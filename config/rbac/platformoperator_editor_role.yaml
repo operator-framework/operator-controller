@@ -5,7 +5,7 @@ metadata:
   name: platformoperator-editor-role
 rules:
 - apiGroups:
-  - platform.openshift.io.my.domain
+  - platform.openshift.io
   resources:
   - platformoperators
   verbs:
@@ -17,7 +17,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - platform.openshift.io.my.domain
+  - platform.openshift.io
   resources:
   - platformoperators/status
   verbs:

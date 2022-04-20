@@ -1,4 +1,4 @@
-domain: my.domain
+domain: openshift.io
 layout:
 - go.kubebuilder.io/v3
 projectName: platform-operators

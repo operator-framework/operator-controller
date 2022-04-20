@@ -6,9 +6,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.7.0
   creationTimestamp: null
-  name: platformoperators.platform.openshift.io.my.domain
+  name: platformoperators.platform.openshift.io
 spec:
-  group: platform.openshift.io.my.domain
+  group: platform.openshift.io
   names:
     kind: PlatformOperator
     listKind: PlatformOperatorList

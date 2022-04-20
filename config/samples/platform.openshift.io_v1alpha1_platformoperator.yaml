@@ -1,4 +1,4 @@
-apiVersion: platform.openshift.io.my.domain/v1alpha1
+apiVersion: platform.openshift.io/v1alpha1
 kind: PlatformOperator
 metadata:
   name: platformoperator-sample

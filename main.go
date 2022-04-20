@@ -73,7 +73,7 @@ func main() {
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "ffdf93bc.my.domain",
+		LeaderElectionID:       "ffdf93bc.openshift.io",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
