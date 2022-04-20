@@ -1,0 +1,16 @@
+domain: my.domain
+layout:
+- go.kubebuilder.io/v3
+projectName: platform-operators
+repo: github.com/timflannagan/platform-operators
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: openshift.io
+  group: platform
+  kind: PlatformOperator
+  path: github.com/timflannagan/platform-operators/api/v1alpha1
+  version: v1alpha1
+version: "3"

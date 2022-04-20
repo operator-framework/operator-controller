@@ -1,0 +1,24 @@
+# permissions for end users to edit platformoperators.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: platformoperator-editor-role
+rules:
+- apiGroups:
+  - platform.openshift.io.my.domain
+  resources:
+  - platformoperators
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - platform.openshift.io.my.domain
+  resources:
+  - platformoperators/status
+  verbs:
+  - get

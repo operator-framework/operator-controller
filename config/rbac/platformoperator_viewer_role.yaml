@@ -1,0 +1,20 @@
+# permissions for end users to view platformoperators.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: platformoperator-viewer-role
+rules:
+- apiGroups:
+  - platform.openshift.io.my.domain
+  resources:
+  - platformoperators
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - platform.openshift.io.my.domain
+  resources:
+  - platformoperators/status
+  verbs:
+  - get
