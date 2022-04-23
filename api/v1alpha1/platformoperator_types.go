@@ -32,10 +32,13 @@ type PlatformOperatorSpec struct {
 type PlatformOperatorStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	InstalledBundleName         string `json:"installedBundleName"`
+	InstalledBundleInstanceName string `json:"installedBundleInstanceName"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:scope=Cluster
 
 // PlatformOperator is the Schema for the platformoperators API
 type PlatformOperator struct {

@@ -14,7 +14,7 @@ spec:
     listKind: PlatformOperatorList
     plural: platformoperators
     singular: platformoperator
-  scope: Namespaced
+  scope: Cluster
   versions:
   - name: v1alpha1
     schema:
