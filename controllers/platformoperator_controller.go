@@ -18,14 +18,26 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
 
+	"github.com/blang/semver/v4"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-registry/pkg/api"
 	registryClient "github.com/operator-framework/operator-registry/pkg/client"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logr "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	platformopenshiftiov1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
@@ -61,90 +73,146 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	po := &platformopenshiftiov1alpha1.PlatformOperator{}
 	if err := r.Get(ctx, req.NamespacedName, po); err != nil {
+		log.Error(err, "failed to find the platform operator")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	log.Info("listing the platform-operators catalogsource")
 	cs := &operatorsv1alpha1.CatalogSource{}
 	if err := r.Get(ctx, types.NamespacedName{
 		Name:      catalogSourceName,
-		Namespace: "platform-operator-system",
+		Namespace: catalogSourceNamespace,
 	}, cs); err != nil {
 		log.Error(err, "failed to find the platform operators catalogsource")
 		return ctrl.Result{}, err
 	}
 
+	log.Info("listing bundles from context")
 	it, err := r.RegistryClient.ListBundles(ctx)
 	if err != nil {
 		log.Error(err, "failed to list bundles in the platform operators catalog source")
 		return ctrl.Result{}, err
 	}
+
+	log.Info("filtering out bundles into candidates", "package name", po.Spec.PackageName, "channel name", "4.12")
+	var (
+		candidateBundles []*api.Bundle
+	)
 	for b := it.Next(); b != nil; b = it.Next() {
-		log.Info("bundle iterator", "bundle", b.String())
+		log.Info("processes bundle", "name", b.GetPackageName())
+		if b.PackageName != po.Spec.PackageName {
+			continue
+		}
+		if b.ChannelName != "4.12" {
+			continue
+		}
+		candidateBundles = append(candidateBundles, b)
+	}
+	if len(candidateBundles) == 0 {
+		log.Info("failed to find any candidate bundles")
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	/*
-			TODO:
-			- Need a status installed vs. desired package version?
-		    - Spec field for which CatalogSource to use?
+	// TODO: move to a method/function
+	// TODO: figure out what's the most appropriate field to parse by semver range. CsvName maybe if that's constantly present?
+	log.Info("finding the bundles that contain the highest semver")
+	var (
+		highestSemver semver.Version
+		bundleImage   string
+		bundleName    string
+	)
+	for _, bundle := range candidateBundles {
+		currVer, err := semver.Parse(bundle.Version)
+		if err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to parse the input %s semver name: %v", bundle.CsvJson, err)
+		}
+		if currVer.Compare(highestSemver) == 1 {
+			highestSemver = currVer
+			bundleImage = bundle.BundlePath
+			bundleName = bundle.CsvName
+		}
+	}
+	// TODO: find a better way to check whether we were able to correctly parse
+	// the semver range
+	if strings.Compare(highestSemver.String(), "v0.0.0") == 0 {
+		log.Info("failed to find the highest semver")
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+	log.Info("candidate bundles", "highest semver", highestSemver)
 
-			Steps:
-			- Connect to the CatalogSource
-			- Get the highest semver range
-			- Check whether we have already generated a BundleInstance that matches that metadata.Name
-	*/
-
-	// TODO(user): your logic here
+	// TODO: check whether we need to pivot the bundle
+	// TODO: what happens when the bundle failed?
+	// TODO: watch the bundle resource?
+	if err := r.ensureBundle(ctx, po, bundleName, bundleImage); err != nil {
+		log.Error(err, "failed to generate the bundle resource")
+		return ctrl.Result{}, err
+	}
+	if err := r.Status().Update(ctx, po); err != nil {
+		log.Error(err, "failed to update the platform operator status")
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *PlatformOperatorReconciler) ensureBundle(ctx context.Context, po *platformopenshiftiov1alpha1.PlatformOperator, bundleName, bundleImage string) error {
+	if po.Status.InstalledBundleName != "" {
+		return nil
+	}
+	bundle := &rukpakv1alpha1.Bundle{}
+	if err := r.Get(ctx, types.NamespacedName{Name: bundleName}, bundle); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
+		bundle = &rukpakv1alpha1.Bundle{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: bundleName,
+			},
+			Spec: rukpakv1alpha1.BundleSpec{
+				ProvisionerClassName: "core.rukpak.io/plain",
+				Source: rukpakv1alpha1.BundleSource{
+					Type: rukpakv1alpha1.SourceTypeImage,
+					Image: &rukpakv1alpha1.ImageSource{
+						Ref: bundleImage,
+					},
+				},
+			},
+		}
+		if err := controllerutil.SetOwnerReference(po, bundle, r.Scheme); err != nil {
+			return err
+		}
+		if err := r.Create(ctx, bundle); err != nil {
+			return err
+		}
+	}
+	po.Status.InstalledBundleName = bundleName
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PlatformOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&platformopenshiftiov1alpha1.PlatformOperator{}).
+		Watches(&source.Kind{Type: &operatorsv1alpha1.CatalogSource{}}, handler.EnqueueRequestsFromMapFunc(requeuePlatformOperators(mgr.GetClient()))).
 		Complete(r)
 }
 
-// func (s *registrySource) Snapshot(ctx context.Context) (*cache.Snapshot, error) {
-// 	// Fetching default channels this way makes many round trips
-// 	// -- may need to either add a new API to fetch all at once,
-// 	// or embed the information into Bundle.
-// 	defaultChannels := make(map[string]string)
+func requeuePlatformOperators(cl client.Client) handler.MapFunc {
+	return func(object client.Object) []reconcile.Request {
+		poList := &platformopenshiftiov1alpha1.PlatformOperatorList{}
+		if err := cl.List(context.Background(), poList); err != nil {
+			return nil
+		}
 
-// 	it, err := s.client.ListBundles(ctx)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to list bundles: %w", err)
-// 	}
-
-// 	var operators []*cache.Entry
-// 	for b := it.Next(); b != nil; b = it.Next() {
-// 		defaultChannel, ok := defaultChannels[b.PackageName]
-// 		if !ok {
-// 			if p, err := s.client.GetPackage(ctx, b.PackageName); err != nil {
-// 				s.logger.Printf("failed to retrieve default channel for bundle, continuing: %v", err)
-// 				continue
-// 			} else {
-// 				defaultChannels[b.PackageName] = p.DefaultChannelName
-// 				defaultChannel = p.DefaultChannelName
-// 			}
-// 		}
-// 		o, err := newOperatorFromBundle(b, "", s.key, defaultChannel)
-// 		if err != nil {
-// 			s.logger.Printf("failed to construct operator from bundle, continuing: %v", err)
-// 			continue
-// 		}
-// 		o.ProvidedAPIs = o.ProvidedAPIs.StripPlural()
-// 		o.RequiredAPIs = o.RequiredAPIs.StripPlural()
-// 		o.Replaces = b.Replaces
-// 		EnsurePackageProperty(o, b.PackageName, b.Version)
-// 		operators = append(operators, o)
-// 	}
-// 	if err := it.Error(); err != nil {
-// 		return nil, fmt.Errorf("error encountered while listing bundles: %w", err)
-// 	}
-
-// 	return &cache.Snapshot{
-// 		Entries: operators,
-// 		Valid:   s.invalidator.GetValidChannel(s.key),
-// 	}, nil
-// }
+		var requests []reconcile.Request
+		for _, po := range poList.Items {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name: po.GetName(),
+				},
+			})
+		}
+		return requests
+	}
+}

@@ -26,6 +26,7 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	registryClient "github.com/operator-framework/operator-registry/pkg/client"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -46,6 +47,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(platformopenshiftiov1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
@@ -89,7 +91,7 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
-	c, err := registryClient.NewClient("localhost:50051")
+	c, err := registryClient.NewClient("platform-operators-catalog-source-svc.platform-operators-system.svc:50051")
 	if err != nil {
 		setupLog.Error(err, "failed to create registry client")
 		os.Exit(1)
