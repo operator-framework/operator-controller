@@ -20,9 +20,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // PlatformOperatorSpec defines the desired state of PlatformOperator
 type PlatformOperatorSpec struct {
 	PackageName string `json:"packageName"`
@@ -30,8 +27,6 @@ type PlatformOperatorSpec struct {
 
 // PlatformOperatorStatus defines the observed state of PlatformOperator
 type PlatformOperatorStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 	InstalledBundleName         string `json:"installedBundleName"`
 	InstalledBundleInstanceName string `json:"installedBundleInstanceName"`
 }
