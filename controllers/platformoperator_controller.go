@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/blang/semver/v4"
@@ -53,6 +52,8 @@ type PlatformOperatorReconciler struct {
 	Scheme         *runtime.Scheme
 	RegistryClient registryClient.Interface
 }
+
+type candidateBundles []*api.Bundle
 
 //+kubebuilder:rbac:groups=platform.openshift.io,resources=platformoperators,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=platform.openshift.io,resources=platformoperators/status,verbs=get;update;patch
@@ -95,9 +96,7 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	log.Info("filtering out bundles into candidates", "package name", po.Spec.PackageName, "channel name", "4.12")
-	var (
-		candidateBundles []*api.Bundle
-	)
+	var cb candidateBundles
 	for b := it.Next(); b != nil; b = it.Next() {
 		log.Info("processes bundle", "name", b.GetPackageName())
 		if b.PackageName != po.Spec.PackageName {
@@ -106,9 +105,9 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		if b.ChannelName != "4.12" {
 			continue
 		}
-		candidateBundles = append(candidateBundles, b)
+		cb = append(cb, b)
 	}
-	if len(candidateBundles) == 0 {
+	if len(cb) == 0 {
 		log.Info("failed to find any candidate bundles")
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
@@ -116,34 +115,20 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// TODO: move to a method/function
 	// TODO: figure out what's the most appropriate field to parse by semver range. CsvName maybe if that's constantly present?
 	log.Info("finding the bundles that contain the highest semver")
-	var (
-		highestSemver semver.Version
-		bundleImage   string
-		bundleName    string
-	)
-	for _, bundle := range candidateBundles {
-		currVer, err := semver.Parse(bundle.Version)
-		if err != nil {
-			return ctrl.Result{}, fmt.Errorf("failed to parse the input %s semver name: %v", bundle.CsvJson, err)
-		}
-		if currVer.Compare(highestSemver) == 1 {
-			highestSemver = currVer
-			bundleImage = bundle.BundlePath
-			bundleName = bundle.CsvName
-		}
-	}
-	// TODO: find a better way to check whether we were able to correctly parse
-	// the semver range
-	if strings.Compare(highestSemver.String(), "v0.0.0") == 0 {
-		log.Info("failed to find the highest semver")
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
-	}
-	log.Info("candidate bundles", "highest semver", highestSemver)
 
+	latestBundle, err := cb.latest()
+	if err != nil || latestBundle == nil {
+		log.Info("failed to find the bundle with the highest semver")
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, err
+	}
+
+	log.Info("candidate bundles", "highest semver", latestBundle.Version)
+
+	// TODO: figure out what's the most appropriate field to parse by semver range. CsvName maybe if that's constantly present?
 	// TODO: check whether we need to pivot the bundle
 	// TODO: what happens when the bundle failed?
 	// TODO: watch the bundle resource?
-	if err := r.ensureBundle(ctx, po, bundleName, bundleImage); err != nil {
+	if err := r.ensureBundle(ctx, po, latestBundle.BundlePath, latestBundle.CsvName); err != nil {
 		log.Error(err, "failed to generate the bundle resource")
 		return ctrl.Result{}, err
 	}
@@ -215,4 +200,23 @@ func requeuePlatformOperators(cl client.Client) handler.MapFunc {
 		}
 		return requests
 	}
+}
+
+func (cb candidateBundles) latest() (*api.Bundle, error) {
+	var (
+		highestSemver semver.Version
+		latestBundle  *api.Bundle
+	)
+	for _, bundle := range cb {
+		currVer, err := semver.Parse(bundle.Version)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse the bundle %s semver: %v", bundle.CsvJson, err)
+		}
+		if currVer.Compare(highestSemver) == 1 {
+			highestSemver = currVer
+			latestBundle = bundle
+		}
+	}
+
+	return latestBundle, nil
 }
