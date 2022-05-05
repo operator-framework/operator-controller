@@ -17,8 +17,10 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -39,9 +41,16 @@ import (
 	//+kubebuilder:scaffold:imports
 )
 
+const (
+	catalogSourceName          = "platform-operators-catalog-source-svc"
+	catalogSourceNamespace     = "platform-operators-system"
+	catalogSourceReconnectTime = time.Second * 5
+)
+
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme               = runtime.NewScheme()
+	setupLog             = ctrl.Log.WithName("setup")
+	catalogSourceService = catalogSourceName + "." + catalogSourceNamespace + ".svc:50051"
 )
 
 func init() {
@@ -82,20 +91,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	// cs := &operatorsv1alpha1.CatalogSource{}
-	// if err := mgr.GetClient().Get(context.Background(), types.NamespacedName{
-	// 	Name:      "platform-operators-catalogsource",
-	// 	Namespace: "platform-operators-system",
-	// }, cs); err != nil {
-	// 	setupLog.Error(err, "failed to query for the platform operators catalogsource")
-	// 	os.Exit(1)
-	// }
-
-	c, err := registryClient.NewClient("platform-operators-catalog-source-svc.platform-operators-system.svc:50051")
+	// Create a registryClient by referencing the requisite catalogSource's service and then
+	// check that it is healthy
+	c, err := registryClient.NewClient(catalogSourceService)
 	if err != nil {
-		setupLog.Error(err, "failed to create registry client")
+		setupLog.Error(err, "failed to create registry client from "+catalogSourceName+" catalog source")
 		os.Exit(1)
 	}
+	if healthy, err := c.HealthCheck(context.Background(), catalogSourceReconnectTime); !healthy || err != nil {
+		setupLog.Error(err, "failed to connect to "+catalogSourceName+" catalog source via the registry client")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.PlatformOperatorReconciler{
 		Client:         mgr.GetClient(),
 		Scheme:         mgr.GetScheme(),
