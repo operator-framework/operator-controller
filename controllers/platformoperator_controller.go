@@ -41,10 +41,7 @@ import (
 	platformopenshiftiov1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 
-const (
-	catalogSourceName      = "platform-operators-catalog-source"
-	catalogSourceNamespace = "platform-operators-system"
-)
+const channelName = "4.12"
 
 // PlatformOperatorReconciler reconciles a PlatformOperator object
 type PlatformOperatorReconciler struct {
@@ -78,16 +75,6 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	log.Info("listing the platform-operators catalogsource")
-	cs := &operatorsv1alpha1.CatalogSource{}
-	if err := r.Get(ctx, types.NamespacedName{
-		Name:      catalogSourceName,
-		Namespace: catalogSourceNamespace,
-	}, cs); err != nil {
-		log.Error(err, "failed to find the platform operators catalogsource")
-		return ctrl.Result{}, err
-	}
-
 	log.Info("listing bundles from context")
 	it, err := r.RegistryClient.ListBundles(ctx)
 	if err != nil {
@@ -95,14 +82,14 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, err
 	}
 
-	log.Info("filtering out bundles into candidates", "package name", po.Spec.PackageName, "channel name", "4.12")
+	log.Info("filtering out bundles into candidates", "package name", po.Spec.PackageName, "channel name", channelName)
 	var cb candidateBundles
 	for b := it.Next(); b != nil; b = it.Next() {
 		log.Info("processes bundle", "name", b.GetPackageName())
 		if b.PackageName != po.Spec.PackageName {
 			continue
 		}
-		if b.ChannelName != "4.12" {
+		if b.ChannelName != channelName {
 			continue
 		}
 		cb = append(cb, b)
@@ -112,8 +99,6 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	// TODO: move to a method/function
-	// TODO: figure out what's the most appropriate field to parse by semver range. CsvName maybe if that's constantly present?
 	log.Info("finding the bundles that contain the highest semver")
 
 	latestBundle, err := cb.latest()
