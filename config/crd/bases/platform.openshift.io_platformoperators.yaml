@@ -43,6 +43,14 @@ spec:
             type: object
           status:
             description: PlatformOperatorStatus defines the observed state of PlatformOperator
+            properties:
+              installedBundleInstanceName:
+                type: string
+              installedBundleName:
+                type: string
+            required:
+            - installedBundleInstanceName
+            - installedBundleName
             type: object
         type: object
     served: true
