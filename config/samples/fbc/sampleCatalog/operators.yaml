@@ -1,0 +1,33 @@
+---
+defaultChannel: "4.12"
+name: combo
+schema: olm.package
+---
+image: docker.io/tyslaton/combo-platform-operator-bundle:v0.0.1
+name: combo.v0.0.1
+package: combo
+properties:
+- type: olm.gvk
+  value:
+    group: combo.io
+    kind: Template
+    version: v1alpha1
+- type: olm.gvk
+  value:
+    group: combo.io
+    kind: Combination
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: combo
+    version: 0.0.1
+relatedImages:
+- image: docker.io/tyslaton/combo-platform-operator-bundle:v0.0.1
+  name: ""
+schema: olm.bundle
+---
+schema: olm.channel
+package: combo
+name: "4.12"
+entries:
+  - name: combo.v0.0.1

@@ -50,7 +50,35 @@ type PlatformOperatorReconciler struct {
 	RegistryClient registryClient.Interface
 }
 
+// SetupWithManager sets up the controller with the Manager.
+func (r *PlatformOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&platformopenshiftiov1alpha1.PlatformOperator{}).
+		Watches(&source.Kind{Type: &operatorsv1alpha1.CatalogSource{}}, handler.EnqueueRequestsFromMapFunc(requeuePlatformOperators(mgr.GetClient()))).
+		// TODO: Only apply for PlatformOperators related to a BundleInstance's OwnerReference
+		Complete(r)
+}
+
 type candidateBundles []*api.Bundle
+
+func (cb candidateBundles) latest() (*api.Bundle, error) {
+	var (
+		highestSemver semver.Version
+		latestBundle  *api.Bundle
+	)
+	for _, bundle := range cb {
+		currVer, err := semver.Parse(bundle.Version)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse the bundle %s semver: %v", bundle.CsvJson, err)
+		}
+		if currVer.Compare(highestSemver) == 1 {
+			highestSemver = currVer
+			latestBundle = bundle
+		}
+	}
+
+	return latestBundle, nil
+}
 
 //+kubebuilder:rbac:groups=platform.openshift.io,resources=platformoperators,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=platform.openshift.io,resources=platformoperators/status,verbs=get;update;patch
@@ -84,12 +112,9 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	log.Info("filtering out bundles into candidates", "package name", po.Spec.PackageName, "channel name", channelName)
 	var cb candidateBundles
+	// TODO: Should build a cache for efficiency
 	for b := it.Next(); b != nil; b = it.Next() {
-		log.Info("processes bundle", "name", b.GetPackageName())
-		if b.PackageName != po.Spec.PackageName {
-			continue
-		}
-		if b.ChannelName != channelName {
+		if b.PackageName != po.Spec.PackageName || b.ChannelName != channelName {
 			continue
 		}
 		cb = append(cb, b)
@@ -99,24 +124,22 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	}
 
-	log.Info("finding the bundles that contain the highest semver")
-
 	latestBundle, err := cb.latest()
 	if err != nil || latestBundle == nil {
 		log.Info("failed to find the bundle with the highest semver")
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, err
 	}
 
-	log.Info("candidate bundles", "highest semver", latestBundle.Version)
+	log.Info("candidate bundle", "bundle", latestBundle.CsvName, "version", latestBundle.Version)
 
 	// TODO: figure out what's the most appropriate field to parse by semver range. CsvName maybe if that's constantly present?
-	// TODO: check whether we need to pivot the bundle
 	// TODO: what happens when the bundle failed?
 	// TODO: watch the bundle resource?
-	if err := r.ensureBundle(ctx, po, latestBundle.BundlePath, latestBundle.CsvName); err != nil {
+	if err := r.ensureBundleInstance(ctx, po, latestBundle); err != nil {
 		log.Error(err, "failed to generate the bundle resource")
 		return ctrl.Result{}, err
 	}
+
 	if err := r.Status().Update(ctx, po); err != nil {
 		log.Error(err, "failed to update the platform operator status")
 		return ctrl.Result{}, err
@@ -125,47 +148,56 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	return ctrl.Result{}, nil
 }
 
-func (r *PlatformOperatorReconciler) ensureBundle(ctx context.Context, po *platformopenshiftiov1alpha1.PlatformOperator, bundleName, bundleImage string) error {
-	if po.Status.InstalledBundleName != "" {
-		return nil
-	}
-	bundle := &rukpakv1alpha1.Bundle{}
-	if err := r.Get(ctx, types.NamespacedName{Name: bundleName}, bundle); err != nil {
+func (r *PlatformOperatorReconciler) ensureBundleInstance(ctx context.Context, po *platformopenshiftiov1alpha1.PlatformOperator, bundle *api.Bundle) error {
+	bundleName, bundleImage := bundle.CsvName, bundle.BundlePath
+	bi := &rukpakv1alpha1.BundleInstance{}
+	if err := r.Get(ctx, types.NamespacedName{Name: bundleName}, bi); err != nil {
 		if !apierrors.IsNotFound(err) {
 			return err
 		}
-		bundle = &rukpakv1alpha1.Bundle{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: bundleName,
-			},
-			Spec: rukpakv1alpha1.BundleSpec{
-				ProvisionerClassName: "core.rukpak.io/plain",
-				Source: rukpakv1alpha1.BundleSource{
-					Type: rukpakv1alpha1.SourceTypeImage,
-					Image: &rukpakv1alpha1.ImageSource{
-						Ref: bundleImage,
-					},
-				},
-			},
-		}
-		if err := controllerutil.SetOwnerReference(po, bundle, r.Scheme); err != nil {
+		if err := controllerutil.SetOwnerReference(po, bi, r.Scheme); err != nil {
 			return err
 		}
-		if err := r.Create(ctx, bundle); err != nil {
+		if err := r.Create(ctx, buildBundleInstance(bundleName, bundleImage)); err != nil {
+			return err
+		}
+		po.Status.InstalledBundleInstanceName = bi.Name
+		return nil
+	}
+
+	// TODO: Does this guarantee that this is a newer Bundle?
+	// Update the BundleInstance if a higher semver was found
+	if po.Status.InstalledBundleInstanceName != bundleName {
+		bi.SetName(bundleName)
+		bi.Spec.Template.Spec.Source.Image.Ref = bundleImage
+		if err := r.Update(ctx, bi); err != nil {
 			return err
 		}
 	}
-	po.Status.InstalledBundleName = bundleName
 
 	return nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *PlatformOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&platformopenshiftiov1alpha1.PlatformOperator{}).
-		Watches(&source.Kind{Type: &operatorsv1alpha1.CatalogSource{}}, handler.EnqueueRequestsFromMapFunc(requeuePlatformOperators(mgr.GetClient()))).
-		Complete(r)
+// createBundleInstance is responsible for taking a name and image to create an embedded BundleInstance
+func buildBundleInstance(name, image string) *rukpakv1alpha1.BundleInstance {
+	return &rukpakv1alpha1.BundleInstance{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: rukpakv1alpha1.BundleInstanceSpec{
+			ProvisionerClassName: "core.rukpak.io/plain",
+			Template: &rukpakv1alpha1.BundleTemplate{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{"app": name},
+				},
+				Spec: rukpakv1alpha1.BundleSpec{
+					ProvisionerClassName: "core.rukpak.io/plain",
+					Source: rukpakv1alpha1.BundleSource{
+						Type: rukpakv1alpha1.SourceTypeImage,
+						Image: &rukpakv1alpha1.ImageSource{
+							Ref: image,
+						}}}}},
+	}
 }
 
 func requeuePlatformOperators(cl client.Client) handler.MapFunc {
@@ -185,23 +217,4 @@ func requeuePlatformOperators(cl client.Client) handler.MapFunc {
 		}
 		return requests
 	}
-}
-
-func (cb candidateBundles) latest() (*api.Bundle, error) {
-	var (
-		highestSemver semver.Version
-		latestBundle  *api.Bundle
-	)
-	for _, bundle := range cb {
-		currVer, err := semver.Parse(bundle.Version)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse the bundle %s semver: %v", bundle.CsvJson, err)
-		}
-		if currVer.Compare(highestSemver) == 1 {
-			highestSemver = currVer
-			latestBundle = bundle
-		}
-	}
-
-	return latestBundle, nil
 }
