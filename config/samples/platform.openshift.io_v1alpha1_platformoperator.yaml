@@ -3,4 +3,4 @@ kind: PlatformOperator
 metadata:
   name: platformoperator-sample
 spec:
-  # TODO(user): Add fields here
+  packageName: combo
