@@ -1098,8 +1098,8 @@ github.com/operator-framework/helm-operator-plugins v0.0.9/go.mod h1:LFi/PUYE+xA
 github.com/operator-framework/operator-lib v0.3.0/go.mod h1:LTp5UQd8ivq4MXqm/W/XHulHQ0RRoZXsAj73sNMAQxc=
 github.com/operator-framework/operator-registry v1.21.0 h1:+GEbWqNdTtpTY/zK9QAORmrhkbQYiDdyutriDYZ9/5Q=
 github.com/operator-framework/operator-registry v1.21.0/go.mod h1:qDxBCYPeOMlOXd95Zi1q4GpiKwK9i9Mag1AkrMOoFNU=
-github.com/operator-framework/rukpak v0.2.0 h1:pYhFjxzVp80KKbnZsa+5waSS+ds7F/t1o9kSEgQV6ww=
-github.com/operator-framework/rukpak v0.2.0/go.mod h1:i39uuzw7udoG3FFJDkXwOCoY8/vC9RzfP3Ny3Rk5kZs=
+github.com/operator-framework/rukpak v0.3.1-0.20220506213707-46bee3457148 h1:Gflax41PCae+0GJkEPMP71Ai2QCrjTojA1MsbQmPV58=
+github.com/operator-framework/rukpak v0.3.1-0.20220506213707-46bee3457148/go.mod h1:4fi9s8h2AiNbWlJAS8DJuCGaSfYC4uNG8mEFbOykATg=
 github.com/otiai10/copy v1.2.0/go.mod h1:rrF5dJ5F0t/EWSYODDu4j9/vEeYHMkc8jt0zJChqQWw=
 github.com/otiai10/curr v0.0.0-20150429015615-9b4961190c95/go.mod h1:9qAhocn7zKJG+0mI8eUu6xqkFDYS2kb2saOteoSB3cE=
 github.com/otiai10/curr v1.0.0/go.mod h1:LskTG5wDwr8Rs+nNQ+1LlxRjAtTZZjtJW4rMXl6j4vs=

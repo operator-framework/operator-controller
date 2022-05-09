@@ -42,7 +42,7 @@ import (
 )
 
 const (
-	catalogSourceName          = "platform-operators-catalog-source-svc"
+	catalogSourceName          = "platform-operators-catalog-source"
 	catalogSourceNamespace     = "platform-operators-system"
 	catalogSourceReconnectTime = time.Second * 5
 )

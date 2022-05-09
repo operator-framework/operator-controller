@@ -8,7 +8,7 @@ require (
 	github.com/onsi/gomega v1.18.1
 	github.com/operator-framework/api v0.13.0
 	github.com/operator-framework/operator-registry v1.21.0
-	github.com/operator-framework/rukpak v0.2.0
+	github.com/operator-framework/rukpak v0.3.1-0.20220506213707-46bee3457148
 	k8s.io/apimachinery v0.23.1
 	k8s.io/client-go v0.23.1
 	sigs.k8s.io/controller-runtime v0.11.0
