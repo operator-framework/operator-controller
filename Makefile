@@ -84,7 +84,7 @@ endif
 .PHONY: demo
 # NOTE: This will fail as the currently available version of RukPak (v0.3.0) does not have 
 #       the requisite code.
-demo: run install-samples 
+demo: deploy install-samples 
 
 .PHONY: kind-load
 kind-load: docker-build

@@ -26,7 +26,6 @@ import (
 	"github.com/operator-framework/operator-registry/pkg/api"
 	registryClient "github.com/operator-framework/operator-registry/pkg/client"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -149,55 +148,33 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 }
 
 func (r *PlatformOperatorReconciler) ensureBundleInstance(ctx context.Context, po *platformopenshiftiov1alpha1.PlatformOperator, bundle *api.Bundle) error {
-	bundleName, bundleImage := bundle.CsvName, bundle.BundlePath
 	bi := &rukpakv1alpha1.BundleInstance{}
-	if err := r.Get(ctx, types.NamespacedName{Name: bundleName}, bi); err != nil {
-		if !apierrors.IsNotFound(err) {
-			return err
-		}
-		if err := controllerutil.SetOwnerReference(po, bi, r.Scheme); err != nil {
-			return err
-		}
-		if err := r.Create(ctx, buildBundleInstance(bundleName, bundleImage)); err != nil {
-			return err
-		}
-		po.Status.InstalledBundleInstanceName = bi.Name
+	bi.SetName(po.GetName())
+	controllerRef := metav1.NewControllerRef(po, po.GroupVersionKind())
+
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, bi, func() error {
+		bi.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
+		bi.Spec = *buildBundleInstance(bi.GetName(), bundle.BundlePath)
 		return nil
-	}
-
-	// TODO: Does this guarantee that this is a newer Bundle?
-	// Update the BundleInstance if a higher semver was found
-	if po.Status.InstalledBundleInstanceName != bundleName {
-		bi.SetName(bundleName)
-		bi.Spec.Template.Spec.Source.Image.Ref = bundleImage
-		if err := r.Update(ctx, bi); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	})
+	return err
 }
 
 // createBundleInstance is responsible for taking a name and image to create an embedded BundleInstance
-func buildBundleInstance(name, image string) *rukpakv1alpha1.BundleInstance {
-	return &rukpakv1alpha1.BundleInstance{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-		Spec: rukpakv1alpha1.BundleInstanceSpec{
-			ProvisionerClassName: "core.rukpak.io/plain",
-			Template: &rukpakv1alpha1.BundleTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{"app": name},
-				},
-				Spec: rukpakv1alpha1.BundleSpec{
-					ProvisionerClassName: "core.rukpak.io/plain",
-					Source: rukpakv1alpha1.BundleSource{
-						Type: rukpakv1alpha1.SourceTypeImage,
-						Image: &rukpakv1alpha1.ImageSource{
-							Ref: image,
-						}}}}},
-	}
+func buildBundleInstance(name, image string) *rukpakv1alpha1.BundleInstanceSpec {
+	return &rukpakv1alpha1.BundleInstanceSpec{
+		ProvisionerClassName: "core.rukpak.io/plain",
+		Template: &rukpakv1alpha1.BundleTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Labels: map[string]string{"app": name},
+			},
+			Spec: rukpakv1alpha1.BundleSpec{
+				ProvisionerClassName: "core.rukpak.io/plain",
+				Source: rukpakv1alpha1.BundleSource{
+					Type: rukpakv1alpha1.SourceTypeImage,
+					Image: &rukpakv1alpha1.ImageSource{
+						Ref: image,
+					}}}}}
 }
 
 func requeuePlatformOperators(cl client.Client) handler.MapFunc {
