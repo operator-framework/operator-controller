@@ -27,8 +27,7 @@ type PlatformOperatorSpec struct {
 
 // PlatformOperatorStatus defines the observed state of PlatformOperator
 type PlatformOperatorStatus struct {
-	InstalledBundleName         string `json:"installedBundleName"`
-	InstalledBundleInstanceName string `json:"installedBundleInstanceName"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
