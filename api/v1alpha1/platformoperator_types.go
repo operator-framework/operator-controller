@@ -20,6 +20,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	TypeInstalled = "Installed"
+
+	ReasonInstalling           = "Installing"
+	ReasonInstallSuccessful    = "InstallSuccessful"
+	ReasonBundleInstanceFailed = "BundleInstanceFailed"
+	ReasonCatalogUnreachable   = "CatalogUnreachable"
+	ReasonCatalogUnstable      = "CatalogUnstable"
+	ReasonCatalogNotFound      = "CatalogNotFound"
+	ReasonNoValidBundles       = "NoValidBundles"
+
+	PhaseInstalling = "Installing"
+	PhaseFailing    = "Failing"
+	PhaseInstalled  = "Installed"
+)
+
 // PlatformOperatorSpec defines the desired state of PlatformOperator
 type PlatformOperatorSpec struct {
 	// PackageName specifies the name of the package to be installed from the provided CatalogSource.
@@ -30,6 +46,7 @@ type PlatformOperatorSpec struct {
 // PlatformOperatorStatus defines the observed state of PlatformOperator
 type PlatformOperatorStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	Phase      string             `json:"phase,omitempty"`
 }
 
 //+kubebuilder:object:root=true

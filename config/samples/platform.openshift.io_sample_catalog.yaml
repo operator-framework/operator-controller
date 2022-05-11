@@ -5,7 +5,7 @@ metadata:
   namespace: platform-operators-system
 spec:
   sourceType: grpc
-  image: tyslaton/sample-catalog:v0.0.1
+  image: tyslaton/sample-catalog:invalid
   displayName: Sample Catalog - LOCAL ONLY
   publisher: N/A
   updateStrategy:

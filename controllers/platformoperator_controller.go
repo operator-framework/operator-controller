@@ -38,15 +38,22 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	platformopenshiftiov1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
+	"github.com/timflannagan/platform-operators/internal/updater"
 )
 
-const channelName = "4.12"
+const (
+	channelName            = "4.12"
+	catalogReconnectTime   = time.Second * 5
+	catalogSourceName      = "platform-operators-catalog-source"
+	catalogSourceNamespace = "platform-operators-system"
+)
+
+var catalogSourceAddress = catalogSourceName + "." + catalogSourceNamespace + ".svc:50051"
 
 // PlatformOperatorReconciler reconciles a PlatformOperator object
 type PlatformOperatorReconciler struct {
 	client.Client
-	Scheme         *runtime.Scheme
-	RegistryClient registryClient.Interface
+	Scheme *runtime.Scheme
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -102,10 +109,51 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	u := updater.NewPlatformOperatorUpdater(r.Client)
+	defer func() {
+		if err := u.Apply(ctx, po); err != nil {
+			log.Error(err, "failed to update status")
+		}
+	}()
+
+	u.UpdateStatus(
+		updater.SetPhase(platformopenshiftiov1alpha1.PhaseFailing),
+		updater.EnsureCondition(metav1.Condition{
+			Type:    platformopenshiftiov1alpha1.TypeInstalled,
+			Status:  metav1.ConditionUnknown,
+			Reason:  platformopenshiftiov1alpha1.ReasonInstalling,
+			Message: "",
+		}),
+	)
+
+	rc, err := handleCatalogConnection(catalogSourceAddress)
+	if err != nil {
+		log.Error(err, "failed to connect to the requisite catalog")
+		u.UpdateStatus(
+			updater.SetPhase(platformopenshiftiov1alpha1.PhaseFailing),
+			updater.EnsureCondition(metav1.Condition{
+				Type:    platformopenshiftiov1alpha1.TypeInstalled,
+				Status:  metav1.ConditionFalse,
+				Reason:  platformopenshiftiov1alpha1.ReasonCatalogUnreachable,
+				Message: err.Error(),
+			}),
+		)
+		return ctrl.Result{}, err
+	}
+
 	log.Info("listing bundles from context")
-	it, err := r.RegistryClient.ListBundles(ctx)
+	it, err := rc.ListBundles(ctx)
 	if err != nil {
 		log.Error(err, "failed to list bundles in the platform operators catalog source")
+		u.UpdateStatus(
+			updater.SetPhase(platformopenshiftiov1alpha1.PhaseFailing),
+			updater.EnsureCondition(metav1.Condition{
+				Type:    platformopenshiftiov1alpha1.TypeInstalled,
+				Status:  metav1.ConditionFalse,
+				Reason:  platformopenshiftiov1alpha1.ReasonCatalogUnstable,
+				Message: err.Error(),
+			}),
+		)
 		return ctrl.Result{}, err
 	}
 
@@ -118,30 +166,49 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 		cb = append(cb, b)
 	}
-	if len(cb) == 0 {
-		log.Info("failed to find any candidate bundles")
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
-	}
 
 	latestBundle, err := cb.latest()
 	if err != nil || latestBundle == nil {
-		log.Info("failed to find the bundle with the highest semver")
+		message := "failed to find a valid bundle"
+		log.Info(message)
+		u.UpdateStatus(
+			updater.SetPhase(platformopenshiftiov1alpha1.PhaseFailing),
+			updater.EnsureCondition(metav1.Condition{
+				Type:    platformopenshiftiov1alpha1.TypeInstalled,
+				Status:  metav1.ConditionFalse,
+				Reason:  platformopenshiftiov1alpha1.ReasonNoValidBundles,
+				Message: fmt.Sprintf("%s with error: %v", message, err),
+			}),
+		)
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, err
 	}
 
-	log.Info("candidate bundle", "bundle", latestBundle.CsvName, "version", latestBundle.Version)
+	log.Info("found a valid bundle", "bundle", latestBundle.CsvName, "version", latestBundle.Version)
 
-	// TODO: figure out what's the most appropriate field to parse by semver range. CsvName maybe if that's constantly present?
 	// TODO: what happens when the bundle failed?
 	if err := r.ensureBundleInstance(ctx, po, latestBundle); err != nil {
 		log.Error(err, "failed to generate the bundle resource")
+		u.UpdateStatus(
+			updater.SetPhase(platformopenshiftiov1alpha1.PhaseFailing),
+			updater.EnsureCondition(metav1.Condition{
+				Type:    platformopenshiftiov1alpha1.TypeInstalled,
+				Status:  metav1.ConditionFalse,
+				Reason:  platformopenshiftiov1alpha1.ReasonBundleInstanceFailed,
+				Message: err.Error(),
+			}),
+		)
 		return ctrl.Result{}, err
 	}
 
-	if err := r.Status().Update(ctx, po); err != nil {
-		log.Error(err, "failed to update the platform operator status")
-		return ctrl.Result{}, err
-	}
+	u.UpdateStatus(
+		updater.SetPhase(platformopenshiftiov1alpha1.PhaseFailing),
+		updater.EnsureCondition(metav1.Condition{
+			Type:    platformopenshiftiov1alpha1.TypeInstalled,
+			Status:  metav1.ConditionTrue,
+			Reason:  platformopenshiftiov1alpha1.ReasonInstallSuccessful,
+			Message: "",
+		}),
+	)
 
 	return ctrl.Result{}, nil
 }
@@ -154,9 +221,25 @@ func (r *PlatformOperatorReconciler) ensureBundleInstance(ctx context.Context, p
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, bi, func() error {
 		bi.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
 		bi.Spec = *buildBundleInstance(bi.GetName(), bundle.BundlePath)
+
 		return nil
 	})
+
 	return err
+}
+
+// handleCatalogConnection takes a catalogSourceService and returns a registryClient.Client
+// if the catalog is reachable
+func handleCatalogConnection(address string) (*registryClient.Client, error) {
+	rc, err := registryClient.NewClient(address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create registry client from %s catalog source: %v", address, err)
+	}
+	if healthy, err := rc.HealthCheck(context.Background(), catalogReconnectTime); !healthy || err != nil {
+		return nil, fmt.Errorf("failed to connect to %s catalog source via the registry client: %v", address, err)
+	}
+
+	return rc, nil
 }
 
 // createBundleInstance is responsible for taking a name and image to create an embedded BundleInstance
