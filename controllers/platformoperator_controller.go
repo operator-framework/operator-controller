@@ -54,7 +54,7 @@ func (r *PlatformOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&platformopenshiftiov1alpha1.PlatformOperator{}).
 		Watches(&source.Kind{Type: &operatorsv1alpha1.CatalogSource{}}, handler.EnqueueRequestsFromMapFunc(requeuePlatformOperators(mgr.GetClient()))).
-		// TODO: Only apply for PlatformOperators related to a BundleInstance's OwnerReference
+		Watches(&source.Kind{Type: &rukpakv1alpha1.BundleInstance{}}, handler.EnqueueRequestsFromMapFunc(requeueBundleInstance(mgr.GetClient()))).
 		Complete(r)
 }
 
@@ -133,7 +133,6 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	// TODO: figure out what's the most appropriate field to parse by semver range. CsvName maybe if that's constantly present?
 	// TODO: what happens when the bundle failed?
-	// TODO: watch the bundle resource?
 	if err := r.ensureBundleInstance(ctx, po, latestBundle); err != nil {
 		log.Error(err, "failed to generate the bundle resource")
 		return ctrl.Result{}, err
@@ -174,7 +173,11 @@ func buildBundleInstance(name, image string) *rukpakv1alpha1.BundleInstanceSpec 
 					Type: rukpakv1alpha1.SourceTypeImage,
 					Image: &rukpakv1alpha1.ImageSource{
 						Ref: image,
-					}}}}}
+					},
+				},
+			},
+		},
+	}
 }
 
 func requeuePlatformOperators(cl client.Client) handler.MapFunc {
@@ -191,6 +194,29 @@ func requeuePlatformOperators(cl client.Client) handler.MapFunc {
 					Name: po.GetName(),
 				},
 			})
+		}
+		return requests
+	}
+}
+
+func requeueBundleInstance(c client.Client) handler.MapFunc {
+	return func(obj client.Object) []reconcile.Request {
+		bi := obj.(*rukpakv1alpha1.BundleInstance)
+
+		poList := &platformopenshiftiov1alpha1.PlatformOperatorList{}
+		if err := c.List(context.Background(), poList); err != nil {
+			return nil
+		}
+
+		var requests []reconcile.Request
+		for _, po := range poList.Items {
+			po := po
+
+			for _, ref := range bi.GetOwnerReferences() {
+				if ref.Name == po.GetName() {
+					requests = append(requests, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(&po)})
+				}
+			}
 		}
 		return requests
 	}
