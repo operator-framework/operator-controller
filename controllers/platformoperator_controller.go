@@ -117,7 +117,7 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}()
 
 	u.UpdateStatus(
-		updater.SetPhase(platformopenshiftiov1alpha1.PhaseFailing),
+		updater.SetPhase(platformopenshiftiov1alpha1.PhaseInstalling),
 		updater.EnsureCondition(metav1.Condition{
 			Type:    platformopenshiftiov1alpha1.TypeInstalled,
 			Status:  metav1.ConditionUnknown,
@@ -126,9 +126,9 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}),
 	)
 
-	rc, err := handleCatalogConnection(catalogSourceAddress)
+	rc, err := newRegistryClient(catalogSourceAddress)
 	if err != nil {
-		log.Error(err, "failed to connect to the requisite catalog")
+		log.Error(err, "failed to connect to the requisite catalog", "address", catalogSourceAddress)
 		u.UpdateStatus(
 			updater.SetPhase(platformopenshiftiov1alpha1.PhaseFailing),
 			updater.EnsureCondition(metav1.Condition{
@@ -150,7 +150,7 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			updater.EnsureCondition(metav1.Condition{
 				Type:    platformopenshiftiov1alpha1.TypeInstalled,
 				Status:  metav1.ConditionFalse,
-				Reason:  platformopenshiftiov1alpha1.ReasonCatalogUnstable,
+				Reason:  platformopenshiftiov1alpha1.ReasonCatalogBundleQueryFailed,
 				Message: err.Error(),
 			}),
 		)
@@ -201,7 +201,7 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	u.UpdateStatus(
-		updater.SetPhase(platformopenshiftiov1alpha1.PhaseFailing),
+		updater.SetPhase(platformopenshiftiov1alpha1.PhaseInstalled),
 		updater.EnsureCondition(metav1.Condition{
 			Type:    platformopenshiftiov1alpha1.TypeInstalled,
 			Status:  metav1.ConditionTrue,
@@ -228,9 +228,9 @@ func (r *PlatformOperatorReconciler) ensureBundleInstance(ctx context.Context, p
 	return err
 }
 
-// handleCatalogConnection takes a catalogSourceService and returns a registryClient.Client
+// newRegistryClient takes a catalogSource address and returns a registryClient.Client
 // if the catalog is reachable
-func handleCatalogConnection(address string) (*registryClient.Client, error) {
+func newRegistryClient(address string) (*registryClient.Client, error) {
 	rc, err := registryClient.NewClient(address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create registry client from %s catalog source: %v", address, err)

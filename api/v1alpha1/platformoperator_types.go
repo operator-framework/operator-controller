@@ -23,13 +23,13 @@ import (
 const (
 	TypeInstalled = "Installed"
 
-	ReasonInstalling           = "Installing"
-	ReasonInstallSuccessful    = "InstallSuccessful"
-	ReasonBundleInstanceFailed = "BundleInstanceFailed"
-	ReasonCatalogUnreachable   = "CatalogUnreachable"
-	ReasonCatalogUnstable      = "CatalogUnstable"
-	ReasonCatalogNotFound      = "CatalogNotFound"
-	ReasonNoValidBundles       = "NoValidBundles"
+	ReasonInstalling               = "Installing"
+	ReasonInstallSuccessful        = "InstallSuccessful"
+	ReasonBundleInstanceFailed     = "BundleInstanceFailed"
+	ReasonCatalogUnreachable       = "CatalogUnreachable"
+	ReasonCatalogBundleQueryFailed = "CatalogBundleQueryFailed"
+	ReasonCatalogNotFound          = "CatalogNotFound"
+	ReasonNoValidBundles           = "NoValidBundles"
 
 	PhaseInstalling = "Installing"
 	PhaseFailing    = "Failing"
