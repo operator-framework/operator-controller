@@ -126,7 +126,7 @@ ENVTEST = $(shell pwd)/bin/setup-envtest
 envtest: ## Download envtest-setup locally if necessary.
 	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
 
-RUKPAK_VERSION=v0.3.0
+RUKPAK_VERSION=v0.4.0
 CERT_MGR_VERSION=v1.7.1
 .PHONY: rukpak
 rukpak:
