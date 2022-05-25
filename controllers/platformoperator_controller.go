@@ -18,65 +18,28 @@ package controllers
 
 import (
 	"context"
-	"fmt"
-	"time"
 
-	"github.com/blang/semver/v4"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-registry/pkg/api"
-	registryClient "github.com/operator-framework/operator-registry/pkg/client"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logr "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	platformopenshiftiov1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
+	"github.com/timflannagan/platform-operators/internal/applier"
+	"github.com/timflannagan/platform-operators/internal/sourcer"
+	"github.com/timflannagan/platform-operators/internal/util"
 )
-
-const channelName = "4.12"
 
 // PlatformOperatorReconciler reconciles a PlatformOperator object
 type PlatformOperatorReconciler struct {
 	client.Client
-	Scheme         *runtime.Scheme
-	RegistryClient registryClient.Interface
-}
-
-// SetupWithManager sets up the controller with the Manager.
-func (r *PlatformOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&platformopenshiftiov1alpha1.PlatformOperator{}).
-		Watches(&source.Kind{Type: &operatorsv1alpha1.CatalogSource{}}, handler.EnqueueRequestsFromMapFunc(requeuePlatformOperators(mgr.GetClient()))).
-		Watches(&source.Kind{Type: &rukpakv1alpha1.BundleInstance{}}, handler.EnqueueRequestsFromMapFunc(requeueBundleInstance(mgr.GetClient()))).
-		Complete(r)
-}
-
-type candidateBundles []*api.Bundle
-
-func (cb candidateBundles) latest() (*api.Bundle, error) {
-	var (
-		highestSemver semver.Version
-		latestBundle  *api.Bundle
-	)
-	for _, bundle := range cb {
-		currVer, err := semver.Parse(bundle.Version)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse the bundle %s semver: %v", bundle.CsvJson, err)
-		}
-		if currVer.Compare(highestSemver) == 1 {
-			highestSemver = currVer
-			latestBundle = bundle
-		}
-	}
-
-	return latestBundle, nil
+	Sourcer sourcer.Sourcer
+	Applier applier.Applier
+	Scheme  *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=platform.openshift.io,resources=platformoperators,verbs=get;list;watch;create;update;patch;delete
@@ -96,128 +59,32 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	log.Info("reconciling request", "req", req.NamespacedName)
 	defer log.Info("finished reconciling request", "req", req.NamespacedName)
 
+	// TODO: flesh out status condition management
 	po := &platformopenshiftiov1alpha1.PlatformOperator{}
 	if err := r.Get(ctx, req.NamespacedName, po); err != nil {
-		log.Error(err, "failed to find the platform operator")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
-	log.Info("listing bundles from context")
-	it, err := r.RegistryClient.ListBundles(ctx)
+	desiredBundle, err := r.Sourcer.Source(ctx, po)
 	if err != nil {
-		log.Error(err, "failed to list bundles in the platform operators catalog source")
+		log.Error(err, "failed to source content for platform operator")
+		return util.ShortRequeue, err
+	}
+	if err := r.Applier.Apply(ctx, po, desiredBundle); err != nil {
+		log.Error(err, "failed to apply the desired bundle")
 		return ctrl.Result{}, err
 	}
-
-	log.Info("filtering out bundles into candidates", "package name", po.Spec.PackageName, "channel name", channelName)
-	var cb candidateBundles
-	// TODO: Should build a cache for efficiency
-	for b := it.Next(); b != nil; b = it.Next() {
-		if b.PackageName != po.Spec.PackageName || b.ChannelName != channelName {
-			continue
-		}
-		cb = append(cb, b)
-	}
-	if len(cb) == 0 {
-		log.Info("failed to find any candidate bundles")
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
-	}
-
-	latestBundle, err := cb.latest()
-	if err != nil || latestBundle == nil {
-		log.Info("failed to find the bundle with the highest semver")
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, err
-	}
-
-	log.Info("candidate bundle", "bundle", latestBundle.CsvName, "version", latestBundle.Version)
-
-	// TODO: figure out what's the most appropriate field to parse by semver range. CsvName maybe if that's constantly present?
-	// TODO: what happens when the bundle failed?
-	if err := r.ensureBundleInstance(ctx, po, latestBundle); err != nil {
-		log.Error(err, "failed to generate the bundle resource")
-		return ctrl.Result{}, err
-	}
-
 	if err := r.Status().Update(ctx, po); err != nil {
 		log.Error(err, "failed to update the platform operator status")
 		return ctrl.Result{}, err
 	}
-
 	return ctrl.Result{}, nil
 }
 
-func (r *PlatformOperatorReconciler) ensureBundleInstance(ctx context.Context, po *platformopenshiftiov1alpha1.PlatformOperator, bundle *api.Bundle) error {
-	bi := &rukpakv1alpha1.BundleInstance{}
-	bi.SetName(po.GetName())
-	controllerRef := metav1.NewControllerRef(po, po.GroupVersionKind())
-
-	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, bi, func() error {
-		bi.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
-		bi.Spec = *buildBundleInstance(bi.GetName(), bundle.BundlePath)
-		return nil
-	})
-	return err
-}
-
-// createBundleInstance is responsible for taking a name and image to create an embedded BundleInstance
-func buildBundleInstance(name, image string) *rukpakv1alpha1.BundleInstanceSpec {
-	return &rukpakv1alpha1.BundleInstanceSpec{
-		ProvisionerClassName: "core.rukpak.io/plain",
-		Template: &rukpakv1alpha1.BundleTemplate{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels: map[string]string{"app": name},
-			},
-			Spec: rukpakv1alpha1.BundleSpec{
-				ProvisionerClassName: "core.rukpak.io/plain",
-				Source: rukpakv1alpha1.BundleSource{
-					Type: rukpakv1alpha1.SourceTypeImage,
-					Image: &rukpakv1alpha1.ImageSource{
-						Ref: image,
-					},
-				},
-			},
-		},
-	}
-}
-
-func requeuePlatformOperators(cl client.Client) handler.MapFunc {
-	return func(object client.Object) []reconcile.Request {
-		poList := &platformopenshiftiov1alpha1.PlatformOperatorList{}
-		if err := cl.List(context.Background(), poList); err != nil {
-			return nil
-		}
-
-		var requests []reconcile.Request
-		for _, po := range poList.Items {
-			requests = append(requests, reconcile.Request{
-				NamespacedName: types.NamespacedName{
-					Name: po.GetName(),
-				},
-			})
-		}
-		return requests
-	}
-}
-
-func requeueBundleInstance(c client.Client) handler.MapFunc {
-	return func(obj client.Object) []reconcile.Request {
-		bi := obj.(*rukpakv1alpha1.BundleInstance)
-
-		poList := &platformopenshiftiov1alpha1.PlatformOperatorList{}
-		if err := c.List(context.Background(), poList); err != nil {
-			return nil
-		}
-
-		var requests []reconcile.Request
-		for _, po := range poList.Items {
-			po := po
-
-			for _, ref := range bi.GetOwnerReferences() {
-				if ref.Name == po.GetName() {
-					requests = append(requests, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(&po)})
-				}
-			}
-		}
-		return requests
-	}
+// SetupWithManager sets up the controller with the Manager.
+func (r *PlatformOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&platformopenshiftiov1alpha1.PlatformOperator{}).
+		Watches(&source.Kind{Type: &operatorsv1alpha1.CatalogSource{}}, handler.EnqueueRequestsFromMapFunc(util.RequeuePlatformOperators(mgr.GetClient()))).
+		Watches(&source.Kind{Type: &rukpakv1alpha1.BundleInstance{}}, handler.EnqueueRequestsFromMapFunc(util.RequeueBundleInstance(mgr.GetClient()))).
+		Complete(r)
 }

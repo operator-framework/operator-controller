@@ -38,6 +38,8 @@ import (
 
 	platformopenshiftiov1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 	"github.com/timflannagan/platform-operators/controllers"
+	"github.com/timflannagan/platform-operators/internal/applier"
+	"github.com/timflannagan/platform-operators/internal/sourcer"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -93,20 +95,21 @@ func main() {
 
 	// Create a registryClient by referencing the requisite catalogSource's service and then
 	// check that it is healthy
-	c, err := registryClient.NewClient(catalogSourceService)
+	c, err := registryClient.NewClient("localhost:50051")
 	if err != nil {
-		setupLog.Error(err, "failed to create registry client from "+catalogSourceName+" catalog source")
+		setupLog.Error(err, "failed to create registry client from catalog source", "service", catalogSourceService)
 		os.Exit(1)
 	}
 	if healthy, err := c.HealthCheck(context.Background(), catalogSourceReconnectTime); !healthy || err != nil {
-		setupLog.Error(err, "failed to connect to "+catalogSourceName+" catalog source via the registry client")
+		setupLog.Error(err, "failed to connect to catalog source via the registry client", "name", catalogSourceName)
 		os.Exit(1)
 	}
 
 	if err = (&controllers.PlatformOperatorReconciler{
-		Client:         mgr.GetClient(),
-		Scheme:         mgr.GetScheme(),
-		RegistryClient: c,
+		Client:  mgr.GetClient(),
+		Scheme:  mgr.GetScheme(),
+		Sourcer: sourcer.NewCatalogSourceHandler(c),
+		Applier: applier.NewBundleInstanceHandler(mgr.GetClient()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PlatformOperator")
 		os.Exit(1)
