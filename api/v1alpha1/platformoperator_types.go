@@ -22,9 +22,11 @@ import (
 
 // PlatformOperatorSpec defines the desired state of PlatformOperator
 type PlatformOperatorSpec struct {
-	// PackageName specifies the name of the package to be installed from the provided CatalogSource.
-	// PackageName is required and must equal the exact name of the package in the catalog.
-	PackageName string `json:"packageName"`
+	// Package specifies the name of the package to be installed from the provided CatalogSource.
+	// Package is required and must equal the exact name of the package in the catalog.
+	Package string `json:"package"`
+	// Channel specifies the current channel that's being used.
+	Channel string `json:"channel"`
 }
 
 // PlatformOperatorStatus defines the observed state of PlatformOperator
