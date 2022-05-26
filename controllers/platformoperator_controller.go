@@ -37,7 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	platformopenshiftiov1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
+	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 
 const channelName = "4.12"
@@ -52,7 +52,7 @@ type PlatformOperatorReconciler struct {
 // SetupWithManager sets up the controller with the Manager.
 func (r *PlatformOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&platformopenshiftiov1alpha1.PlatformOperator{}).
+		For(&platformv1alpha1.PlatformOperator{}).
 		Watches(&source.Kind{Type: &operatorsv1alpha1.CatalogSource{}}, handler.EnqueueRequestsFromMapFunc(requeuePlatformOperators(mgr.GetClient()))).
 		Watches(&source.Kind{Type: &rukpakv1alpha1.BundleInstance{}}, handler.EnqueueRequestsFromMapFunc(requeueBundleInstance(mgr.GetClient()))).
 		Complete(r)
@@ -68,7 +68,7 @@ func (cb candidateBundles) latest() (*api.Bundle, error) {
 	for _, bundle := range cb {
 		currVer, err := semver.Parse(bundle.Version)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse the bundle %s semver: %v", bundle.CsvJson, err)
+			return nil, fmt.Errorf("failed to parse the bundle %s semver: %w", bundle.CsvJson, err)
 		}
 		if currVer.Compare(highestSemver) == 1 {
 			highestSemver = currVer
@@ -96,7 +96,7 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	log.Info("reconciling request", "req", req.NamespacedName)
 	defer log.Info("finished reconciling request", "req", req.NamespacedName)
 
-	po := &platformopenshiftiov1alpha1.PlatformOperator{}
+	po := &platformv1alpha1.PlatformOperator{}
 	if err := r.Get(ctx, req.NamespacedName, po); err != nil {
 		log.Error(err, "failed to find the platform operator")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -146,7 +146,7 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	return ctrl.Result{}, nil
 }
 
-func (r *PlatformOperatorReconciler) ensureBundleInstance(ctx context.Context, po *platformopenshiftiov1alpha1.PlatformOperator, bundle *api.Bundle) error {
+func (r *PlatformOperatorReconciler) ensureBundleInstance(ctx context.Context, po *platformv1alpha1.PlatformOperator, bundle *api.Bundle) error {
 	bi := &rukpakv1alpha1.BundleInstance{}
 	bi.SetName(po.GetName())
 	controllerRef := metav1.NewControllerRef(po, po.GroupVersionKind())
@@ -182,7 +182,7 @@ func buildBundleInstance(name, image string) *rukpakv1alpha1.BundleInstanceSpec 
 
 func requeuePlatformOperators(cl client.Client) handler.MapFunc {
 	return func(object client.Object) []reconcile.Request {
-		poList := &platformopenshiftiov1alpha1.PlatformOperatorList{}
+		poList := &platformv1alpha1.PlatformOperatorList{}
 		if err := cl.List(context.Background(), poList); err != nil {
 			return nil
 		}
@@ -203,7 +203,7 @@ func requeueBundleInstance(c client.Client) handler.MapFunc {
 	return func(obj client.Object) []reconcile.Request {
 		bi := obj.(*rukpakv1alpha1.BundleInstance)
 
-		poList := &platformopenshiftiov1alpha1.PlatformOperatorList{}
+		poList := &platformv1alpha1.PlatformOperatorList{}
 		if err := c.List(context.Background(), poList); err != nil {
 			return nil
 		}
