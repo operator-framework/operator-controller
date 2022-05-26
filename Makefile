@@ -102,7 +102,7 @@ uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified i
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy
-deploy: build-container kind-load install rukpak ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: build-container kind-load install rukpak olm ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
@@ -136,6 +136,7 @@ KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/k
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
 $(KUSTOMIZE): $(LOCALBIN)
+	rm -f $(KUSTOMIZE)
 	curl -s $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN)
 
 .PHONY: controller-gen
@@ -166,3 +167,9 @@ rukpak:
 	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
 	kubectl apply -f https://github.com/operator-framework/rukpak/releases/download/$(RUKPAK_VERSION)/rukpak.yaml
 
+OLM_VERSION ?= v0.21.2
+.PHONY: olm
+olm:
+	# TODO(tflannag): Deploy a BundleInstance using the OLM plain bundle image
+	kubectl apply --server-side=true -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/$(OLM_VERSION)/crds.yaml
+	kubectl apply --server-side=true -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/$(OLM_VERSION)/olm.yaml
