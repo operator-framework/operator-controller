@@ -17,17 +17,14 @@ limitations under the License.
 package main
 
 import (
-	"context"
 	"flag"
 	"os"
-	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	registryClient "github.com/operator-framework/operator-registry/pkg/client"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -41,16 +38,9 @@ import (
 	//+kubebuilder:scaffold:imports
 )
 
-const (
-	catalogSourceName          = "platform-operators-catalog-source"
-	catalogSourceNamespace     = "platform-operators-system"
-	catalogSourceReconnectTime = time.Second * 5
-)
-
 var (
-	scheme               = runtime.NewScheme()
-	setupLog             = ctrl.Log.WithName("setup")
-	catalogSourceService = catalogSourceName + "." + catalogSourceNamespace + ".svc:50051"
+	scheme   = runtime.NewScheme()
+	setupLog = ctrl.Log.WithName("setup")
 )
 
 func init() {
@@ -91,22 +81,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create a registryClient by referencing the requisite catalogSource's service and then
-	// check that it is healthy
-	c, err := registryClient.NewClient(catalogSourceService)
-	if err != nil {
-		setupLog.Error(err, "failed to create registry client from "+catalogSourceName+" catalog source")
-		os.Exit(1)
-	}
-	if healthy, err := c.HealthCheck(context.Background(), catalogSourceReconnectTime); !healthy || err != nil {
-		setupLog.Error(err, "failed to connect to "+catalogSourceName+" catalog source via the registry client")
-		os.Exit(1)
-	}
-
 	if err = (&controllers.PlatformOperatorReconciler{
-		Client:         mgr.GetClient(),
-		Scheme:         mgr.GetScheme(),
-		RegistryClient: c,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PlatformOperator")
 		os.Exit(1)

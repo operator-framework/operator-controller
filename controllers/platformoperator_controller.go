@@ -40,7 +40,10 @@ import (
 	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 
-const channelName = "4.12"
+const (
+	channelName        = "4.12"
+	plainProvisionerID = "core.rukpak.io/plain"
+)
 
 // PlatformOperatorReconciler reconciles a PlatformOperator object
 type PlatformOperatorReconciler struct {
@@ -102,8 +105,27 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	css := &operatorsv1alpha1.CatalogSourceList{}
+	if err := r.List(ctx, css); err != nil {
+		log.Error(err, "failed to list the catalogsource resources in the cluster")
+		return ctrl.Result{}, err
+	}
+	if len(css.Items) == 0 {
+		log.Info("unable to query catalog content as no catalogsources are available")
+		return ctrl.Result{}, nil
+	}
+	// TODO(tflannag): properly handle multiple catalogsources in a cluster
+	cs := css.Items[0]
+
+	log.Info("creating registry client from catalogsource")
+	rc, err := registryClient.NewClient(cs.Spec.Address)
+	if err != nil {
+		log.Error(err, "failed to create registry client from catalogsource", "name", cs.GetName(), "namespace", cs.GetNamespace(), "address", cs.Spec.Address)
+		return ctrl.Result{}, err
+	}
+
 	log.Info("listing bundles from context")
-	it, err := r.RegistryClient.ListBundles(ctx)
+	it, err := rc.ListBundles(ctx)
 	if err != nil {
 		log.Error(err, "failed to list bundles in the platform operators catalog source")
 		return ctrl.Result{}, err
@@ -153,22 +175,19 @@ func (r *PlatformOperatorReconciler) ensureBundleInstance(ctx context.Context, p
 
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, bi, func() error {
 		bi.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
-		bi.Spec = *buildBundleInstance(bi.GetName(), bundle.BundlePath)
+		bi.Spec = *buildBundleInstance(bundle.BundlePath)
 		return nil
 	})
 	return err
 }
 
 // createBundleInstance is responsible for taking a name and image to create an embedded BundleInstance
-func buildBundleInstance(name, image string) *rukpakv1alpha1.BundleInstanceSpec {
+func buildBundleInstance(image string) *rukpakv1alpha1.BundleInstanceSpec {
 	return &rukpakv1alpha1.BundleInstanceSpec{
-		ProvisionerClassName: "core.rukpak.io/plain",
+		ProvisionerClassName: plainProvisionerID,
 		Template: &rukpakv1alpha1.BundleTemplate{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels: map[string]string{"app": name},
-			},
 			Spec: rukpakv1alpha1.BundleSpec{
-				ProvisionerClassName: "core.rukpak.io/plain",
+				ProvisionerClassName: plainProvisionerID,
 				Source: rukpakv1alpha1.BundleSource{
 					Type: rukpakv1alpha1.SourceTypeImage,
 					Image: &rukpakv1alpha1.ImageSource{
