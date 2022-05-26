@@ -3,6 +3,8 @@
 IMG ?= controller:latest
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.22
+BIN_DIR := bin
+CONTAINER_RUNTIME ?= docker
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -69,20 +71,12 @@ e2e: generate ginkgo ## Run e2e tests
 ##@ Build
 
 .PHONY: build
-build: generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
+build: ## Build manager binary.
+	CGO_ENABLED=0 go build -o bin/manager main.go
 
-.PHONY: run
-run: generate fmt vet ## Run a controller from your host.
-	go run ./main.go
-
-.PHONY: docker-build
-docker-build: ## Build docker image with the manager.
-	docker build -t ${IMG} .
-
-.PHONY: docker-push
-docker-push: ## Push docker image with the manager.
-	docker push ${IMG}
+.PHONY: build-container
+build-container: build ## Builds provisioner container image locally
+	$(CONTAINER_RUNTIME) build -f Dockerfile -t $(IMG) $(BIN_DIR)
 
 ##@ Deployment
 
@@ -91,12 +85,12 @@ ifndef ignore-not-found
 endif
 
 .PHONY: demo
-# NOTE: This will fail as the currently available version of RukPak (v0.3.0) does not have
+# NOTE: This will fail as the currently available version of RukPak (v0.4.0) does not have
 #       the requisite code.
 demo: deploy install-samples
 
 .PHONY: kind-load
-kind-load: docker-build
+kind-load: build-container
 	kind load docker-image $(IMG)
 
 .PHONY: install
@@ -108,7 +102,7 @@ uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified i
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy
-deploy: generate kustomize kind-load install rukpak ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: build-container kind-load install rukpak ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
