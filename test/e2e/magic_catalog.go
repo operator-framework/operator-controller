@@ -6,7 +6,7 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	k8serror "k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -115,13 +115,13 @@ func (c *magicCatalog) UpdateCatalog(ctx context.Context, provider FileBasedCata
 			Name:      c.podName,
 			Namespace: c.namespace,
 		}, pod)
-		if k8serror.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return true, nil
 		}
 		return false, err
 	})
 	if err != nil {
-		return fmt.Errorf("failed to successfully update the catalog deployment: %v", err)
+		return fmt.Errorf("failed to successfully update the catalog deployment: %w", err)
 	}
 
 	c.fileBasedCatalog = provider
@@ -157,7 +157,7 @@ func (c *magicCatalog) undeployCatalog(ctx context.Context, resources []k8scontr
 		err := c.kubeClient.Delete(ctx, res)
 
 		// ignore not found errors
-		if err != nil && !k8serror.IsNotFound(err) {
+		if err != nil && !apierrors.IsNotFound(err) {
 			if errors == nil {
 				errors = make([]error, 0)
 			}
@@ -170,7 +170,7 @@ func (c *magicCatalog) undeployCatalog(ctx context.Context, resources []k8scontr
 func (c *magicCatalog) cleanUpAfter(ctx context.Context, err error) error {
 	cleanupErr := c.UndeployCatalog(ctx)
 	if cleanupErr != nil {
-		return fmt.Errorf("the following cleanup errors occurred: '%s' after an error deploying the configmap: '%s' ", cleanupErr, err)
+		return fmt.Errorf("the following cleanup errors occurred: '%s' after an error deploying the configmap: '%w' ", cleanupErr, err)
 	}
 	return err
 }
@@ -238,7 +238,6 @@ func (c *magicCatalog) makeCatalogSource() *operatorsv1alpha1.CatalogSource {
 }
 
 func (c *magicCatalog) makeCatalogSourcePod() *corev1.Pod {
-
 	const (
 		image                  = "quay.io/operator-framework/upstream-opm-builder"
 		readinessDelay  int32  = 5
