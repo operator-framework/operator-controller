@@ -34,6 +34,15 @@ linters-settings:
       alias: rukpakv1alpha1
     - pkg: github.com/timflannagan/platform-operators/api/v1alpha1
       alias: platformv1alpha1
+  revive:
+    rules:
+    - name: dot-imports
+      severity: warning
+      disabled: true
+  stylecheck:
+    dot-import-whitelist:
+      - github.com/onsi/gomega
+      - github.com/onsi/ginkgo
   goimports:
     local-prefixes: github.com/timflannagan/platform-operators
 
