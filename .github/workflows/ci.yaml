@@ -13,7 +13,7 @@ jobs:
           go-version: '~1.18'
 
       - name: Run verification checks
-        run: go mod tidy && git diff --exit-code
+        run: go mod tidy && make generate && git diff --exit-code
   lint:
     runs-on: ubuntu-latest
     steps:
