@@ -1,4 +1,4 @@
-FROM gcr.io/distroless/static:debug
+FROM gcr.io/distroless/static:debug-nonroot
 WORKDIR /
 
 COPY manager manager
