@@ -60,9 +60,10 @@ lint: ## Run golangci-lint linter checks.
 lint: golangci-lint
 	$(GOLANGCI_LINT) run
 
+UNIT_TEST_DIRS=$(shell go list ./... | grep -v /test/)
 .PHONY: unit
 unit: generate fmt vet envtest ## Run unit tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -count=1 -short $(UNIT_TEST_DIRS)
 
 .PHONY: e2e
 e2e: generate ginkgo ## Run e2e tests
