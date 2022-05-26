@@ -12,7 +12,7 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
-# This is a requirement for 'setup-envtest.sh' in the test target.
+# This is a requirement for 'setup-envtest.sh' in the unit target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
@@ -53,9 +53,13 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-.PHONY: test
-test: generate fmt vet envtest ## Run tests.
+.PHONY: unit
+unit: generate fmt vet envtest ## Run unit tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+
+.PHONY: e2e
+e2e: generate ## Run e2e tests
+	ginkgo -trace -progress test/e2e
 
 ##@ Build
 
@@ -68,7 +72,7 @@ run: generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build
-docker-build: test ## Build docker image with the manager.
+docker-build: ## Build docker image with the manager.
 	docker build -t ${IMG} .
 
 .PHONY: docker-push
@@ -82,9 +86,9 @@ ifndef ignore-not-found
 endif
 
 .PHONY: demo
-# NOTE: This will fail as the currently available version of RukPak (v0.3.0) does not have 
+# NOTE: This will fail as the currently available version of RukPak (v0.3.0) does not have
 #       the requisite code.
-demo: deploy install-samples 
+demo: deploy install-samples
 
 .PHONY: kind-load
 kind-load: docker-build
