@@ -20,8 +20,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Cache build and module paths
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Run golangci linting checks
-        uses: golangci/golangci-lint-action@v3
+        run: make lint
   e2e:
     runs-on: ubuntu-latest
     steps:
