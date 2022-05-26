@@ -1,0 +1,24 @@
+name: sanity
+
+on:
+  workflow_dispatch:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '~1.18'
+
+      - name: Run verification checks
+        run: go mod tidy && git diff --exit-code
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run golangci linting checks
+        uses: golangci/golangci-lint-action@v3
