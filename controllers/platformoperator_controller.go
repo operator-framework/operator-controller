@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/blang/semver/v4"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -29,6 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	utilerror "k8s.io/apimachinery/pkg/util/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -102,7 +102,6 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	po := &platformv1alpha1.PlatformOperator{}
 	if err := r.Get(ctx, req.NamespacedName, po); err != nil {
-		log.Error(err, "failed to find the platform operator")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
@@ -115,43 +114,62 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		log.Info("unable to query catalog content as no catalogsources are available")
 		return ctrl.Result{}, nil
 	}
-	// TODO(tflannag): properly handle multiple catalogsources in a cluster
-	cs := css.Items[0]
 
-	log.Info("creating registry client from catalogsource")
-	rc, err := registryClient.NewClient(cs.Spec.Address)
-	if err != nil {
-		log.Error(err, "failed to create registry client from catalogsource", "name", cs.GetName(), "namespace", cs.GetNamespace(), "address", cs.Spec.Address)
-		return ctrl.Result{}, err
-	}
-
-	log.Info("listing bundles from context")
-	it, err := rc.ListBundles(ctx)
-	if err != nil {
-		log.Error(err, "failed to list bundles in the platform operators catalog source")
-		return ctrl.Result{}, err
-	}
-
-	log.Info("filtering out bundles into candidates", "package name", po.Spec.PackageName, "channel name", channelName)
-	var cb candidateBundles
-	// TODO: Should build a cache for efficiency
-	for b := it.Next(); b != nil; b = it.Next() {
-		if b.PackageName != po.Spec.PackageName || b.ChannelName != channelName {
+	readySources := make([]operatorsv1alpha1.CatalogSource, 0, len(css.Items))
+	for _, cs := range css.Items {
+		if cs.Status.GRPCConnectionState == nil {
 			continue
 		}
-		cb = append(cb, b)
+		if cs.Status.GRPCConnectionState.LastObservedState != "READY" {
+			continue
+		}
+		if cs.Status.GRPCConnectionState.Address == "" {
+			continue
+		}
+		readySources = append(readySources, cs)
+	}
+	log.Info("filtering out bundles into candidates", "package name", po.Spec.PackageName, "channel name", channelName)
+	var (
+		errors []error
+		cb     candidateBundles
+	)
+	// TODO: Should build a cache for efficiency
+	for _, cs := range readySources {
+		// Note(tflannag): Need to account for grpc-based CatalogSource(s) that
+		// specify a spec.Address or a spec.Image, so ensure this field exists, and
+		// it's not empty before creating a registry client.
+		rc, err := registryClient.NewClient(cs.Status.GRPCConnectionState.Address)
+		if err != nil {
+			errors = append(errors, fmt.Errorf("failed to register client from the %s/%s grpc connection: %w", cs.GetName(), cs.GetNamespace(), err))
+			continue
+		}
+		it, err := rc.ListBundles(ctx)
+		if err != nil {
+			errors = append(errors, fmt.Errorf("failed to list bundles from the %s/%s catalog: %w", cs.GetName(), cs.GetNamespace(), err))
+			continue
+		}
+		for b := it.Next(); b != nil; b = it.Next() {
+			if b.PackageName != po.Spec.PackageName || b.ChannelName != channelName {
+				continue
+			}
+			cb = append(cb, b)
+		}
+	}
+	if len(errors) != 0 {
+		agg := utilerror.NewAggregate(errors)
+		log.Error(agg, "failed to build catalog snapshot")
+		return ctrl.Result{}, agg
 	}
 	if len(cb) == 0 {
 		log.Info("failed to find any candidate bundles")
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		return ctrl.Result{}, nil
 	}
 
 	latestBundle, err := cb.latest()
 	if err != nil || latestBundle == nil {
 		log.Info("failed to find the bundle with the highest semver")
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, err
+		return ctrl.Result{}, err
 	}
-
 	log.Info("candidate bundle", "bundle", latestBundle.CsvName, "version", latestBundle.Version)
 
 	// TODO: figure out what's the most appropriate field to parse by semver range. CsvName maybe if that's constantly present?
