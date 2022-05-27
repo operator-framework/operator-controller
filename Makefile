@@ -102,10 +102,14 @@ install: generate kustomize ## Install CRDs into the K8s cluster specified in ~/
 uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
-.PHONY: deploy
-deploy: build-container kind-load install rukpak olm ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+
+.PHONY: run
+run: build-container kind-load install
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
+
+.PHONY: deploy
+deploy: build-container kind-load run rukpak olm ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
