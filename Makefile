@@ -160,13 +160,13 @@ golangci-lint: $(GOLANGCI_LINT)
 $(GOLANGCI_LINT): $(LOCALBIN) ## Download golangci-lint locally if necessary.
 	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
 
-RUKPAK_VERSION=v0.4.0
+RUKPAK_VERSION=v0.5.0
 CERT_MGR_VERSION=v1.7.1
 .PHONY: rukpak
 rukpak:
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MGR_VERSION)/cert-manager.yaml
 	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
-	kubectl apply -f https://github.com/operator-framework/rukpak/releases/download/$(RUKPAK_VERSION)/rukpak.yaml
+	kubectl apply -f https://github.com/timflannagan/rukpak/releases/download/$(RUKPAK_VERSION)/rukpak.yaml
 
 OLM_VERSION ?= v0.21.2
 .PHONY: olm
