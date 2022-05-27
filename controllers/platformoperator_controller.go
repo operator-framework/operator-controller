@@ -41,8 +41,9 @@ import (
 )
 
 const (
-	channelName        = "4.12"
-	plainProvisionerID = "core.rukpak.io/plain"
+	channelName           = "4.12"
+	plainProvisionerID    = "core.rukpak.io/plain"
+	registryProvisionerID = "core.rukpak.io/registry"
 )
 
 // PlatformOperatorReconciler reconciles a PlatformOperator object
@@ -187,7 +188,7 @@ func buildBundleInstance(image string) *rukpakv1alpha1.BundleInstanceSpec {
 		ProvisionerClassName: plainProvisionerID,
 		Template: &rukpakv1alpha1.BundleTemplate{
 			Spec: rukpakv1alpha1.BundleSpec{
-				ProvisionerClassName: plainProvisionerID,
+				ProvisionerClassName: registryProvisionerID,
 				Source: rukpakv1alpha1.BundleSource{
 					Type: rukpakv1alpha1.SourceTypeImage,
 					Image: &rukpakv1alpha1.ImageSource{
