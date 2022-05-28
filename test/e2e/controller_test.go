@@ -41,7 +41,7 @@ var _ = Describe("platform operators controller", func() {
 			catalog MagicCatalog
 		)
 		BeforeEach(func() {
-			provider, err := NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.yaml"))
+			provider, err := NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.v0.1.0.yaml"))
 			Expect(err).To(BeNil())
 
 			catalog = NewMagicCatalog(c, ns.GetName(), "prometheus", provider)
@@ -49,6 +49,51 @@ var _ = Describe("platform operators controller", func() {
 		})
 		AfterEach(func() {
 			Expect(catalog.UndeployCatalog(ctx)).To(BeNil())
+		})
+		When("a platformoperator has an update available", func() {
+			var (
+				po *platformv1alpha1.PlatformOperator
+			)
+			BeforeEach(func() {
+				po = &platformv1alpha1.PlatformOperator{
+					ObjectMeta: metav1.ObjectMeta{
+						GenerateName: "prometheus-operator",
+					},
+					Spec: platformv1alpha1.PlatformOperatorSpec{
+						PackageName: "prometheus-operator",
+					},
+				}
+				Expect(c.Create(ctx, po)).To(BeNil())
+			})
+			AfterEach(func() {
+				Expect(c.Delete(ctx, po)).To(BeNil())
+			})
+			It("should initially select the v0.1.0 package", func() {
+				Eventually(func() bool {
+					bi := &rukpakv1alpha1.BundleInstance{}
+					if err := c.Get(ctx, types.NamespacedName{Name: po.GetName()}, bi); err != nil {
+						return false
+					}
+					return bi.Spec.Template.Spec.Source.Image.Ref == "quay.io/operatorhubio/prometheus:v0.47.0"
+				}).Should(BeTrue())
+			})
+			When("the catalog has been updated and a new olm.bundle version is available", func() {
+				BeforeEach(func() {
+					updatedProvider, err := NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.v0.2.0.yaml"))
+					Expect(err).To(BeNil())
+
+					Expect(catalog.UpdateCatalog(ctx, updatedProvider)).To(BeNil())
+				})
+				It("should result in the v0.2.0 package being installed", func() {
+					Eventually(func() bool {
+						bi := &rukpakv1alpha1.BundleInstance{}
+						if err := c.Get(ctx, types.NamespacedName{Name: po.GetName()}, bi); err != nil {
+							return false
+						}
+						return bi.Spec.Template.Spec.Source.Image.Ref == "quay.io/operatorhubio/prometheus:v0.47.0--20220413T184225"
+					}).Should(BeTrue())
+				})
+			})
 		})
 
 		When("a platformoperator has been created", func() {
@@ -90,7 +135,7 @@ var _ = Describe("platform operators controller", func() {
 					if err := c.Get(ctx, types.NamespacedName{Name: po.GetName()}, bi); err != nil {
 						return false
 					}
-					return bi.Spec.Template.Spec.Source.Image.Ref == "quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"
+					return bi.Spec.Template.Spec.Source.Image.Ref == "quay.io/operatorhubio/prometheus:v0.47.0"
 				}).Should(BeTrue())
 			})
 			It("should result in a successful installation", func() {
