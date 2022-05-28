@@ -12,7 +12,7 @@ entries:
 schema: olm.bundle
 name: prometheus-operator.v0.1.0
 package: prometheus-operator
-image: quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed
+image: quay.io/operatorhubio/prometheus:v0.47.0
 properties:
   - type: olm.package
     value:
