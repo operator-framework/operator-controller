@@ -1,0 +1,32 @@
+---
+schema: olm.package
+name: prometheus-operator
+defaultChannel: "4.12"
+---
+schema: olm.channel
+package: prometheus-operator
+name: "4.12"
+entries:
+  - name: prometheus-operator.v0.1.0
+  - name: prometheus-operator.v0.2.0
+    replaces: prometheus-operator.v0.1.0
+---
+schema: olm.bundle
+name: prometheus-operator.v0.1.0
+package: prometheus-operator
+image: quay.io/operatorhubio/prometheus:v0.47.0
+properties:
+  - type: olm.package
+    value:
+      packageName: prometheus-operator
+      version: 0.1.0
+---
+schema: olm.bundle
+name: prometheus-operator.v0.2.0
+package: prometheus-operator
+image: quay.io/operatorhubio/prometheus:v0.47.0--20220413T184225
+properties:
+  - type: olm.package
+    value:
+      packageName: prometheus-operator
+      version: 0.2.0
