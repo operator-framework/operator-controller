@@ -16,21 +16,6 @@ const (
 	channelName = "4.12"
 )
 
-type Bundle struct {
-	Version  string
-	Image    string
-	Replaces string
-	Skips    []string
-}
-
-func (b Bundle) String() string {
-	return fmt.Sprintf("Version: %s; Image: %s; Replaces %s", b.Version, b.Image, b.Replaces)
-}
-
-type Sourcer interface {
-	Source(context.Context, *platformv1alpha1.PlatformOperator) (*Bundle, error)
-}
-
 type catalogSource struct {
 	client.Client
 }
