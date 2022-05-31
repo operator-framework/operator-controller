@@ -73,7 +73,7 @@ e2e: generate ginkgo ## Run e2e tests
 
 .PHONY: build
 build: ## Build manager binary.
-	CGO_ENABLED=0 go build -o bin/manager main.go
+	CGO_ENABLED=0 go build -o bin/manager ./cmd/...
 
 .PHONY: build-container
 build-container: build ## Builds provisioner container image locally
