@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	"github.com/timflannagan/kubectl-catalog-plugin/pkg/catalog"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,17 +40,17 @@ var _ = Describe("platform operators controller", func() {
 	// already for 20/30s sometimes.
 	When("sourcing content from a single catalogsource", func() {
 		var (
-			catalog MagicCatalog
+			mc catalog.MagicCatalog
 		)
 		BeforeEach(func() {
-			provider, err := NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.v0.1.0.yaml"))
+			provider, err := catalog.NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.v0.1.0.yaml"))
 			Expect(err).To(BeNil())
 
-			catalog = NewMagicCatalog(c, ns.GetName(), "prometheus", provider)
-			Expect(catalog.DeployCatalog(ctx)).To(BeNil())
+			mc = catalog.NewMagicCatalog(c, ns.GetName(), "prometheus", provider)
+			Expect(mc.DeployCatalog(ctx)).To(BeNil())
 		})
 		AfterEach(func() {
-			Expect(catalog.UndeployCatalog(ctx)).To(BeNil())
+			Expect(mc.UndeployCatalog(ctx)).To(BeNil())
 		})
 		When("a platformoperator has an update available", func() {
 			var (
@@ -80,10 +81,10 @@ var _ = Describe("platform operators controller", func() {
 			})
 			When("the catalog has been updated and a new olm.bundle version is available", func() {
 				BeforeEach(func() {
-					updatedProvider, err := NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.v0.2.0.yaml"))
+					updatedProvider, err := catalog.NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.v0.2.0.yaml"))
 					Expect(err).To(BeNil())
 
-					Expect(catalog.UpdateCatalog(ctx, updatedProvider)).To(BeNil())
+					Expect(mc.UpdateCatalog(ctx, updatedProvider)).To(BeNil())
 				})
 				It("should result in the v0.2.0 package being installed", func() {
 					Eventually(func() bool {
