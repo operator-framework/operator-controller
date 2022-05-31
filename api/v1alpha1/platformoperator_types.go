@@ -34,7 +34,7 @@ type PlatformOperatorStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster
+//+kubebuilder:resource:scope=Cluster,shortName={"platform","platforms"}
 
 // PlatformOperator is the Schema for the platformoperators API
 type PlatformOperator struct {

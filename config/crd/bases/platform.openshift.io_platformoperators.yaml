@@ -12,6 +12,9 @@ spec:
     kind: PlatformOperator
     listKind: PlatformOperatorList
     plural: platformoperators
+    shortNames:
+    - platform
+    - platforms
     singular: platformoperator
   scope: Cluster
   versions:
