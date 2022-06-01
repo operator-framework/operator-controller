@@ -25,7 +25,13 @@ func byConnectionReadiness(cs operatorsv1alpha1.CatalogSource) bool {
 	if cs.Status.GRPCConnectionState == nil {
 		return false
 	}
+	if cs.Status.RegistryServiceStatus == nil {
+		return false
+	}
 	if cs.Status.GRPCConnectionState.Address == "" {
+		return false
+	}
+	if cs.Status.RegistryServiceStatus.Protocol != "grpc" {
 		return false
 	}
 	return cs.Status.GRPCConnectionState.LastObservedState == "READY"

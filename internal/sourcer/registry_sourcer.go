@@ -63,12 +63,12 @@ func (s sources) GetCandidates(ctx context.Context, po *platformv1alpha1.Platfor
 		// it's not empty before creating a registry client.
 		rc, err := registryClient.NewClient(cs.Status.GRPCConnectionState.Address)
 		if err != nil {
-			errors = append(errors, fmt.Errorf("failed to register client from the %s/%s grpc connection: %w", cs.GetName(), cs.GetNamespace(), err))
+			errors = append(errors, fmt.Errorf("failed to register client from the %s/%s grpc connection (%+v) (%+v): %w", cs.GetName(), cs.GetNamespace(), cs.Status.GRPCConnectionState, cs.Status.RegistryServiceStatus, err))
 			continue
 		}
 		it, err := rc.ListBundles(ctx)
 		if err != nil {
-			errors = append(errors, fmt.Errorf("failed to list bundles from the %s/%s catalog: %w", cs.GetName(), cs.GetNamespace(), err))
+			errors = append(errors, fmt.Errorf("failed to list bundles from the %s/%s catalog (%+v) (%+v): %w", cs.GetName(), cs.GetNamespace(), cs.Status.GRPCConnectionState, cs.Status.RegistryServiceStatus, err))
 			continue
 		}
 		for b := it.Next(); b != nil; b = it.Next() {
@@ -76,10 +76,11 @@ func (s sources) GetCandidates(ctx context.Context, po *platformv1alpha1.Platfor
 				continue
 			}
 			candidates = append(candidates, Bundle{
-				Version:  b.GetVersion(),
-				Image:    b.GetBundlePath(),
-				Skips:    b.GetSkips(),
-				Replaces: b.GetReplaces(),
+				Version:     b.GetVersion(),
+				Image:       b.GetBundlePath(),
+				Skips:       b.GetSkips(),
+				Replaces:    b.GetReplaces(),
+				PackageName: b.GetPackageName(),
 			})
 		}
 	}

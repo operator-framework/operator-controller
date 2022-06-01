@@ -98,6 +98,88 @@ var _ = Describe("platform operators controller", func() {
 			})
 		})
 
+		When("a platformoperator contains upgrade probes", func() {
+			var (
+				po *platformv1alpha1.PlatformOperator
+			)
+			BeforeEach(func() {
+				po = &platformv1alpha1.PlatformOperator{
+					ObjectMeta: metav1.ObjectMeta{
+						GenerateName: "prometheus-operator",
+					},
+					Spec: platformv1alpha1.PlatformOperatorSpec{
+						PackageName: "prometheus",
+						UpgradeChecks: []platformv1alpha1.UpgradeCheck{
+							{
+								Kind:    "deployment",
+								Group:   "apps",
+								Version: "v1",
+								Name:    "prometheus-operator",
+								Path:    ".status.availableReplicas",
+								Value:   "1",
+							},
+						},
+					},
+				}
+				Expect(c.Create(ctx, po)).To(BeNil())
+			})
+			AfterEach(func() {
+				Expect(c.Delete(ctx, po)).To(BeNil())
+			})
+			It("should initially result in a successful installation", func() {
+				Eventually(func() (*metav1.Condition, error) {
+					if err := c.Get(ctx, client.ObjectKeyFromObject(po), po); err != nil {
+						return nil, err
+					}
+					return meta.FindStatusCondition(po.Status.Conditions, platformv1alpha1.TypeApplied), nil
+				}).Should(And(
+					Not(BeNil()),
+					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(platformv1alpha1.TypeApplied)),
+					WithTransform(func(c *metav1.Condition) metav1.ConditionStatus { return c.Status }, Equal(metav1.ConditionTrue)),
+					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(platformv1alpha1.ReasonApplySuccessful)),
+					WithTransform(func(c *metav1.Condition) string { return c.Message }, ContainSubstring("Successfully applied the desired olm.bundle content")),
+				))
+			})
+			When("a platform operator's upgrade probes have been updated", func() {
+				BeforeEach(func() {
+					Eventually(func() error {
+						if err := c.Get(ctx, client.ObjectKeyFromObject(po), po); err != nil {
+							return err
+						}
+						probe := platformv1alpha1.UpgradeCheck{
+							Kind:    "deployment",
+							Group:   "apps",
+							Version: "v1",
+							Name:    "prometheus-operator",
+							Path:    ".status.availableReplicas",
+							Value:   "2",
+						}
+						po.Spec.UpgradeChecks = []platformv1alpha1.UpgradeCheck{probe}
+						return c.Update(ctx, po)
+					}).Should(Succeed())
+
+					updatedProvider, err := catalog.NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.v0.2.0.yaml"))
+					Expect(err).To(BeNil())
+
+					Expect(mc.UpdateCatalog(ctx, updatedProvider)).To(BeNil())
+				})
+				It("should not report an upgradeable state", func() {
+					Eventually(func() (*metav1.Condition, error) {
+						if err := c.Get(ctx, client.ObjectKeyFromObject(po), po); err != nil {
+							return nil, err
+						}
+						return meta.FindStatusCondition(po.Status.Conditions, platformv1alpha1.TypeApplied), nil
+					}).Should(And(
+						Not(BeNil()),
+						WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(platformv1alpha1.TypeApplied)),
+						WithTransform(func(c *metav1.Condition) metav1.ConditionStatus { return c.Status }, Equal(metav1.ConditionUnknown)),
+						WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(platformv1alpha1.ReasonApplyFailed)),
+						WithTransform(func(c *metav1.Condition) string { return c.Message }, ContainSubstring("waiting for the PlatformOperator to meet upgrade probe conditions")),
+					))
+				})
+			})
+		})
+
 		When("a platformoperator has been created", func() {
 			var (
 				po *platformv1alpha1.PlatformOperator

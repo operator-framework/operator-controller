@@ -9,4 +9,5 @@ import (
 
 type Applier interface {
 	Apply(context.Context, *v1alpha1.PlatformOperator, *sourcer.Bundle) error
+	Upgradeable(context.Context, *v1alpha1.PlatformOperator) (bool, error)
 }
