@@ -20,6 +20,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var (
+	TypeSourced = "Sourced"
+	TypeApplied = "Applied"
+
+	ReasonSourceFailed     = "SourceFailed"
+	ReasonSourceSuccessful = "SourceSuccessful"
+	ReasonApplyFailed      = "ApplyFailed"
+	ReasonApplySuccessful  = "ApplySuccessful"
+)
+
 // PlatformOperatorSpec defines the desired state of PlatformOperator
 type PlatformOperatorSpec struct {
 	// PackageName specifies the name of the package to be installed from the provided CatalogSource.

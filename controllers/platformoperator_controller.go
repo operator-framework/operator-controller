@@ -21,6 +21,8 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -64,19 +66,46 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if err := r.Get(ctx, req.NamespacedName, po); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	defer func() {
+		po := po.DeepCopy()
+		po.ObjectMeta.ManagedFields = nil
+		if err := r.Status().Patch(ctx, po, client.Apply, client.FieldOwner("platformoperator")); err != nil {
+			log.Error(err, "failed to patch status")
+		}
+	}()
+
 	desiredBundle, err := r.Sourcer.Source(ctx, po)
 	if err != nil {
-		log.Error(err, "failed to source content for platform operator")
-		return util.ShortRequeue, err
+		meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
+			Type:    platformv1alpha1.TypeSourced,
+			Status:  metav1.ConditionUnknown,
+			Reason:  platformv1alpha1.ReasonSourceFailed,
+			Message: err.Error(),
+		})
+		return ctrl.Result{}, err
 	}
+	meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
+		Type:    platformv1alpha1.TypeSourced,
+		Status:  metav1.ConditionTrue,
+		Reason:  platformv1alpha1.ReasonSourceSuccessful,
+		Message: "Successfully sourced the desired olm.bundle content",
+	})
+
 	if err := r.Applier.Apply(ctx, po, desiredBundle); err != nil {
-		log.Error(err, "failed to apply the desired bundle")
+		meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
+			Type:    platformv1alpha1.TypeApplied,
+			Status:  metav1.ConditionUnknown,
+			Reason:  platformv1alpha1.ReasonApplyFailed,
+			Message: err.Error(),
+		})
 		return ctrl.Result{}, err
 	}
-	if err := r.Status().Update(ctx, po); err != nil {
-		log.Error(err, "failed to update the platform operator status")
-		return ctrl.Result{}, err
-	}
+	meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
+		Type:    platformv1alpha1.TypeApplied,
+		Status:  metav1.ConditionTrue,
+		Reason:  platformv1alpha1.ReasonApplySuccessful,
+		Message: "Successfully applied the desired olm.bundle content",
+	})
 	return ctrl.Result{}, nil
 }
 
