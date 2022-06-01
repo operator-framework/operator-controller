@@ -35,6 +35,19 @@ type PlatformOperatorSpec struct {
 	// PackageName specifies the name of the package to be installed from the provided CatalogSource.
 	// PackageName is required and must equal the exact name of the package in the catalog.
 	PackageName string `json:"packageName"`
+	// UpgradeCheck define the set of upgrade checks that must be performed before
+	// determining the upgradeability of an individual package.
+	UpgradeChecks []UpgradeCheck `json:"upgradeProbes,omitempty"`
+}
+
+type UpgradeCheck struct {
+	Kind      string `json:"kind"`
+	Group     string `json:"group"`
+	Version   string `json:"version"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace,omitempty"`
+	Path      string `json:"path"`
+	Value     string `json:"value"`
 }
 
 // PlatformOperatorStatus defines the observed state of PlatformOperator

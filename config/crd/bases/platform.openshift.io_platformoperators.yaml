@@ -43,6 +43,35 @@ spec:
                   from the provided CatalogSource. PackageName is required and must
                   equal the exact name of the package in the catalog.
                 type: string
+              upgradeProbes:
+                description: UpgradeCheck define the set of upgrade checks that must
+                  be performed before determining the upgradeability of an individual
+                  package.
+                items:
+                  properties:
+                    group:
+                      type: string
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    path:
+                      type: string
+                    value:
+                      type: string
+                    version:
+                      type: string
+                  required:
+                  - group
+                  - kind
+                  - name
+                  - path
+                  - value
+                  - version
+                  type: object
+                type: array
             required:
             - packageName
             type: object
