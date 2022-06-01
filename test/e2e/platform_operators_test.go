@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
@@ -137,6 +138,20 @@ var _ = Describe("platform operators controller", func() {
 					}
 					return bi.Spec.Template.Spec.Source.Image.Ref == "quay.io/operatorhubio/prometheus:v0.47.0"
 				}).Should(BeTrue())
+			})
+			It("should result in a successful application", func() {
+				Eventually(func() (*metav1.Condition, error) {
+					if err := c.Get(ctx, client.ObjectKeyFromObject(po), po); err != nil {
+						return nil, err
+					}
+					return meta.FindStatusCondition(po.Status.Conditions, platformv1alpha1.TypeApplied), nil
+				}).Should(And(
+					Not(BeNil()),
+					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(platformv1alpha1.TypeApplied)),
+					WithTransform(func(c *metav1.Condition) metav1.ConditionStatus { return c.Status }, Equal(metav1.ConditionTrue)),
+					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(platformv1alpha1.ReasonApplySuccessful)),
+					WithTransform(func(c *metav1.Condition) string { return c.Message }, ContainSubstring("Successfully applied the desired olm.bundle content")),
+				))
 			})
 			It("should result in a successful installation", func() {
 				Eventually(func() (*metav1.Condition, error) {
