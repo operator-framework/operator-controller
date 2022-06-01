@@ -62,7 +62,7 @@ var _ = Describe("platform operators controller", func() {
 						GenerateName: "prometheus-operator",
 					},
 					Spec: platformv1alpha1.PlatformOperatorSpec{
-						PackageName: "prometheus-operator",
+						PackageName: "prometheus",
 					},
 				}
 				Expect(c.Create(ctx, po)).To(BeNil())
@@ -108,7 +108,7 @@ var _ = Describe("platform operators controller", func() {
 						GenerateName: "prometheus-operator",
 					},
 					Spec: platformv1alpha1.PlatformOperatorSpec{
-						PackageName: "prometheus-operator",
+						PackageName: "prometheus",
 					},
 				}
 				Expect(c.Create(ctx, po)).To(BeNil())

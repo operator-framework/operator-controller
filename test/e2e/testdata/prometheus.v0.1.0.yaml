@@ -1,20 +1,20 @@
 ---
 schema: olm.package
-name: prometheus-operator
+name: prometheus
 defaultChannel: "4.12"
 ---
 schema: olm.channel
-package: prometheus-operator
+package: prometheus
 name: "4.12"
 entries:
   - name: prometheus-operator.v0.1.0
 ---
 schema: olm.bundle
 name: prometheus-operator.v0.1.0
-package: prometheus-operator
+package: prometheus
 image: quay.io/operatorhubio/prometheus:v0.47.0
 properties:
   - type: olm.package
     value:
-      packageName: prometheus-operator
+      packageName: prometheus
       version: 0.1.0
