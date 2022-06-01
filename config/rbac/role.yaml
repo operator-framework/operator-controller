@@ -6,6 +6,12 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
   - core.rukpak.io
   resources:
   - bundleinstances

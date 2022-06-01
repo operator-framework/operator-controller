@@ -50,6 +50,7 @@ type PlatformOperatorReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=catalogsources,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core.rukpak.io,resources=bundleinstances,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core.rukpak.io,resources=bundles,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=*,resources=*,verbs=*
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
