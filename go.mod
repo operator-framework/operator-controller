@@ -8,14 +8,12 @@ require (
 	github.com/onsi/gomega v1.18.1
 	github.com/operator-framework/api v0.13.0
 	github.com/operator-framework/operator-registry v1.22.1
-	github.com/operator-framework/rukpak v0.4.0
+	github.com/operator-framework/rukpak v0.5.0
 	k8s.io/api v0.23.1
 	k8s.io/apimachinery v0.23.1
 	k8s.io/client-go v0.23.1
 	sigs.k8s.io/controller-runtime v0.11.0
 )
-
-replace github.com/operator-framework/rukpak => github.com/timflannagan/rukpak v0.5.0
 
 require (
 	cloud.google.com/go v0.99.0 // indirect
