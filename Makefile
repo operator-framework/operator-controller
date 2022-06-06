@@ -177,4 +177,8 @@ OLM_VERSION ?= v0.21.2
 olm:
 	# TODO(tflannag): Deploy a BundleInstance using the OLM plain bundle image
 	kubectl apply --server-side=true -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/$(OLM_VERSION)/crds.yaml
+	# Wait for CRDs to be accepted before proceeding
+	kubectl wait --for=condition=NamesAccepted crd/catalogsources.operators.coreos.com crd/clusterserviceversions.operators.coreos.com \
+	crd/installplans.operators.coreos.com crd/olmconfigs.operators.coreos.com crd/operatorconditions.operators.coreos.com \
+	crd/operatorgroups.operators.coreos.com crd/operators.operators.coreos.com crd/subscriptions.operators.coreos.com --timeout=60s
 	kubectl apply --server-side=true -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/$(OLM_VERSION)/olm.yaml
