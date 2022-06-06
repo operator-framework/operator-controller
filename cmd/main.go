@@ -70,6 +70,13 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
+	var channelName string
+	if channelName = os.Getenv("CHANNEL_NAME"); channelName == "" {
+		// Default channel name (for now)
+		channelName = "4.12"
+	}
+	setupLog.Info("querying channel", channelName)
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
@@ -86,7 +93,7 @@ func main() {
 	if err = (&controllers.PlatformOperatorReconciler{
 		Client:  mgr.GetClient(),
 		Scheme:  mgr.GetScheme(),
-		Sourcer: sourcer.NewCatalogSourceHandler(mgr.GetClient()),
+		Sourcer: sourcer.NewCatalogSourceHandler(mgr.GetClient(), channelName),
 		Applier: applier.NewBundleInstanceHandler(mgr.GetClient()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PlatformOperator")

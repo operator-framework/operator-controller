@@ -12,17 +12,15 @@ import (
 	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 
-const (
-	channelName = "4.12"
-)
-
 type catalogSource struct {
 	client.Client
+	channel string
 }
 
-func NewCatalogSourceHandler(c client.Client) Sourcer {
+func NewCatalogSourceHandler(c client.Client, channel string) Sourcer {
 	return &catalogSource{
-		Client: c,
+		Client:  c,
+		channel: channel,
 	}
 }
 
@@ -36,7 +34,7 @@ func (cs catalogSource) Source(ctx context.Context, po *platformv1alpha1.Platfor
 	}
 	sources := sources(css.Items)
 
-	candidates, err := sources.Filter(byConnectionReadiness).GetCandidates(ctx, po)
+	candidates, err := sources.Filter(byConnectionReadiness).GetCandidates(ctx, po, cs.channel)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +49,7 @@ func (cs catalogSource) Source(ctx context.Context, po *platformv1alpha1.Platfor
 	return latestBundle, nil
 }
 
-func (s sources) GetCandidates(ctx context.Context, po *platformv1alpha1.PlatformOperator) (bundles, error) {
+func (s sources) GetCandidates(ctx context.Context, po *platformv1alpha1.PlatformOperator, channel string) (bundles, error) {
 	var (
 		errors     []error
 		candidates bundles
@@ -72,7 +70,7 @@ func (s sources) GetCandidates(ctx context.Context, po *platformv1alpha1.Platfor
 			continue
 		}
 		for b := it.Next(); b != nil; b = it.Next() {
-			if b.PackageName != po.Spec.PackageName || b.ChannelName != channelName {
+			if b.PackageName != po.Spec.PackageName || b.ChannelName != channel {
 				continue
 			}
 			candidates = append(candidates, Bundle{
