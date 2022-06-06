@@ -8,6 +8,7 @@ import (
 )
 
 type Bundle struct {
+	Name     string
 	Version  string
 	Image    string
 	Replaces string
@@ -19,5 +20,5 @@ func (b Bundle) String() string {
 }
 
 type Sourcer interface {
-	Source(context.Context, *platformv1alpha1.PlatformOperator) (*Bundle, error)
+	Source(context.Context, *platformv1alpha1.PlatformOperator) ([]*Bundle, error)
 }

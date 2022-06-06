@@ -32,6 +32,7 @@ func byConnectionReadiness(cs operatorsv1alpha1.CatalogSource) bool {
 }
 
 type bundles []Bundle
+type bundleVersions map[string]bundles
 
 type bundleFilterFunc func(b1, b2 *Bundle) bool
 

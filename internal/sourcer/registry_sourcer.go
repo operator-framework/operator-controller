@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	channelName = "4.12"
+	channelName = "beta"
 )
 
 type catalogSource struct {
@@ -26,7 +26,7 @@ func NewCatalogSourceHandler(c client.Client) Sourcer {
 	}
 }
 
-func (cs catalogSource) Source(ctx context.Context, po *platformv1alpha1.PlatformOperator) (*Bundle, error) {
+func (cs catalogSource) Source(ctx context.Context, po *platformv1alpha1.PlatformOperator) ([]*Bundle, error) {
 	css := &operatorsv1alpha1.CatalogSourceList{}
 	if err := cs.List(ctx, css); err != nil {
 		return nil, err
@@ -40,21 +40,28 @@ func (cs catalogSource) Source(ctx context.Context, po *platformv1alpha1.Platfor
 	if err != nil {
 		return nil, err
 	}
-	if len(candidates) == 0 {
-		return nil, fmt.Errorf("failed to find candidate olm.bundles from the %s package", po.Spec.PackageName)
+
+	// TODO: Find a way to better understand where and how a PO is failing. Gets
+	//		 complex when one or more are failing.
+	if len(candidates) != len(po.Spec.Packages) {
+		return nil, fmt.Errorf("failed to find one or more candidate olm.bundles for requested PlatformOperators")
 	}
-	latestBundle, err := candidates.Latest()
-	if err != nil {
-		return nil, err
+	latestBundles := []*Bundle{}
+	for _, versions := range candidates {
+		latestBundle, err := versions.Latest()
+		if err != nil {
+			return nil, err
+		}
+		latestBundles = append(latestBundles, latestBundle)
 	}
 
-	return latestBundle, nil
+	return latestBundles, nil
 }
 
-func (s sources) GetCandidates(ctx context.Context, po *platformv1alpha1.PlatformOperator) (bundles, error) {
+func (s sources) GetCandidates(ctx context.Context, po *platformv1alpha1.PlatformOperator) (bundleVersions, error) {
 	var (
 		errors     []error
-		candidates bundles
+		candidates = bundleVersions{}
 	)
 	// TODO: Should build a cache for efficiency
 	for _, cs := range s {
@@ -72,10 +79,11 @@ func (s sources) GetCandidates(ctx context.Context, po *platformv1alpha1.Platfor
 			continue
 		}
 		for b := it.Next(); b != nil; b = it.Next() {
-			if b.PackageName != po.Spec.PackageName || b.ChannelName != channelName {
+			if !contains(b.PackageName, po.Spec.Packages) || b.ChannelName != channelName {
 				continue
 			}
-			candidates = append(candidates, Bundle{
+			candidates[b.PackageName] = append(candidates[b.PackageName], Bundle{
+				Name:     b.GetPackageName(),
 				Version:  b.GetVersion(),
 				Image:    b.GetBundlePath(),
 				Skips:    b.GetSkips(),
@@ -87,4 +95,13 @@ func (s sources) GetCandidates(ctx context.Context, po *platformv1alpha1.Platfor
 		return nil, utilerror.NewAggregate(errors)
 	}
 	return candidates, nil
+}
+
+func contains(search string, arr []string) bool {
+	for _, ele := range arr {
+		if search == ele {
+			return true
+		}
+	}
+	return false
 }

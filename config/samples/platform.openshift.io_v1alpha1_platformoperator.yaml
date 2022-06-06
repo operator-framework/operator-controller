@@ -1,6 +1,7 @@
 apiVersion: platform.openshift.io/v1alpha1
 kind: PlatformOperator
 metadata:
-  name: platformoperator-sample
+  name: platform
 spec:
-  packageName: combo
+  packages: 
+  - prometheus

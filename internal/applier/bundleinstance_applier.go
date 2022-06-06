@@ -2,6 +2,7 @@ package applier
 
 import (
 	"context"
+	"fmt"
 
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +30,9 @@ func NewBundleInstanceHandler(c client.Client) Applier {
 
 func (a *biApplier) Apply(ctx context.Context, po *v1alpha1.PlatformOperator, b *sourcer.Bundle) error {
 	bi := &rukpakv1alpha1.BundleInstance{}
-	bi.SetName(po.GetName())
+	// TODO (tylerslaton): This will be a problem as some bundles in the CatalogSource have
+	// 					   long names that break the 40 char limit.
+	bi.SetName(fmt.Sprintf("%s-%s", po.GetName(), b.Name))
 	controllerRef := metav1.NewControllerRef(po, po.GroupVersionKind())
 
 	_, err := controllerutil.CreateOrUpdate(ctx, a.Client, bi, func() error {

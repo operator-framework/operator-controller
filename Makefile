@@ -76,6 +76,7 @@ build: ## Build manager binary.
 	CGO_ENABLED=0 go build -o bin/manager ./cmd/...
 
 .PHONY: build-container
+build-container: export GOOS=linux
 build-container: build ## Builds provisioner container image locally
 	$(CONTAINER_RUNTIME) build -f Dockerfile -t $(IMG) $(BIN_DIR)
 
@@ -170,7 +171,7 @@ CERT_MGR_VERSION=v1.7.1
 rukpak:
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MGR_VERSION)/cert-manager.yaml
 	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
-	kubectl apply -f https://github.com/timflannagan/rukpak/releases/download/$(RUKPAK_VERSION)/rukpak.yaml
+	kubectl apply -f https://github.com/operator-framework/rukpak/releases/download/$(RUKPAK_VERSION)/rukpak.yaml
 
 OLM_VERSION ?= v0.21.2
 .PHONY: olm

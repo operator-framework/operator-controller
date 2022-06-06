@@ -74,7 +74,7 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}()
 
-	desiredBundle, err := r.Sourcer.Source(ctx, po)
+	desiredBundles, err := r.Sourcer.Source(ctx, po)
 	if err != nil {
 		meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
 			Type:    platformv1alpha1.TypeSourced,
@@ -91,20 +91,25 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		Message: "Successfully sourced the desired olm.bundle content",
 	})
 
-	if err := r.Applier.Apply(ctx, po, desiredBundle); err != nil {
-		meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
-			Type:    platformv1alpha1.TypeApplied,
-			Status:  metav1.ConditionUnknown,
-			Reason:  platformv1alpha1.ReasonApplyFailed,
-			Message: err.Error(),
-		})
-		return ctrl.Result{}, err
+	// TODO: Attempt a dry run before applying for real to make sure resources
+	// 		 all get created together.
+	for _, desiredBundle := range desiredBundles {
+		if err := r.Applier.Apply(ctx, po, desiredBundle); err != nil {
+			meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
+				Type:    platformv1alpha1.TypeApplied,
+				Status:  metav1.ConditionFalse,
+				Reason:  platformv1alpha1.ReasonApplySuccessful,
+				Message: err.Error(),
+			})
+			return ctrl.Result{}, err
+		}
 	}
+
 	meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
 		Type:    platformv1alpha1.TypeApplied,
 		Status:  metav1.ConditionTrue,
 		Reason:  platformv1alpha1.ReasonApplySuccessful,
-		Message: "Successfully applied the desired olm.bundle content",
+		Message: "Successfully applied all desired olm.bundle content",
 	})
 	return ctrl.Result{}, nil
 }
