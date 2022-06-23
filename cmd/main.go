@@ -34,6 +34,7 @@ import (
 	deppyv1alpha1 "github.com/operator-framework/deppy/api/v1alpha1"
 	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 	"github.com/timflannagan/platform-operators/controllers"
+	"github.com/timflannagan/platform-operators/internal/sourcer"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -82,6 +83,14 @@ func main() {
 	if err = (&controllers.PlatformOperatorReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "PlatformOperator")
+		os.Exit(1)
+	}
+	if err = (&controllers.CatalogSourceAdapter{
+		Client:  mgr.GetClient(),
+		Scheme:  mgr.GetScheme(),
+		Sourcer: sourcer.NewCatalogSourceHandler(mgr.GetClient()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PlatformOperator")
 		os.Exit(1)
