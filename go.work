@@ -1,0 +1,9 @@
+go 1.18
+
+use (
+	.
+    ./rukpak
+	./rukpak/hack/tools
+)
+
+replace github.com/operator-framework/rukpak v0.5.0 => ./rukpak
