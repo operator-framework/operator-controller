@@ -32,9 +32,9 @@ var (
 
 // PlatformOperatorSpec defines the desired state of PlatformOperator
 type PlatformOperatorSpec struct {
-	// PackageName specifies the name of the package to be installed from the provided CatalogSource.
-	// PackageName is required and must equal the exact name of the package in the catalog.
-	PackageName string `json:"packageName"`
+	// Packages is the desired set of platform operator package names
+	// that should be managed on the cluster.
+	Packages []string `json:"packages"`
 }
 
 // PlatformOperatorStatus defines the observed state of PlatformOperator
