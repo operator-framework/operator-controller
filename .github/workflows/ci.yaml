@@ -46,9 +46,6 @@ jobs:
       with:
         submodules: true
 
-    - name: Install platform operators
-      run: make deploy
-
     - name: Run e2e tests
       run: make e2e
   unit:
