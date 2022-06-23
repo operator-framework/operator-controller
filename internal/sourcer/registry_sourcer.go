@@ -68,10 +68,14 @@ func (s sources) GetCandidates(ctx context.Context) ([]Bundle, error) {
 		}
 		for b := it.Next(); b != nil; b = it.Next() {
 			candidates = append(candidates, Bundle{
-				Version:  b.GetVersion(),
-				Image:    b.GetBundlePath(),
-				Skips:    b.GetSkips(),
-				Replaces: b.GetReplaces(),
+				Name:        b.GetCsvName(),
+				PackageName: b.GetPackageName(),
+				ChannelName: b.GetChannelName(),
+				Version:     b.GetVersion(),
+				Image:       b.GetBundlePath(),
+				Skips:       b.GetSkips(),
+				Replaces:    b.GetReplaces(),
+				SourceName:  cs.GetName(),
 			})
 		}
 	}
