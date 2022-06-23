@@ -6,14 +6,18 @@ import (
 )
 
 type Bundle struct {
-	Version  string
-	Image    string
-	Replaces string
-	Skips    []string
+	Name        string
+	PackageName string
+	ChannelName string
+	Version     string
+	Image       string
+	Replaces    string
+	Skips       []string
+	SourceName  string
 }
 
 func (b Bundle) String() string {
-	return fmt.Sprintf("Version: %s; Image: %s; Replaces %s", b.Version, b.Image, b.Replaces)
+	return fmt.Sprintf("Name: %s; Package: %s; Channel: %s; Version: %s; Image: %s; Replaces: %s", b.Name, b.PackageName, b.ChannelName, b.Version, b.Image, b.Replaces)
 }
 
 type Sourcer interface {
