@@ -59,7 +59,10 @@ unit: generate envtest ## Run unit tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -count=1 -short $(UNIT_TEST_DIRS)
 
 .PHONY: e2e
-e2e: generate ginkgo ## Run e2e tests
+e2e: deploy test-e2e
+
+.PHONY: test-e2e
+test-e2e: ginkgo ## Run e2e tests
 	$(GINKGO) -trace -progress test/e2e
 
 .PHONY: verify
