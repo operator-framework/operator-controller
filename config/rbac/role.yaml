@@ -5,6 +5,43 @@ metadata:
   creationTimestamp: null
   name: manager-role
 rules:
+- nonResourceURLs:
+  - /bundles/*
+  verbs:
+  - get
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
 - apiGroups:
   - core.rukpak.io
   resources:
@@ -20,6 +57,19 @@ rules:
 - apiGroups:
   - core.rukpak.io
   resources:
+  - bundleinstances/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundleinstances/status
+  verbs:
+  - patch
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
   - bundles
   verbs:
   - create
@@ -29,6 +79,19 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundles/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundles/status
+  verbs:
+  - patch
+  - update
 - apiGroups:
   - operators.coreos.com
   resources:
