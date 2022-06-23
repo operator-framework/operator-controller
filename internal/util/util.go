@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 

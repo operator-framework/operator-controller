@@ -3,11 +3,11 @@ package applier
 import (
 	"context"
 
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"github.com/timflannagan/platform-operators/api/v1alpha1"
 	"github.com/timflannagan/platform-operators/internal/sourcer"
 )

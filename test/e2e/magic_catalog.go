@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -12,6 +11,8 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	k8scontrollerclient "sigs.k8s.io/controller-runtime/pkg/client"
+
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 const (
