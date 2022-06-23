@@ -3,6 +3,8 @@ package sourcer
 import (
 	"context"
 	"fmt"
+
+	deppyv1alpha1 "github.com/operator-framework/deppy/api/v1alpha1"
 )
 
 type Bundle struct {
@@ -14,6 +16,7 @@ type Bundle struct {
 	Replaces    string
 	Skips       []string
 	SourceName  string
+	Properties  []deppyv1alpha1.Property
 }
 
 func (b Bundle) String() string {
