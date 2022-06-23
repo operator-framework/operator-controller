@@ -1,0 +1,21 @@
+resources:
+  - resources/certificate.yaml
+  - resources/cluster_role.yaml
+  - resources/cluster_role_binding.yaml
+  - resources/deployment.yaml
+  - resources/service.yaml
+  - resources/serviceaccount.yaml
+
+vars:
+  - name: PLAIN_PROVISIONER_SERVICE_NAMESPACE # namespace of the service
+    objref:
+      kind: Service
+      version: v1
+      name: plain-provisioner
+    fieldref:
+      fieldpath: metadata.namespace
+  - name: PLAIN_PROVISIONER_SERVICE_NAME
+    objref:
+      kind: Service
+      version: v1
+      name: plain-provisioner

@@ -1,0 +1,45 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: crd-validation-webhook
+  annotations:
+    cert-manager.io/inject-ca-from: crdvalidator-system/crd-validation-webhook-certificate
+webhooks:
+  - name: "webhook.crdvalidator.io"
+    rules:
+    - apiGroups: ["apiextensions.k8s.io"]
+      apiVersions: ["v1"]
+      operations: ["CREATE", "UPDATE"]
+      resources: ["customresourcedefinitions"]
+      scope: "*"
+    clientConfig:
+      service:
+        namespace: crdvalidator-system
+        name: crd-validation-webhook
+        path: /validate-crd
+        port: 9443
+    objectSelector:
+      matchLabels:
+        core.rukpak.io/owner-kind: BundleInstance
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: crd-validation-webhook-certificate
+  namespace: crdvalidator-system
+spec:
+  secretName: crd-validation-webhook-certificate
+  dnsNames:
+    - crd-validation-webhook.crdvalidator-system.svc
+  issuerRef:
+    name: selfsigned
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned
+  namespace: crdvalidator-system
+spec:
+  selfSigned: {}

@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: plain-provisioner-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: plain-provisioner-admin
+subjects:
+  - apiGroup: ""
+    kind: ServiceAccount
+    name: plain-provisioner-admin
+    namespace: rukpak-system

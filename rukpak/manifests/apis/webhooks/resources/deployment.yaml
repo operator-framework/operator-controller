@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: system
+  name: core-webhook
+  labels:
+    app: core-webhook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: core-webhook
+  template:
+    metadata:
+      labels:
+        app: core-webhook
+    spec:
+      serviceAccountName: core-admin
+      containers:
+        - name: core-webhook
+          command: ["/core"]
+          args: ["run"]
+          image: quay.io/operator-framework/rukpak:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+            - containerPort: 9443
+              name: webhook-server
+              protocol: TCP
+          volumeMounts:
+          - mountPath: /tmp/k8s-webhook-server/serving-certs
+            name: cert
+            readOnly: true
+      volumes:
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: rukpak-webhook-certificate

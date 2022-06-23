@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: rukpak-system
+  name: registry-provisioner
+spec:
+  ports:
+    - port: 443
+      protocol: TCP
+      targetPort: 8443
+  selector:
+    app: registry-provisioner

@@ -1,0 +1,28 @@
+# limit bundle name length up to 40
+- op: add
+  path: /spec/versions/0/schema/openAPIV3Schema/properties/metadata/properties
+  value:
+    name:
+      type: string
+      maxLength: 40
+
+# Union source type
+- op: add
+  path: /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/source/oneOf
+  value:
+  - required:
+    - git
+  - required:
+    - image
+
+# Union git ref
+- op: add
+  path: /spec/versions/0/schema/openAPIV3Schema/properties/spec/properties/source/properties/git/properties/ref/oneOf
+  value:
+  - required:
+    - branch
+  - required:
+    - commit
+  - required:
+    - tag
+

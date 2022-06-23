@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crd-validation-webhook
+  namespace: crdvalidator-system
+spec:
+  selector:
+    matchLabels:
+      app: crd-validation-webhook
+  template:
+    metadata:
+      labels:
+        app: crd-validation-webhook
+    spec:
+      serviceAccountName: crd-validation-webhook
+      containers:
+        - image: quay.io/operator-framework/rukpak:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/crdvalidator"]
+          name: crd-validation-webhook
+          volumeMounts:
+            - name: tls
+              mountPath: "/etc/admission-webhook/tls"
+      volumes:
+        - name: tls
+          secret:
+            secretName: crd-validation-webhook-certificate

@@ -1,0 +1,11 @@
+apiVersion: core.rukpak.io/v1alpha1
+kind: Bundle
+metadata:
+  name: combo-v0.0.1
+spec:
+  source:
+    type: image
+    image:
+      ref: docker-registry.rukpak-e2e.svc.cluster.local:5000/bundles/plain-v0:valid
+      pullSecret: registrysecret
+  provisionerClassName: core.rukpak.io/plain
