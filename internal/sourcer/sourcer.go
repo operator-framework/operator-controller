@@ -17,5 +17,5 @@ func (b Bundle) String() string {
 }
 
 type Sourcer interface {
-	Source(context.Context) (*Bundle, error)
+	Source(context.Context) ([]Bundle, error)
 }

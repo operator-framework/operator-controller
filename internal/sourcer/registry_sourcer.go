@@ -26,7 +26,7 @@ func NewCatalogSourceHandler(c client.Client) Sourcer {
 	}
 }
 
-func (cs catalogSource) Source(ctx context.Context) (*Bundle, error) {
+func (cs catalogSource) Source(ctx context.Context) ([]Bundle, error) {
 	css := &operatorsv1alpha1.CatalogSourceList{}
 	if err := cs.List(ctx, css); err != nil {
 		return nil, err
@@ -43,14 +43,10 @@ func (cs catalogSource) Source(ctx context.Context) (*Bundle, error) {
 	if len(candidates) == 0 {
 		return nil, ErrNoCandidates
 	}
-	latestBundle, err := candidates.Latest()
-	if err != nil {
-		return nil, err
-	}
-	return latestBundle, nil
+	return candidates, nil
 }
 
-func (s sources) GetCandidates(ctx context.Context) (bundles, error) {
+func (s sources) GetCandidates(ctx context.Context) ([]Bundle, error) {
 	var (
 		errors     []error
 		candidates bundles
