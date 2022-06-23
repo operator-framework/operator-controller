@@ -31,3 +31,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - core.deppy.io
+  resources:
+  - resolutions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - core.deppy.io
+  resources:
+  - resolutions/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.deppy.io
+  resources:
+  - resolutions/status
+  verbs:
+  - get
+  - patch
+  - update
