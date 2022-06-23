@@ -10,4 +10,5 @@ use (
 replace (
 	github.com/operator-framework/deppy v0.0.0-20220622214412-92cb5a817a60 => ./deppy
 	github.com/operator-framework/rukpak v0.5.0 => ./rukpak
+	github.com/operator-framework/rukpak/hack/tools v0.5.0 => ./rukpak/hack/tools
 )
