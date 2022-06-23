@@ -47,14 +47,6 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths=./api/...
 	$(CONTROLLER_GEN) rbac:roleName=manager-role paths=./... output:rbac:artifacts:config=config/rbac
 
-.PHONY: fmt
-fmt: ## Run go fmt against code.
-	go fmt ./...
-
-.PHONY: vet
-vet: ## Run go vet against code.
-	go vet ./...
-
 .PHONY: lint
 lint: ## Run golangci-lint linter checks.
 lint: golangci-lint
@@ -62,7 +54,7 @@ lint: golangci-lint
 
 UNIT_TEST_DIRS=$(shell go list ./... | grep -v /test/)
 .PHONY: unit
-unit: generate fmt vet envtest ## Run unit tests.
+unit: generate envtest ## Run unit tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -count=1 -short $(UNIT_TEST_DIRS)
 
 .PHONY: e2e
@@ -85,11 +77,6 @@ ifndef ignore-not-found
   ignore-not-found = false
 endif
 
-.PHONY: demo
-# NOTE: This will fail as the currently available version of RukPak (v0.4.0) does not have
-#       the requisite code.
-demo: deploy install-samples
-
 .PHONY: kind-load
 kind-load: build-container
 	kind load docker-image $(IMG)
@@ -101,7 +88,6 @@ install: generate kustomize ## Install CRDs into the K8s cluster specified in ~/
 .PHONY: uninstall
 uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
-
 
 .PHONY: run
 run: build-container kind-load install
