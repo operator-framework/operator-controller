@@ -65,9 +65,20 @@ e2e: deploy test-e2e
 test-e2e: ginkgo ## Run e2e tests
 	$(GINKGO) -trace -progress test/e2e
 
-.PHONY: verify
-verify: tidy generate
+.PHONY: root-verify
+root-verify: tidy generate
 	git diff --exit-code
+
+.PHONY: deppy-verify
+deppy-verify:
+	make -C deppy verify
+
+.PHONY: rukpak-verify
+rukpak-verify:
+	make -C rukpak verify
+
+.PHONY: verify
+verify: root-verify deppy-verify rukpak-verify
 
 ##@ Build
 
