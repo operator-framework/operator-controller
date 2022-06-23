@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"github.com/operator-framework/deppy/api/v1alpha1"
+	deppyv1alpha1 "github.com/operator-framework/deppy/api/v1alpha1"
 	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 
@@ -61,15 +61,13 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}()
 
-	res := &v1alpha1.Resolution{}
+	res := &deppyv1alpha1.Resolution{}
 	if err := r.Get(ctx, types.NamespacedName{Name: platformResolution}, res); err != nil {
 		log.Error(err, "failed to find the resolution resource")
 		return ctrl.Result{}, err
 	}
 
-	var (
-		desiredPackages []v1alpha1.Constraint
-	)
+	desiredPackages := make([]deppyv1alpha1.Constraint, 0)
 	for _, name := range po.Spec.Packages {
 		desiredPackages = append(desiredPackages, newPackageRequirement(name))
 	}
@@ -78,8 +76,8 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	return ctrl.Result{}, r.Client.Update(ctx, res)
 }
 
-func newPackageRequirement(packageName string) v1alpha1.Constraint {
-	return v1alpha1.Constraint{
+func newPackageRequirement(packageName string) deppyv1alpha1.Constraint {
+	return deppyv1alpha1.Constraint{
 		Type: packageConstraintType,
 		Value: map[string]string{
 			packageValueKey: packageName,
@@ -91,8 +89,8 @@ func newPackageRequirement(packageName string) v1alpha1.Constraint {
 func (r *PlatformOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&platformv1alpha1.PlatformOperator{}).
-		Watches(&source.Kind{Type: &v1alpha1.Resolution{}}, handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
-			resolution := o.(*v1alpha1.Resolution)
+		Watches(&source.Kind{Type: &deppyv1alpha1.Resolution{}}, handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
+			resolution := o.(*deppyv1alpha1.Resolution)
 			if resolution.GetName() == platformResolution {
 				return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: platformSingletonName}}}
 			}

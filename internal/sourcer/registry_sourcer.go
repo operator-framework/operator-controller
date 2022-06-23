@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	registryClient "github.com/operator-framework/operator-registry/pkg/client"
 	utilerror "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	registryClient "github.com/operator-framework/operator-registry/pkg/client"
 )
 
 var (

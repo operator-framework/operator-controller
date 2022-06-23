@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/operator-framework/deppy/api/v1alpha1"
-	"github.com/operator-framework/deppy/internal/solver"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +30,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	deppyv1alpha1 "github.com/operator-framework/deppy/api/v1alpha1"
+	"github.com/operator-framework/deppy/internal/solver"
 )
 
 const (
@@ -61,7 +62,7 @@ func (r *ResolutionReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	l.Info("reconciling request", "request", req.NamespacedName)
 	defer l.Info("finished reconciling request")
 
-	res := &v1alpha1.Resolution{}
+	res := &deppyv1alpha1.Resolution{}
 	if err := r.Get(ctx, req.NamespacedName, res); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -74,7 +75,7 @@ func (r *ResolutionReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}()
 	res.Status.IDs = nil
 
-	inputs := &v1alpha1.InputList{}
+	inputs := &deppyv1alpha1.InputList{}
 	if err := r.List(context.Background(), inputs); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -151,7 +152,7 @@ func (r *ResolutionReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-func (r *ResolutionReconciler) EvaluateConstraints(res *v1alpha1.Resolution, items []v1alpha1.Input) ([]solver.Variable, error) {
+func (r *ResolutionReconciler) EvaluateConstraints(res *deppyv1alpha1.Resolution, items []deppyv1alpha1.Input) ([]solver.Variable, error) {
 	variables := make([]solver.Variable, 0)
 
 	inputs, err := r.calculateInputVariables(items)
@@ -174,7 +175,7 @@ func (r *ResolutionReconciler) EvaluateConstraints(res *v1alpha1.Resolution, ite
 }
 
 func (r *ResolutionReconciler) calculateInputVariables(
-	items []v1alpha1.Input,
+	items []deppyv1alpha1.Input,
 ) (map[solver.Identifier]solver.Variable, error) {
 	inputs := make(map[solver.Identifier]solver.Variable)
 
@@ -192,9 +193,9 @@ func (r *ResolutionReconciler) calculateInputVariables(
 }
 
 func (r *ResolutionReconciler) calculateConstraints(
-	res *v1alpha1.Resolution,
+	res *deppyv1alpha1.Resolution,
 	visited map[solver.Identifier]solver.Variable,
-	items []v1alpha1.Input,
+	items []deppyv1alpha1.Input,
 ) (map[solver.Identifier]solver.Variable, error) {
 	inputs := make(map[solver.Identifier]solver.Variable)
 
@@ -238,7 +239,7 @@ func (r *ResolutionReconciler) calculateConstraints(
 	return inputs, nil
 }
 
-func propertyExists(tpe, key, value string, properties []v1alpha1.Property) bool {
+func propertyExists(tpe, key, value string, properties []deppyv1alpha1.Property) bool {
 	for _, property := range properties {
 		if property.Type != tpe {
 			continue
@@ -254,9 +255,9 @@ func propertyExists(tpe, key, value string, properties []v1alpha1.Property) bool
 // SetupWithManager sets up the controller with the Manager.
 func (r *ResolutionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.Resolution{}).
-		Watches(&source.Kind{Type: &v1alpha1.Input{}}, handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
-			resolutions := &v1alpha1.ResolutionList{}
+		For(&deppyv1alpha1.Resolution{}).
+		Watches(&source.Kind{Type: &deppyv1alpha1.Input{}}, handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
+			resolutions := &deppyv1alpha1.ResolutionList{}
 			if err := r.List(context.Background(), resolutions); err != nil {
 				return nil
 			}

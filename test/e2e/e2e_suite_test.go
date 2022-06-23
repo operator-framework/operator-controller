@@ -6,14 +6,14 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 
