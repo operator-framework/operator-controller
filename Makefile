@@ -5,6 +5,7 @@ IMG ?= controller:latest
 ENVTEST_K8S_VERSION = 1.22
 BIN_DIR := bin
 CONTAINER_RUNTIME ?= docker
+KIND_CLUSTER_NAME ?= kind
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -78,8 +79,12 @@ ifndef ignore-not-found
 endif
 
 .PHONY: kind-load
-kind-load: build-container
-	kind load docker-image $(IMG)
+kind-load: build-container kind
+	$(KIND) load docker-image $(IMG)
+
+.PHONY: kind-cluster
+kind-cluster: kind
+	$(KIND) get clusters | grep $(KIND_CLUSTER_NAME) || $(KIND) create cluster --name $(KIND_CLUSTER_NAME)
 
 .PHONY: install
 install: generate kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
@@ -90,12 +95,12 @@ uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified i
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: run
-run: build-container kind-load install
+run: build-container kind-cluster kind-load install
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: deploy
-deploy: build-container kind-load run rukpak olm ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: run rukpak olm ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -118,6 +123,7 @@ CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 GINKGO ?= $(LOCALBIN)/ginkgo
 GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
+KIND ?= $(LOCALBIN)/kind
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v3.8.7
@@ -150,7 +156,11 @@ golangci-lint: $(GOLANGCI_LINT)
 $(GOLANGCI_LINT): $(LOCALBIN) ## Download golangci-lint locally if necessary.
 	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
 
-KIND_CLUSTER_NAME ?= kind
+.PHONY: kind
+kind: $(KIND) ## Download kind locally if necessary.
+$(KIND): $(LOCALBIN)
+	GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@v0.14.0
+
 .PHONY: rukpak
 rukpak: ## Install the rukpak stack locally
 	make -C rukpak build-container kind-load install KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME)
