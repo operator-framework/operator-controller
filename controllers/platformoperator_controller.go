@@ -3,10 +3,12 @@ package controllers
 import (
 	"context"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logr "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -60,20 +62,29 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			log.Error(err, "failed to patch status")
 		}
 	}()
-
-	res := &deppyv1alpha1.Resolution{}
-	if err := r.Get(ctx, types.NamespacedName{Name: platformResolution}, res); err != nil {
-		log.Error(err, "failed to find the resolution resource")
+	if err := r.ensureResolution(ctx, po); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	desiredPackages := make([]deppyv1alpha1.Constraint, 0)
-	for _, name := range po.Spec.Packages {
-		desiredPackages = append(desiredPackages, newPackageRequirement(name))
-	}
-	// TODO: sort these packages to ensure determinism
-	res.Spec.Constraints = desiredPackages
-	return ctrl.Result{}, r.Client.Update(ctx, res)
+	return ctrl.Result{}, nil
+}
+
+func (r *PlatformOperatorReconciler) ensureResolution(ctx context.Context, po *platformv1alpha1.PlatformOperator) error {
+	res := &deppyv1alpha1.Resolution{}
+	res.SetName(po.GetName())
+	controllerRef := metav1.NewControllerRef(po, po.GroupVersionKind())
+
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, res, func() error {
+		res.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
+		desiredPackages := make([]deppyv1alpha1.Constraint, 0)
+		for _, name := range po.Spec.Packages {
+			desiredPackages = append(desiredPackages, newPackageRequirement(name))
+		}
+		// TODO: sort these packages to ensure determinism
+		res.Spec.Constraints = desiredPackages
+		return nil
+	})
+	return err
 }
 
 func newPackageRequirement(packageName string) deppyv1alpha1.Constraint {
