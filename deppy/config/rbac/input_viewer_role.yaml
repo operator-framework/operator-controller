@@ -1,0 +1,20 @@
+# permissions for end users to view inputs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: input-viewer-role
+rules:
+- apiGroups:
+  - core.deppy.io
+  resources:
+  - inputs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - core.deppy.io
+  resources:
+  - inputs/status
+  verbs:
+  - get

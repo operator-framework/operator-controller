@@ -1,0 +1,24 @@
+# permissions for end users to edit inputs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: input-editor-role
+rules:
+- apiGroups:
+  - core.deppy.io
+  resources:
+  - inputs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - core.deppy.io
+  resources:
+  - inputs/status
+  verbs:
+  - get
