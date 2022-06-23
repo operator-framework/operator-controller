@@ -176,6 +176,10 @@ $(KIND): $(LOCALBIN)
 rukpak: ## Install the rukpak stack locally
 	make -C rukpak build-container kind-load install KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME)
 
+.PHONY: deppy
+deppy:  ## Install the deppy stack locally
+	make -C deppy run KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME)
+
 OLM_VERSION ?= v0.21.2
 .PHONY: olm
 olm:  ## Install OLM locally
