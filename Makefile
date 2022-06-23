@@ -164,17 +164,14 @@ golangci-lint: $(GOLANGCI_LINT)
 $(GOLANGCI_LINT): $(LOCALBIN) ## Download golangci-lint locally if necessary.
 	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
 
-RUKPAK_VERSION=v0.5.0
-CERT_MGR_VERSION=v1.7.1
+KIND_CLUSTER_NAME ?= kind
 .PHONY: rukpak
-rukpak:
-	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MGR_VERSION)/cert-manager.yaml
-	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
-	kubectl apply -f https://github.com/operator-framework/rukpak/releases/download/$(RUKPAK_VERSION)/rukpak.yaml
+rukpak: ## Install the rukpak stack locally
+	make -C rukpak build-container kind-load install KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME)
 
 OLM_VERSION ?= v0.21.2
 .PHONY: olm
-olm:
+olm:  ## Install OLM locally
 	# TODO(tflannag): Deploy a BundleInstance using the OLM plain bundle image
 	kubectl apply --server-side=true -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/$(OLM_VERSION)/crds.yaml
 	# Wait for CRDs to be accepted before proceeding
