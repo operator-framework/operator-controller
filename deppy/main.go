@@ -80,13 +80,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.InputReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Input")
-		os.Exit(1)
-	}
 	if err = (&controllers.ResolutionReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),

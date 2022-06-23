@@ -10,27 +10,9 @@ rules:
   resources:
   - inputs
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
-- apiGroups:
-  - core.deppy.io
-  resources:
-  - inputs/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - core.deppy.io
-  resources:
-  - inputs/status
-  verbs:
-  - get
-  - patch
-  - update
 - apiGroups:
   - core.deppy.io
   resources:
