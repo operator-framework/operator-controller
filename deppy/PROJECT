@@ -13,4 +13,12 @@ resources:
   kind: Input
   path: github.com/operator-framework/deppy/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+  controller: true
+  domain: deppy.io
+  group: core
+  kind: Resolution
+  path: github.com/operator-framework/deppy/api/v1alpha1
+  version: v1alpha1
 version: "3"

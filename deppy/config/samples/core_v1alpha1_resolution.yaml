@@ -1,0 +1,6 @@
+apiVersion: core.deppy.io/v1alpha1
+kind: Resolution
+metadata:
+  name: resolution-sample
+spec:
+  # TODO(user): Add fields here
