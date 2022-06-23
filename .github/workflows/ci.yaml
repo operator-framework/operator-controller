@@ -15,7 +15,7 @@ jobs:
           go-version: '~1.18'
 
       - name: Run verification checks
-        run: go mod tidy && make generate && git diff --exit-code
+        run: make verify
   lint:
     runs-on: ubuntu-latest
     steps:

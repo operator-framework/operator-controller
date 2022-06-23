@@ -62,6 +62,10 @@ unit: generate envtest ## Run unit tests.
 e2e: generate ginkgo ## Run e2e tests
 	$(GINKGO) -trace -progress test/e2e
 
+.PHONY: verify
+verify: tidy generate
+	git diff --exit-code
+
 ##@ Build
 
 .PHONY: build
@@ -77,6 +81,10 @@ build-container: build ## Builds provisioner container image locally
 ifndef ignore-not-found
   ignore-not-found = false
 endif
+
+.PHONY: tidy
+tidy:
+	go mod tidy
 
 .PHONY: kind-load
 kind-load: build-container kind
