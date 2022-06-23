@@ -47,8 +47,12 @@ rules:
   resources:
   - inputs
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - core.deppy.io
@@ -118,6 +122,14 @@ rules:
   verbs:
   - patch
   - update
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - catalogsources
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - platform.openshift.io
   resources:
