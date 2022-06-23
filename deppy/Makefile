@@ -2,7 +2,7 @@
 IMG ?= controller:latest
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.22
-
+KIND_CLUSTER_NAME ?= kind
 BIN_DIR ?= bin
 CONTAINER_RUNTIME ?= docker
 
@@ -48,14 +48,6 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-
-.PHONY: fmt
-fmt: ## Run go fmt against code.
-	go fmt ./...
-
-.PHONY: vet
-vet: ## Run go vet against code.
-	go vet ./...
 
 .PHONY: tidy
 tidy: ## Update modules.
@@ -105,10 +97,9 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 kind-load: build-container kind
 	$(KIND) load docker-image $(IMG)
 
-.PHONY: kind-create
-kind-create: kind
-	$(KIND) create cluster
-	$(KIND) export kubeconfig
+.PHONY: kind-cluster
+kind-cluster: kind
+	$(KIND) get clusters | grep $(KIND_CLUSTER_NAME) || $(KIND) create cluster --name $(KIND_CLUSTER_NAME)
 
 .PHONY: run
 run: build-container kind-load install
@@ -116,7 +107,7 @@ run: build-container kind-load install
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: deploy
-deploy: kind-create run ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: kind-cluster run ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -139,7 +130,7 @@ GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v3.8.7
-CONTROLLER_TOOLS_VERSION ?= v0.8.0
+CONTROLLER_TOOLS_VERSION ?= v0.9.0
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
