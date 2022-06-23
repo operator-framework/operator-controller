@@ -30,7 +30,7 @@ spec:
       - command:
         - /manager
         args:
-        - --leader-elect
+        - --leader-elect=false
         image: controller:latest
         name: manager
         imagePullPolicy: IfNotPresent
