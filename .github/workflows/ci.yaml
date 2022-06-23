@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: true
       - uses: actions/setup-go@v2
         with:
           go-version: '~1.18'
@@ -19,6 +21,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '~1.18'
 
       - name: Cache build and module paths
         uses: actions/cache@v3
@@ -35,7 +42,9 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
 
     - name: Install platform operators
       run: make deploy
@@ -45,7 +54,9 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
 
     - name: Run unit tests
       run: make unit
