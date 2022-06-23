@@ -28,7 +28,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 const (
@@ -251,5 +254,16 @@ func propertyExists(tpe, key, value string, properties []v1alpha1.Property) bool
 func (r *ResolutionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Resolution{}).
+		Watches(&source.Kind{Type: &v1alpha1.Input{}}, handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
+			resolutions := &v1alpha1.ResolutionList{}
+			if err := r.List(context.Background(), resolutions); err != nil {
+				return nil
+			}
+			res := make([]reconcile.Request, 0, len(resolutions.Items))
+			for _, input := range resolutions.Items {
+				res = append(res, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(&input)})
+			}
+			return res
+		})).
 		Complete(r)
 }
