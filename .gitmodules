@@ -1,0 +1,3 @@
+[submodule "rukpak"]
+	path = rukpak
+	url = https://github.com/operator-framework/rukpak
