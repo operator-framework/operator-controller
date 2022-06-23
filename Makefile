@@ -122,7 +122,7 @@ run: build-container kind-cluster kind-load install
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: deploy
-deploy: run rukpak olm ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: run rukpak deppy olm ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
