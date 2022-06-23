@@ -3,8 +3,6 @@ package sourcer
 import (
 	"context"
 	"fmt"
-
-	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 
 type Bundle struct {
@@ -19,5 +17,5 @@ func (b Bundle) String() string {
 }
 
 type Sourcer interface {
-	Source(context.Context, *platformv1alpha1.PlatformOperator) (*Bundle, error)
+	Source(context.Context) (*Bundle, error)
 }
