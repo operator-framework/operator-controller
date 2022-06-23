@@ -1135,8 +1135,6 @@ github.com/operator-framework/api v0.12.0/go.mod h1:FTiYGm11fZQ3cSX+EQHc/UWoGZAw
 github.com/operator-framework/api v0.13.0/go.mod h1:FTiYGm11fZQ3cSX+EQHc/UWoGZAwkGfyeHU+wMJ8jmA=
 github.com/operator-framework/api v0.15.0 h1:4f9i0drtqHj7ykLoHxv92GR43S7MmQHhmFQkfm5YaGI=
 github.com/operator-framework/api v0.15.0/go.mod h1:scnY9xqSeCsOdtJtNoHIXd7OtHZ14gj1hkDA4+DlgLY=
-github.com/operator-framework/deppy v0.0.0-20220622214412-92cb5a817a60 h1:j9KQcpSfVGkJdcjpTnBGsv/W+RODNN7/rVwaTsu2paQ=
-github.com/operator-framework/deppy v0.0.0-20220622214412-92cb5a817a60/go.mod h1:FraZ6IyVz6rLw9fM6lMOA7UwBbw77wmXEUYCx4oDhIY=
 github.com/operator-framework/helm-operator-plugins v0.0.10/go.mod h1:5SNPtUyW8cUTZwV1Jgowq/dR9dy35XWPoktYQn2cADs=
 github.com/operator-framework/operator-lib v0.3.0/go.mod h1:LTp5UQd8ivq4MXqm/W/XHulHQ0RRoZXsAj73sNMAQxc=
 github.com/operator-framework/operator-registry v1.22.1 h1:myPsCo2Iyd5mRnm8Lwh1mEKeGfmuXO4fkeU9qB59dnE=
