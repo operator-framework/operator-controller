@@ -1,0 +1,4 @@
+bases:
+  - ./apis
+  - ./provisioners
+  - ./crdvalidator

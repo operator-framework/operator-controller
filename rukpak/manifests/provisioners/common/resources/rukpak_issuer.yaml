@@ -1,0 +1,37 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: rukpak-selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rukpak-ca
+  namespace: rukpak-system
+spec:
+  isCA: true
+  secretName: rukpak-ca
+  dnsNames:
+    - rukpak.io
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  privateKey:
+    rotationPolicy: Always
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: rukpak-selfsigned-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: rukpak-ca-issuer
+  namespace: rukpak-system
+spec:
+  ca:
+    secretName: rukpak-ca

@@ -1,0 +1,44 @@
+namespace: rukpak-system
+namePrefix: rukpak-
+
+resources:
+  - resources/namespace.yaml
+  - resources/serviceaccount.yaml
+  - resources/service.yaml
+  - resources/certificate.yaml
+  - resources/deployment.yaml
+  - resources/webhook.yaml
+
+configurations:
+- kustomizeconfig.yaml
+
+patchesStrategicMerge:
+- patches/cainjection.yaml
+
+vars:
+- name: CERTIFICATE_NAMESPACE # namespace of the certificate CR
+  objref:
+    kind: Certificate
+    group: cert-manager.io
+    version: v1
+    name: webhook-certificate # this name should match the one in certificate.yaml
+  fieldref:
+    fieldpath: metadata.namespace
+- name: CERTIFICATE_NAME
+  objref:
+    kind: Certificate
+    group: cert-manager.io
+    version: v1
+    name: webhook-certificate # this name should match the one in certificate.yaml
+- name: SERVICE_NAMESPACE # namespace of the service
+  objref:
+    kind: Service
+    version: v1
+    name: webhook-service
+  fieldref:
+    fieldpath: metadata.namespace
+- name: SERVICE_NAME
+  objref:
+    kind: Service
+    version: v1
+    name: webhook-service

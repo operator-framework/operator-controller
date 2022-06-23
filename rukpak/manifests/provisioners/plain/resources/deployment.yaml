@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: rukpak-system
+  name: plain-provisioner
+  labels:
+    app: plain-provisioner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plain-provisioner
+  template:
+    metadata:
+      labels:
+        app: plain-provisioner
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+    spec:
+      serviceAccountName: plain-provisioner-admin
+      containers:
+        - name: kube-rbac-proxy
+          image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+          args:
+            - "--secure-listen-address=0.0.0.0:8443"
+            - "--upstream=http://127.0.0.1:8080/"
+            - "--logtostderr=true"
+            - "--v=1"
+            - "--tls-cert-file=/etc/pki/tls/tls.crt"
+            - "--tls-private-key-file=/etc/pki/tls/tls.key"
+          ports:
+            - containerPort: 8443
+              protocol: TCP
+              name: https
+          volumeMounts:
+            - name: certs
+              mountPath: /etc/pki/tls
+        - name: manager
+          image: quay.io/operator-framework/rukpak:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/plain"]
+          args:
+            - "--unpack-image=quay.io/operator-framework/rukpak:latest"
+            - "--storage-dir=/var/cache/bundles"
+            - "--http-bind-address=127.0.0.1:8080"
+            - "--http-external-address=https://$(PLAIN_PROVISIONER_SERVICE_NAME).$(PLAIN_PROVISIONER_SERVICE_NAMESPACE).svc"
+            - "--bundle-ca-file=/etc/pki/tls/ca.crt"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: bundle-cache
+              mountPath: /var/cache/bundles
+            - name: certs
+              mountPath: /etc/pki/tls
+      volumes:
+        - name: bundle-cache
+          emptyDir: {}
+        - name: certs
+          secret:
+            secretName: plain-provisioner-cert
+            optional: false

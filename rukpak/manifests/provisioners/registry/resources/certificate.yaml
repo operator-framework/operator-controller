@@ -1,0 +1,14 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: registry-provisioner
+  namespace: rukpak-system
+spec:
+  secretName: registry-provisioner-cert
+  dnsNames:
+    - $(REGISTRY_PROVISIONER_SERVICE_NAME).$(REGISTRY_PROVISIONER_SERVICE_NAMESPACE).svc
+    - $(REGISTRY_PROVISIONER_SERVICE_NAME).$(REGISTRY_PROVISIONER_SERVICE_NAMESPACE).svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: rukpak-ca-issuer
