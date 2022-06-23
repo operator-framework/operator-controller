@@ -7,7 +7,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logr "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/deppy/api/v1alpha1"
 	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
@@ -88,5 +91,12 @@ func newPackageRequirement(packageName string) v1alpha1.Constraint {
 func (r *PlatformOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&platformv1alpha1.PlatformOperator{}).
+		Watches(&source.Kind{Type: &v1alpha1.Resolution{}}, handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
+			resolution := o.(*v1alpha1.Resolution)
+			if resolution.GetName() == platformResolution {
+				return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: platformSingletonName}}}
+			}
+			return nil
+		})).
 		Complete(r)
 }
