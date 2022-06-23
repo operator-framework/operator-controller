@@ -43,9 +43,17 @@ rules:
   verbs:
   - get
 - apiGroups:
-  - core.rukpak.io
+  - core.deppy.io
   resources:
-  - bundleinstances
+  - inputs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - core.deppy.io
+  resources:
+  - resolutions
   verbs:
   - create
   - delete
@@ -53,6 +61,27 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - core.deppy.io
+  resources:
+  - resolutions/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.deppy.io
+  resources:
+  - resolutions/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundleinstances
+  verbs:
+  - list
   - watch
 - apiGroups:
   - core.rukpak.io
@@ -72,9 +101,6 @@ rules:
   resources:
   - bundles
   verbs:
-  - create
-  - delete
-  - get
   - list
   - patch
   - update
@@ -92,14 +118,6 @@ rules:
   verbs:
   - patch
   - update
-- apiGroups:
-  - operators.coreos.com
-  resources:
-  - catalogsources
-  verbs:
-  - get
-  - list
-  - watch
 - apiGroups:
   - platform.openshift.io
   resources:
