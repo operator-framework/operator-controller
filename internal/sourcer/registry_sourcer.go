@@ -101,15 +101,16 @@ func (s sources) GetCandidates(ctx context.Context) ([]Bundle, error) {
 				properties = append(properties, deppyv1alpha1.Property{Type: property.Type, Value: value})
 			}
 			candidates = append(candidates, Bundle{
-				Name:        b.GetCsvName(),
-				PackageName: b.GetPackageName(),
-				ChannelName: b.GetChannelName(),
-				Version:     b.GetVersion(),
-				Image:       b.GetBundlePath(),
-				Skips:       b.GetSkips(),
-				Replaces:    b.GetReplaces(),
-				SourceName:  cs.GetName(),
-				Properties:  properties,
+				Name:            b.GetCsvName(),
+				PackageName:     b.GetPackageName(),
+				ChannelName:     b.GetChannelName(),
+				Version:         b.GetVersion(),
+				Image:           b.GetBundlePath(),
+				Skips:           b.GetSkips(),
+				Replaces:        b.GetReplaces(),
+				SourceName:      cs.GetName(),
+				SourceNamespace: cs.GetNamespace(),
+				Properties:      properties,
 			})
 		}
 	}

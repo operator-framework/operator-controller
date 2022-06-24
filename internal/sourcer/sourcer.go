@@ -8,15 +8,16 @@ import (
 )
 
 type Bundle struct {
-	Name        string
-	PackageName string
-	ChannelName string
-	Version     string
-	Image       string
-	Replaces    string
-	Skips       []string
-	SourceName  string
-	Properties  []deppyv1alpha1.Property
+	Name            string
+	PackageName     string
+	ChannelName     string
+	Version         string
+	Image           string
+	Replaces        string
+	Skips           []string
+	SourceName      string
+	SourceNamespace string
+	Properties      []deppyv1alpha1.Property
 }
 
 func (b Bundle) String() string {
