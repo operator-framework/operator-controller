@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -55,14 +56,47 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			log.Error(err, "failed to patch status")
 		}
 	}()
-	if err := r.ensureResolution(ctx, po); err != nil {
+
+	res, err := r.ensureResolution(ctx, po)
+	if err != nil {
+		meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
+			Type:    platformv1alpha1.TypeSourced,
+			Status:  metav1.ConditionFalse,
+			Reason:  platformv1alpha1.ReasonSourceFailed,
+			Message: err.Error(),
+		})
 		return ctrl.Result{}, err
 	}
+	cond := meta.FindStatusCondition(res.Status.Conditions, "Resolved")
+	if cond == nil {
+		// assume that we recently created the resolution resource, and let
+		// the watcher requeue this for us
+		return ctrl.Result{}, nil
+	}
+	// check whether the resolution failed and bubble up that information
+	// to the platform-operator's singleton resource
+	if cond.Status != metav1.ConditionTrue {
+		meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
+			Type:    platformv1alpha1.TypeSourced,
+			Status:  cond.Status,
+			Reason:  cond.Reason,
+			Message: cond.Message,
+		})
+		// TODO: should we be returning nil here? I _think_ it's fine for now,
+		// as we have a watcher on that resolution API.
+		return ctrl.Result{}, nil
+	}
+	meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
+		Type:    platformv1alpha1.TypeSourced,
+		Status:  metav1.ConditionTrue,
+		Reason:  platformv1alpha1.ReasonSourceSuccessful,
+		Message: "Successfully sourced package candidates",
+	})
 
 	return ctrl.Result{}, nil
 }
 
-func (r *PlatformOperatorReconciler) ensureResolution(ctx context.Context, po *platformv1alpha1.PlatformOperator) error {
+func (r *PlatformOperatorReconciler) ensureResolution(ctx context.Context, po *platformv1alpha1.PlatformOperator) (*deppyv1alpha1.Resolution, error) {
 	res := &deppyv1alpha1.Resolution{}
 	res.SetName(po.GetName())
 	controllerRef := metav1.NewControllerRef(po, po.GroupVersionKind())
@@ -77,7 +111,7 @@ func (r *PlatformOperatorReconciler) ensureResolution(ctx context.Context, po *p
 		res.Spec.Constraints = desiredPackages
 		return nil
 	})
-	return err
+	return res, err
 }
 
 func newPackageRequirement(packageName string) deppyv1alpha1.Constraint {

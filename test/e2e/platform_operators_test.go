@@ -7,7 +7,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
@@ -46,23 +48,37 @@ var _ = Describe("platform operators controller", func() {
 		AfterEach(func() {
 			Expect(catalog.UndeployCatalog(ctx)).To(BeNil())
 		})
-		When("a platformoperator has an update available", func() {
+		When("a platformoperator is targeting an invalid package name", func() {
 			var (
 				po *platformv1alpha1.PlatformOperator
 			)
 			BeforeEach(func() {
 				po = &platformv1alpha1.PlatformOperator{
 					ObjectMeta: metav1.ObjectMeta{
-						GenerateName: "prometheus-operator",
+						GenerateName: "prometheus-operator-invalid",
 					},
 					Spec: platformv1alpha1.PlatformOperatorSpec{
-						Packages: []string{"prometheus-operator"},
+						Packages: []string{"prometheus-operator-invalid"},
 					},
 				}
 				Expect(c.Create(ctx, po)).To(BeNil())
 			})
 			AfterEach(func() {
 				Expect(c.Delete(ctx, po)).To(BeNil())
+			})
+			It("should bubble up the resolution failures", func() {
+				Eventually(func() (*metav1.Condition, error) {
+					if err := c.Get(ctx, client.ObjectKeyFromObject(po), po); err != nil {
+						return nil, err
+					}
+					return meta.FindStatusCondition(po.Status.Conditions, platformv1alpha1.TypeSourced), nil
+				}).Should(And(
+					Not(BeNil()),
+					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(platformv1alpha1.TypeSourced)),
+					WithTransform(func(c *metav1.Condition) metav1.ConditionStatus { return c.Status }, Equal(metav1.ConditionFalse)),
+					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal("SolverProblemFailed")),
+					WithTransform(func(c *metav1.Condition) string { return c.Message }, ContainSubstring("constraints not satisfiable")),
+				))
 			})
 		})
 
@@ -83,6 +99,20 @@ var _ = Describe("platform operators controller", func() {
 			})
 			AfterEach(func() {
 				Expect(c.Delete(ctx, po)).To(BeNil())
+			})
+			It("should result in packages being successfully sourced", func() {
+				Eventually(func() (*metav1.Condition, error) {
+					if err := c.Get(ctx, client.ObjectKeyFromObject(po), po); err != nil {
+						return nil, err
+					}
+					return meta.FindStatusCondition(po.Status.Conditions, platformv1alpha1.TypeSourced), nil
+				}).Should(And(
+					Not(BeNil()),
+					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(platformv1alpha1.TypeSourced)),
+					WithTransform(func(c *metav1.Condition) metav1.ConditionStatus { return c.Status }, Equal(metav1.ConditionTrue)),
+					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(platformv1alpha1.ReasonSourceSuccessful)),
+					WithTransform(func(c *metav1.Condition) string { return c.Message }, ContainSubstring("Successfully sourced package candidates")),
+				))
 			})
 		})
 	})
