@@ -14,10 +14,6 @@ import (
 	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 
-const (
-	dataBaseDir = "testdata"
-)
-
 var _ = Describe("platform operators controller", func() {
 	var (
 		ns  *corev1.Namespace

@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	deppyv1alpha1 "github.com/operator-framework/deppy/api/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
@@ -29,6 +30,10 @@ var (
 	c   client.Client
 )
 
+const (
+	dataBaseDir = "testdata"
+)
+
 var _ = BeforeSuite(func() {
 	cfg = ctrl.GetConfigOrDie()
 
@@ -37,6 +42,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).To(BeNil())
 
 	err = rukpakv1alpha1.AddToScheme(scheme)
+	Expect(err).To(BeNil())
+
+	err = deppyv1alpha1.AddToScheme(scheme)
 	Expect(err).To(BeNil())
 
 	err = operatorsv1alpha1.AddToScheme(scheme)
