@@ -5,17 +5,16 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logr "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	deppyv1alpha1 "github.com/operator-framework/deppy/api/v1alpha1"
 	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
+	"github.com/timflannagan/platform-operators/internal/util"
 )
 
 // PlatformOperatorReconciler reconciles a PlatformOperator object
@@ -27,8 +26,6 @@ type PlatformOperatorReconciler struct {
 const (
 	packageConstraintType = "olm.RequirePackage"
 	packageValueKey       = "package"
-	platformResolution    = "platform"
-	platformSingletonName = "cluster"
 )
 
 //+kubebuilder:rbac:groups=platform.openshift.io,resources=platformoperators,verbs=get;list;watch;create;update;patch;delete
@@ -50,10 +47,6 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	po := &platformv1alpha1.PlatformOperator{}
 	if err := r.Get(ctx, req.NamespacedName, po); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-	// filter out any non-cluster singletons
-	if po.GetName() != platformSingletonName {
-		return ctrl.Result{}, nil
 	}
 	defer func() {
 		po := po.DeepCopy()
@@ -100,12 +93,6 @@ func newPackageRequirement(packageName string) deppyv1alpha1.Constraint {
 func (r *PlatformOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&platformv1alpha1.PlatformOperator{}).
-		Watches(&source.Kind{Type: &deppyv1alpha1.Resolution{}}, handler.EnqueueRequestsFromMapFunc(func(o client.Object) []reconcile.Request {
-			resolution := o.(*deppyv1alpha1.Resolution)
-			if resolution.GetName() == platformResolution {
-				return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: platformSingletonName}}}
-			}
-			return nil
-		})).
+		Watches(&source.Kind{Type: &deppyv1alpha1.Resolution{}}, handler.EnqueueRequestsFromMapFunc(util.RequeuePlatformOperators(r.Client))).
 		Complete(r)
 }
