@@ -90,7 +90,13 @@ func (r *CatalogSourceAdapter) applyCandidateInput(ctx context.Context, b source
 	// TODO: ID becomes a field on the Input resource vs. relying on the metadata.Name internally?
 	//
 	// TODO: add a controller owner reference?
-	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, candidateInput, func() error {
+	_, err := controllerutil.CreateOrPatch(ctx, r.Client, candidateInput, func() error {
+		candidateInput.ObjectMeta.Annotations = map[string]string{
+			"deppy.adapter.catalog/image":       b.Image,
+			"deppy.adapter.catalog/channel":     b.ChannelName,
+			"deppy.adapter.catalog/source-name": b.SourceName,
+			"deppy.adapter.catalog/package":     b.PackageName,
+		}
 		candidateInput.Spec = deppyv1alpha1.InputSpec{
 			InputClassName: inputClassName,
 			Properties:     b.Properties,
