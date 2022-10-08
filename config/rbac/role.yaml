@@ -1,0 +1,85 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - packages
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - packages/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - packages/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - catalogcaches
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - catalogcaches/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - catalogcaches/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - catalogsources
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - catalogsources/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - catalogsources/status
+  verbs:
+  - get
+  - patch
+  - update

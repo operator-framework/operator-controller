@@ -1,0 +1,15 @@
+
+# Binaries for programs and plugins
+bin
+
+# Kubernetes Generated files - skip generated files, except for vendored files
+
+!vendor/**/zz_generated.*
+
+# Dependency directories
+vendor/
+bin/
+dist/
+
+# apiserver certificates 
+config/certificates

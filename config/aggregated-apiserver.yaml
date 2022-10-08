@@ -1,0 +1,80 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rukpak-packageserver-apiserver
+  namespace: rukpak
+  labels:
+    api: rukpak-packageserver
+    apiserver: "true"
+spec:
+  selector:
+    matchLabels:
+      api: rukpak-packageserver
+      apiserver: "true"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        api: rukpak-packageserver
+        apiserver: "true"
+    spec:
+      containers:
+      - name: apiserver
+        image: docker.io/anik120/rukpak-packageserver:latest
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: apiserver-certs
+          mountPath: /apiserver.local.config/certificates
+          readOnly: true
+        command:
+        - "./apiserver"
+        args:
+        - "--etcd-servers=http://etcd-svc:2379"
+        - "--tls-cert-file=/apiserver.local.config/certificates/tls.crt"
+        - "--tls-private-key-file=/apiserver.local.config/certificates/tls.key"
+        - "--audit-log-path=-"
+        - "--feature-gates=APIPriorityAndFairness=false"
+        - "--audit-log-maxage=0"
+        - "--audit-log-maxbackup=0"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 20Mi
+          limits:
+            cpu: 100m
+            memory: 30Mi
+      volumes:
+      - name: apiserver-certs
+        secret:
+          secretName: rukpak-packageserver
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/tls
+metadata:
+  name: rukpak-packageserver
+  namespace: rukpak
+  labels:
+    api: rukpak-packageserver
+    apiserver: "true"
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURzVENDQXBtZ0F3SUJBZ0lJUG9QTkFIZ08vUVV3RFFZSktvWklodmNOQVFFTEJRQXdkREVMTUFrR0ExVUUKQmhNQ2RXNHhDekFKQmdOVkJBZ01Bbk4wTVFvd0NBWURWUVFIREFGc01Rb3dDQVlEVlFRS0RBRnZNUXN3Q1FZRApWUVFMREFKdmRURXpNREVHQTFVRUF3d3FjblZyY0dGckxYQmhZMnRoWjJWelpYSjJaWEl0WTJWeWRHbG1hV05oCmRHVXRZWFYwYUc5eWFYUjVNQjRYRFRJeU1UQXdOekU1TVRrd00xb1hEVE15TVRBd05ERTVNVGt3TTFvd0tqRW8KTUNZR0ExVUVBeE1mY25WcmNHRnJMWEJoWTJ0aFoyVnpaWEoyWlhJdWNuVnJjR0ZyTG5OMll6Q0NBU0l3RFFZSgpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DZ2dFQkFNSGpOVmlqbzFpcGlCUlE3K1daZmNWK09rK2JsVWViCkI2MXRqaHpEYlNJY0crSncyc1JkZkNOalNqRnd6dHpuYldha1ltdU5aVm5pYlFIZHV5QnpjNFMzeThPYnM4N3kKZW91WjV1U0xSbitzMVV5N2xKMFdQOGtVajM4eDVCdW4ySEVVdjBsMGJaMzlOK1l1WVltK0lpT09rV0tOVGdPNgppUjJDVkVDN2RzampZRHhhNHZkdE96Ri9sSTRBdHh1Zmt5dHRqTmJhd1M1ME0xOVhGSlFWeGNYcllyMVpoOC9jCjdMaFdvd0RENVp1K1cyMW16Ym5Vd2w2cEUvRlo3ODZaV1hkbjZjZnFJLytBK3NxRFh6dmxPeUN2clpuWGtJTDAKRy9NVytrZ2pSZmFYMjd5RVJQTmQ3ZzBueWtKUUhWZnlnczV5dGVlNjdjYmRTZmtlUG1LcUZrOENBd0VBQWFPQgprRENCalRBT0JnTlZIUThCQWY4RUJBTUNCYUF3SFFZRFZSMGxCQll3RkFZSUt3WUJCUVVIQXdFR0NDc0dBUVVGCkJ3TUNNQjhHQTFVZEl3UVlNQmFBRkZYTXJlZjJyeEZ1aUsyL1B3ZnZmMi9BbjZnNk1Ec0dBMVVkRVFRME1ES0MKQ1d4dlkyRnNhRzl6ZElJZmNuVnJjR0ZyTFhCaFkydGhaMlZ6WlhKMlpYSXVjblZyY0dGckxuTjJZNGNFZndBQQpBVEFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBTUZXOS9PTzZBbXYwL2VJUWxtb3h2aS8zbU5NU0ZzYlpMYTZqCk9sdElYMG1tR2ZuNUVBR3VYUEtLNC9WTktNT3AwVHRKcCtJUXE1MFo5S3BHdzZLdnZXbFRpQldVN1lETFlZYloKdlV6MEIrZTVXZk5OcVV5NUlDQkJtOVZuZmM3NFE3cVNaSVJocTM2YkViWkhBRGMxUnpGMmNnSTdYd01TcFVJdAptWk1HbTdzd0p1elVUYUpWclJoa0plbW1tbHVsZVNzMHhwbHNlM2hHS0IvQVFNcmtCa1k4eHJaN2RhRGtaVk5tCmROeWpTd3hXODkvMG5OcGRqTmcvcFhRWWNDUmVKRDU5cGw1R3NMNkozbkw1cWUxcEdzUi9BNGkwQVZlSUs0d3MKa2Z0Zmo2WlJIQjlWU1M4UWEvN0xyNFp0c2N3S0JmbzVxUU1DQ0prSzFYa1BucHF1bmc9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  tls.key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBd2VNMVdLT2pXS21JRkZEdjVabDl4WDQ2VDV1VlI1c0hyVzJPSE1OdElod2I0bkRhCnhGMThJMk5LTVhETzNPZHRacVJpYTQxbFdlSnRBZDI3SUhOemhMZkx3NXV6enZKNmk1bm01SXRHZjZ6VlRMdVUKblJZL3lSU1BmekhrRzZmWWNSUy9TWFJ0bmYwMzVpNWhpYjRpSTQ2UllvMU9BN3FKSFlKVVFMdDJ5T05nUEZyaQo5MjA3TVgrVWpnQzNHNStUSzIyTTF0ckJMblF6WDFjVWxCWEZ4ZXRpdlZtSHo5enN1RmFqQU1QbG03NWJiV2JOCnVkVENYcWtUOFZudnpwbFpkMmZweCtvai80RDZ5b05mTytVN0lLK3RtZGVRZ3ZRYjh4YjZTQ05GOXBmYnZJUkUKODEzdURTZktRbEFkVi9LQ3puSzE1N3J0eHQxSitSNCtZcW9XVHdJREFRQUJBb0lCQVFDU1l3S2ZCd1hJWmsrSQp6MGNoT2c5Y3NoNUNocnhoME9vdUJkNWJWeTJwcUVGaGFVV3pKc1lZVGRueGxET0xVK3drcUE1ckY5bWkwTEx1CnlzT0REOGZ6TjNYUUhWblg4UG1YTno2OTVXMzM3YjBwN3lLWXEvakMwQlE3dTZaM1B2WExBeGdkMUpzQ3d2R1cKaUFRNnBHUlFKazhjY29XcGlRZ0hVS1JlTDJ2UzVaRGdKVVpuSzYvc2wzUXg2WGtCYVVrT0RFZGFFeHBxNWtRYQowOTZwWkR0Z1drVS9PcjRWTzZIQk1NWnVYNlBFeGt3K0VPZWl2UGFIRkFMZmlobjYzY2pBcU1QK09ISUVYaytjCk4yUlYrQ2NyclRZMURKeGJ4enM4c3RNNFhxQ3R6K2tqdkpINWFvSVhZUWlhWW9IU1NHVDk1YlVaS01KbmZUeFMKMStheS9tZWhBb0dCQU9hS3RwZ0FJN3ZiOWNpaGZFc0xrSXYvQytMUTFZMWJkazVyc1kxZ3hEektZazV2d1UvRgpmR2ZNNzBERmc4cExUbWtobzhZbWprV3dBSEt3elgwZnpFYXc5ZlFnbWhPVzdMRHpzQUplNk1pN25XRnRjcHpYCnp3bnVlUlRCM2ZrY1RSby9BQ0I2YnBBc3IxTVQyUFRlMVI3MklnRTZTbTRmSXJlMlVSM29McGovQW9HQkFOZE0KVEdvbWx2MFhBeG11eVU5MmphMklOVFJYTkNhNEhHQzJIdjBXVEx3dkJWUHVrR2V1SEZYRnd5MXhnYlZoT0c2NwpZanNzcXRoY0xUOW5leHBnMHdFZXhlcEJoem1TU3dvTXd2QkZQODExUWcwcXJYZ3lNNGFQck4xUmFCYUMwb1RyCkhMdGpyeU5DWmRSNHQ4Yk9GaXFHSmVkY0dybmc5bEFqL3ZKaTc3S3hBb0dCQUpCZzRMZFNwdzVZVTVYQlpFalAKUmtnV2d3Z2FCeE9PNndsenNtODY0Y3E4YUZKODlKQ1R1alI3aUg2RTgrTTF4RFpjNWVjTGNHQStPQm1ibGlVOQpTNzRkeHZxTGpGS21XemI2ZGdrV0RTemhLay9BcmwyQlhkejNad2JUM3NMS3NaSzFUOHdIUU1TejUxemMraXRvCmZnbjAxUmoxdTNVNXRKRmU4WEFNWDFwYkFvR0FMUkowRE9UM1J4VENPV1kyRHNTcTlHRkhnaVdmYlZ1dDFURkwKVzRDSG4vM1lCN0l4MlFMQ085S2pBYWg1bHhjN1VUTTVaVm44aWo4QjJmdzM4VlhEMXNBeWZ0QXBGd3hoV1VGQwpyanBSR1Jvck1jWjFlbXhJRFN1VzdONVdCQ0J2SWhSMmQyUnZEZHFncHRKKzVzZk9MQ2paVm80WnFrQkdVSkM0Cmx0WFBpSUVDZ1lBbDgzdXk3VnZhNjd2ZGxnVlMrVisrR2hLenQ3R1Q2aTFpRE4vMTd0a3FYZUhEdlNHdXBzTzQKSFlXOTUyWlRsTWRXMkt6NDNvK0J5NmVlN0o1NmFaejVKaURDZnBnT0hHcjJPZ3k3M3BUWHJBVkVoM0JKa1ZpUApPWlgzTXZCK0w2MHVLZXpIOE4zODdBdndLNWRhMDhZZDdFK25FOHc3YktTL1U1cWNjYlBDOHc9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rukpak-packageserver
+  namespace: rukpak
+  labels:
+    api: rukpak-packageserver
+    apiserver: "true"
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 443
+  selector:
+    api: rukpak-packageserver
+    apiserver: "true"

@@ -1,0 +1,8 @@
+apiVersion: core.rukpak.io/v1beta1
+kind: CatalogSource
+metadata:
+  name: catalogsource-sample
+  namespace: test
+spec:
+  image: docker.io/anik120/community-operator-index:v4.11
+  pollingInterval: 45m
