@@ -31,8 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	corecontrollers "github.com/anik120/rukpak-packageserver/controllers/core"
 	"github.com/anik120/rukpak-packageserver/pkg/apis/core/v1beta1"
+	corecontrollers "github.com/anik120/rukpak-packageserver/pkg/controllers/core"
 	//+kubebuilder:scaffold:imports
 )
 
