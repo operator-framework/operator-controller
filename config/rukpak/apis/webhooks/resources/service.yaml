@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-service
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: platform-operators-rukpak-webhook-tls
+spec:
+  ports:
+    - port: 443
+      protocol: TCP
+      targetPort: 9443
+  selector:
+    app: webhooks

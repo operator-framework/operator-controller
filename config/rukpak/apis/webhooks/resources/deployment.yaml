@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhooks
+  labels:
+    app: webhooks
+spec:
+  selector:
+    matchLabels:
+      app: webhooks
+  template:
+    metadata:
+      labels:
+        app: webhooks
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      priorityClassName: "system-cluster-critical"
+      serviceAccountName: webhooks-admin
+      containers:
+        - name: webhooks
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ "ALL" ]
+          command: ["/webhooks"]
+          image: quay.io/operator-framework/rukpak:main
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+            - containerPort: 9443
+              name: webhook-server
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+          volumeMounts:
+          - mountPath: /tmp/k8s-webhook-server/serving-certs
+            name: cert
+            readOnly: true
+      volumes:
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: platform-operators-rukpak-webhook-tls

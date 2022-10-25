@@ -1,0 +1,22 @@
+apiVersion: config.openshift.io/v1
+kind: ClusterOperator
+metadata:
+  name: aggregated
+spec: {}
+status:
+  versions:
+  - name: operator
+    version: "0.0.1-snapshot"
+  relatedObjects:
+  - group: ''
+    name: openshift-platform-operators
+    resource: namespaces
+  - group: platform.openshift.io
+    name: ""
+    resource: platformoperators
+  - group: core.rukpak.io
+    name: ""
+    resource: bundles
+  - group: core.rukpak.io
+    name: ""
+    resource: bundledeployments

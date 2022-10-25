@@ -2,9 +2,8 @@ package sourcer
 
 import (
 	"context"
-	"fmt"
 
-	platformv1alpha1 "github.com/timflannagan/platform-operators/api/v1alpha1"
+	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
 )
 
 type Bundle struct {
@@ -12,10 +11,6 @@ type Bundle struct {
 	Image    string
 	Replaces string
 	Skips    []string
-}
-
-func (b Bundle) String() string {
-	return fmt.Sprintf("Version: %s; Image: %s; Replaces %s", b.Version, b.Image, b.Replaces)
 }
 
 type Sourcer interface {

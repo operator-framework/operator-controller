@@ -1,0 +1,9 @@
+# limit bundledeployment name length up to 45
+# this limits the max bundle name up to 52 (allows 11 extra letters)
+# the length of the bundle name is the length of bundledeployment name plus 7
+- op: add
+  path: /spec/versions/0/schema/openAPIV3Schema/properties/metadata/properties
+  value:
+    name:
+      type: string
+      maxLength: 45

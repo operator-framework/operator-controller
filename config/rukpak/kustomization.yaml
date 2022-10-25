@@ -1,0 +1,12 @@
+namePrefix: rukpak-
+bases:
+  - ./apis
+  - ./core
+images:
+- name: quay.io/brancz/kube-rbac-proxy
+  newName: gcr.io/kubebuilder/kube-rbac-proxy
+  newTag: v0.8.0
+# Edit this image if you would like to use a custom version of RukPak
+- name: quay.io/operator-framework/rukpak:main
+  newName: quay.io/openshift/origin-olm-rukpak
+  newTag: "4.12"
