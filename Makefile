@@ -47,26 +47,25 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 	# $(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths=./api/...
 	# $(CONTROLLER_GEN) rbac:roleName=manager-role paths=./... output:rbac:artifacts:config=config/rbac
 
-.PHONY: fmt
-fmt: ## Run go fmt against code.
-	go fmt ./...
+.PHONY: tidy
+tidy:  ## Update Go module dependencies.
+	go mod tidy
 
-.PHONY: vet
-vet: ## Run go vet against code.
-	go vet ./...
+.PHONY: verify
+verify: generate tidy  ## Run verification checks.
+	git diff --exit-code
 
 .PHONY: lint
-lint: ## Run golangci-lint linter checks.
-lint: golangci-lint
+lint: golangci-lint  ## Run golangci-lint linter checks.
 	$(GOLANGCI_LINT) run
 
 UNIT_TEST_DIRS=$(shell go list ./... | grep -v /test/)
 .PHONY: unit
-unit: generate fmt vet envtest ## Run unit tests.
+unit: generate envtest ## Run unit tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -count=1 -short $(UNIT_TEST_DIRS)
 
 .PHONY: e2e
-e2e: generate ginkgo ## Run e2e tests
+e2e: generate ginkgo ## Run e2e tests.
 	$(GINKGO) -trace -progress test/e2e
 
 ##@ Build
