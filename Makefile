@@ -43,9 +43,9 @@ help: ## Display this help.
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
-	# $(CONTROLLER_GEN) crd:crdVersions=v1 output:crd:artifacts:config=config/crd/bases paths=./api/...
-	# $(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths=./api/...
-	# $(CONTROLLER_GEN) rbac:roleName=manager-role paths=./... output:rbac:artifacts:config=config/rbac
+	$(CONTROLLER_GEN) crd:crdVersions=v1 output:crd:artifacts:config=config/crd/bases paths=./api/...
+	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths=./api/...
+	$(CONTROLLER_GEN) rbac:roleName=manager-role paths=./... output:rbac:artifacts:config=config/rbac
 
 .PHONY: tidy
 tidy:  ## Update Go module dependencies.
@@ -65,8 +65,13 @@ unit: generate envtest ## Run unit tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -count=1 -short $(UNIT_TEST_DIRS)
 
 .PHONY: e2e
-e2e: generate ginkgo ## Run e2e tests.
-	$(GINKGO) -trace -progress test/e2e
+e2e: deploy test-e2e
+
+.PHONY: test-e2e
+FOCUS := $(if $(TEST),-v -focus "$(TEST)")
+JUNIT_REPORT := $(if $(ARTIFACT_DIR), -output-dir $(ARTIFACT_DIR) -junit-report junit_e2e.xml)
+test-e2e: ginkgo ## Run e2e tests
+	$(GINKGO) -trace -progress $(JUNIT_REPORT) $(FOCUS) test/e2e
 
 ##@ Build
 
@@ -84,11 +89,6 @@ ifndef ignore-not-found
   ignore-not-found = false
 endif
 
-.PHONY: demo
-# NOTE: This will fail as the currently available version of RukPak (v0.4.0) does not have
-#       the requisite code.
-demo: deploy install-samples
-
 .PHONY: kind-load
 kind-load: build-container
 	kind load docker-image $(IMG)
@@ -96,6 +96,7 @@ kind-load: build-container
 .PHONY: install
 install: generate kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
+	kubectl apply -f vendor/github.com/openshift/api/platform/v1alpha1/platformoperators.crd.yaml
 
 .PHONY: uninstall
 uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -107,7 +108,7 @@ run: build-container kind-load install
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: deploy
-deploy: build-container kind-load run rukpak olm ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: build-container kind-load run  ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -165,3 +166,19 @@ $(GINKGO): $(LOCALBIN) ## Download ginkgo locally if necessary.
 golangci-lint: $(GOLANGCI_LINT)
 $(GOLANGCI_LINT): $(LOCALBIN) ## Download golangci-lint locally if necessary.
 	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+
+RUKPAK_RELEASE ?= v0.11.0
+
+.PHONY: rukpak
+rukpak:
+	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.0/cert-manager.yaml
+	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
+	kubectl apply -f https://github.com/operator-framework/rukpak/releases/download/$(RUKPAK_RELEASE)/rukpak.yaml
+	kubectl wait --for=condition=Available --namespace=rukpak-system deployment/core --timeout=60s
+	kubectl wait --for=condition=Available --namespace=rukpak-system deployment/helm-provisioner --timeout=60s
+	kubectl wait --for=condition=Available --namespace=rukpak-system deployment/rukpak-webhooks --timeout=60s
+	kubectl wait --for=condition=Available --namespace=crdvalidator-system deployment/crd-validation-webhook --timeout=60s
+
+.PHONY: olm
+olm:
+	operator-sdk olm install
