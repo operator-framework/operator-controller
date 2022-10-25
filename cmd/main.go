@@ -92,12 +92,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.PlatformOperatorReconciler{
-		Client: mgr.GetClient(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "PlatformOperator")
-		os.Exit(1)
-	}
 	if err = (&controllers.OperatorReconciler{
 		Client:  mgr.GetClient(),
 		Sourcer: sourcer.NewCatalogSourceHandler(mgr.GetClient()),
@@ -108,9 +102,9 @@ func main() {
 	//+kubebuilder:scaffold:builder
 
 	// check whether the ClusterOperator GV exists on the cluster to determine whether
-	// the aggregate ClusterOperator controller should be setup.
-	if err := registerCOControllersIfAvailable(mgr, systemNamespace); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "ClusterOperator")
+	// the downstream controllers should be setup.
+	if err := registerDownstreamControllers(mgr, systemNamespace); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Downstream")
 		os.Exit(1)
 	}
 
@@ -130,11 +124,10 @@ func main() {
 	}
 }
 
-// registerCOControllersIfAvailable is responsible for checking whether
+// registerDownstreamControllers is responsible for checking whether
 // the config.openshift.io/v1 GV is available on the cluster to determine
-// whether the ClusterOperator-related controllers should be added to the
-// mgr instance.
-func registerCOControllersIfAvailable(mgr ctrl.Manager, systemNamespace string) error {
+// whether the downstream-related controllers should be registered.
+func registerDownstreamControllers(mgr ctrl.Manager, systemNamespace string) error {
 	discovery, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
 	if err != nil {
 		return err
@@ -149,10 +142,19 @@ func registerCOControllersIfAvailable(mgr ctrl.Manager, systemNamespace string) 
 	if !supported {
 		return nil
 	}
-	// Add Aggregated CO controller to manager
-	return (&controllers.AggregatedClusterOperatorReconciler{
+
+	// Add the Aggregated ClusterOperator controller
+	err = (&controllers.AggregatedClusterOperatorReconciler{
 		Client:          mgr.GetClient(),
 		ReleaseVersion:  clusteroperator.GetReleaseVariable(),
 		SystemNamespace: util.PodNamespace(systemNamespace),
+	}).SetupWithManager(mgr)
+	if err != nil {
+		return err
+	}
+
+	// Add the PlatformOperator controller
+	return (&controllers.PlatformOperatorReconciler{
+		Client: mgr.GetClient(),
 	}).SetupWithManager(mgr)
 }
