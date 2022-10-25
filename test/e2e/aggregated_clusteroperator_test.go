@@ -8,12 +8,14 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
 	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
 	"github.com/timflannagan/platform-operators/internal/clusteroperator"
+	"github.com/timflannagan/platform-operators/internal/util"
 )
 
 var _ = Describe("aggregated clusteroperator controller", func() {
@@ -22,6 +24,14 @@ var _ = Describe("aggregated clusteroperator controller", func() {
 	)
 	BeforeEach(func() {
 		ctx = context.Background()
+
+		supported, err := util.IsAPIAvailable(dc, schema.GroupVersion{
+			Group:   "config.openshift.io",
+			Version: "v1",
+		})
+		if err != nil || supported != true {
+			Skip("ClusterOperator GK doesn't exist on the cluster")
+		}
 	})
 
 	When("no POs have been installed on the cluster", func() {

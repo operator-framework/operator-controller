@@ -11,6 +11,7 @@ import (
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,6 +30,7 @@ func TestPlatformOperators(t *testing.T) {
 var (
 	cfg *rest.Config
 	c   client.Client
+	dc  discovery.DiscoveryInterface
 )
 
 const (
@@ -58,5 +60,8 @@ var _ = BeforeSuite(func() {
 	Expect(err).To(BeNil())
 
 	c, err = client.New(cfg, client.Options{Scheme: scheme})
+	Expect(err).To(BeNil())
+
+	dc, err = discovery.NewDiscoveryClientForConfig(cfg)
 	Expect(err).To(BeNil())
 })
