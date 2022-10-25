@@ -21,6 +21,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - core.olm.io
+  resources:
+  - operators
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - core.olm.io
+  resources:
+  - operators/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.olm.io
+  resources:
+  - operators/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - core.rukpak.io
   resources:
   - bundledeployments
