@@ -16,10 +16,6 @@ limitations under the License.
 
 package v1alpha1
 
-import (
-	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
-)
-
 var (
 	TypeInstalled = "Installed"
 
@@ -33,11 +29,11 @@ var (
 
 // SetActiveBundleDeployment is responsible for populating the status.ActiveBundleDeployment
 // structure with the Operator resource the POM component is currently managing.
-func SetActiveBundleDeployment(po *platformv1alpha1.PlatformOperator, name string) {
-	if po == nil {
+func SetActiveBundleDeployment(o *Operator, name string) {
+	if o == nil {
 		panic("input specified is nil")
 	}
-	po.Status.ActiveBundleDeployment = platformv1alpha1.ActiveBundleDeployment{
+	o.Status.ActiveBundleDeployment = ActiveBundleDeployment{
 		Name: name,
 	}
 }
