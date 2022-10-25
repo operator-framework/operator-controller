@@ -32,7 +32,7 @@ var (
 )
 
 // SetActiveBundleDeployment is responsible for populating the status.ActiveBundleDeployment
-// structure with the BundleDeployment the POM component is currently managing.
+// structure with the Operator resource the POM component is currently managing.
 func SetActiveBundleDeployment(po *platformv1alpha1.PlatformOperator, name string) {
 	if po == nil {
 		panic("input specified is nil")
