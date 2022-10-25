@@ -4,19 +4,28 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	configv1 "github.com/openshift/api/config/v1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	utilerror "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
 	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
+)
+
+const (
+	// This is the error message thrown by ServerSupportsVersion function
+	// when an API version is not supported by the server.
+	notSupportedErrorMessage = "server does not support API version"
 )
 
 // GetPodNamespace checks whether the controller is running in a Pod vs.
@@ -157,4 +166,15 @@ func InspectBundleDeployment(_ context.Context, conditions []metav1.Condition) *
 		}
 	}
 	return nil
+}
+
+func IsAPIAvailable(c discovery.DiscoveryInterface, gv schema.GroupVersion) (bool, error) {
+	discoveryErr := discovery.ServerSupportsVersion(c, gv)
+	if strings.Contains(discoveryErr.Error(), notSupportedErrorMessage) {
+		return false, nil
+	}
+	if discoveryErr != nil {
+		return false, discoveryErr
+	}
+	return true, nil
 }

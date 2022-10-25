@@ -20,14 +20,14 @@ import (
 	"flag"
 	"os"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
+	"k8s.io/client-go/discovery"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	configv1 "github.com/openshift/api/config/v1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -99,13 +99,10 @@ func main() {
 	}
 	//+kubebuilder:scaffold:builder
 
-	// Add Aggregated CO controller to manager
-	if err = (&controllers.AggregatedClusterOperatorReconciler{
-		Client:          mgr.GetClient(),
-		ReleaseVersion:  clusteroperator.GetReleaseVariable(),
-		SystemNamespace: util.PodNamespace(systemNamespace),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "AggregatedCO")
+	// check whether the ClusterOperator GV exists on the cluster to determine whether
+	// the aggregate ClusterOperator controller should be setup.
+	if err := registerCOControllersIfAvailable(mgr, systemNamespace); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterOperator")
 		os.Exit(1)
 	}
 
@@ -123,4 +120,31 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+// registerCOControllersIfAvailable is responsible for checking whether
+// the config.openshift.io/v1 GV is available on the cluster to determine
+// whether the ClusterOperator-related controllers should be added to the
+// mgr instance.
+func registerCOControllersIfAvailable(mgr ctrl.Manager, systemNamespace string) error {
+	discovery, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
+	if err != nil {
+		return err
+	}
+	supported, err := util.IsAPIAvailable(discovery, schema.GroupVersion{
+		Group:   "config.openshift.io",
+		Version: "v1",
+	})
+	if err != nil {
+		return err
+	}
+	if !supported {
+		return nil
+	}
+	// Add Aggregated CO controller to manager
+	return (&controllers.AggregatedClusterOperatorReconciler{
+		Client:          mgr.GetClient(),
+		ReleaseVersion:  clusteroperator.GetReleaseVariable(),
+		SystemNamespace: util.PodNamespace(systemNamespace),
+	}).SetupWithManager(mgr)
 }
