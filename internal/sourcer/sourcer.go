@@ -3,7 +3,7 @@ package sourcer
 import (
 	"context"
 
-	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
+	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 
 type Bundle struct {
@@ -14,5 +14,5 @@ type Bundle struct {
 }
 
 type Sourcer interface {
-	Source(context.Context, *platformv1alpha1.PlatformOperator) (*Bundle, error)
+	Source(context.Context, *platformtypes.Operator) (*Bundle, error)
 }

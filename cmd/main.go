@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
+	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
 	"github.com/timflannagan/platform-operators/internal/clusteroperator"
 	"github.com/timflannagan/platform-operators/internal/controllers"
 	"github.com/timflannagan/platform-operators/internal/sourcer"
@@ -53,6 +54,7 @@ func init() {
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(platformv1alpha1.Install(scheme))
 	utilruntime.Must(configv1.AddToScheme(scheme))
+	utilruntime.Must(platformtypes.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -91,10 +93,16 @@ func main() {
 	}
 
 	if err = (&controllers.PlatformOperatorReconciler{
+		Client: mgr.GetClient(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "PlatformOperator")
+		os.Exit(1)
+	}
+	if err = (&controllers.OperatorReconciler{
 		Client:  mgr.GetClient(),
 		Sourcer: sourcer.NewCatalogSourceHandler(mgr.GetClient()),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "PlatformOperator")
+		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
