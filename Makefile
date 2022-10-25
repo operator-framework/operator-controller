@@ -5,6 +5,7 @@ IMG ?= quay.io/operator-framework/operator:latest
 ENVTEST_K8S_VERSION = 1.22
 BIN_DIR := bin
 CONTAINER_RUNTIME ?= docker
+KIND_CLUSTER_NAME ?= kind
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -65,6 +66,7 @@ unit: generate envtest ## Run unit tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test -count=1 -short $(UNIT_TEST_DIRS)
 
 .PHONY: e2e
+e2e: KIND_CLUSTER_NAME=e2e
 e2e: deploy test-e2e
 
 .PHONY: test-e2e
@@ -90,8 +92,13 @@ ifndef ignore-not-found
 endif
 
 .PHONY: kind-load
-kind-load: build-container
-	kind load docker-image $(IMG)
+kind-load: kind ## Loads the currently constructed image onto the cluster
+	$(KIND) load docker-image $(IMG) --name $(KIND_CLUSTER_NAME)
+
+.PHONY: kind-cluster
+kind-cluster: kind ## Standup a kind cluster
+	$(KIND) get clusters | grep $(KIND_CLUSTER_NAME) || $(KIND) create cluster --name $(KIND_CLUSTER_NAME)
+	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
 
 .PHONY: install
 install: generate kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
@@ -103,12 +110,12 @@ uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified i
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: run
-run: build-container kind-load install
+run: build-container kind-cluster kind-load install
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: deploy
-deploy: build-container kind-load run  ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: run rukpak olm  ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
@@ -131,6 +138,8 @@ CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 GINKGO ?= $(LOCALBIN)/ginkgo
 GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
+KIND ?= $(LOCALBIN)/kind
+OPERATOR_SDK ?= $(LOCALBIN)/operator-sdk
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v3.8.7
@@ -139,6 +148,9 @@ ENVTEST_VERSION ?= latest
 KIND_VERSION ?= v0.14.0
 GINKGO_VERSION ?= v2.1.4
 GOLANGCI_LINT_VERSION ?= v1.49.0
+KIND_VERSION ?= v0.14.0
+OPERATOR_SDK_VERSION ?= v1.25.0
+RUKPAK_RELEASE ?= v0.11.0
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
@@ -167,7 +179,15 @@ golangci-lint: $(GOLANGCI_LINT)
 $(GOLANGCI_LINT): $(LOCALBIN) ## Download golangci-lint locally if necessary.
 	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 
-RUKPAK_RELEASE ?= v0.11.0
+.PHONY: kind
+kind: $(KIND) ## Download kind locally if necessary.
+$(KIND): $(LOCALBIN)
+	GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@$(KIND_VERSION)
+
+.PHONY: operator-sdk
+operator-sdk: $(OPERATOR_SDK)
+$(OPERATOR_SDK): $(LOCALBIN) ## Download operator-sdk locally if necessary.
+	curl -L https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_linux_amd64 -o $(OPERATOR_SDK) && chmod +x $(OPERATOR_SDK)
 
 .PHONY: rukpak
 rukpak:
@@ -180,5 +200,5 @@ rukpak:
 	kubectl wait --for=condition=Available --namespace=crdvalidator-system deployment/crd-validation-webhook --timeout=60s
 
 .PHONY: olm
-olm:
-	operator-sdk olm install
+olm: operator-sdk
+	$(OPERATOR_SDK) olm install
