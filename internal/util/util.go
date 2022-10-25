@@ -40,18 +40,18 @@ func PodNamespace(defaultNamespace string) string {
 	return string(namespace)
 }
 
-func RequeuePlatformOperators(cl client.Client) handler.MapFunc {
+func RequeueOperators(cl client.Client) handler.MapFunc {
 	return func(object client.Object) []reconcile.Request {
-		poList := &platformv1alpha1.PlatformOperatorList{}
-		if err := cl.List(context.Background(), poList); err != nil {
+		operators := &platformtypes.OperatorList{}
+		if err := cl.List(context.Background(), operators); err != nil {
 			return nil
 		}
 
 		var requests []reconcile.Request
-		for _, po := range poList.Items {
+		for _, o := range operators.Items {
 			requests = append(requests, reconcile.Request{
 				NamespacedName: types.NamespacedName{
-					Name: po.GetName(),
+					Name: o.GetName(),
 				},
 			})
 		}
@@ -61,20 +61,20 @@ func RequeuePlatformOperators(cl client.Client) handler.MapFunc {
 
 func RequeueBundleDeployment(c client.Client) handler.MapFunc {
 	return func(obj client.Object) []reconcile.Request {
-		bi := obj.(*rukpakv1alpha1.BundleDeployment)
+		bd := obj.(*rukpakv1alpha1.BundleDeployment)
 
-		poList := &platformv1alpha1.PlatformOperatorList{}
-		if err := c.List(context.Background(), poList); err != nil {
+		operators := &platformtypes.OperatorList{}
+		if err := c.List(context.Background(), operators); err != nil {
 			return nil
 		}
 
 		var requests []reconcile.Request
-		for _, po := range poList.Items {
-			po := po
+		for _, o := range operators.Items {
+			o := o
 
-			for _, ref := range bi.GetOwnerReferences() {
-				if ref.Name == po.GetName() {
-					requests = append(requests, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(&po)})
+			for _, ref := range bd.GetOwnerReferences() {
+				if ref.Name == o.GetName() {
+					requests = append(requests, reconcile.Request{NamespacedName: client.ObjectKeyFromObject(&o)})
 				}
 			}
 		}
