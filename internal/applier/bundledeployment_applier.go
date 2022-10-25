@@ -4,7 +4,7 @@ import (
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
+	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 
 const (
@@ -12,11 +12,11 @@ const (
 	registryProvisionerID = "core-rukpak-io-registry"
 )
 
-func NewBundleDeployment(po *platformv1alpha1.PlatformOperator, image string) *rukpakv1alpha1.BundleDeployment {
+func NewBundleDeployment(o *platformtypes.Operator, image string) *rukpakv1alpha1.BundleDeployment {
 	bd := &rukpakv1alpha1.BundleDeployment{}
-	bd.SetName(po.GetName())
+	bd.SetName(o.GetName())
 
-	controllerRef := metav1.NewControllerRef(po, po.GroupVersionKind())
+	controllerRef := metav1.NewControllerRef(o, o.GroupVersionKind())
 	bd.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
 
 	bd.Spec = buildBundleDeployment(image)

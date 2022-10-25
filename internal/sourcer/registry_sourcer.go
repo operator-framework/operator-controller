@@ -9,17 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
+	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
-
-const (
-	catalogName      = "redhat-operators"
-	catalogNamespace = "openshift-marketplace"
-)
-
-func getDefaultCatalogNN() types.NamespacedName {
-	return types.NamespacedName{Name: catalogName, Namespace: catalogNamespace}
-}
 
 type catalogSource struct {
 	client.Client
@@ -31,19 +22,22 @@ func NewCatalogSourceHandler(c client.Client) Sourcer {
 	}
 }
 
-func (cs catalogSource) Source(ctx context.Context, po *platformv1alpha1.PlatformOperator) (*Bundle, error) {
+func (cs catalogSource) Source(ctx context.Context, o *platformtypes.Operator) (*Bundle, error) {
 	catalog := &operatorsv1alpha1.CatalogSource{}
-	if err := cs.Client.Get(ctx, getDefaultCatalogNN(), catalog); err != nil {
+	if err := cs.Client.Get(ctx, types.NamespacedName{
+		Name:      o.Spec.Catalog.Name,
+		Namespace: o.Spec.Catalog.Namespace,
+	}, catalog); err != nil {
 		return nil, err
 	}
 	sources := sources([]operatorsv1alpha1.CatalogSource{*catalog})
 
-	candidates, err := sources.Filter(byConnectionReadiness).GetCandidates(ctx, po)
+	candidates, err := sources.Filter(byConnectionReadiness).GetCandidates(ctx, o)
 	if err != nil {
 		return nil, err
 	}
 	if len(candidates) == 0 {
-		return nil, fmt.Errorf("failed to find candidate olm.bundles from the %s package", po.Spec.Package.Name)
+		return nil, fmt.Errorf("failed to find candidate olm.bundles from the %s package", o.Spec.Package.Name)
 	}
 	latestBundle, err := candidates.Latest()
 	if err != nil {
@@ -53,7 +47,7 @@ func (cs catalogSource) Source(ctx context.Context, po *platformv1alpha1.Platfor
 	return latestBundle, nil
 }
 
-func (s sources) GetCandidates(ctx context.Context, po *platformv1alpha1.PlatformOperator) (bundles, error) {
+func (s sources) GetCandidates(ctx context.Context, o *platformtypes.Operator) (bundles, error) {
 	// TODO(tflannag): This doesn't account for edge case where there are zero sources.
 	if len(s) != 1 {
 		return nil, fmt.Errorf("validation error: only a single catalog source is supported during phase 0")
@@ -73,7 +67,7 @@ func (s sources) GetCandidates(ctx context.Context, po *platformv1alpha1.Platfor
 		candidates bundles
 	)
 	for b := it.Next(); b != nil; b = it.Next() {
-		if b.PackageName != po.Spec.Package.Name {
+		if b.PackageName != o.Spec.Package.Name {
 			continue
 		}
 		candidates = append(candidates, Bundle{
