@@ -5,7 +5,7 @@ run:
 linters:
   enable:
   - asciicheck
-  - deadcode
+  - unused
   - depguard
   - errorlint
   - gofmt
@@ -32,8 +32,10 @@ linters-settings:
       alias: apierrors
     - pkg: github.com/operator-framework/rukpak/api/v1alpha1
       alias: rukpakv1alpha1
-    - pkg: github.com/timflannagan/platform-operators/api/v1alpha1
+    - pkg: github.com/openshift/api/platform/v1alpha1
       alias: platformv1alpha1
+    - pkg: github.com/timflannagan/platform-operators/api/v1alpha1
+      alias: platformtypes
   revive:
     rules:
     - name: dot-imports
@@ -44,7 +46,7 @@ linters-settings:
       - github.com/onsi/gomega
       - github.com/onsi/ginkgo
   goimports:
-    local-prefixes: github.com/timflannagan/platform-operators
+    local-prefixes: github.com/timflannagan/platform-operators,github.com/openshift/api/platform/v1alpha1
 
 output:
   format: tab
