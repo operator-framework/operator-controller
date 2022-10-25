@@ -18,30 +18,20 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logr "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
 	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
-	"github.com/timflannagan/platform-operators/internal/applier"
 	"github.com/timflannagan/platform-operators/internal/sourcer"
-	"github.com/timflannagan/platform-operators/internal/util"
-)
-
-var (
-	errSourceFailed = errors.New("failed to run sourcing logic")
 )
 
 // PlatformOperatorReconciler reconciles a PlatformOperator object
@@ -79,76 +69,57 @@ func (r *PlatformOperatorReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}()
 
-	bd, err := r.ensureDesiredBundleDeployment(ctx, po)
-	if err != nil {
-		// check whether we failed to return an active BundleDeployment
-		// resource due to sourcing failures. These sourcing failures are
-		// possible if the desired package name isn't present in the supported
-		// catalog sources in the cluster.
-		reason := platformtypes.ReasonInstallFailed
-		if errors.Is(err, errSourceFailed) {
-			reason = platformtypes.ReasonSourceFailed
-		}
+	// ensure an Operator resource is created under-the-hood.
+	if err := r.ensureOperator(ctx, po); err != nil {
 		meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
 			Type:    platformtypes.TypeInstalled,
 			Status:  metav1.ConditionFalse,
-			Reason:  reason,
+			Reason:  platformtypes.ReasonInstallFailed,
 			Message: err.Error(),
 		})
 		return ctrl.Result{}, err
 	}
 
-	// check whether the generated BundleDeployment are reporting any
-	// failures when attempting to unpack the configured registry+v1
-	// bundle contents, or persisting those unpack contents to the cluster.
-	if failureCond := util.InspectBundleDeployment(ctx, bd.Status.Conditions); failureCond != nil {
-		// avoid returning an error here as the controller is watching for BD resource
-		// events. this should avoid unnecessary requeues when the BD is still in the
-		// same state.
-		meta.SetStatusCondition(&po.Status.Conditions, *failureCond)
-		return ctrl.Result{}, nil
-	}
+	// TODO(tflannag): Bubble up underlying Operator resource status.
 	meta.SetStatusCondition(&po.Status.Conditions, metav1.Condition{
 		Type:    platformtypes.TypeInstalled,
 		Status:  metav1.ConditionTrue,
 		Reason:  platformtypes.ReasonInstallSuccessful,
-		Message: fmt.Sprintf("Successfully applied the %s BundleDeployment resource", bd.GetName()),
+		Message: fmt.Sprintf("Successfully applied the %s Operator resource", po.GetName()),
 	})
-	platformtypes.SetActiveBundleDeployment(po, bd.GetName())
+	platformtypes.SetActiveBundleDeployment(po, po.GetName())
 
 	return ctrl.Result{}, nil
 }
 
-func (r *PlatformOperatorReconciler) ensureDesiredBundleDeployment(ctx context.Context, po *platformv1alpha1.PlatformOperator) (*rukpakv1alpha1.BundleDeployment, error) {
-	bd := &rukpakv1alpha1.BundleDeployment{}
+func (r *PlatformOperatorReconciler) ensureOperator(ctx context.Context, po *platformv1alpha1.PlatformOperator) error {
+	o := &platformtypes.Operator{}
+	o.SetName(po.GetName())
+	controllerRef := metav1.NewControllerRef(po, po.GroupVersionKind())
 
-	// check whether the underlying BD has already been generated to determine
-	// whether the sourcing logic needs to be run to avoid performing unnecessary
-	// work given upgrades aren't supported during phase 0. Note: this logic
-	// doesn't compare the current and desired status of the BD resource so it's
-	// possible that users/controllers/etc. can modify the generated BD resource.
-	// See https://github.com/timflannagan/platform-operators/issues/47 for more details.
-	if err := r.Get(ctx, types.NamespacedName{Name: po.GetName()}, bd); err != nil {
-		if !apierrors.IsNotFound(err) {
-			return nil, err
+	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, o, func() error {
+		o.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
+		o.Spec = platformtypes.OperatorSpec{
+			Catalog: platformtypes.CatalogSpec{
+				Name:      "operatorhubio-catalog",
+				Namespace: "olm",
+			},
+			Package: platformtypes.PackageSpec{
+				Name: po.Spec.Package.Name,
+			},
 		}
-		sourcedBundle, err := r.Sourcer.Source(ctx, po)
-		if err != nil {
-			return nil, fmt.Errorf("%v: %w", err, errSourceFailed)
-		}
-		bd = applier.NewBundleDeployment(po, sourcedBundle.Image)
-		if err := r.Create(ctx, bd); err != nil {
-			return nil, err
-		}
-	}
-	return bd, nil
+		return nil
+	})
+	return err
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PlatformOperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&platformv1alpha1.PlatformOperator{}).
-		Watches(&source.Kind{Type: &operatorsv1alpha1.CatalogSource{}}, handler.EnqueueRequestsFromMapFunc(util.RequeuePlatformOperators(mgr.GetClient()))).
-		Watches(&source.Kind{Type: &rukpakv1alpha1.BundleDeployment{}}, handler.EnqueueRequestsFromMapFunc(util.RequeueBundleDeployment(mgr.GetClient()))).
+		Watches(&source.Kind{Type: &platformtypes.Operator{}}, &handler.EnqueueRequestForOwner{
+			IsController: true,
+			OwnerType:    &platformv1alpha1.PlatformOperator{},
+		}).
 		Complete(r)
 }
