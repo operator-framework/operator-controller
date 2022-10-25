@@ -43,15 +43,15 @@ var (
 	errSourceFailed = errors.New("failed to run sourcing logic")
 )
 
-// PlatformOperatorReconciler reconciles a PlatformOperator object
+// OperatorReconciler reconciles an Operator object
 type OperatorReconciler struct {
 	client.Client
 	Sourcer sourcer.Sourcer
 }
 
-//+kubebuilder:rbac:groups=platform.openshift.io,resources=platformoperators,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=platform.openshift.io,resources=platformoperators/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=platform.openshift.io,resources=platformoperators/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core.olm.io,resources=operators,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core.olm.io,resources=operators/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=core.olm.io,resources=operators/finalizers,verbs=update
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=catalogsources,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core.rukpak.io,resources=bundledeployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core.rukpak.io,resources=bundles,verbs=get;list;watch;create;update;patch;delete
