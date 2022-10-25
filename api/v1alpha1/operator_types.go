@@ -20,9 +20,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // OperatorSpec defines the desired state of Operator
 type OperatorSpec struct {
 	Catalog CatalogSpec `json:"catalog"`
@@ -41,6 +38,19 @@ type PackageSpec struct {
 // OperatorStatus defines the observed state of Operator
 type OperatorStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// activeBundleDeployment is the reference to the BundleDeployment resource that's
+	// being managed by this Operator resource. If this field is not populated in the status
+	// then it means the Operator has either not been installed yet or is failing to install.
+	// +optional
+	ActiveBundleDeployment ActiveBundleDeployment `json:"activeBundleDeployment,omitempty"`
+}
+
+// ActiveBundleDeployment references a BundleDeployment resource.
+type ActiveBundleDeployment struct {
+	// name is the metadata.name of the referenced BundleDeployment object.
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
 }
 
 //+kubebuilder:object:root=true

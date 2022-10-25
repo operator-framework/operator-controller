@@ -113,7 +113,7 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		Reason:  platformtypes.ReasonInstallSuccessful,
 		Message: fmt.Sprintf("Successfully applied the %s BundleDeployment resource", bd.GetName()),
 	})
-	// platformtypes.SetActiveBundleDeployment(po, bd.GetName())
+	platformtypes.SetActiveBundleDeployment(o, bd.GetName())
 
 	return ctrl.Result{}, nil
 }
