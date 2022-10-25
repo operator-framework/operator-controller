@@ -100,9 +100,13 @@ func (r *PlatformOperatorReconciler) ensureOperator(ctx context.Context, po *pla
 	_, err := controllerutil.CreateOrUpdate(ctx, r.Client, o, func() error {
 		o.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
 		o.Spec = platformtypes.OperatorSpec{
+			// Note(tflannag): Hardcode this for now given it's a phase 0
+			// restriction that will ease over time. We don't have a good
+			// idea on what an installer UX configuration will look like,
+			// so this should be sufficient for now.
 			Catalog: platformtypes.CatalogSpec{
-				Name:      "operatorhubio-catalog",
-				Namespace: "olm",
+				Name:      "redhat-operators",
+				Namespace: "openshift-marketplace",
 			},
 			Package: platformtypes.PackageSpec{
 				Name: po.Spec.Package.Name,
