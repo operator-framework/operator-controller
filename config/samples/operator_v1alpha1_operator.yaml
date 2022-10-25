@@ -1,0 +1,6 @@
+apiVersion: operator.operator.io/v1alpha1
+kind: Operator
+metadata:
+  name: operator-sample
+spec:
+  # TODO(user): Add fields here
