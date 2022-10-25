@@ -103,7 +103,6 @@ kind-cluster: kind ## Standup a kind cluster
 .PHONY: install
 install: generate kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
-	kubectl apply -f vendor/github.com/openshift/api/platform/v1alpha1/platformoperators.crd.yaml
 
 .PHONY: uninstall
 uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
