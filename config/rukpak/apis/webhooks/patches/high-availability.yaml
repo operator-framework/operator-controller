@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhooks
+spec:
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 25%
+  template:
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: webhooks
+            topologyKey: kubernetes.io/hostname

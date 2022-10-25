@@ -6,9 +6,24 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - config.openshift.io
+  resources:
+  - clusteroperators
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - config.openshift.io
+  resources:
+  - clusteroperators/status
+  verbs:
+  - patch
+  - update
+- apiGroups:
   - core.rukpak.io
   resources:
-  - bundleinstances
+  - bundledeployments
   verbs:
   - create
   - delete

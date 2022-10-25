@@ -1,5 +1,5 @@
 # Adds namespace to all resources.
-namespace: platform-operators-system
+namespace: openshift-platform-operators
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named
@@ -12,10 +12,27 @@ namePrefix: platform-operators-
 #commonLabels:
 #  someName: someValue
 
+# Annotations to add to all resources.
+commonAnnotations:
+  release.openshift.io/feature-set: "TechPreviewNoUpgrade"
+  include.release.openshift.io/self-managed-high-availability: "true"
+  include.release.openshift.io/single-node-developer: "true"
+  exclude.release.openshift.io/internal-openshift-hosted: "true"
+
+images:
+- name: quay.io/brancz/kube-rbac-proxy
+  newName: gcr.io/kubebuilder/kube-rbac-proxy
+  newTag: v0.8.0
+# Edit this image if you would like to use a custom version of PlatformOperators
+- name: controller:latest
+  newName: quay.io/openshift/origin-cluster-platform-operators-manager
+  newTag: "4.12"
+
 bases:
-- ../crd
 - ../rbac
 - ../manager
+- ../rukpak
+- ../clusteroperator
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
 # crd/kustomization.yaml
 #- ../webhook

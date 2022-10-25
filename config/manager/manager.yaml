@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: latest
     control-plane: controller-manager
   name: system
 ---
@@ -26,6 +28,9 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      priorityClassName: "system-cluster-critical"
       containers:
       - command:
         - /manager
@@ -36,6 +41,11 @@ spec:
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ "ALL" ]
+        env:
+        - name: RELEASE_VERSION
+          value: "0.0.1-snapshot"
         livenessProbe:
           httpGet:
             path: /healthz
@@ -48,12 +58,7 @@ spec:
             port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
-        # TODO(user): Configure the resources accordingly based on the project requirements.
-        # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
         resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
           requests:
             cpu: 10m
             memory: 64Mi
