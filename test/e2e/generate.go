@@ -22,9 +22,9 @@ import (
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 )
 
-// var (
-// 	genName = SimpleNameGenerator.GenerateName
-// )
+var (
+	genName = SimpleNameGenerator.GenerateName
+)
 
 // NameGenerator generates names for objects. Some backends may have more information
 // available to guide selection of new names and this interface hides those details.

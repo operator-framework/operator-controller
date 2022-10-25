@@ -16,6 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
+	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 
 func TestPlatformOperators(t *testing.T) {
@@ -30,11 +31,18 @@ var (
 	c   client.Client
 )
 
+const (
+	dataBaseDir = "testdata"
+)
+
 var _ = BeforeSuite(func() {
 	cfg = ctrl.GetConfigOrDie()
 
 	scheme := runtime.NewScheme()
 	err := platformv1alpha1.Install(scheme)
+	Expect(err).To(BeNil())
+
+	err = platformtypes.AddToScheme(scheme)
 	Expect(err).To(BeNil())
 
 	err = rukpakv1alpha1.AddToScheme(scheme)

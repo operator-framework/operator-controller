@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -8,7 +9,11 @@ import (
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -53,6 +58,19 @@ func HandleTestCaseFailure() error {
 	cmd.Env = append(os.Environ(), envVars...)
 
 	return cmd.Run()
+}
+
+func SetupTestNamespace(c client.Client, name string) *corev1.Namespace {
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+	Eventually(func() error {
+		return c.Create(context.Background(), ns)
+	}).Should(Succeed())
+
+	return ns
 }
 
 // waitFor wraps wait.Pool with default polling parameters
