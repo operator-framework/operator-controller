@@ -131,10 +131,17 @@ func (r *OperatorReconciler) ensureDesiredBundleDeployment(ctx context.Context, 
 		if !apierrors.IsNotFound(err) {
 			return nil, err
 		}
+		// TODO: surface the sourced bundle version in the Operator's status.
 		sourcedBundle, err := r.Sourcer.Source(ctx, o)
 		if err != nil {
 			return nil, fmt.Errorf("%v: %w", err, errSourceFailed)
 		}
+
+		// TODO: Remove this debug artifact once upgrades are better supported,
+		// and this overall logic is refactored.
+		log := logr.FromContext(ctx)
+		log.Info("successfully sourced a registry+v1 bundle", "version", sourcedBundle.Version)
+
 		bd = applier.NewBundleDeployment(o, sourcedBundle.Image)
 		if err := r.Create(ctx, bd); err != nil {
 			return nil, err
