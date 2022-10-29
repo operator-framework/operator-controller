@@ -3,8 +3,11 @@ package sourcer
 import (
 	"context"
 	"fmt"
+	"regexp"
 
+	"github.com/blang/semver/v4"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-registry/pkg/api"
 	registryClient "github.com/operator-framework/operator-registry/pkg/client"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -62,12 +65,16 @@ func (s sources) GetCandidates(ctx context.Context, o *platformtypes.Operator) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to list bundles from the %s/%s catalog: %w", cs.GetName(), cs.GetNamespace(), err)
 	}
+	matchesDesiredVersion := getVersionFilter(o.Spec.Package.Version)
 
 	var (
 		candidates bundles
 	)
 	for b := it.Next(); b != nil; b = it.Next() {
 		if b.PackageName != o.Spec.Package.Name {
+			continue
+		}
+		if !matchesDesiredVersion(b) {
 			continue
 		}
 		candidates = append(candidates, Bundle{
@@ -78,4 +85,50 @@ func (s sources) GetCandidates(ctx context.Context, o *platformtypes.Operator) (
 		})
 	}
 	return candidates, nil
+}
+
+func isExplicitSemver(v string) bool {
+	spaces, err := regexp.MatchString(" ", v)
+	if err != nil {
+		return false
+	}
+	specialChar, err := regexp.MatchString("[<|>|=|\\|]", v)
+	if err != nil {
+		return false
+	}
+	return !spaces && !specialChar
+}
+
+func getVersionFilter(v string) func(b *api.Bundle) bool {
+	// check whether no version requirements were supplied,
+	// and default to no version filtering in this case.
+	if v == "" {
+		return func(b *api.Bundle) bool {
+			return true
+		}
+	}
+
+	// distinguish between an explicit desired version, e.g. "2.0.0",
+	// versus a version range being supplied in the spec.Package.Version
+	// field.
+	if isExplicitSemver(v) {
+		version, err := semver.Parse(v)
+		if err != nil {
+			panic(err)
+		}
+		return func(b *api.Bundle) bool {
+			return b.GetVersion() == version.String()
+		}
+	}
+	expectedRange, err := semver.ParseRange(v)
+	if err != nil {
+		panic(err)
+	}
+	return func(b *api.Bundle) bool {
+		bundleVersion, err := semver.Parse(b.GetVersion())
+		if err != nil {
+			panic(err)
+		}
+		return expectedRange(bundleVersion)
+	}
 }
