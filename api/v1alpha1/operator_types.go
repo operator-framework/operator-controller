@@ -32,7 +32,8 @@ type CatalogSpec struct {
 }
 
 type PackageSpec struct {
-	Name string `json:"name"`
+	Name    string `json:"name"`
+	Version string `json:"version,omitempty"`
 }
 
 // OperatorStatus defines the observed state of Operator
