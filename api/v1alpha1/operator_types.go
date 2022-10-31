@@ -22,8 +22,8 @@ import (
 
 // OperatorSpec defines the desired state of Operator
 type OperatorSpec struct {
-	Catalog CatalogSpec `json:"catalog"`
-	Package PackageSpec `json:"package"`
+	Catalog *CatalogSpec `json:"catalog,omitempty"`
+	Package *PackageSpec `json:"package"`
 }
 
 type CatalogSpec struct {

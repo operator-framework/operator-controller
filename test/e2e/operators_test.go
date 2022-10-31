@@ -181,11 +181,11 @@ var _ = Describe("operators controller", func() {
 						GenerateName: "valid-",
 					},
 					Spec: platformtypes.OperatorSpec{
-						Catalog: platformtypes.CatalogSpec{
+						Catalog: &platformtypes.CatalogSpec{
 							Name:      "prometheus",
 							Namespace: ns.GetName(),
 						},
-						Package: platformtypes.PackageSpec{
+						Package: &platformtypes.PackageSpec{
 							Name: "prometheus-operator",
 						},
 					},
