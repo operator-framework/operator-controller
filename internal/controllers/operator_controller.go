@@ -96,6 +96,7 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		})
 		return ctrl.Result{}, err
 	}
+	platformtypes.SetActiveBundleDeployment(o, bd.GetName())
 
 	// check whether the generated BundleDeployment are reporting any
 	// failures when attempting to unpack the configured registry+v1
@@ -113,7 +114,6 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		Reason:  platformtypes.ReasonInstallSuccessful,
 		Message: fmt.Sprintf("Successfully applied the %s BundleDeployment resource", bd.GetName()),
 	})
-	platformtypes.SetActiveBundleDeployment(o, bd.GetName())
 
 	return ctrl.Result{}, nil
 }
