@@ -65,7 +65,6 @@ spec:
                 - name
                 type: object
             required:
-            - catalog
             - package
             type: object
           status:

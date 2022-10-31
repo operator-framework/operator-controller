@@ -103,11 +103,11 @@ func (r *PlatformOperatorReconciler) ensureOperator(ctx context.Context, po *pla
 			// restriction that will ease over time. We don't have a good
 			// idea on what an installer UX configuration will look like,
 			// so this should be sufficient for now.
-			Catalog: platformtypes.CatalogSpec{
+			Catalog: &platformtypes.CatalogSpec{
 				Name:      "redhat-operators",
 				Namespace: "openshift-marketplace",
 			},
-			Package: platformtypes.PackageSpec{
+			Package: &platformtypes.PackageSpec{
 				Name: po.Spec.Package.Name,
 			},
 		}
