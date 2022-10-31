@@ -75,16 +75,8 @@ var _ = Describe("operators controller", func() {
 				Expect(c.Delete(ctx, o)).To(Succeed())
 			})
 
-			It("should eventually contain a non-empty status.ActiveBundleDeployment.Name", func() {
-				Eventually(func() (bool, error) {
-					if err := c.Get(ctx, client.ObjectKeyFromObject(o), o); err != nil {
-						return false, err
-					}
-					return o.Status.ActiveBundleDeployment.Name != "", nil
-				})
-			})
-
-			It("should eventually result in a successful installation", func() {
+			It("should chose the highest semver package when no catalog source configuration has been specified", func() {
+				By("verifying the installation eventually succeeds")
 				Eventually(func() (*metav1.Condition, error) {
 					if err := c.Get(ctx, client.ObjectKeyFromObject(o), o); err != nil {
 						return nil, err
@@ -99,9 +91,8 @@ var _ = Describe("operators controller", func() {
 					WithTransform(func(c *metav1.Condition) metav1.ConditionStatus { return c.Status }, Equal(metav1.ConditionTrue)),
 					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(platformtypes.ReasonInstallSuccessful)),
 				))
-			})
 
-			It("should chose the highest semver package when no catalog source configuration has been specified", func() {
+				By("verifying that the highest semver container image was selected")
 				Eventually(func() bool {
 					if err := c.Get(ctx, client.ObjectKeyFromObject(o), o); err != nil {
 						return false
@@ -116,7 +107,7 @@ var _ = Describe("operators controller", func() {
 						return false
 					}
 					// Note: this points to the v1.5.1 image.
-					return bd.Spec.Template.Spec.Source.Image.Ref == "quay.io/operatorhubio/universal-crossplane@v1.5.1-up.1"
+					return bd.Spec.Template.Spec.Source.Image.Ref == "quay.io/operatorhubio/universal-crossplane:v1.5.1-up.1"
 				}).Should(BeTrue())
 
 			})
