@@ -26,8 +26,11 @@ function ensure_kubectl() {
 
 function collect_artifacts() {
     commands=()
-    commands+=("get co platform-operators-aggregated -o yaml")
-    commands+=("get platformoperators -o yaml")
+    # TODO(tflannag): Figure out a graceful way to collect downstream
+    # only artifacts.
+    # commands+=("get co platform-operators-aggregated -o yaml")
+    # commands+=("get platformoperators -o yaml")
+    commands+=("get operators.core.olm.io -o yaml")
     commands+=("get bundledeployments -o yaml")
     commands+=("get bundles -o yaml")
 

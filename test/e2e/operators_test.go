@@ -30,6 +30,99 @@ var _ = Describe("operators controller", func() {
 		Expect(c.Delete(ctx, ns)).To(BeNil())
 	})
 
+	When("sourcing content from multiple catalog sources", func() {
+		var (
+			catalog1 MagicCatalog
+			catalog2 MagicCatalog
+		)
+		BeforeEach(func() {
+			provider, err := NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.v0.2.0.yaml"))
+			Expect(err).To(BeNil())
+
+			catalog1 = NewMagicCatalog(c, ns.GetName(), "prometheus", provider)
+			Expect(catalog1.DeployCatalog(ctx)).To(BeNil())
+
+			provider2, err := NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "crossplane.v0.1.0.yaml"))
+			Expect(err).To(BeNil())
+
+			catalog2 = NewMagicCatalog(c, ns.GetName(), "crossplane", provider2)
+			Expect(catalog2.DeployCatalog(ctx)).To(BeNil())
+		})
+		AfterEach(func() {
+			Expect(catalog1.UndeployCatalog(ctx)).To(BeNil())
+			Expect(catalog2.UndeployCatalog(ctx)).To(BeNil())
+		})
+
+		When("a valid operator is created", func() {
+			var (
+				o *platformtypes.Operator
+			)
+			BeforeEach(func() {
+				o = &platformtypes.Operator{
+					ObjectMeta: metav1.ObjectMeta{
+						GenerateName: "valid-",
+					},
+					Spec: platformtypes.OperatorSpec{
+						Package: &platformtypes.PackageSpec{
+							Name: "crossplane",
+						},
+					},
+				}
+				Expect(c.Create(ctx, o)).To(Succeed())
+			})
+			AfterEach(func() {
+				Expect(HandleTestCaseFailure()).To(BeNil())
+				Expect(c.Delete(ctx, o)).To(Succeed())
+			})
+
+			It("should eventually contain a non-empty status.ActiveBundleDeployment.Name", func() {
+				Eventually(func() (bool, error) {
+					if err := c.Get(ctx, client.ObjectKeyFromObject(o), o); err != nil {
+						return false, err
+					}
+					return o.Status.ActiveBundleDeployment.Name != "", nil
+				})
+			})
+
+			It("should eventually result in a successful installation", func() {
+				Eventually(func() (*metav1.Condition, error) {
+					if err := c.Get(ctx, client.ObjectKeyFromObject(o), o); err != nil {
+						return nil, err
+					}
+					if o.Status.ActiveBundleDeployment.Name == "" {
+						return nil, fmt.Errorf("waiting for bundledeployment name to be populated")
+					}
+					return meta.FindStatusCondition(o.Status.Conditions, platformtypes.TypeInstalled), nil
+				}).Should(And(
+					Not(BeNil()),
+					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(platformtypes.TypeInstalled)),
+					WithTransform(func(c *metav1.Condition) metav1.ConditionStatus { return c.Status }, Equal(metav1.ConditionTrue)),
+					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(platformtypes.ReasonInstallSuccessful)),
+				))
+			})
+
+			It("should chose the highest semver package when no catalog source configuration has been specified", func() {
+				Eventually(func() bool {
+					if err := c.Get(ctx, client.ObjectKeyFromObject(o), o); err != nil {
+						return false
+					}
+					bdName := o.Status.ActiveBundleDeployment.Name
+					if bdName == "" {
+						return false
+					}
+
+					bd := &rukpakv1alpha1.BundleDeployment{}
+					if err := c.Get(ctx, types.NamespacedName{Name: bdName}, bd); err != nil {
+						return false
+					}
+					// Note: this points to the v1.5.1 image.
+					return bd.Spec.Template.Spec.Source.Image.Ref == "quay.io/operatorhubio/universal-crossplane@v1.5.1-up.1"
+				}).Should(BeTrue())
+
+			})
+		})
+	})
+
 	When("sourcing content from a single catalog source", func() {
 		var (
 			catalog MagicCatalog
@@ -55,11 +148,11 @@ var _ = Describe("operators controller", func() {
 						GenerateName: "valid-",
 					},
 					Spec: platformtypes.OperatorSpec{
-						Catalog: platformtypes.CatalogSpec{
+						Catalog: &platformtypes.CatalogSpec{
 							Name:      "prometheus",
 							Namespace: ns.GetName(),
 						},
-						Package: platformtypes.PackageSpec{
+						Package: &platformtypes.PackageSpec{
 							Name:    "prometheus-operator",
 							Version: "0.1.0",
 						},
@@ -118,11 +211,11 @@ var _ = Describe("operators controller", func() {
 						GenerateName: "valid-",
 					},
 					Spec: platformtypes.OperatorSpec{
-						Catalog: platformtypes.CatalogSpec{
+						Catalog: &platformtypes.CatalogSpec{
 							Name:      "prometheus",
 							Namespace: ns.GetName(),
 						},
-						Package: platformtypes.PackageSpec{
+						Package: &platformtypes.PackageSpec{
 							Name:    "prometheus-operator",
 							Version: ">0.1.0",
 						},
@@ -193,6 +286,7 @@ var _ = Describe("operators controller", func() {
 				Expect(c.Create(ctx, o)).To(Succeed())
 			})
 			AfterEach(func() {
+				Expect(HandleTestCaseFailure()).To(BeNil())
 				Expect(c.Delete(ctx, o)).To(Succeed())
 			})
 
