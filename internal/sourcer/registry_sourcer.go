@@ -10,7 +10,9 @@ import (
 	"github.com/operator-framework/operator-registry/pkg/api"
 	registryClient "github.com/operator-framework/operator-registry/pkg/client"
 	"k8s.io/apimachinery/pkg/types"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	logr "sigs.k8s.io/controller-runtime/pkg/log"
 
 	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
@@ -26,15 +28,10 @@ func NewCatalogSourceHandler(c client.Client) Sourcer {
 }
 
 func (cs catalogSource) Source(ctx context.Context, o *platformtypes.Operator) (*Bundle, error) {
-	catalog := &operatorsv1alpha1.CatalogSource{}
-	if err := cs.Client.Get(ctx, types.NamespacedName{
-		Name:      o.Spec.Catalog.Name,
-		Namespace: o.Spec.Catalog.Namespace,
-	}, catalog); err != nil {
+	sources, err := determineSources(ctx, cs.Client, o)
+	if err != nil {
 		return nil, err
 	}
-	sources := sources([]operatorsv1alpha1.CatalogSource{*catalog})
-
 	candidates, err := sources.Filter(byConnectionReadiness).GetCandidates(ctx, o)
 	if err != nil {
 		return nil, err
@@ -51,40 +48,45 @@ func (cs catalogSource) Source(ctx context.Context, o *platformtypes.Operator) (
 }
 
 func (s sources) GetCandidates(ctx context.Context, o *platformtypes.Operator) (bundles, error) {
-	// TODO(tflannag): This doesn't account for edge case where there are zero sources.
-	if len(s) != 1 {
-		return nil, fmt.Errorf("validation error: only a single catalog source is supported during phase 0")
-	}
-	cs := s[0]
-
-	rc, err := registryClient.NewClient(cs.Status.GRPCConnectionState.Address)
-	if err != nil {
-		return nil, fmt.Errorf("failed to register client from the %s/%s grpc connection: %w", cs.GetName(), cs.GetNamespace(), err)
-	}
-	it, err := rc.ListBundles(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list bundles from the %s/%s catalog: %w", cs.GetName(), cs.GetNamespace(), err)
-	}
 	matchesDesiredVersion := getVersionFilter(o.Spec.Package.Version)
+	log := logr.FromContext(ctx)
 
+	// TODO(tflannag): Revisit this implementation as it's expensive.
 	var (
 		candidates bundles
+		errors     []error
 	)
-	for b := it.Next(); b != nil; b = it.Next() {
-		if b.PackageName != o.Spec.Package.Name {
+	for _, cs := range s {
+		// TODO(tflannag): Determine how to handle failure modes when creating a new
+		// registry client, and when listing bundles from a catalog. We can still successfully
+		// find a candidate from a catalog if 1/3 catalogs are down in the cluster.
+		rc, err := registryClient.NewClient(cs.Status.GRPCConnectionState.Address)
+		if err != nil {
+			errors = append(errors, fmt.Errorf("failed to register client from the %s/%s grpc connection: %w", cs.GetName(), cs.GetNamespace(), err))
 			continue
 		}
-		if !matchesDesiredVersion(b) {
+		it, err := rc.ListBundles(ctx)
+		if err != nil {
+			log.Info("failed to list bundles from catalog", "name", cs.GetName(), "namespace", cs.GetNamespace(), "error", err.Error())
 			continue
 		}
-		candidates = append(candidates, Bundle{
-			Version:  b.GetVersion(),
-			Image:    b.GetBundlePath(),
-			Skips:    b.GetSkips(),
-			Replaces: b.GetReplaces(),
-		})
+
+		for b := it.Next(); b != nil; b = it.Next() {
+			if b.PackageName != o.Spec.Package.Name {
+				continue
+			}
+			if !matchesDesiredVersion(b) {
+				continue
+			}
+			candidates = append(candidates, Bundle{
+				Version:  b.GetVersion(),
+				Image:    b.GetBundlePath(),
+				Skips:    b.GetSkips(),
+				Replaces: b.GetReplaces(),
+			})
+		}
 	}
-	return candidates, nil
+	return candidates, utilerrors.NewAggregate(errors)
 }
 
 func isExplicitSemver(v string) bool {
@@ -131,4 +133,27 @@ func getVersionFilter(v string) func(b *api.Bundle) bool {
 		}
 		return expectedRange(bundleVersion)
 	}
+}
+
+func determineSources(ctx context.Context, c client.Client, o *platformtypes.Operator) (sources, error) {
+	// check whether no catalog was configured, and attempt to use all the catalogs
+	// in the cluster to find candidate bundles to install.
+	if o.Spec.Catalog == nil {
+		css := &operatorsv1alpha1.CatalogSourceList{}
+		if err := c.List(ctx, css); err != nil {
+			return nil, err
+		}
+		if len(css.Items) == 0 {
+			return nil, fmt.Errorf("failed to query for any catalog sources in the cluster")
+		}
+		return sources(css.Items), nil
+	}
+	catalog := &operatorsv1alpha1.CatalogSource{}
+	if err := c.Get(ctx, types.NamespacedName{
+		Name:      o.Spec.Catalog.Name,
+		Namespace: o.Spec.Catalog.Namespace,
+	}, catalog); err != nil {
+		return nil, err
+	}
+	return sources([]operatorsv1alpha1.CatalogSource{*catalog}), nil
 }
