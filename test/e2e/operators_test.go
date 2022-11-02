@@ -106,7 +106,6 @@ var _ = Describe("operators controller", func() {
 					if err := c.Get(ctx, types.NamespacedName{Name: bdName}, bd); err != nil {
 						return false
 					}
-					// Note: this points to the v1.5.1 image.
 					return bd.Spec.Template.Spec.Source.Image.Ref == "quay.io/operatorhubio/universal-crossplane:v1.5.1-up.1"
 				}).Should(BeTrue())
 
@@ -305,6 +304,36 @@ var _ = Describe("operators controller", func() {
 					WithTransform(func(c *metav1.Condition) metav1.ConditionStatus { return c.Status }, Equal(metav1.ConditionTrue)),
 					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(platformtypes.ReasonInstallSuccessful)),
 				))
+			})
+
+			When("a new operator version has become available", func() {
+				BeforeEach(func() {
+					updatedProvider, err := NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.v0.3.0.yaml"))
+					Expect(err).To(BeNil())
+
+					Expect(catalog.UpdateCatalog(ctx, updatedProvider)).To(BeNil())
+				})
+				It("should eventually pivot to the most recent version", func() {
+					Eventually(func() bool {
+						if err := c.Get(ctx, client.ObjectKeyFromObject(o), o); err != nil {
+							return false
+						}
+						bdName := o.Status.ActiveBundleDeployment.Name
+						if bdName == "" {
+							return false
+						}
+
+						bd := &rukpakv1alpha1.BundleDeployment{}
+						if err := c.Get(ctx, types.NamespacedName{Name: bdName}, bd); err != nil {
+							return false
+						}
+						version, ok := bd.GetLabels()["core.olm.io/version"]
+						if !ok {
+							return false
+						}
+						return version == "0.3.0" && bd.Spec.Template.Spec.Source.Image.Ref == "quay.io/operatorhubio/prometheus:v0.47.0--20220325T220130"
+					}).Should(BeTrue())
+				})
 			})
 		})
 	})

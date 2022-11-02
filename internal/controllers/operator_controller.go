@@ -23,10 +23,8 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -119,33 +117,14 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 }
 
 func (r *OperatorReconciler) ensureDesiredBundleDeployment(ctx context.Context, o *platformtypes.Operator) (*rukpakv1alpha1.BundleDeployment, error) {
-	bd := &rukpakv1alpha1.BundleDeployment{}
-
-	// check whether the underlying BD has already been generated to determine
-	// whether the sourcing logic needs to be run to avoid performing unnecessary
-	// work given upgrades aren't supported during phase 0. Note: this logic
-	// doesn't compare the current and desired status of the BD resource so it's
-	// possible that users/controllers/etc. can modify the generated BD resource.
-	// See https://github.com/timflannagan/platform-operators/issues/47 for more details.
-	if err := r.Get(ctx, types.NamespacedName{Name: o.GetName()}, bd); err != nil {
-		if !apierrors.IsNotFound(err) {
-			return nil, err
-		}
-		// TODO: surface the sourced bundle version in the Operator's status.
-		sourcedBundle, err := r.Sourcer.Source(ctx, o)
-		if err != nil {
-			return nil, fmt.Errorf("%v: %w", err, errSourceFailed)
-		}
-
-		// TODO: Remove this debug artifact once upgrades are better supported,
-		// and this overall logic is refactored.
-		log := logr.FromContext(ctx)
-		log.Info("successfully sourced a registry+v1 bundle", "version", sourcedBundle.Version)
-
-		bd = applier.NewBundleDeployment(o, sourcedBundle.Image)
-		if err := r.Create(ctx, bd); err != nil {
-			return nil, err
-		}
+	// TODO: surface the sourced bundle version in the Operator's status.
+	sourcedBundle, err := r.Sourcer.Source(ctx, o)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", err, errSourceFailed)
+	}
+	bd, err := applier.Apply(ctx, o, r.Client, *sourcedBundle)
+	if err != nil {
+		return nil, err
 	}
 	return bd, nil
 }
