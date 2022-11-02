@@ -79,6 +79,10 @@ func (s sources) GetCandidates(ctx context.Context, o *platformtypes.Operator) (
 				continue
 			}
 			candidates = append(candidates, Bundle{
+				SourceInfo: types.NamespacedName{
+					Name:      cs.GetName(),
+					Namespace: cs.GetNamespace(),
+				},
 				Version:  b.GetVersion(),
 				Image:    b.GetBundlePath(),
 				Skips:    b.GetSkips(),
