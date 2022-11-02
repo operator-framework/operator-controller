@@ -44,7 +44,7 @@ var (
 // OperatorReconciler reconciles an Operator object
 type OperatorReconciler struct {
 	client.Client
-	Sourcer sourcer.Sourcer
+	sourcer.Sourcer
 }
 
 //+kubebuilder:rbac:groups=core.olm.io,resources=operators,verbs=get;list;watch;create;update;patch;delete
@@ -76,20 +76,28 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 	}()
 
-	bd, err := r.ensureDesiredBundleDeployment(ctx, o)
+	source, err := r.Source(ctx, o)
 	if err != nil {
-		// check whether we failed to return an active BundleDeployment
-		// resource due to sourcing failures. These sourcing failures are
-		// possible if the desired package name isn't present in the supported
-		// catalog sources in the cluster.
-		reason := platformtypes.ReasonInstallFailed
-		if errors.Is(err, errSourceFailed) {
-			reason = platformtypes.ReasonSourceFailed
-		}
 		meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
 			Type:    platformtypes.TypeInstalled,
 			Status:  metav1.ConditionFalse,
-			Reason:  reason,
+			Reason:  platformtypes.ReasonSourceFailed,
+			Message: err.Error(),
+		})
+		return ctrl.Result{}, fmt.Errorf("%v: %w", err, errSourceFailed)
+	}
+	platformtypes.SetSourceInfo(o, platformtypes.SourceInfo{
+		Name:      source.SourceInfo.Name,
+		Namespace: source.SourceInfo.Namespace,
+		Version:   source.Version,
+	})
+
+	bd, err := r.ensureDesiredBundleDeployment(ctx, o, source)
+	if err != nil {
+		meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
+			Type:    platformtypes.TypeInstalled,
+			Status:  metav1.ConditionFalse,
+			Reason:  platformtypes.ReasonInstallFailed,
 			Message: err.Error(),
 		})
 		return ctrl.Result{}, err
@@ -116,13 +124,8 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	return ctrl.Result{}, nil
 }
 
-func (r *OperatorReconciler) ensureDesiredBundleDeployment(ctx context.Context, o *platformtypes.Operator) (*rukpakv1alpha1.BundleDeployment, error) {
-	// TODO: surface the sourced bundle version in the Operator's status.
-	sourcedBundle, err := r.Sourcer.Source(ctx, o)
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", err, errSourceFailed)
-	}
-	bd, err := applier.Apply(ctx, o, r.Client, *sourcedBundle)
+func (r *OperatorReconciler) ensureDesiredBundleDeployment(ctx context.Context, o *platformtypes.Operator, source *sourcer.Bundle) (*rukpakv1alpha1.BundleDeployment, error) {
+	bd, err := applier.Apply(ctx, o, r.Client, *source)
 	if err != nil {
 		return nil, err
 	}
