@@ -3,14 +3,17 @@ package sourcer
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/types"
+
 	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
 )
 
 type Bundle struct {
-	Version  string
-	Image    string
-	Replaces string
-	Skips    []string
+	Version    string
+	Image      string
+	Replaces   string
+	Skips      []string
+	SourceInfo types.NamespacedName
 }
 
 type Sourcer interface {
