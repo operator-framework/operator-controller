@@ -37,3 +37,12 @@ func SetActiveBundleDeployment(o *Operator, name string) {
 		Name: name,
 	}
 }
+
+// SetSourceInfo is responsible for populating the status.SourceInfo
+// structure with the Operator resource the POM component is currently managing.
+func SetSourceInfo(o *Operator, info SourceInfo) {
+	if o == nil {
+		panic("input specified is nil")
+	}
+	o.Status.SourceInfo = info
+}
