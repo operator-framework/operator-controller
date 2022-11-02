@@ -45,6 +45,18 @@ type OperatorStatus struct {
 	// then it means the Operator has either not been installed yet or is failing to install.
 	// +optional
 	ActiveBundleDeployment ActiveBundleDeployment `json:"activeBundleDeployment,omitempty"`
+
+	// sourceInfo is the reference to the previously sourced catalog data that's being
+	// installed by this Operator resource.
+	SourceInfo SourceInfo `json:"sourceInfo,omitempty"`
+}
+
+// SourceInfo contains metadata information for the current bundle being managed
+// by an Operator resource.
+type SourceInfo struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Version   string `json:"version"`
 }
 
 // ActiveBundleDeployment references a BundleDeployment resource.
