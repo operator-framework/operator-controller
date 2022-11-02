@@ -22,6 +22,9 @@ spec:
     - jsonPath: .status.conditions[?(.type=="Installed")].reason
       name: Install State
       type: string
+    - jsonPath: .status.sourceInfo.version
+      name: Installed Version
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
