@@ -23,10 +23,10 @@ spec:
         runAsUser: 0
       containers:
       - name: controller
-        image: docker.io/anik120/rukpak-packageserver:latest
+        image: docker.io/anik120/catalogsource-controller:latest
         imagePullPolicy: IfNotPresent
         command:
-        - "./controller-manager"
+        - "./manager"
         args:
         resources:
           requests:

@@ -1,6 +1,10 @@
 
-# Image URL to use all building/pushing image targets
-IMG ?= docker.io/anik120/rukpak-packageserver:latest
+# Image URL to use all building/pushing controller image targets
+CONTROLLER_IMG ?= docker.io/anik120/catalogsource-controller:latest
+
+# Image URL to use all building/pushing apiserver image targets
+SERVER_IMG ?= docker.io/anik120/rukpak-packageserver:latest
+
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.23
 
@@ -61,21 +65,33 @@ test: manifests generate fmt vet envtest ## Run tests.
 
 ##@ Build
 
-.PHONY: build
-build: generate fmt vet ## Build manager binary.
+.PHONY: build-controller
+build-controller: generate fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
+
+.PHONY: build-server
+build-server: fmt vet ## Build api-server.
+	go build -o bin/apiserver cmd/apiserver/main.go
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
-.PHONY: docker-build
-docker-build: test ## Build docker image with the manager.
-	docker build -t ${IMG} .
+.PHONY: docker-build-controller
+docker-build-controller: test ## Build docker image with the manager.
+	docker build -f controller.Dockerfile -t ${CONTROLLER_IMG} .
 
-.PHONY: docker-push
-docker-push: ## Push docker image with the manager.
-	docker push ${IMG}
+.PHONY: docker-push-controller
+docker-push-controller: ## Push docker image with the manager.
+	docker push ${CONTROLLER_IMG}
+
+.PHONY: docker-build-server
+docker-build-server: test ## Build docker image with the apiserver.
+	docker build -f apiserver.Dockerfile -t ${SERVER_IMG} .
+
+.PHONY: docker-push-server
+docker-push-server: ## Push docker image with the apiserver.
+	docker push ${SERVER_IMG}
 
 ##@ Deployment
 
@@ -107,9 +123,6 @@ $(LOCALBIN):
 
 CONTROLLER_TOOLS_VERSION ?= v0.9.0
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
-# .PHONY: controller-gen
-# controller-gen: ## Download controller-gen locally if necessary.
-# 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0)
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
