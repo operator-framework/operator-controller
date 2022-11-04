@@ -37,7 +37,7 @@ func (cs catalogSource) Source(ctx context.Context, o *platformtypes.Operator) (
 		return nil, err
 	}
 	if len(candidates) == 0 {
-		return nil, fmt.Errorf("failed to find candidate olm.bundles from the %s package", o.Spec.Package.Name)
+		return nil, fmt.Errorf("failed to find any bundles for the desired %s package name", o.Spec.Package.Name)
 	}
 	latestBundle, err := candidates.Latest()
 	if err != nil {
