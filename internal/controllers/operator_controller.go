@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -35,10 +34,6 @@ import (
 	"github.com/timflannagan/platform-operators/internal/applier"
 	"github.com/timflannagan/platform-operators/internal/sourcer"
 	"github.com/timflannagan/platform-operators/internal/util"
-)
-
-var (
-	errSourceFailed = errors.New("failed to run sourcing logic")
 )
 
 // OperatorReconciler reconciles an Operator object
@@ -84,7 +79,7 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			Reason:  platformtypes.ReasonSourceFailed,
 			Message: err.Error(),
 		})
-		return ctrl.Result{}, fmt.Errorf("%v: %w", err, errSourceFailed)
+		return ctrl.Result{}, err
 	}
 	platformtypes.SetSourceInfo(o, platformtypes.SourceInfo{
 		Name:      source.SourceInfo.Name,
@@ -92,7 +87,7 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		Version:   source.Version,
 	})
 
-	bd, err := r.ensureDesiredBundleDeployment(ctx, o, source)
+	bd, err := applier.Apply(ctx, o, r.Client, *source)
 	if err != nil {
 		meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
 			Type:    platformtypes.TypeInstalled,
@@ -122,14 +117,6 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	})
 
 	return ctrl.Result{}, nil
-}
-
-func (r *OperatorReconciler) ensureDesiredBundleDeployment(ctx context.Context, o *platformtypes.Operator, source *sourcer.Bundle) (*rukpakv1alpha1.BundleDeployment, error) {
-	bd, err := applier.Apply(ctx, o, r.Client, *source)
-	if err != nil {
-		return nil, err
-	}
-	return bd, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
