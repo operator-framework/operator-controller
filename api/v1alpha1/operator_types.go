@@ -20,6 +20,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var (
+	TypeInstalled = "Installed"
+
+	ReasonSourceFailed  = "SourceFailed"
+	ReasonUnpackPending = "UnpackPending"
+
+	ReasonInstallFailed     = "InstallFailed"
+	ReasonInstallSuccessful = "InstallSuccessful"
+	ReasonInstallPending    = "InstallPending"
+)
+
 // OperatorSpec defines the desired state of Operator
 type OperatorSpec struct {
 	Catalog *CatalogSpec `json:"catalog,omitempty"`
@@ -94,4 +105,24 @@ type OperatorList struct {
 
 func init() {
 	SchemeBuilder.Register(&Operator{}, &OperatorList{})
+}
+
+// SetActiveBundleDeployment is responsible for populating the status.ActiveBundleDeployment
+// structure with the Operator resource the Operator controller is currently managing.
+func SetActiveBundleDeployment(o *Operator, name string) {
+	if o == nil {
+		panic("input specified is nil")
+	}
+	o.Status.ActiveBundleDeployment = ActiveBundleDeployment{
+		Name: name,
+	}
+}
+
+// SetSourceInfo is responsible for populating the status.SourceInfo
+// structure with the Operator resource the Operator controller is currently managing.
+func SetSourceInfo(o *Operator, info SourceInfo) {
+	if o == nil {
+		panic("input specified is nil")
+	}
+	o.Status.SourceInfo = info
 }
