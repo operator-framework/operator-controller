@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
+	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 var _ = Describe("operators controller", func() {

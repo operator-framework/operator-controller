@@ -31,8 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
-	"github.com/timflannagan/platform-operators/internal/clusteroperator"
-	"github.com/timflannagan/platform-operators/internal/util"
+	"github.com/operator-framework/operator-controller/internal/clusteroperator"
+	"github.com/operator-framework/operator-controller/internal/util"
 )
 
 type AggregatedClusterOperatorReconciler struct {

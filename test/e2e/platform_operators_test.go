@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
-	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
+	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 var _ = Describe("platform operators controller", func() {
@@ -113,7 +113,7 @@ var _ = Describe("platform operators controller", func() {
 		})
 
 		// Note: this is a known limitation in the current implementation.
-		// See https://github.com/timflannagan/platform-operators/issues/47 for more details.
+		// See https://github.com/operator-framework/operator-controller/issues/47 for more details.
 		It("the underlying BD has been modified", func() {
 			Eventually(func() error {
 				bi := &rukpakv1alpha1.BundleDeployment{}

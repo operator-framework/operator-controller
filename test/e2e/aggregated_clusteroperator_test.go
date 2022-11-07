@@ -13,9 +13,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
-	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
-	"github.com/timflannagan/platform-operators/internal/clusteroperator"
-	"github.com/timflannagan/platform-operators/internal/util"
+	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/clusteroperator"
+	"github.com/operator-framework/operator-controller/internal/util"
 )
 
 var _ = Describe("aggregated clusteroperator controller", func() {

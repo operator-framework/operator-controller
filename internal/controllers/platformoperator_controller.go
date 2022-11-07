@@ -30,8 +30,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
-	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
-	"github.com/timflannagan/platform-operators/internal/sourcer"
+	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/sourcer"
 )
 
 // PlatformOperatorReconciler reconciles a PlatformOperator object
