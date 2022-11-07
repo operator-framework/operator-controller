@@ -13,7 +13,7 @@ jobs:
           go-version-file: "go.mod"
 
       - name: Run verification checks
-        run: make tidy
+        run: make verify
   lint:
     runs-on: ubuntu-latest
     steps:
