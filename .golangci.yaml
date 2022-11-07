@@ -32,10 +32,8 @@ linters-settings:
       alias: apierrors
     - pkg: github.com/operator-framework/rukpak/api/v1alpha1
       alias: rukpakv1alpha1
-    - pkg: github.com/openshift/api/platform/v1alpha1
-      alias: platformv1alpha1
     - pkg: github.com/operator-framework/operator-controller/api/v1alpha1
-      alias: platformtypes
+      alias: operatorv1alpha1
   revive:
     rules:
     - name: dot-imports
@@ -46,7 +44,7 @@ linters-settings:
       - github.com/onsi/gomega
       - github.com/onsi/ginkgo
   goimports:
-    local-prefixes: github.com/operator-framework/operator-controller,github.com/openshift/api/platform/v1alpha1
+    local-prefixes: github.com/operator-framework/operator-controller
 
 output:
   format: tab

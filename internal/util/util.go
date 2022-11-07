@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
+	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 // GetPodNamespace checks whether the controller is running in a Pod vs.
@@ -29,7 +29,7 @@ func PodNamespace(defaultNamespace string) string {
 
 func RequeueOperators(cl client.Client) handler.MapFunc {
 	return func(object client.Object) []reconcile.Request {
-		operators := &platformtypes.OperatorList{}
+		operators := &operatorv1alpha1.OperatorList{}
 		if err := cl.List(context.Background(), operators); err != nil {
 			return nil
 		}
@@ -50,7 +50,7 @@ func RequeueBundleDeployment(c client.Client) handler.MapFunc {
 	return func(obj client.Object) []reconcile.Request {
 		bd := obj.(*rukpakv1alpha1.BundleDeployment)
 
-		operators := &platformtypes.OperatorList{}
+		operators := &operatorv1alpha1.OperatorList{}
 		if err := c.List(context.Background(), operators); err != nil {
 			return nil
 		}
@@ -77,15 +77,15 @@ func InspectBundleDeployment(_ context.Context, conditions []metav1.Condition) *
 	unpacked := meta.FindStatusCondition(conditions, rukpakv1alpha1.TypeHasValidBundle)
 	if unpacked == nil {
 		return &metav1.Condition{
-			Type:    platformtypes.TypeInstalled,
+			Type:    operatorv1alpha1.TypeInstalled,
 			Status:  metav1.ConditionFalse,
-			Reason:  platformtypes.ReasonUnpackPending,
+			Reason:  operatorv1alpha1.ReasonUnpackPending,
 			Message: "Waiting for the bundle to be unpacked",
 		}
 	}
 	if unpacked.Status != metav1.ConditionTrue {
 		return &metav1.Condition{
-			Type:    platformtypes.TypeInstalled,
+			Type:    operatorv1alpha1.TypeInstalled,
 			Status:  metav1.ConditionFalse,
 			Reason:  unpacked.Reason,
 			Message: unpacked.Message,
@@ -95,15 +95,15 @@ func InspectBundleDeployment(_ context.Context, conditions []metav1.Condition) *
 	installed := meta.FindStatusCondition(conditions, rukpakv1alpha1.TypeInstalled)
 	if installed == nil {
 		return &metav1.Condition{
-			Type:    platformtypes.TypeInstalled,
+			Type:    operatorv1alpha1.TypeInstalled,
 			Status:  metav1.ConditionFalse,
-			Reason:  platformtypes.ReasonInstallPending,
+			Reason:  operatorv1alpha1.ReasonInstallPending,
 			Message: "Waiting for the bundle to be installed",
 		}
 	}
 	if installed.Status != metav1.ConditionTrue {
 		return &metav1.Condition{
-			Type:    platformtypes.TypeInstalled,
+			Type:    operatorv1alpha1.TypeInstalled,
 			Status:  metav1.ConditionFalse,
 			Reason:  installed.Reason,
 			Message: installed.Message,

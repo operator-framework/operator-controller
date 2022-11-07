@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
+	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/sourcer"
 	//+kubebuilder:scaffold:imports
@@ -46,7 +46,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(platformtypes.AddToScheme(scheme))
+	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

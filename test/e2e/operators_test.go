@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
+	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 var _ = Describe("operators controller", func() {
@@ -55,15 +55,15 @@ var _ = Describe("operators controller", func() {
 
 		When("a valid operator is created", func() {
 			var (
-				o *platformtypes.Operator
+				o *operatorv1alpha1.Operator
 			)
 			BeforeEach(func() {
-				o = &platformtypes.Operator{
+				o = &operatorv1alpha1.Operator{
 					ObjectMeta: metav1.ObjectMeta{
 						GenerateName: "valid-",
 					},
-					Spec: platformtypes.OperatorSpec{
-						Package: &platformtypes.PackageSpec{
+					Spec: operatorv1alpha1.OperatorSpec{
+						Package: &operatorv1alpha1.PackageSpec{
 							Name: "crossplane",
 						},
 					},
@@ -84,12 +84,12 @@ var _ = Describe("operators controller", func() {
 					if o.Status.ActiveBundleDeployment.Name == "" {
 						return nil, fmt.Errorf("waiting for bundledeployment name to be populated")
 					}
-					return meta.FindStatusCondition(o.Status.Conditions, platformtypes.TypeInstalled), nil
+					return meta.FindStatusCondition(o.Status.Conditions, operatorv1alpha1.TypeInstalled), nil
 				}).Should(And(
 					Not(BeNil()),
-					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(platformtypes.TypeInstalled)),
+					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(operatorv1alpha1.TypeInstalled)),
 					WithTransform(func(c *metav1.Condition) metav1.ConditionStatus { return c.Status }, Equal(metav1.ConditionTrue)),
-					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(platformtypes.ReasonInstallSuccessful)),
+					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(operatorv1alpha1.ReasonInstallSuccessful)),
 				))
 
 				By("verifying that the highest semver container image was selected")
@@ -130,19 +130,19 @@ var _ = Describe("operators controller", func() {
 
 		When("an operator has been created with an explicit version specified", func() {
 			var (
-				o *platformtypes.Operator
+				o *operatorv1alpha1.Operator
 			)
 			BeforeEach(func() {
-				o = &platformtypes.Operator{
+				o = &operatorv1alpha1.Operator{
 					ObjectMeta: metav1.ObjectMeta{
 						GenerateName: "valid-",
 					},
-					Spec: platformtypes.OperatorSpec{
-						Catalog: &platformtypes.CatalogSpec{
+					Spec: operatorv1alpha1.OperatorSpec{
+						Catalog: &operatorv1alpha1.CatalogSpec{
 							Name:      "prometheus",
 							Namespace: ns.GetName(),
 						},
-						Package: &platformtypes.PackageSpec{
+						Package: &operatorv1alpha1.PackageSpec{
 							Name:    "prometheus-operator",
 							Version: "0.1.0",
 						},
@@ -162,12 +162,12 @@ var _ = Describe("operators controller", func() {
 					if o.Status.ActiveBundleDeployment.Name == "" {
 						return nil, fmt.Errorf("waiting for bundledeployment name to be populated")
 					}
-					return meta.FindStatusCondition(o.Status.Conditions, platformtypes.TypeInstalled), nil
+					return meta.FindStatusCondition(o.Status.Conditions, operatorv1alpha1.TypeInstalled), nil
 				}).Should(And(
 					Not(BeNil()),
-					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(platformtypes.TypeInstalled)),
+					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(operatorv1alpha1.TypeInstalled)),
 					WithTransform(func(c *metav1.Condition) metav1.ConditionStatus { return c.Status }, Equal(metav1.ConditionTrue)),
-					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(platformtypes.ReasonInstallSuccessful)),
+					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(operatorv1alpha1.ReasonInstallSuccessful)),
 				))
 			})
 
@@ -193,19 +193,19 @@ var _ = Describe("operators controller", func() {
 
 		When("an operator has been created with a version range specified", func() {
 			var (
-				o *platformtypes.Operator
+				o *operatorv1alpha1.Operator
 			)
 			BeforeEach(func() {
-				o = &platformtypes.Operator{
+				o = &operatorv1alpha1.Operator{
 					ObjectMeta: metav1.ObjectMeta{
 						GenerateName: "valid-",
 					},
-					Spec: platformtypes.OperatorSpec{
-						Catalog: &platformtypes.CatalogSpec{
+					Spec: operatorv1alpha1.OperatorSpec{
+						Catalog: &operatorv1alpha1.CatalogSpec{
 							Name:      "prometheus",
 							Namespace: ns.GetName(),
 						},
-						Package: &platformtypes.PackageSpec{
+						Package: &operatorv1alpha1.PackageSpec{
 							Name:    "prometheus-operator",
 							Version: ">0.1.0",
 						},
@@ -225,12 +225,12 @@ var _ = Describe("operators controller", func() {
 					if o.Status.ActiveBundleDeployment.Name == "" {
 						return nil, fmt.Errorf("waiting for bundledeployment name to be populated")
 					}
-					return meta.FindStatusCondition(o.Status.Conditions, platformtypes.TypeInstalled), nil
+					return meta.FindStatusCondition(o.Status.Conditions, operatorv1alpha1.TypeInstalled), nil
 				}).Should(And(
 					Not(BeNil()),
-					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(platformtypes.TypeInstalled)),
+					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(operatorv1alpha1.TypeInstalled)),
 					WithTransform(func(c *metav1.Condition) metav1.ConditionStatus { return c.Status }, Equal(metav1.ConditionTrue)),
-					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(platformtypes.ReasonInstallSuccessful)),
+					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(operatorv1alpha1.ReasonInstallSuccessful)),
 				))
 			})
 
@@ -256,19 +256,19 @@ var _ = Describe("operators controller", func() {
 
 		When("a valid operator is created", func() {
 			var (
-				o *platformtypes.Operator
+				o *operatorv1alpha1.Operator
 			)
 			BeforeEach(func() {
-				o = &platformtypes.Operator{
+				o = &operatorv1alpha1.Operator{
 					ObjectMeta: metav1.ObjectMeta{
 						GenerateName: "valid-",
 					},
-					Spec: platformtypes.OperatorSpec{
-						Catalog: &platformtypes.CatalogSpec{
+					Spec: operatorv1alpha1.OperatorSpec{
+						Catalog: &operatorv1alpha1.CatalogSpec{
 							Name:      "prometheus",
 							Namespace: ns.GetName(),
 						},
-						Package: &platformtypes.PackageSpec{
+						Package: &operatorv1alpha1.PackageSpec{
 							Name: "prometheus-operator",
 						},
 					},
@@ -297,12 +297,12 @@ var _ = Describe("operators controller", func() {
 					if o.Status.ActiveBundleDeployment.Name == "" {
 						return nil, fmt.Errorf("waiting for bundledeployment name to be populated")
 					}
-					return meta.FindStatusCondition(o.Status.Conditions, platformtypes.TypeInstalled), nil
+					return meta.FindStatusCondition(o.Status.Conditions, operatorv1alpha1.TypeInstalled), nil
 				}).Should(And(
 					Not(BeNil()),
-					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(platformtypes.TypeInstalled)),
+					WithTransform(func(c *metav1.Condition) string { return c.Type }, Equal(operatorv1alpha1.TypeInstalled)),
 					WithTransform(func(c *metav1.Condition) metav1.ConditionStatus { return c.Status }, Equal(metav1.ConditionTrue)),
-					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(platformtypes.ReasonInstallSuccessful)),
+					WithTransform(func(c *metav1.Condition) string { return c.Reason }, Equal(operatorv1alpha1.ReasonInstallSuccessful)),
 				))
 			})
 

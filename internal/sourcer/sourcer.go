@@ -5,7 +5,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
-	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
+	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 type Bundle struct {
@@ -17,5 +17,5 @@ type Bundle struct {
 }
 
 type Sourcer interface {
-	Source(context.Context, *platformtypes.Operator) (*Bundle, error)
+	Source(context.Context, *operatorv1alpha1.Operator) (*Bundle, error)
 }

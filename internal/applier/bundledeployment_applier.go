@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
+	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/sourcer"
 )
 
@@ -17,7 +17,7 @@ const (
 	registryProvisionerID = "core-rukpak-io-registry"
 )
 
-func Apply(ctx context.Context, o *platformtypes.Operator, c client.Client, source sourcer.Bundle) (*rukpakv1alpha1.BundleDeployment, error) {
+func Apply(ctx context.Context, o *operatorv1alpha1.Operator, c client.Client, source sourcer.Bundle) (*rukpakv1alpha1.BundleDeployment, error) {
 	bd := &rukpakv1alpha1.BundleDeployment{}
 	bd.SetName(o.GetName())
 	controllerRef := metav1.NewControllerRef(o, o.GroupVersionKind())

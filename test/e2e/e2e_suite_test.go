@@ -10,12 +10,11 @@ import (
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
+	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 func TestPlatformOperators(t *testing.T) {
@@ -28,7 +27,6 @@ func TestPlatformOperators(t *testing.T) {
 var (
 	cfg *rest.Config
 	c   client.Client
-	dc  discovery.DiscoveryInterface
 )
 
 const (
@@ -39,7 +37,7 @@ var _ = BeforeSuite(func() {
 	cfg = ctrl.GetConfigOrDie()
 
 	scheme := runtime.NewScheme()
-	err := platformtypes.AddToScheme(scheme)
+	err := operatorv1alpha1.AddToScheme(scheme)
 	Expect(err).To(BeNil())
 
 	err = rukpakv1alpha1.AddToScheme(scheme)
