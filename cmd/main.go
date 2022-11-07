@@ -20,26 +20,20 @@ import (
 	"flag"
 	"os"
 
-	"k8s.io/client-go/discovery"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	configv1 "github.com/openshift/api/config/v1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
 	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/clusteroperator"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/sourcer"
-	"github.com/operator-framework/operator-controller/internal/util"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -52,8 +46,6 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(platformv1alpha1.Install(scheme))
-	utilruntime.Must(configv1.AddToScheme(scheme))
 	utilruntime.Must(platformtypes.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
@@ -101,13 +93,6 @@ func main() {
 	}
 	//+kubebuilder:scaffold:builder
 
-	// check whether the ClusterOperator GV exists on the cluster to determine whether
-	// the downstream controllers should be setup.
-	if err := registerDownstreamControllers(mgr, systemNamespace); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Downstream")
-		os.Exit(1)
-	}
-
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
@@ -122,39 +107,4 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-}
-
-// registerDownstreamControllers is responsible for checking whether
-// the config.openshift.io/v1 GV is available on the cluster to determine
-// whether the downstream-related controllers should be registered.
-func registerDownstreamControllers(mgr ctrl.Manager, systemNamespace string) error {
-	discovery, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
-	if err != nil {
-		return err
-	}
-	supported, err := util.IsAPIAvailable(discovery, schema.GroupVersion{
-		Group:   "config.openshift.io",
-		Version: "v1",
-	})
-	if err != nil {
-		return err
-	}
-	if !supported {
-		return nil
-	}
-
-	// Add the Aggregated ClusterOperator controller
-	err = (&controllers.AggregatedClusterOperatorReconciler{
-		Client:          mgr.GetClient(),
-		ReleaseVersion:  clusteroperator.GetReleaseVariable(),
-		SystemNamespace: util.PodNamespace(systemNamespace),
-	}).SetupWithManager(mgr)
-	if err != nil {
-		return err
-	}
-
-	// Add the PlatformOperator controller
-	return (&controllers.PlatformOperatorReconciler{
-		Client: mgr.GetClient(),
-	}).SetupWithManager(mgr)
 }
