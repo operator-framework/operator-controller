@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	platformv1alpha1 "github.com/openshift/api/platform/v1alpha1"
-	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
+	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 func Test_inspectPlatformOperator(t *testing.T) {

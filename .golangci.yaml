@@ -34,7 +34,7 @@ linters-settings:
       alias: rukpakv1alpha1
     - pkg: github.com/openshift/api/platform/v1alpha1
       alias: platformv1alpha1
-    - pkg: github.com/timflannagan/platform-operators/api/v1alpha1
+    - pkg: github.com/operator-framework/operator-controller/api/v1alpha1
       alias: platformtypes
   revive:
     rules:
@@ -46,7 +46,7 @@ linters-settings:
       - github.com/onsi/gomega
       - github.com/onsi/ginkgo
   goimports:
-    local-prefixes: github.com/timflannagan/platform-operators,github.com/openshift/api/platform/v1alpha1
+    local-prefixes: github.com/operator-framework/operator-controller,github.com/openshift/api/platform/v1alpha1
 
 output:
   format: tab

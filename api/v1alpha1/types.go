@@ -28,7 +28,7 @@ var (
 )
 
 // SetActiveBundleDeployment is responsible for populating the status.ActiveBundleDeployment
-// structure with the Operator resource the POM component is currently managing.
+// structure with the Operator resource the Operator controller is currently managing.
 func SetActiveBundleDeployment(o *Operator, name string) {
 	if o == nil {
 		panic("input specified is nil")
@@ -39,7 +39,7 @@ func SetActiveBundleDeployment(o *Operator, name string) {
 }
 
 // SetSourceInfo is responsible for populating the status.SourceInfo
-// structure with the Operator resource the POM component is currently managing.
+// structure with the Operator resource the Operator controller is currently managing.
 func SetSourceInfo(o *Operator, info SourceInfo) {
 	if o == nil {
 		panic("input specified is nil")

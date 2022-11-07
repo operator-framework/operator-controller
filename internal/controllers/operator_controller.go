@@ -30,10 +30,10 @@ import (
 	logr "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
-	"github.com/timflannagan/platform-operators/internal/applier"
-	"github.com/timflannagan/platform-operators/internal/sourcer"
-	"github.com/timflannagan/platform-operators/internal/util"
+	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/applier"
+	"github.com/operator-framework/operator-controller/internal/sourcer"
+	"github.com/operator-framework/operator-controller/internal/util"
 )
 
 // OperatorReconciler reconciles an Operator object

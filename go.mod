@@ -1,4 +1,4 @@
-module github.com/timflannagan/platform-operators
+module github.com/operator-framework/operator-controller
 
 go 1.18
 

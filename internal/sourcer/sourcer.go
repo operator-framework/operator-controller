@@ -5,7 +5,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 
-	platformtypes "github.com/timflannagan/platform-operators/api/v1alpha1"
+	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 type Bundle struct {
