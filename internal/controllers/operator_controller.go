@@ -30,7 +30,7 @@ import (
 	logr "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
+	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/applier"
 	"github.com/operator-framework/operator-controller/internal/sourcer"
 	"github.com/operator-framework/operator-controller/internal/util"
@@ -59,7 +59,7 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	log.Info("reconciling request", "req", req.NamespacedName)
 	defer log.Info("finished reconciling request", "req", req.NamespacedName)
 
-	o := &platformtypes.Operator{}
+	o := &operatorv1alpha1.Operator{}
 	if err := r.Get(ctx, req.NamespacedName, o); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -74,14 +74,14 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	source, err := r.Source(ctx, o)
 	if err != nil {
 		meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
-			Type:    platformtypes.TypeInstalled,
+			Type:    operatorv1alpha1.TypeInstalled,
 			Status:  metav1.ConditionFalse,
-			Reason:  platformtypes.ReasonSourceFailed,
+			Reason:  operatorv1alpha1.ReasonSourceFailed,
 			Message: err.Error(),
 		})
 		return ctrl.Result{}, err
 	}
-	platformtypes.SetSourceInfo(o, platformtypes.SourceInfo{
+	operatorv1alpha1.SetSourceInfo(o, operatorv1alpha1.SourceInfo{
 		Name:      source.SourceInfo.Name,
 		Namespace: source.SourceInfo.Namespace,
 		Version:   source.Version,
@@ -90,14 +90,14 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	bd, err := applier.Apply(ctx, o, r.Client, *source)
 	if err != nil {
 		meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
-			Type:    platformtypes.TypeInstalled,
+			Type:    operatorv1alpha1.TypeInstalled,
 			Status:  metav1.ConditionFalse,
-			Reason:  platformtypes.ReasonInstallFailed,
+			Reason:  operatorv1alpha1.ReasonInstallFailed,
 			Message: err.Error(),
 		})
 		return ctrl.Result{}, err
 	}
-	platformtypes.SetActiveBundleDeployment(o, bd.GetName())
+	operatorv1alpha1.SetActiveBundleDeployment(o, bd.GetName())
 
 	// check whether the generated BundleDeployment are reporting any
 	// failures when attempting to unpack the configured registry+v1
@@ -110,9 +110,9 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, nil
 	}
 	meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
-		Type:    platformtypes.TypeInstalled,
+		Type:    operatorv1alpha1.TypeInstalled,
 		Status:  metav1.ConditionTrue,
-		Reason:  platformtypes.ReasonInstallSuccessful,
+		Reason:  operatorv1alpha1.ReasonInstallSuccessful,
 		Message: fmt.Sprintf("Successfully applied the %s BundleDeployment resource", bd.GetName()),
 	})
 
@@ -122,7 +122,7 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 // SetupWithManager sets up the controller with the Manager.
 func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&platformtypes.Operator{}).
+		For(&operatorv1alpha1.Operator{}).
 		Watches(&source.Kind{Type: &operatorsv1alpha1.CatalogSource{}}, handler.EnqueueRequestsFromMapFunc(util.RequeueOperators(mgr.GetClient()))).
 		Watches(&source.Kind{Type: &rukpakv1alpha1.BundleDeployment{}}, handler.EnqueueRequestsFromMapFunc(util.RequeueBundleDeployment(mgr.GetClient()))).
 		Complete(r)

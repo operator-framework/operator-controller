@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logr "sigs.k8s.io/controller-runtime/pkg/log"
 
-	platformtypes "github.com/operator-framework/operator-controller/api/v1alpha1"
+	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 type catalogSource struct {
@@ -27,7 +27,7 @@ func NewCatalogSourceHandler(c client.Client) Sourcer {
 	}
 }
 
-func (cs catalogSource) Source(ctx context.Context, o *platformtypes.Operator) (*Bundle, error) {
+func (cs catalogSource) Source(ctx context.Context, o *operatorv1alpha1.Operator) (*Bundle, error) {
 	sources, err := getSources(ctx, cs.Client, o)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (cs catalogSource) Source(ctx context.Context, o *platformtypes.Operator) (
 	return latestBundle, nil
 }
 
-func (s sources) GetCandidates(ctx context.Context, o *platformtypes.Operator) (bundles, error) {
+func (s sources) GetCandidates(ctx context.Context, o *operatorv1alpha1.Operator) (bundles, error) {
 	matchesDesiredVersion := getVersionFilter(o.Spec.Package.Version)
 	log := logr.FromContext(ctx)
 
@@ -139,7 +139,7 @@ func getVersionFilter(v string) func(b *api.Bundle) bool {
 	}
 }
 
-func getSources(ctx context.Context, c client.Client, o *platformtypes.Operator) (sources, error) {
+func getSources(ctx context.Context, c client.Client, o *operatorv1alpha1.Operator) (sources, error) {
 	// check whether no catalog was configured, and attempt to use all the catalogs
 	// in the cluster to find candidate bundles to install.
 	if o.Spec.Catalog == nil {
