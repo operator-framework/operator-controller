@@ -72,7 +72,7 @@ e2e: deploy test-e2e
 .PHONY: test-e2e
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 JUNIT_REPORT := $(if $(ARTIFACT_DIR), -output-dir $(ARTIFACT_DIR) -junit-report junit_e2e.xml)
-test-e2e: ginkgo ## Run e2e tests
+test-e2e: ginkgo ## Run e2e tests.
 	$(GINKGO) -trace -progress $(JUNIT_REPORT) $(FOCUS) test/e2e
 
 ##@ Build
@@ -82,7 +82,7 @@ build: ## Build manager binary.
 	CGO_ENABLED=0 go build -o bin/manager ./cmd/...
 
 .PHONY: build-container
-build-container: build ## Builds provisioner container image locally
+build-container: build ## Builds provisioner container image locally.
 	$(CONTAINER_RUNTIME) build -f Dockerfile -t $(IMG) $(BIN_DIR)
 
 ##@ Deployment
@@ -92,11 +92,11 @@ ifndef ignore-not-found
 endif
 
 .PHONY: kind-load
-kind-load: kind ## Loads the currently constructed image onto the cluster
+kind-load: kind ## Loads the currently constructed image onto the cluster.
 	$(KIND) load docker-image $(IMG) --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-cluster
-kind-cluster: kind ## Standup a kind cluster
+kind-cluster: kind ## Standup a kind cluster.
 	$(KIND) get clusters | grep $(KIND_CLUSTER_NAME) || $(KIND) create cluster --name $(KIND_CLUSTER_NAME)
 	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
 
@@ -109,19 +109,19 @@ uninstall: generate kustomize ## Uninstall CRDs from the K8s cluster specified i
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: run
-run: build-container kind-cluster kind-load install
+run: build-container kind-cluster kind-load install  ## Deploy the Operator controller in a K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: deploy
-deploy: run rukpak olm  ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: run rukpak olm  ## Deploy the OLM 1.x stack in a K8s cluster specified in ~/.kube/config.
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: install-samples
-install-samples:  ## Install the sample manifests found in config/samples/manifests
+install-samples:  ## Install the sample manifests found in config/samples/manifests.
 	kubectl apply -f config/samples
 
 ##@ Build Dependencies
@@ -186,10 +186,12 @@ $(KIND): $(LOCALBIN)
 .PHONY: operator-sdk
 operator-sdk: $(OPERATOR_SDK)
 $(OPERATOR_SDK): $(LOCALBIN) ## Download operator-sdk locally if necessary.
-	curl -L https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_linux_amd64 -o $(OPERATOR_SDK) && chmod +x $(OPERATOR_SDK)
+	curl -sL https://github.com/operator-framework/operator-sdk/releases/download/$(OPERATOR_SDK_VERSION)/operator-sdk_linux_amd64 -o $(OPERATOR_SDK) && chmod +x $(OPERATOR_SDK)
+
+##@ Install Dependencies
 
 .PHONY: rukpak
-rukpak:
+rukpak:  ## Installs the rukpak project.
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.0/cert-manager.yaml
 	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
 	kubectl apply -f https://github.com/operator-framework/rukpak/releases/download/$(RUKPAK_RELEASE)/rukpak.yaml
@@ -199,5 +201,5 @@ rukpak:
 	kubectl wait --for=condition=Available --namespace=crdvalidator-system deployment/crd-validation-webhook --timeout=60s
 
 .PHONY: olm
-olm: operator-sdk
+olm: operator-sdk  ## Installs the OLM project.
 	$(OPERATOR_SDK) olm install
