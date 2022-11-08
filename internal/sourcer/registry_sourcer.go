@@ -138,8 +138,25 @@ func getVersionFilter(v string) func(b *api.Bundle) bool {
 }
 
 func getSources(ctx context.Context, c client.Client, o *operatorv1alpha1.Operator) (sources, error) {
+	// check whether this Operator has already been installed, and use the existing
+	// catalog to ensure we're following the defined upgrade graph for that catalog.
+	//
+	// Note(tflannag): We should revisit this implementation to determine whether it's
+	// the right behavior when the o.Spec.Catalog hasn't been configured as the UX
+	// may be confusing.
+	if o.Status.SourceInfo.Name != "" && o.Status.SourceInfo.Namespace != "" {
+		catalog := &operatorsv1alpha1.CatalogSource{}
+		if err := c.Get(ctx, types.NamespacedName{
+			Name:      o.Status.SourceInfo.Name,
+			Namespace: o.Status.SourceInfo.Namespace,
+		}, catalog); err != nil {
+			return nil, err
+		}
+		return sources([]operatorsv1alpha1.CatalogSource{*catalog}), nil
+	}
+
 	// check whether no catalog was configured, and attempt to use all the catalogs
-	// in the cluster to find candidate bundles to install.
+	// in the cluster to find candidate bundles to initially install.
 	if o.Spec.Catalog == nil {
 		css := &operatorsv1alpha1.CatalogSourceList{}
 		if err := c.List(ctx, css); err != nil {
