@@ -151,6 +151,7 @@ var _ = Describe("operators controller", func() {
 				Expect(c.Create(ctx, o)).To(Succeed())
 			})
 			AfterEach(func() {
+				Expect(HandleTestCaseFailure()).To(BeNil())
 				Expect(c.Delete(ctx, o)).To(Succeed())
 			})
 
@@ -214,6 +215,7 @@ var _ = Describe("operators controller", func() {
 				Expect(c.Create(ctx, o)).To(Succeed())
 			})
 			AfterEach(func() {
+				Expect(HandleTestCaseFailure()).To(BeNil())
 				Expect(c.Delete(ctx, o)).To(Succeed())
 			})
 
