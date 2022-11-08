@@ -71,7 +71,7 @@ e2e: deploy test-e2e
 
 .PHONY: test-e2e
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
-JUNIT_REPORT := $(if $(ARTIFACT_DIR), -output-dir $(ARTIFACT_DIR) -junit-report junit_e2e.xml)
+JUNIT_REPORT := $(if $(ARTIFACT_DIR), -output-dir $(abspath $(ARTIFACT_DIR)) -junit-report junit_e2e.xml)
 test-e2e: ginkgo ## Run e2e tests.
 	$(GINKGO) -trace -progress $(JUNIT_REPORT) $(FOCUS) test/e2e
 
