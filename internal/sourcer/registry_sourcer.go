@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logr "sigs.k8s.io/controller-runtime/pkg/log"
 
 	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
@@ -49,7 +48,6 @@ func (cs catalogSource) Source(ctx context.Context, o *operatorv1alpha1.Operator
 
 func (s sources) GetCandidates(ctx context.Context, o *operatorv1alpha1.Operator) (bundles, error) {
 	matchesDesiredVersion := getVersionFilter(o.Spec.Package.Version)
-	log := logr.FromContext(ctx)
 
 	// TODO(tflannag): Revisit this implementation as it's expensive.
 	var (
@@ -67,7 +65,7 @@ func (s sources) GetCandidates(ctx context.Context, o *operatorv1alpha1.Operator
 		}
 		it, err := rc.ListBundles(ctx)
 		if err != nil {
-			log.Info("failed to list bundles from catalog", "name", cs.GetName(), "namespace", cs.GetNamespace(), "error", err.Error())
+			errors = append(errors, fmt.Errorf("failed to list bundles from the %s/%s catalog: %w", cs.GetName(), cs.GetNamespace(), err))
 			continue
 		}
 
