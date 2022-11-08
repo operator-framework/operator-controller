@@ -44,7 +44,15 @@ jobs:
         go-version-file: "go.mod"
 
     - name: Run e2e tests
-      run: make e2e
+      run: make e2e ARTIFACT_DIR=${{ github.workspace }}/artifacts
+
+    - name: Archive Test Artifacts
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: e2e-test-output-${{ (github.event.pull_request.head.sha || github.sha) }}-${{ github.run_id }}-${{ matrix.parallel-id }}
+        path: ${{ github.workspace }}/artifacts/*
+
   unit:
     runs-on: ubuntu-latest
     steps:

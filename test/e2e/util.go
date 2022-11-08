@@ -31,12 +31,19 @@ func HandleTestCaseFailure() error {
 	}
 
 	// current test case failed. attempt to collect CI artifacts if the
-	// $ARTIFACT_DIR environment variable has been set. This variable is
-	// always present in downstream CI environments.
+	// $ARTIFACT_DIR environment variable has been set.
 	artifactDir := os.Getenv("ARTIFACT_DIR")
 	if artifactDir == "" {
 		ginkgo.GinkgoT().Logf("not gathering testing artifacts as $ARTIFACT_DIR is unset")
 		return nil
+	}
+	// check whether the $KUBECONFIG environment variable is empty to
+	// determine whether we should fall back to the default path.
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig == "" {
+		// Expand $HOME variable as the exec package intentionally does
+		// not expand this value when invoking a shell.
+		kubeconfig = os.ExpandEnv("$HOME/.kube/config")
 	}
 
 	// create a dedicated test case directory to avoid overwriting the
@@ -51,9 +58,8 @@ func HandleTestCaseFailure() error {
 	cmd.Stderr = os.Stderr
 	envVars := []string{
 		"ARTIFACT_DIR=" + testCaseDir,
-		"KUBECONFIG=" + os.Getenv("KUBECONFIG"),
+		"KUBECONFIG=" + kubeconfig,
 		"KUBECTL=" + os.Getenv("KUBECTL"),
-		"OPENSHIFT_CI=" + os.Getenv("OPENSHIFT_CI"),
 	}
 	cmd.Env = append(os.Environ(), envVars...)
 
