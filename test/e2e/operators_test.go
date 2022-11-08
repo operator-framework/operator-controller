@@ -337,4 +337,85 @@ var _ = Describe("operators controller", func() {
 			})
 		})
 	})
+
+	When("multiple catalogs contain the same package name", func() {
+		var (
+			catalog1 MagicCatalog
+			catalog2 MagicCatalog
+		)
+		BeforeEach(func() {
+			provider, err := NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.v0.1.0.yaml"))
+			Expect(err).To(BeNil())
+
+			catalog1 = NewMagicCatalog(c, ns.GetName(), "prometheus-1", provider)
+			Expect(catalog1.DeployCatalog(ctx)).To(BeNil())
+
+			provider2, err := NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.v0.2.0.yaml"))
+			Expect(err).To(BeNil())
+
+			catalog2 = NewMagicCatalog(c, ns.GetName(), "prometheus-2", provider2)
+			Expect(catalog2.DeployCatalog(ctx)).To(BeNil())
+		})
+		AfterEach(func() {
+			Expect(catalog1.UndeployCatalog(ctx)).To(BeNil())
+			Expect(catalog2.UndeployCatalog(ctx)).To(BeNil())
+		})
+
+		When("an operator is created that doesn't specify a catalog", func() {
+			var (
+				o *operatorv1alpha1.Operator
+			)
+			BeforeEach(func() {
+				o = &operatorv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{
+						GenerateName: "valid-",
+					},
+					Spec: operatorv1alpha1.OperatorSpec{
+						Package: &operatorv1alpha1.PackageSpec{
+							Name: "prometheus-operator",
+						},
+					},
+				}
+				Expect(c.Create(ctx, o)).To(Succeed())
+			})
+			AfterEach(func() {
+				Expect(HandleTestCaseFailure()).To(BeNil())
+				Expect(c.Delete(ctx, o)).To(Succeed())
+			})
+
+			It("should eventually select the catalog that contains the highest semver bundle", func() {
+				Eventually(func() (*operatorv1alpha1.SourceInfo, error) {
+					if err := c.Get(ctx, client.ObjectKeyFromObject(o), o); err != nil {
+						return nil, err
+					}
+					return &o.Status.SourceInfo, nil
+				}).Should(And(
+					Not(BeNil()),
+					WithTransform(func(c *operatorv1alpha1.SourceInfo) string { return c.Name }, Equal("prometheus-2")),
+					WithTransform(func(c *operatorv1alpha1.SourceInfo) string { return c.Namespace }, Equal(ns.GetName())),
+				))
+			})
+
+			When("a new operator version has become available in catalog1", func() {
+				BeforeEach(func() {
+					updatedProvider, err := NewFileBasedFiledBasedCatalogProvider(filepath.Join(dataBaseDir, "prometheus.v0.3.0.yaml"))
+					Expect(err).To(BeNil())
+
+					Expect(catalog1.UpdateCatalog(ctx, updatedProvider)).To(BeNil())
+				})
+				It("should avoid pivoting to another catalog after initial installation", func() {
+					Consistently(func() (*operatorv1alpha1.SourceInfo, error) {
+						if err := c.Get(ctx, client.ObjectKeyFromObject(o), o); err != nil {
+							return nil, err
+						}
+						return &o.Status.SourceInfo, nil
+					}).Should(And(
+						Not(BeNil()),
+						WithTransform(func(c *operatorv1alpha1.SourceInfo) string { return c.Name }, Equal("prometheus-2")),
+						WithTransform(func(c *operatorv1alpha1.SourceInfo) string { return c.Namespace }, Equal(ns.GetName())),
+					))
+				})
+			})
+		})
+	})
 })
