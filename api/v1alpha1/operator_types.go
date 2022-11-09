@@ -31,10 +31,21 @@ var (
 	ReasonInstallPending    = "InstallPending"
 )
 
+type SourceType string
+
+const (
+	SourceTypeCatalog = "catalog"
+)
+
 // OperatorSpec defines the desired state of Operator
 type OperatorSpec struct {
-	Catalog *CatalogSpec `json:"catalog,omitempty"`
+	Source  *SourceSpec  `json:"source"`
 	Package *PackageSpec `json:"package"`
+}
+
+type SourceSpec struct {
+	Type    SourceType   `json:"type"`
+	Catalog *CatalogSpec `json:"catalog,omitempty"`
 }
 
 type CatalogSpec struct {

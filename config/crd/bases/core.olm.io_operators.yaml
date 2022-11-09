@@ -48,16 +48,6 @@ spec:
           spec:
             description: OperatorSpec defines the desired state of Operator
             properties:
-              catalog:
-                properties:
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                - namespace
-                type: object
               package:
                 properties:
                   name:
@@ -67,8 +57,26 @@ spec:
                 required:
                 - name
                 type: object
+              source:
+                properties:
+                  catalog:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                  type:
+                    type: string
+                required:
+                - type
+                type: object
             required:
             - package
+            - source
             type: object
           status:
             description: OperatorStatus defines the observed state of Operator
@@ -162,11 +170,14 @@ spec:
                     type: string
                   namespace:
                     type: string
+                  type:
+                    type: string
                   version:
                     type: string
                 required:
                 - name
                 - namespace
+                - type
                 - version
                 type: object
             type: object
