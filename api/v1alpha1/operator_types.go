@@ -76,9 +76,10 @@ type OperatorStatus struct {
 // SourceInfo contains metadata information for the current bundle being managed
 // by an Operator resource.
 type SourceInfo struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Version   string `json:"version"`
+	Type      SourceType `json:"type"`
+	Name      string     `json:"name"`
+	Namespace string     `json:"namespace"`
+	Version   string     `json:"version"`
 }
 
 // ActiveBundleDeployment references a BundleDeployment resource.

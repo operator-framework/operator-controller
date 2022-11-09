@@ -138,9 +138,12 @@ var _ = Describe("operators controller", func() {
 						GenerateName: "valid-",
 					},
 					Spec: operatorv1alpha1.OperatorSpec{
-						Catalog: &operatorv1alpha1.CatalogSpec{
-							Name:      "prometheus",
-							Namespace: ns.GetName(),
+						Source: &operatorv1alpha1.SourceSpec{
+							Type: operatorv1alpha1.SourceTypeCatalog,
+							Catalog: &operatorv1alpha1.CatalogSpec{
+								Name:      "prometheus",
+								Namespace: ns.GetName(),
+							},
 						},
 						Package: &operatorv1alpha1.PackageSpec{
 							Name:    "prometheus-operator",
@@ -202,9 +205,12 @@ var _ = Describe("operators controller", func() {
 						GenerateName: "valid-",
 					},
 					Spec: operatorv1alpha1.OperatorSpec{
-						Catalog: &operatorv1alpha1.CatalogSpec{
-							Name:      "prometheus",
-							Namespace: ns.GetName(),
+						Source: &operatorv1alpha1.SourceSpec{
+							Type: operatorv1alpha1.SourceTypeCatalog,
+							Catalog: &operatorv1alpha1.CatalogSpec{
+								Name:      "prometheus",
+								Namespace: ns.GetName(),
+							},
 						},
 						Package: &operatorv1alpha1.PackageSpec{
 							Name:    "prometheus-operator",
@@ -266,9 +272,12 @@ var _ = Describe("operators controller", func() {
 						GenerateName: "valid-",
 					},
 					Spec: operatorv1alpha1.OperatorSpec{
-						Catalog: &operatorv1alpha1.CatalogSpec{
-							Name:      "prometheus",
-							Namespace: ns.GetName(),
+						Source: &operatorv1alpha1.SourceSpec{
+							Type: operatorv1alpha1.SourceTypeCatalog,
+							Catalog: &operatorv1alpha1.CatalogSpec{
+								Name:      "prometheus",
+								Namespace: ns.GetName(),
+							},
 						},
 						Package: &operatorv1alpha1.PackageSpec{
 							Name: "prometheus-operator",

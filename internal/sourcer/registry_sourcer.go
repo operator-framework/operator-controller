@@ -27,6 +27,9 @@ func NewCatalogSourceHandler(c client.Client) Sourcer {
 }
 
 func (cs catalogSource) Source(ctx context.Context, o *operatorv1alpha1.Operator) (*Bundle, error) {
+	if o.Spec.Source.Type != operatorv1alpha1.SourceTypeCatalog {
+		return nil, nil
+	}
 	sources, err := getSources(ctx, cs.Client, o)
 	if err != nil {
 		return nil, err
@@ -144,7 +147,7 @@ func getSources(ctx context.Context, c client.Client, o *operatorv1alpha1.Operat
 	// Note(tflannag): We should revisit this implementation to determine whether it's
 	// the right behavior when the o.Spec.Catalog hasn't been configured as the UX
 	// may be confusing.
-	if o.Status.SourceInfo.Name != "" && o.Status.SourceInfo.Namespace != "" {
+	if o.Status.SourceInfo.Type == operatorv1alpha1.SourceTypeCatalog && o.Status.SourceInfo.Name != "" && o.Status.SourceInfo.Namespace != "" {
 		catalog := &operatorsv1alpha1.CatalogSource{}
 		if err := c.Get(ctx, types.NamespacedName{
 			Name:      o.Status.SourceInfo.Name,
@@ -155,9 +158,10 @@ func getSources(ctx context.Context, c client.Client, o *operatorv1alpha1.Operat
 		return sources([]operatorsv1alpha1.CatalogSource{*catalog}), nil
 	}
 
+	catalog := o.Spec.Source.Catalog
 	// check whether no catalog was configured, and attempt to use all the catalogs
-	// in the cluster to find candidate bundles to initially install.
-	if o.Spec.Catalog == nil {
+	// in the cluster to find candidate bundles to install.
+	if catalog == nil {
 		css := &operatorsv1alpha1.CatalogSourceList{}
 		if err := c.List(ctx, css); err != nil {
 			return nil, err
@@ -167,12 +171,12 @@ func getSources(ctx context.Context, c client.Client, o *operatorv1alpha1.Operat
 		}
 		return sources(css.Items), nil
 	}
-	catalog := &operatorsv1alpha1.CatalogSource{}
+	cs := &operatorsv1alpha1.CatalogSource{}
 	if err := c.Get(ctx, types.NamespacedName{
-		Name:      o.Spec.Catalog.Name,
-		Namespace: o.Spec.Catalog.Namespace,
-	}, catalog); err != nil {
+		Name:      catalog.Name,
+		Namespace: catalog.Namespace,
+	}, cs); err != nil {
 		return nil, err
 	}
-	return sources([]operatorsv1alpha1.CatalogSource{*catalog}), nil
+	return sources([]operatorsv1alpha1.CatalogSource{*cs}), nil
 }

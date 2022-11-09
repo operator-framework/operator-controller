@@ -11,6 +11,8 @@ spec:
   # the configured spec.catalog catalog source.
   package:
     name: universal-crossplane
-  catalog:
-    name: operatorhubio-catalog
-    namespace: olm
+  source:
+    type: "catalog"
+    catalog:
+      name: operatorhubio-catalog
+      namespace: olm

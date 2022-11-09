@@ -10,3 +10,5 @@ spec:
   # catalog source on the cluster that contains it.
   package:
     name: universal-crossplane
+  source:
+    type: "catalog"

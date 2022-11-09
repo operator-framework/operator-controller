@@ -8,6 +8,8 @@ spec:
   package:
     name: universal-crossplane
     version: "<2.0.0 || >=3.0.0"
-  catalog:
-    name: operatorhubio-catalog
-    namespace: olm
+  source:
+    type: "catalog"
+    catalog:
+      name: operatorhubio-catalog
+      namespace: olm
