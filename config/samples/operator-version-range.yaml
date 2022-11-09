@@ -1,0 +1,13 @@
+---
+
+apiVersion: core.olm.io/v1alpha1
+kind: Operator
+metadata:
+  name: crossplane-version-range
+spec:
+  package:
+    name: universal-crossplane
+    version: "<2.0.0 || >=3.0.0"
+  catalog:
+    name: operatorhubio-catalog
+    namespace: olm

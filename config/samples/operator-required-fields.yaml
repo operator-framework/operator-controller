@@ -1,0 +1,12 @@
+---
+
+apiVersion: core.olm.io/v1alpha1
+kind: Operator
+metadata:
+  name: crossplane-version-range
+spec:
+  # The spec.package.name is the only required field here, which tells
+  # the Operator controller to attempt to find this package from any
+  # catalog source on the cluster that contains it.
+  package:
+    name: universal-crossplane
