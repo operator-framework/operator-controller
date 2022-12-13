@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- operators_v1alpha1_operator.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

@@ -3,4 +3,14 @@ layout:
 - go.kubebuilder.io/v4-alpha
 projectName: operator-controller
 repo: github.com/operator-framework/operator-controller
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: operatorframework.io
+  group: operators
+  kind: Operator
+  path: github.com/operator-framework/operator-controller/api/v1alpha1
+  version: v1alpha1
 version: "3"
