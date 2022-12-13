@@ -1,0 +1,6 @@
+domain: operatorframework.io
+layout:
+- go.kubebuilder.io/v4-alpha
+projectName: operator-controller
+repo: github.com/operator-framework/operator-controller
+version: "3"
