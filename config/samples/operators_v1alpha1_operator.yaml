@@ -9,4 +9,5 @@ metadata:
     app.kubernetes.io/created-by: operator-controller
   name: operator-sample
 spec:
+  # TODO(user): Add fields here
   packageName: my-operator
