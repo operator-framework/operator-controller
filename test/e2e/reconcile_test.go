@@ -38,7 +38,7 @@ var _ = Describe("Operator Install", func() {
 			err = c.Delete(ctx, operator)
 			Expect(err).To(Not(HaveOccurred()))
 		})
-		It("installs the specified package", func() {
+		PIt("installs the specified package", func() {
 			// Pending until we actually have some code to test
 			// Expect that a CRD and Deployment were successfully installed by rukpak
 		})
