@@ -1,6 +1,15 @@
-
+###########################
+# Configuration Variables #
+###########################
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+export IMAGE_REPO ?= quay.io/operator-framework/operator-controller
+export IMAGE_TAG ?= latest
+export GO_BUILD_TAGS ?= upstream
+IMG?=$(IMAGE_REPO):$(IMAGE_TAG)
+
+OPERATOR_CONTROLLER_NAMESPACE ?= operator-controller-system
+KIND_CLUSTER_NAME ?= operator-controller
+
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.25.0
 
@@ -54,9 +63,26 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-.PHONY: test
-test: manifests generate fmt vet envtest ## Run tests.
+.PHONY: test test-e2e e2e kind-load kind-cluster kind-cluster-cleanup
+test: manifests generate fmt vet envtest test-e2e ## Run all tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
+
+FOCUS := $(if $(TEST),-v -focus "$(TEST)")
+E2E_FLAGS ?= ""
+test-e2e: ginkgo ## Run the e2e tests
+	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/e2e
+
+e2e: run test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
+
+kind-load: kind ## Loads the currently constructed image onto the cluster
+	$(KIND) load docker-image $(IMG) --name $(KIND_CLUSTER_NAME)
+
+kind-cluster: kind kind-cluster-cleanup ## Standup a kind cluster
+	$(KIND) create cluster --name ${KIND_CLUSTER_NAME}
+	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
+
+kind-cluster-cleanup: kind ## Delete the kind cluster
+	$(KIND) delete cluster --name ${KIND_CLUSTER_NAME}
 
 ##@ Build
 
@@ -65,14 +91,17 @@ build: manifests generate fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
 .PHONY: run
-run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./main.go
+run: docker-build kind-cluster kind-load install deploy wait ## Build the operator-controller then deploy it into a new kind cluster.
+
+.PHONY: wait
+wait:
+	kubectl wait --for=condition=Available --namespace=$(OPERATOR_CONTROLLER_NAMESPACE) deployment/operator-controller-controller-manager --timeout=60s
 
 # If you wish built the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
-docker-build: test ## Build docker image with the manager.
+docker-build: generate ## Build docker image with the operator-controller.
 	docker build -t ${IMG} .
 
 .PHONY: docker-push
@@ -129,11 +158,23 @@ $(LOCALBIN):
 ## Tool Binaries
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
+KIND ?= $(LOCALBIN)/kind
+GINKGO ?= $(LOCALBIN)/ginkgo
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v4.5.7
 CONTROLLER_TOOLS_VERSION ?= v0.10.0
+
+.PHONY: kind
+kind: $(KIND) ## Download kind locally if necessary.
+$(KIND): $(LOCALBIN)
+	test -s $(LOCALBIN)/kind || GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@v0.15.0
+
+.PHONY: ginkgo
+ginkgo: $(GINKGO) ## Download ginkgo locally if necessary.
+$(GINKGO): $(LOCALBIN)
+	test -s $(LOCALBIN)/ginkgo || GOBIN=$(LOCALBIN) go install github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
