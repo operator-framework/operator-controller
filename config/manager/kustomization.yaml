@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/operator-framework/operator-controller
-  newTag: latest
+  newTag: devel

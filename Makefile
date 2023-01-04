@@ -3,7 +3,7 @@
 ###########################
 # Image URL to use all building/pushing image targets
 export IMAGE_REPO ?= quay.io/operator-framework/operator-controller
-export IMAGE_TAG ?= latest
+export IMAGE_TAG ?= devel
 export GO_BUILD_TAGS ?= upstream
 IMG?=$(IMAGE_REPO):$(IMAGE_TAG)
 
@@ -72,6 +72,7 @@ E2E_FLAGS ?= ""
 test-e2e: ginkgo ## Run the e2e tests
 	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/e2e
 
+e2e: KIND_CLUSTER_NAME=operator-controller-e2e
 e2e: run test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
 
 kind-load: kind ## Loads the currently constructed image onto the cluster
