@@ -31,6 +31,7 @@ type OperatorSpec struct {
 type OperatorStatus struct{}
 
 //+kubebuilder:object:root=true
+//+kubebuilder:resource:scope=Cluster
 //+kubebuilder:subresource:status
 
 // Operator is the Schema for the operators API
