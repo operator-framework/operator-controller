@@ -13,7 +13,7 @@ spec:
     listKind: OperatorList
     plural: operators
     singular: operator
-  scope: Namespaced
+  scope: Cluster
   versions:
   - name: v1alpha1
     schema:
