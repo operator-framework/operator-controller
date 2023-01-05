@@ -32,7 +32,6 @@ type OperatorStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster
 
 // Operator is the Schema for the operators API
 type Operator struct {
