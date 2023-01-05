@@ -25,6 +25,9 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+# Disable -j flag for make
+.NOTPARALLEL:
+
 .PHONY: all
 all: build
 
