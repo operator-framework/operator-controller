@@ -25,6 +25,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // OperatorReconciler reconciles a Operator object
@@ -47,9 +49,32 @@ type OperatorReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.1/pkg/reconcile
 func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log := log.FromContext(ctx).WithName("reconcile")
+
+	var operator operatorsv1alpha1.Operator
+	if err := r.Get(ctx, req.NamespacedName, &operator); err != nil {
+		log.Error(err, "unable to fetch Operator")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	readyCondition := metav1.Condition{
+		Type:               operatorsv1alpha1.TypeReady,
+		Status:             metav1.ConditionFalse,
+		Reason:             "startUp",
+		Message:            "Operator startup",
+		ObservedGeneration: operator.GetGeneration(),
+	}
+	apimeta.SetStatusCondition(&operator.Status.Conditions, readyCondition)
+	log.Info("set not ready Condition")
 
 	// TODO(user): your logic here
+
+	// This is something that needs to happen if any Status is updated,
+	// even if an error occurs
+	if err := r.Status().Update(ctx, &operator); err != nil {
+		log.Error(err, "unable to update Operator status")
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }

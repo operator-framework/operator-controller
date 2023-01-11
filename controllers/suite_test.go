@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package controllers_test
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
@@ -31,6 +32,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/controllers"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -77,4 +82,61 @@ var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
+})
+
+var _ = Describe("Reconcile Test", func() {
+	When("an Operator is created", func() {
+		var (
+			operator *operatorsv1alpha1.Operator
+			ctx      context.Context
+			opName   string
+			pkgName  string
+			err      error
+		)
+		BeforeEach(func() {
+			ctx = context.Background()
+
+			opName = "operator-test"
+			pkgName = "package-test"
+
+			operator = &operatorsv1alpha1.Operator{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: opName,
+				},
+				Spec: operatorsv1alpha1.OperatorSpec{
+					PackageName: pkgName,
+				},
+			}
+			err = k8sClient.Create(ctx, operator)
+			Expect(err).To(Not(HaveOccurred()))
+
+			or := controllers.OperatorReconciler{
+				k8sClient,
+				scheme.Scheme,
+			}
+			_, err = or.Reconcile(ctx, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name: opName,
+				},
+			})
+			Expect(err).To(Not(HaveOccurred()))
+		})
+		AfterEach(func() {
+			err = k8sClient.Delete(ctx, operator)
+			Expect(err).To(Not(HaveOccurred()))
+		})
+		It("has a Condition created", func() {
+			getOperator := &operatorsv1alpha1.Operator{}
+
+			err = k8sClient.Get(ctx, client.ObjectKey{
+				Name: opName,
+			}, getOperator)
+			Expect(err).To(Not(HaveOccurred()))
+
+			// There should always be a "Ready" condition, regardless of Status.
+			conds := getOperator.Status.Conditions
+			Expect(conds).To(Not(BeEmpty()))
+			Expect(conds).To(ContainElement(HaveField("Type", operatorsv1alpha1.TypeReady)))
+		})
+	})
 })
