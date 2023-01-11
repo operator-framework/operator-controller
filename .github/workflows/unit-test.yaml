@@ -8,13 +8,13 @@ on:
     - main
 
 jobs:
-  e2e-kind:
+  unit-test-basic:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-go@v3
       with:
         go-version-file: "go.mod"
-    - name: Run unit tests
+    - name: Run basic unit tests
       run: |
         make test
