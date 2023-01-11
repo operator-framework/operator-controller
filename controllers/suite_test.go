@@ -18,24 +18,26 @@ package controllers_test
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/controllers"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -96,8 +98,8 @@ var _ = Describe("Reconcile Test", func() {
 		BeforeEach(func() {
 			ctx = context.Background()
 
-			opName = "operator-test"
-			pkgName = "package-test"
+			opName = fmt.Sprintf("perator-test-%s", rand.String(8))
+			pkgName = fmt.Sprintf("package-test-%s", rand.String(8))
 
 			operator = &operatorsv1alpha1.Operator{
 				ObjectMeta: metav1.ObjectMeta{

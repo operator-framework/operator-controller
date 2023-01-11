@@ -19,14 +19,16 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/equality"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // OperatorReconciler reconciles a Operator object
@@ -49,32 +51,50 @@ type OperatorReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.1/pkg/reconcile
 func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx).WithName("reconcile")
+	l := log.FromContext(ctx).WithName("reconcile")
+	l.V(1).Info("starting")
+	defer l.V(1).Info("ending")
 
-	var operator operatorsv1alpha1.Operator
-	if err := r.Get(ctx, req.NamespacedName, &operator); err != nil {
-		log.Error(err, "unable to fetch Operator")
+	var existingOp = &operatorsv1alpha1.Operator{}
+	if err := r.Get(ctx, req.NamespacedName, existingOp); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	reconciledOp := existingOp.DeepCopy()
+	res, reconcileErr := r.reconcile(ctx, reconciledOp)
+
+	// Compare status and update if required
+	if !equality.Semantic.DeepEqual(existingOp.Status, reconciledOp.Status) {
+		if updateErr := r.Status().Update(ctx, reconciledOp); updateErr != nil {
+			return res, utilerrors.NewAggregate([]error{reconcileErr, updateErr})
+		}
+	}
+
+	// Compare resources - ignoring status - and update if required
+	existingOp.Status, reconciledOp.Status = operatorsv1alpha1.OperatorStatus{}, operatorsv1alpha1.OperatorStatus{}
+	if !equality.Semantic.DeepEqual(existingOp, reconciledOp) {
+		if updateErr := r.Update(ctx, reconciledOp); updateErr != nil {
+			return res, utilerrors.NewAggregate([]error{reconcileErr, updateErr})
+		}
+	}
+
+	return res, reconcileErr
+}
+
+// Helper function to do the actual reconcile
+func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha1.Operator) (ctrl.Result, error) {
+
+	// TODO(user): change ReasonNotImplemented when functionality added
 	readyCondition := metav1.Condition{
 		Type:               operatorsv1alpha1.TypeReady,
 		Status:             metav1.ConditionFalse,
-		Reason:             "startUp",
-		Message:            "Operator startup",
-		ObservedGeneration: operator.GetGeneration(),
+		Reason:             operatorsv1alpha1.StatusNotImplemented,
+		Message:            "The Reconcile operation is not implemented",
+		ObservedGeneration: op.GetGeneration(),
 	}
-	apimeta.SetStatusCondition(&operator.Status.Conditions, readyCondition)
-	log.Info("set not ready Condition")
+	apimeta.SetStatusCondition(&op.Status.Conditions, readyCondition)
 
 	// TODO(user): your logic here
-
-	// This is something that needs to happen if any Status is updated,
-	// even if an error occurs
-	if err := r.Status().Update(ctx, &operator); err != nil {
-		log.Error(err, "unable to update Operator status")
-		return ctrl.Result{}, err
-	}
 
 	return ctrl.Result{}, nil
 }

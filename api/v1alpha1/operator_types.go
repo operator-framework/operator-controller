@@ -29,6 +29,8 @@ type OperatorSpec struct {
 
 const (
 	TypeReady = "Ready"
+
+	StatusNotImplemented = "NotImplemented"
 )
 
 // OperatorStatus defines the observed state of Operator
