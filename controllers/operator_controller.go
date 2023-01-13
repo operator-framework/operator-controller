@@ -88,7 +88,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	readyCondition := metav1.Condition{
 		Type:               operatorsv1alpha1.TypeReady,
 		Status:             metav1.ConditionFalse,
-		Reason:             operatorsv1alpha1.StatusNotImplemented,
+		Reason:             operatorsv1alpha1.ReasonNotImplemented,
 		Message:            "The Reconcile operation is not implemented",
 		ObservedGeneration: op.GetGeneration(),
 	}

@@ -98,7 +98,7 @@ var _ = Describe("Reconcile Test", func() {
 		BeforeEach(func() {
 			ctx = context.Background()
 
-			opName = fmt.Sprintf("perator-test-%s", rand.String(8))
+			opName = fmt.Sprintf("operator-test-%s", rand.String(8))
 			pkgName = fmt.Sprintf("package-test-%s", rand.String(8))
 
 			operator = &operatorsv1alpha1.Operator{
