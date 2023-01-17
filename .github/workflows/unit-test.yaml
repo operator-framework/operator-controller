@@ -1,0 +1,20 @@
+name: unit-test
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+    - main
+
+jobs:
+  unit-test-basic:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-go@v3
+      with:
+        go-version-file: "go.mod"
+    - name: Run basic unit tests
+      run: |
+        make test

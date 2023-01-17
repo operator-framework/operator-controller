@@ -27,8 +27,22 @@ type OperatorSpec struct {
 	PackageName string `json:"packageName"`
 }
 
+const (
+	// TODO(user): add more Types
+	TypeReady = "Ready"
+
+	// TODO(user): add more Reasons
+	ReasonNotImplemented = "NotImplemented"
+)
+
 // OperatorStatus defines the observed state of Operator
-type OperatorStatus struct{}
+type OperatorStatus struct {
+	// +patchMergeKey=type
+	// +patchStrategy=merge
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:scope=Cluster
