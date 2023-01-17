@@ -28,12 +28,19 @@ type OperatorSpec struct {
 }
 
 const (
-	// TODO(user): add more Types
+	// TODO(user): add more Types, here and into GetTypes()
 	TypeReady = "Ready"
 
 	// TODO(user): add more Reasons
 	ReasonNotImplemented = "NotImplemented"
 )
+
+func GetTypes() []string {
+	// TODO(user): add Types from above
+	return []string{
+		TypeReady,
+	}
+}
 
 // OperatorStatus defines the observed state of Operator
 type OperatorStatus struct {

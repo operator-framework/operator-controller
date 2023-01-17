@@ -71,7 +71,7 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	compareOp := reconciledOp.DeepCopy()
 	existingOp.Status, compareOp.Status = operatorsv1alpha1.OperatorStatus{}, operatorsv1alpha1.OperatorStatus{}
 	existingOp.Finalizers, compareOp.Finalizers = []string{}, []string{}
-	specDiffers := !equality.Semantic.DeepEqual(existingOp, compareOp)
+	unexpectedFieldsChanged := !equality.Semantic.DeepEqual(existingOp, compareOp)
 
 	if updateStatus {
 		if updateErr := r.Status().Update(ctx, reconciledOp); updateErr != nil {
@@ -79,7 +79,7 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 	}
 
-	if specDiffers {
+	if unexpectedFieldsChanged {
 		panic("spec or metadata changed by reconciler")
 	}
 

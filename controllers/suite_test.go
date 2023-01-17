@@ -127,7 +127,7 @@ var _ = Describe("Reconcile Test", func() {
 			err = k8sClient.Delete(ctx, operator)
 			Expect(err).To(Not(HaveOccurred()))
 		})
-		It("has a Condition created", func() {
+		It("has all Conditions created", func() {
 			getOperator := &operatorsv1alpha1.Operator{}
 
 			err = k8sClient.Get(ctx, client.ObjectKey{
@@ -138,7 +138,24 @@ var _ = Describe("Reconcile Test", func() {
 			// There should always be a "Ready" condition, regardless of Status.
 			conds := getOperator.Status.Conditions
 			Expect(conds).To(Not(BeEmpty()))
-			Expect(conds).To(ContainElement(HaveField("Type", operatorsv1alpha1.TypeReady)))
+			types := operatorsv1alpha1.GetTypes()
+			Expect(conds).To(HaveLen(len(types)))
+			for _, t := range types {
+				Expect(conds).To(ContainElement(HaveField("Type", t)))
+			}
+		})
+		It("has matching gnerations in Conditions", func() {
+			getOperator := &operatorsv1alpha1.Operator{}
+
+			err = k8sClient.Get(ctx, client.ObjectKey{
+				Name: opName,
+			}, getOperator)
+			Expect(err).To(Not(HaveOccurred()))
+
+			// The ObservedGeneration should match the resource generation
+			for _, c := range getOperator.Status.Conditions {
+				Expect(c).To(HaveField("ObservedGeneration", getOperator.GetGeneration()))
+			}
 		})
 	})
 })
