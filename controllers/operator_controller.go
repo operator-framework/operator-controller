@@ -63,16 +63,27 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	reconciledOp := existingOp.DeepCopy()
 	res, reconcileErr := r.reconcile(ctx, reconciledOp)
 
-	// Compare status and update if required
-	if !equality.Semantic.DeepEqual(existingOp.Status, reconciledOp.Status) {
+	// Do checks before any Update()s, as Update() may modify the resource structure!
+	updateStatus := !equality.Semantic.DeepEqual(existingOp.Status, reconciledOp.Status)
+	updateFinalizers := !equality.Semantic.DeepEqual(existingOp.Finalizers, reconciledOp.Finalizers)
+
+	// Compare resources - ignoring status & metadata.finalizers
+	compareOp := reconciledOp.DeepCopy()
+	existingOp.Status, compareOp.Status = operatorsv1alpha1.OperatorStatus{}, operatorsv1alpha1.OperatorStatus{}
+	existingOp.Finalizers, compareOp.Finalizers = []string{}, []string{}
+	specDiffers := !equality.Semantic.DeepEqual(existingOp, compareOp)
+
+	if updateStatus {
 		if updateErr := r.Status().Update(ctx, reconciledOp); updateErr != nil {
 			return res, utilerrors.NewAggregate([]error{reconcileErr, updateErr})
 		}
 	}
 
-	// Compare resources - ignoring status - and update if required
-	existingOp.Status, reconciledOp.Status = operatorsv1alpha1.OperatorStatus{}, operatorsv1alpha1.OperatorStatus{}
-	if !equality.Semantic.DeepEqual(existingOp, reconciledOp) {
+	if specDiffers {
+		panic("spec or metadata changed by reconciler")
+	}
+
+	if updateFinalizers {
 		if updateErr := r.Update(ctx, reconciledOp); updateErr != nil {
 			return res, utilerrors.NewAggregate([]error{reconcileErr, updateErr})
 		}
