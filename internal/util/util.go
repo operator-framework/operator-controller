@@ -16,7 +16,8 @@ limitations under the License.
 
 package util
 
-// ConditionTypes is the full set of Operator condition types.
+// ConditionTypes is the full set of Operator condition Types.
+// ConditionReasons is the full set of Operator condition Reasons.
 //
 // NOTE: These are populated by init() in api/v1alpha1/operator_types.go
 var ConditionTypes []string
