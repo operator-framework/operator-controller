@@ -66,7 +66,7 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingOp.Status, reconciledOp.Status)
 	updateFinalizers := !equality.Semantic.DeepEqual(existingOp.Finalizers, reconciledOp.Finalizers)
-	unexpectedFieldsChanged := checkForUnexpectedFieldChange(existingOp, reconciledOp)
+	unexpectedFieldsChanged := checkForUnexpectedFieldChange(*existingOp, *reconciledOp)
 
 	if updateStatus {
 		if updateErr := r.Status().Update(ctx, reconciledOp); updateErr != nil {
@@ -88,11 +88,10 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 }
 
 // Compare resources - ignoring status & metadata.finalizers
-func checkForUnexpectedFieldChange(a, b *operatorsv1alpha1.Operator) bool {
-	copyA, copyB := a.DeepCopy(), b.DeepCopy()
-	copyA.Status, copyB.Status = operatorsv1alpha1.OperatorStatus{}, operatorsv1alpha1.OperatorStatus{}
-	copyA.Finalizers, copyB.Finalizers = []string{}, []string{}
-	return !equality.Semantic.DeepEqual(copyA, copyB)
+func checkForUnexpectedFieldChange(a, b operatorsv1alpha1.Operator) bool {
+	a.Status, b.Status = operatorsv1alpha1.OperatorStatus{}, operatorsv1alpha1.OperatorStatus{}
+	a.Finalizers, b.Finalizers = []string{}, []string{}
+	return !equality.Semantic.DeepEqual(a, b)
 }
 
 // Helper function to do the actual reconcile
