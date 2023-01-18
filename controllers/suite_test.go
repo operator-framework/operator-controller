@@ -1,5 +1,5 @@
 /*
-Copyright 2022.
+Copyright 2023.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -38,6 +39,7 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/controllers"
+	operatorutil "github.com/operator-framework/operator-controller/internal/util"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -128,33 +130,45 @@ var _ = Describe("Reconcile Test", func() {
 			Expect(err).To(Not(HaveOccurred()))
 		})
 		It("has all Conditions created", func() {
-			getOperator := &operatorsv1alpha1.Operator{}
+			op := &operatorsv1alpha1.Operator{}
 
 			err = k8sClient.Get(ctx, client.ObjectKey{
 				Name: opName,
-			}, getOperator)
+			}, op)
 			Expect(err).To(Not(HaveOccurred()))
 
-			// There should always be a "Ready" condition, regardless of Status.
-			conds := getOperator.Status.Conditions
+			// All defined condition Types MUST exist after reconciliation
+			conds := op.Status.Conditions
 			Expect(conds).To(Not(BeEmpty()))
-			types := operatorsv1alpha1.GetTypes()
-			Expect(conds).To(HaveLen(len(types)))
-			for _, t := range types {
-				Expect(conds).To(ContainElement(HaveField("Type", t)))
+			Expect(conds).To(HaveLen(len(operatorutil.ConditionTypes)))
+			for _, t := range operatorutil.ConditionTypes {
+				Expect(apimeta.FindStatusCondition(conds, t)).To(Not(BeNil()))
 			}
 		})
-		It("has matching gnerations in Conditions", func() {
-			getOperator := &operatorsv1alpha1.Operator{}
+		It("has matching generations in Conditions", func() {
+			op := &operatorsv1alpha1.Operator{}
 
 			err = k8sClient.Get(ctx, client.ObjectKey{
 				Name: opName,
-			}, getOperator)
+			}, op)
 			Expect(err).To(Not(HaveOccurred()))
 
-			// The ObservedGeneration should match the resource generation
-			for _, c := range getOperator.Status.Conditions {
-				Expect(c).To(HaveField("ObservedGeneration", getOperator.GetGeneration()))
+			// The ObservedGeneration MUST match the resource generation after reconciliation
+			for _, c := range op.Status.Conditions {
+				Expect(c.ObservedGeneration).To(Equal(op.GetGeneration()))
+			}
+		})
+		It("has only pre-defined Reasons", func() {
+			op := &operatorsv1alpha1.Operator{}
+
+			err = k8sClient.Get(ctx, client.ObjectKey{
+				Name: opName,
+			}, op)
+			Expect(err).To(Not(HaveOccurred()))
+
+			// A given Reason MUST be in the list of ConditionReasons
+			for _, c := range op.Status.Conditions {
+				Expect(c.Reason).To(BeElementOf(operatorutil.ConditionReasons))
 			}
 		})
 	})

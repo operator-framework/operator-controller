@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	operatorutil "github.com/operator-framework/operator-controller/internal/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,18 +29,22 @@ type OperatorSpec struct {
 }
 
 const (
-	// TODO(user): add more Types, here and into GetTypes()
+	// TODO(user): add more Types, here and into init()
 	TypeReady = "Ready"
 
-	// TODO(user): add more Reasons
+	// TODO(user): add more Reasons, here and into init()
 	ReasonNotImplemented = "NotImplemented"
 )
 
-func GetTypes() []string {
+func init() {
 	// TODO(user): add Types from above
-	return []string{
+	operatorutil.ConditionTypes = append(operatorutil.ConditionTypes,
 		TypeReady,
-	}
+	)
+	// TODO(user): add Reasons from above
+	operatorutil.ConditionReasons = append(operatorutil.ConditionReasons,
+		ReasonNotImplemented,
+	)
 }
 
 // OperatorStatus defines the observed state of Operator

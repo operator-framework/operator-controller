@@ -1,5 +1,5 @@
 /*
-Copyright 2022.
+Copyright 2023.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -66,12 +66,7 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingOp.Status, reconciledOp.Status)
 	updateFinalizers := !equality.Semantic.DeepEqual(existingOp.Finalizers, reconciledOp.Finalizers)
-
-	// Compare resources - ignoring status & metadata.finalizers
-	compareOp := reconciledOp.DeepCopy()
-	existingOp.Status, compareOp.Status = operatorsv1alpha1.OperatorStatus{}, operatorsv1alpha1.OperatorStatus{}
-	existingOp.Finalizers, compareOp.Finalizers = []string{}, []string{}
-	unexpectedFieldsChanged := !equality.Semantic.DeepEqual(existingOp, compareOp)
+	unexpectedFieldsChanged := checkForUnexpectedFieldChange(existingOp, reconciledOp)
 
 	if updateStatus {
 		if updateErr := r.Status().Update(ctx, reconciledOp); updateErr != nil {
@@ -90,6 +85,14 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	return res, reconcileErr
+}
+
+// Compare resources - ignoring status & metadata.finalizers
+func checkForUnexpectedFieldChange(a, b *operatorsv1alpha1.Operator) bool {
+	copyA, copyB := a.DeepCopy(), b.DeepCopy()
+	copyA.Status, copyB.Status = operatorsv1alpha1.OperatorStatus{}, operatorsv1alpha1.OperatorStatus{}
+	copyA.Finalizers, copyB.Finalizers = []string{}, []string{}
+	return !equality.Semantic.DeepEqual(copyA, copyB)
 }
 
 // Helper function to do the actual reconcile
