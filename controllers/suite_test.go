@@ -115,8 +115,8 @@ var _ = Describe("Reconcile Test", func() {
 			Expect(err).To(Not(HaveOccurred()))
 
 			or := controllers.OperatorReconciler{
-				k8sClient,
-				scheme.Scheme,
+				Client: k8sClient,
+				Scheme: scheme.Scheme,
 			}
 			_, err = or.Reconcile(ctx, reconcile.Request{
 				NamespacedName: types.NamespacedName{
