@@ -114,16 +114,18 @@ func (b *BundleEntity) BundlePath() (string, error) {
 }
 
 func (b *BundleEntity) loadPackage() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	if b.bundlePackage == nil {
 		bundlePackage, err := loadFromEntity[property.Package](b.Entity, property.TypePackage)
 		if err != nil {
-			return fmt.Errorf("error determining package for entity '%s': %s", b.ID, err)
+			return fmt.Errorf("error determining package for entity '%s': %w", b.ID, err)
 		}
 		b.bundlePackage = &bundlePackage
 		if b.semVersion == nil {
 			semVer, err := semver.Parse(b.bundlePackage.Version)
 			if err != nil {
-				return fmt.Errorf("could not parse semver (%s) for entity '%s': %s", b.bundlePackage.Version, b.ID, err)
+				return fmt.Errorf("could not parse semver (%s) for entity '%s': %w", b.bundlePackage.Version, b.ID, err)
 			}
 			b.semVersion = &semVer
 		}
@@ -137,7 +139,7 @@ func (b *BundleEntity) loadProvidedGVKs() error {
 	if b.providedGVKs == nil {
 		providedGVKs, err := loadFromEntity[[]GVK](b.Entity, property.TypeGVK)
 		if err != nil {
-			return fmt.Errorf("error determining bundle provided gvks for entity '%s': %s", b.ID, err)
+			return fmt.Errorf("error determining bundle provided gvks for entity '%s': %w", b.ID, err)
 		}
 		b.providedGVKs = providedGVKs
 	}
@@ -150,7 +152,7 @@ func (b *BundleEntity) loadRequiredGVKs() error {
 	if b.requiredGVKs == nil {
 		requiredGVKs, err := loadFromEntity[[]GVKRequired](b.Entity, property.TypeGVKRequired)
 		if err != nil {
-			return fmt.Errorf("error determining bundle required gvks for entity '%s': %s", b.ID, err)
+			return fmt.Errorf("error determining bundle required gvks for entity '%s': %w", b.ID, err)
 		}
 		b.requiredGVKs = requiredGVKs
 	}
@@ -163,12 +165,12 @@ func (b *BundleEntity) loadRequiredPackages() error {
 	if b.requiredPackages == nil {
 		requiredPackages, err := loadFromEntity[[]PackageRequired](b.Entity, property.TypePackageRequired)
 		if err != nil {
-			return fmt.Errorf("error determining bundle required packages for entity '%s': %s", b.ID, err)
+			return fmt.Errorf("error determining bundle required packages for entity '%s': %w", b.ID, err)
 		}
 		for _, requiredPackage := range requiredPackages {
 			semverRange, err := semver.ParseRange(requiredPackage.VersionRange)
 			if err != nil {
-				return fmt.Errorf("error determining bundle required package semver range for entity '%s': '%s'", b.ID, err)
+				return fmt.Errorf("error determining bundle required package semver range for entity '%s': '%w'", b.ID, err)
 			}
 			requiredPackage.SemverRange = &semverRange
 		}
@@ -183,7 +185,7 @@ func (b *BundleEntity) loadChannelProperties() error {
 	if b.channelProperties == nil {
 		channel, err := loadFromEntity[ChannelProperties](b.Entity, property.TypeChannel)
 		if err != nil {
-			return fmt.Errorf("error determining bundle channel properties for entity '%s': %s", b.ID, err)
+			return fmt.Errorf("error determining bundle channel properties for entity '%s': %w", b.ID, err)
 		}
 		b.channelProperties = &channel
 	}
@@ -196,7 +198,7 @@ func (b *BundleEntity) loadBundlePath() error {
 	if b.bundlePath == "" {
 		bundlePath, err := loadFromEntity[string](b.Entity, PropertyBundlePath)
 		if err != nil {
-			return fmt.Errorf("error determining bundle path for entity '%s': %s", b.ID, err)
+			return fmt.Errorf("error determining bundle path for entity '%s': %w", b.ID, err)
 		}
 		b.bundlePath = bundlePath
 	}
@@ -211,7 +213,7 @@ func loadFromEntity[T interface{}](entity *input.Entity, propertyName string) (T
 	}
 
 	if err := json.Unmarshal([]byte(propertyValue), &deserializedProperty); err != nil {
-		return deserializedProperty, fmt.Errorf("property '%s' ('%s') could not be parsed: %s", propertyName, propertyValue, err)
+		return deserializedProperty, fmt.Errorf("property '%s' ('%s') could not be parsed: %w", propertyName, propertyValue, err)
 	}
 	return deserializedProperty, nil
 }

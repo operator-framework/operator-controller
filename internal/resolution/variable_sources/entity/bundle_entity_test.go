@@ -1,16 +1,14 @@
 package entity_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/blang/semver/v4"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
-	"github.com/operator-framework/operator-registry/alpha/property"
-
 	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
+	"github.com/operator-framework/operator-registry/alpha/property"
 )
 
 func TestBundleEntity(t *testing.T) {
@@ -34,7 +32,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			packageName, err := bundleEntity.PackageName()
 			Expect(packageName).To(Equal(""))
-			Expect(err).To(Equal(fmt.Errorf("error determining package for entity 'operatorhub/prometheus/0.14.0': property 'olm.package' not found")))
+			Expect(err.Error()).To(Equal("error determining package for entity 'operatorhub/prometheus/0.14.0': property 'olm.package' not found"))
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -43,7 +41,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			packageName, err := bundleEntity.PackageName()
 			Expect(packageName).To(Equal(""))
-			Expect(err).To(Equal(fmt.Errorf("error determining package for entity 'operatorhub/prometheus/0.14.0': property 'olm.package' ('badPackageNameStructure') could not be parsed: invalid character 'b' looking for beginning of value")))
+			Expect(err.Error()).To(Equal("error determining package for entity 'operatorhub/prometheus/0.14.0': property 'olm.package' ('badPackageNameStructure') could not be parsed: invalid character 'b' looking for beginning of value"))
 		})
 	})
 
@@ -62,7 +60,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			version, err := bundleEntity.Version()
 			Expect(version).To(BeNil())
-			Expect(err).To(Equal(fmt.Errorf("error determining package for entity 'operatorhub/prometheus/0.14.0': property 'olm.package' not found")))
+			Expect(err.Error()).To(Equal("error determining package for entity 'operatorhub/prometheus/0.14.0': property 'olm.package' not found"))
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -71,7 +69,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			version, err := bundleEntity.Version()
 			Expect(version).To(BeNil())
-			Expect(err).To(Equal(fmt.Errorf("error determining package for entity 'operatorhub/prometheus/0.14.0': property 'olm.package' ('badPackageStructure') could not be parsed: invalid character 'b' looking for beginning of value")))
+			Expect(err.Error()).To(Equal("error determining package for entity 'operatorhub/prometheus/0.14.0': property 'olm.package' ('badPackageStructure') could not be parsed: invalid character 'b' looking for beginning of value"))
 		})
 		It("should return error if the version is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -80,7 +78,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			version, err := bundleEntity.Version()
 			Expect(version).To(BeNil())
-			Expect(err).To(Equal(fmt.Errorf("could not parse semver (badversion) for entity 'operatorhub/prometheus/0.14.0': No Major.Minor.Patch elements found")))
+			Expect(err.Error()).To(Equal("could not parse semver (badversion) for entity 'operatorhub/prometheus/0.14.0': No Major.Minor.Patch elements found"))
 		})
 	})
 
@@ -102,7 +100,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			providedGvks, err := bundleEntity.ProvidedGVKs()
 			Expect(providedGvks).To(BeNil())
-			Expect(err).To(Equal(fmt.Errorf("error determining bundle provided gvks for entity 'operatorhub/prometheus/0.14.0': property 'olm.gvk' not found")))
+			Expect(err.Error()).To(Equal("error determining bundle provided gvks for entity 'operatorhub/prometheus/0.14.0': property 'olm.gvk' not found"))
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -111,7 +109,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			providedGvks, err := bundleEntity.ProvidedGVKs()
 			Expect(providedGvks).To(BeNil())
-			Expect(err).To(Equal(fmt.Errorf("error determining bundle provided gvks for entity 'operatorhub/prometheus/0.14.0': property 'olm.gvk' ('badGvkStructure') could not be parsed: invalid character 'b' looking for beginning of value")))
+			Expect(err.Error()).To(Equal("error determining bundle provided gvks for entity 'operatorhub/prometheus/0.14.0': property 'olm.gvk' ('badGvkStructure') could not be parsed: invalid character 'b' looking for beginning of value"))
 		})
 	})
 
@@ -133,7 +131,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			requiredGvks, err := bundleEntity.RequiredGVKs()
 			Expect(requiredGvks).To(BeNil())
-			Expect(err).To(Equal(fmt.Errorf("error determining bundle required gvks for entity 'operatorhub/prometheus/0.14.0': property 'olm.gvk.required' not found")))
+			Expect(err.Error()).To(Equal("error determining bundle required gvks for entity 'operatorhub/prometheus/0.14.0': property 'olm.gvk.required' not found"))
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -142,7 +140,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			requiredGvks, err := bundleEntity.RequiredGVKs()
 			Expect(requiredGvks).To(BeNil())
-			Expect(err).To(Equal(fmt.Errorf("error determining bundle required gvks for entity 'operatorhub/prometheus/0.14.0': property 'olm.gvk.required' ('badGvkStructure') could not be parsed: invalid character 'b' looking for beginning of value")))
+			Expect(err.Error()).To(Equal("error determining bundle required gvks for entity 'operatorhub/prometheus/0.14.0': property 'olm.gvk.required' ('badGvkStructure') could not be parsed: invalid character 'b' looking for beginning of value"))
 		})
 	})
 
@@ -164,7 +162,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			requiredPackages, err := bundleEntity.RequiredPackages()
 			Expect(requiredPackages).To(BeNil())
-			Expect(err).To(Equal(fmt.Errorf("error determining bundle required packages for entity 'operatorhub/prometheus/0.14.0': property 'olm.package.required' not found")))
+			Expect(err.Error()).To(Equal("error determining bundle required packages for entity 'operatorhub/prometheus/0.14.0': property 'olm.package.required' not found"))
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -173,7 +171,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			requiredPackages, err := bundleEntity.RequiredPackages()
 			Expect(requiredPackages).To(BeNil())
-			Expect(err).To(Equal(fmt.Errorf("error determining bundle required packages for entity 'operatorhub/prometheus/0.14.0': property 'olm.package.required' ('badRequiredPackageStructure') could not be parsed: invalid character 'b' looking for beginning of value")))
+			Expect(err.Error()).To(Equal("error determining bundle required packages for entity 'operatorhub/prometheus/0.14.0': property 'olm.package.required' ('badRequiredPackageStructure') could not be parsed: invalid character 'b' looking for beginning of value"))
 		})
 	})
 
@@ -192,7 +190,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			channelName, err := bundleEntity.ChannelName()
 			Expect(channelName).To(BeEmpty())
-			Expect(err).To(Equal(fmt.Errorf("error determining bundle channel properties for entity 'operatorhub/prometheus/0.14.0': property 'olm.channel' not found")))
+			Expect(err.Error()).To(Equal("error determining bundle channel properties for entity 'operatorhub/prometheus/0.14.0': property 'olm.channel' not found"))
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -201,7 +199,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			channelName, err := bundleEntity.ChannelName()
 			Expect(channelName).To(BeEmpty())
-			Expect(err).To(Equal(fmt.Errorf("error determining bundle channel properties for entity 'operatorhub/prometheus/0.14.0': property 'olm.channel' ('badChannelPropertiesStructure') could not be parsed: invalid character 'b' looking for beginning of value")))
+			Expect(err.Error()).To(Equal("error determining bundle channel properties for entity 'operatorhub/prometheus/0.14.0': property 'olm.channel' ('badChannelPropertiesStructure') could not be parsed: invalid character 'b' looking for beginning of value"))
 		})
 	})
 
@@ -228,7 +226,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			channelProperties, err := bundleEntity.ChannelProperties()
 			Expect(channelProperties).To(BeNil())
-			Expect(err).To(Equal(fmt.Errorf("error determining bundle channel properties for entity 'operatorhub/prometheus/0.14.0': property 'olm.channel' not found")))
+			Expect(err.Error()).To(Equal("error determining bundle channel properties for entity 'operatorhub/prometheus/0.14.0': property 'olm.channel' not found"))
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -237,7 +235,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			channelProperties, err := bundleEntity.ChannelProperties()
 			Expect(channelProperties).To(BeNil())
-			Expect(err).To(Equal(fmt.Errorf("error determining bundle channel properties for entity 'operatorhub/prometheus/0.14.0': property 'olm.channel' ('badChannelPropertiesStructure') could not be parsed: invalid character 'b' looking for beginning of value")))
+			Expect(err.Error()).To(Equal("error determining bundle channel properties for entity 'operatorhub/prometheus/0.14.0': property 'olm.channel' ('badChannelPropertiesStructure') could not be parsed: invalid character 'b' looking for beginning of value"))
 		})
 	})
 
@@ -256,7 +254,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			bundlePath, err := bundleEntity.BundlePath()
 			Expect(bundlePath).To(BeEmpty())
-			Expect(err).To(Equal(fmt.Errorf("error determining bundle path for entity 'operatorhub/prometheus/0.14.0': property 'olm.bundle.path' not found")))
+			Expect(err.Error()).To(Equal("error determining bundle path for entity 'operatorhub/prometheus/0.14.0': property 'olm.bundle.path' not found"))
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -265,7 +263,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			bundlePath, err := bundleEntity.BundlePath()
 			Expect(bundlePath).To(BeEmpty())
-			Expect(err).To(Equal(fmt.Errorf("error determining bundle path for entity 'operatorhub/prometheus/0.14.0': property 'olm.bundle.path' ('badBundlePath') could not be parsed: invalid character 'b' looking for beginning of value")))
+			Expect(err.Error()).To(Equal("error determining bundle path for entity 'operatorhub/prometheus/0.14.0': property 'olm.bundle.path' ('badBundlePath') could not be parsed: invalid character 'b' looking for beginning of value"))
 		})
 	})
 })
