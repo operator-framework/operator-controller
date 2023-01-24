@@ -36,6 +36,10 @@ func (g GVKRequired) String() string {
 	return fmt.Sprintf(`group:"%s" version:"%s" kind:"%s"`, g.Group, g.Version, g.Kind)
 }
 
+func (g GVKRequired) AsGVK() GVK {
+	return GVK(g)
+}
+
 type BundleEntity struct {
 	*input.Entity
 
