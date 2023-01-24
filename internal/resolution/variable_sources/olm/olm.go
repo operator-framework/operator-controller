@@ -1,10 +1,13 @@
-package variable_sources
+package olm
 
 import (
 	"context"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/global_constraints"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
 )
 
 var _ input.VariableSource = &OLMVariableSource{}
@@ -24,10 +27,10 @@ func (o *OLMVariableSource) GetVariables(ctx context.Context, entitySource input
 
 	// build required package variable sources
 	for _, packageName := range o.packageNames {
-		inputVariableSources = append(inputVariableSources, NewRequiredPackage(packageName))
+		inputVariableSources = append(inputVariableSources, required_package.NewRequiredPackage(packageName))
 	}
 
 	// build variable source pipeline
-	variableSource := NewGlobalConstraintVariableSource(NewBundlesAndDepsVariableSource(inputVariableSources...))
+	variableSource := global_constraints.NewGlobalConstraintVariableSource(bundles_and_dependencies.NewBundlesAndDepsVariableSource(inputVariableSources...))
 	return variableSource.GetVariables(ctx, entitySource)
 }

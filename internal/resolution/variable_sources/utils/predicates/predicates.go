@@ -1,7 +1,8 @@
-package variable_sources
+package predicates
 
 import (
 	"github.com/blang/semver/v4"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources"
 	"github.com/operator-framework/operator-registry/pkg/api"
 
 	"github.com/operator-framework/deppy/pkg/deppy/input"
@@ -9,7 +10,7 @@ import (
 
 func WithPackageName(packageName string) input.Predicate {
 	return func(entity *input.Entity) bool {
-		bundleEntity := NewBundleEntity(entity)
+		bundleEntity := variable_sources.NewBundleEntity(entity)
 		name, err := bundleEntity.PackageName()
 		if err != nil {
 			return false
@@ -20,7 +21,7 @@ func WithPackageName(packageName string) input.Predicate {
 
 func InSemverRange(semverRange semver.Range) input.Predicate {
 	return func(entity *input.Entity) bool {
-		bundleEntity := NewBundleEntity(entity)
+		bundleEntity := variable_sources.NewBundleEntity(entity)
 		bundleVersion, err := bundleEntity.Version()
 		if err != nil {
 			return false
@@ -31,7 +32,7 @@ func InSemverRange(semverRange semver.Range) input.Predicate {
 
 func InChannel(channelName string) input.Predicate {
 	return func(entity *input.Entity) bool {
-		bundleEntity := NewBundleEntity(entity)
+		bundleEntity := variable_sources.NewBundleEntity(entity)
 		bundleChannel, err := bundleEntity.ChannelName()
 		if err != nil {
 			return false
@@ -42,7 +43,7 @@ func InChannel(channelName string) input.Predicate {
 
 func ProvidesGVK(gvk *api.GroupVersionKind) input.Predicate {
 	return func(entity *input.Entity) bool {
-		bundleEntity := NewBundleEntity(entity)
+		bundleEntity := variable_sources.NewBundleEntity(entity)
 		providedGVKs, err := bundleEntity.ProvidedGVKs()
 		if err != nil {
 			return false

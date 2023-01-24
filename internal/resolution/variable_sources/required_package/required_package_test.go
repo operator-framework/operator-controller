@@ -1,20 +1,27 @@
-package variable_sources_test
+package required_package_test
 
 import (
 	"context"
 	"fmt"
+	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
 	"github.com/operator-framework/operator-registry/alpha/property"
 )
 
+func TestRequiredPackage(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "RequiredPackageVariableSource Suite")
+}
+
 var _ = Describe("RequiredPackageVariable", func() {
 	var (
-		rpv            *variable_sources.RequiredPackageVariable
+		rpv            *required_package.RequiredPackageVariable
 		packageName    string
 		bundleEntities []*variable_sources.BundleEntity
 	)
@@ -35,7 +42,7 @@ var _ = Describe("RequiredPackageVariable", func() {
 				property.TypeChannel: `{"channelName":"stable","priority":0}`,
 			})),
 		}
-		rpv = variable_sources.NewRequiredPackageVariable(packageName, bundleEntities)
+		rpv = required_package.NewRequiredPackageVariable(packageName, bundleEntities)
 	})
 
 	It("should return the correct package name", func() {
@@ -54,14 +61,14 @@ var _ = Describe("RequiredPackageVariable", func() {
 
 var _ = Describe("RequiredPackageVariableSource", func() {
 	var (
-		rpvs             *variable_sources.RequiredPackageVariableSource
+		rpvs             *required_package.RequiredPackageVariableSource
 		packageName      string
 		mockEntitySource input.EntitySource
 	)
 
 	BeforeEach(func() {
 		packageName = "test-package"
-		rpvs = variable_sources.NewRequiredPackage(packageName)
+		rpvs = required_package.NewRequiredPackage(packageName)
 		mockEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{
 			"bundle-1": *input.NewEntity("bundle-1", map[string]string{
 				property.TypePackage: `{"packageName": "test-package", "version": "1.0.0"}`,
@@ -92,7 +99,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 		variables, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(variables)).To(Equal(1))
-		reqPackageVar, ok := variables[0].(*variable_sources.RequiredPackageVariable)
+		reqPackageVar, ok := variables[0].(*required_package.RequiredPackageVariable)
 		Expect(ok).To(BeTrue())
 		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))))
 

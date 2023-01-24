@@ -7,7 +7,7 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	"github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -28,7 +28,7 @@ func (o *OperatorResolver) Resolve(ctx context.Context) (solver.Solution, error)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get package names for resolution: %s", err)
 	}
-	olmVariableSource := variable_sources.NewOLMVariableSource(packageNames...)
+	olmVariableSource := olm.NewOLMVariableSource(packageNames...)
 	deppySolver, err := solver.NewDeppySolver(o.entitySource, olmVariableSource)
 	solution, err := deppySolver.Solve(ctx)
 	if err != nil {

@@ -1,4 +1,4 @@
-package variable_sources
+package required_package
 
 import (
 	"context"
@@ -7,18 +7,21 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/constraint"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/utils/predicates"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/utils/sort"
 )
 
 type RequiredPackageVariable struct {
 	*input.SimpleVariable
-	bundleEntities []*BundleEntity
+	bundleEntities []*variable_sources.BundleEntity
 }
 
-func (r *RequiredPackageVariable) BundleEntities() []*BundleEntity {
+func (r *RequiredPackageVariable) BundleEntities() []*variable_sources.BundleEntity {
 	return r.bundleEntities
 }
 
-func NewRequiredPackageVariable(packageName string, bundleEntities []*BundleEntity) *RequiredPackageVariable {
+func NewRequiredPackageVariable(packageName string, bundleEntities []*variable_sources.BundleEntity) *RequiredPackageVariable {
 	id := deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))
 	var entityIDs []deppy.Identifier
 	for _, bundle := range bundleEntities {
@@ -44,17 +47,17 @@ func NewRequiredPackage(packageName string) *RequiredPackageVariableSource {
 }
 
 func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
-	resultSet, err := entitySource.Filter(ctx, WithPackageName(r.packageName))
+	resultSet, err := entitySource.Filter(ctx, predicates.WithPackageName(r.packageName))
 	if err != nil {
 		return nil, err
 	}
 	if len(resultSet) == 0 {
 		return nil, fmt.Errorf("package '%s' not found", r.packageName)
 	}
-	resultSet = resultSet.Sort(ByChannelAndVersion)
-	var bundleEntities []*BundleEntity
+	resultSet = resultSet.Sort(sort.ByChannelAndVersion)
+	var bundleEntities []*variable_sources.BundleEntity
 	for i := 0; i < len(resultSet); i++ {
-		bundleEntities = append(bundleEntities, NewBundleEntity(&resultSet[i]))
+		bundleEntities = append(bundleEntities, variable_sources.NewBundleEntity(&resultSet[i]))
 	}
 	return []deppy.Variable{
 		NewRequiredPackageVariable(r.packageName, bundleEntities),

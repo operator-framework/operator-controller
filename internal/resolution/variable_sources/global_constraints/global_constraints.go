@@ -1,4 +1,4 @@
-package variable_sources
+package global_constraints
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/constraint"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
 	"github.com/operator-framework/operator-registry/pkg/api"
 )
 
@@ -45,8 +47,8 @@ func (g *GlobalConstraintVariableSource) GetVariables(ctx context.Context, entit
 	gvkToBundleMap := map[string]map[deppy.Identifier]struct{}{}
 	for _, variable := range variables {
 		switch v := variable.(type) {
-		case *BundleVariable:
-			bundleEntities := []*BundleEntity{v.BundleEntity()}
+		case *bundles_and_dependencies.BundleVariable:
+			bundleEntities := []*variable_sources.BundleEntity{v.BundleEntity()}
 			bundleEntities = append(bundleEntities, v.Dependencies()...)
 			for _, bundleEntity := range bundleEntities {
 				// get bundleID package and update map

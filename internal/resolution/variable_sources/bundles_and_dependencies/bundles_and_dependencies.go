@@ -1,4 +1,4 @@
-package variable_sources
+package bundles_and_dependencies
 
 import (
 	"context"
@@ -9,23 +9,27 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/constraint"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/utils/predicates"
+	sort2 "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/utils/sort"
 )
 
 type BundleVariable struct {
 	*input.SimpleVariable
-	bundleEntity *BundleEntity
-	dependencies []*BundleEntity
+	bundleEntity *variable_sources.BundleEntity
+	dependencies []*variable_sources.BundleEntity
 }
 
-func (b *BundleVariable) BundleEntity() *BundleEntity {
+func (b *BundleVariable) BundleEntity() *variable_sources.BundleEntity {
 	return b.bundleEntity
 }
 
-func (b *BundleVariable) Dependencies() []*BundleEntity {
+func (b *BundleVariable) Dependencies() []*variable_sources.BundleEntity {
 	return b.dependencies
 }
 
-func NewBundleVariable(bundleEntity *BundleEntity, dependencyBundleEntities []*BundleEntity) *BundleVariable {
+func NewBundleVariable(bundleEntity *variable_sources.BundleEntity, dependencyBundleEntities []*variable_sources.BundleEntity) *BundleVariable {
 	var dependencyIDs []deppy.Identifier
 	for _, bundle := range dependencyBundleEntities {
 		dependencyIDs = append(dependencyIDs, bundle.ID)
@@ -66,10 +70,10 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context, entityS
 	}
 
 	// create bundle queue for dependency resolution
-	var bundleEntityQueue []*BundleEntity
+	var bundleEntityQueue []*variable_sources.BundleEntity
 	for _, variable := range variables {
 		switch v := variable.(type) {
-		case *RequiredPackageVariable:
+		case *required_package.RequiredPackageVariable:
 			for _, bundleEntity := range v.BundleEntities() {
 				bundleEntityQueue = append(bundleEntityQueue, bundleEntity)
 			}
@@ -80,7 +84,7 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context, entityS
 	visited := map[deppy.Identifier]struct{}{}
 	for len(bundleEntityQueue) > 0 {
 		// pop head of queue
-		var head *BundleEntity
+		var head *variable_sources.BundleEntity
 		head, bundleEntityQueue = bundleEntityQueue[0], bundleEntityQueue[1:]
 
 		// ignore bundles that have already been processed
@@ -105,8 +109,8 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context, entityS
 	return variables, nil
 }
 
-func (b *BundlesAndDepsVariableSource) getEntityDependencies(ctx context.Context, bundleEntity *BundleEntity, entitySource input.EntitySource) ([]*BundleEntity, error) {
-	var dependencies []*BundleEntity
+func (b *BundlesAndDepsVariableSource) getEntityDependencies(ctx context.Context, bundleEntity *variable_sources.BundleEntity, entitySource input.EntitySource) ([]*variable_sources.BundleEntity, error) {
+	var dependencies []*variable_sources.BundleEntity
 	added := map[deppy.Identifier]struct{}{}
 
 	// gather required package dependencies
@@ -117,7 +121,7 @@ func (b *BundlesAndDepsVariableSource) getEntityDependencies(ctx context.Context
 		if err != nil {
 			return nil, err
 		}
-		packageDependencyBundles, err := entitySource.Filter(ctx, input.And(WithPackageName(requiredPackage.PackageName), InSemverRange(semverRange)))
+		packageDependencyBundles, err := entitySource.Filter(ctx, input.And(predicates.WithPackageName(requiredPackage.PackageName), predicates.InSemverRange(semverRange)))
 		if err != nil {
 			return nil, err
 		}
@@ -127,7 +131,7 @@ func (b *BundlesAndDepsVariableSource) getEntityDependencies(ctx context.Context
 		for i := 0; i < len(packageDependencyBundles); i++ {
 			entity := packageDependencyBundles[i]
 			if _, ok := added[entity.ID]; !ok {
-				dependencies = append(dependencies, NewBundleEntity(&entity))
+				dependencies = append(dependencies, variable_sources.NewBundleEntity(&entity))
 				added[entity.ID] = struct{}{}
 			}
 		}
@@ -137,7 +141,7 @@ func (b *BundlesAndDepsVariableSource) getEntityDependencies(ctx context.Context
 	// todo(perdasilva): disambiguate between not found and actual errors
 	gvkDependencies, _ := bundleEntity.RequiredGVKs()
 	for i := 0; i < len(gvkDependencies); i++ {
-		gvkDependencyBundles, err := entitySource.Filter(ctx, ProvidesGVK(&gvkDependencies[i]))
+		gvkDependencyBundles, err := entitySource.Filter(ctx, predicates.ProvidesGVK(&gvkDependencies[i]))
 		if err != nil {
 			return nil, err
 		}
@@ -147,7 +151,7 @@ func (b *BundlesAndDepsVariableSource) getEntityDependencies(ctx context.Context
 		for i := 0; i < len(gvkDependencyBundles); i++ {
 			entity := gvkDependencyBundles[i]
 			if _, ok := added[entity.ID]; !ok {
-				dependencies = append(dependencies, NewBundleEntity(&entity))
+				dependencies = append(dependencies, variable_sources.NewBundleEntity(&entity))
 				added[entity.ID] = struct{}{}
 			}
 		}
@@ -155,7 +159,7 @@ func (b *BundlesAndDepsVariableSource) getEntityDependencies(ctx context.Context
 
 	// sort bundles in version order
 	sort.SliceStable(dependencies, func(i, j int) bool {
-		return ByChannelAndVersion(dependencies[i].Entity, dependencies[j].Entity)
+		return sort2.ByChannelAndVersion(dependencies[i].Entity, dependencies[j].Entity)
 	})
 
 	return dependencies, nil

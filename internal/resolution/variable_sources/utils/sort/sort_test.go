@@ -1,14 +1,20 @@
-package variable_sources_test
+package sort_test
 
 import (
 	"sort"
+	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources"
+	sort2 "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/utils/sort"
 	"github.com/operator-framework/operator-registry/alpha/property"
 )
+
+func TestSort(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Sort Suite")
+}
 
 var _ = Describe("Sort", func() {
 	Describe("ByChannelAndVersion", func() {
@@ -25,7 +31,7 @@ var _ = Describe("Sort", func() {
 			entities := []*input.Entity{e2, e3, e1}
 
 			sort.Slice(entities, func(i, j int) bool {
-				return variable_sources.ByChannelAndVersion(entities[i], entities[j])
+				return sort2.ByChannelAndVersion(entities[i], entities[j])
 			})
 
 			Expect(entities[0]).To(Equal(e1))
@@ -49,7 +55,7 @@ var _ = Describe("Sort", func() {
 			entities := []*input.Entity{e2, e3, e1}
 
 			sort.Slice(entities, func(i, j int) bool {
-				return variable_sources.ByChannelAndVersion(entities[i], entities[j])
+				return sort2.ByChannelAndVersion(entities[i], entities[j])
 			})
 
 			Expect(entities[0]).To(Equal(e1))
@@ -73,7 +79,7 @@ var _ = Describe("Sort", func() {
 			entities := []*input.Entity{e2, e3, e1}
 
 			sort.Slice(entities, func(i, j int) bool {
-				return variable_sources.ByChannelAndVersion(entities[i], entities[j])
+				return sort2.ByChannelAndVersion(entities[i], entities[j])
 			})
 
 			Expect(entities[0]).To(Equal(e3))
@@ -101,7 +107,7 @@ var _ = Describe("Sort", func() {
 			entities := []*input.Entity{e2, e3, e1, e4}
 
 			sort.Slice(entities, func(i, j int) bool {
-				return variable_sources.ByChannelAndVersion(entities[i], entities[j])
+				return sort2.ByChannelAndVersion(entities[i], entities[j])
 			})
 
 			Expect(entities[0]).To(Equal(e2))
@@ -127,7 +133,7 @@ var _ = Describe("Sort", func() {
 			entities := []*input.Entity{e2, e3, e1, e4}
 
 			sort.Slice(entities, func(i, j int) bool {
-				return variable_sources.ByChannelAndVersion(entities[i], entities[j])
+				return sort2.ByChannelAndVersion(entities[i], entities[j])
 			})
 
 			Expect(entities[0]).To(Equal(e3))

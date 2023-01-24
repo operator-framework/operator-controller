@@ -1,8 +1,9 @@
-package variable_sources_test
+package global_constraints_test
 
 import (
 	"context"
 	"fmt"
+	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -10,14 +11,22 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/constraint"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/global_constraints"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
 	"github.com/operator-framework/operator-registry/alpha/property"
 )
+
+func TestGlobalConstraints(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "GlobalConstraintsVariableSource Suite")
+}
 
 var _ = Describe("GlobalConstraintVariable", func() {
 	var (
 		id                       deppy.Identifier
 		atMostIDs                []deppy.Identifier
-		globalConstraintVariable *variable_sources.GlobalConstraintVariable
+		globalConstraintVariable *global_constraints.GlobalConstraintVariable
 	)
 
 	BeforeEach(func() {
@@ -26,7 +35,7 @@ var _ = Describe("GlobalConstraintVariable", func() {
 			deppy.IdentifierFromString("test-at-most-id-1"),
 			deppy.IdentifierFromString("test-at-most-id-2"),
 		}
-		globalConstraintVariable = variable_sources.NewGlobalConstraintVariable(id, atMostIDs...)
+		globalConstraintVariable = global_constraints.NewGlobalConstraintVariable(id, atMostIDs...)
 	})
 
 	It("should initialize a new global constraint variable", func() {
@@ -135,14 +144,14 @@ var bundleSet = map[deppy.Identifier]*input.Entity{
 var _ = Describe("GlobalConstraintVariableSource", func() {
 	var (
 		inputVariableSource            *MockInputVariableSource
-		globalConstraintVariableSource *variable_sources.GlobalConstraintVariableSource
+		globalConstraintVariableSource *global_constraints.GlobalConstraintVariableSource
 		ctx                            context.Context
 		entitySource                   input.EntitySource
 	)
 
 	BeforeEach(func() {
 		inputVariableSource = &MockInputVariableSource{}
-		globalConstraintVariableSource = variable_sources.NewGlobalConstraintVariableSource(inputVariableSource)
+		globalConstraintVariableSource = global_constraints.NewGlobalConstraintVariableSource(inputVariableSource)
 		ctx = context.Background()
 
 		// the entity is not used in this variable source
@@ -151,16 +160,16 @@ var _ = Describe("GlobalConstraintVariableSource", func() {
 
 	It("should get variables from the input variable source and create global constraint variables", func() {
 		inputVariableSource.ResultSet = []deppy.Variable{
-			variable_sources.NewRequiredPackageVariable("test-package", []*variable_sources.BundleEntity{
+			required_package.NewRequiredPackageVariable("test-package", []*variable_sources.BundleEntity{
 				variable_sources.NewBundleEntity(bundleSet["bundle-2"]),
 				variable_sources.NewBundleEntity(bundleSet["bundle-1"]),
 			}),
-			variable_sources.NewRequiredPackageVariable("test-package-2", []*variable_sources.BundleEntity{
+			required_package.NewRequiredPackageVariable("test-package-2", []*variable_sources.BundleEntity{
 				variable_sources.NewBundleEntity(bundleSet["bundle-15"]),
 				variable_sources.NewBundleEntity(bundleSet["bundle-16"]),
 				variable_sources.NewBundleEntity(bundleSet["bundle-17"]),
 			}),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-2"]),
 				[]*variable_sources.BundleEntity{
 					variable_sources.NewBundleEntity(bundleSet["bundle-4"]),
@@ -170,7 +179,7 @@ var _ = Describe("GlobalConstraintVariableSource", func() {
 					variable_sources.NewBundleEntity(bundleSet["bundle-9"]),
 				},
 			),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-1"]),
 				[]*variable_sources.BundleEntity{
 					variable_sources.NewBundleEntity(bundleSet["bundle-7"]),
@@ -178,23 +187,23 @@ var _ = Describe("GlobalConstraintVariableSource", func() {
 					variable_sources.NewBundleEntity(bundleSet["bundle-9"]),
 				},
 			),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-4"]),
 				[]*variable_sources.BundleEntity{},
 			),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-5"]),
 				[]*variable_sources.BundleEntity{},
 			),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-6"]),
 				[]*variable_sources.BundleEntity{},
 			),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-7"]),
 				[]*variable_sources.BundleEntity{},
 			),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-8"]),
 				[]*variable_sources.BundleEntity{
 					variable_sources.NewBundleEntity(bundleSet["bundle-9"]),
@@ -202,27 +211,27 @@ var _ = Describe("GlobalConstraintVariableSource", func() {
 					variable_sources.NewBundleEntity(bundleSet["bundle-11"]),
 				},
 			),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-9"]),
 				[]*variable_sources.BundleEntity{},
 			),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-10"]),
 				[]*variable_sources.BundleEntity{},
 			),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-11"]),
 				[]*variable_sources.BundleEntity{},
 			),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-15"]),
 				[]*variable_sources.BundleEntity{},
 			),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-16"]),
 				[]*variable_sources.BundleEntity{},
 			),
-			variable_sources.NewBundleVariable(
+			bundles_and_dependencies.NewBundleVariable(
 				variable_sources.NewBundleEntity(bundleSet["bundle-17"]),
 				[]*variable_sources.BundleEntity{},
 			),
@@ -230,10 +239,10 @@ var _ = Describe("GlobalConstraintVariableSource", func() {
 		variables, err := globalConstraintVariableSource.GetVariables(ctx, entitySource)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(len(variables)).To(Equal(26))
-		var globalConstraintVariables []*variable_sources.GlobalConstraintVariable
+		var globalConstraintVariables []*global_constraints.GlobalConstraintVariable
 		for _, variable := range variables {
 			switch v := variable.(type) {
-			case *variable_sources.GlobalConstraintVariable:
+			case *global_constraints.GlobalConstraintVariable:
 				globalConstraintVariables = append(globalConstraintVariables, v)
 			}
 		}
@@ -255,7 +264,7 @@ var _ = Describe("GlobalConstraintVariableSource", func() {
 
 	It("should return an error if input variable source returns an error", func() {
 		inputVariableSource = &MockInputVariableSource{Err: fmt.Errorf("error getting variables")}
-		globalConstraintVariableSource = variable_sources.NewGlobalConstraintVariableSource(inputVariableSource)
+		globalConstraintVariableSource = global_constraints.NewGlobalConstraintVariableSource(inputVariableSource)
 		_, err := globalConstraintVariableSource.GetVariables(ctx, entitySource)
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("error getting variables"))
@@ -294,7 +303,7 @@ func (m *MockInputVariableSource) GetVariables(ctx context.Context, entitySource
 	return m.ResultSet, nil
 }
 
-func CollectGlobalConstraintVariableIDs(vars []*variable_sources.GlobalConstraintVariable) []string {
+func CollectGlobalConstraintVariableIDs(vars []*global_constraints.GlobalConstraintVariable) []string {
 	var ids []string
 	for _, v := range vars {
 		ids = append(ids, v.Identifier().String())
