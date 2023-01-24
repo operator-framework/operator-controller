@@ -113,12 +113,10 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 
 	// todo(perdasilva): more hacks - need to fix up the solution structure to be more useful
 	packageVariableIDMap := map[string]string{}
-	if solution != nil {
-		for variableID, ok := range solution {
-			if ok {
-				idComponents := strings.Split(string(variableID), "/")
-				packageVariableIDMap[idComponents[1]] = string(variableID)
-			}
+	for variableID, ok := range solution {
+		if ok {
+			idComponents := strings.Split(string(variableID), "/")
+			packageVariableIDMap[idComponents[1]] = string(variableID)
 		}
 	}
 
