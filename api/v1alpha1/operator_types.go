@@ -32,8 +32,9 @@ const (
 	// TODO(user): add more Types, here and into init()
 	TypeReady = "Ready"
 
-	// TODO(user): add more Reasons, here and into init()
-	ReasonNotImplemented = "NotImplemented"
+	ReasonNotImplemented      = "NotImplemented"
+	ReasonResolutionFailed    = "ResolutionFailed"
+	ReasonResolutionSucceeded = "ResolutionSucceeded"
 )
 
 func init() {
@@ -54,6 +55,7 @@ type OperatorStatus struct {
 	// +listType=map
 	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+	BundlePath string             `json:"BundlePath,omitempty"`
 }
 
 //+kubebuilder:object:root=true
