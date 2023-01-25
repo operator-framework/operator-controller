@@ -7,8 +7,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
 	"github.com/operator-framework/operator-registry/alpha/property"
+
+	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
 )
 
 func TestBundleEntity(t *testing.T) {
