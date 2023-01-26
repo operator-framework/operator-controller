@@ -18,7 +18,10 @@ package controllers
 
 import (
 	"context"
+	"strings"
 
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/resolution"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,14 +30,14 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 // OperatorReconciler reconciles a Operator object
 type OperatorReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+
+	resolver *resolution.OperatorResolver
 }
 
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators,verbs=get;list;watch;create;update;patch;delete
@@ -97,24 +100,60 @@ func checkForUnexpectedFieldChange(a, b operatorsv1alpha1.Operator) bool {
 // Helper function to do the actual reconcile
 func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha1.Operator) (ctrl.Result, error) {
 
-	// TODO(user): change ReasonNotImplemented when functionality added
-	readyCondition := metav1.Condition{
-		Type:               operatorsv1alpha1.TypeReady,
-		Status:             metav1.ConditionFalse,
-		Reason:             operatorsv1alpha1.ReasonNotImplemented,
-		Message:            "The Reconcile operation is not implemented",
-		ObservedGeneration: op.GetGeneration(),
+	// todo(perdasilva): this is a _hack_ we probably want to find a better way to ride or die resolve and update
+	solution, err := r.resolver.Resolve(ctx)
+	status := metav1.ConditionTrue
+	reason := operatorsv1alpha1.ReasonResolutionSucceeded
+	message := "resolution was successful"
+	if err != nil {
+		status = metav1.ConditionTrue
+		reason = operatorsv1alpha1.ReasonResolutionFailed
+		message = err.Error()
 	}
-	apimeta.SetStatusCondition(&op.Status.Conditions, readyCondition)
 
-	// TODO(user): your logic here
+	// todo(perdasilva): more hacks - need to fix up the solution structure to be more useful
+	packageVariableIDMap := map[string]string{}
+	for variableID, ok := range solution {
+		if ok {
+			idComponents := strings.Split(string(variableID), "/")
+			packageVariableIDMap[idComponents[1]] = string(variableID)
+		}
+	}
+
+	operatorList := &operatorsv1alpha1.OperatorList{}
+	if err := r.Client.List(ctx, operatorList); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	for _, operator := range operatorList.Items {
+		apimeta.SetStatusCondition(&operator.Status.Conditions, metav1.Condition{
+			Type:               operatorsv1alpha1.TypeReady,
+			Status:             status,
+			Reason:             reason,
+			Message:            message,
+			ObservedGeneration: op.GetGeneration(),
+		})
+		if varID, ok := packageVariableIDMap[operator.Spec.PackageName]; ok {
+			operator.Status.BundlePath = varID
+		}
+		if err := r.Client.Status().Update(ctx, &operator); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
+	r.resolver = resolution.NewOperatorResolver(mgr.GetClient(), resolution.HardcodedEntitySource)
+
+	err := ctrl.NewControllerManagedBy(mgr).
 		For(&operatorsv1alpha1.Operator{}).
 		Complete(r)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
