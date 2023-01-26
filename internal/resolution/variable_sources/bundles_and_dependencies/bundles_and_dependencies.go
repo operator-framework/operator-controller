@@ -95,7 +95,7 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context, entityS
 		// get bundle dependencies
 		dependencyEntityBundles, err := b.getEntityDependencies(ctx, head, entitySource)
 		if err != nil {
-			return nil, fmt.Errorf("could not determine dependencies for entity with id '%s': %s", head.ID, err)
+			return nil, fmt.Errorf("could not determine dependencies for entity with id '%s': %w", head.ID, err)
 		}
 
 		// add bundle dependencies to queue for processing
