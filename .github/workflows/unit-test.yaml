@@ -29,4 +29,4 @@ jobs:
 
     - name: Run basic unit tests
       run: |
-        make test
+        make test-unit
