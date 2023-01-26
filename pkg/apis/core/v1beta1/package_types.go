@@ -19,8 +19,6 @@ package v1beta1
 import (
 	"context"
 
-	"github.com/operator-framework/api/pkg/lib/version"
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -34,6 +32,7 @@ import (
 
 // Package
 // +k8s:openapi-gen=true
+// +kubebuilder:resource:scope=Cluster
 type Package struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -56,16 +55,15 @@ type PackageSpec struct {
 	// CatalogSource is the name of the CatalogSource this package belongs to
 	CatalogSource            string `json:"catalogSource"`
 	CatalogSourceDisplayName string `json:"catalogSourceDisplayName,omitempty"`
-	CatalogSourcePublisher   string `json:"catalogSourcePublisher,omitempty"`
+	// TODO(everettraven): what is this for?
+	CatalogSourcePublisher string `json:"catalogSourcePublisher,omitempty"`
 
-	//  CatalogSourceNamespace is the namespace of the owning CatalogSource
-	CatalogSourceNamespace string `json:"catalogSourceNamespace"`
+	// TODO(everettraven): can we remove this? Can the package metadata.name can be used instead?
+	// // PackageName is the name of the overall package, ala `etcd`.
+	// PackageName string `json:"packageName"`
 
-	// Provider is the provider of the Package
-	Provider AppLink `json:"provider,omitempty"`
-
-	// PackageName is the name of the overall package, ala `etcd`.
-	PackageName string `json:"packageName"`
+	// Description is the description of the package
+	Description string `json:"description"`
 
 	// Channels are the declared channels for the package, ala `stable` or `alpha`.
 	Channels []PackageChannel `json:"channels"`
@@ -79,29 +77,21 @@ type PackageSpec struct {
 	DefaultChannel string `json:"defaultChannel"`
 }
 
-// AppLink defines a link to an application
-type AppLink struct {
-	Name string `json:"name,omitempty"`
-	URL  string `json:"url,omitempty"`
-}
-
 // PackageChannel defines a single channel under a package, pointing to a version of that
 // package.
 type PackageChannel struct {
 	// Name is the name of the channel, e.g. `alpha` or `stable`
 	Name string `json:"name"`
 
-	// Head is the head bundle in the channel.
-	Head string `json:"head"`
-
-	// Desc is the description from the head bundle in the channel
-	// Desc Description `json:"desc,omitempty"`
+	// Entries is all the channel entries within a channel
+	Entries []ChannelEntry `json:"entries"`
 }
 
-// Maintainer defines a project maintainer
-type Maintainer struct {
-	Name  string `json:"name,omitempty"`
-	Email string `json:"email,omitempty"`
+type ChannelEntry struct {
+	Name      string   `json:"name"`
+	Replaces  string   `json:"replaces,omitempty"`
+	Skips     []string `json:"skips,omitempty"`
+	SkipRange string   `json:"skipRange,omitempty"`
 }
 
 // Icon defines a base64 encoded icon and media type
@@ -152,51 +142,8 @@ func (in *PackageList) GetListMeta() *metav1.ListMeta {
 	return &in.ListMeta
 }
 
-// Description
-type Description struct {
-	// DisplayName
-	DisplayName string `json:"displayName,omitempty"`
-
-	// Icon is the base64 encoded icon
-	// +listType=set
-	Icon []Icon `json:"icon,omitempty"`
-
-	// Version
-	Version version.OperatorVersion `json:"version,omitempty"`
-
-	// Provider
-	Provider AppLink `json:"provider,omitempty"`
-	// // +listType=map
-	// Annotations map[string]string `json:"annotations,omitempty"`
-	// +listType=set
-	Keywords []string `json:"keywords,omitempty"`
-	// +listType=set
-	Links []AppLink `json:"links,omitempty"`
-	// +listType=set
-	Maintainers []Maintainer `json:"maintainers,omitempty"`
-	Maturity    string       `json:"maturity,omitempty"`
-
-	// LongDescription
-	LongDescription string `json:"description,omitempty"`
-
-	// InstallModes specify supported installation types
-	// +listType=set
-	InstallModes []operatorv1alpha1.InstallMode `json:"installModes,omitempty"`
-
-	CustomResourceDefinitions operatorv1alpha1.CustomResourceDefinitions `json:"customresourcedefinitions,omitempty"`
-	APIServiceDefinitions     operatorv1alpha1.APIServiceDefinitions     `json:"apiservicedefinitions,omitempty"`
-	NativeAPIs                []metav1.GroupVersionKind                  `json:"nativeApis,omitempty"`
-
-	// Minimum Kubernetes version for operator installation
-	MinKubeVersion string `json:"minKubeVersion,omitempty"`
-
-	// List of related images
-	RelatedImages []string `json:"relatedImages,omitempty"`
-}
-
 // PackageStatus defines the observed state of Package
-type PackageStatus struct {
-}
+type PackageStatus struct{}
 
 func (in PackageStatus) SubResourceName() string {
 	return "status"

@@ -32,6 +32,7 @@ import (
 
 // CatalogSource
 // +k8s:openapi-gen=true
+// +kubebuilder:resource:scope=Cluster
 type CatalogSource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

@@ -28,8 +28,7 @@ func main() {
 	err := builder.APIServer.
 		// +kubebuilder:scaffold:resource-register
 		WithResource(&corev1beta1.Package{}).
-		WithResource(&corev1beta1.Package{}).
-		WithResource(&corev1beta1.CatalogCache{}).
+		WithResource(&corev1beta1.BundleMetadata{}).
 		WithResource(&corev1beta1.CatalogSource{}).
 		Execute()
 	if err != nil {

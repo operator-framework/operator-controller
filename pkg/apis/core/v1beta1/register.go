@@ -23,30 +23,18 @@ import (
 )
 
 var AddToScheme = func(scheme *runtime.Scheme) error {
-	metav1.AddToGroupVersion(scheme, schema.GroupVersion{
+	gv := schema.GroupVersion{
 		Group:   "core.rukpak.io",
 		Version: "v1beta1",
-	})
+	}
+	metav1.AddToGroupVersion(scheme, gv)
 	// +kubebuilder:scaffold:install
 
-	scheme.AddKnownTypes(schema.GroupVersion{
-		Group:   "core.rukpak.io",
-		Version: "v1beta1",
-	}, &Package{}, &PackageList{})
+	scheme.AddKnownTypes(gv, &Package{}, &PackageList{})
 
-	scheme.AddKnownTypes(schema.GroupVersion{
-		Group:   "core.rukpak.io",
-		Version: "v1beta1",
-	}, &Package{}, &PackageList{})
+	scheme.AddKnownTypes(gv, &CatalogSource{}, &CatalogSourceList{})
 
-	scheme.AddKnownTypes(schema.GroupVersion{
-		Group:   "core.rukpak.io",
-		Version: "v1beta1",
-	}, &CatalogCache{}, &CatalogCacheList{})
+	scheme.AddKnownTypes(gv, &BundleMetadata{}, &BundleMetadataList{})
 
-	scheme.AddKnownTypes(schema.GroupVersion{
-		Group:   "core.rukpak.io",
-		Version: "v1beta1",
-	}, &CatalogSource{}, &CatalogSourceList{})
 	return nil
 }

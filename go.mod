@@ -1,9 +1,8 @@
 module github.com/anik120/rukpak-packageserver
 
-go 1.17
+go 1.19
 
 require (
-	github.com/operator-framework/api v0.17.1
 	github.com/operator-framework/operator-registry v1.26.2
 	k8s.io/apimachinery v0.24.0
 	k8s.io/client-go v0.24.0
@@ -95,6 +94,7 @@ require (
 	github.com/onsi/gomega v1.18.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
+	github.com/operator-framework/api v0.17.1 // indirect
 	github.com/otiai10/copy v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

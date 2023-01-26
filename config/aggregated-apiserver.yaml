@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: apiserver
-        image: docker.io/anik120/rukpak-packageserver:latest
+        image: docker.io/bpalmer/rukpak-packageserver:latest
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: apiserver-certs

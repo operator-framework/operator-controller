@@ -23,11 +23,11 @@ spec:
         runAsUser: 0
       containers:
       - name: controller
-        image: docker.io/anik120/catalogsource-controller:latest
+        image: docker.io/bpalmer/catalogsource-controller:latest
         imagePullPolicy: IfNotPresent
         command:
         - "./manager"
-        args:
+        args: []
         resources:
           requests:
             cpu: 100m

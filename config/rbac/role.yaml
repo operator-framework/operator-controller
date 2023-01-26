@@ -8,6 +8,32 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - bundlemetadata
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - bundlemetadata/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - bundlemetadata/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
   - packages
   verbs:
   - create
@@ -27,32 +53,6 @@ rules:
   - ""
   resources:
   - packages/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - core.rukpak.io
-  resources:
-  - catalogcaches
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - core.rukpak.io
-  resources:
-  - catalogcaches/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - core.rukpak.io
-  resources:
-  - catalogcaches/status
   verbs:
   - get
   - patch
