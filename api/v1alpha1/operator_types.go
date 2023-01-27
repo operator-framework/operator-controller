@@ -44,7 +44,7 @@ func init() {
 	)
 	// TODO(user): add Reasons from above
 	operatorutil.ConditionReasons = append(operatorutil.ConditionReasons,
-		ReasonNotImplemented,
+		ReasonNotImplemented, ReasonResolutionSucceeded, ReasonResolutionFailed,
 	)
 }
 
@@ -55,7 +55,6 @@ type OperatorStatus struct {
 	// +listType=map
 	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
-	BundlePath string             `json:"BundlePath,omitempty"`
 }
 
 //+kubebuilder:object:root=true

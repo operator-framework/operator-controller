@@ -19,9 +19,6 @@ package controllers
 import (
 	"context"
 
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/resolution"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +27,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/resolution"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
 )
 
 // OperatorReconciler reconciles a Operator object
@@ -112,7 +113,6 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		message = err.Error()
 	} else {
 		// extract package bundle path from resolved variable
-		var bundlePath = ""
 		for _, variable := range solution.SelectedVariables() {
 			switch v := variable.(type) {
 			case *bundles_and_dependencies.BundleVariable:
@@ -121,15 +121,16 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 					return ctrl.Result{}, err
 				}
 				if packageName == op.Spec.PackageName {
-					bundlePath, err = v.BundleEntity().BundlePath()
+					bundlePath, err := v.BundleEntity().BundlePath()
 					if err != nil {
 						return ctrl.Result{}, err
 					}
+					// TODO(perdasilva): use bundlePath to stamp out bundle deployment
+					_ = bundlePath
 					break
 				}
 			}
 		}
-		op.Status.BundlePath = bundlePath
 	}
 
 	// update operator status
