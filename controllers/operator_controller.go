@@ -112,7 +112,6 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		message = err.Error()
 	} else {
 		// extract package bundle path from resolved variable
-		var bundlePath = ""
 		for _, variable := range solution.SelectedVariables() {
 			switch v := variable.(type) {
 			case *bundles_and_dependencies.BundleVariable:
@@ -121,15 +120,16 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 					return ctrl.Result{}, err
 				}
 				if packageName == op.Spec.PackageName {
-					bundlePath, err = v.BundleEntity().BundlePath()
+					bundlePath, err := v.BundleEntity().BundlePath()
 					if err != nil {
 						return ctrl.Result{}, err
 					}
+					// TODO(perdasilva): use bundlePath to stamp out bundle deployment
+					_ = bundlePath
 					break
 				}
 			}
 		}
-		op.Status.BundlePath = bundlePath
 	}
 
 	// update operator status
