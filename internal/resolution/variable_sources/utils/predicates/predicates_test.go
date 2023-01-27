@@ -42,7 +42,7 @@ var _ = Describe("Predicates", func() {
 	})
 
 	Describe("InChannel", func() {
-		It("should return true when the entity has the has version in the right range", func() {
+		It("should return true when the entity comes from the specified channel", func() {
 			entity := input.NewEntity("test", map[string]string{
 				property.TypeChannel: `{"channelName":"stable","priority":0}`,
 			})
