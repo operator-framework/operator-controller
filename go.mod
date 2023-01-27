@@ -6,7 +6,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/onsi/ginkgo/v2 v2.3.1
 	github.com/onsi/gomega v1.22.1
-	github.com/operator-framework/deppy v0.0.0-20230102161649-36fa82370999
+	github.com/operator-framework/deppy v0.0.0-20230125110717-dc02e928470f
 	github.com/operator-framework/operator-registry v1.26.2
 	k8s.io/apimachinery v0.25.0
 	k8s.io/client-go v0.25.0

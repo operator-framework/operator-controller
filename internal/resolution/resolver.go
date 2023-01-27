@@ -24,7 +24,7 @@ func NewOperatorResolver(client client.Client, entitySource input.EntitySource) 
 	}
 }
 
-func (o *OperatorResolver) Resolve(ctx context.Context) (solver.Solution, error) {
+func (o *OperatorResolver) Resolve(ctx context.Context) (*solver.Solution, error) {
 	packageNames, err := o.getPackageNames(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get package names for resolution: %w", err)

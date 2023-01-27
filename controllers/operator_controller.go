@@ -18,10 +18,10 @@ package controllers
 
 import (
 	"context"
-	"strings"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/resolution"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -99,47 +99,47 @@ func checkForUnexpectedFieldChange(a, b operatorsv1alpha1.Operator) bool {
 
 // Helper function to do the actual reconcile
 func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha1.Operator) (ctrl.Result, error) {
+	// define condition parameters
+	var status = metav1.ConditionTrue
+	var reason = operatorsv1alpha1.ReasonResolutionSucceeded
+	var message = "resolution was successful"
 
-	// todo(perdasilva): this is a _hack_ we probably want to find a better way to ride or die resolve and update
+	// run resolution
 	solution, err := r.resolver.Resolve(ctx)
-	status := metav1.ConditionTrue
-	reason := operatorsv1alpha1.ReasonResolutionSucceeded
-	message := "resolution was successful"
 	if err != nil {
 		status = metav1.ConditionTrue
 		reason = operatorsv1alpha1.ReasonResolutionFailed
 		message = err.Error()
+	} else {
+		// extract package bundle path from resolved variable
+		var bundlePath = ""
+		for _, variable := range solution.SelectedVariables() {
+			switch v := variable.(type) {
+			case *bundles_and_dependencies.BundleVariable:
+				packageName, err := v.BundleEntity().PackageName()
+				if err != nil {
+					return ctrl.Result{}, err
+				}
+				if packageName == op.Spec.PackageName {
+					bundlePath, err = v.BundleEntity().BundlePath()
+					if err != nil {
+						return ctrl.Result{}, err
+					}
+					break
+				}
+			}
+		}
+		op.Status.BundlePath = bundlePath
 	}
 
-	// todo(perdasilva): more hacks - need to fix up the solution structure to be more useful
-	packageVariableIDMap := map[string]string{}
-	for variableID, ok := range solution {
-		if ok {
-			idComponents := strings.Split(string(variableID), "/")
-			packageVariableIDMap[idComponents[1]] = string(variableID)
-		}
-	}
-
-	operatorList := &operatorsv1alpha1.OperatorList{}
-	if err := r.Client.List(ctx, operatorList); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	for _, operator := range operatorList.Items {
-		apimeta.SetStatusCondition(&operator.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeReady,
-			Status:             status,
-			Reason:             reason,
-			Message:            message,
-			ObservedGeneration: op.GetGeneration(),
-		})
-		if varID, ok := packageVariableIDMap[operator.Spec.PackageName]; ok {
-			operator.Status.BundlePath = varID
-		}
-		if err := r.Client.Status().Update(ctx, &operator); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
+	// update operator status
+	apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
+		Type:               operatorsv1alpha1.TypeReady,
+		Status:             status,
+		Reason:             reason,
+		Message:            message,
+		ObservedGeneration: op.GetGeneration(),
+	})
 
 	return ctrl.Result{}, nil
 }
