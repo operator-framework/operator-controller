@@ -67,13 +67,17 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test test-e2e e2e kind-load kind-cluster kind-cluster-cleanup
-test: manifests generate fmt vet envtest test-e2e ## Run all tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test ./... -coverprofile cover.out
+test: manifests generate fmt vet test-unit test-e2e ## Run all tests.
 
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 E2E_FLAGS ?= ""
 test-e2e: ginkgo ## Run the e2e tests
 	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/e2e
+
+ENVTEST_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
+UNIT_TEST_DIRS=$(shell go list ./... | grep -v /test/)
+test-unit: envtest ## Run the unit tests
+	eval $$($(ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
 
 e2e: KIND_CLUSTER_NAME=operator-controller-e2e
 e2e: run test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
