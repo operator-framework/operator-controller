@@ -77,20 +77,26 @@ var _ = Describe("OperatorResolver", func() {
 		resolver := resolution.NewOperatorResolver(client, entitySource)
 		solution, err := resolver.Resolve(context.Background())
 		Expect(err).ToNot(HaveOccurred())
-		Expect(solution).To(HaveLen(3))
-		Expect(solution["operatorhub/packageA/2.0.0"]).To(BeTrue())
-		Expect(solution["operatorhub/prometheus/0.47.0"]).To(BeTrue())
-		Expect(solution["operatorhub/prometheus/0.37.0"]).To(BeFalse())
+		// 2 * required package variables + 2 * bundle variables
+		Expect(solution.SelectedVariables()).To(HaveLen(4))
+
+		Expect(solution.IsSelected("operatorhub/packageA/2.0.0")).To(BeTrue())
+		Expect(solution.IsSelected("operatorhub/prometheus/0.47.0")).To(BeTrue())
+		Expect(solution.IsSelected("required package packageA")).To(BeTrue())
+		Expect(solution.IsSelected("required package prometheus")).To(BeTrue())
+
+		Expect(solution.IsSelected("operatorhub/prometheus/0.37.0")).To(BeFalse())
+
 	})
 
-	It("should not return an error if there are not Operator resources", func() {
+	It("should not return an error if there are no Operator resources", func() {
 		var resources []client.Object
 		client := FakeClient(resources...)
 		entitySource := input.NewCacheQuerier(testEntityCache)
 		resolver := resolution.NewOperatorResolver(client, entitySource)
 		solution, err := resolver.Resolve(context.Background())
 		Expect(err).ToNot(HaveOccurred())
-		Expect(solution).To(HaveLen(0))
+		Expect(solution.SelectedVariables()).To(HaveLen(0))
 	})
 
 	It("should return an error if the entity source throws an error", func() {
