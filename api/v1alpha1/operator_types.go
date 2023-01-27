@@ -44,7 +44,7 @@ func init() {
 	)
 	// TODO(user): add Reasons from above
 	operatorutil.ConditionReasons = append(operatorutil.ConditionReasons,
-		ReasonNotImplemented,
+		ReasonNotImplemented, ReasonResolutionSucceeded, ReasonResolutionFailed,
 	)
 }
 
