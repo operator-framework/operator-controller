@@ -21,12 +21,8 @@ rules:
   resources:
   - operators
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - operators.operatorframework.io

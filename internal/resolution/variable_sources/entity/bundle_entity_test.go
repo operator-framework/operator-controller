@@ -96,12 +96,12 @@ var _ = Describe("BundleEntity", func() {
 				{Group: "bar.io", Kind: "Bar", Version: "v1alpha1"},
 			}))
 		})
-		It("should return an error if the property is not found", func() {
+		It("should return nil if the property is not found", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{})
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			providedGvks, err := bundleEntity.ProvidedGVKs()
+			Expect(err).ToNot(HaveOccurred())
 			Expect(providedGvks).To(BeNil())
-			Expect(err.Error()).To(Equal("error determining bundle provided gvks for entity 'operatorhub/prometheus/0.14.0': property 'olm.gvk' not found"))
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -127,12 +127,12 @@ var _ = Describe("BundleEntity", func() {
 				{Group: "bar.io", Kind: "Bar", Version: "v1alpha1"},
 			}))
 		})
-		It("should return an error if the property is not found", func() {
+		It("should return nil if the property is not found", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{})
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			requiredGvks, err := bundleEntity.RequiredGVKs()
+			Expect(err).ToNot(HaveOccurred())
 			Expect(requiredGvks).To(BeNil())
-			Expect(err.Error()).To(Equal("error determining bundle required gvks for entity 'operatorhub/prometheus/0.14.0': property 'olm.gvk.required' not found"))
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -158,12 +158,12 @@ var _ = Describe("BundleEntity", func() {
 				{PackageRequired: property.PackageRequired{PackageName: "packageB", VersionRange: ">0.5.0 <0.8.6"}},
 			}))
 		})
-		It("should return an error if the property is not found", func() {
+		It("should return nil if the property is not found", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{})
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			requiredPackages, err := bundleEntity.RequiredPackages()
+			Expect(err).ToNot(HaveOccurred())
 			Expect(requiredPackages).To(BeNil())
-			Expect(err.Error()).To(Equal("error determining bundle required packages for entity 'operatorhub/prometheus/0.14.0': property 'olm.package.required' not found"))
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
