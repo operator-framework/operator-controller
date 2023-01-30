@@ -19,6 +19,8 @@ package v1beta1
 import (
 	"context"
 
+	"github.com/operator-framework/api/pkg/lib/version"
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -55,8 +57,7 @@ type PackageSpec struct {
 	// CatalogSource is the name of the CatalogSource this package belongs to
 	CatalogSource            string `json:"catalogSource"`
 	CatalogSourceDisplayName string `json:"catalogSourceDisplayName,omitempty"`
-	// TODO(everettraven): what is this for?
-	CatalogSourcePublisher string `json:"catalogSourcePublisher,omitempty"`
+	CatalogSourcePublisher   string `json:"catalogSourcePublisher,omitempty"`
 
 	// TODO(everettraven): can we remove this? Can the package metadata.name can be used instead?
 	// // PackageName is the name of the overall package, ala `etcd`.
@@ -141,6 +142,65 @@ var _ resource.ObjectList = &PackageList{}
 func (in *PackageList) GetListMeta() *metav1.ListMeta {
 	return &in.ListMeta
 }
+
+// TODO: Audit this section
+// ---- START AUDIT SECTION ----
+
+// AppLink defines a link to an application
+type AppLink struct {
+	Name string `json:"name,omitempty"`
+	URL  string `json:"url,omitempty"`
+}
+
+// Maintainer defines a project maintainer
+type Maintainer struct {
+	Name  string `json:"name,omitempty"`
+	Email string `json:"email,omitempty"`
+}
+
+// Description
+type Description struct {
+	// DisplayName
+	DisplayName string `json:"displayName,omitempty"`
+
+	// Icon is the base64 encoded icon
+	// +listType=set
+	Icon []Icon `json:"icon,omitempty"`
+
+	// Version
+	Version version.OperatorVersion `json:"version,omitempty"`
+
+	// Provider
+	Provider AppLink `json:"provider,omitempty"`
+	// // +listType=map
+	// Annotations map[string]string `json:"annotations,omitempty"`
+	// +listType=set
+	Keywords []string `json:"keywords,omitempty"`
+	// +listType=set
+	Links []AppLink `json:"links,omitempty"`
+	// +listType=set
+	Maintainers []Maintainer `json:"maintainers,omitempty"`
+	Maturity    string       `json:"maturity,omitempty"`
+
+	// LongDescription
+	LongDescription string `json:"description,omitempty"`
+
+	// InstallModes specify supported installation types
+	// +listType=set
+	InstallModes []operatorv1alpha1.InstallMode `json:"installModes,omitempty"`
+
+	CustomResourceDefinitions operatorv1alpha1.CustomResourceDefinitions `json:"customresourcedefinitions,omitempty"`
+	APIServiceDefinitions     operatorv1alpha1.APIServiceDefinitions     `json:"apiservicedefinitions,omitempty"`
+	NativeAPIs                []metav1.GroupVersionKind                  `json:"nativeApis,omitempty"`
+
+	// Minimum Kubernetes version for operator installation
+	MinKubeVersion string `json:"minKubeVersion,omitempty"`
+
+	// List of related images
+	RelatedImages []string `json:"relatedImages,omitempty"`
+}
+
+// ---- END AUDIT SECTION ----
 
 // PackageStatus defines the observed state of Package
 type PackageStatus struct{}

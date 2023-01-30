@@ -42,7 +42,6 @@ spec:
               catalogSourceDisplayName:
                 type: string
               catalogSourcePublisher:
-                description: 'TODO(everettraven): what is this for?'
                 type: string
               channels:
                 description: Channels are the declared channels for the package, ala

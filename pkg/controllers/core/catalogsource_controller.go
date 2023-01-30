@@ -92,12 +92,6 @@ func (r *CatalogSourceReconciler) buildBundleMetadata(ctx context.Context, declC
 	for _, bundle := range declCfg.Bundles {
 		bundleMeta := corev1beta1.BundleMetadata{
 			ObjectMeta: metav1.ObjectMeta{
-				// TODO(everettraven): If we just provide the name of the bundle, then
-				// we are inherently saying no other catalog sources/packages can provide a bundle
-				// of the same name due to this being a cluster scoped resource. Should
-				// we consider making the name of the bundle some combination of the
-				// CatalogSource, package, and bundle name? Maybe something like:
-				// `catalogsource/package/bundle`?
 				Name: bundle.Name,
 			},
 			Spec: corev1beta1.BundleMetadataSpec{
@@ -140,12 +134,11 @@ func (r *CatalogSourceReconciler) buildPackages(ctx context.Context, declCfg *de
 	for _, pkg := range declCfg.Packages {
 		pack := corev1beta1.Package{
 			ObjectMeta: metav1.ObjectMeta{
-				// TODO(everettraven): If we just provide the name of the package, then
+				// TODO: If we just provide the name of the package, then
 				// we are inherently saying no other catalog sources can provide a package
-				// of the same name due to this being a cluster scoped resource. Should
-				// we consider making the name of the package some combination of the
-				// catalog source name and package name? Maybe something like:
-				// `catalog-source/package`?
+				// of the same name due to this being a cluster scoped resource. We should
+				// look into options for configuring admission criteria for the Package
+				// resource to resolve this potential clash.
 				Name: pkg.Name,
 			},
 			Spec: corev1beta1.PackageSpec{
