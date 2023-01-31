@@ -19,10 +19,12 @@ package controllers
 import (
 	"context"
 
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,9 +43,19 @@ type OperatorReconciler struct {
 	resolver *resolution.OperatorResolver
 }
 
+func NewOperatorReconciler(c client.Client, s *runtime.Scheme, r *resolution.OperatorResolver) *OperatorReconciler {
+	return &OperatorReconciler{
+		Client:   c,
+		Scheme:   s,
+		resolver: r,
+	}
+}
+
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators/finalizers,verbs=update
+
+//+kubebuilder:rbac:groups=core.rukpak.io,resources=bundledeployments,verbs=get;list;watch;create;update;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -125,8 +137,14 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 					if err != nil {
 						return ctrl.Result{}, err
 					}
-					// TODO(perdasilva): use bundlePath to stamp out bundle deployment
-					_ = bundlePath
+					dep, err := r.generateExpectedBundleDeployment(*op, bundlePath)
+					if err != nil {
+						return ctrl.Result{}, err
+					}
+					// Create bundleDeployment if not found or Update if needed
+					if err := r.ensureBundleDeployment(ctx, dep); err != nil {
+						return ctrl.Result{}, err
+					}
 					break
 				}
 			}
@@ -145,16 +163,71 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	return ctrl.Result{}, nil
 }
 
+func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string) (*rukpakv1alpha1.BundleDeployment, error) {
+	dep := &rukpakv1alpha1.BundleDeployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: o.GetName(),
+		},
+		Spec: rukpakv1alpha1.BundleDeploymentSpec{
+			//TODO: Don't assume plain provisioner
+			ProvisionerClassName: "core-rukpak-io-plain",
+			Template: &rukpakv1alpha1.BundleTemplate{
+				ObjectMeta: metav1.ObjectMeta{
+					// TODO: Remove
+					Labels: map[string]string{
+						"app": "my-bundle",
+					},
+				},
+				Spec: rukpakv1alpha1.BundleSpec{
+					Source: rukpakv1alpha1.BundleSource{
+						// TODO: Don't assume image type
+						Type: rukpakv1alpha1.SourceTypeImage,
+						Image: &rukpakv1alpha1.ImageSource{
+							Ref: bundlePath,
+						},
+					},
+
+					//TODO: Don't assume registry provisioner
+					ProvisionerClassName: "core-rukpak-io-registry",
+				},
+			},
+		},
+	}
+
+	if err := ctrl.SetControllerReference(&o, dep, r.Scheme); err != nil {
+		return nil, err
+	}
+	return dep, nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.resolver = resolution.NewOperatorResolver(mgr.GetClient(), resolution.HardcodedEntitySource)
-
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&operatorsv1alpha1.Operator{}).
+		Owns(&rukpakv1alpha1.BundleDeployment{}).
 		Complete(r)
 
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (r *OperatorReconciler) ensureBundleDeployment(ctx context.Context, desiredBundleDeployment *rukpakv1alpha1.BundleDeployment) error {
+	existingBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
+	err := r.Client.Get(ctx, types.NamespacedName{Name: desiredBundleDeployment.GetName()}, existingBundleDeployment)
+	if err != nil {
+		if client.IgnoreNotFound(err) != nil {
+			return err
+		}
+		return r.Client.Create(ctx, desiredBundleDeployment)
+	}
+
+	// Check if the existing bundleDeployment's spec needs to be updated
+	if equality.Semantic.DeepEqual(existingBundleDeployment.Spec, desiredBundleDeployment.Spec) {
+		return nil
+	}
+
+	existingBundleDeployment.Spec = desiredBundleDeployment.Spec
+	return r.Client.Update(ctx, existingBundleDeployment)
 }

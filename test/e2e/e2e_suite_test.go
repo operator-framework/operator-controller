@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 )
 
 var (
@@ -31,6 +32,9 @@ var _ = BeforeSuite(func() {
 
 	scheme := runtime.NewScheme()
 	err := operatorv1alpha1.AddToScheme(scheme)
+	Expect(err).To(Not(HaveOccurred()))
+
+	err = rukpakv1alpha1.AddToScheme(scheme)
 	Expect(err).To(Not(HaveOccurred()))
 
 	c, err = client.New(cfg, client.Options{Scheme: scheme})

@@ -33,6 +33,8 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/resolution"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -45,6 +47,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -89,10 +92,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.OperatorReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = controllers.NewOperatorReconciler(
+		mgr.GetClient(),
+		mgr.GetScheme(),
+		resolution.NewOperatorResolver(mgr.GetClient(), resolution.HardcodedEntitySource),
+	).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)
 	}
