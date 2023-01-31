@@ -6,6 +6,17 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundledeployments
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - operators.operatorframework.io
   resources:
   - operators

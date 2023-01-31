@@ -1,0 +1,368 @@
+## TODO dfranz: remove this file and add a crds package in rukpak so we can grab it from that repo instead of having two copies
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.9.0
+  creationTimestamp: null
+  name: bundledeployments.core.rukpak.io
+spec:
+  group: core.rukpak.io
+  names:
+    kind: BundleDeployment
+    listKind: BundleDeploymentList
+    plural: bundledeployments
+    shortNames:
+    - bd
+    - bds
+    singular: bundledeployment
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.activeBundle
+      name: Active Bundle
+      type: string
+    - jsonPath: .status.conditions[?(.type=="Installed")].reason
+      name: Install State
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .spec.provisionerClassName
+      name: Provisioner
+      priority: 1
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: BundleDeployment is the Schema for the bundledeployments API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: BundleDeploymentSpec defines the desired state of BundleDeployment
+            properties:
+              config:
+                description: Config is provisioner specific configurations
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              provisionerClassName:
+                description: ProvisionerClassName sets the name of the provisioner
+                  that should reconcile this BundleDeployment.
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                type: string
+              template:
+                description: Template describes the generated Bundle that this deployment
+                  will manage.
+                properties:
+                  metadata:
+                    description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      finalizers:
+                        items:
+                          type: string
+                        type: array
+                      labels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    type: object
+                  spec:
+                    description: 'Specification of the desired behavior of the Bundle.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status'
+                    properties:
+                      provisionerClassName:
+                        description: ProvisionerClassName sets the name of the provisioner
+                          that should reconcile this BundleDeployment.
+                        pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                        type: string
+                      source:
+                        description: Source defines the configuration for the underlying
+                          Bundle content.
+                        properties:
+                          git:
+                            description: Git is the git repository that backs the
+                              content of this Bundle.
+                            properties:
+                              auth:
+                                description: Auth configures the authorization method
+                                  if necessary.
+                                properties:
+                                  insecureSkipVerify:
+                                    description: InsecureSkipVerify controls whether
+                                      a client verifies the server's certificate chain
+                                      and host name. If InsecureSkipVerify is true,
+                                      the clone operation will accept any certificate
+                                      presented by the server and any host name in
+                                      that certificate. In this mode, TLS is susceptible
+                                      to machine-in-the-middle attacks unless custom
+                                      verification is used. This should be used only
+                                      for testing.
+                                    type: boolean
+                                  secret:
+                                    description: Secret contains reference to the
+                                      secret that has authorization information and
+                                      is in the namespace that the provisioner is
+                                      deployed. The secret is expected to contain
+                                      `data.username` and `data.password` for the
+                                      username and password, respectively for http(s)
+                                      scheme. Refer to https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
+                                      For the ssh authorization of the GitSource,
+                                      the secret is expected to contain `data.ssh-privatekey`
+                                      and `data.ssh-knownhosts` for the ssh privatekey
+                                      and the host entry in the known_hosts file respectively.
+                                      Refer to https://kubernetes.io/docs/concepts/configuration/secret/#ssh-authentication-secrets
+                                    properties:
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion,
+                                          kind, uid?'
+                                        type: string
+                                    type: object
+                                type: object
+                              directory:
+                                description: Directory refers to the location of the
+                                  bundle within the git repository. Directory is optional
+                                  and if not set defaults to ./manifests.
+                                type: string
+                              ref:
+                                description: Ref configures the git source to clone
+                                  a specific branch, tag, or commit from the specified
+                                  repo. Ref is required, and exactly one field within
+                                  Ref is required. Setting more than one field or
+                                  zero fields will result in an error.
+                                properties:
+                                  branch:
+                                    description: Branch refers to the branch to checkout
+                                      from the repository. The Branch should contain
+                                      the bundle manifests in the specified directory.
+                                    type: string
+                                  commit:
+                                    description: Commit refers to the commit to checkout
+                                      from the repository. The Commit should contain
+                                      the bundle manifests in the specified directory.
+                                    type: string
+                                  tag:
+                                    description: Tag refers to the tag to checkout
+                                      from the repository. The Tag should contain
+                                      the bundle manifests in the specified directory.
+                                    type: string
+                                type: object
+                              repository:
+                                description: Repository is a URL link to the git repository
+                                  containing the bundle. Repository is required and
+                                  the URL should be parsable by a standard git tool.
+                                type: string
+                            required:
+                            - ref
+                            - repository
+                            type: object
+                          http:
+                            description: HTTP is the remote location that backs the
+                              content of this Bundle.
+                            properties:
+                              auth:
+                                description: Auth configures the authorization method
+                                  if necessary.
+                                properties:
+                                  insecureSkipVerify:
+                                    description: InsecureSkipVerify controls whether
+                                      a client verifies the server's certificate chain
+                                      and host name. If InsecureSkipVerify is true,
+                                      the clone operation will accept any certificate
+                                      presented by the server and any host name in
+                                      that certificate. In this mode, TLS is susceptible
+                                      to machine-in-the-middle attacks unless custom
+                                      verification is used. This should be used only
+                                      for testing.
+                                    type: boolean
+                                  secret:
+                                    description: Secret contains reference to the
+                                      secret that has authorization information and
+                                      is in the namespace that the provisioner is
+                                      deployed. The secret is expected to contain
+                                      `data.username` and `data.password` for the
+                                      username and password, respectively for http(s)
+                                      scheme. Refer to https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
+                                      For the ssh authorization of the GitSource,
+                                      the secret is expected to contain `data.ssh-privatekey`
+                                      and `data.ssh-knownhosts` for the ssh privatekey
+                                      and the host entry in the known_hosts file respectively.
+                                      Refer to https://kubernetes.io/docs/concepts/configuration/secret/#ssh-authentication-secrets
+                                    properties:
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion,
+                                          kind, uid?'
+                                        type: string
+                                    type: object
+                                type: object
+                              url:
+                                description: URL is where the bundle contents is.
+                                type: string
+                            required:
+                            - url
+                            type: object
+                          image:
+                            description: Image is the bundle image that backs the
+                              content of this bundle.
+                            properties:
+                              pullSecret:
+                                description: ImagePullSecretName contains the name
+                                  of the image pull secret in the namespace that the
+                                  provisioner is deployed.
+                                type: string
+                              ref:
+                                description: Ref contains the reference to a container
+                                  image containing Bundle contents.
+                                type: string
+                            required:
+                            - ref
+                            type: object
+                          local:
+                            description: Local is a reference to a local object in
+                              the cluster.
+                            properties:
+                              configMap:
+                                properties:
+                                  name:
+                                    type: string
+                                  namespace:
+                                    type: string
+                                required:
+                                - name
+                                - namespace
+                                type: object
+                            required:
+                            - configMap
+                            type: object
+                          type:
+                            description: Type defines the kind of Bundle content being
+                              sourced.
+                            type: string
+                          upload:
+                            description: Upload is a source that enables this Bundle's
+                              content to be uploaded via Rukpak's bundle upload service.
+                              This source type is primarily useful with bundle development
+                              workflows because it enables bundle developers to inject
+                              a local bundle directly into the cluster.
+                            type: object
+                        required:
+                        - type
+                        type: object
+                    required:
+                    - provisionerClassName
+                    - source
+                    type: object
+                required:
+                - spec
+                type: object
+            required:
+            - provisionerClassName
+            - template
+            type: object
+          status:
+            description: BundleDeploymentStatus defines the observed state of BundleDeployment
+            properties:
+              activeBundle:
+                type: string
+              conditions:
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource. --- This struct is intended for direct
+                    use as an array at the field path .status.conditions.  For example,
+                    \n type FooStatus struct{ // Represents the observations of a
+                    foo's current state. // Known .status.conditions.type are: \"Available\",
+                    \"Progressing\", and \"Degraded\" // +patchMergeKey=type // +patchStrategy=merge
+                    // +listType=map // +listMapKey=type Conditions []metav1.Condition
+                    `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\"
+                    protobuf:\"bytes,1,rep,name=conditions\"` \n // other fields }"
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition
+                        transitioned from one status to another. This should be when
+                        the underlying condition changed.  If that is not known, then
+                        using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating
+                        details about the transition. This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.generation
+                        that the condition was set based upon. For instance, if .metadata.generation
+                        is currently 12, but the .status.conditions[x].observedGeneration
+                        is 9, the condition is out of date with respect to the current
+                        state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating
+                        the reason for the condition's last transition. Producers
+                        of specific condition types may define expected values and
+                        meanings for this field, and whether the values are considered
+                        a guaranteed API. The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                        --- Many .condition.type values are consistent across resources
+                        like Available, but because arbitrary conditions can be useful
+                        (see .node.status.conditions), the ability to deconflict is
+                        important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              observedGeneration:
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

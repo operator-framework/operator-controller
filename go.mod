@@ -8,6 +8,7 @@ require (
 	github.com/onsi/gomega v1.22.1
 	github.com/operator-framework/deppy v0.0.0-20230125110717-dc02e928470f
 	github.com/operator-framework/operator-registry v1.26.2
+	github.com/operator-framework/rukpak v0.11.0
 	k8s.io/apimachinery v0.25.0
 	k8s.io/client-go v0.25.0
 	sigs.k8s.io/controller-runtime v0.13.1
@@ -42,7 +43,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
-	github.com/google/gofuzz v1.1.0 // indirect
+	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/josharian/intern v1.0.0 // indirect

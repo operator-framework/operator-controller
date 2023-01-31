@@ -38,7 +38,9 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/resolution"
 	operatorutil "github.com/operator-framework/operator-controller/internal/util"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -63,7 +65,9 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths:     []string{filepath.Join("..", "config", "crd", "bases")},
+		CRDDirectoryPaths: []string{
+			filepath.Join("..", "config", "crd", "bases"),
+			filepath.Join("..", "testdata", "crds")},
 		ErrorIfCRDPathMissing: true,
 	}
 
@@ -74,6 +78,9 @@ var _ = BeforeSuite(func() {
 	Expect(cfg).NotTo(BeNil())
 
 	err = operatorsv1alpha1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = rukpakv1alpha1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
@@ -87,10 +94,11 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	err = (&controllers.OperatorReconciler{
-		Client: k8sManager.GetClient(),
-		Scheme: k8sManager.GetScheme(),
-	}).SetupWithManager(k8sManager)
+	err = controllers.NewOperatorReconciler(
+		k8sManager.GetClient(),
+		k8sManager.GetScheme(),
+		resolution.NewOperatorResolver(k8sManager.GetClient(), resolution.HardcodedEntitySource),
+	).SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
 	ctx, cancel = context.WithCancel(context.Background())
