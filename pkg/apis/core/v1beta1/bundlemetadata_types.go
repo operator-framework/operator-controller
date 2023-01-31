@@ -68,11 +68,19 @@ type BundleMetadataSpec struct {
 	RelatedImages []RelatedImage `json:"relatedImages"`
 }
 
+// TODO: In the future we should remove this in favor of using `property.Property` from
+// https://pkg.go.dev/github.com/operator-framework/operator-registry@v1.26.3/alpha/property#Property
+// This will likely require some changes to the `property.Property` type to
+// make it suitable for usage within the Spec for a CustomResource
 type Property struct {
 	Type  string `json:"type"`
 	Value []byte `json:"value"`
 }
 
+// TODO: In the future we should remove this in favor of using `model.RelatedImage` (or similar) from
+// https://pkg.go.dev/github.com/operator-framework/operator-registry@v1.26.3/alpha/model#RelatedImage
+// This will likely require some changes to the `model.RelatedImage` type
+// to make it suitable for usage within the Spec for a CustomResource
 type RelatedImage struct {
 	Name  string `json:"name"`
 	Image string `json:"image"`

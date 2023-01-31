@@ -23,17 +23,17 @@ spec:
         runAsUser: 0
       containers:
       - name: controller
-        image: docker.io/bpalmer/catalogsource-controller:latest
+        image: docker.io/anik120/catalogsource-controller:latest
         imagePullPolicy: IfNotPresent
         command:
         - "./manager"
         args: []
         resources:
           requests:
-            cpu: 100m
+            cpu: 1000m
             memory: 200Mi
           limits:
-            cpu: 100m
+            cpu: 1000m
             memory: 300Mi
       volumes:
       - name: apiserver-certs
