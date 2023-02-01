@@ -81,6 +81,7 @@ func main() {
 	if err = (&corecontrollers.CatalogSourceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		Cfg:    mgr.GetConfig(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "CatalogSource")
 		os.Exit(1)

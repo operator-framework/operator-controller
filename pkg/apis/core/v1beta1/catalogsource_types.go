@@ -130,3 +130,23 @@ var _ resource.StatusSubResource = &CatalogSourceStatus{}
 func (in CatalogSourceStatus) CopyTo(parent resource.ObjectWithStatusSubResource) {
 	parent.(*CatalogSource).Status = in
 }
+
+// TODO: We should probably move this to a specific errors package
+type UnpackPhaseError struct {
+	message string
+}
+
+func NewUnpackPhaseError(message string) *UnpackPhaseError {
+	return &UnpackPhaseError{
+		message: message,
+	}
+}
+
+func (upe *UnpackPhaseError) Error() string {
+	return upe.message
+}
+
+func IsUnpackPhaseError(err error) bool {
+	_, ok := err.(*UnpackPhaseError)
+	return ok
+}
