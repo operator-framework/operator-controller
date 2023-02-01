@@ -34,6 +34,7 @@ import (
 
 // Package
 // +k8s:openapi-gen=true
+// +kubebuilder:resource:scope=Cluster
 type Package struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -58,14 +59,12 @@ type PackageSpec struct {
 	CatalogSourceDisplayName string `json:"catalogSourceDisplayName,omitempty"`
 	CatalogSourcePublisher   string `json:"catalogSourcePublisher,omitempty"`
 
-	//  CatalogSourceNamespace is the namespace of the owning CatalogSource
-	CatalogSourceNamespace string `json:"catalogSourceNamespace"`
+	// TODO(everettraven): can we remove this? Can the package metadata.name can be used instead?
+	// // PackageName is the name of the overall package, ala `etcd`.
+	// PackageName string `json:"packageName"`
 
-	// Provider is the provider of the Package
-	Provider AppLink `json:"provider,omitempty"`
-
-	// PackageName is the name of the overall package, ala `etcd`.
-	PackageName string `json:"packageName"`
+	// Description is the description of the package
+	Description string `json:"description"`
 
 	// Channels are the declared channels for the package, ala `stable` or `alpha`.
 	Channels []PackageChannel `json:"channels"`
@@ -79,29 +78,21 @@ type PackageSpec struct {
 	DefaultChannel string `json:"defaultChannel"`
 }
 
-// AppLink defines a link to an application
-type AppLink struct {
-	Name string `json:"name,omitempty"`
-	URL  string `json:"url,omitempty"`
-}
-
 // PackageChannel defines a single channel under a package, pointing to a version of that
 // package.
 type PackageChannel struct {
 	// Name is the name of the channel, e.g. `alpha` or `stable`
 	Name string `json:"name"`
 
-	// Head is the head bundle in the channel.
-	Head string `json:"head"`
-
-	// Desc is the description from the head bundle in the channel
-	// Desc Description `json:"desc,omitempty"`
+	// Entries is all the channel entries within a channel
+	Entries []ChannelEntry `json:"entries"`
 }
 
-// Maintainer defines a project maintainer
-type Maintainer struct {
-	Name  string `json:"name,omitempty"`
-	Email string `json:"email,omitempty"`
+type ChannelEntry struct {
+	Name      string   `json:"name"`
+	Replaces  string   `json:"replaces,omitempty"`
+	Skips     []string `json:"skips,omitempty"`
+	SkipRange string   `json:"skipRange,omitempty"`
 }
 
 // Icon defines a base64 encoded icon and media type
@@ -152,6 +143,21 @@ func (in *PackageList) GetListMeta() *metav1.ListMeta {
 	return &in.ListMeta
 }
 
+// TODO: Audit this section
+// ---- START AUDIT SECTION ----
+
+// AppLink defines a link to an application
+type AppLink struct {
+	Name string `json:"name,omitempty"`
+	URL  string `json:"url,omitempty"`
+}
+
+// Maintainer defines a project maintainer
+type Maintainer struct {
+	Name  string `json:"name,omitempty"`
+	Email string `json:"email,omitempty"`
+}
+
 // Description
 type Description struct {
 	// DisplayName
@@ -194,9 +200,10 @@ type Description struct {
 	RelatedImages []string `json:"relatedImages,omitempty"`
 }
 
+// ---- END AUDIT SECTION ----
+
 // PackageStatus defines the observed state of Package
-type PackageStatus struct {
-}
+type PackageStatus struct{}
 
 func (in PackageStatus) SubResourceName() string {
 	return "status"

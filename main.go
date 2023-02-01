@@ -85,11 +85,11 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "CatalogSource")
 		os.Exit(1)
 	}
-	if err = (&corecontrollers.CatalogCacheReconciler{
+	if err = (&corecontrollers.BundleMetadataReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CatalogCache")
+		setupLog.Error(err, "unable to create controller", "controller", "BundleMetadata")
 		os.Exit(1)
 	}
 	if err = (&corecontrollers.PackageReconciler{

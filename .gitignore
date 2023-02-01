@@ -10,6 +10,7 @@ bin
 vendor/
 bin/
 dist/
+cover.out
 
 # apiserver certificates 
 config/certificates

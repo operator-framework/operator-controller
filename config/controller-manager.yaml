@@ -27,13 +27,13 @@ spec:
         imagePullPolicy: IfNotPresent
         command:
         - "./manager"
-        args:
+        args: []
         resources:
           requests:
-            cpu: 100m
+            cpu: 1000m
             memory: 200Mi
           limits:
-            cpu: 100m
+            cpu: 1000m
             memory: 300Mi
       volumes:
       - name: apiserver-certs

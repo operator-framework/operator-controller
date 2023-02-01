@@ -18,10 +18,10 @@ package core
 
 import (
 	"context"
+	"fmt"
 
 	opm "github.com/operator-framework/operator-registry/alpha/action"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
-	bundleProperty "github.com/operator-framework/operator-registry/alpha/property"
 	"github.com/operator-framework/operator-registry/pkg/image/containerdregistry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -70,11 +70,12 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	if err := r.buildCache(ctx, declCfg, catalogSource, req); err != nil {
+
+	if err := r.buildPackages(ctx, declCfg, catalogSource); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err := r.buildPackages(ctx, declCfg, catalogSource, req); err != nil {
+	if err := r.buildBundleMetadata(ctx, declCfg, catalogSource); err != nil {
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil
@@ -87,74 +88,87 @@ func (r *CatalogSourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *CatalogSourceReconciler) buildCache(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalogSource corev1beta1.CatalogSource, req ctrl.Request) error {
-	cache := corev1beta1.CatalogCache{ObjectMeta: metav1.ObjectMeta{
-		Name:      req.Name,
-		Namespace: req.Namespace,
-		OwnerReferences: []metav1.OwnerReference{
-			{
-				APIVersion: catalogSource.APIVersion,
-				Kind:       catalogSource.Kind,
-				Name:       req.Name,
-				UID:        catalogSource.UID,
-			},
-		}}}
+func (r *CatalogSourceReconciler) buildBundleMetadata(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalogSource corev1beta1.CatalogSource) error {
 	for _, bundle := range declCfg.Bundles {
-		operator := corev1beta1.Operator{
-			Name:       bundle.Name,
-			Package:    bundle.Package,
-			BundlePath: bundle.Image,
+		bundleMeta := corev1beta1.BundleMetadata{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: bundle.Name,
+			},
+			Spec: corev1beta1.BundleMetadataSpec{
+				CatalogSource: catalogSource.Name,
+				Package:       bundle.Package,
+				Image:         bundle.Image,
+				Properties:    []corev1beta1.Property{},
+				RelatedImages: []corev1beta1.RelatedImage{},
+			},
 		}
-		props, _ := bundleProperty.Parse(bundle.Properties)
-		providedGVKs := []corev1beta1.APIKey{}
-		for _, gvk := range props.GVKs {
-			providedGVKs = append(providedGVKs, corev1beta1.APIKey{Group: gvk.Group, Kind: gvk.Kind, Version: gvk.Version})
+
+		for _, relatedImage := range bundle.RelatedImages {
+			bundleMeta.Spec.RelatedImages = append(bundleMeta.Spec.RelatedImages, corev1beta1.RelatedImage{
+				Name:  relatedImage.Name,
+				Image: relatedImage.Image,
+			})
 		}
-		requiredGVKs := []corev1beta1.APIKey{}
-		for _, gvk := range props.GVKsRequired {
-			requiredGVKs = append(requiredGVKs, corev1beta1.APIKey{Group: gvk.Group, Kind: gvk.Kind, Version: gvk.Version})
+
+		for _, prop := range bundle.Properties {
+			// skip any properties that are of type `olm.bundle.object`
+			if prop.Type == "olm.bundle.object" {
+				continue
+			}
+
+			bundleMeta.Spec.Properties = append(bundleMeta.Spec.Properties, corev1beta1.Property{
+				Type:  prop.Type,
+				Value: prop.Value,
+			})
 		}
-		operator.ProvidedAPIs = providedGVKs
-		operator.RequiredAPIs = requiredGVKs
-		cache.Spec.Operators = append(cache.Spec.Operators, operator)
+
+		if err := r.Client.Create(ctx, &bundleMeta); err != nil {
+			return fmt.Errorf("creating bundlemetadata %q: %w", bundleMeta.Name, err)
+		}
 	}
 
-	if err := r.Client.Create(ctx, &cache); err != nil {
-		return err
-	}
 	return nil
 }
 
-func (r *CatalogSourceReconciler) buildPackages(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalogSource corev1beta1.CatalogSource, req ctrl.Request) error {
-
+func (r *CatalogSourceReconciler) buildPackages(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalogSource corev1beta1.CatalogSource) error {
 	for _, pkg := range declCfg.Packages {
-
 		pack := corev1beta1.Package{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      pkg.Name,
-				Namespace: req.Namespace,
+				// TODO: If we just provide the name of the package, then
+				// we are inherently saying no other catalog sources can provide a package
+				// of the same name due to this being a cluster scoped resource. We should
+				// look into options for configuring admission criteria for the Package
+				// resource to resolve this potential clash.
+				Name: pkg.Name,
 			},
 			Spec: corev1beta1.PackageSpec{
-				CatalogSource:          catalogSource.Name,
-				CatalogSourceNamespace: catalogSource.Namespace,
-				DefaultChannel:         pkg.DefaultChannel,
-				Icon: corev1beta1.Icon{
-					Base64Data: string(pkg.Icon.Data),
-					Mediatype:  pkg.Icon.MediaType,
-				},
+				CatalogSource:  catalogSource.Name,
+				DefaultChannel: pkg.DefaultChannel,
+				Channels:       []corev1beta1.PackageChannel{},
+				Description:    pkg.Description,
 			},
 		}
 		for _, ch := range declCfg.Channels {
 			if ch.Package == pkg.Name {
-				pack.Spec.Channels = append(pack.Spec.Channels, corev1beta1.PackageChannel{
-					Name: ch.Name,
-					// Head: ,
-				})
+				packChannel := corev1beta1.PackageChannel{
+					Name:    ch.Name,
+					Entries: []corev1beta1.ChannelEntry{},
+				}
+				for _, entry := range ch.Entries {
+					packChannel.Entries = append(packChannel.Entries, corev1beta1.ChannelEntry{
+						Name:      entry.Name,
+						Replaces:  entry.Replaces,
+						Skips:     entry.Skips,
+						SkipRange: entry.SkipRange,
+					})
+				}
+
+				pack.Spec.Channels = append(pack.Spec.Channels, packChannel)
 			}
 		}
 
 		if err := r.Client.Create(ctx, &pack); err != nil {
-			return err
+			return fmt.Errorf("creating package %q: %w", pack.Name, err)
 		}
 	}
 	return nil
