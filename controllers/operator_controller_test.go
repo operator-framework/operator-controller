@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -61,16 +62,17 @@ var _ = Describe("Reconcile Test", func() {
 				}
 				err := cl.Create(ctx, operator)
 				Expect(err).NotTo(HaveOccurred())
-
+			})
+			It("sets resolution failure status", func() {
 				By("running reconcile")
 				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
 				Expect(res).To(Equal(ctrl.Result{}))
-				Expect(err).NotTo(HaveOccurred())
+				Expect(err).To(MatchError(fmt.Sprintf("package '%s' not found", pkgName)))
 
 				By("fetching updated operator after reconcile")
 				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
-			})
-			It("sets resolution failure status", func() {
+
+				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
@@ -89,27 +91,145 @@ var _ = Describe("Reconcile Test", func() {
 				}
 				err := cl.Create(ctx, operator)
 				Expect(err).NotTo(HaveOccurred())
-
-				By("running reconcile")
-				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
-				Expect(res).To(Equal(ctrl.Result{}))
-				Expect(err).NotTo(HaveOccurred())
-
-				By("fetching updated operator after reconcile")
-				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
 			})
-			It("results in the expected BundleDeployment", func() {
-				bd := &rukpakv1alpha1.BundleDeployment{}
-				err := cl.Get(ctx, types.NamespacedName{Name: opKey.Name}, bd)
-				Expect(err).NotTo(HaveOccurred())
-				// TODO: verify other fields
+			When("the BundleDeployment does not exist", func() {
+				BeforeEach(func() {
+					By("running reconcile")
+					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+					Expect(res).To(Equal(ctrl.Result{}))
+					Expect(err).NotTo(HaveOccurred())
+
+					By("fetching updated operator after reconcile")
+					Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+				})
+				It("results in the expected BundleDeployment", func() {
+					bd := &rukpakv1alpha1.BundleDeployment{}
+					err := cl.Get(ctx, types.NamespacedName{Name: opKey.Name}, bd)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(bd.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-plain"))
+					Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-registry"))
+					Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
+					Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
+					Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+				})
+				It("sets resolution success status", func() {
+					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+					Expect(cond).NotTo(BeNil())
+					Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+					Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionSucceeded))
+					Expect(cond.Message).To(Equal("resolution was successful"))
+				})
 			})
-			It("sets resolution success status", func() {
-				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
-				Expect(cond).NotTo(BeNil())
-				Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionSucceeded))
-				Expect(cond.Message).To(Equal("resolution was successful"))
+			When("the expected BundleDeployment already exists", func() {
+				BeforeEach(func() {
+					By("patching the existing BD")
+					err := cl.Create(ctx, &rukpakv1alpha1.BundleDeployment{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: opKey.Name,
+							OwnerReferences: []metav1.OwnerReference{
+								{
+									APIVersion:         operatorsv1alpha1.GroupVersion.String(),
+									Kind:               "Operator",
+									Name:               operator.Name,
+									UID:                operator.UID,
+									Controller:         pointer.Bool(true),
+									BlockOwnerDeletion: pointer.Bool(true),
+								},
+							},
+						},
+						Spec: rukpakv1alpha1.BundleDeploymentSpec{
+							ProvisionerClassName: "core-rukpak-io-plain",
+							Template: &rukpakv1alpha1.BundleTemplate{
+								Spec: rukpakv1alpha1.BundleSpec{
+									ProvisionerClassName: "core-rukpak-io-registry",
+									Source: rukpakv1alpha1.BundleSource{
+										Type: rukpakv1alpha1.SourceTypeImage,
+										Image: &rukpakv1alpha1.ImageSource{
+											Ref: "quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed",
+										},
+									},
+								},
+							},
+						},
+					})
+					Expect(err).NotTo(HaveOccurred())
+
+					By("running reconcile")
+					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+					Expect(res).To(Equal(ctrl.Result{}))
+					Expect(err).NotTo(HaveOccurred())
+
+					By("fetching updated operator after reconcile")
+					Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+				})
+				PIt("does not patch the BundleDeployment", func() {
+					// TODO: verify that no patch call is made.
+				})
+				It("results in the expected BundleDeployment", func() {
+					bd := &rukpakv1alpha1.BundleDeployment{}
+					err := cl.Get(ctx, types.NamespacedName{Name: opKey.Name}, bd)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(bd.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-plain"))
+					Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-registry"))
+					Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
+					Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
+					Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+				})
+				It("sets resolution success status", func() {
+					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+					Expect(cond).NotTo(BeNil())
+					Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+					Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionSucceeded))
+					Expect(cond.Message).To(Equal("resolution was successful"))
+				})
+			})
+			When("an out-of-date BundleDeployment exists", func() {
+				BeforeEach(func() {
+					By("creating the expected BD")
+					err := cl.Create(ctx, &rukpakv1alpha1.BundleDeployment{
+						ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+						Spec: rukpakv1alpha1.BundleDeploymentSpec{
+							ProvisionerClassName: "foo",
+							Template: &rukpakv1alpha1.BundleTemplate{
+								Spec: rukpakv1alpha1.BundleSpec{
+									ProvisionerClassName: "bar",
+									Source: rukpakv1alpha1.BundleSource{
+										Type: rukpakv1alpha1.SourceTypeHTTP,
+										HTTP: &rukpakv1alpha1.HTTPSource{
+											URL: "http://localhost:8080/",
+										},
+									},
+								},
+							},
+						},
+					})
+					Expect(err).NotTo(HaveOccurred())
+
+					By("running reconcile")
+					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+					Expect(res).To(Equal(ctrl.Result{}))
+					Expect(err).NotTo(HaveOccurred())
+
+					By("fetching updated operator after reconcile")
+					Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+				})
+				It("results in the expected BundleDeployment", func() {
+					bd := &rukpakv1alpha1.BundleDeployment{}
+					err := cl.Get(ctx, types.NamespacedName{Name: opKey.Name}, bd)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(bd.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-plain"))
+					Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-registry"))
+					Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
+					Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
+					Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+				})
+				It("sets resolution success status", func() {
+					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+					Expect(cond).NotTo(BeNil())
+					Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+					Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionSucceeded))
+					Expect(cond.Message).To(Equal("resolution was successful"))
+				})
 			})
 		})
 		When("the selected bundle's image ref cannot be parsed", func() {
@@ -132,6 +252,7 @@ var _ = Describe("Reconcile Test", func() {
 				By("fetching updated operator after reconcile")
 				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
 
+				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
@@ -155,16 +276,17 @@ var _ = Describe("Reconcile Test", func() {
 				}
 				err = cl.Create(ctx, operator)
 				Expect(err).NotTo(HaveOccurred())
-
+			})
+			It("sets resolution failure status", func() {
 				By("running reconcile")
 				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
 				Expect(res).To(Equal(ctrl.Result{}))
-				Expect(err).To(BeNil())
+				Expect(err).To(MatchError(`duplicate identifier "required package prometheus" in input`))
 
 				By("fetching updated operator after reconcile")
 				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
-			})
-			It("sets resolution failure status", func() {
+
+				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))

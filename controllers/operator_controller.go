@@ -20,10 +20,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -35,6 +37,7 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/resolution"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
 )
 
 // OperatorReconciler reconciles a Operator object
@@ -104,7 +107,6 @@ func checkForUnexpectedFieldChange(a, b operatorsv1alpha1.Operator) bool {
 
 // Helper function to do the actual reconcile
 func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha1.Operator) (ctrl.Result, error) {
-
 	// run resolution
 	solution, err := r.Resolver.Resolve(ctx)
 	if err != nil {
@@ -115,65 +117,48 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 			Message:            err.Error(),
 			ObservedGeneration: op.GetGeneration(),
 		})
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, err
 	}
 
-	// extract package bundle path from resolved variable
-	packageFound := false
-	for _, variable := range solution.SelectedVariables() {
-		switch v := variable.(type) {
-		case *bundles_and_dependencies.BundleVariable:
-			packageName, err := v.BundleEntity().PackageName()
-			if err != nil {
-				apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-					Type:               operatorsv1alpha1.TypeReady,
-					Status:             metav1.ConditionFalse,
-					Reason:             operatorsv1alpha1.ReasonBundleLookupFailed,
-					Message:            err.Error(),
-					ObservedGeneration: op.GetGeneration(),
-				})
-				return ctrl.Result{}, err
-			}
-			if packageName == op.Spec.PackageName {
-				bundlePath, err := v.BundleEntity().BundlePath()
-				if err != nil {
-					apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-						Type:               operatorsv1alpha1.TypeReady,
-						Status:             metav1.ConditionFalse,
-						Reason:             operatorsv1alpha1.ReasonBundleLookupFailed,
-						Message:            err.Error(),
-						ObservedGeneration: op.GetGeneration(),
-					})
-					return ctrl.Result{}, err
-				}
-				dep := r.generateExpectedBundleDeployment(*op, bundlePath)
-				// Create bundleDeployment if not found or Update if needed
-				if err := r.ensureBundleDeployment(ctx, dep); err != nil {
-					apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-						Type:               operatorsv1alpha1.TypeReady,
-						Status:             metav1.ConditionFalse,
-						Reason:             operatorsv1alpha1.ReasonBundleDeploymentFailed,
-						Message:            err.Error(),
-						ObservedGeneration: op.GetGeneration(),
-					})
-					return ctrl.Result{}, err
-				}
-				packageFound = true
-				break
-			}
-		}
-	}
-	if !packageFound {
-		// TODO: If this happens, it very likely indicates a bug in our resolver.
-		//    For that reason, should this just panic?
+	// lookup the bundle entity in the solution that corresponds to the
+	// Operator's desired package name.
+	bundleEntity, err := r.getBundleEntityFromSolution(solution, op.Spec.PackageName)
+	if err != nil {
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeReady,
 			Status:             metav1.ConditionFalse,
 			Reason:             operatorsv1alpha1.ReasonBundleLookupFailed,
-			Message:            fmt.Sprintf("resolved set does not contain expected package %q", op.Spec.PackageName),
+			Message:            err.Error(),
 			ObservedGeneration: op.GetGeneration(),
 		})
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, err
+	}
+
+	// Get the bundle image reference for the bundle
+	bundleImage, err := bundleEntity.BundlePath()
+	if err != nil {
+		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
+			Type:               operatorsv1alpha1.TypeReady,
+			Status:             metav1.ConditionFalse,
+			Reason:             operatorsv1alpha1.ReasonBundleLookupFailed,
+			Message:            err.Error(),
+			ObservedGeneration: op.GetGeneration(),
+		})
+		return ctrl.Result{}, err
+	}
+
+	// Ensure a BundleDeployment exists with its bundle source from the bundle
+	// image we just looked up in the solution.
+	dep := r.generateExpectedBundleDeployment(*op, bundleImage)
+	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
+		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
+			Type:               operatorsv1alpha1.TypeReady,
+			Status:             metav1.ConditionFalse,
+			Reason:             operatorsv1alpha1.ReasonBundleDeploymentFailed,
+			Message:            err.Error(),
+			ObservedGeneration: op.GetGeneration(),
+		})
+		return ctrl.Result{}, err
 	}
 
 	// update operator status
@@ -184,51 +169,66 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		Message:            "resolution was successful",
 		ObservedGeneration: op.GetGeneration(),
 	})
-
 	return ctrl.Result{}, nil
 }
 
-func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string) *rukpakv1alpha1.BundleDeployment {
-	// TODO: Use unstructured + server side apply?
-	return &rukpakv1alpha1.BundleDeployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: o.GetName(),
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion:         operatorsv1alpha1.GroupVersion.String(),
-					Kind:               "Operator",
-					Name:               o.Name,
-					UID:                o.UID,
-					Controller:         pointer.Bool(true),
-					BlockOwnerDeletion: pointer.Bool(true),
-				},
-			},
+func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Solution, packageName string) (*entity.BundleEntity, error) {
+	for _, variable := range solution.SelectedVariables() {
+		switch v := variable.(type) {
+		case *bundles_and_dependencies.BundleVariable:
+			entityPkgName, err := v.BundleEntity().PackageName()
+			if err != nil {
+				return nil, err
+			}
+			if packageName == entityPkgName {
+				return v.BundleEntity(), nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("entity for package %q not found in solution", packageName)
+}
+
+func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string) *unstructured.Unstructured {
+	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
+	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
+	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
+	// unstructured ensures that the patch contains only what is specified. Using unstructured like this is basically
+	// identical to "kubectl apply -f"
+	bd := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": rukpakv1alpha1.GroupVersion.String(),
+		"kind":       rukpakv1alpha1.BundleDeploymentKind,
+		"metadata": map[string]interface{}{
+			"name": o.GetName(),
 		},
-		Spec: rukpakv1alpha1.BundleDeploymentSpec{
-			//TODO: Don't assume plain provisioner
-			ProvisionerClassName: "core-rukpak-io-plain",
-			Template: &rukpakv1alpha1.BundleTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					// TODO: Remove
-					Labels: map[string]string{
-						"app": "my-bundle",
-					},
-				},
-				Spec: rukpakv1alpha1.BundleSpec{
-					Source: rukpakv1alpha1.BundleSource{
+		"spec": map[string]interface{}{
+			// TODO: Don't assume plain provisioner
+			"provisionerClassName": "core-rukpak-io-plain",
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					// TODO: Don't assume registry provisioner
+					"provisionerClassName": "core-rukpak-io-registry",
+					"source": map[string]interface{}{
 						// TODO: Don't assume image type
-						Type: rukpakv1alpha1.SourceTypeImage,
-						Image: &rukpakv1alpha1.ImageSource{
-							Ref: bundlePath,
+						"type": string(rukpakv1alpha1.SourceTypeImage),
+						"image": map[string]interface{}{
+							"ref": bundlePath,
 						},
 					},
-
-					//TODO: Don't assume registry provisioner
-					ProvisionerClassName: "core-rukpak-io-registry",
 				},
 			},
 		},
-	}
+	}}
+	bd.SetOwnerReferences([]metav1.OwnerReference{
+		{
+			APIVersion:         operatorsv1alpha1.GroupVersion.String(),
+			Kind:               "Operator",
+			Name:               o.Name,
+			UID:                o.UID,
+			Controller:         pointer.Bool(true),
+			BlockOwnerDeletion: pointer.Bool(true),
+		},
+	})
+	return bd
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -244,24 +244,30 @@ func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return nil
 }
 
-func (r *OperatorReconciler) ensureBundleDeployment(ctx context.Context, desiredBundleDeployment *rukpakv1alpha1.BundleDeployment) error {
-	existingBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
-	err := r.Client.Get(ctx, types.NamespacedName{Name: desiredBundleDeployment.GetName()}, existingBundleDeployment)
-	if err != nil {
-		if client.IgnoreNotFound(err) != nil {
-			return err
-		}
-		return r.Client.Create(ctx, desiredBundleDeployment)
+func (r *OperatorReconciler) ensureBundleDeployment(ctx context.Context, desiredBundleDeployment *unstructured.Unstructured) error {
+	existingBundleDeployment, err := r.existingBundleDeploymentUnstructured(ctx, desiredBundleDeployment.GetName())
+	if client.IgnoreNotFound(err) != nil {
+		return err
 	}
 
-	// Check if the existing bundleDeployment's spec needs to be updated
-	//
-	// FIXME: checking only for spec differences means that we will not fixup
-	//   changes to and removals of desired metadata.
-	if equality.Semantic.DeepEqual(existingBundleDeployment.Spec, desiredBundleDeployment.Spec) {
+	// If the existing BD already has everything that the desired BD has, no need to contact the API server.
+	if equality.Semantic.DeepDerivative(desiredBundleDeployment, existingBundleDeployment) {
 		return nil
 	}
+	return r.Client.Patch(ctx, desiredBundleDeployment, client.Apply, client.ForceOwnership, client.FieldOwner("operator-controller"))
+}
 
-	existingBundleDeployment.Spec = desiredBundleDeployment.Spec
-	return r.Client.Update(ctx, existingBundleDeployment)
+func (r *OperatorReconciler) existingBundleDeploymentUnstructured(ctx context.Context, name string) (*unstructured.Unstructured, error) {
+	existingBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
+	err := r.Client.Get(ctx, types.NamespacedName{Name: name}, existingBundleDeployment)
+	if err != nil {
+		return nil, err
+	}
+	existingBundleDeployment.APIVersion = rukpakv1alpha1.GroupVersion.String()
+	existingBundleDeployment.Kind = rukpakv1alpha1.BundleDeploymentKind
+	unstrExistingBundleDeploymentObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(existingBundleDeployment)
+	if err != nil {
+		return nil, err
+	}
+	return &unstructured.Unstructured{Object: unstrExistingBundleDeploymentObj}, nil
 }
