@@ -40,17 +40,8 @@ import (
 // OperatorReconciler reconciles a Operator object
 type OperatorReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-
-	resolver *resolution.OperatorResolver
-}
-
-func NewOperatorReconciler(c client.Client, s *runtime.Scheme, r *resolution.OperatorResolver) *OperatorReconciler {
-	return &OperatorReconciler{
-		Client:   c,
-		Scheme:   s,
-		resolver: r,
-	}
+	Scheme   *runtime.Scheme
+	Resolver *resolution.OperatorResolver
 }
 
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators,verbs=get;list;watch
@@ -120,9 +111,9 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	var message = "resolution was successful"
 
 	// run resolution
-	solution, err := r.resolver.Resolve(ctx)
+	solution, err := r.Resolver.Resolve(ctx)
 	if err != nil {
-		status = metav1.ConditionTrue
+		status = metav1.ConditionFalse
 		reason = operatorsv1alpha1.ReasonResolutionFailed
 		message = err.Error()
 	} else {
