@@ -51,7 +51,7 @@ func NewOperatorReconciler(c client.Client, s *runtime.Scheme, r *resolution.Ope
 	}
 }
 
-//+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators,verbs=get;list;watch
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators/finalizers,verbs=update
 
