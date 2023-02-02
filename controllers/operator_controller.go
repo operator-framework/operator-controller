@@ -23,9 +23,11 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -137,11 +139,8 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 					if err != nil {
 						return ctrl.Result{}, err
 					}
-					dep, err := r.generateExpectedBundleDeployment(*op, bundlePath)
-					if err != nil {
-						return ctrl.Result{}, err
-					}
 					// Create bundleDeployment if not found or Update if needed
+					dep := r.generateExpectedBundleDeployment(*op, bundlePath)
 					if err := r.ensureBundleDeployment(ctx, dep); err != nil {
 						return ctrl.Result{}, err
 					}
@@ -163,41 +162,47 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	return ctrl.Result{}, nil
 }
 
-func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string) (*rukpakv1alpha1.BundleDeployment, error) {
-	dep := &rukpakv1alpha1.BundleDeployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: o.GetName(),
+func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string) *unstructured.Unstructured {
+	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
+	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
+	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
+	// unstructured ensures that the patch contains only what is specified. Using unstructured like this is basically
+	// identical to "kubectl apply -f"
+	bd := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": rukpakv1alpha1.GroupVersion.String(),
+		"kind":       rukpakv1alpha1.BundleDeploymentKind,
+		"metadata": map[string]interface{}{
+			"name": o.GetName(),
 		},
-		Spec: rukpakv1alpha1.BundleDeploymentSpec{
-			//TODO: Don't assume plain provisioner
-			ProvisionerClassName: "core-rukpak-io-plain",
-			Template: &rukpakv1alpha1.BundleTemplate{
-				ObjectMeta: metav1.ObjectMeta{
-					// TODO: Remove
-					Labels: map[string]string{
-						"app": "my-bundle",
-					},
-				},
-				Spec: rukpakv1alpha1.BundleSpec{
-					Source: rukpakv1alpha1.BundleSource{
+		"spec": map[string]interface{}{
+			// TODO: Don't assume plain provisioner
+			"provisionerClassName": "core-rukpak-io-plain",
+			"template": map[string]interface{}{
+				"spec": map[string]interface{}{
+					// TODO: Don't assume registry provisioner
+					"provisionerClassName": "core-rukpak-io-registry",
+					"source": map[string]interface{}{
 						// TODO: Don't assume image type
-						Type: rukpakv1alpha1.SourceTypeImage,
-						Image: &rukpakv1alpha1.ImageSource{
-							Ref: bundlePath,
+						"type": string(rukpakv1alpha1.SourceTypeImage),
+						"image": map[string]interface{}{
+							"ref": bundlePath,
 						},
 					},
-
-					//TODO: Don't assume registry provisioner
-					ProvisionerClassName: "core-rukpak-io-registry",
 				},
 			},
 		},
-	}
-
-	if err := ctrl.SetControllerReference(&o, dep, r.Scheme); err != nil {
-		return nil, err
-	}
-	return dep, nil
+	}}
+	bd.SetOwnerReferences([]metav1.OwnerReference{
+		{
+			APIVersion:         operatorsv1alpha1.GroupVersion.String(),
+			Kind:               "Operator",
+			Name:               o.Name,
+			UID:                o.UID,
+			Controller:         pointer.Bool(true),
+			BlockOwnerDeletion: pointer.Bool(true),
+		},
+	})
+	return bd
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -213,21 +218,35 @@ func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return nil
 }
 
-func (r *OperatorReconciler) ensureBundleDeployment(ctx context.Context, desiredBundleDeployment *rukpakv1alpha1.BundleDeployment) error {
-	existingBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
-	err := r.Client.Get(ctx, types.NamespacedName{Name: desiredBundleDeployment.GetName()}, existingBundleDeployment)
-	if err != nil {
-		if client.IgnoreNotFound(err) != nil {
-			return err
-		}
-		return r.Client.Create(ctx, desiredBundleDeployment)
+func (r *OperatorReconciler) ensureBundleDeployment(ctx context.Context, desiredBundleDeployment *unstructured.Unstructured) error {
+	// TODO: what if there happens to be an unrelated BD with the same name as the Operator?
+	//   we should probably also check to see if there's an owner reference and/or a label set
+	//   that we expect only to ever be used by the operator controller. That way, we don't
+	//   automatically and silently adopt and change a BD that the user doens't intend to be
+	//   owned by the Operator.
+	existingBundleDeployment, err := r.existingBundleDeploymentUnstructured(ctx, desiredBundleDeployment.GetName())
+	if client.IgnoreNotFound(err) != nil {
+		return err
 	}
 
-	// Check if the existing bundleDeployment's spec needs to be updated
-	if equality.Semantic.DeepEqual(existingBundleDeployment.Spec, desiredBundleDeployment.Spec) {
+	// If the existing BD already has everything that the desired BD has, no need to contact the API server.
+	if equality.Semantic.DeepDerivative(desiredBundleDeployment, existingBundleDeployment) {
 		return nil
 	}
+	return r.Client.Patch(ctx, desiredBundleDeployment, client.Apply, client.ForceOwnership, client.FieldOwner("operator-controller"))
+}
 
-	existingBundleDeployment.Spec = desiredBundleDeployment.Spec
-	return r.Client.Update(ctx, existingBundleDeployment)
+func (r *OperatorReconciler) existingBundleDeploymentUnstructured(ctx context.Context, name string) (*unstructured.Unstructured, error) {
+	existingBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
+	err := r.Client.Get(ctx, types.NamespacedName{Name: name}, existingBundleDeployment)
+	if err != nil {
+		return nil, err
+	}
+	existingBundleDeployment.APIVersion = rukpakv1alpha1.GroupVersion.String()
+	existingBundleDeployment.Kind = rukpakv1alpha1.BundleDeploymentKind
+	unstrExistingBundleDeploymentObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(existingBundleDeployment)
+	if err != nil {
+		return nil, err
+	}
+	return &unstructured.Unstructured{Object: unstrExistingBundleDeploymentObj}, nil
 }
