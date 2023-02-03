@@ -66,7 +66,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test test-e2e e2e kind-load kind-cluster kind-cluster-cleanup
-test: manifests generate fmt vet test-unit test-e2e ## Run all tests.
+test: manifests generate fmt vet test-unit e2e ## Run all tests.
 
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 E2E_FLAGS ?= ""
