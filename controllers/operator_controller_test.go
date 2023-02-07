@@ -67,8 +67,7 @@ var _ = Describe("Reconcile Test", func() {
 				By("running reconcile")
 				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
 				Expect(res).To(Equal(ctrl.Result{}))
-				// TODO: should resolution failure return an error?
-				Expect(err).NotTo(HaveOccurred())
+				Expect(err).To(MatchError(fmt.Sprintf("package '%s' not found", pkgName)))
 
 				By("fetching updated operator after reconcile")
 				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
@@ -243,7 +242,7 @@ var _ = Describe("Reconcile Test", func() {
 				err := cl.Create(ctx, operator)
 				Expect(err).NotTo(HaveOccurred())
 			})
-			PIt("sets resolution failure status and returns an error", func() {
+			It("sets resolution failure status and returns an error", func() {
 				By("running reconcile")
 				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
 				Expect(res).To(Equal(ctrl.Result{}))
@@ -253,7 +252,11 @@ var _ = Describe("Reconcile Test", func() {
 				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
 
 				By("checking the expected conditions")
-				// TODO: there should be a condition update that sets Ready false in this scenario
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonBundleLookupFailed))
+				Expect(cond.Message).To(ContainSubstring(`error determining bundle path for entity`))
 			})
 		})
 		When("the operator specifies a duplicate package", func() {
@@ -277,8 +280,7 @@ var _ = Describe("Reconcile Test", func() {
 				By("running reconcile")
 				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
 				Expect(res).To(Equal(ctrl.Result{}))
-				// TODO: should this scenario return an error?
-				Expect(err).NotTo(HaveOccurred())
+				Expect(err).To(MatchError(Equal(`duplicate identifier "required package prometheus" in input`)))
 
 				By("fetching updated operator after reconcile")
 				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
