@@ -100,6 +100,10 @@ build: manifests generate fmt vet ## Build manager binary.
 .PHONY: run
 run: docker-build kind-cluster kind-load cert-mgr rukpak install deploy wait ## Build the operator-controller then deploy it into a new kind cluster.
 
+.PHONY: run-local
+run-local: manifests generate fmt vet  ## Run a controller from your host. Make sure that necessary CRDs are installed in the cluster.
+	go run ./main.go
+
 .PHONY: wait
 wait:
 	kubectl wait --for=condition=Available --namespace=$(OPERATOR_CONTROLLER_NAMESPACE) deployment/operator-controller-controller-manager --timeout=$(WAIT_TIMEOUT)
@@ -165,6 +169,12 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+
+# cleans up all the operator resources and their dependents like cert-manager and rukpak
+.PHONY: cleanup
+cleanup: undeploy uninstall
+	kubectl delete --ignore-not-found=$(ignore-not-found) -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MGR_VERSION)/cert-manager.yaml
+	kubectl delete --ignore-not-found=$(ignore-not-found) -f https://github.com/operator-framework/rukpak/releases/latest/download/rukpak.yaml
 
 ##@ Build Dependencies
 
