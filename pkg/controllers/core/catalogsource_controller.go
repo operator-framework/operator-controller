@@ -41,11 +41,10 @@ import (
 // CatalogSourceReconciler reconciles a CatalogSource object
 type CatalogSourceReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	Cfg    *rest.Config
+	Scheme   *runtime.Scheme
+	Cfg      *rest.Config
+	OpmImage string
 }
-
-const opmImage = "quay.io/operator-framework/opm:v1.26"
 
 //+kubebuilder:rbac:groups=core.rukpak.io,resources=catalogsources,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core.rukpak.io,resources=catalogsources/status,verbs=get;update;patch
@@ -67,7 +66,7 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	job := unpackJob(catalogSource)
+	job := r.unpackJob(catalogSource)
 	err := r.Client.Get(ctx, client.ObjectKeyFromObject(job), job)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -194,7 +193,7 @@ func (r *CatalogSourceReconciler) buildPackages(ctx context.Context, declCfg *de
 }
 
 func (r *CatalogSourceReconciler) createUnpackJob(ctx context.Context, cs corev1beta1.CatalogSource) error {
-	job := unpackJob(cs)
+	job := r.unpackJob(cs)
 
 	if err := r.Client.Create(ctx, job); err != nil {
 		return fmt.Errorf("creating unpackJob: %w", err)
@@ -239,7 +238,7 @@ func (r *CatalogSourceReconciler) parseUnpackLogs(ctx context.Context, job *batc
 	return declcfg.LoadReader(bytes.NewReader(logs))
 }
 
-func unpackJob(cs corev1beta1.CatalogSource) *batchv1.Job {
+func (r *CatalogSourceReconciler) unpackJob(cs corev1beta1.CatalogSource) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "rukpak",
@@ -255,7 +254,7 @@ func unpackJob(cs corev1beta1.CatalogSource) *batchv1.Job {
 					RestartPolicy: v1.RestartPolicyOnFailure,
 					Containers: []v1.Container{
 						{
-							Image: opmImage,
+							Image: r.OpmImage,
 							Name:  "unpacker",
 							Command: []string{
 								"opm",
