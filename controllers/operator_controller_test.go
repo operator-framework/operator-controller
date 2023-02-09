@@ -293,10 +293,80 @@ var _ = Describe("Reconcile Test", func() {
 				Expect(cond.Message).To(Equal(`duplicate identifier "required package prometheus" in input`))
 			})
 		})
+		When("the existing operator status is based on bundleDeployment", func() {
+			const pkgName = "prometheus"
+			var (
+				bd rukpakv1alpha1.BundleDeployment
+			)
+			BeforeEach(func() {
+				By("creating the expected BundleDeployment")
+				bd := &rukpakv1alpha1.BundleDeployment{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: rukpakv1alpha1.BundleDeploymentSpec{
+						ProvisionerClassName: "core-rukpak-io-plain",
+						Template: &rukpakv1alpha1.BundleTemplate{
+							Spec: rukpakv1alpha1.BundleSpec{
+								ProvisionerClassName: "core-rukpak-io-registry",
+								Source: rukpakv1alpha1.BundleSource{
+									Type: rukpakv1alpha1.SourceTypeImage,
+									Image: &rukpakv1alpha1.ImageSource{
+										Ref: "quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed",
+									},
+								},
+							},
+						},
+					},
+				}
+				err := cl.Create(ctx, bd)
+				Expect(err).NotTo(HaveOccurred())
+
+				By("creating the operator object")
+				operator = &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: pkgName,
+					},
+				}
+				err = cl.Create(ctx, operator)
+				Expect(err).NotTo(HaveOccurred())
+
+			})
+			It("verify if operator status is updated according to bundleDeployment", func() {
+				err := cl.Get(ctx, opKey, &bd)
+				Expect(err).NotTo(HaveOccurred())
+				apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
+					Type:               rukpakv1alpha1.TypeInstalled,
+					LastTransitionTime: metav1.Now(),
+					Status:             metav1.ConditionFalse,
+					Message:            "fail to unpack",
+					Reason:             rukpakv1alpha1.ReasonInstallFailed,
+				})
+				err = cl.Status().Update(ctx, &bd)
+				Expect(err).NotTo(HaveOccurred())
+
+				By("running reconcile")
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(res).To(Equal(ctrl.Result{}))
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring(`error observed by Rukpak`))
+
+				By("fetching the updated operator after reconcile")
+				op := &operatorsv1alpha1.Operator{}
+				err = cl.Get(ctx, opKey, op)
+				Expect(err).NotTo(HaveOccurred())
+
+				By("checking the expected conditions")
+				cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeReady)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonBundleDeploymentFailed))
+				Expect(cond.Message).To(ContainSubstring(`error observed by Rukpak`))
+			})
+		})
 		AfterEach(func() {
 			verifyInvariants(ctx, operator)
 
-			err := cl.Delete(ctx, operator)
+			err := cl.DeleteAllOf(ctx, operator)
 			Expect(err).To(Not(HaveOccurred()))
 		})
 	})

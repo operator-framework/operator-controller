@@ -257,10 +257,16 @@ func (r *OperatorReconciler) ensureBundleDeployment(ctx context.Context, desired
 	}
 
 	// If the existing BD already has everything that the desired BD has, no need to contact the API server.
+	// Make sure the status of the existingBD from the server is as expected.
 	if equality.Semantic.DeepDerivative(desiredBundleDeployment, existingBundleDeployment) {
-		return nil
+		return verifySuccessfulBDStatus(existingBundleDeployment)
 	}
-	return r.Client.Patch(ctx, desiredBundleDeployment, client.Apply, client.ForceOwnership, client.FieldOwner("operator-controller"))
+
+	if err = r.Client.Patch(ctx, desiredBundleDeployment, client.Apply, client.ForceOwnership, client.FieldOwner("operator-controller")); err != nil {
+		return err
+	}
+
+	return verifySuccessfulBDStatus(desiredBundleDeployment)
 }
 
 func (r *OperatorReconciler) existingBundleDeploymentUnstructured(ctx context.Context, name string) (*unstructured.Unstructured, error) {
@@ -276,4 +282,31 @@ func (r *OperatorReconciler) existingBundleDeploymentUnstructured(ctx context.Co
 		return nil, err
 	}
 	return &unstructured.Unstructured{Object: unstrExistingBundleDeploymentObj}, nil
+}
+
+func verifySuccessfulBDStatus(dep *unstructured.Unstructured) error {
+	// convert the unstructured object from patch call to typed bundledeployment to make checking of Status easier.
+	existingTypedBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
+
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(dep.UnstructuredContent(), existingTypedBundleDeployment); err != nil {
+		return err
+	}
+
+	ers := []error{}
+	conditions := existingTypedBundleDeployment.Status.Conditions
+
+	// Do we error here?
+	if conditions == nil || len(conditions) == 0 {
+		return nil
+	}
+
+	for _, condition := range conditions {
+		// Currently we are checking for only these two types, if any other condition is added to Rukpak, validate accordingly.
+		if condition.Type == rukpakv1alpha1.TypeHasValidBundle || condition.Type == rukpakv1alpha1.TypeInstalled {
+			if condition.Status == metav1.ConditionFalse {
+				ers = append(ers, fmt.Errorf("error observed by Rukpak: %v", condition.Message))
+			}
+		}
+	}
+	return utilerrors.NewAggregate(ers)
 }

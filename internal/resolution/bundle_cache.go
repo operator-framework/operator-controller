@@ -48,4 +48,10 @@ var HardcodedEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Ent
 		"olm.gvk":         "[{\"group\":\"monitoring.coreos.com\",\"kind\":\"Alertmanager\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"Alertmanager\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"AlertmanagerConfig\",\"version\":\"v1alpha1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"AlertmanagerConfig\",\"version\":\"v1alpha1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"PodMonitor\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"PodMonitor\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"Probe\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"Probe\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"Prometheus\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"Prometheus\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"PrometheusRule\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"PrometheusRule\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"ServiceMonitor\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"ServiceMonitor\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"ThanosRuler\",\"version\":\"v1\"},{\"group\":\"monitoring.coreos.com\",\"kind\":\"ThanosRuler\",\"version\":\"v1\"}]",
 		"olm.package":     "{\"packageName\":\"prometheus\",\"version\":\"0.47.0\"}",
 	}),
+	"operatorhub/lightbend-console-operator/0.0.1": *input.NewEntity("operatorhub/lightbend-console-operator/0.0.1", map[string]string{
+		"olm.bundle.path": `"quay.io/operatorhubio/lightbend-console-operator@sha256:2cf5f1abf71be29b7d2667ae9ca4102198c93cdef450d09faf1b26900443e285"`,
+		"olm.channel":     "{\"channelName\":\"alpha\",\"priority\":0}",
+		"olm.gvk":         "[{\"group\":\"app.lightbend.com\",\"kind\":\"Console\",\"version\":\"v1alpha1\"}]",
+		"olm.package":     "{\"packageName\":\"lightbend-console-operator\",\"version\":\"0.0.1\"}",
+	}),
 })
