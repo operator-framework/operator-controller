@@ -1,5 +1,6 @@
 # operator-controller
 // TODO(user): Add simple overview of use/purpose
+dco test
 
 ## Description
 // TODO(user): An in-depth paragraph about your project and overview of use
