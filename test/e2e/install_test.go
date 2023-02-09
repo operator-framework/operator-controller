@@ -21,21 +21,25 @@ const (
 )
 
 var _ = Describe("Operator Install", func() {
+	var (
+		ctx          context.Context
+		pkgName      string
+		operatorName string
+		operator     *operatorv1alpha1.Operator
+	)
 	It("resolves the specified package with correct bundle path", func() {
-		var (
-			ctx          context.Context            = context.Background()
-			pkgName      string                     = "prometheus"
-			operatorName string                     = fmt.Sprintf("operator-%s", rand.String(8))
-			operator     *operatorv1alpha1.Operator = &operatorv1alpha1.Operator{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: operatorName,
-				},
-				Spec: operatorv1alpha1.OperatorSpec{
-					PackageName: pkgName,
-				},
-			}
-		)
 		ctx = context.Background()
+		pkgName = "prometheus"
+		operatorName = fmt.Sprintf("operator-%s", rand.String(8))
+		operator = &operatorv1alpha1.Operator{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: operatorName,
+			},
+			Spec: operatorv1alpha1.OperatorSpec{
+				PackageName: pkgName,
+			},
+		}
+
 		By("creating the Operator resource")
 		err := c.Create(ctx, operator)
 		Expect(err).ToNot(HaveOccurred())
