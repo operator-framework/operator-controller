@@ -17,14 +17,20 @@ limitations under the License.
 package core
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"time"
 
-	opm "github.com/operator-framework/operator-registry/alpha/action"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
-	"github.com/operator-framework/operator-registry/pkg/image/containerdregistry"
+	batchv1 "k8s.io/api/batch/v1"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -35,7 +41,9 @@ import (
 // CatalogSourceReconciler reconciles a CatalogSource object
 type CatalogSourceReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme   *runtime.Scheme
+	Cfg      *rest.Config
+	OpmImage string
 }
 
 //+kubebuilder:rbac:groups=core.rukpak.io,resources=catalogsources,verbs=get;list;watch;create;update;patch;delete
@@ -58,19 +66,29 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// IMPORTANT TODO: This implementation of containerdregistry requires privileged perm to create a CacheDir
-	// Figure out a way to not use the CacheDir so that container can be run in non-privileged mode.
-	reg, err := containerdregistry.NewRegistry()
-	// defer reg.Destroy()
+	job := r.unpackJob(catalogSource)
+	err := r.Client.Get(ctx, client.ObjectKeyFromObject(job), job)
 	if err != nil {
-		return ctrl.Result{}, err
-	}
-	imageRenderer := opm.Render{Refs: []string{catalogSource.Spec.Image}, Registry: reg}
-	declCfg, err := imageRenderer.Run(ctx)
-	if err != nil {
+		if errors.IsNotFound(err) {
+			if err = r.createUnpackJob(ctx, catalogSource); err != nil {
+				return ctrl.Result{}, err
+			}
+			// after creating the job requeue
+			return ctrl.Result{Requeue: true}, nil
+		}
 		return ctrl.Result{}, err
 	}
 
+	declCfg, err := r.parseUnpackLogs(ctx, job)
+	if err != nil {
+		// check if this is a pod phase error and requeue if it is
+		if corev1beta1.IsUnpackPhaseError(err) {
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		}
+		return ctrl.Result{}, err
+	}
+
+	// TODO: Can we create these resources in parallel using goroutines?
 	if err := r.buildPackages(ctx, declCfg, catalogSource); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -172,4 +190,81 @@ func (r *CatalogSourceReconciler) buildPackages(ctx context.Context, declCfg *de
 		}
 	}
 	return nil
+}
+
+func (r *CatalogSourceReconciler) createUnpackJob(ctx context.Context, cs corev1beta1.CatalogSource) error {
+	job := r.unpackJob(cs)
+
+	if err := r.Client.Create(ctx, job); err != nil {
+		return fmt.Errorf("creating unpackJob: %w", err)
+	}
+
+	return nil
+}
+
+func (r *CatalogSourceReconciler) parseUnpackLogs(ctx context.Context, job *batchv1.Job) (*declcfg.DeclarativeConfig, error) {
+	clientset, err := kubernetes.NewForConfig(r.Cfg)
+	if err != nil {
+		return nil, fmt.Errorf("creating clientset: %w", err)
+	}
+
+	podsForJob := &v1.PodList{}
+	err = r.Client.List(ctx, podsForJob, client.MatchingLabels{"job-name": job.GetName()})
+	if err != nil {
+		return nil, fmt.Errorf("listing pods: %w", err)
+	}
+
+	if len(podsForJob.Items) <= 0 {
+		return nil, fmt.Errorf("no pods for job")
+	}
+	pod := podsForJob.Items[0]
+
+	if pod.Status.Phase != v1.PodSucceeded {
+		return nil, corev1beta1.NewUnpackPhaseError(fmt.Sprintf("job pod in phase %q, expected %q", pod.Status.Phase, v1.PodSucceeded))
+	}
+
+	req := clientset.CoreV1().Pods(job.Namespace).GetLogs(pod.GetName(), &v1.PodLogOptions{})
+	podLogs, err := req.Stream(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("streaming pod logs: %w", err)
+	}
+	defer podLogs.Close()
+
+	logs, err := io.ReadAll(podLogs)
+	if err != nil {
+		return nil, fmt.Errorf("reading pod logs: %w", err)
+	}
+
+	return declcfg.LoadReader(bytes.NewReader(logs))
+}
+
+func (r *CatalogSourceReconciler) unpackJob(cs corev1beta1.CatalogSource) *batchv1.Job {
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "rukpak",
+			Name:      fmt.Sprintf("%s-image-unpack", cs.Name),
+		},
+		Spec: batchv1.JobSpec{
+			Template: v1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "rukpak",
+					Name:      fmt.Sprintf("%s-image-unpack-pod", cs.Name),
+				},
+				Spec: v1.PodSpec{
+					RestartPolicy: v1.RestartPolicyOnFailure,
+					Containers: []v1.Container{
+						{
+							Image: r.OpmImage,
+							Name:  "unpacker",
+							Command: []string{
+								"opm",
+								"render",
+								cs.Spec.Image,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }

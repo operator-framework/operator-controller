@@ -59,6 +59,8 @@ rules:
     resources:
       - 'configmaps'
       - 'namespaces'
+      - 'pods'
+      - 'pods/log'
     verbs:
       - 'get'
       - 'list'
@@ -74,7 +76,15 @@ rules:
       - '*'
     verbs:
       - '*'
-
+  - apiGroups:
+      - 'batch'
+    resources:
+      - 'jobs'
+    verbs:
+      - 'create'
+      - 'get'
+      - 'list'
+      - 'watch'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
