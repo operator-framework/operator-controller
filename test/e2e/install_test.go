@@ -51,7 +51,7 @@ var _ = Describe("Operator Install", func() {
 			err = c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)
 			g.Expect(err).ToNot(HaveOccurred())
 			g.Expect(len(operator.Status.Conditions)).To(Equal(1))
-			g.Expect(operator.Status.Conditions[0].Message).To(Equal("resolution was successful"))
+			g.Expect(operator.Status.Conditions[0].Message).To(Equal("install was successful"))
 		}).WithTimeout(defaultTimeout).WithPolling(defaultPoll).Should(Succeed())
 
 		By("eventually installing the package successfully")
