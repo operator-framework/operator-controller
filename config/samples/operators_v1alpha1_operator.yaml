@@ -10,4 +10,4 @@ metadata:
   name: operator-sample
 spec:
   # TODO(user): Add fields here
-  packageName: prometheus
+  packageName: lightbend-console-operator

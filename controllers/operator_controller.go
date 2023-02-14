@@ -162,14 +162,21 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		return ctrl.Result{}, err
 	}
 
-	// update operator status
-	apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-		Type:               operatorsv1alpha1.TypeReady,
-		Status:             metav1.ConditionTrue,
-		Reason:             operatorsv1alpha1.ReasonResolutionSucceeded,
-		Message:            "resolution was successful",
-		ObservedGeneration: op.GetGeneration(),
-	})
+	// convert existing unstructured object into bundleDeployment for easier mapping of status.
+	existingTypedBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(dep.UnstructuredContent(), existingTypedBundleDeployment); err != nil {
+		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
+			Type:               operatorsv1alpha1.TypeReady,
+			Status:             metav1.ConditionUnknown,
+			Reason:             operatorsv1alpha1.ReasonResolutionSucceeded,
+			Message:            err.Error(),
+			ObservedGeneration: op.GetGeneration(),
+		})
+		return ctrl.Result{}, err
+	}
+
+	// set the status of the operator based on the respective bundle deployment status conditions.
+	apimeta.SetStatusCondition(&op.Status.Conditions, mapBDStatusToReadyCondition(existingTypedBundleDeployment, op.GetGeneration()))
 	return ctrl.Result{}, nil
 }
 
@@ -259,14 +266,11 @@ func (r *OperatorReconciler) ensureBundleDeployment(ctx context.Context, desired
 	// If the existing BD already has everything that the desired BD has, no need to contact the API server.
 	// Make sure the status of the existingBD from the server is as expected.
 	if equality.Semantic.DeepDerivative(desiredBundleDeployment, existingBundleDeployment) {
-		return verifySuccessfulBDStatus(existingBundleDeployment)
+		*desiredBundleDeployment = *existingBundleDeployment
+		return nil
 	}
 
-	if err = r.Client.Patch(ctx, desiredBundleDeployment, client.Apply, client.ForceOwnership, client.FieldOwner("operator-controller")); err != nil {
-		return err
-	}
-
-	return verifySuccessfulBDStatus(desiredBundleDeployment)
+	return r.Client.Patch(ctx, desiredBundleDeployment, client.Apply, client.ForceOwnership, client.FieldOwner("operator-controller"))
 }
 
 func (r *OperatorReconciler) existingBundleDeploymentUnstructured(ctx context.Context, name string) (*unstructured.Unstructured, error) {
@@ -284,29 +288,49 @@ func (r *OperatorReconciler) existingBundleDeploymentUnstructured(ctx context.Co
 	return &unstructured.Unstructured{Object: unstrExistingBundleDeploymentObj}, nil
 }
 
-func verifySuccessfulBDStatus(dep *unstructured.Unstructured) error {
-	// convert the unstructured object from patch call to typed bundledeployment to make checking of Status easier.
-	existingTypedBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
+// verifyBDStatus reads the various possibilities of status in bundle deployment and translates
+// into corresponding operator condition status and message.
+func verifyBDStatus(dep *rukpakv1alpha1.BundleDeployment) (metav1.ConditionStatus, string) {
+	isValidBundleCond := apimeta.FindStatusCondition(dep.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
+	isInstalledCond := apimeta.FindStatusCondition(dep.Status.Conditions, rukpakv1alpha1.TypeInstalled)
 
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(dep.UnstructuredContent(), existingTypedBundleDeployment); err != nil {
-		return err
+	if isValidBundleCond == nil && isInstalledCond == nil {
+		return metav1.ConditionUnknown, fmt.Sprintf("waiting for bundleDeployment %q status to be updated", dep.Name)
 	}
 
-	ers := []error{}
-	conditions := existingTypedBundleDeployment.Status.Conditions
-
-	// Do we error here?
-	if conditions == nil || len(conditions) == 0 {
-		return nil
+	if isValidBundleCond != nil && isValidBundleCond.Status == metav1.ConditionFalse {
+		return metav1.ConditionFalse, isValidBundleCond.Message
 	}
 
-	for _, condition := range conditions {
-		// Currently we are checking for only these two types, if any other condition is added to Rukpak, validate accordingly.
-		if condition.Type == rukpakv1alpha1.TypeHasValidBundle || condition.Type == rukpakv1alpha1.TypeInstalled {
-			if condition.Status == metav1.ConditionFalse {
-				ers = append(ers, fmt.Errorf("error observed by Rukpak: %v", condition.Message))
-			}
-		}
+	if isInstalledCond != nil && isInstalledCond.Status == metav1.ConditionFalse {
+		return metav1.ConditionFalse, isInstalledCond.Message
 	}
-	return utilerrors.NewAggregate(ers)
+
+	if isInstalledCond != nil && isInstalledCond.Status == metav1.ConditionTrue {
+		return metav1.ConditionTrue, "resolution was successful"
+	}
+	return metav1.ConditionUnknown, fmt.Sprintf("waiting for rukpak to install bundleDeployment successfully %s", dep.Name)
+}
+
+// mapBDStatusToReadyCondition returns the operator object's "TypeReady" condition based on the bundle deployment statuses.
+func mapBDStatusToReadyCondition(existingBD *rukpakv1alpha1.BundleDeployment, observedGeneration int64) metav1.Condition {
+	// update operator status:
+	// 1. If the Operator "Ready" status is "Unknown": The status of successful bundleDeployment is unknown, wait till Rukpak updates the BD status.
+	// 2. If the Operator "Ready" status is "True": Update the "successful resolution" status and return the result.
+	// 3. If the Operator "Ready" status is "False": There is error observed from Rukpak. Update the status accordingly.
+	status, message := verifyBDStatus(existingBD)
+	var reason string
+	if status == metav1.ConditionTrue || status == metav1.ConditionUnknown {
+		reason = operatorsv1alpha1.ReasonResolutionSucceeded
+	} else {
+		reason = operatorsv1alpha1.ReasonBundleDeploymentFailed
+	}
+
+	return metav1.Condition{
+		Type:               operatorsv1alpha1.TypeReady,
+		Status:             status,
+		Reason:             reason,
+		Message:            message,
+		ObservedGeneration: observedGeneration,
+	}
 }
