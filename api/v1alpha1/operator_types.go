@@ -33,7 +33,7 @@ const (
 	// TODO(user): add more Types, here and into init()
 	TypeReady = "Ready"
 
-	ReasonResolutionSucceeded    = "ResolutionSucceeded"
+	ReasonInstallationSucceeded  = "InstallationSucceeded"
 	ReasonResolutionFailed       = "ResolutionFailed"
 	ReasonBundleLookupFailed     = "BundleLookupFailed"
 	ReasonBundleDeploymentFailed = "BundleDeploymentFailed"
@@ -46,7 +46,7 @@ func init() {
 	)
 	// TODO(user): add Reasons from above
 	operatorutil.ConditionReasons = append(operatorutil.ConditionReasons,
-		ReasonResolutionSucceeded,
+		ReasonInstallationSucceeded,
 		ReasonResolutionFailed,
 		ReasonBundleLookupFailed,
 		ReasonBundleDeploymentFailed,

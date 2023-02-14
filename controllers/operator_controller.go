@@ -168,7 +168,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeReady,
 			Status:             metav1.ConditionUnknown,
-			Reason:             operatorsv1alpha1.ReasonResolutionSucceeded,
+			Reason:             operatorsv1alpha1.ReasonInstallationSucceeded,
 			Message:            err.Error(),
 			ObservedGeneration: op.GetGeneration(),
 		})
@@ -307,7 +307,7 @@ func verifyBDStatus(dep *rukpakv1alpha1.BundleDeployment) (metav1.ConditionStatu
 	}
 
 	if isInstalledCond != nil && isInstalledCond.Status == metav1.ConditionTrue {
-		return metav1.ConditionTrue, "resolution was successful"
+		return metav1.ConditionTrue, "install was successful"
 	}
 	return metav1.ConditionUnknown, fmt.Sprintf("waiting for rukpak to install bundleDeployment successfully %s", dep.Name)
 }
@@ -321,7 +321,7 @@ func mapBDStatusToReadyCondition(existingBD *rukpakv1alpha1.BundleDeployment, ob
 	status, message := verifyBDStatus(existingBD)
 	var reason string
 	if status == metav1.ConditionTrue || status == metav1.ConditionUnknown {
-		reason = operatorsv1alpha1.ReasonResolutionSucceeded
+		reason = operatorsv1alpha1.ReasonInstallationSucceeded
 	} else {
 		reason = operatorsv1alpha1.ReasonBundleDeploymentFailed
 	}
