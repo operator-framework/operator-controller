@@ -309,7 +309,7 @@ func verifyBDStatus(dep *rukpakv1alpha1.BundleDeployment) (metav1.ConditionStatu
 	if isInstalledCond != nil && isInstalledCond.Status == metav1.ConditionTrue {
 		return metav1.ConditionTrue, "install was successful"
 	}
-	return metav1.ConditionUnknown, fmt.Sprintf("waiting for rukpak to install bundleDeployment successfully %s", dep.Name)
+	return metav1.ConditionUnknown, fmt.Sprintf("could not determine the state of bundleDeployment %s", dep.Name)
 }
 
 // mapBDStatusToReadyCondition returns the operator object's "TypeReady" condition based on the bundle deployment statuses.
@@ -320,7 +320,8 @@ func mapBDStatusToReadyCondition(existingBD *rukpakv1alpha1.BundleDeployment, ob
 	// 3. If the Operator "Ready" status is "False": There is error observed from Rukpak. Update the status accordingly.
 	status, message := verifyBDStatus(existingBD)
 	var reason string
-	if status == metav1.ConditionTrue || status == metav1.ConditionUnknown {
+	// TODO: introduce a new reason for condition Unknown, instead of defaulting it to Installation Succeeded.
+	if status == metav1.ConditionTrue {
 		reason = operatorsv1alpha1.ReasonInstallationSucceeded
 	} else {
 		reason = operatorsv1alpha1.ReasonBundleDeploymentFailed
