@@ -91,6 +91,7 @@ var _ = Describe("Reconcile Test", func() {
 				err := cl.Create(ctx, operator)
 				Expect(err).NotTo(HaveOccurred())
 			})
+
 			When("the BundleDeployment does not exist", func() {
 				BeforeEach(func() {
 					By("running reconcile")
@@ -111,14 +112,12 @@ var _ = Describe("Reconcile Test", func() {
 					Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
 					Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
 				})
-				It("sets resolution success status", func() {
-					Eventually(func() {
-						cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
-						Expect(cond).NotTo(BeNil())
-						Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-						Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationSucceeded))
-						Expect(cond.Message).To(Equal("install was successful"))
-					})
+				It("sets the status on operator", func() {
+					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+					Expect(cond).NotTo(BeNil())
+					Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+					Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonBundleDeploymentFailed))
+					Expect(cond.Message).To(ContainSubstring("waiting for bundleDeployment"))
 				})
 			})
 			When("the expected BundleDeployment already exists", func() {
@@ -176,14 +175,12 @@ var _ = Describe("Reconcile Test", func() {
 					Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
 					Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
 				})
-				It("sets resolution success status", func() {
-					Eventually(func() {
-						cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
-						Expect(cond).NotTo(BeNil())
-						Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-						Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationSucceeded))
-						Expect(cond.Message).To(Equal("install was successful"))
-					})
+				It("sets the status on operator", func() {
+					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+					Expect(cond).NotTo(BeNil())
+					Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+					Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonBundleDeploymentFailed))
+					Expect(cond.Message).To(ContainSubstring("waiting for bundleDeployment"))
 				})
 			})
 			When("an out-of-date BundleDeployment exists", func() {
@@ -227,14 +224,11 @@ var _ = Describe("Reconcile Test", func() {
 					Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
 				})
 				It("sets resolution success status", func() {
-					Eventually(func() {
-						cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
-						Expect(cond).NotTo(BeNil())
-						Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-						Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationSucceeded))
-						Expect(cond.Message).To(Equal("install was successful"))
-					})
-
+					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+					Expect(cond).NotTo(BeNil())
+					Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+					Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonBundleDeploymentFailed))
+					Expect(cond.Message).To(ContainSubstring("waiting for bundleDeployment"))
 				})
 			})
 		})
@@ -268,12 +262,16 @@ var _ = Describe("Reconcile Test", func() {
 		})
 		When("the operator specifies a duplicate package", func() {
 			const pkgName = "prometheus"
+			var dupOperator *operatorsv1alpha1.Operator
+
 			BeforeEach(func() {
 				By("initializing cluster state")
-				err := cl.Create(ctx, &operatorsv1alpha1.Operator{
+				dupOperator = &operatorsv1alpha1.Operator{
 					ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("orig-%s", opKey.Name)},
 					Spec:       operatorsv1alpha1.OperatorSpec{PackageName: pkgName},
-				})
+				}
+
+				err := cl.Create(ctx, dupOperator)
 				Expect(err).NotTo(HaveOccurred())
 
 				operator = &operatorsv1alpha1.Operator{
@@ -283,6 +281,12 @@ var _ = Describe("Reconcile Test", func() {
 				err = cl.Create(ctx, operator)
 				Expect(err).NotTo(HaveOccurred())
 			})
+
+			AfterEach(func() {
+				err := cl.Delete(ctx, dupOperator)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
 			It("sets resolution failure status", func() {
 				By("running reconcile")
 				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
@@ -303,11 +307,11 @@ var _ = Describe("Reconcile Test", func() {
 		When("the existing operator status is based on bundleDeployment", func() {
 			const pkgName = "prometheus"
 			var (
-				bd rukpakv1alpha1.BundleDeployment
+				bd *rukpakv1alpha1.BundleDeployment
 			)
 			BeforeEach(func() {
 				By("creating the expected BundleDeployment")
-				bd := &rukpakv1alpha1.BundleDeployment{
+				bd = &rukpakv1alpha1.BundleDeployment{
 					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
 					Spec: rukpakv1alpha1.BundleDeploymentSpec{
 						ProvisionerClassName: "core-rukpak-io-plain",
@@ -338,7 +342,13 @@ var _ = Describe("Reconcile Test", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 			})
-			It("verify if operator status when bundle deployment is waiting to be created", func() {
+
+			AfterEach(func() {
+				err := cl.Delete(ctx, bd)
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("verify operator status when bundle deployment is waiting to be created", func() {
 				By("running reconcile")
 				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
 				Expect(res).To(Equal(ctrl.Result{}))
@@ -353,14 +363,11 @@ var _ = Describe("Reconcile Test", func() {
 				cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeReady)
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
-				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationSucceeded))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonBundleDeploymentFailed))
 				Expect(cond.Message).To(ContainSubstring(`waiting for bundleDeployment`))
 			})
 
 			It("verify operator status when `HasValidBundle` condition of rukpak is false", func() {
-				err := cl.Get(ctx, opKey, &bd)
-				Expect(err).NotTo(HaveOccurred())
-
 				apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
 					Type:    rukpakv1alpha1.TypeHasValidBundle,
 					Status:  metav1.ConditionFalse,
@@ -369,7 +376,7 @@ var _ = Describe("Reconcile Test", func() {
 				})
 
 				By("updating the status of bundleDeployment")
-				err = cl.Status().Update(ctx, &bd)
+				err := cl.Status().Update(ctx, bd)
 				Expect(err).NotTo(HaveOccurred())
 
 				By("running reconcile")
@@ -391,9 +398,6 @@ var _ = Describe("Reconcile Test", func() {
 			})
 
 			It("verify operator status when `InstallReady` condition of rukpak is false", func() {
-				err := cl.Get(ctx, opKey, &bd)
-				Expect(err).NotTo(HaveOccurred())
-
 				apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
 					Type:    rukpakv1alpha1.TypeInstalled,
 					Status:  metav1.ConditionFalse,
@@ -402,7 +406,7 @@ var _ = Describe("Reconcile Test", func() {
 				})
 
 				By("updating the status of bundleDeployment")
-				err = cl.Status().Update(ctx, &bd)
+				err := cl.Status().Update(ctx, bd)
 				Expect(err).NotTo(HaveOccurred())
 
 				By("running reconcile")
@@ -424,9 +428,6 @@ var _ = Describe("Reconcile Test", func() {
 			})
 
 			It("verify operator status when `InstallReady` condition of rukpak is true", func() {
-				err := cl.Get(ctx, opKey, &bd)
-				Expect(err).NotTo(HaveOccurred())
-
 				apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
 					Type:    rukpakv1alpha1.TypeInstalled,
 					Status:  metav1.ConditionTrue,
@@ -435,7 +436,7 @@ var _ = Describe("Reconcile Test", func() {
 				})
 
 				By("updating the status of bundleDeployment")
-				err = cl.Status().Update(ctx, &bd)
+				err := cl.Status().Update(ctx, bd)
 				Expect(err).NotTo(HaveOccurred())
 
 				By("running reconcile")
@@ -457,9 +458,6 @@ var _ = Describe("Reconcile Test", func() {
 			})
 
 			It("verify any other unknown status of bundledeployment", func() {
-				err := cl.Get(ctx, opKey, &bd)
-				Expect(err).NotTo(HaveOccurred())
-
 				apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
 					Type:    rukpakv1alpha1.TypeHasValidBundle,
 					Status:  metav1.ConditionUnknown,
@@ -475,7 +473,7 @@ var _ = Describe("Reconcile Test", func() {
 				})
 
 				By("updating the status of bundleDeployment")
-				err = cl.Status().Update(ctx, &bd)
+				err := cl.Status().Update(ctx, bd)
 				Expect(err).NotTo(HaveOccurred())
 
 				By("running reconcile")
@@ -492,14 +490,11 @@ var _ = Describe("Reconcile Test", func() {
 				cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeReady)
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
-				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationSucceeded))
-				Expect(cond.Message).To(ContainSubstring(`waiting for rukpak to install bundleDeployment successfully`))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonBundleDeploymentFailed))
+				Expect(cond.Message).To(ContainSubstring(`could not determine the state of bundleDeployment`))
 			})
 
 			It("verify operator status when bundleDeployment installation status is unknown", func() {
-				err := cl.Get(ctx, opKey, &bd)
-				Expect(err).NotTo(HaveOccurred())
-
 				apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
 					Type:    rukpakv1alpha1.TypeInstalled,
 					Status:  metav1.ConditionUnknown,
@@ -508,7 +503,7 @@ var _ = Describe("Reconcile Test", func() {
 				})
 
 				By("updating the status of bundleDeployment")
-				err = cl.Status().Update(ctx, &bd)
+				err := cl.Status().Update(ctx, bd)
 				Expect(err).NotTo(HaveOccurred())
 
 				By("running reconcile")
@@ -525,14 +520,14 @@ var _ = Describe("Reconcile Test", func() {
 				cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeReady)
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
-				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationSucceeded))
-				Expect(cond.Message).To(ContainSubstring(`waiting for rukpak to install bundleDeployment successfully`))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonBundleDeploymentFailed))
+				Expect(cond.Message).To(ContainSubstring(`could not determine the state of bundleDeployment`))
 			})
 		})
 		AfterEach(func() {
 			verifyInvariants(ctx, operator)
 
-			err := cl.DeleteAllOf(ctx, operator)
+			err := cl.Delete(ctx, operator)
 			Expect(err).To(Not(HaveOccurred()))
 		})
 	})
