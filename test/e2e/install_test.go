@@ -8,6 +8,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -27,6 +29,28 @@ var _ = Describe("Operator Install", func() {
 		operatorName string
 		operator     *operatorv1alpha1.Operator
 	)
+
+	var kubeClient *kubernetes.Clientset
+	var testNamespace string
+	cleanup := func() {}
+	var ctx = context.TODO()
+	BeforeEach(func() {
+		kubeClient, err := kubernetes.NewForConfig(config.GetConfigOrDie())
+		Expect(err).To(BeNil())
+		testNamespace := createTestNamespace(ctx, kubeClient, "registry-grpc-")
+		cleanup = applyCRDifNotPresent(ctx)
+		testPrefix := "registry-grpc-"
+
+		serviceAccountName := createTestServiceAccount(ctx, kubeClient, testNamespace, testPrefix)
+		createTestRegistryPod(ctx, kubeClient, testNamespace, testPrefix, serviceAccountName)
+		serviceName := createTestRegistryService(ctx, kubeClient, testNamespace, testPrefix)
+		createTestCatalogSource(ctx, kubeClient, testNamespace, "prometheus-index", serviceName)
+
+	})
+	AfterEach(func() {
+		deleteTestNamespace(ctx, kubeClient, testNamespace)
+		cleanup()
+	})
 	It("resolves the specified package with correct bundle path", func() {
 		ctx = context.Background()
 		pkgName = "prometheus"

@@ -20,12 +20,15 @@ import (
 	"flag"
 	"os"
 
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity_sources/catalogsource"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity_sources/hardcoded"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -91,7 +94,7 @@ func main() {
 	if err = (&controllers.OperatorReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), resolution.HardcodedEntitySource),
+		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), hardcoded.HardcodedEntitySource),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)
@@ -107,6 +110,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	watchClient, err := client.NewWithWatch(mgr.GetConfig(), client.Options{Scheme: mgr.GetScheme()})
+	if err != nil {
+		setupLog.Error(err, "unable to create catalogSource watch")
+		os.Exit(1)
+	}
+	watchLog := ctrl.Log.WithName("catalogSourceCache")
+	if err := mgr.Add(catalogsource.NewCachedRegistryQuerier(watchClient, catalogsource.NewRegistryGRPCClient(0), &watchLog)); err != nil {
+		setupLog.Error(err, "unable to set up catalogSource watch")
+		os.Exit(1)
+	}
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
