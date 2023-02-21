@@ -10,7 +10,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 
 	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/utils/predicates"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/util/predicates"
 )
 
 func TestPredicates(t *testing.T) {
