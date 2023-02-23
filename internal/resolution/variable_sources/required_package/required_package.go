@@ -9,8 +9,8 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
 	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/utils/predicates"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/utils/sort"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/util/predicates"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/util/sort"
 )
 
 type RequiredPackageVariable struct {

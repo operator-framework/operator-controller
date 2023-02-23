@@ -12,8 +12,8 @@ import (
 
 	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/utils/predicates"
-	entitysort "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/utils/sort"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/util/predicates"
+	entitysort "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/util/sort"
 )
 
 type BundleVariable struct {

@@ -9,7 +9,7 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
-	entitysort "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/utils/sort"
+	entitysort "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/util/sort"
 )
 
 func TestSort(t *testing.T) {
