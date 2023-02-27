@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/anik120/rukpak-packageserver/pkg/apis/core/v1beta1"
+	"github.com/anik120/rukpak-packageserver/pkg/profile"
 	corecontrollers "github.com/anik120/rukpak-packageserver/pkg/controllers/core"
 	//+kubebuilder:scaffold:imports
 )
@@ -111,6 +112,13 @@ func main() {
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
+
+	// Add pprof config
+	pprofer := profile.NewPprofer()
+	if err := mgr.Add(pprofer); err != nil {
+		setupLog.Error(err, "unable to setup pprof configuration")
 		os.Exit(1)
 	}
 
