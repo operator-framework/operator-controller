@@ -23,7 +23,7 @@ spec:
         runAsUser: 0
       containers:
       - name: controller
-        image: docker.io/anik120/catalogsource-controller:pprof
+        image: docker.io/anik120/catalogsource-controller:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
