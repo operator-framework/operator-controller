@@ -155,7 +155,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeReady,
 			Status:             metav1.ConditionFalse,
-			Reason:             operatorsv1alpha1.ReasonBundleDeploymentFailed,
+			Reason:             operatorsv1alpha1.ReasonInstallationFailed,
 			Message:            err.Error(),
 			ObservedGeneration: op.GetGeneration(),
 		})
@@ -168,7 +168,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeReady,
 			Status:             metav1.ConditionUnknown,
-			Reason:             operatorsv1alpha1.ReasonInstallationSucceeded,
+			Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
 			Message:            err.Error(),
 			ObservedGeneration: op.GetGeneration(),
 		})
@@ -320,11 +320,14 @@ func mapBDStatusToReadyCondition(existingBD *rukpakv1alpha1.BundleDeployment, ob
 	// 3. If the Operator "Ready" status is "False": There is error observed from Rukpak. Update the status accordingly.
 	status, message := verifyBDStatus(existingBD)
 	var reason string
-	// TODO: introduce a new reason for condition Unknown, instead of defaulting it to Installation Succeeded.
-	if status == metav1.ConditionTrue {
+
+	switch status {
+	case metav1.ConditionTrue:
 		reason = operatorsv1alpha1.ReasonInstallationSucceeded
-	} else {
-		reason = operatorsv1alpha1.ReasonBundleDeploymentFailed
+	case metav1.ConditionFalse:
+		reason = operatorsv1alpha1.ReasonInstallationFailed
+	default:
+		reason = operatorsv1alpha1.ReasonInstallationStatusUnknown
 	}
 
 	return metav1.Condition{

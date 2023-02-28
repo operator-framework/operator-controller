@@ -33,10 +33,11 @@ const (
 	// TODO(user): add more Types, here and into init()
 	TypeReady = "Ready"
 
-	ReasonInstallationSucceeded  = "InstallationSucceeded"
-	ReasonResolutionFailed       = "ResolutionFailed"
-	ReasonBundleLookupFailed     = "BundleLookupFailed"
-	ReasonBundleDeploymentFailed = "BundleDeploymentFailed"
+	ReasonInstallationSucceeded     = "InstallationSucceeded"
+	ReasonResolutionFailed          = "ResolutionFailed"
+	ReasonBundleLookupFailed        = "BundleLookupFailed"
+	ReasonInstallationFailed        = "InstallationFailed"
+	ReasonInstallationStatusUnknown = "InstallationStatusUnknown"
 )
 
 func init() {
@@ -49,7 +50,8 @@ func init() {
 		ReasonInstallationSucceeded,
 		ReasonResolutionFailed,
 		ReasonBundleLookupFailed,
-		ReasonBundleDeploymentFailed,
+		ReasonInstallationFailed,
+		ReasonInstallationStatusUnknown,
 	)
 }
 
