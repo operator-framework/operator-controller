@@ -23,11 +23,14 @@ spec:
         runAsUser: 0
       containers:
       - name: controller
-        image: docker.io/anik120/catalogsource-controller:latest
+        image: docker.io/anik120/catalogsource-controller:pprof
         imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
         command:
         - "./manager"
-        args: []
+        args:
+        - --profiling=true
         resources:
           requests:
             cpu: 1000m

@@ -1,80 +1,19 @@
 package profile
 
 import (
-	"context"
 	"net/http"
 	"net/http/pprof"
+
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
-type profileConfig struct {
-	pprof   bool
-	cmdline bool
-	profile bool
-	symbol  bool
-	trace   bool
-}
-
-// Option applies a configuration option to the given config.
-type Option func(p *profileConfig)
-
-func (p *profileConfig) apply(options []Option) {
-	if len(options) == 0 {
-		// If no options are given, default to all
-		p.pprof = true
-		p.cmdline = true
-		p.profile = true
-		p.symbol = true
-		p.trace = true
-
-		return
-	}
-
-	for _, o := range options {
-		o(p)
-	}
-}
-
-func defaultProfileConfig() *profileConfig {
-	// Initialize config
-	return &profileConfig{}
-}
-
-// RegisterHandlers registers profile Handlers with the given ServeMux.
-//
-// The Handlers registered are determined by the given options.
-// If no options are given, all available handlers are registered by default.
-func RegisterHandlers(mux *http.ServeMux, options ...Option) {
-	config := defaultProfileConfig()
-	config.apply(options)
-
-	if config.pprof {
-		mux.HandleFunc("/debug/pprof/", pprof.Index)
-	}
-	if config.cmdline {
-		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	}
-	if config.profile {
-		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	}
-	if config.symbol {
-		mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	}
-	if config.trace {
-		mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-	}
-}
-
-/* TODO(everettraven): Update this to:
-1. Have a struct/object implementation that implements the controller-runtime Runnable interface
-*/
-
+// An update method of adding pprof to the controller manager.
 type Pprofer struct {
 	pprof   bool
 	cmdline bool
 	profile bool
 	symbol  bool
 	trace   bool
-	port    int
 	mux     *http.ServeMux
 }
 
@@ -89,7 +28,6 @@ func NewPprofer(opts ...PproferOptions) *Pprofer {
 		profile: true,
 		symbol:  true,
 		trace:   true,
-		port:    8080,
 	}
 
 	// Apply any options that have been specified
@@ -100,40 +38,53 @@ func NewPprofer(opts ...PproferOptions) *Pprofer {
 	// Create the new ServeMux and add the necessary paths and handlers
 	mux := http.NewServeMux()
 
-	if pprofer.pprof {
-		mux.HandleFunc("/debug/pprof/", pprof.Index)
-	}
-	if pprofer.cmdline {
-		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	}
-	if pprofer.profile {
-		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	}
-	if pprofer.symbol {
-		mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	}
-	if pprofer.trace {
-		mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-	}
-
 	pprofer.mux = mux
 
 	return pprofer
 }
 
-// implements the Runnable interface
-func (p *Pprofer) Start(ctx context.Context) error {
-	return http.ListenAndServe("localhost:8080", p.mux)
+type PprofHandler struct {
+	Handle http.HandlerFunc
+}
+
+var _ http.Handler = &PprofHandler{}
+
+func (h *PprofHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	h.Handle(rw, req)
+}
+
+func (p *Pprofer) ConfigureControllerManager(mgr manager.Manager) error {
+	if p.pprof {
+		if err := mgr.AddMetricsExtraHandler("/debug/pprof/", &PprofHandler{Handle: pprof.Index}); err != nil {
+			return err
+		}
+	}
+	if p.cmdline {
+		if err := mgr.AddMetricsExtraHandler("/debug/pprof/cmdline", &PprofHandler{Handle: pprof.Cmdline}); err != nil {
+			return err
+		}
+	}
+	if p.profile {
+		if err := mgr.AddMetricsExtraHandler("/debug/pprof/profile", &PprofHandler{Handle: pprof.Profile}); err != nil {
+			return err
+		}
+	}
+	if p.symbol {
+		if err := mgr.AddMetricsExtraHandler("/debug/pprof/symbol", &PprofHandler{Handle: pprof.Symbol}); err != nil {
+			return err
+		}
+	}
+	if p.trace {
+		if err := mgr.AddMetricsExtraHandler("/debug/pprof/trace", &PprofHandler{Handle: pprof.Trace}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Options
 type PproferOptions func(*Pprofer)
-
-func WithPort(port int) PproferOptions {
-	return func(p *Pprofer) {
-		p.port = port
-	}
-}
 
 func WithIndex(val bool) PproferOptions {
 	return func(p *Pprofer) {
