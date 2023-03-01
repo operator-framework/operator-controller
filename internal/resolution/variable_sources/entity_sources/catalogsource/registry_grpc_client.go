@@ -39,6 +39,8 @@ func (r *registryGRPCClient) ListEntities(ctx context.Context, catalogSource *v1
 	// TODO: create GRPC connections separately
 	conn, err := ConnectGRPCWithTimeout(ctx, catalogSource.Address(), r.timeout)
 	if conn != nil {
+		// ConnectGRPCWithTimeout may fail to establish a READY connection
+		// close any opened connection regardless of its state.
 		defer conn.Close()
 	}
 	if err != nil {
@@ -61,7 +63,7 @@ func (r *registryGRPCClient) ListEntities(ctx context.Context, catalogSource *v1
 			break
 		}
 		if err != nil {
-			return entities, fmt.Errorf("failed to read bundle stream: %v", err)
+			return nil, fmt.Errorf("failed to read bundle stream: %v", err)
 		}
 
 		packageKey := fmt.Sprintf("%s/%s", catalogSourceID, bundle.PackageName)
@@ -69,14 +71,14 @@ func (r *registryGRPCClient) ListEntities(ctx context.Context, catalogSource *v1
 		if !ok {
 			pkg, err = catsrcClient.GetPackage(ctx, &catalogsourceapi.GetPackageRequest{Name: bundle.PackageName})
 			if err != nil {
-				return entities, fmt.Errorf("failed to get package %s: %v", bundle.PackageName, err)
+				return nil, fmt.Errorf("failed to get package %s: %v", bundle.PackageName, err)
 			}
 			catalogPackages[packageKey] = pkg
 		}
 
 		entity, err := EntityFromBundle(catalogSourceID, pkg, bundle)
 		if err != nil {
-			return entities, fmt.Errorf("failed to parse entity %s: %v", entity.Identifier(), err)
+			return nil, fmt.Errorf("failed to parse entity %s: %v", entity.Identifier(), err)
 		}
 		entities = append(entities, entity)
 	}
@@ -86,6 +88,7 @@ func (r *registryGRPCClient) ListEntities(ctx context.Context, catalogSource *v1
 const DefaultGRPCTimeout = 2 * time.Minute
 
 func ConnectGRPCWithTimeout(ctx context.Context, address string, timeout time.Duration) (conn *grpc.ClientConn, err error) {
+	// based on https://github.com/operator-framework/operator-lifecycle-manager/blob/afc0848d102ecdc01a0b0f3b55d389bb66acf168/pkg/controller/registry/grpc/source.go#L149
 	conn, err = grpcConnection(address)
 	if err != nil {
 		return nil, fmt.Errorf("GRPC connection failed: %v", err)

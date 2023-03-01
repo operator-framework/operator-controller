@@ -7,8 +7,8 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestDeppy(t *testing.T) {
+func TestCatalogSource(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecs(t, "Deppy Suite")
+	RunSpecs(t, "CatalogSource Suite")
 }

@@ -149,7 +149,8 @@ func createTestRegistryPod(ctx context.Context, cli *kubernetes.Clientset, names
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
-				Name:  "registry",
+				Name: "registry",
+				// TODO: switch to using locally built and loaded images to avoid flakes
 				Image: "quay.io/ankitathomas/index:prometheus-index-v0.37.0",
 				Ports: []corev1.ContainerPort{
 					{

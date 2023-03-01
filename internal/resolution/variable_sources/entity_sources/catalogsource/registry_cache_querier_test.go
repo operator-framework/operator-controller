@@ -2,6 +2,7 @@ package catalogsource_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -10,6 +11,9 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/deppy/pkg/deppy"
+	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity_sources/catalogsource"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -19,11 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	crClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	"github.com/operator-framework/deppy/pkg/deppy"
-	"github.com/operator-framework/deppy/pkg/deppy/input"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity_sources/catalogsource"
 )
 
 type catalogContents struct {
@@ -44,7 +43,7 @@ func (r *fakeRegistryClient) ListEntities(ctx context.Context, catsrc *v1alpha1.
 }
 
 var _ = Describe("Registry EntitySource", func() {
-	var querier input.EntitySource
+	var querier *catalogsource.CachedRegistryEntitySource
 	var registryClient *fakeRegistryClient
 	var cli crClient.WithWatch
 	var cacheSyncInterval = 5 * time.Second
@@ -101,10 +100,9 @@ var _ = Describe("Registry EntitySource", func() {
 			},
 		}
 
-		logger := zap.New()
-		querier = catalogsource.NewCachedRegistryQuerier(cli, registryClient, &logger, catalogsource.WithSyncInterval(cacheSyncInterval))
+		querier = catalogsource.NewCachedRegistryQuerier(cli, catalogsource.WithRegistryClient(registryClient), catalogsource.WithSyncInterval(cacheSyncInterval))
 		go func() {
-			querier.(*catalogsource.CachedRegistryEntitySource).Start(context.TODO())
+			querier.Start(context.TODO())
 		}()
 		Eventually(func(g Gomega) {
 			g.Expect(cachedEntityIDs()).To(ConsistOf([]deppy.Identifier{"test-ns/hardcoded/pkg2/chan2/0.2.0", "test-ns/withsvc/pkg1/chan1/0.1.0"}))
@@ -112,7 +110,7 @@ var _ = Describe("Registry EntitySource", func() {
 	})
 
 	AfterEach(func() {
-		querier.(*catalogsource.CachedRegistryEntitySource).Stop()
+		querier.Stop()
 	})
 
 	Describe("CachedRegistryEntitySource", func() {
@@ -159,7 +157,7 @@ var _ = Describe("Registry EntitySource", func() {
 							var gvks []string
 							if _, ok := e.Properties[property.TypeGVK]; ok {
 								var props []property.GVK
-								err := catalogsource.JSONUnmarshal([]byte(e.Properties[property.TypeGVK]), &props)
+								err := json.Unmarshal([]byte(e.Properties[property.TypeGVK]), &props)
 								g.Expect(err).To(BeNil())
 								for _, gvk := range props {
 									key := fmt.Sprintf("%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind)

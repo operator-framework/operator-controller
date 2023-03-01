@@ -115,8 +115,7 @@ func main() {
 		setupLog.Error(err, "unable to create catalogSource watch")
 		os.Exit(1)
 	}
-	watchLog := ctrl.Log.WithName("catalogSourceCache")
-	if err := mgr.Add(catalogsource.NewCachedRegistryQuerier(watchClient, catalogsource.NewRegistryGRPCClient(0), &watchLog)); err != nil {
+	if err := mgr.Add(catalogsource.NewCachedRegistryQuerier(watchClient, catalogsource.WithLogger(ctrl.Log.WithName("catalogSourceCache")))); err != nil {
 		setupLog.Error(err, "unable to set up catalogSource watch")
 		os.Exit(1)
 	}

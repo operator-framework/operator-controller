@@ -7,10 +7,10 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	errors2 "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/json"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -44,14 +44,24 @@ func WithSyncInterval(d time.Duration) Option {
 	}
 }
 
-func NewCachedRegistryQuerier(client client.WithWatch, rClient RegistryClient, logger *logr.Logger, options ...Option) *CachedRegistryEntitySource {
-	if logger == nil {
-		l := zap.New()
-		logger = &l
+func WithRegistryClient(r RegistryClient) Option {
+	return func(c *CachedRegistryEntitySource) {
+		c.rClient = r
 	}
+}
+
+func WithLogger(l logr.Logger) Option {
+	return func(c *CachedRegistryEntitySource) {
+		c.logger = &l
+	}
+}
+
+func NewCachedRegistryQuerier(client client.WithWatch, options ...Option) *CachedRegistryEntitySource {
+	l := zap.New()
+	logger := &l
 	c := &CachedRegistryEntitySource{
 		client:       client,
-		rClient:      rClient,
+		rClient:      NewRegistryGRPCClient(0),
 		logger:       logger,
 		done:         make(chan struct{}),
 		cache:        map[string]sourceCache{},
@@ -78,8 +88,20 @@ func (r *CachedRegistryEntitySource) Start(ctx context.Context) error {
 	} else {
 		r.logger.Info("Populated initial cache")
 	}
+
 	// watching catalogSource for changes works only with OLM managed catalogSources.
-	go r.ProcessQueue(ctx)
+	go func() {
+		for {
+			item, shutdown := r.queue.Get() // block till there is a new item
+			if shutdown {
+				return
+			}
+			if key, ok := item.(types.NamespacedName); ok {
+				r.syncCatalogSource(ctx, key)
+			}
+		}
+	}()
+
 	for {
 		select {
 		case entry := <-catalogSourceWatch.ResultChan():
@@ -95,18 +117,7 @@ func (r *CachedRegistryEntitySource) Start(ctx context.Context) error {
 				continue
 			}
 
-			switch entry.Type {
-			case watch.Deleted:
-				func() {
-					r.RWMutex.Lock()
-					defer r.RWMutex.Unlock()
-					catalogSourceKey := types.NamespacedName{Namespace: catalogSource.Namespace, Name: catalogSource.Name}
-					delete(r.cache, catalogSourceKey.String())
-					r.logger.Info("Completed cache delete", "catalogSource", catalogSourceKey)
-				}()
-			case watch.Added, watch.Modified:
-				r.syncCatalogSource(ctx, catalogSource)
-			}
+			r.queue.Add(catalogSourceKey(&catalogSource))
 		case <-ctx.Done():
 			r.Stop()
 		case <-r.done:
@@ -124,43 +135,40 @@ func (r *CachedRegistryEntitySource) Stop() {
 	close(r.done)
 }
 
-func (r *CachedRegistryEntitySource) ProcessQueue(ctx context.Context) {
-	for {
-		item, _ := r.queue.Get() // block till there is a new item
-		defer r.queue.Done(item)
-		if _, ok := item.(types.NamespacedName); ok {
-			var catalogSource v1alpha1.CatalogSource
-			if err := r.client.Get(ctx, item.(types.NamespacedName), &catalogSource); err != nil {
-				r.logger.Info("cannot find catalogSource, skipping cache update", "CatalogSource", item)
-				return
-			}
-			r.syncCatalogSource(ctx, catalogSource)
+// handle added or updated catalogSource
+func (r *CachedRegistryEntitySource) syncCatalogSource(ctx context.Context, key types.NamespacedName) {
+	r.RWMutex.Lock()
+	defer r.queue.Done(key)
+	defer r.RWMutex.Unlock()
+
+	var catalogSource v1alpha1.CatalogSource
+	if err := r.client.Get(ctx, key, &catalogSource); err != nil {
+		if errors2.IsNotFound(err) {
+			delete(r.cache, catalogSourceKey(&catalogSource).String())
+			return
+		} else {
+			r.logger.Info("cannot find catalogSource, skipping cache update", "CatalogSource", key)
+			r.queue.AddRateLimited(key)
+			return
 		}
 	}
-}
 
-// handle added or updated catalogSource
-func (r *CachedRegistryEntitySource) syncCatalogSource(ctx context.Context, catalogSource v1alpha1.CatalogSource) {
-	catalogSourceKey := types.NamespacedName{Namespace: catalogSource.Namespace, Name: catalogSource.Name}
-	r.RWMutex.Lock()
-	defer r.RWMutex.Unlock()
 	entities, err := r.rClient.ListEntities(ctx, &catalogSource)
 	if err != nil {
-		r.logger.Error(err, "failed to list entities for catalogSource entity cache update", "catalogSource", catalogSourceKey)
+		r.logger.Error(err, "failed to list entities for catalogSource entity cache update", "catalogSource", key)
 		if !isManagedCatalogSource(catalogSource) {
-			r.queue.AddRateLimited(catalogSourceKey)
+			r.queue.AddRateLimited(key)
 		}
 		return
 	}
-	r.cache[catalogSourceKey.String()] = sourceCache{
+	r.cache[key.String()] = sourceCache{
 		Items: entities,
-		//imageID: imageID,
 	}
 	if !isManagedCatalogSource(catalogSource) {
-		r.queue.Forget(catalogSourceKey)
-		r.queue.AddAfter(catalogSourceKey, r.syncInterval)
+		r.queue.Forget(key)
+		r.queue.AddAfter(key, r.syncInterval)
 	}
-	r.logger.Info("Completed cache update", "catalogSource", catalogSourceKey)
+	r.logger.Info("Completed cache update", "catalogSource", key)
 }
 
 func (r *CachedRegistryEntitySource) Get(ctx context.Context, id deppy.Identifier) *input.Entity {
@@ -233,10 +241,8 @@ func (r *CachedRegistryEntitySource) populate(ctx context.Context) error {
 			errs = append(errs, err)
 			continue
 		}
-		catalogSourceKey := types.NamespacedName{Namespace: catalogSource.Namespace, Name: catalogSource.Name}
-		r.cache[catalogSourceKey.String()] = sourceCache{
+		r.cache[catalogSourceKey(&catalogSource).String()] = sourceCache{
 			Items: entities,
-			//imageID: imageID,
 		}
 	}
 	if len(errs) > 0 {
@@ -248,4 +254,11 @@ func (r *CachedRegistryEntitySource) populate(ctx context.Context) error {
 // TODO: find better way to identify catalogSources unmanaged by olm
 func isManagedCatalogSource(catalogSource v1alpha1.CatalogSource) bool {
 	return len(catalogSource.Spec.Address) == 0
+}
+
+func catalogSourceKey(source *v1alpha1.CatalogSource) *types.NamespacedName {
+	if source == nil {
+		return nil
+	}
+	return &types.NamespacedName{Namespace: source.Namespace, Name: source.Name}
 }

@@ -15,6 +15,8 @@ import (
 )
 
 type UpgradeEdge struct {
+	// may possibly be replaced by edge specific variablesources
+	// rather than being grouped with bundle properties
 	property.Channel
 	Replaces  string   `json:"replaces,omitempty"`
 	Skips     []string `json:"skips,omitempty"`
@@ -27,75 +29,57 @@ type DefaultChannel struct {
 }
 
 const (
-	TypeDefaultChannel = "olm.package.defaultChannel"
-	TypeBundleSource   = "olm.bundle.path"
-	TypeLabel          = "olm.label"
-	TypeLabelRequired  = "olm.label.required"
+	// TODO: reevaluate if defaultChannel is strictly necessary in olmv1
+	typeDefaultChannel = "olm.package.defaultChannel"
+	typeBundleSource   = "olm.bundle.path"
+	typeLabel          = "olm.label"
+	typeLabelRequired  = "olm.label.required"
 )
 
 func EntityFromBundle(catsrcID string, pkg *catalogsourceapi.Package, bundle *catalogsourceapi.Bundle) (*input.Entity, error) {
+	modelBundle, err := catalogsourceapi.ConvertAPIBundleToModelBundle(bundle)
+	if err != nil {
+		return nil, err
+	}
 	properties := map[string]string{}
 	var errs []error
 
 	// Multivalue properties
 	propsList := map[string]map[string]struct{}{}
-
-	setPropertyValue := func(key, value string) {
-		if _, ok := propsList[key]; !ok {
-			propsList[key] = map[string]struct{}{}
-		}
-		if _, ok := propsList[key][value]; !ok {
-			propsList[key][value] = struct{}{}
-		}
-	}
-
-	for _, prvAPI := range bundle.ProvidedApis {
-		apiValue, err := JSONMarshal(prvAPI)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		setPropertyValue(property.TypeGVK, string(apiValue))
-	}
-
-	for _, reqAPI := range bundle.RequiredApis {
-		apiValue, err := JSONMarshal(reqAPI)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		setPropertyValue(property.TypeGVKRequired, string(apiValue))
-	}
-
-	for _, reqAPI := range bundle.Dependencies {
-		switch reqAPI.Type {
-		case property.TypeGVK:
-			setPropertyValue(property.TypeGVKRequired, reqAPI.Value)
+	for _, p := range modelBundle.Properties {
+		switch p.Type {
+		case property.TypeBundleObject:
+		case property.TypeChannel:
+			upValue, err := jsonMarshal(UpgradeEdge{
+				Channel: property.Channel{
+					ChannelName: bundle.ChannelName,
+				},
+				Replaces:  bundle.Replaces,
+				Skips:     bundle.Skips,
+				SkipRange: bundle.SkipRange,
+			})
+			if err != nil {
+				errs = append(errs, err)
+			} else {
+				properties[p.Type] = string(upValue)
+			}
 		case property.TypePackage:
-			setPropertyValue(property.TypePackageRequired, reqAPI.Value)
-		case TypeLabel: // legacy property
-			setPropertyValue(TypeLabelRequired, reqAPI.Value)
+			properties[p.Type] = string(p.Value)
 		default:
-			setPropertyValue(reqAPI.Type, reqAPI.Value)
+			if _, ok := propsList[p.Type]; !ok {
+				propsList[p.Type] = map[string]struct{}{}
+			}
+			if _, ok := propsList[p.Type][string(p.Value)]; !ok {
+				propsList[p.Type][string(p.Value)] = struct{}{}
+			}
 		}
-	}
-
-	ignoredProperties := map[string]struct{}{
-		property.TypeBundleObject: {},
-	}
-
-	for _, p := range bundle.Properties {
-		if _, ok := ignoredProperties[p.Type]; ok {
-			continue
-		}
-		setPropertyValue(p.Type, p.Value)
 	}
 
 	for pType, pValues := range propsList {
 		var prop []interface{}
 		for pValue := range pValues {
 			var v interface{}
-			err := JSONUnmarshal([]byte(pValue), &v)
+			err := json.Unmarshal([]byte(pValue), &v)
 			if err != nil {
 				errs = append(errs, err)
 				continue
@@ -111,7 +95,7 @@ func EntityFromBundle(catsrcID string, pkg *catalogsourceapi.Package, bundle *ca
 				return fmt.Sprintf("%v", prop[i]) < fmt.Sprintf("%v", prop[j])
 			})
 		}
-		pValue, err := JSONMarshal(prop)
+		pValue, err := jsonMarshal(prop)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -119,49 +103,18 @@ func EntityFromBundle(catsrcID string, pkg *catalogsourceapi.Package, bundle *ca
 		properties[pType] = string(pValue)
 	}
 
-	// Singleton properties.
-	// `olm.package`, `olm.channel`, `olm.defaultChannel`
-	pkgValue, err := JSONMarshal(property.Package{
-		PackageName: bundle.PackageName,
-		Version:     bundle.Version,
-	})
-	if err != nil {
-		errs = append(errs, err)
-	} else {
-		properties[property.TypePackage] = string(pkgValue)
-	}
-
-	upValue, err := JSONMarshal(UpgradeEdge{
-		Channel: property.Channel{
-			ChannelName: bundle.ChannelName,
-		},
-		Replaces:  bundle.Replaces,
-		Skips:     bundle.Skips,
-		SkipRange: bundle.SkipRange,
-		//		Version:   bundle.Version,
-	})
-	if err != nil {
-		errs = append(errs, err)
-	} else {
-		properties[property.TypeChannel] = string(upValue)
-	}
-
-	properties[TypeDefaultChannel] = pkg.DefaultChannelName
-	properties[TypeBundleSource] = bundle.BundlePath
+	properties[typeDefaultChannel] = pkg.DefaultChannelName
+	properties[typeBundleSource] = bundle.BundlePath
 
 	if len(errs) > 0 {
 		return nil, fmt.Errorf("failed to parse properties for bundle %s/%s in %s: %v", bundle.GetPackageName(), bundle.GetVersion(), catsrcID, errors.NewAggregate(errs))
 	}
 
 	// Since multiple instances of bundle may exist for different channels, entityID must include reference to channel
-	entityIDFromBundle := func(catsrcID string, bundle *catalogsourceapi.Bundle) deppy.Identifier {
-		return deppy.Identifier(fmt.Sprintf("%s/%s/%s/%s", catsrcID, bundle.PackageName, bundle.ChannelName, bundle.Version))
-	}
-
-	return input.NewEntity(entityIDFromBundle(catsrcID, bundle), properties), nil
+	return input.NewEntity(deppy.Identifier(fmt.Sprintf("%s/%s/%s/%s", catsrcID, bundle.PackageName, bundle.ChannelName, bundle.Version)), properties), nil
 }
 
-func JSONMarshal(p interface{}) ([]byte, error) {
+func jsonMarshal(p interface{}) ([]byte, error) {
 	buf := &bytes.Buffer{}
 	dec := json.NewEncoder(buf)
 	dec.SetEscapeHTML(false)
@@ -174,10 +127,4 @@ func JSONMarshal(p interface{}) ([]byte, error) {
 		return nil, err
 	}
 	return out.Bytes(), nil
-}
-
-func JSONUnmarshal(p []byte, out interface{}) error {
-	buf := bytes.NewReader(p)
-	dec := json.NewDecoder(buf)
-	return dec.Decode(out)
 }
