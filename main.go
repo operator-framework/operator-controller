@@ -20,7 +20,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity_sources/catalogsource"
+	olmv0v1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity_sources/hardcoded"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,7 +28,6 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -44,10 +43,12 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
+
+	// required by the catalog source cache controller
+	utilruntime.Must(olmv0v1alpha1.AddToScheme(scheme))
 }
 
 func main() {
@@ -91,6 +92,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	catsrcReconciler := controllers.NewCatalogSourceReconciler(mgr.GetClient(), mgr.GetEventRecorderFor("catalogsource-controller"))
+	if err := catsrcReconciler.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create catalog source controller", "controller", "CatalogSource")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.OperatorReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
@@ -110,15 +117,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	watchClient, err := client.NewWithWatch(mgr.GetConfig(), client.Options{Scheme: mgr.GetScheme()})
-	if err != nil {
-		setupLog.Error(err, "unable to create catalogSource watch")
-		os.Exit(1)
-	}
-	if err := mgr.Add(catalogsource.NewCachedRegistryQuerier(watchClient, catalogsource.WithLogger(ctrl.Log.WithName("catalogSourceCache")))); err != nil {
-		setupLog.Error(err, "unable to set up catalogSource watch")
-		os.Exit(1)
-	}
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")

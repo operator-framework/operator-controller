@@ -114,7 +114,6 @@ func waitForGRPCWithTimeout(ctx context.Context, conn *grpc.ClientConn, timeout 
 		return nil
 	}
 	oldState := state
-	fmt.Printf("%v %s Connection state: %v\n", time.Now(), address, state)
 	ctx2, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	for {
@@ -124,7 +123,6 @@ func waitForGRPCWithTimeout(ctx context.Context, conn *grpc.ClientConn, timeout 
 		default:
 			state := conn.GetState()
 			if state != oldState {
-				fmt.Printf("%v %s Connection state: %v\n", time.Now(), address, state)
 				oldState = state
 			}
 			if state == connectivity.Ready {
