@@ -156,7 +156,7 @@ var _ = Describe("Registry GRPC Client", func() {
 		Expect(entities).To(ConsistOf([]*input.Entity{{
 			ID: "//prometheus/beta/0.47.0",
 			Properties: map[string]string{
-				"olm.gvk":                    `[{"group":"monitoring.coreos.com","kind":"Probe","plural":"probes","version":"v1"},{"group":"monitoring.coreos.com","kind":"Prometheus","plural":"prometheuses","version":"v1"},{"group":"monitoring.coreos.com","kind":"Prometheus","version":"v1"},{"group":"monitoring.coreos.com","kind":"PrometheusRule","plural":"prometheusrules","version":"v1"},{"group":"monitoring.coreos.com","kind":"PrometheusRule","version":"v1"}]`,
+				"olm.gvk":                    `[{"group":"monitoring.coreos.com","kind":"Probe","version":"v1"},{"group":"monitoring.coreos.com","kind":"Prometheus","version":"v1"},{"group":"monitoring.coreos.com","kind":"PrometheusRule","version":"v1"}]`,
 				"olm.maxOpenShiftVersion":    `["4.8"]`,
 				"olm.package":                `{"packageName":"prometheus","version":"0.47.0"}`,
 				"olm.channel":                `{"channelName":"beta","priority":0,"replaces":"prometheusoperator.0.37.0"}`,
@@ -166,7 +166,7 @@ var _ = Describe("Registry GRPC Client", func() {
 		}, {
 			ID: "//prometheus/beta/0.37.0",
 			Properties: map[string]string{
-				"olm.gvk":                    `[{"group":"monitoring.coreos.com","kind":"Prometheus","plural":"prometheuses","version":"v1"},{"group":"monitoring.coreos.com","kind":"Prometheus","version":"v1"},{"group":"monitoring.coreos.com","kind":"PrometheusRule","plural":"prometheusrules","version":"v1"},{"group":"monitoring.coreos.com","kind":"PrometheusRule","version":"v1"}]`,
+				"olm.gvk":                    `[{"group":"monitoring.coreos.com","kind":"Prometheus","version":"v1"},{"group":"monitoring.coreos.com","kind":"PrometheusRule","version":"v1"}]`,
 				"olm.package":                `{"packageName":"prometheus","version":"0.37.0"}`,
 				"olm.channel":                `{"channelName":"beta","priority":0}`,
 				"olm.package.defaultChannel": "beta",

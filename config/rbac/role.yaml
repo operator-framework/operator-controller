@@ -17,6 +17,14 @@ rules:
   - update
   - watch
 - apiGroups:
+  - operators.coreos.com
+  resources:
+  - catalogsources
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - operators.operatorframework.io
   resources:
   - operators

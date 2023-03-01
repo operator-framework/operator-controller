@@ -96,7 +96,7 @@ func (r *CachedRegistryEntitySource) Start(ctx context.Context) error {
 			if shutdown {
 				return
 			}
-			if key, ok := item.(types.NamespacedName); ok {
+			if key, ok := item.(*types.NamespacedName); ok {
 				r.syncCatalogSource(ctx, key)
 			}
 		}
@@ -116,7 +116,6 @@ func (r *CachedRegistryEntitySource) Start(ctx context.Context) error {
 				r.logger.Error(err, "cannot reconcile non-catalogSource: unmarshalling failed", "event", entry.Type, "object", entry.Object)
 				continue
 			}
-
 			r.queue.Add(catalogSourceKey(&catalogSource))
 		case <-ctx.Done():
 			r.Stop()
@@ -136,15 +135,14 @@ func (r *CachedRegistryEntitySource) Stop() {
 }
 
 // handle added or updated catalogSource
-func (r *CachedRegistryEntitySource) syncCatalogSource(ctx context.Context, key types.NamespacedName) {
+func (r *CachedRegistryEntitySource) syncCatalogSource(ctx context.Context, key *types.NamespacedName) {
 	r.RWMutex.Lock()
 	defer r.queue.Done(key)
 	defer r.RWMutex.Unlock()
-
 	var catalogSource v1alpha1.CatalogSource
-	if err := r.client.Get(ctx, key, &catalogSource); err != nil {
+	if err := r.client.Get(ctx, *key, &catalogSource); err != nil {
 		if errors2.IsNotFound(err) {
-			delete(r.cache, catalogSourceKey(&catalogSource).String())
+			delete(r.cache, key.String())
 			return
 		} else {
 			r.logger.Info("cannot find catalogSource, skipping cache update", "CatalogSource", key)

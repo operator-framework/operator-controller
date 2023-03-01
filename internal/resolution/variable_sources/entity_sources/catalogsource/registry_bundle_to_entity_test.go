@@ -21,7 +21,7 @@ var _ = Describe("RegistryBundleConverter", func() {
 		// Values in the aggregated property set must not have duplicates.
 		b := &catalogsourceapi.Bundle{
 			CsvName:     "test",
-			PackageName: "test",
+			PackageName: "other",
 			ChannelName: "beta",
 			BundlePath:  "path/to/bundle",
 			Version:     "0.1.4",
@@ -72,7 +72,7 @@ var _ = Describe("RegistryBundleConverter", func() {
 			Properties: []*catalogsourceapi.Property{
 				{
 					Type:  "olm.package",
-					Value: `{"packageName":"other","version":"0.1.4"}`,
+					Value: `{"packageName":"test","version":"0.1.4"}`,
 				}, {
 					Type:  "olm.gvk",
 					Value: `{"group":"foo","version":"v1","kind":"prov1"}`,
@@ -84,7 +84,7 @@ var _ = Describe("RegistryBundleConverter", func() {
 					Value: `{"group":"foo","version":"v1","kind":"req3"}`,
 				}, {
 					Type:  "olm.package.required",
-					Value: `{"packageName":"dep1","version":"1.1.0"}`,
+					Value: `{"packageName":"dep1","versionRange":"1.1.0"}`,
 				}, {
 					Type:  "olm.maxOpenShiftVersion",
 					Value: "4.12",
@@ -101,7 +101,7 @@ var _ = Describe("RegistryBundleConverter", func() {
 		entity, err := catalogsource.EntityFromBundle("test-catalog", p, b)
 		Expect(err).To(BeNil())
 		Expect(entity).To(Equal(&input.Entity{
-			ID: "test-catalog/test/beta/0.1.4",
+			ID: "test-catalog/other/beta/0.1.4",
 			Properties: map[string]string{
 				"olm.package":                `{"packageName":"test","version":"0.1.4"}`,
 				"olm.channel":                `{"channelName":"beta","priority":0,"replaces":"test-operator.v0.0.1","skips":["test-operator.v0.0.2","test-operator.v0.0.3"],"skipRange":"< 0.1.4"}`,
@@ -109,7 +109,7 @@ var _ = Describe("RegistryBundleConverter", func() {
 				"olm.bundle.path":            "path/to/bundle",
 				"olm.maxOpenShiftVersion":    "[4.12]",
 				"olm.deprecated":             "[{}]",
-				"olm.package.required":       `[{"packageName":"dep1","version":"1.1.0"},{"packageName":"dep2","version":"<1.1.0"}]`,
+				"olm.package.required":       `[{"packageName":"dep1","versionRange":"1.1.0"},{"packageName":"dep2","versionRange":"<1.1.0"}]`,
 				"olm.gvk":                    `[{"group":"foo","kind":"prov1","version":"v1"},{"group":"foo","kind":"prov2","version":"v1"}]`,
 				"olm.gvk.required":           `[{"group":"foo","kind":"req1","version":"v1"},{"group":"foo","kind":"req2","version":"v1"},{"group":"foo","kind":"req3","version":"v1"},{"group":"foo","kind":"req4","version":"v1"}]`,
 			},
