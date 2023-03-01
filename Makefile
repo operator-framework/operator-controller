@@ -97,8 +97,11 @@ kind-cluster-cleanup: kind ## Delete the kind cluster
 build: manifests generate fmt vet ## Build manager binary.
 	go build -o bin/manager main.go
 
+.PHONY: run-image
+run-image: docker-build kind-load install-cert-mgr install-rukpak install deploy wait ## Build the operator-controller then deploy it into an existing kind cluster.
+
 .PHONY: run
-run: docker-build kind-cluster kind-load cert-mgr rukpak install deploy wait ## Build the operator-controller then deploy it into a new kind cluster.
+run: kind-cluster run-image ## Build the operator-controller then deploy it into a new kind cluster.
 
 .PHONY: run-local
 run-local: manifests generate fmt vet  ## Run a controller from your host. Make sure that necessary CRDs are installed in the cluster.
@@ -143,15 +146,23 @@ ifndef ignore-not-found
 endif
 
 ## TODO dfranz: replace cert-mgr and rukpak targets with our chosen method of distribution when available
-.PHONY: cert-mgr
-cert-mgr: ## Install cert-manager
+.PHONY: install-cert-mgr
+install-cert-mgr: ## Install cert-manager
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MGR_VERSION)/cert-manager.yaml
 	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=$(WAIT_TIMEOUT)
 
-.PHONY: rukpak
-rukpak: ## Install rukpak
+.PHONY: uninstall-cert-mgr
+uninstall-cert-mgr: ## Install cert-manager
+	kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MGR_VERSION)/cert-manager.yaml
+
+.PHONY: install-rukpak
+install-rukpak: ## Install rukpak
 	kubectl apply -f https://github.com/operator-framework/rukpak/releases/latest/download/rukpak.yaml
 	kubectl wait --for=condition=Available --namespace=rukpak-system deployment/core --timeout=$(WAIT_TIMEOUT)
+
+.PHONY: uninstall-rukpak
+uninstall-rukpak: ## Install rukpak
+	kubectl delete -f https://github.com/operator-framework/rukpak/releases/latest/download/rukpak.yaml
 
 .PHONY: install
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
@@ -172,9 +183,7 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 
 # cleans up all the operator resources and their dependents like cert-manager and rukpak
 .PHONY: cleanup
-cleanup: undeploy uninstall
-	kubectl delete --ignore-not-found=$(ignore-not-found) -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MGR_VERSION)/cert-manager.yaml
-	kubectl delete --ignore-not-found=$(ignore-not-found) -f https://github.com/operator-framework/rukpak/releases/latest/download/rukpak.yaml
+cleanup: undeploy uninstall uninstall-rukpak uninstall-cert-mgr 
 
 ##@ Build Dependencies
 
