@@ -91,7 +91,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	catsrcReconciler := controllers.NewCatalogSourceReconciler(mgr.GetClient(), mgr.GetEventRecorderFor("catalogsource-controller"))
+	catsrcReconciler := controllers.NewCatalogSourceReconciler(
+		mgr.GetClient(),
+		mgr.GetScheme(),
+		mgr.GetEventRecorderFor("catalogsource-controller"),
+	)
 	if err := catsrcReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create catalog source controller", "controller", "CatalogSource")
 		os.Exit(1)

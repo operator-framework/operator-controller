@@ -29,6 +29,23 @@ const (
 	eventReasonCacheUpdateFailed = "BundleCacheUpdateFailed"
 )
 
+type CatalogSourceReconcilerOption func(reconciler *CatalogSourceReconciler)
+
+func WithRegistryClient(registry catalogsource.RegistryClient) CatalogSourceReconcilerOption {
+	return func(reconciler *CatalogSourceReconciler) {
+		reconciler.registry = registry
+	}
+}
+
+// applyDefaults applies default values to empty CatalogSourceReconciler fields _after_ options have been applied
+func applyDefaults() CatalogSourceReconcilerOption {
+	return func(reconciler *CatalogSourceReconciler) {
+		if reconciler.registry == nil {
+			reconciler.registry = catalogsource.NewRegistryGRPCClient(defaultRegistryGRPCConnectionTimeout)
+		}
+	}
+}
+
 type CatalogSourceReconciler struct {
 	sync.RWMutex
 	client.Client
@@ -38,14 +55,21 @@ type CatalogSourceReconciler struct {
 	cache    map[string]map[deppy.Identifier]*input.Entity
 }
 
-func NewCatalogSourceReconciler(client client.Client, recorder record.EventRecorder) *CatalogSourceReconciler {
-	return &CatalogSourceReconciler{
+func NewCatalogSourceReconciler(client client.Client, scheme *runtime.Scheme, recorder record.EventRecorder, options ...CatalogSourceReconcilerOption) *CatalogSourceReconciler {
+	reconciler := &CatalogSourceReconciler{
 		RWMutex:  sync.RWMutex{},
 		Client:   client,
+		scheme:   scheme,
 		recorder: recorder,
 		cache:    map[string]map[deppy.Identifier]*input.Entity{},
-		registry: catalogsource.NewRegistryGRPCClient(defaultRegistryGRPCConnectionTimeout),
 	}
+	// apply options
+	options = append(options, applyDefaults())
+	for _, option := range options {
+		option(reconciler)
+	}
+
+	return reconciler
 }
 
 // +kubebuilder:rbac:groups=operators.coreos.com,resources=catalogsources,verbs=get;list;watch

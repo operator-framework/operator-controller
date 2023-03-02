@@ -595,13 +595,13 @@ func verifyConditionsInvariants(op *operatorsv1alpha1.Operator) {
 
 var testEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{
 	"operatorhub/prometheus/0.37.0": *input.NewEntity("operatorhub/prometheus/0.37.0", map[string]string{
-		"olm.bundle.path": `"quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"`,
+		"olm.bundle.path": "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35",
 		"olm.channel":     `{"channelName":"beta","priority":0}`,
 		"olm.package":     `{"packageName":"prometheus","version":"0.37.0"}`,
 		"olm.gvk":         `[]`,
 	}),
 	"operatorhub/prometheus/0.47.0": *input.NewEntity("operatorhub/prometheus/0.47.0", map[string]string{
-		"olm.bundle.path": `"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"`,
+		"olm.bundle.path": "quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed",
 		"olm.channel":     `{"channelName":"beta","priority":0,"replaces":"prometheusoperator.0.37.0"}`,
 		"olm.package":     `{"packageName":"prometheus","version":"0.47.0"}`,
 		"olm.gvk":         `[]`,

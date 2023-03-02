@@ -22,7 +22,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -69,6 +71,12 @@ var _ = BeforeSuite(func() {
 	err = operatorsv1alpha1.AddToScheme(sch)
 	Expect(err).NotTo(HaveOccurred())
 	err = rukpakv1alpha1.AddToScheme(sch)
+	Expect(err).NotTo(HaveOccurred())
+
+	// required for the catalog source controller tests
+	err = v1alpha1.AddToScheme(sch)
+	Expect(err).NotTo(HaveOccurred())
+	err = v1.AddToScheme(sch)
 	Expect(err).NotTo(HaveOccurred())
 
 	cl, err = client.New(cfg, client.Options{Scheme: sch})
