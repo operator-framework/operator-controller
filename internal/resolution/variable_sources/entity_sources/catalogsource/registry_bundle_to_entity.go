@@ -47,11 +47,12 @@ func EntityFromBundle(catsrcID string, pkg *catalogsourceapi.Package, bundle *ca
 	for _, p := range modelBundle.Properties {
 		switch p.Type {
 		case property.TypeBundleObject:
+			// ignore - only need metadata for resolution and bundle path for installation
 		case property.TypePackage:
 			properties[p.Type] = string(p.Value)
 		default:
 			var v interface{}
-			// the keys in the marhaled object may be out of order.
+			// the keys in the marshaled object may be out of order.
 			// recreate the json object so this doesn't happen.
 			pValue := p.Value
 			err := json.Unmarshal(p.Value, &v)

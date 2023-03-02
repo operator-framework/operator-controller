@@ -63,7 +63,7 @@ type OperatorReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.1/pkg/reconcile
 func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	l := log.FromContext(ctx).WithName("reconcile")
+	l := log.FromContext(ctx).WithName("operator-controller")
 	l.V(1).Info("starting")
 	defer l.V(1).Info("ending")
 

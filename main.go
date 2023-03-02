@@ -21,7 +21,6 @@ import (
 	"os"
 
 	olmv0v1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity_sources/hardcoded"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -101,7 +100,7 @@ func main() {
 	if err = (&controllers.OperatorReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), hardcoded.HardcodedEntitySource),
+		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), catsrcReconciler),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)
