@@ -9,7 +9,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity_sources/catalogsource"
+	"github.com/operator-framework/operator-controller/internal/resolution/entity_sources/catalogsource"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"

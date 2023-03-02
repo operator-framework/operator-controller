@@ -23,11 +23,11 @@ const defaultCatalogSourceSyncInterval = 5 * time.Minute
 
 type CachedRegistryEntitySource struct {
 	sync.RWMutex
-	client       client.WithWatch
-	rClient      RegistryClient
-	logger       *logr.Logger
-	cache        map[string]sourceCache
-	done         chan struct{}
+	client  client.WithWatch
+	rClient RegistryClient
+	logger  *logr.Logger
+	cache   map[string]sourceCache
+	done    chan struct{}
 	queue        workqueue.RateLimitingInterface // for unmanaged catalogsources
 	syncInterval time.Duration
 }

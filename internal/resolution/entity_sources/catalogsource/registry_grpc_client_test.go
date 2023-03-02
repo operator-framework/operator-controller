@@ -9,11 +9,10 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-controller/internal/resolution/entity_sources/catalogsource"
 	"github.com/operator-framework/operator-registry/pkg/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity_sources/catalogsource"
 )
 
 type mockServer struct {

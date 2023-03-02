@@ -6,10 +6,10 @@ import (
 
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
 )
 
 type OperatorResolver struct {

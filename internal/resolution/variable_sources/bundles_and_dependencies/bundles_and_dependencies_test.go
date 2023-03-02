@@ -8,11 +8,11 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
 	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
 )
 
 func TestBundlesAndDeps(t *testing.T) {

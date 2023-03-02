@@ -24,7 +24,6 @@ const (
 
 var _ = Describe("Operator Install", func() {
 	var (
-		ctx          context.Context
 		pkgName      string
 		operatorName string
 		operator     *operatorv1alpha1.Operator

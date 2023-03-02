@@ -9,11 +9,11 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/operator-framework/operator-controller/internal/resolution/entity_sources/catalogsource"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity_sources/catalogsource"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
