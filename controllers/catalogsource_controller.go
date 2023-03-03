@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -90,10 +91,11 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	entities, err := r.registry.ListEntities(ctx, catalogSource)
 	if err != nil {
 		r.recorder.Event(catalogSource, eventTypeWarning, eventReasonCacheUpdateFailed, fmt.Sprintf("Failed to update bundle cache from %s/%s: %v", catalogSource.GetNamespace(), catalogSource.GetName(), err))
-		return ctrl.Result{Requeue: true}, err
+		return ctrl.Result{Requeue: !isManagedCatalogSource(*catalogSource)}, err
 	}
-	r.updateCache(req.String(), entities)
-	r.recorder.Event(catalogSource, eventTypeNormal, eventReasonCacheUpdated, fmt.Sprintf("Successfully updated bundle cache from %s/%s", catalogSource.GetNamespace(), catalogSource.GetName()))
+	if updated := r.updateCache(req.String(), entities); updated {
+		r.recorder.Event(catalogSource, eventTypeNormal, eventReasonCacheUpdated, fmt.Sprintf("Successfully updated bundle cache from %s/%s", catalogSource.GetNamespace(), catalogSource.GetName()))
+	}
 
 	if isManagedCatalogSource(*catalogSource) {
 		return ctrl.Result{}, nil
@@ -113,14 +115,19 @@ func isManagedCatalogSource(catalogSource v1alpha1.CatalogSource) bool {
 	return len(catalogSource.Spec.Address) == 0
 }
 
-func (r *CatalogSourceReconciler) updateCache(sourceID string, entities []*input.Entity) {
-	r.RWMutex.Lock()
-	defer r.RWMutex.Unlock()
+func (r *CatalogSourceReconciler) updateCache(sourceID string, entities []*input.Entity) bool {
 	newSourceCache := make(map[deppy.Identifier]*input.Entity)
 	for _, entity := range entities {
 		newSourceCache[entity.Identifier()] = entity
 	}
+	if _, ok := r.cache[sourceID]; ok && reflect.DeepEqual(r.cache[sourceID], newSourceCache) {
+		return false
+	}
+	r.RWMutex.Lock()
+	defer r.RWMutex.Unlock()
 	r.cache[sourceID] = newSourceCache
+	// return whether cache had updates
+	return true
 }
 
 func (r *CatalogSourceReconciler) dropSource(sourceID string) {

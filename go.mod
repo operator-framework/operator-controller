@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/blang/semver/v4 v4.0.0
+	github.com/containerd/containerd v1.6.3
 	github.com/onsi/ginkgo/v2 v2.3.1
 	github.com/onsi/gomega v1.22.1
 	github.com/operator-framework/api v0.15.0

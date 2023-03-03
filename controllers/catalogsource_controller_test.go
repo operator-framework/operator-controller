@@ -141,6 +141,7 @@ var _ = Describe("CatalogSource Controller Test", func() {
 			By("running re-reconcile")
 			res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
 			Expect(res).To(Equal(ctrl.Result{}))
+			Expect(err).ToNot(HaveOccurred())
 
 			By("checking the cache is empty again")
 			entities = nil
@@ -150,6 +151,64 @@ var _ = Describe("CatalogSource Controller Test", func() {
 			})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(entities).To(BeEmpty())
+		})
+
+		Describe("querying CatalogSource EntitySource", func() {
+			BeforeEach(func() {
+				registryEntities := []*input.Entity{
+					input.NewEntity(deppy.Identifier(fmt.Sprintf("%s/%s/pkg1/chan1/0.1.0", catalogSourceName, namespace)), map[string]string{}),
+					input.NewEntity(deppy.Identifier(fmt.Sprintf("%s/%s/pkg1/chan1/0.2.0", catalogSourceName, namespace)), map[string]string{"k": "v"}),
+				}
+				fakeRegistry.setEntitiesForSource(opKey.String(), registryEntities...)
+
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(res).To(Equal(ctrl.Result{}))
+			})
+			Describe("Get", func() {
+				It("should fetch an entity by ID", func() {
+					Expect(reconciler.Get(ctx, deppy.Identifier(fmt.Sprintf("%s/%s/pkg1/chan1/0.1.0", catalogSourceName, namespace)))).To(
+						Equal(input.NewEntity(deppy.Identifier(fmt.Sprintf("%s/%s/pkg1/chan1/0.1.0", catalogSourceName, namespace)), map[string]string{})),
+					)
+				})
+				It("should not fetch anything for nonexistent entity ID", func() {
+					Expect(reconciler.Get(ctx, "non-existent")).To(BeNil())
+				})
+			})
+			Describe("Filter", func() {
+				It("should return entities that meet filter predicates", func() {
+					actual, err := reconciler.Filter(ctx, func(e *input.Entity) bool {
+						_, ok := e.Properties["k"]
+						return ok
+					})
+					Expect(err).ToNot(HaveOccurred())
+					Expect(actual).To(ConsistOf(input.EntityList{*input.NewEntity(deppy.Identifier(fmt.Sprintf("%s/%s/pkg1/chan1/0.2.0", catalogSourceName, namespace)), map[string]string{"k": "v"})}))
+				})
+			})
+			Describe("GroupBy", func() {
+				It("should group entities by the keys provided by the groupBy function", func() {
+					actual, err := reconciler.GroupBy(ctx, func(e *input.Entity) []string {
+						var keys []string
+						for k := range e.Properties {
+							keys = append(keys, k)
+						}
+						return keys
+					})
+					Expect(err).ToNot(HaveOccurred())
+					Expect(actual).To(Equal(input.EntityListMap{"k": input.EntityList{*input.NewEntity(deppy.Identifier(fmt.Sprintf("%s/%s/pkg1/chan1/0.2.0", catalogSourceName, namespace)), map[string]string{"k": "v"})}}))
+				})
+			})
+			Describe("Iterate", func() {
+				It("should go through all entities", func() {
+					var ids []string
+					Expect(reconciler.Iterate(ctx, func(e *input.Entity) error {
+						ids = append(ids, e.Identifier().String())
+						return nil
+					})).To(BeNil())
+					Expect(ids).To(ConsistOf([]string{fmt.Sprintf("%s/%s/pkg1/chan1/0.1.0", catalogSourceName, namespace),
+						fmt.Sprintf("%s/%s/pkg1/chan1/0.2.0", catalogSourceName, namespace)}))
+				})
+			})
 		})
 	})
 })

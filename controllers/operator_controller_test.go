@@ -607,7 +607,7 @@ var testEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{
 		"olm.gvk":         `[]`,
 	}),
 	"operatorhub/badimage/0.1.0": *input.NewEntity("operatorhub/badimage/0.1.0", map[string]string{
-		"olm.bundle.path": `{"name": "quay.io/operatorhubio/badimage:v0.1.0"}`,
+		"olm.bundle.path": ``,
 		"olm.package":     `{"packageName":"badimage","version":"0.1.0"}`,
 		"olm.gvk":         `[]`,
 	}),

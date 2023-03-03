@@ -27,84 +27,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-// e2e resolution from a catalogsource backed entitysource without olm
-//var _ = Describe("Deppy", func() {
-//	var kubeClient *kubernetes.Clientset
-//	var err error
-//	var testNamespace string
-//	cleanup := func() {}
-//	var ctx = context.TODO()
-//	BeforeEach(func() {
-//		kubeClient, err = kubernetes.NewForConfig(config.GetConfigOrDie())
-//		Expect(err).To(BeNil())
-//		testNamespace = createTestNamespace(ctx, kubeClient, "registry-grpc-")
-//		cleanup = applyCRDifNotPresent(ctx)
-//	})
-//	AfterEach(func() {
-//		deleteTestNamespace(ctx, kubeClient, testNamespace)
-//		cleanup()
-//	})
-//	It("can install an operator from a catalogSource", func() {
-//		testPrefix := "registry-grpc-"
-//
-//		serviceAccountName := createTestServiceAccount(ctx, kubeClient, testNamespace, testPrefix)
-//		createTestRegistryPod(ctx, kubeClient, testNamespace, testPrefix, serviceAccountName)
-//		serviceName := createTestRegistryService(ctx, kubeClient, testNamespace, testPrefix)
-//		createTestCatalogSource(ctx, kubeClient, testNamespace, "prometheus-index", serviceName)
-//
-//		scheme := runtime.NewScheme()
-//		// Add catalogSources
-//		err = v1alpha1.AddToScheme(scheme)
-//		Expect(err).To(BeNil())
-//
-//		c := config.GetConfigOrDie()
-//		ctrlCli, err := controllerClient.NewWithWatch(c, controllerClient.Options{
-//			Scheme: scheme,
-//		})
-//		Expect(err).To(BeNil())
-//
-//		logger := zap.New()
-//		cacheCli := catalogsource.NewCachedRegistryQuerier(ctrlCli, catalogsource.NewRegistryGRPCClient(0), &logger)
-//
-//		go cacheCli.Start(ctx)
-//
-//		defer cacheCli.Stop()
-//
-//		Eventually(func(g Gomega) {
-//			// wait till cache is populated
-//			var entityIDs []deppy.Identifier
-//			err := cacheCli.Iterate(ctx, func(entity *input.Entity) error {
-//				entityIDs = append(entityIDs, entity.Identifier())
-//				return nil
-//			})
-//			g.Expect(err).To(BeNil())
-//			g.Expect(entityIDs).To(ConsistOf([]deppy.Identifier{
-//				deppy.IdentifierFromString(testNamespace + "/prometheus-index/prometheus/beta/0.14.0"),
-//				deppy.IdentifierFromString(testNamespace + "/prometheus-index/prometheus/beta/0.15.0"),
-//				deppy.IdentifierFromString(testNamespace + "/prometheus-index/prometheus/beta/0.22.2"),
-//				deppy.IdentifierFromString(testNamespace + "/prometheus-index/prometheus/beta/0.27.0"),
-//				deppy.IdentifierFromString(testNamespace + "/prometheus-index/prometheus/beta/0.32.0"),
-//				deppy.IdentifierFromString(testNamespace + "/prometheus-index/prometheus/beta/0.37.0"),
-//			}))
-//		}).Should(Succeed())
-//
-//		s, err := solver.NewDeppySolver(cacheCli, olm.NewOLMVariableSource("prometheus"))
-//
-//		//catalogsource.WithDependencies([]*input.Entity{{ID: deppy.IdentifierFromString("with package prometheus"), Properties: map[string]string{
-//		//	property.TypePackageRequired: `[{"packageName":"prometheus","version":">=0.37.0"}]`,
-//		//}}})
-//		Expect(err).To(BeNil())
-//		solutionSet, err := s.Solve(ctx, solver.AddAllVariablesToSolution())
-//		Expect(err).To(BeNil())
-//
-//		Expect(solutionSet.Error()).To(BeNil())
-//		Expect(solutionSet.SelectedVariables()).To(HaveKey(deppy.IdentifierFromString(testNamespace + "/prometheus-index/prometheus/beta/0.37.0")))
-//		Expect(solutionSet)
-//
-//	})
-//
-//})
-
 // ListEntities
 func createTestNamespace(ctx context.Context, c *kubernetes.Clientset, prefix string) string {
 	ns, err := c.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{
@@ -280,7 +202,7 @@ func applyCRDifNotPresent(ctx context.Context) func() {
 	err = ctrlCli.Get(ctx, types.NamespacedName{Name: "catalogsources.operators.coreos.com"}, &catalogSourceCRD)
 	if err != nil {
 		Expect(errors.IsNotFound(err)).To(BeTrue())
-		crdContents, err := os.ReadFile("../testdata/operators.coreos.com_catalogsources.crd.yaml")
+		crdContents, err := os.ReadFile("../../testdata/crds/operators.coreos.com_catalogsources.yaml")
 		Expect(err).To(BeNil())
 
 		err = yaml2.Unmarshal(crdContents, &catalogSourceCRD)

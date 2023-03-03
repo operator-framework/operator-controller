@@ -24,6 +24,7 @@ const (
 
 var _ = Describe("Operator Install", func() {
 	var (
+		ctx          context.Context
 		pkgName      string
 		operatorName string
 		operator     *operatorv1alpha1.Operator
@@ -32,7 +33,7 @@ var _ = Describe("Operator Install", func() {
 	var kubeClient *kubernetes.Clientset
 	var testNamespace string
 	cleanup := func() {}
-	var ctx = context.TODO()
+	ctx = context.TODO()
 	BeforeEach(func() {
 		kubeClient, err := kubernetes.NewForConfig(config.GetConfigOrDie())
 		Expect(err).To(BeNil())
