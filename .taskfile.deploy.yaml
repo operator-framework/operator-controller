@@ -1,0 +1,26 @@
+version: '3'
+
+includes:
+  build:
+    taskfile: .taskfile.build.yaml
+    internal: true
+  kind:
+    taskfile: .taskfile.kind.yaml
+    internal: true
+
+tasks:
+  kind:
+    cmds:
+    - task: kind:load-image
+      vars:
+        IMAGE: "$IMAGE_REPO:$IMAGE_TAG"
+        KIND_CLUSTER_NAME: "{{.KIND_CLUSTER_NAME}}"
+    - ./install.sh
+    deps:
+      - task: build:docker
+      - task: build:manifest
+      - task: build:install-script
+      - task: kind:create
+        vars:
+          KIND_CLUSTER_NAME: "{{.KIND_CLUSTER_NAME}}"
+    desc: "Run the operator in a fresh kind cluster"

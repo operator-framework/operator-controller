@@ -6,30 +6,21 @@ vendor
 *.dll
 *.so
 *.dylib
-bin/*
-testbin/*
-Dockerfile.cross
+**/bin/*
 
 # Test binary, build with `go test -c`
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
-*.out
+cover.out
 
 # Release output
-dist/**
-operator-controller.yaml
-install.sh
-
-# Kubernetes Generated files - skip generated files, except for vendored files
-
-!vendor/**/zz_generated.*
+/dist/**
+/install.sh
+/operator-controller.yaml
 
 # editor and IDE paraphernalia
 .idea
 *.swp
 *.swo
 *~
-
-# TODO dfranz remove this line and the bin folder when tools binaries are moved to their own folder
-!bin/.dockerignore

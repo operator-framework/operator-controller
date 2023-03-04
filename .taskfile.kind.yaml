@@ -1,0 +1,32 @@
+version: '3'
+
+vars:
+  KIND_CLUSTER_NAME: "operator-controller"
+
+includes:
+  tools:
+    taskfile: .taskfile.tools.yaml
+    internal: true
+
+tasks:
+  create:
+    desc: "Create a fresh kind cluster"
+    cmds:
+      - "{{.TOOLSBIN}}/kind create cluster --name {{.KIND_CLUSTER_NAME}}"
+    deps:
+      - tools:kind
+      - task: delete
+        vars:
+          KIND_CLUSTER_NAME: "{{.KIND_CLUSTER_NAME}}"
+
+  delete:
+    desc: "Delete a kind cluster"
+    cmds:
+      - "{{.TOOLSBIN}}/kind delete cluster --name {{.KIND_CLUSTER_NAME}}"
+    deps: [tools:kind]
+
+  load-image:
+    desc: "Load the image into the kind cluster"
+    cmds:
+      - "{{.TOOLSBIN}}/kind load docker-image {{.IMAGE}} --name {{.KIND_CLUSTER_NAME}}"
+    deps: [tools:kind]

@@ -1,0 +1,41 @@
+version: '3'
+
+vars:
+  CONTROLLER_GEN_VERSION: v0.11.3
+  GINKGO_VERSION:
+    sh: go list -m -f {{ "{{.Version}}" }} github.com/onsi/ginkgo/v2
+  GORELEASER_VERSION: main
+  KIND_VERSION: v0.17.0
+  KUSTOMIZE_VERSION: v4.5.7
+  SETUP_ENVTEST_VERSION: latest
+
+tasks:
+  controller-gen:
+    desc: "Install controller-gen"
+    cmds:
+      - GOBIN={{.TOOLSBIN}} go install sigs.k8s.io/controller-tools/cmd/controller-gen@{{.CONTROLLER_GEN_VERSION}}
+
+  ginkgo:
+    desc: "Install ginkgo"
+    cmds:
+      - GOBIN={{.TOOLSBIN}} go install github.com/onsi/ginkgo/v2/ginkgo@{{.GINKGO_VERSION}}
+
+  goreleaser:
+    desc: "Install goreleaser"
+    cmds:
+      - GOBIN={{.TOOLSBIN}} go install github.com/goreleaser/goreleaser@{{.GORELEASER_VERSION}}
+
+  kind:
+    desc: "Install kind"
+    cmds:
+      - GOBIN={{.TOOLSBIN}} go install sigs.k8s.io/kind@{{.KIND_VERSION}}
+
+  kustomize:
+    desc: "Install kustomize"
+    cmds:
+      - GOBIN={{.TOOLSBIN}} go install sigs.k8s.io/kustomize/kustomize/v4@{{.KUSTOMIZE_VERSION}}
+
+  setup-envtest:
+    desc: "Install envtest"
+    cmds:
+      - GOBIN={{.TOOLSBIN}} go install sigs.k8s.io/controller-runtime/tools/setup-envtest@{{.SETUP_ENVTEST_VERSION}}

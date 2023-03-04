@@ -1,0 +1,80 @@
+version: '3'
+
+
+includes:
+  tools:
+    taskfile: .taskfile.tools.yaml
+    internal: true
+
+  style:
+    taskfile: .taskfile.style.yaml
+    internal: true
+
+  build:
+    taskfile: .taskfile.build.yaml
+    internal: true
+
+  kind:
+    taskfile: .taskfile.kind.yaml
+    internal: true
+
+  deploy:
+    taskfile: .taskfile.deploy.yaml
+    internal: true
+
+vars:
+  ENVTEST_VERSION:
+    sh: go list -m -f {{ "{{.Version}}" }} k8s.io/client-go | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$/1.\1.x/'
+
+  PKGS:
+    sh: go list ./... | grep -v 'test/e2e$' | cut -d/ -f4 | uniq | sed '/^$/d' | sed 's|.*|./&/...|' | tr '\n' ' '
+
+tasks:
+  default:
+    desc: "Run all tests"
+    cmds:
+      - task: sanity
+      - task: unit
+      - task: e2e
+
+  unit:
+    desc: "Run unit tests"
+    summary: |
+      Run unit tests.
+      
+      The FOCUS variable can be used to filter tests by name.
+      The PKGS variable can be used to filter tests by package.
+    cmds:
+      - eval $({{.TOOLSBIN}}/setup-envtest use -p env {{.ENVTEST_VERSION}}) && {{.TOOLSBIN}}/ginkgo --tags {{.GO_BUILD_TAGS}} {{with .FOCUS}}-focus "{{.}}"{{end}} -coverprofile cover.out {{.PKGS}}
+    deps: [tools:setup-envtest, tools:ginkgo]
+
+  e2e:
+    desc: "Run e2e tests"
+    summary: |
+      Run e2e tests.
+      
+      The FOCUS variable can be used to filter tests by name.
+    cmds:
+      - defer:
+          task: kind:delete
+          vars:
+            KIND_CLUSTER_NAME: "{{.KIND_CLUSTER_NAME}}-e2e"
+      - "{{.TOOLSBIN}}/ginkgo --tags {{.GO_BUILD_TAGS}} -progress -trace {{with .FOCUS}}-focus '{{.}}'{{end}} ./test/e2e"
+    deps:
+      - tools:ginkgo
+      - task: deploy:kind
+        vars:
+          KIND_CLUSTER_NAME: "{{.KIND_CLUSTER_NAME}}-e2e"
+
+  sanity:
+    desc: "Run sanity checks"
+    summary: |
+      Run sanity checks.
+      
+      These checks include running formatters and code generation to ensure the
+      repository is in a clean, consistent state.
+      
+      They also include running the linters and static analysis tools.
+    cmds:
+      - git diff --exit-code
+    deps: [ style, build:generate ]

@@ -1,0 +1,16 @@
+version: '3'
+
+tasks:
+  default:
+    deps: [ fmt, vet, tidy ]
+
+  fmt:
+    cmds:
+      - go fmt ./...
+  vet:
+    cmds:
+      - go vet ./...
+  tidy:
+    cmds:
+      - go mod tidy
+

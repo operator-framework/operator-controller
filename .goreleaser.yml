@@ -10,7 +10,7 @@ builds:
   - id: operator-controller
     main: ./
     binary: bin/manager
-    tags: $GO_BUILD_TAGS
+    tags: upstream
     goos:
     - linux
     goarch:
@@ -22,7 +22,7 @@ builds:
     - -X main.Version={{ .Version }}
 dockers:
 - image_templates:
-  - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+    - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
   dockerfile: Dockerfile
   goos: linux
   goarch: amd64
@@ -58,11 +58,12 @@ changelog:
 release:
   disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
   extra_files:
+  - glob: 'install.sh'
   - glob: 'operator-controller.yaml'
   - glob: 'install.sh'
   header: |
     ## Installation
 
     ```bash
-    curl -L -s https://github.com/operator-framework/operator-controller/releases/download/{{ .Tag }}/install.sh | bash -s
+    curl -sSL https://github.com/operator-framework/operator-controller/releases/download/{{ .Env.IMAGE_TAG }}/install.sh | bash -s
     ```

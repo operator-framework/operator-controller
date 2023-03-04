@@ -1,8 +1,0 @@
-# More info: https://docs.docker.com/engine/reference/builder/#dockerignore-file
-# Ignore tools binaries
-# TODO dfranz: We don't need this file anymore once we move the tool binaries out.
-controller-gen
-ginkgo
-goreleaser
-kind
-kustomize
