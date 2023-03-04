@@ -11,6 +11,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	catsrcapi "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 )
@@ -36,6 +37,9 @@ var _ = BeforeSuite(func() {
 
 	err = rukpakv1alpha1.AddToScheme(scheme)
 	Expect(err).To(Not(HaveOccurred()))
+
+	err = catsrcapi.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
 
 	c, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).To(Not(HaveOccurred()))

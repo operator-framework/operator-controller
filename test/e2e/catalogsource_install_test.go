@@ -22,29 +22,34 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	yaml2 "k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 // ListEntities
-func createTestNamespace(ctx context.Context, c *kubernetes.Clientset, prefix string) string {
-	ns, err := c.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{
+func createTestNamespace(ctx context.Context, c client.Client, prefix string) string {
+	ns := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: prefix,
 		},
-	}, metav1.CreateOptions{})
+	}
+	err := c.Create(ctx, ns)
 	Expect(err).To(BeNil())
 	return ns.Name
 }
 
-func deleteTestNamespace(ctx context.Context, c *kubernetes.Clientset, name string) {
-	err := c.CoreV1().Namespaces().Delete(ctx, name, metav1.DeleteOptions{})
+func deleteTestNamespace(ctx context.Context, c client.Client, name string) {
+	err := c.Delete(ctx, &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	})
 	Expect(err).To(BeNil())
 }
 
-func createTestServiceAccount(ctx context.Context, cli *kubernetes.Clientset, namespace, prefix string) string {
-	sa, err := cli.CoreV1().ServiceAccounts(namespace).Create(ctx, &corev1.ServiceAccount{
+func createTestServiceAccount(ctx context.Context, c client.Client, namespace, prefix string) string {
+	sa := &corev1.ServiceAccount{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ServiceAccount",
 			APIVersion: "v1",
@@ -53,13 +58,14 @@ func createTestServiceAccount(ctx context.Context, cli *kubernetes.Clientset, na
 			GenerateName: prefix,
 			Namespace:    namespace,
 		},
-	}, metav1.CreateOptions{})
+	}
+	err := c.Create(ctx, sa)
 	Expect(err).To(BeNil())
 	return sa.Name
 }
 
-func createTestRegistryPod(ctx context.Context, cli *kubernetes.Clientset, namespace, prefix, serviceAccount string) string {
-	pod, err := cli.CoreV1().Pods(namespace).Create(ctx, &corev1.Pod{
+func createTestRegistryPod(ctx context.Context, cli client.Client, namespace, prefix, serviceAccount string) string {
+	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Pod",
 			APIVersion: "v1",
@@ -68,6 +74,7 @@ func createTestRegistryPod(ctx context.Context, cli *kubernetes.Clientset, names
 			GenerateName: prefix,
 			Labels:       map[string]string{"catalogsource": "prometheus-index"},
 			Annotations:  nil,
+			Namespace:    namespace,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
@@ -111,12 +118,13 @@ func createTestRegistryPod(ctx context.Context, cli *kubernetes.Clientset, names
 				TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 			}},
 			ServiceAccountName: serviceAccount,
-		},
-	}, metav1.CreateOptions{})
+		}}
+	err := cli.Create(ctx, pod)
 	Expect(err).To(BeNil())
 
+	currentPod := corev1.Pod{}
 	Eventually(func() (bool, error) {
-		currentPod, err := cli.CoreV1().Pods(namespace).Get(ctx, pod.Name, metav1.GetOptions{})
+		err := cli.Get(ctx, types.NamespacedName{Name: pod.Name, Namespace: namespace}, &currentPod)
 		if err != nil {
 			return false, err
 		}
@@ -128,14 +136,15 @@ func createTestRegistryPod(ctx context.Context, cli *kubernetes.Clientset, names
 	return pod.Name
 }
 
-func createTestRegistryService(ctx context.Context, cli *kubernetes.Clientset, namespace, prefix string) string {
-	svc, err := cli.CoreV1().Services(namespace).Create(ctx, &corev1.Service{
+func createTestRegistryService(ctx context.Context, cli client.Client, namespace, prefix string) string {
+	svc := &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: prefix,
+			Namespace:    namespace,
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
@@ -148,7 +157,8 @@ func createTestRegistryService(ctx context.Context, cli *kubernetes.Clientset, n
 			Type:     corev1.ServiceTypeNodePort,
 			Selector: map[string]string{"catalogsource": "prometheus-index"},
 		},
-	}, metav1.CreateOptions{})
+	}
+	err := c.Create(ctx, svc)
 	Expect(err).To(BeNil())
 
 	conn, err := grpc.Dial(getServiceAddress(ctx, cli, namespace, svc.Name), []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}...)
@@ -174,8 +184,9 @@ func createTestRegistryService(ctx context.Context, cli *kubernetes.Clientset, n
 	return svc.Name
 }
 
-func getServiceAddress(ctx context.Context, cli *kubernetes.Clientset, namespace, name string) string {
-	svc, err := cli.CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{})
+func getServiceAddress(ctx context.Context, cli client.Client, namespace, name string) string {
+	svc := corev1.Service{}
+	err := cli.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &svc)
 	Expect(err).To(BeNil())
 	c := config.GetConfigOrDie()
 	parts := strings.Split(c.Host, ":")
@@ -223,7 +234,7 @@ func applyCRDifNotPresent(ctx context.Context) func() {
 	return cleanup
 }
 
-func createTestCatalogSource(ctx context.Context, cli *kubernetes.Clientset, namespace, name, serviceName string) {
+func createTestCatalogSource(ctx context.Context, cli client.Client, namespace, name, serviceName string) {
 	scheme := runtime.NewScheme()
 	// Add catalogSources
 	err := v1alpha1.AddToScheme(scheme)
