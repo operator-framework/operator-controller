@@ -60,7 +60,6 @@ type BundleEntity struct {
 	requiredPackages  []PackageRequired
 	channelProperties *ChannelProperties
 	semVersion        *semver.Version
-	bundlePath        string
 	mu                sync.RWMutex
 }
 

@@ -152,6 +152,8 @@ func createTestRegistryService(ctx context.Context, cli *kubernetes.Clientset, n
 	Expect(err).To(BeNil())
 
 	conn, err := grpc.Dial(getServiceAddress(ctx, cli, namespace, svc.Name), []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}...)
+	Expect(err).ToNot(HaveOccurred())
+
 	defer conn.Close()
 	oldState := conn.GetState()
 	Eventually(func(g Gomega) {

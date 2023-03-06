@@ -2,8 +2,9 @@ package catalogsource_test
 
 import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
-	"github.com/operator-framework/operator-controller/internal/resolution/entity_sources/catalogsource"
 	catalogsourceapi "github.com/operator-framework/operator-registry/pkg/api"
+
+	"github.com/operator-framework/operator-controller/internal/resolution/entity_sources/catalogsource"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
