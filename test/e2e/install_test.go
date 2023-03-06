@@ -28,10 +28,20 @@ var _ = Describe("Operator Install", func() {
 		operator     *operatorv1alpha1.Operator
 	)
 
-	// var kubeClient *kubernetes.Clientset
 	var testNamespace string
 	cleanup := func() {}
 	ctx = context.TODO()
+	BeforeEach(func() {
+		testNamespace := createTestNamespace(ctx, c, "registry-grpc-")
+		cleanup = applyCRDifNotPresent(ctx)
+		testPrefix := "registry-grpc-"
+
+		serviceAccountName := createTestServiceAccount(ctx, c, testNamespace, testPrefix)
+		createTestRegistryPod(ctx, c, testNamespace, testPrefix, serviceAccountName)
+		serviceName := createTestRegistryService(ctx, c, testNamespace, testPrefix)
+		createTestCatalogSource(ctx, c, testNamespace, "prometheus-index", serviceName)
+
+	})
 	AfterEach(func() {
 		deleteTestNamespace(ctx, c, testNamespace)
 		cleanup()

@@ -6,6 +6,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -39,6 +40,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).To(Not(HaveOccurred()))
 
 	err = catsrcapi.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = corev1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	c, err = client.New(cfg, client.Options{Scheme: scheme})

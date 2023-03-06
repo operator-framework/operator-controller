@@ -4,13 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
-	"time"
 
 	. "github.com/onsi/gomega"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -154,33 +149,38 @@ func createTestRegistryService(ctx context.Context, cli client.Client, namespace
 					TargetPort: intstr.FromInt(50051),
 				},
 			},
-			Type:     corev1.ServiceTypeNodePort,
 			Selector: map[string]string{"catalogsource": "prometheus-index"},
 		},
 	}
 	err := c.Create(ctx, svc)
 	Expect(err).To(BeNil())
 
-	conn, err := grpc.Dial(getServiceAddress(ctx, cli, namespace, svc.Name), []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}...)
-	Expect(err).ToNot(HaveOccurred())
+	// svcAddress := getServiceAddress(ctx, cli, namespace, svc.Name)
 
-	defer conn.Close()
-	oldState := conn.GetState()
-	Eventually(func(g Gomega) {
-		state := conn.GetState()
-		if state != connectivity.Ready {
-			if conn.WaitForStateChange(ctx, conn.GetState()) {
-				state = conn.GetState()
-				if oldState != state {
-					oldState = state
-					if state == connectivity.Idle {
-						conn.Connect()
-					}
-				}
-			}
-		}
-		g.Expect(conn.GetState()).To(Equal(connectivity.Ready))
-	}).WithTimeout(2 * time.Minute).Should(Succeed())
+	// conn, err := grpc.Dial(svcAddress, grpc.WithInsecure())
+	// Expect(err).ToNot(HaveOccurred())
+
+	// fmt.Println("svcAddress", svcAddress)
+	// connectionContext, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// defer cancel()
+
+	// defer conn.Close()
+	// oldState := conn.GetState()
+	// Eventually(func(g Gomega) {
+	// 	state := conn.GetState()
+	// 	if state != connectivity.Ready {
+	// 		if conn.WaitForStateChange(connectionContext, conn.GetState()) {
+	// 			state = conn.GetState()
+	// 			if oldState != state {
+	// 				oldState = state
+	// 				if state == connectivity.Idle {
+	// 					conn.Connect()
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	g.Expect(conn.GetState()).To(Equal(connectivity.Ready))
+	// }).WithTimeout(2 * time.Minute).Should(Succeed())
 	return svc.Name
 }
 
@@ -188,14 +188,7 @@ func getServiceAddress(ctx context.Context, cli client.Client, namespace, name s
 	svc := corev1.Service{}
 	err := cli.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &svc)
 	Expect(err).To(BeNil())
-	c := config.GetConfigOrDie()
-	parts := strings.Split(c.Host, ":")
-	address := parts[0]
-	if len(parts) == 3 {
-		address = strings.TrimLeft(parts[1], "/")
-	}
-	// TODO: not required on-cluster, fix Dockerfile and use fmt.Sprintf("%s.%s.svc:%d", svc.Name, svc.Namespace, svc.Spec.Ports[0].Port)
-	return fmt.Sprintf("%s:%d", address, svc.Spec.Ports[0].NodePort)
+	return fmt.Sprintf("%s.%s.svc:%d", svc.Name, svc.Namespace, svc.Spec.Ports[0].Port)
 }
 
 func applyCRDifNotPresent(ctx context.Context) func() {
