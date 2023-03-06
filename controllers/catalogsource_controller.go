@@ -86,6 +86,7 @@ func NewCatalogSourceReconciler(client client.Client, scheme *runtime.Scheme, re
 }
 
 // +kubebuilder:rbac:groups=operators.coreos.com,resources=catalogsources,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("catalogsource-controller")
