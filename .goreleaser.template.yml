@@ -1,0 +1,50 @@
+env:
+- GOPROXY=https://proxy.golang.org|direct
+- GO111MODULE=on
+- CGO_ENABLED=0
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+builds:
+  - id: operator-controller
+    main: ./
+    binary: bin/manager
+    tags: $GO_BUILD_TAGS
+    goos:
+    - linux
+    ldflags:
+    - -X main.Version={{ .Version }}
+dockers:
+- image_templates:
+  - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
+  dockerfile: Dockerfile
+  goos: linux
+docker_manifests:
+- name_template: "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
+  image_templates:
+  - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  use: github-native
+  skip: $DISABLE_RELEASE_PIPELINE
+release:
+  disable: $DISABLE_RELEASE_PIPELINE
+  extra_files:
+  - glob: 'operator-controller.yaml'
+  header: |
+    ## Installation
+
+    ```bash
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/{{ .Env.CERT_MGR_VERSION }}/cert-manager.yaml
+    kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
+    kubectl apply -f https://github.com/operator-framework/rukpak/releases/latest/download/rukpak.yaml
+    kubectl wait --for=condition=Available --namespace=rukpak-system deployment/core --timeout=60s
+    kubectl wait --for=condition=Available --namespace=rukpak-system deployment/helm-provisioner --timeout=60s
+    kubectl wait --for=condition=Available --namespace=rukpak-system deployment/rukpak-webhooks --timeout=60s
+    kubectl apply -f https://github.com/operator-framework/operator-controller/releases/download/{{ .Tag }}/operator-controller.yaml
+    kubectl wait --for=condition=Available --namespace=operator-controller-system deployment/operator-controller-controller-manager --timeout=60s
+    ```

@@ -6,6 +6,7 @@ export IMAGE_REPO ?= quay.io/operator-framework/operator-controller
 export IMAGE_TAG ?= devel
 export GO_BUILD_TAGS ?= upstream
 export CERT_MGR_VERSION ?= v1.9.0
+export GORELEASER_VERSION ?= v1.15.2
 export WAIT_TIMEOUT ?= 60s
 IMG?=$(IMAGE_REPO):$(IMAGE_TAG)
 
@@ -94,8 +95,8 @@ kind-cluster-cleanup: kind ## Delete the kind cluster
 ##@ Build
 
 .PHONY: build
-build: manifests generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
+build: manifests generate fmt vet substitute goreleaser ## Build manager binary using goreleaser for current GOOS and GOARCH.
+	${GORELEASER} build ${GORELEASER_ARGS} --single-target -o bin/manager
 
 .PHONY: run
 run: docker-build kind-cluster kind-load cert-mgr rukpak install deploy wait ## Build the operator-controller then deploy it into a new kind cluster.
@@ -108,12 +109,9 @@ wait:
 # (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
-docker-build: generate ## Build docker image with the operator-controller.
-	docker build -t ${IMG} .
-
-.PHONY: docker-push
-docker-push: ## Push docker image with the manager.
-	docker push ${IMG}
+docker-build: export GOOS=linux
+docker-build: build ## Build docker image with the operator-controller.
+	docker build -t ${IMG} -f Dockerfile ./bin/
 
 # PLATFORMS defines the target platforms for  the manager image be build to provide support to multiple
 # architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:
@@ -131,6 +129,24 @@ docker-buildx: test ## Build and push docker image for the manager for cross-pla
 	- docker buildx build --push --platform=$(PLATFORMS) --tag ${IMG} -f Dockerfile.cross .
 	- docker buildx rm project-v3-builder
 	rm Dockerfile.cross
+
+###########
+# Release #
+###########
+
+##@ Release:
+export DISABLE_RELEASE_PIPELINE ?= true
+export GORELEASER_ARGS ?= --snapshot --rm-dist
+
+substitute:
+	envsubst < .goreleaser.template.yml > .goreleaser.yml
+
+release: substitute goreleaser ## Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
+	$(GORELEASER) $(GORELEASER_ARGS)
+
+quickstart: VERSION ?= $(shell git describe --abbrev=0 --tags)
+quickstart: kustomize generate ## Generate the installation release manifests
+	kubectl kustomize config/default | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
 
 ##@ Deployment
 
@@ -178,6 +194,7 @@ KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 KIND ?= $(LOCALBIN)/kind
 GINKGO ?= $(LOCALBIN)/ginkgo
+GORELEASER := $(LOCALBIN)/goreleaser
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
@@ -193,6 +210,11 @@ $(KIND): $(LOCALBIN)
 ginkgo: $(GINKGO) ## Download ginkgo locally if necessary.
 $(GINKGO): $(LOCALBIN)
 	test -s $(LOCALBIN)/ginkgo || GOBIN=$(LOCALBIN) go install github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
+
+.PHONY: goreleaser
+goreleaser: $(GORELEASER) ## Builds a local copy of goreleaser
+$(GORELEASER): $(LOCALBIN)
+	test -s $(LOCALBIN)/goreleaser || GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@${GORELEASER_VERSION}
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
