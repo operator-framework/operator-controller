@@ -75,7 +75,7 @@ func createTestRegistryPod(ctx context.Context, cli client.Client, namespace, pr
 			Containers: []corev1.Container{{
 				Name: "registry",
 				// TODO: switch to using locally built and loaded images to avoid flakes
-				Image: "quay.io/ankitathomas/index:prometheus-index-v0.37.0",
+				Image: "quay.io/ankitathomas/index:quay",
 				Ports: []corev1.ContainerPort{
 					{
 						Name:          "grpc",
@@ -155,32 +155,6 @@ func createTestRegistryService(ctx context.Context, cli client.Client, namespace
 	err := c.Create(ctx, svc)
 	Expect(err).To(BeNil())
 
-	// svcAddress := getServiceAddress(ctx, cli, namespace, svc.Name)
-
-	// conn, err := grpc.Dial(svcAddress, grpc.WithInsecure())
-	// Expect(err).ToNot(HaveOccurred())
-
-	// fmt.Println("svcAddress", svcAddress)
-	// connectionContext, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	// defer cancel()
-
-	// defer conn.Close()
-	// oldState := conn.GetState()
-	// Eventually(func(g Gomega) {
-	// 	state := conn.GetState()
-	// 	if state != connectivity.Ready {
-	// 		if conn.WaitForStateChange(connectionContext, conn.GetState()) {
-	// 			state = conn.GetState()
-	// 			if oldState != state {
-	// 				oldState = state
-	// 				if state == connectivity.Idle {
-	// 					conn.Connect()
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// 	g.Expect(conn.GetState()).To(Equal(connectivity.Ready))
-	// }).WithTimeout(2 * time.Minute).Should(Succeed())
 	return svc.Name
 }
 
@@ -191,6 +165,7 @@ func getServiceAddress(ctx context.Context, cli client.Client, namespace, name s
 	return fmt.Sprintf("%s.%s.svc:%d", svc.Name, svc.Namespace, svc.Spec.Ports[0].Port)
 }
 
+// TODO: ensure CRD support in test environment setup in Makefile
 func applyCRDifNotPresent(ctx context.Context) func() {
 	cleanup := func() {}
 	scheme := runtime.NewScheme()
@@ -245,7 +220,8 @@ func createTestCatalogSource(ctx context.Context, cli client.Client, namespace, 
 			Namespace: namespace,
 		},
 		Spec: v1alpha1.CatalogSourceSpec{
-			Address: getServiceAddress(ctx, cli, namespace, serviceName),
+			Address:    getServiceAddress(ctx, cli, namespace, serviceName),
+			SourceType: v1alpha1.SourceTypeGrpc,
 		},
 	})
 	Expect(err).To(BeNil())

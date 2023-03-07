@@ -102,6 +102,7 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	entities, err := r.registry.ListEntities(ctx, catalogSource)
+	// TODO: invalidate stale cache for failed updates
 	if err != nil {
 		r.recorder.Event(catalogSource, eventTypeWarning, eventReasonCacheUpdateFailed, fmt.Sprintf("Failed to update bundle cache from %s/%s: %v", catalogSource.GetNamespace(), catalogSource.GetName(), err))
 		return ctrl.Result{Requeue: !isManagedCatalogSource(*catalogSource)}, err
