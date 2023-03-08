@@ -30,7 +30,9 @@ spec:
         command:
         - "./manager"
         args:
-        - --profiling=true
+        # If you are interested in enabling the endpoints for collecting
+        # performance metrics via pprof uncomment the below line:
+        # - --profiling=true
         resources:
           requests:
             cpu: 1000m
