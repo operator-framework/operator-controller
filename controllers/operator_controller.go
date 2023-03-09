@@ -294,10 +294,6 @@ func verifyBDStatus(dep *rukpakv1alpha1.BundleDeployment) (metav1.ConditionStatu
 	isValidBundleCond := apimeta.FindStatusCondition(dep.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
 	isInstalledCond := apimeta.FindStatusCondition(dep.Status.Conditions, rukpakv1alpha1.TypeInstalled)
 
-	if isValidBundleCond == nil && isInstalledCond == nil {
-		return metav1.ConditionUnknown, fmt.Sprintf("waiting for bundleDeployment %q status to be updated", dep.Name)
-	}
-
 	if isValidBundleCond != nil && isValidBundleCond.Status == metav1.ConditionFalse {
 		return metav1.ConditionFalse, isValidBundleCond.Message
 	}
@@ -309,11 +305,21 @@ func verifyBDStatus(dep *rukpakv1alpha1.BundleDeployment) (metav1.ConditionStatu
 	if isInstalledCond != nil && isInstalledCond.Status == metav1.ConditionTrue {
 		return metav1.ConditionTrue, "install was successful"
 	}
-	return metav1.ConditionUnknown, fmt.Sprintf("could not determine the state of bundleDeployment %s", dep.Name)
+	return metav1.ConditionUnknown, fmt.Sprintf("could not determine the state of BundleDeployment %s", dep.Name)
 }
 
 // mapBDStatusToReadyCondition returns the operator object's "TypeReady" condition based on the bundle deployment statuses.
 func mapBDStatusToReadyCondition(existingBD *rukpakv1alpha1.BundleDeployment, observedGeneration int64) metav1.Condition {
+	// if BundleDeployment status is stale, return an unknown condition.
+	if isBundleDepStale(existingBD) {
+		return metav1.Condition{
+			Type:               operatorsv1alpha1.TypeReady,
+			Status:             metav1.ConditionUnknown,
+			Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
+			Message:            fmt.Sprintf("waiting for BundleDeployment %q status to be updated. BundleDeployment conditions out of date.", existingBD.Name),
+			ObservedGeneration: observedGeneration,
+		}
+	}
 	// update operator status:
 	// 1. If the Operator "Ready" status is "Unknown": The status of successful bundleDeployment is unknown, wait till Rukpak updates the BD status.
 	// 2. If the Operator "Ready" status is "True": Update the "successful resolution" status and return the result.
@@ -337,4 +343,9 @@ func mapBDStatusToReadyCondition(existingBD *rukpakv1alpha1.BundleDeployment, ob
 		Message:            message,
 		ObservedGeneration: observedGeneration,
 	}
+}
+
+// isBundleDepStale returns true if conditions are out of date.
+func isBundleDepStale(bd *rukpakv1alpha1.BundleDeployment) bool {
+	return bd != nil && bd.Status.ObservedGeneration != bd.GetGeneration()
 }
