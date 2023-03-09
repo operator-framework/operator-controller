@@ -44,7 +44,7 @@ spec:
             memory: 20Mi
           limits:
             cpu: 100m
-            memory: 300Mi
+            memory: 30Mi
       volumes:
       - name: apiserver-certs
         secret:
