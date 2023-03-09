@@ -33,6 +33,7 @@ import (
 
 	"github.com/anik120/rukpak-packageserver/pkg/apis/core/v1beta1"
 	corecontrollers "github.com/anik120/rukpak-packageserver/pkg/controllers/core"
+	"github.com/anik120/rukpak-packageserver/pkg/profile"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -53,6 +54,7 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	var opmImage string
+	var profiling bool
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -62,6 +64,7 @@ func main() {
 	opts := zap.Options{
 		Development: true,
 	}
+	flag.BoolVar(&profiling, "profiling", false, "enable profiling endpoints to allow for using pprof")
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
@@ -112,6 +115,14 @@ func main() {
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
+	}
+
+	if profiling {
+		pprofer := profile.NewPprofer()
+		if err := pprofer.ConfigureControllerManager(mgr); err != nil {
+			setupLog.Error(err, "unable to setup pprof configuration")
+			os.Exit(1)
+		}
 	}
 
 	setupLog.Info("starting manager")

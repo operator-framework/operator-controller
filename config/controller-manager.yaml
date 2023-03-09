@@ -25,9 +25,14 @@ spec:
       - name: controller
         image: docker.io/anik120/catalogsource-controller:latest
         imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
         command:
         - "./manager"
-        args: []
+        args:
+        # If you are interested in enabling the endpoints for collecting
+        # performance metrics via pprof uncomment the below line:
+        # - --profiling=true
         resources:
           requests:
             cpu: 1000m

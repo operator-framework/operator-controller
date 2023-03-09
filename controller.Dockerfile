@@ -13,6 +13,7 @@ RUN go mod download
 COPY main.go main.go
 COPY pkg/apis/ pkg/apis/
 COPY pkg/controllers/ pkg/controllers/
+COPY pkg/profile/    pkg/profile/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
