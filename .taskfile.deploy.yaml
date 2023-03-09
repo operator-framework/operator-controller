@@ -18,9 +18,17 @@ tasks:
     - ./install.sh
     deps:
       - task: build:docker
+        vars:
+          GO_COVER: "{{.GO_COVER}}"
+          GO_BUILD_TAGS: "{{.GO_BUILD_TAGS}}"
       - task: build:manifest
+        vars:
+          KUSTOMIZE_DIR: "{{.KUSTOMIZE_DIR}}"
+          OPERATOR_CONTROLLER_MANIFEST: "{{.OPERATOR_CONTROLLER_MANIFEST}}"
       - task: build:install-script
+        vars:
+          OPERATOR_CONTROLLER_MANIFEST: "{{.OPERATOR_CONTROLLER_MANIFEST}}"
       - task: kind:create
         vars:
           KIND_CLUSTER_NAME: "{{.KIND_CLUSTER_NAME}}"
-    desc: "Run the operator in a fresh kind cluster"
+          KIND_EXTRA_FLAGS: "{{.KIND_EXTRA_FLAGS}}"

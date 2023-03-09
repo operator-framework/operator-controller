@@ -7,6 +7,7 @@ includes:
 
 vars:
   BIN: "{{.ROOT_DIR}}/bin"
+  KUSTOMIZE_DIR: "config/default"
   OPERATOR_CONTROLLER_MANIFEST: ./operator-controller.yaml
 
   OLMV0_VERSION: v0.24.0
@@ -36,9 +37,16 @@ tasks:
       By default, the binary is created at ./bin/manager.
       
       To generate the binary for a different OS, set the GOOS task variable accordingly.
+
+      The GO_COVER task variable instruments the operator with coverage enabled when set to "true"
+      or disabled when set to "false". The default is "false".
+    env:
+      GOOS: "{{.GOOS}}"
+      GO_COVER: '{{.GO_COVER | default "false" }}'
+      GO_BUILD_TAGS: "{{.GO_BUILD_TAGS}}"
     cmds:
       - mkdir -p {{.BIN}}
-      - GOOS={{.GOOS}} {{.TOOLSBIN}}/goreleaser build --single-target --snapshot --clean --output {{.BIN}}/manager
+      - "{{.TOOLSBIN}}/goreleaser build --debug --single-target --snapshot --clean --output {{.BIN}}/manager"
     deps: [tools:goreleaser, generate]
 
   docker:
@@ -60,6 +68,7 @@ tasks:
         vars:
           BIN: "{{.ROOT_DIR}}/bin/linux"
           GOOS: linux
+          GO_COVER: "{{.GO_COVER}}"
 
   manifest:
     desc: "Generate the operator manifest"
@@ -70,7 +79,7 @@ tasks:
       with the controller image set to the IMAGE_REPO and IMAGE_TAG environment variables.
     cmds:
       - cd config/manager && {{.TOOLSBIN}}/kustomize edit set image controller=$IMAGE_REPO:$IMAGE_TAG
-      - "{{.TOOLSBIN}}/kustomize build config/default > ./operator-controller.yaml"
+      - "{{.TOOLSBIN}}/kustomize build {{.KUSTOMIZE_DIR}} > {{.OPERATOR_CONTROLLER_MANIFEST}}"
     deps: [tools:kustomize, generate]
 
   install-script:

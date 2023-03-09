@@ -12,12 +12,12 @@ vendor
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
-cover.out
+/coverage
 
 # Release output
 /dist/**
 /install.sh
-/operator-controller.yaml
+/operator-controller*.yaml
 
 # editor and IDE paraphernalia
 .idea

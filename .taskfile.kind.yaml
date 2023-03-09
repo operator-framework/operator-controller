@@ -12,7 +12,7 @@ tasks:
   create:
     desc: "Create a fresh kind cluster"
     cmds:
-      - "{{.TOOLSBIN}}/kind create cluster --name {{.KIND_CLUSTER_NAME}}"
+      - "{{.TOOLSBIN}}/kind create cluster --name {{.KIND_CLUSTER_NAME}} {{.KIND_EXTRA_FLAGS}}"
     deps:
       - tools:kind
       - task: delete

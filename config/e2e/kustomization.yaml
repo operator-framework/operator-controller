@@ -1,0 +1,7 @@
+resources:
+- ../default
+
+patchesStrategicMerge:
+  # Tweak the operator manifest to use configure volume mount and environment
+  # variables to facilitate coverage collection.
+  - manager_e2e_patch.yaml

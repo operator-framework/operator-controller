@@ -4,7 +4,7 @@ vars:
   CONTROLLER_GEN_VERSION: v0.11.3
   GINKGO_VERSION:
     sh: go list -m -f {{ "{{.Version}}" }} github.com/onsi/ginkgo/v2
-  GORELEASER_VERSION: main
+  GORELEASER_VERSION: v1.16.1
   KIND_VERSION: v0.17.0
   KUSTOMIZE_VERSION: v4.5.7
   SETUP_ENVTEST_VERSION: latest

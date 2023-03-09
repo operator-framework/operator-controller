@@ -44,8 +44,16 @@ tasks:
       
       The FOCUS variable can be used to filter tests by name.
       The PKGS variable can be used to filter tests by package.
+    vars:
+      GOCOVERDIR: "./coverage/unit"
     cmds:
-      - eval $({{.TOOLSBIN}}/setup-envtest use -p env {{.ENVTEST_VERSION}}) && {{.TOOLSBIN}}/ginkgo --tags {{.GO_BUILD_TAGS}} {{with .FOCUS}}-focus "{{.}}"{{end}} -coverprofile cover.out {{.PKGS}}
+      - rm -rf {{.GOCOVERDIR}} && mkdir -p {{.GOCOVERDIR}} && chmod 1777 {{.GOCOVERDIR}}
+      - defer:
+          task: rm-file
+          vars:
+            FILE: .ginkgo.coverprofile.out
+      - eval $({{.TOOLSBIN}}/setup-envtest use -p env {{.ENVTEST_VERSION}}) && {{.TOOLSBIN}}/ginkgo --coverprofile=.ginkgo.coverprofile.out --tags {{.GO_BUILD_TAGS}} --progress --trace {{with .FOCUS}}--focus "{{.}}"{{end}} {{.PKGS}} -- -test.gocoverdir="{{.ROOT_DIR}}/{{.GOCOVERDIR}}"
+      - go tool covdata percent -i={{.GOCOVERDIR}}
     deps: [tools:setup-envtest, tools:ginkgo]
 
   e2e:
@@ -54,17 +62,41 @@ tasks:
       Run e2e tests.
       
       The FOCUS variable can be used to filter tests by name.
+    vars:
+      GOCOVERDIR: "./coverage/e2e"
     cmds:
+      - rm -rf {{.GOCOVERDIR}} && mkdir -p {{.GOCOVERDIR}} && chmod 1777 {{.GOCOVERDIR}}
+      - |
+        cat << EOF > ./kind-e2e.yaml
+        kind: Cluster
+        apiVersion: kind.x-k8s.io/v1alpha4
+        nodes:
+          - role: control-plane
+            extraMounts:
+              - hostPath: {{.GOCOVERDIR}}
+                containerPath: /tmp/coverdata
+        EOF
+      - defer:
+          task: rm-file
+          vars:
+            FILE: "./kind-e2e.yaml"
+      - task: deploy:kind
+        vars:
+          KUSTOMIZE_DIR: "config/e2e"
+          OPERATOR_CONTROLLER_MANIFEST: "operator-controller-e2e.yaml"
+          KIND_CLUSTER_NAME: "{{.KIND_CLUSTER_NAME}}-e2e"
+          KIND_EXTRA_FLAGS: "--config ./kind-e2e.yaml"
+          GO_COVER: "true"
       - defer:
           task: kind:delete
           vars:
             KIND_CLUSTER_NAME: "{{.KIND_CLUSTER_NAME}}-e2e"
-      - "{{.TOOLSBIN}}/ginkgo --tags {{.GO_BUILD_TAGS}} -progress -trace {{with .FOCUS}}-focus '{{.}}'{{end}} ./test/e2e"
-    deps:
-      - tools:ginkgo
-      - task: deploy:kind
-        vars:
-          KIND_CLUSTER_NAME: "{{.KIND_CLUSTER_NAME}}-e2e"
+      - "{{.TOOLSBIN}}/ginkgo --tags {{.GO_BUILD_TAGS}} --progress --trace {{with .FOCUS}}--focus '{{.}}'{{end}} ./test/e2e"
+
+      # Delete the operator controller manager pod to write the coverage data to disk.
+      - kubectl delete --wait pod -n operator-controller-system -l control-plane=controller-manager
+      - go tool covdata percent -i={{.GOCOVERDIR}}
+    deps: [tools:ginkgo]
 
   sanity:
     desc: "Run sanity checks"
@@ -78,3 +110,9 @@ tasks:
     cmds:
       - git diff --exit-code
     deps: [ style, build:generate ]
+
+  rm-file:
+    cmds:
+      - rm -f {{.FILE}}
+    silent: true
+    internal: true

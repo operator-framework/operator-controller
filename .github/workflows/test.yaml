@@ -35,3 +35,17 @@ jobs:
       - name: Run ${{matrix.test}} test
         run: |
           task test:${{matrix.test}}
+
+      - name: Convert coverage data to Codecov format
+        if: ${{matrix.test == 'unit' || matrix.test == 'e2e'}}
+        run: |
+          go tool covdata textfmt -i=coverage/${{matrix.test}} -o=coverage/${{matrix.test}}.out
+
+      - name: Upload coverage data to Codecov
+        if: ${{matrix.test == 'unit' || matrix.test == 'e2e'}}
+        uses: codecov/codecov-action@v3
+        with:
+          file: coverage/${{matrix.test}}.out
+          flags: ${{matrix.test}}
+          fail_ci_if_error: true
+

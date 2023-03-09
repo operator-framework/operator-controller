@@ -6,6 +6,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
@@ -14,7 +15,6 @@ import (
 
 	catsrcapi "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 )
 
 var (

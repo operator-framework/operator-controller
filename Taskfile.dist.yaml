@@ -57,6 +57,9 @@ tasks:
         GitHub changelog and release pipeline steps. By default, this is set to false.
         This should only be set to true when running the release task for a tagged
         release.
+    env:
+      GO_COVER: false
+      GO_BUILD_TAGS: "{{.GO_BUILD_TAGS}}"
     cmds:
       - task: build:manifest
       - task: build:install-script
