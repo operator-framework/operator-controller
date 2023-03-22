@@ -19,6 +19,13 @@ type ChannelProperties struct {
 	SkipRange string   `json:"skipRange,omitempty"`
 }
 
+type propertyRequirement bool
+
+const (
+	required propertyRequirement = true
+	optional propertyRequirement = false
+)
+
 type PackageRequired struct {
 	property.PackageRequired
 	SemverRange *semver.Range `json:"-"`
@@ -121,7 +128,7 @@ func (b *BundleEntity) loadPackage() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.bundlePackage == nil {
-		bundlePackage, err := loadFromEntity[property.Package](b.Entity, property.TypePackage)
+		bundlePackage, err := loadFromEntity[property.Package](b.Entity, property.TypePackage, required)
 		if err != nil {
 			return fmt.Errorf("error determining package for entity '%s': %w", b.ID, err)
 		}
@@ -141,7 +148,7 @@ func (b *BundleEntity) loadProvidedGVKs() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.providedGVKs == nil {
-		providedGVKs, err := loadFromEntity[[]GVK](b.Entity, property.TypeGVK)
+		providedGVKs, err := loadFromEntity[[]GVK](b.Entity, property.TypeGVK, optional)
 		if err != nil {
 			return fmt.Errorf("error determining bundle provided gvks for entity '%s': %w", b.ID, err)
 		}
@@ -154,7 +161,7 @@ func (b *BundleEntity) loadRequiredGVKs() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.requiredGVKs == nil {
-		requiredGVKs, err := loadFromEntity[[]GVKRequired](b.Entity, property.TypeGVKRequired)
+		requiredGVKs, err := loadFromEntity[[]GVKRequired](b.Entity, property.TypeGVKRequired, optional)
 		if err != nil {
 			return fmt.Errorf("error determining bundle required gvks for entity '%s': %w", b.ID, err)
 		}
@@ -167,7 +174,7 @@ func (b *BundleEntity) loadRequiredPackages() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.requiredPackages == nil {
-		requiredPackages, err := loadFromEntity[[]PackageRequired](b.Entity, property.TypePackageRequired)
+		requiredPackages, err := loadFromEntity[[]PackageRequired](b.Entity, property.TypePackageRequired, optional)
 		if err != nil {
 			return fmt.Errorf("error determining bundle required packages for entity '%s': %w", b.ID, err)
 		}
@@ -187,7 +194,7 @@ func (b *BundleEntity) loadChannelProperties() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.channelProperties == nil {
-		channel, err := loadFromEntity[ChannelProperties](b.Entity, property.TypeChannel)
+		channel, err := loadFromEntity[ChannelProperties](b.Entity, property.TypeChannel, required)
 		if err != nil {
 			return fmt.Errorf("error determining bundle channel properties for entity '%s': %w", b.ID, err)
 		}
@@ -200,7 +207,7 @@ func (b *BundleEntity) loadBundlePath() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.bundlePath == "" {
-		bundlePath, err := loadFromEntity[string](b.Entity, PropertyBundlePath)
+		bundlePath, err := loadFromEntity[string](b.Entity, PropertyBundlePath, required)
 		if err != nil {
 			return fmt.Errorf("error determining bundle path for entity '%s': %w", b.ID, err)
 		}
@@ -209,15 +216,15 @@ func (b *BundleEntity) loadBundlePath() error {
 	return nil
 }
 
-func loadFromEntity[T interface{}](entity *input.Entity, propertyName string) (T, error) {
+func loadFromEntity[T interface{}](entity *input.Entity, propertyName string, required propertyRequirement) (T, error) {
 	deserializedProperty := *new(T)
 	propertyValue, ok := entity.Properties[propertyName]
-	if !ok {
-		return deserializedProperty, fmt.Errorf("property '%s' not found", propertyName)
-	}
-
-	if err := json.Unmarshal([]byte(propertyValue), &deserializedProperty); err != nil {
-		return deserializedProperty, fmt.Errorf("property '%s' ('%s') could not be parsed: %w", propertyName, propertyValue, err)
+	if ok {
+		if err := json.Unmarshal([]byte(propertyValue), &deserializedProperty); err != nil {
+			return deserializedProperty, fmt.Errorf("property '%s' ('%s') could not be parsed: %w", propertyName, propertyValue, err)
+		}
+	} else if required {
+		return deserializedProperty, fmt.Errorf("required property '%s' not found", propertyName)
 	}
 	return deserializedProperty, nil
 }
