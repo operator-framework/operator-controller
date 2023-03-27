@@ -31,9 +31,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/anik120/catalogd/pkg/apis/core/v1beta1"
-	corecontrollers "github.com/anik120/catalogd/pkg/controllers/core"
-	"github.com/anik120/catalogd/pkg/profile"
+	"github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	corecontrollers "github.com/operator-framework/catalogd/pkg/controllers/core"
+	"github.com/operator-framework/catalogd/pkg/profile"
 	//+kubebuilder:scaffold:imports
 )
 

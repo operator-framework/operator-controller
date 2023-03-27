@@ -20,7 +20,7 @@ limitations under the License.
 
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
-// +k8s:conversion-gen=github.com/anik120/rukpak-packageserver/pkg/apis/core
+// +k8s:conversion-gen=github.com/operator-framework/rukpak-packageserver/pkg/apis/core
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=core.rukpak.io
-package v1beta1 // import "github.com/anik120/rukpak-packageserver/pkg/apis/core/v1beta1"
+package v1beta1 // import "github.com/operator-framework/rukpak-packageserver/pkg/apis/core/v1beta1"

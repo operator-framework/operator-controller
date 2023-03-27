@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	corev1beta1 "github.com/anik120/catalogd/pkg/apis/core/v1beta1"
+	corev1beta1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 )
 
 // PackageReconciler reconciles a Package object

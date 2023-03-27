@@ -11,8 +11,8 @@ https://hackmd.io/@i2YBW1rSQ8GcKcTIHn9CCA/B1cMe1kHj
 
 ```
 $ kind create cluster
-$ kubectl apply -f https://github.com/anik120/catalogd/config/crd/bases/
-$ kubectl apply -f https://github.com/anik120/catalogd/config/
+$ kubectl apply -f https://github.com/operator-framework/catalogd/config/crd/bases/
+$ kubectl apply -f https://github.com/operator-framework/catalogd/config/
 $ kubectl create ns test
 $ kubectl apply -f config/samples/catalogsource.yaml
 

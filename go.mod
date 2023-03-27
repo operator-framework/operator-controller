@@ -1,4 +1,4 @@
-module github.com/anik120/catalogd
+module github.com/operator-framework/catalogd
 
 go 1.19
 
