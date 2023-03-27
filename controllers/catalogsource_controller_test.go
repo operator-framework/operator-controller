@@ -21,7 +21,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/resolution/entity_sources/catalogsource"
 )
 
-var _ catalogsource.RegistryClient = &fakeRegistryClient{}
+var _ catalogsource.RegistryClient[v1alpha1.CatalogSource] = &fakeRegistryClient{}
 
 const (
 	unmanagedCatalogSourceSyncInterface = 1 * time.Second

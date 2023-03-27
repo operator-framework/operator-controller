@@ -17,6 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	catsrcv1beta1 "github.com/anik120/rukpak-packageserver/pkg/apis/core/v1beta1"
 	"github.com/operator-framework/operator-controller/internal/resolution/entity_sources/catalogsource"
 )
 
@@ -33,7 +34,7 @@ const (
 
 type CatalogSourceReconcilerOption func(reconciler *CatalogSourceReconciler)
 
-func WithRegistryClient(registry catalogsource.RegistryClient) CatalogSourceReconcilerOption {
+func WithRegistryClient(registry catalogsource.RegistryClient[v1alpha1.CatalogSource]) CatalogSourceReconcilerOption {
 	return func(reconciler *CatalogSourceReconciler) {
 		reconciler.registry = registry
 	}
@@ -61,7 +62,7 @@ type CatalogSourceReconciler struct {
 	sync.RWMutex
 	client.Client
 	scheme                             *runtime.Scheme
-	registry                           catalogsource.RegistryClient
+	registry                           catalogsource.RegistryClient[v1alpha1.CatalogSource]
 	recorder                           record.EventRecorder
 	unmanagedCatalogSourceSyncInterval time.Duration
 	cache                              map[string]map[deppy.Identifier]*input.Entity
@@ -95,6 +96,14 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	var catalogSource = &v1alpha1.CatalogSource{}
 	if err := r.Client.Get(ctx, req.NamespacedName, catalogSource); err != nil {
+		if errors.IsNotFound(err) {
+			r.dropSource(req.String())
+		}
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	var v1beta1Catsrc = &catsrcv1beta1.CatalogSource{}
+	if err := r.Client.Get(ctx, req.NamespacedName, v1beta1Catsrc); err != nil {
 		if errors.IsNotFound(err) {
 			r.dropSource(req.String())
 		}

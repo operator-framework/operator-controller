@@ -20,22 +20,22 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type RegistryClient interface {
-	ListEntities(ctx context.Context, catsrc *v1alpha1.CatalogSource) ([]*input.Entity, error)
+type RegistryClient[C any] interface {
+	ListEntities(ctx context.Context, catsrc *C) ([]*input.Entity, error)
 }
 
 type registryGRPCClient struct {
 	timeout time.Duration
 }
 
-func NewRegistryGRPCClient(grpcTimeout time.Duration) RegistryClient {
+func NewRegistryGRPCClient(grpcTimeout time.Duration) RegistryClient[v1alpha1.CatalogSource] {
 	if grpcTimeout == 0 {
 		grpcTimeout = DefaultGRPCTimeout
 	}
-	return &registryGRPCClient{timeout: grpcTimeout}
+	return registryGRPCClient{timeout: grpcTimeout}
 }
 
-func (r *registryGRPCClient) ListEntities(ctx context.Context, catalogSource *v1alpha1.CatalogSource) ([]*input.Entity, error) {
+func (r registryGRPCClient) ListEntities(ctx context.Context, catalogSource *v1alpha1.CatalogSource) ([]*input.Entity, error) {
 	// TODO: create GRPC connections separately
 	conn, err := ConnectGRPCWithTimeout(ctx, catalogSource.Address(), r.timeout)
 	if conn != nil {

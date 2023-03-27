@@ -3,6 +3,7 @@ module github.com/operator-framework/operator-controller
 go 1.19
 
 require (
+	github.com/anik120/rukpak-packageserver v0.0.0-20230323183512-a08e34be188e
 	github.com/blang/semver/v4 v4.0.0
 	github.com/onsi/ginkgo/v2 v2.6.0
 	github.com/onsi/gomega v1.24.1
