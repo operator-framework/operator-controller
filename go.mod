@@ -1,4 +1,4 @@
-module github.com/anik120/rukpak-packageserver
+module github.com/anik120/catalogd
 
 go 1.19
 

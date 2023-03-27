@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/apiserver-runtime/pkg/builder"
 
 	// +kubebuilder:scaffold:resource-imports
-	corev1beta1 "github.com/anik120/rukpak-packageserver/pkg/apis/core/v1beta1"
+	corev1beta1 "github.com/anik120/catalogd/pkg/apis/core/v1beta1"
 )
 
 func main() {
