@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: apiserver
-        image: quay.io/operator-framework/catalogd:latest
+        image: quay.io/operator-framework/catalogd-server:latest
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: apiserver-certs

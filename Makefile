@@ -3,7 +3,7 @@
 CONTROLLER_IMG ?= quay.io/operator-framework/catalogd-controller:latest
 
 # Image URL to use all building/pushing apiserver image targets
-SERVER_IMG ?= quay.io/operator-framework/catalogd:latest
+SERVER_IMG ?= quay.io/operator-framework/catalogd-server:latest
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.23
