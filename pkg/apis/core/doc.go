@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 // +k8s:deepcopy-gen=package,register
-// +groupName=core.rukpak.io
+// +groupName=core.catalogd.io
 
 // Package api is the internal version of the API.
 package core

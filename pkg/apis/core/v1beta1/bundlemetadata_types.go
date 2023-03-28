@@ -107,7 +107,7 @@ func (in *BundleMetadata) NewList() runtime.Object {
 
 func (in *BundleMetadata) GetGroupVersionResource() schema.GroupVersionResource {
 	return schema.GroupVersionResource{
-		Group:    "core.rukpak.io",
+		Group:    "core.catalogd.io",
 		Version:  "v1beta1",
 		Resource: "bundlemetadata",
 	}

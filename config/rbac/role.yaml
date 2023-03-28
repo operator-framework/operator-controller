@@ -58,7 +58,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - core.rukpak.io
+  - core.catalogd.io
   resources:
   - catalogsources
   verbs:
@@ -70,13 +70,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - core.rukpak.io
+  - core.catalogd.io
   resources:
   - catalogsources/finalizers
   verbs:
   - update
 - apiGroups:
-  - core.rukpak.io
+  - core.catalogd.io
   resources:
   - catalogsources/status
   verbs:

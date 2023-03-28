@@ -2,13 +2,13 @@
 apiVersion: apiregistration.k8s.io/v1
 kind: APIService
 metadata:
-  name: v1beta1.core.rukpak.io
+  name: v1beta1.core.catalogd.io
   labels:
     api: catalogd
     apiserver: "true"
 spec:
   version: v1beta1
-  group: core.rukpak.io
+  group: core.catalogd.io
   groupPriorityMinimum: 2000
   service:
     name: catalogd

@@ -1,4 +1,4 @@
-apiVersion: core.rukpak.io/v1beta1
+apiVersion: core.catalogd.io/v1beta1
 kind: CatalogSource
 metadata:
   name: catalogsource-sample
