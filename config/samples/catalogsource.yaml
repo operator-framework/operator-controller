@@ -3,5 +3,5 @@ kind: CatalogSource
 metadata:
   name: catalogsource-sample
 spec:
-  image: docker.io/anik120/community-operator-index:v4.11
+  image: quay.io/operatorhubio/catalog:latest
 
