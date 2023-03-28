@@ -243,7 +243,7 @@ var _ = Describe("BundleEntity", func() {
 	Describe("BundlePath", func() {
 		It("should return the bundle channel properties if present", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
-				"olm.bundle.path": `"bundle.io/path/to/bundle"`,
+				"olm.bundle.path": "bundle.io/path/to/bundle",
 			})
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			bundlePath, err := bundleEntity.BundlePath()
@@ -255,16 +255,44 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			bundlePath, err := bundleEntity.BundlePath()
 			Expect(bundlePath).To(BeEmpty())
-			Expect(err.Error()).To(Equal("error determining bundle path for entity 'operatorhub/prometheus/0.14.0': required property 'olm.bundle.path' not found"))
+			Expect(err.Error()).To(Equal("error determining bundle path for entity 'operatorhub/prometheus/0.14.0': property 'olm.bundle.path' not found or empty"))
 		})
-		It("should return error if the property is malformed", func() {
+		It("should return error if the property is empty", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
-				"olm.bundle.path": "badBundlePath",
+				"olm.bundle.path": "",
 			})
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			bundlePath, err := bundleEntity.BundlePath()
 			Expect(bundlePath).To(BeEmpty())
-			Expect(err.Error()).To(Equal("error determining bundle path for entity 'operatorhub/prometheus/0.14.0': property 'olm.bundle.path' ('badBundlePath') could not be parsed: invalid character 'b' looking for beginning of value"))
+			Expect(err.Error()).To(Equal("error determining bundle path for entity 'operatorhub/prometheus/0.14.0': property 'olm.bundle.path' not found or empty"))
+		})
+	})
+
+	Describe("DefaultChannel", func() {
+		It("should return the bundle channel properties if present", func() {
+			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
+				"olm.package.defaultChannel": "stable",
+			})
+			bundleEntity := olmentity.NewBundleEntity(entity)
+			defaultChannel, err := bundleEntity.DefaultChannel()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(defaultChannel).To(Equal("stable"))
+		})
+		It("should return an error if the property is not found", func() {
+			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{})
+			bundleEntity := olmentity.NewBundleEntity(entity)
+			defaultChannel, err := bundleEntity.DefaultChannel()
+			Expect(defaultChannel).To(BeEmpty())
+			Expect(err.Error()).To(Equal("error determining default channel for entity 'operatorhub/prometheus/0.14.0': property 'olm.package.defaultChannel' not found or empty"))
+		})
+		It("should return error if the property is empty", func() {
+			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
+				"olm.bundle.path": "",
+			})
+			bundleEntity := olmentity.NewBundleEntity(entity)
+			defaultChannel, err := bundleEntity.DefaultChannel()
+			Expect(defaultChannel).To(BeEmpty())
+			Expect(err.Error()).To(Equal("error determining default channel for entity 'operatorhub/prometheus/0.14.0': property 'olm.package.defaultChannel' not found or empty"))
 		})
 	})
 })

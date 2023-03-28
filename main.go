@@ -20,6 +20,7 @@ import (
 	"flag"
 	"os"
 
+	olmv0v1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -41,10 +42,12 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
+
+	// required by the catalog source cache controller
+	utilruntime.Must(olmv0v1alpha1.AddToScheme(scheme))
 }
 
 func main() {
@@ -88,10 +91,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	catsrcReconciler := controllers.NewCatalogSourceReconciler(
+		mgr.GetClient(),
+		mgr.GetScheme(),
+		mgr.GetEventRecorderFor("catalogsource-controller"),
+	)
+	if err := catsrcReconciler.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create catalog source controller", "controller", "CatalogSource")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.OperatorReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), resolution.HardcodedEntitySource),
+		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), catsrcReconciler),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)

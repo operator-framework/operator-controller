@@ -27,9 +27,28 @@ var _ = Describe("Operator Install", func() {
 		operatorName string
 		operator     *operatorv1alpha1.Operator
 	)
+
+	var testNamespace string
+	cleanup := func() {}
+	ctx = context.TODO()
+	BeforeEach(func() {
+		testNamespace = createTestNamespace(ctx, c, "registry-grpc-")
+		cleanup = applyCRDifNotPresent(ctx)
+		testPrefix := "registry-grpc-"
+
+		serviceAccountName := createTestServiceAccount(ctx, c, testNamespace, testPrefix)
+		createTestRegistryPod(ctx, c, testNamespace, testPrefix, serviceAccountName)
+		serviceName := createTestRegistryService(ctx, c, testNamespace, testPrefix)
+		createTestCatalogSource(ctx, c, testNamespace, "prometheus-index", serviceName)
+
+	})
+	AfterEach(func() {
+		deleteTestNamespace(ctx, c, testNamespace)
+		cleanup()
+	})
 	It("resolves the specified package with correct bundle path", func() {
 		ctx = context.Background()
-		pkgName = "prometheus"
+		pkgName = "project-quay"
 		operatorName = fmt.Sprintf("operator-%s", rand.String(8))
 		operator = &operatorv1alpha1.Operator{
 			ObjectMeta: metav1.ObjectMeta{
@@ -44,8 +63,6 @@ var _ = Describe("Operator Install", func() {
 		err := c.Create(ctx, operator)
 		Expect(err).ToNot(HaveOccurred())
 
-		// TODO dfranz: This test currently relies on the hard-coded CatalogSources found in bundle_cache.go
-		// and should be re-worked to use a real or test catalog source when the hard-coded stuff is removed
 		By("eventually reporting a successful resolution and bundle path")
 		Eventually(func(g Gomega) {
 			err = c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)
