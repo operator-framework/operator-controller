@@ -1,6 +1,6 @@
 ## pprof
 
-This folder contains some profiles that can be read using [pprof](https://github.com/google/pprof) to show how the core kubernetes apiserver and the custom rukpak-packageserver apiserver CPU & Memory utilization is affected by the creation and reconciliation of the sample `CatalogSource` CR found at `../config/samples/rukpak_catalogsource.yaml`.
+This folder contains some profiles that can be read using [pprof](https://github.com/google/pprof) to show how the core kubernetes apiserver and the custom catalogd apiserver CPU & Memory utilization is affected by the creation and reconciliation of the sample `CatalogSource` CR found at `../config/samples/catalogsource.yaml`.
 
 Instead of providing static screenshots and losing the interactivity associated with these `pprof` profiles, each of the files with the extension `.pb` can be used to view the profiles that were the result of running `pprof` against the live processes.
 
@@ -16,8 +16,8 @@ If you know your way around `pprof` you *should* be able to run any other variat
 Here is a brief breakdown of what information is provided in each profile file in this directory:
 - `kubeapiserver_cpu_profile.pb` - This is the CPU utilization of the core kube-apiserver
 - `kubeapiserver_heap_profile.pb` - This is the Memory utilization of the core kube-apiserver
-- `rukpakapiserver_cpu_profile.pb` - This is the CPU utilization of the custom rukpak-packageserver apiserver
-- `rukpakapiserver_heap_profile.pb` - This is the Memory utilization of the custom rukpak-packageserver apiserver
+- `catalogd_apiserver_cpu_profile.pb` - This is the CPU utilization of the custom catalogd apiserver
+- `catalogd_apiserver_heap_profile.pb` - This is the Memory utilization of the custom catalogd apiserver
 - `manager_cpu_profile.pb` - This is the CPU utilization of the CatalogSource controller (and other controllers associated with this manager).
 - `manager_heap_profile.pb` - This is the Memory utilization of the CatalogSource controller (and other controllers associated with this manager).
 - `kubeapiserver_alone_cpu_profile.pb` - This is the CPU utilization for the core kube-apiserver without running our custom apiserver
@@ -27,7 +27,7 @@ Here is a brief breakdown of what information is provided in each profile file i
 
 
 ## Pprof Breakdown
-In this section, we will break down the differences between how the core kube-apiserver resource utilization was impacted when running with and without the custom rukpak-packageserver apiserver in an effort to determine how beneficial it is to use a custom apiserver.
+In this section, we will break down the differences between how the core kube-apiserver resource utilization was impacted when running with and without the custom catalogd apiserver in an effort to determine how beneficial it is to use a custom apiserver.
 
 > **NOTE**: All this information was compared by someone who is not very experienced with using `pprof`. If you find that any of these values are incorrect or the calculations don't seem to make sense, feel free to create an issue or open a PR to update these findings.
 
@@ -61,27 +61,27 @@ go tool pprof -http=localhost:6060 -diff_base=pprof/kubeapiserver_alone_heap_pro
 This command will normalize the profiles to better compare the differences. In its simplest form this difference was calculated by `pprof/kubeapiserver_alone_heap_profile.pb - pprof/kubeapiserver_heap_profile.pb`
 
 According to the `Normalized Difference`, there appears to be:
-- An additional 0.02kB space used when in combination with the custom rukpak-packageserver apiserver
-- An additional 9 objects used when in combination with the custom rukpak-packageserver apiserver
-- No additional space allocated when in combination with the custom rukpak-packageserver apiserver
-- 102 less objects allocated when in combination with the custom rukpak-packageserver apiserver
+- An additional 0.02kB space used when in combination with the custom catalogd apiserver
+- An additional 9 objects used when in combination with the custom catalogd apiserver
+- No additional space allocated when in combination with the custom catalogd apiserver
+- 102 less objects allocated when in combination with the custom catalogd apiserver
 
 
 ## Metric Server Analysis
-This section will be an analysis of the on cluster CPU/Memory consumption of the pods corresponding to the core kube-apiserver, rukpak-packageserver and the controller-manager.
+This section will be an analysis of the on cluster CPU/Memory consumption of the pods corresponding to the core kube-apiserver, catalogd apiserver and the controller-manager.
 
 This section is being added as the pprof metrics don't necessarily show the whole picture. This section will include 2 scenarios for the core kube-apiserver:
-1. The CPU/Memory consumption of the kube-apiserver pod without the rukpak-packageserver running
-2. The CPU/Memory consumption of the kube-apiserver pod with the rukpak-packageserver running
+1. The CPU/Memory consumption of the kube-apiserver pod without the catalogd apisver running
+2. The CPU/Memory consumption of the kube-apiserver pod with the catalogd apisever running
 
-### Core kube-apiserver without rukpak-packageserver
+### Core kube-apiserver without catalogd apiserver
 ![kube-apiserver CPU and Memory metrics graphs without custom apiserver](images/kubeapiserver_alone_metrics.png)
 
 **TLDR**: CPU utilization spike of 0.156 cores and settles ~0.011 cores above prior utilization. Memory consumption increase of 22Mi.
 
 This image shows the spike in CPU utilization and the increase in Memory consumption. In this scenario, the command:
 ```
-kubectl apply -f config/samples/rukpak_catalogsource.yaml
+kubectl apply -f config/samples/catalogsource.yaml
 ```
 was run right at 1:44 PM.
 
@@ -90,16 +90,16 @@ The CPU spike lasted ~3 minutes and the values were:
 - 1:45PM (PEAK) - 0.223 cores
 - 1:47PM - 0.078 cores
 
-With this, we can see that without the rukpak-packageserver the core kube-apiserver had a CPU utilization spike of 0.156 cores and then settled at ~0.011 cores above what the utilization was prior to the reconciliation of the sample `CatalogSource` CR. 
+With this, we can see that without the catalogd apiserver the core kube-apiserver had a CPU utilization spike of 0.156 cores and then settled at ~0.011 cores above what the utilization was prior to the reconciliation of the sample `CatalogSource` CR. 
 
 The memory consumption increased over the span of ~3 minutes and then stabilized. The values were:
 - 1:44PM - 289Mi
 - 1:45PM - 305Mi
 - 1:47PM - 311Mi
 
-With this, we can see that without the rukpak-packageserver the core kube-apiserver had a memory consumption increase of 22Mi.
+With this, we can see that without the catalogd apiserver the core kube-apiserver had a memory consumption increase of 22Mi.
 
-### Core kube-apiserver with rukpak-packageserver
+### Core kube-apiserver with catalogd apiserver
 
 #### kube-apiserver:
 ![kube-apiserver CPU and mem metric graph with custom apiserver](images/kubeapiserver_metrics.png)
@@ -108,7 +108,7 @@ With this, we can see that without the rukpak-packageserver the core kube-apiser
 
 This image shows the spike in CPU utilization and the increase in Memory consumption. In this scenario, the command:
 ```
-kubectl apply -f config/samples/rukpak_catalogsource.yaml
+kubectl apply -f config/samples/catalogsource.yaml
 ```
 was run right at 3:06 PM
 
@@ -118,7 +118,7 @@ The CPU spike lasted ~3 minutes and the values were:
 - 3:08 PM (PEAK) - 0.215 cores
 - 3:09 PM - 0.091 cores
 
-With this, we can see that with the rukpak-packageserver the core kube-apiserver had a CPU utilization spike of 0.125 cores and then settled at ~0.001 cores above what the utilization was prior to the reconciliation of the sample `CatalogSource` CR. 
+With this, we can see that with the catalogd apiserver the core kube-apiserver had a CPU utilization spike of 0.125 cores and then settled at ~0.001 cores above what the utilization was prior to the reconciliation of the sample `CatalogSource` CR. 
 
 The memory consumption increased over the span of ~3 minutes and then stabilized. The values were:
 - 3:06PM - 337Mi
@@ -126,16 +126,16 @@ The memory consumption increased over the span of ~3 minutes and then stabilized
 - 3:08 PM - 363Mi
 - 3:09 PM - 363Mi
 
-With this, we can see that with the rukpak-packageserver the core kube-apiserver had a memory consumption increase of ~26Mi.
+With this, we can see that with the catalogd apiserver the core kube-apiserver had a memory consumption increase of ~26Mi.
 
-#### rukpak-packageserver
-![rukpak-packageserver custom apiserver CPU and memory consumption graphs](images/customapiserver_metrics.png)
+#### catalogd apiserver
+![catalogd custom apiserver CPU and memory consumption graphs](images/customapiserver_metrics.png)
 
 **TLDR**: potential increase of ~0.012 cores, but more likely ~0.002 cores. Memory consumption increase of ~0.1Mi
 
 This image shows the spike in CPU utilization and the increase in Memory consumption. In this scenario, the command:
 ```
-kubectl apply -f config/samples/rukpak_catalogsource.yaml
+kubectl apply -f config/samples/catalogsource.yaml
 ```
 was run right at 3:06 PM
 
@@ -156,12 +156,12 @@ The memory consumption increased over the span of ~3 minutes. The values were:
 We can see that our custom apiserver had a memory consumption increase of ~0.1Mi.
 
 #### Summary
-Comparing the results of the kube-apiserver running both with and without the rukpak-packageserver apiserver, we can see that:
-- The kube-apiserver CPU utilization spikes 0.031 cores less and settles ~0.01 cores less when running in combination with the rukpak-packageserver
-- The kube-apiserver consumes ~4Mi more memory when running in combination with the rukpak-packageserver
+Comparing the results of the kube-apiserver running both with and without the catalogd apiserver, we can see that:
+- The kube-apiserver CPU utilization spikes 0.031 cores less and settles ~0.01 cores less when running in combination with the catalogd apiserver
+- The kube-apiserver consumes ~4Mi more memory when running in combination with the catalogd apiserver
 
 
-Overall, when running both the kube-apiserver and the rukpak-packageserver the total CPU utilization remains roughly the same while the overall memory consumption increases ~73Mi.
+Overall, when running both the kube-apiserver and the catalogd apiserver the total CPU utilization remains roughly the same while the overall memory consumption increases ~73Mi.
 
 ### controller-manager metrics
 ![controller-manager CPU & memory metric graphs](images/controller_metrics.png)
@@ -170,7 +170,7 @@ Overall, when running both the kube-apiserver and the rukpak-packageserver the t
 
 This image shows the spike in CPU utilization and the increase in Memory consumption. In this scenario, the command:
 ```
-kubectl apply -f config/samples/rukpak_catalogsource.yaml
+kubectl apply -f config/samples/catalogsource.yaml
 ```
 was run right at 3:06 PM
 
