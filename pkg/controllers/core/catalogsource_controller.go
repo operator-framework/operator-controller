@@ -241,13 +241,13 @@ func (r *CatalogSourceReconciler) parseUnpackLogs(ctx context.Context, job *batc
 func (r *CatalogSourceReconciler) unpackJob(cs corev1beta1.CatalogSource) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "rukpak",
+			Namespace: "catalogd-system",
 			Name:      fmt.Sprintf("%s-image-unpack", cs.Name),
 		},
 		Spec: batchv1.JobSpec{
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "rukpak",
+					Namespace: "catalogd-system",
 					Name:      fmt.Sprintf("%s-image-unpack-pod", cs.Name),
 				},
 				Spec: v1.PodSpec{
