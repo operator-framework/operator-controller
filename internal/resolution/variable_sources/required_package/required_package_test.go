@@ -68,8 +68,10 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 	)
 
 	BeforeEach(func() {
+		var err error
 		packageName = "test-package"
-		rpvs = required_package.NewRequiredPackage(packageName)
+		rpvs, err = required_package.NewRequiredPackage(packageName)
+		Expect(err).NotTo(HaveOccurred())
 		mockEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{
 			"bundle-1": *input.NewEntity("bundle-1", map[string]string{
 				property.TypePackage: `{"packageName": "test-package", "version": "1.0.0"}`,
@@ -104,7 +106,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 		Expect(ok).To(BeTrue())
 		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))))
 
-		// ensure bundle entities are in version order
+		// ensure bundle entities are in version order (high to low)
 		Expect(reqPackageVar.BundleEntities()).To(Equal([]*olmentity.BundleEntity{
 			olmentity.NewBundleEntity(input.NewEntity("bundle-2", map[string]string{
 				property.TypePackage: `{"packageName": "test-package", "version": "3.0.0"}`,
@@ -118,6 +120,33 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 				property.TypePackage: `{"packageName": "test-package", "version": "1.0.0"}`,
 				property.TypeChannel: `{"channelName":"stable","priority":0}`})),
 		}))
+	})
+
+	It("should filter by version range", func() {
+		// recreate source with version range option
+		var err error
+		rpvs, err = required_package.NewRequiredPackage(packageName, required_package.InVersionRange(">=1.0.0 !1.0.0 <3.0.0"))
+		Expect(err).NotTo(HaveOccurred())
+
+		variables, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(len(variables)).To(Equal(1))
+		reqPackageVar, ok := variables[0].(*required_package.RequiredPackageVariable)
+		Expect(ok).To(BeTrue())
+		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))))
+
+		// ensure bundle entities are in version order (high to low)
+		Expect(reqPackageVar.BundleEntities()).To(Equal([]*olmentity.BundleEntity{
+			olmentity.NewBundleEntity(input.NewEntity("bundle-3", map[string]string{
+				property.TypePackage: `{"packageName": "test-package", "version": "2.0.0"}`,
+				property.TypeChannel: `{"channelName":"stable","priority":0}`,
+			})),
+		}))
+	})
+
+	It("should fail with bad semver range", func() {
+		_, err := required_package.NewRequiredPackage(packageName, required_package.InVersionRange("not a valid semver"))
+		Expect(err).To(HaveOccurred())
 	})
 
 	It("should return an error if package not found", func() {

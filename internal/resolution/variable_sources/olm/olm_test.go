@@ -11,10 +11,12 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/crd_constraints"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestGlobalConstraints(t *testing.T) {
@@ -48,6 +50,32 @@ func entityFromCache(name string) *input.Entity {
 	return &entity
 }
 
+type opOption func(*operatorsv1alpha1.Operator) error
+
+func withVersionRange(versionRange string) opOption {
+	return func(op *operatorsv1alpha1.Operator) error {
+		op.Spec.Version = versionRange
+		return nil
+	}
+}
+
+func operator(name string, opts ...opOption) operatorsv1alpha1.Operator {
+	op := operatorsv1alpha1.Operator{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: operatorsv1alpha1.OperatorSpec{
+			PackageName: name,
+		},
+	}
+	for _, opt := range opts {
+		if err := opt(&op); err != nil {
+			Fail(err.Error())
+		}
+	}
+	return op
+}
+
 var _ = Describe("OLMVariableSource", func() {
 	var testEntitySource input.EntitySource
 
@@ -56,7 +84,7 @@ var _ = Describe("OLMVariableSource", func() {
 	})
 
 	It("should produce RequiredPackage variables", func() {
-		olmVariableSource := olm.NewOLMVariableSource("prometheus", "packageA")
+		olmVariableSource := olm.NewOLMVariableSource(operator("prometheus"), operator("packageA"))
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -69,7 +97,7 @@ var _ = Describe("OLMVariableSource", func() {
 	})
 
 	It("should produce BundleVariables variables", func() {
-		olmVariableSource := olm.NewOLMVariableSource("prometheus", "packageA")
+		olmVariableSource := olm.NewOLMVariableSource(operator("prometheus"), operator("packageA"))
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -88,8 +116,29 @@ var _ = Describe("OLMVariableSource", func() {
 		})))
 	})
 
+	It("should produce version filtered BundleVariables variables", func() {
+		olmVariableSource := olm.NewOLMVariableSource(operator("prometheus", withVersionRange(">0.40.0")), operator("packageA"))
+		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
+		Expect(err).ToNot(HaveOccurred())
+
+		bundleVariables := filterVariables[*bundles_and_dependencies.BundleVariable](variables)
+		Expect(bundleVariables).To(HaveLen(2))
+		Expect(bundleVariables).To(WithTransform(func(bvars []*bundles_and_dependencies.BundleVariable) []*input.Entity {
+			var out []*input.Entity
+			for _, variable := range bvars {
+				out = append(out, variable.BundleEntity().Entity)
+			}
+			return out
+		}, Equal([]*input.Entity{
+			entityFromCache("operatorhub/prometheus/0.47.0"),
+			// filtered out
+			// entityFromCache("operatorhub/prometheus/0.37.0"),
+			entityFromCache("operatorhub/packageA/2.0.0"),
+		})))
+	})
+
 	It("should produce GlobalConstraints variables", func() {
-		olmVariableSource := olm.NewOLMVariableSource("prometheus", "packageA")
+		olmVariableSource := olm.NewOLMVariableSource(operator("prometheus"), operator("packageA"))
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -117,7 +166,7 @@ var _ = Describe("OLMVariableSource", func() {
 	})
 
 	It("should return an errors when they occur", func() {
-		olmVariableSource := olm.NewOLMVariableSource("prometheus", "packageA")
+		olmVariableSource := olm.NewOLMVariableSource(operator("prometheus"), operator("packageA"))
 		_, err := olmVariableSource.GetVariables(context.Background(), FailEntitySource{})
 		Expect(err).To(HaveOccurred())
 	})

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/blang/semver/v4"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/constraint"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
-
 	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/util/predicates"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/util/sort"
@@ -36,23 +36,52 @@ func NewRequiredPackageVariable(packageName string, bundleEntities []*olmentity.
 
 var _ input.VariableSource = &RequiredPackageVariableSource{}
 
-type RequiredPackageVariableSource struct {
-	packageName string
-}
+type RequiredPackageOption func(*RequiredPackageVariableSource) error
 
-func NewRequiredPackage(packageName string) *RequiredPackageVariableSource {
-	return &RequiredPackageVariableSource{
-		packageName: packageName,
+func InVersionRange(versionRange string) RequiredPackageOption {
+	return func(r *RequiredPackageVariableSource) error {
+		if versionRange != "" {
+			if vr, err := semver.ParseRange(versionRange); err == nil {
+				r.versionRange = versionRange
+				r.predicates = append(r.predicates, predicates.InSemverRange(vr))
+				return nil
+			} else {
+				return fmt.Errorf("invalid version range '%s': %v", versionRange, err)
+			}
+		}
+		return nil
 	}
 }
 
+type RequiredPackageVariableSource struct {
+	packageName  string
+	versionRange string
+	predicates   []input.Predicate
+}
+
+func NewRequiredPackage(packageName string, options ...RequiredPackageOption) (*RequiredPackageVariableSource, error) {
+	if packageName == "" {
+		return nil, fmt.Errorf("package name must not be empty")
+	}
+	r := &RequiredPackageVariableSource{
+		packageName: packageName,
+		predicates:  []input.Predicate{predicates.WithPackageName(packageName)},
+	}
+	for _, option := range options {
+		if err := option(r); err != nil {
+			return nil, err
+		}
+	}
+	return r, nil
+}
+
 func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
-	resultSet, err := entitySource.Filter(ctx, predicates.WithPackageName(r.packageName))
+	resultSet, err := entitySource.Filter(ctx, input.And(r.predicates...))
 	if err != nil {
 		return nil, err
 	}
 	if len(resultSet) == 0 {
-		return nil, fmt.Errorf("package '%s' not found", r.packageName)
+		return nil, r.notFoundError()
 	}
 	resultSet = resultSet.Sort(sort.ByChannelAndVersion)
 	var bundleEntities []*olmentity.BundleEntity
@@ -62,4 +91,11 @@ func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context, entity
 	return []deppy.Variable{
 		NewRequiredPackageVariable(r.packageName, bundleEntities),
 	}, nil
+}
+
+func (r *RequiredPackageVariableSource) notFoundError() error {
+	if r.versionRange != "" {
+		return fmt.Errorf("package '%s' in version range '%s' not found", r.packageName, r.versionRange)
+	}
+	return fmt.Errorf("package '%s' not found", r.packageName)
 }
