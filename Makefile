@@ -1,9 +1,9 @@
 
 # Image URL to use all building/pushing controller image targets
-CONTROLLER_IMG ?= docker.io/anik120/catalogsource-controller:latest
+CONTROLLER_IMG ?= quay.io/operator-framework/catalogd-controller:latest
 
 # Image URL to use all building/pushing apiserver image targets
-SERVER_IMG ?= docker.io/anik120/rukpak-packageserver:latest
+SERVER_IMG ?= quay.io/operator-framework/catalogd:latest
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.23
