@@ -4,4 +4,4 @@ metadata:
   name: catalogsource-sample
 spec:
   image: docker.io/anik120/community-operator-index:v4.11
-  pollingInterval: 45m
+

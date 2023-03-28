@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: rukpak-packageserver-apiserver-auth-reader
+  name: catalogd-apiserver-auth-reader
 rules:
   - apiGroups:
       - ""
@@ -17,36 +17,36 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: rukpak-packageserver-apiserver-auth-reader
-  namespace: rukpak
+  name: catalogd-apiserver-auth-reader
+  namespace: catalogd-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: rukpak-packageserver-apiserver-auth-reader
+  name: catalogd-apiserver-auth-reader
 subjects:
   - kind: ServiceAccount
-    namespace: rukpak
+    namespace: catalogd-system
     name: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: rukpak-packageserver-apiserver-auth-delegator
-  namespace: rukpak
+  name: catalogd-apiserver-auth-delegator
+  namespace: catalogd-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: system:auth-delegator
 subjects:
   - kind: ServiceAccount
-    namespace: rukpak
+    namespace: catalogd-system
     name: default
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: rukpak-packageserver-controller
-  namespace: rukpak
+  name: catalogd-controller
+  namespace: catalogd-system
 rules:
   - apiGroups:
       - 'core.rukpak.io'
@@ -89,13 +89,13 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: rukpak-packageserver-controller
-  namespace: rukpak
+  name: catalogd-controller
+  namespace: catalogd-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: rukpak-packageserver-controller
+  name: catalogd-controller
 subjects:
   - kind: ServiceAccount
-    namespace: rukpak
+    namespace: catalogd-system
     name: default

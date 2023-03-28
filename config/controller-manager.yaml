@@ -2,25 +2,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rukpak-packageserver-controller
-  namespace: rukpak
+  name: catalogd-controller
+  namespace: catalogd-system
   labels:
-    api: rukpak-packageserver
+    api: catalogd
     controller: "true"
 spec:
   selector:
     matchLabels:
-      api: rukpak-packageserver
+      api: catalogd
       controller: "true"
   replicas: 1
   template:
     metadata:
       labels:
-        api: rukpak-packageserver
+        api: catalogd
         controller: "true"
     spec:
-      securityContext:
-        runAsUser: 0
       containers:
       - name: controller
         image: docker.io/anik120/catalogsource-controller:latest
@@ -43,4 +41,4 @@ spec:
       volumes:
       - name: apiserver-certs
         secret:
-          secretName: rukpak-packageserver
+          secretName: catalogd
