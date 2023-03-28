@@ -39,6 +39,10 @@ spec:
                 maxLength: 48
                 pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
                 type: string
+              version:
+                maxLength: 64
+                pattern: ^(\|\||\s+)?([\s~^><=]*)v?(\d+)(\.(\d+))?(\.(\d+))?(\-(.+))?$
+                type: string
             required:
             - packageName
             type: object

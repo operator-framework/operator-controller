@@ -27,6 +27,11 @@ type OperatorSpec struct {
 	//+kubebuilder:validation:MaxLength:=48
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+(-[a-z0-9]+)*$
 	PackageName string `json:"packageName"`
+
+	//+kubebuilder:validation:MaxLength:=64
+	//+kubebuilder:validation:Pattern:=^(\|\||\s+)?([\s~^><=]*)v?(\d+)(\.(\d+))?(\.(\d+))?(\-(.+))?$
+	//+kubebuilder:optional
+	Version string `json:"version,omitempty"`
 }
 
 const (
