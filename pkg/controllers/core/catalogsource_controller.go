@@ -33,6 +33,7 @@ import (
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	corev1beta1 "github.com/anik120/catalogd/pkg/apis/core/v1beta1"
@@ -140,6 +141,8 @@ func (r *CatalogSourceReconciler) buildBundleMetadata(ctx context.Context, declC
 			})
 		}
 
+		ctrlutil.SetOwnerReference(&catalogSource, &bundleMeta, r.Scheme)
+
 		if err := r.Client.Create(ctx, &bundleMeta); err != nil {
 			return fmt.Errorf("creating bundlemetadata %q: %w", bundleMeta.Name, err)
 		}
@@ -185,6 +188,8 @@ func (r *CatalogSourceReconciler) buildPackages(ctx context.Context, declCfg *de
 			}
 		}
 
+		ctrlutil.SetOwnerReference(&catalogSource, &pack, r.Scheme)
+
 		if err := r.Client.Create(ctx, &pack); err != nil {
 			return fmt.Errorf("creating package %q: %w", pack.Name, err)
 		}
@@ -194,6 +199,8 @@ func (r *CatalogSourceReconciler) buildPackages(ctx context.Context, declCfg *de
 
 func (r *CatalogSourceReconciler) createUnpackJob(ctx context.Context, cs corev1beta1.CatalogSource) error {
 	job := r.unpackJob(cs)
+
+	ctrlutil.SetOwnerReference(&cs, job, r.Scheme)
 
 	if err := r.Client.Create(ctx, job); err != nil {
 		return fmt.Errorf("creating unpackJob: %w", err)
