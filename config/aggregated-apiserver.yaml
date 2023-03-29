@@ -2,26 +2,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rukpak-packageserver-apiserver
-  namespace: rukpak
+  name: catalogd-apiserver
+  namespace: catalogd-system
   labels:
-    api: rukpak-packageserver
+    api: catalogd
     apiserver: "true"
 spec:
   selector:
     matchLabels:
-      api: rukpak-packageserver
+      api: catalogd
       apiserver: "true"
   replicas: 1
   template:
     metadata:
       labels:
-        api: rukpak-packageserver
+        api: catalogd
         apiserver: "true"
     spec:
       containers:
       - name: apiserver
-        image: docker.io/anik120/rukpak-packageserver:latest
+        image: quay.io/operator-framework/catalogd-server:latest
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: apiserver-certs
@@ -48,15 +48,15 @@ spec:
       volumes:
       - name: apiserver-certs
         secret:
-          secretName: rukpak-packageserver
+          secretName: catalogd
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: rukpak-packageserver
-  namespace: rukpak
+  name: catalogd
+  namespace: catalogd-system
   labels:
-    api: rukpak-packageserver
+    api: catalogd
     apiserver: "true"
 spec:
   ports:
@@ -64,17 +64,17 @@ spec:
     protocol: TCP
     targetPort: 443
   selector:
-    api: rukpak-packageserver
+    api: catalogd
     apiserver: "true"
 ---
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   labels:
-    api: rukpak-packageserver
+    api: catalogd
     apiserver: "true"
   name: selfsigned-issuer
-  namespace: rukpak
+  namespace: catalogd-system
 spec:
   selfSigned: {}
 ---
@@ -82,16 +82,16 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   labels:
-    api: rukpak-packageserver
+    api: catalogd
     apiserver: "true"
-  name: rukpak-packageserver-cert
-  namespace: rukpak
+  name: catalogd-cert
+  namespace: catalogd-system
 spec:
   dnsNames:
-  - rukpak-packageserver.rukpak.svc
-  - rukpak-packageserver.rukpak.svc.cluster.local
+  - catalogd.catalogd-system.svc
+  - catalogd.catalogd-system.svc.cluster.local
   - localhost
   issuerRef:
     kind: Issuer
     name: selfsigned-issuer
-  secretName: rukpak-packageserver
+  secretName: catalogd

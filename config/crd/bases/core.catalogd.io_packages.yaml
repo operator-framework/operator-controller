@@ -5,9 +5,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.9.0
   creationTimestamp: null
-  name: packages.core.rukpak.io
+  name: packages.core.catalogd.io
 spec:
-  group: core.rukpak.io
+  group: core.catalogd.io
   names:
     kind: Package
     listKind: PackageList

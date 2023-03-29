@@ -85,7 +85,7 @@ func (in *CatalogSource) NewList() runtime.Object {
 
 func (in *CatalogSource) GetGroupVersionResource() schema.GroupVersionResource {
 	return schema.GroupVersionResource{
-		Group:    "core.rukpak.io",
+		Group:    "core.catalogd.io",
 		Version:  "v1beta1",
 		Resource: "catalogsources",
 	}

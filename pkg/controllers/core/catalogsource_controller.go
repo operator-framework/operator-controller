@@ -36,7 +36,7 @@ import (
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	corev1beta1 "github.com/anik120/catalogd/pkg/apis/core/v1beta1"
+	corev1beta1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 )
 
 // CatalogSourceReconciler reconciles a CatalogSource object
@@ -47,9 +47,9 @@ type CatalogSourceReconciler struct {
 	OpmImage string
 }
 
-//+kubebuilder:rbac:groups=core.rukpak.io,resources=catalogsources,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core.rukpak.io,resources=catalogsources/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=core.rukpak.io,resources=catalogsources/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core.catalogd.io,resources=catalogsources,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core.catalogd.io,resources=catalogsources/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=core.catalogd.io,resources=catalogsources/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -248,13 +248,13 @@ func (r *CatalogSourceReconciler) parseUnpackLogs(ctx context.Context, job *batc
 func (r *CatalogSourceReconciler) unpackJob(cs corev1beta1.CatalogSource) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "rukpak",
+			Namespace: "catalogd-system",
 			Name:      fmt.Sprintf("%s-image-unpack", cs.Name),
 		},
 		Spec: batchv1.JobSpec{
 			Template: v1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "rukpak",
+					Namespace: "catalogd-system",
 					Name:      fmt.Sprintf("%s-image-unpack-pod", cs.Name),
 				},
 				Spec: v1.PodSpec{
