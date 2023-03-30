@@ -6,7 +6,7 @@ export IMAGE_REPO ?= quay.io/operator-framework/operator-controller
 export IMAGE_TAG ?= devel
 export GO_BUILD_TAGS ?= upstream
 export CERT_MGR_VERSION ?= v1.9.0
-export GORELEASER_VERSION ?= v1.15.2
+export GORELEASER_VERSION ?= v1.16.2
 export WAIT_TIMEOUT ?= 60s
 IMG?=$(IMAGE_REPO):$(IMAGE_TAG)
 
@@ -95,7 +95,7 @@ kind-cluster-cleanup: kind ## Delete the kind cluster
 ##@ Build
 
 .PHONY: build
-build: manifests generate fmt vet substitute goreleaser ## Build manager binary using goreleaser for current GOOS and GOARCH.
+build: manifests generate fmt vet goreleaser ## Build manager binary using goreleaser for current GOOS and GOARCH.
 	${GORELEASER} build ${GORELEASER_ARGS} --single-target -o bin/manager
 
 .PHONY: run
@@ -135,13 +135,10 @@ docker-buildx: test ## Build and push docker image for the manager for cross-pla
 ###########
 
 ##@ Release:
-export DISABLE_RELEASE_PIPELINE ?= true
-export GORELEASER_ARGS ?= --snapshot --rm-dist
+export ENABLE_RELEASE_PIPELINE ?= false
+export GORELEASER_ARGS ?= --snapshot --clean
 
-substitute:
-	envsubst < .goreleaser.template.yml > .goreleaser.yml
-
-release: substitute goreleaser ## Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
+release: goreleaser ## Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)
 
 quickstart: VERSION ?= $(shell git describe --abbrev=0 --tags)
