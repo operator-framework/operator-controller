@@ -78,7 +78,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build-controller
-docker-build-controller: test ## Build docker image with the manager.
+docker-build-controller: build-controller test ## Build docker image with the manager.
 	docker build -f controller.Dockerfile -t ${CONTROLLER_IMG} .
 
 .PHONY: docker-push-controller
@@ -86,7 +86,7 @@ docker-push-controller: ## Push docker image with the manager.
 	docker push ${CONTROLLER_IMG}
 
 .PHONY: docker-build-server
-docker-build-server: test ## Build docker image with the apiserver.
+docker-build-server: build-server test ## Build docker image with the apiserver.
 	docker build -f apiserver.Dockerfile -t ${SERVER_IMG} .
 
 .PHONY: docker-push-server
@@ -120,6 +120,14 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 cert-manager: ## Deploy cert-manager on the cluster
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
 
+export ENABLE_RELEASE_PIPELINE ?= false
+export GORELEASER_ARGS ?= --snapshot --clean
+export CONTROLLER_IMAGE_REPO ?= quay.io/operator-framework/catalogd-controller
+export APISERVER_IMAGE_REPO ?= quay.io/operator-framework/catalogd-server
+export IMAGE_TAG ?= devel
+release: goreleaser ## Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
+	$(GORELEASER) $(GORELEASER_ARGS)
+
 ## Location to install dependencies to
 LOCALBIN ?= $(shell pwd)/bin
 $(LOCALBIN):
@@ -152,6 +160,13 @@ ENVTEST = $(shell pwd)/bin/setup-envtest
 .PHONY: envtest
 envtest: ## Download envtest-setup locally if necessary.
 	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
+
+GORELEASER := $(LOCALBIN)/goreleaser
+export GORELEASER_VERSION ?= v1.16.2
+.PHONY: goreleaser
+goreleaser: $(GORELEASER) ## Builds a local copy of goreleaser
+$(GORELEASER): $(LOCALBIN)
+	test -s $(LOCALBIN)/goreleaser || GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@${GORELEASER_VERSION}
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))

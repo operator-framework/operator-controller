@@ -1,0 +1,92 @@
+
+env:
+- GOPROXY=https://proxy.golang.org|direct
+- GO111MODULE=on
+- CGO_ENABLED=0
+before:
+  hooks:
+    - go mod tidy
+    - go mod download
+builds:
+  - id: catalogd-controller
+    main: ./cmd/manager/
+    binary: bin/manager
+    tags: $GO_BUILD_TAGS
+    goos:
+    - linux
+    goarch:
+    - amd64
+    - arm64
+    - ppc64le
+    - s390x
+    ldflags:
+    - -X main.Version={{ .Version }}
+  - id: catalogd-server
+    main: ./cmd/apiserver/
+    binary: bin/apiserver
+    tags: $GO_BUILD_TAGS
+    goos:
+    - linux
+    goarch:
+    - amd64
+    - arm64
+    - ppc64le
+    - s390x
+    ldflags:
+    - -X main.Version={{ .Version }}
+dockers:
+- image_templates:
+  - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+  dockerfile: controller.Dockerfile
+  goos: linux
+  goarch: amd64
+- image_templates:
+    - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+  dockerfile: controller.Dockerfile
+  goos: linux
+  goarch: arm64
+- image_templates:
+    - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+  dockerfile: controller.Dockerfile
+  goos: linux
+  goarch: ppc64le
+- image_templates:
+    - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+  dockerfile: controller.Dockerfile
+  goos: linux
+  goarch: s390x
+- image_templates:
+  - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+  dockerfile: apiserver.Dockerfile
+  goos: linux
+  goarch: amd64
+- image_templates:
+    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+  dockerfile: apiserver.Dockerfile
+  goos: linux
+  goarch: arm64
+- image_templates:
+    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+  dockerfile: apiserver.Dockerfile
+  goos: linux
+  goarch: ppc64le
+- image_templates:
+    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+  dockerfile: apiserver.Dockerfile
+  goos: linux
+  goarch: s390x
+docker_manifests:
+- name_template: "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
+  image_templates:
+    - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+    - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+    - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+    - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+- name_template: "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
+  image_templates:
+    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+release:
+  disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
