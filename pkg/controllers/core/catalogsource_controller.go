@@ -27,14 +27,17 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	corev1beta1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 )
@@ -97,13 +100,30 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err := r.buildBundleMetadata(ctx, declCfg, catalogSource); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	// update CatalogSource status as "Ready" since at this point
+	// all catalog content should be available on cluster
+	updateStatusReady(&catalogSource)
+	if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
+		return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
+	}
+
 	return ctrl.Result{}, nil
+}
+
+func updateStatusReady(catalogSource *corev1beta1.CatalogSource) {
+	meta.SetStatusCondition(&catalogSource.Status.Conditions, metav1.Condition{
+		Type:    corev1beta1.TypeReady,
+		Reason:  corev1beta1.ReasonContentsAvailable,
+		Status:  metav1.ConditionTrue,
+		Message: "catalog contents have been unpacked and are available on cluster",
+	})
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *CatalogSourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&corev1beta1.CatalogSource{}).
+		For(&corev1beta1.CatalogSource{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Complete(r)
 }
 
