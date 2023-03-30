@@ -39,12 +39,12 @@ jobs:
         if [[ $GITHUB_REF == refs/tags/* ]]; then
           # Release tags.
           echo IMAGE_TAG="${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          echo GORELEASER_ARGS="--rm-dist" >> $GITHUB_ENV
-          echo DISABLE_RELEASE_PIPELINE=false >> $GITHUB_ENV
+          echo GORELEASER_ARGS="--clean" >> $GITHUB_ENV
+          echo ENABLE_RELEASE_PIPELINE=true >> $GITHUB_ENV
         elif [[ $GITHUB_REF == refs/heads/* ]]; then
           # Branch build.
           echo IMAGE_TAG="$(echo "${GITHUB_REF#refs/heads/}" | sed -r 's|/+|-|g')" >> $GITHUB_ENV
-          echo GORELEASER_ARGS="--rm-dist --skip-validate" >> $GITHUB_ENV
+          echo GORELEASER_ARGS="--clean --skip-validate" >> $GITHUB_ENV
         elif [[ $GITHUB_REF == refs/pull/* ]]; then
           # PR build.
           echo IMAGE_TAG="pr-$(echo "${GITHUB_REF}" | sed -E 's|refs/pull/([^/]+)/?.*|\1|')" >> $GITHUB_ENV
