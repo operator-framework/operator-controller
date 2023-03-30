@@ -2,7 +2,7 @@
 The operator-controller is the central component of Operator Lifecycle Manager (OLM) v1. It extends Kubernetes with an API through which users can install Operators.
 
 ## Description
-OLM v1 is the follow up to OLM v0, located [here](https://github.com/operator-framework/operator-lifecycle-manager). It consists of four different components, including this one, which are as follows:
+OLM v1 is the follow-up to OLM v0, located [here](https://github.com/operator-framework/operator-lifecycle-manager). It consists of four different components, including this one, which are as follows:
 * operator-controller
 * [deppy](https://github.com/operator-framework/deppy)
 * [rukpak](https://github.com/operator-framework/rukpak)

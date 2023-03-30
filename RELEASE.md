@@ -51,4 +51,5 @@ git tag v1.2.0
 git push upstream v1.2.0
 ```
 
+### Post-Steps
 Once the tag has been pushed the release action should run automatically. You can view the progress [here](https://github.com/operator-framework/operator-lifecycle-manager/actions/workflows/goreleaser.yaml). When finished, the release should then be available on the [releases page](https://github.com/operator-framework/operator-controller/releases).
