@@ -6,7 +6,16 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - ""
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+- apiGroups:
+  - catalogd.operatorframework.io
   resources:
   - bundlemetadata
   verbs:
@@ -18,13 +27,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - ""
+  - catalogd.operatorframework.io
   resources:
   - bundlemetadata/finalizers
   verbs:
   - update
 - apiGroups:
-  - ""
+  - catalogd.operatorframework.io
   resources:
   - bundlemetadata/status
   verbs:
@@ -32,33 +41,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - ""
-  resources:
-  - packages
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - packages/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - packages/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - core.catalogd.io
+  - catalogd.operatorframework.io
   resources:
   - catalogsources
   verbs:
@@ -70,16 +53,58 @@ rules:
   - update
   - watch
 - apiGroups:
-  - core.catalogd.io
+  - catalogd.operatorframework.io
   resources:
   - catalogsources/finalizers
   verbs:
   - update
 - apiGroups:
-  - core.catalogd.io
+  - catalogd.operatorframework.io
   resources:
   - catalogsources/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - catalogd.operatorframework.io
+  resources:
+  - packages
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - catalogd.operatorframework.io
+  resources:
+  - packages/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - catalogd.operatorframework.io
+  resources:
+  - packages/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
+  - list
+  - watch

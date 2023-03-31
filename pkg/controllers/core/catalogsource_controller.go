@@ -47,9 +47,12 @@ type CatalogSourceReconciler struct {
 	OpmImage string
 }
 
-//+kubebuilder:rbac:groups=core.catalogd.io,resources=catalogsources,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core.catalogd.io,resources=catalogsources/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=core.catalogd.io,resources=catalogsources/finalizers,verbs=update
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogsources,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogsources/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogsources/finalizers,verbs=update
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
+//+kubebuilder:rbac:groups=core,resources=pods/log,verbs=get;list;watch
+//+kubebuilder:rbac:groups=batch,resources=jobs,verbs=create;get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

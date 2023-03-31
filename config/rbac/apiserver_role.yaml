@@ -1,0 +1,25 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: apiserver-auth-reader
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - 'admissionregistration.k8s.io'
+    resources:
+      - '*'
+    verbs:
+      - 'list'
+      - 'watch'
+  - nonResourceURLs:
+      - '*'
+    verbs:
+      - '*'

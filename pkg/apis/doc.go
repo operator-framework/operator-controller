@@ -17,6 +17,6 @@ limitations under the License.
 //go:generate apiregister-gen --input-dirs ./... -h ../../boilerplate.go.txt
 
 //
-// +domain=catalogd.io
+// +domain=operatorframework.io
 
 package apis

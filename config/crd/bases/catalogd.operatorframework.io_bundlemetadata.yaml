@@ -1,0 +1,98 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.9.0
+  creationTimestamp: null
+  name: bundlemetadata.catalogd.operatorframework.io
+spec:
+  group: catalogd.operatorframework.io
+  names:
+    kind: BundleMetadata
+    listKind: BundleMetadataList
+    plural: bundlemetadata
+    singular: bundlemetadata
+  scope: Cluster
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: BundleMetadata
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: BundleMetadataSpec defines the desired state of BundleMetadata
+            properties:
+              catalogSource:
+                description: CatalogSource is the name of the CatalogSource that provides
+                  this bundle
+                type: string
+              image:
+                description: Image is a reference to the image that provides the bundle
+                  contents
+                type: string
+              package:
+                description: Package is the name of the package that provides this
+                  bundle
+                type: string
+              properties:
+                description: Properties is a string of references to property objects
+                  that are part of the bundle
+                items:
+                  description: 'TODO: In the future we should remove this in favor
+                    of using `property.Property` from https://pkg.go.dev/github.com/operator-framework/operator-registry@v1.26.3/alpha/property#Property
+                    This will likely require some changes to the `property.Property`
+                    type to make it suitable for usage within the Spec for a CustomResource'
+                  properties:
+                    type:
+                      type: string
+                    value:
+                      format: byte
+                      type: string
+                  required:
+                  - type
+                  - value
+                  type: object
+                type: array
+              relatedImages:
+                description: RelatedImages are the RelatedImages in the bundle
+                items:
+                  description: 'TODO: In the future we should remove this in favor
+                    of using `model.RelatedImage` (or similar) from https://pkg.go.dev/github.com/operator-framework/operator-registry@v1.26.3/alpha/model#RelatedImage
+                    This will likely require some changes to the `model.RelatedImage`
+                    type to make it suitable for usage within the Spec for a CustomResource'
+                  properties:
+                    image:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - image
+                  - name
+                  type: object
+                type: array
+            required:
+            - catalogSource
+            - image
+            - package
+            - properties
+            - relatedImages
+            type: object
+          status:
+            description: BundleMetadataStatus defines the observed state of BundleMetadata
+            type: object
+        type: object
+    served: true
+    storage: true

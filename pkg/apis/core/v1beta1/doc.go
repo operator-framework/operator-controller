@@ -22,5 +22,5 @@ limitations under the License.
 // +k8s:deepcopy-gen=package,register
 // +k8s:conversion-gen=github.com/operator-framework/catalogd/pkg/apis/core
 // +k8s:defaulter-gen=TypeMeta
-// +groupName=core.catalogd.io
+// +groupName=catalogd.operatorframework.io
 package v1beta1 // import "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"

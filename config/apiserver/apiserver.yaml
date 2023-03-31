@@ -1,12 +1,42 @@
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1beta1.catalogd.operatorframework.io
+  labels:
+    api: catalogd
+    apiserver: "true"
+    app.kubernetes.io/name: apiservice
+    app.kubernetes.io/instance: system
+    app.kubernetes.io/component: apiservice
+    app.kubernetes.io/created-by: catalogd
+    app.kubernetes.io/part-of: catalogd
+    app.kubernetes.io/managed-by: kustomize
+  annotations:
+    # Have cert manager inject the caBundle field using the cert we created
+    cert-manager.io/inject-ca-from: catalogd-system/server-cert
+spec:
+  version: v1beta1
+  group: catalogd.operatorframework.io
+  groupPriorityMinimum: 2000
+  service:
+    name: catalogd
+    namespace: system
+  versionPriority: 10
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: catalogd-apiserver
-  namespace: catalogd-system
+  name: apiserver
+  namespace: system
   labels:
     api: catalogd
     apiserver: "true"
+    app.kubernetes.io/name: deployment
+    app.kubernetes.io/instance: system
+    app.kubernetes.io/component: apiservice
+    app.kubernetes.io/created-by: catalogd
+    app.kubernetes.io/part-of: catalogd
+    app.kubernetes.io/managed-by: kustomize
 spec:
   selector:
     matchLabels:
@@ -19,18 +49,19 @@ spec:
         api: catalogd
         apiserver: "true"
     spec:
+      serviceAccountName: apiserver
       containers:
       - name: apiserver
-        image: quay.io/operator-framework/catalogd-server:latest
+        image: apiserver:latest
         imagePullPolicy: IfNotPresent
         volumeMounts:
-        - name: apiserver-certs
+        - name: catalogd-apiserver-certs
           mountPath: /apiserver.local.config/certificates
           readOnly: true
         command:
         - "./apiserver"
         args:
-        - "--etcd-servers=http://etcd-svc:2379"
+        - "--etcd-servers=http://catalogd-etcd-svc:2379"
         - "--tls-cert-file=/apiserver.local.config/certificates/tls.crt"
         - "--tls-private-key-file=/apiserver.local.config/certificates/tls.key"
         - "--audit-log-path=-"
@@ -46,15 +77,15 @@ spec:
             cpu: 100m
             memory: 30Mi
       volumes:
-      - name: apiserver-certs
+      - name: catalogd-apiserver-certs
         secret:
-          secretName: catalogd
+          secretName: catalogd-apiserver
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: catalogd
-  namespace: catalogd-system
+  name: apiserver
+  namespace: system
   labels:
     api: catalogd
     apiserver: "true"
@@ -74,7 +105,7 @@ metadata:
     api: catalogd
     apiserver: "true"
   name: selfsigned-issuer
-  namespace: catalogd-system
+  namespace: system
 spec:
   selfSigned: {}
 ---
@@ -84,14 +115,14 @@ metadata:
   labels:
     api: catalogd
     apiserver: "true"
-  name: catalogd-cert
-  namespace: catalogd-system
+  name: server-cert
+  namespace: system
 spec:
   dnsNames:
-  - catalogd.catalogd-system.svc
-  - catalogd.catalogd-system.svc.cluster.local
+  - catalogd-apiserver.catalogd.svc
+  - catalogd-apiserver.catalogd.svc.cluster.local
   - localhost
   issuerRef:
     kind: Issuer
-    name: selfsigned-issuer
-  secretName: catalogd
+    name: catalogd-selfsigned-issuer
+  secretName: catalogd-apiserver

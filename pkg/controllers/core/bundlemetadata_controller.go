@@ -33,9 +33,9 @@ type BundleMetadataReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=core,resources=bundlemetadata,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=bundlemetadata/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=core,resources=bundlemetadata/finalizers,verbs=update
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=bundlemetadata,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=bundlemetadata/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=bundlemetadata/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

@@ -1,0 +1,13 @@
+apiVersion: catalogd.operatorframework.io/v1beta1
+kind: CatalogSource
+metadata: 
+  labels:
+    app.kubernetes.io/name: catalogsource
+    app.kubernetes.io/instance: catalogsource-sample
+    app.kubernetes.io/part-of: catalogd
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: catalogd
+  name: catalogsource-sample
+spec:
+  image: quay.io/operatorhubio/catalog:latest
+  pollingInterval: 45m

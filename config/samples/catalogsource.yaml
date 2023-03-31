@@ -1,7 +1,0 @@
-apiVersion: core.catalogd.io/v1beta1
-kind: CatalogSource
-metadata:
-  name: catalogsource-sample
-spec:
-  image: quay.io/operatorhubio/catalog:latest
-

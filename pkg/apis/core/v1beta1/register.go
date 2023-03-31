@@ -24,7 +24,7 @@ import (
 
 var AddToScheme = func(scheme *runtime.Scheme) error {
 	gv := schema.GroupVersion{
-		Group:   "core.catalogd.io",
+		Group:   "catalogd.operatorframework.io",
 		Version: "v1beta1",
 	}
 	metav1.AddToGroupVersion(scheme, gv)

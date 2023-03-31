@@ -122,7 +122,7 @@ func (in *Package) NewList() runtime.Object {
 
 func (in *Package) GetGroupVersionResource() schema.GroupVersionResource {
 	return schema.GroupVersionResource{
-		Group:    "core.catalogd.io",
+		Group:    "catalogd.operatorframework.io",
 		Version:  "v1beta1",
 		Resource: "packages",
 	}
