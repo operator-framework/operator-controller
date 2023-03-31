@@ -23,10 +23,10 @@ func ByChannelAndVersion(entity1 *input.Entity, entity2 *input.Entity) bool {
 	}
 
 	// todo(perdasilva): handle default channel in ordering once it is being exposed by the entity
-	// channelOrder := channelOrder(e1, e2)
-	// if channelOrder != 0 {
-	// 	return channelOrder < 0
-	// }
+	channelOrder := channelOrder(e1, e2)
+	if channelOrder != 0 {
+		return channelOrder < 0
+	}
 
 	// order version from highest to lowest (favor the latest release)
 	versionOrder := versionOrder(e1, e2)

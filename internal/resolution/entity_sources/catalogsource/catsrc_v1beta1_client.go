@@ -38,7 +38,24 @@ func (c *v1beta1CatalogSourceConnector) Get(ctx context.Context, id deppy.Identi
 		fmt.Println("error fetching types %w", err)
 	}
 
-	entity, err := convertBMDToEntity(*bundleMetaData)
+	packageData := &catsrcV1.Package{}
+	if err := c.client.Get(ctx, types.NamespacedName{Name: bundleMetaData.Spec.Package}, packageData); err != nil {
+		fmt.Println("error fetching types %w", err)
+	}
+
+	bundleChannels := make([]string, 0)
+	for _, ch := range packageData.Spec.Channels {
+		for _, entry := range ch.Entries {
+			if entry.Name == bmdname {
+				bundleChannels = append(bundleChannels, ch.Name)
+			}
+		}
+	}
+
+	entity, err := convertBMDToEntity(*bundleMetaData, channelData{
+		Channels:       bundleChannels,
+		DefaultChannel: packageData.Spec.DefaultChannel,
+	})
 	if err != nil {
 		fmt.Println("error while converting to entity %w", err)
 	}
@@ -83,7 +100,12 @@ func (c *v1beta1CatalogSourceConnector) Iterate(ctx context.Context, fn input.It
 		return err
 	}
 
-	entityList, err := convertBundleMetadataToEntities(catsrcBundleMetadata)
+	bundleChannels, err := c.getChannelData(ctx)
+	if err != nil {
+		return err
+	}
+
+	entityList, err := convertBundleMetadataToEntities(catsrcBundleMetadata, bundleChannels)
 	if err != nil {
 		return err
 	}
@@ -104,20 +126,46 @@ func (c *v1beta1CatalogSourceConnector) getBundleMetadataList(ctx context.Contex
 		return nil, fmt.Errorf("error fetching the list of bundleMetadata %v", err)
 	}
 
-	var bundleMetadata []catsrcV1.BundleMetadata
-	for _, c := range bundleMetadataList.Items {
-		bundleMetadata = append(bundleMetadata, c)
+	return bundleMetadataList.Items, nil
+}
+
+type channelData struct {
+	Channels       []string
+	DefaultChannel string
+}
+
+// TODO: expose channel priorities in Package API
+// get package level properties to add to bundles for resolution
+func (c *v1beta1CatalogSourceConnector) getChannelData(ctx context.Context) (map[string]*channelData, error) {
+	var packageList catsrcV1.PackageList
+
+	if err := c.client.List(ctx, &packageList); err != nil {
+		return nil, fmt.Errorf("error fetching the list of bundleMetadata %v", err)
 	}
+
+	// map[package.spec.channel.entry]map[property.Type] = {property.Value} for olm.channel, olm.defaultChannel property types
+	bundleMetadata := make(map[string]*channelData, 0)
+	for _, pkg := range packageList.Items {
+		for _, ch := range pkg.Spec.Channels {
+			for _, b := range ch.Entries {
+				if bundleMetadata[b.Name] == nil {
+					bundleMetadata[b.Name] = &channelData{DefaultChannel: pkg.Spec.DefaultChannel}
+				}
+				bundleMetadata[b.Name].Channels = append(bundleMetadata[b.Name].Channels, ch.Name)
+			}
+		}
+	}
+
 	return bundleMetadata, nil
 }
 
 // convertBundleMetadataToEntities converts bundleMetadata into entities.
-func convertBundleMetadataToEntities(bundlemetadataEntity []catsrcV1.BundleMetadata) (input.EntityList, error) {
+func convertBundleMetadataToEntities(bundlemetadataEntity []catsrcV1.BundleMetadata, channelMembershipData map[string]*channelData) (input.EntityList, error) {
 	var inputEntityList []input.Entity
 
 	var errs []error
 	for _, bmd := range bundlemetadataEntity {
-		entity, err := convertBMDToEntity(bmd)
+		entity, err := convertBMDToEntity(bmd, *channelMembershipData[bmd.GetName()])
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -129,7 +177,7 @@ func convertBundleMetadataToEntities(bundlemetadataEntity []catsrcV1.BundleMetad
 	return inputEntityList, errors.NewAggregate(errs)
 }
 
-func convertBMDToEntity(bd catsrcV1.BundleMetadata) (*input.Entity, error) {
+func convertBMDToEntity(bd catsrcV1.BundleMetadata, channelMembershipData channelData) (*input.Entity, error) {
 	properties := map[string]string{}
 	var errs []error
 
@@ -168,6 +216,22 @@ func convertBMDToEntity(bd catsrcV1.BundleMetadata) (*input.Entity, error) {
 		}
 	}
 
+	for _, ch := range channelMembershipData.Channels {
+		pValue, err := jsonMarshal(property.Channel{
+			ChannelName: ch,
+		})
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		if _, ok := propsList[property.TypeChannel]; !ok {
+			propsList[property.TypeChannel] = map[string]struct{}{}
+		}
+		if _, ok := propsList[property.TypeChannel][string(pValue)]; !ok {
+			propsList[property.TypeChannel][string(pValue)] = struct{}{}
+		}
+	}
+
 	for pType, pValues := range propsList {
 		var prop []interface{}
 		for pValue := range pValues {
@@ -198,6 +262,7 @@ func convertBMDToEntity(bd catsrcV1.BundleMetadata) (*input.Entity, error) {
 		properties[pType] = string(pValue)
 	}
 
+	properties[typeDefaultChannel] = channelMembershipData.DefaultChannel
 	properties[typeBundleSource] = bd.Spec.Image
 
 	if len(errs) > 0 {
