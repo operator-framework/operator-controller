@@ -7,6 +7,7 @@ export IMAGE_TAG ?= devel
 export GO_BUILD_TAGS ?= upstream
 export CERT_MGR_VERSION ?= v1.9.0
 export GORELEASER_VERSION ?= v1.16.2
+export OLM_V0_VERSION ?= v0.24.0
 export WAIT_TIMEOUT ?= 60s
 IMG?=$(IMAGE_REPO):$(IMAGE_TAG)
 

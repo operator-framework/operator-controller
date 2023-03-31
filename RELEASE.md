@@ -1,7 +1,6 @@
 # Release Process for OLM v1
 
 ## Choosing version increment
-
 When making releases for operator-controller, version increments should adhere strictly to Semantic Versioning. In short:
 * Major: API breaking change(s) are made.
 * Minor: Backwards compatible features are added.
@@ -10,23 +9,22 @@ When making releases for operator-controller, version increments should adhere s
 When a major or minor release being made is associated with one or more milestones, please ensure that all related features have been merged into the `main` branch before continuing.
 
 ## Creating the release
-
 Note that throughout this guide, the `upstream` remote refers to the `operator-framework/operator-controller` repository.
 
 The release process differs slightly based on whether a patch or major/minor release is being made.
 
 ### Patch Release
 #### Step 1
-In this example we will be creating a new patch release from version `v1.2.3`, on the branch `release-v1.2.z`.  
+In this example we will be creating a new patch release from version `v1.2.3`, on the branch `release-v1.2`.  
 First ensure that the release branch has been updated on remote with the changes from the patch, then perform the following:
 ```bash
-git fetch upstream release-v1.2.z
-git pull release-v1.2.z
-git checkout release-v1.2.z
+git fetch upstream release-v1.2
+git pull release-v1.2
+git checkout release-v1.2
 ```
+
 #### Step 2
 Create a new tag, incrementing the patch number from the previous version. In this case, we'll be incrementing from `v1.2.3` to `v1.2.4`:
-
 ```bash
 ## Previous version was v1.2.3, so we bump the patch number up by one
 git tag v1.2.4
@@ -35,13 +33,13 @@ git push upstream v1.2.4
 
 ### Major/Minor Release
 #### Step 1
-Create a release branch from `main` branch for the target release. Follow the pattern `release-<MAJOR>.<MINOR>.z` when naming the branch; for example: `release-v1.2.z`. The final character should be `z` to facilitate future patch releases. 
+Create a release branch from `main` branch for the target release. Follow the pattern `release-<MAJOR>.<MINOR>` when naming the branch; for example: `release-v1.2`. The patch version should not be included in the branch name in order to facilitate an easier patch process.
 ```bash
 git checkout main
 git fetch upstream main
 git pull main
-git checkout -b release-v1.2.z
-git push upstream release-v1.2.z
+git checkout -b release-v1.2
+git push upstream release-v1.2
 ```
 
 #### Step 2
