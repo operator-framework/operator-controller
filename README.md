@@ -71,7 +71,7 @@ In the mean time, it is assumed you know how to make contributions to open sourc
 If you have any questions, feel free to reach out to us on the Kubernetes Slack channel [#olm-dev](https://kubernetes.slack.com/archives/C0181L6JYQ2) or [create an issue](https://github.com/operator-framework/catalogd/issues/new)
 ### Testing Local Changes
 **Prerequisites**
-- [Install KinD](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+- [Install kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
 
 **Local (not on cluster)**
 > **Note**: This will work *only* for the controller
