@@ -115,10 +115,6 @@ func (in *CatalogSourceList) GetListMeta() *metav1.ListMeta {
 
 // CatalogSourceStatus defines the observed state of CatalogSource
 type CatalogSourceStatus struct {
-
-	// The last time the image has been polled to ensure the image is up-to-date
-	LatestImagePoll *metav1.Time `json:"latestImagePoll,omitempty"`
-
 	// Conditions store the status conditions of the CatalogSource instances
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
