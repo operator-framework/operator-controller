@@ -1,9 +1,12 @@
 
 # Image URL to use all building/pushing controller image targets
-CONTROLLER_IMG ?= quay.io/operator-framework/catalogd-controller:latest
+CONTROLLER_IMG ?= quay.io/operator-framework/catalogd-controller
 
 # Image URL to use all building/pushing apiserver image targets
-SERVER_IMG ?= quay.io/operator-framework/catalogd-server:latest
+SERVER_IMG ?= quay.io/operator-framework/catalogd-server
+
+# Tag to use when building/pushing images
+IMG_TAG ?= latest
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.23
@@ -79,7 +82,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 
 .PHONY: docker-build-controller
 docker-build-controller: build-controller test ## Build docker image with the manager.
-	docker build -f controller.Dockerfile -t ${CONTROLLER_IMG} .
+	docker build -f controller.Dockerfile -t ${CONTROLLER_IMG}:${IMG_TAG} .
 
 .PHONY: docker-push-controller
 docker-push-controller: ## Push docker image with the manager.
@@ -87,7 +90,7 @@ docker-push-controller: ## Push docker image with the manager.
 
 .PHONY: docker-build-server
 docker-build-server: build-server test ## Build docker image with the apiserver.
-	docker build -f apiserver.Dockerfile -t ${SERVER_IMG} .
+	docker build -f apiserver.Dockerfile -t ${SERVER_IMG}:${IMG_TAG} .
 
 .PHONY: docker-push-server
 docker-push-server: ## Push docker image with the apiserver.
@@ -122,9 +125,9 @@ cert-manager: ## Deploy cert-manager on the cluster
 
 export ENABLE_RELEASE_PIPELINE ?= false
 export GORELEASER_ARGS ?= --snapshot --clean
-export CONTROLLER_IMAGE_REPO ?= quay.io/operator-framework/catalogd-controller
-export APISERVER_IMAGE_REPO ?= quay.io/operator-framework/catalogd-server
-export IMAGE_TAG ?= devel
+export CONTROLLER_IMAGE_REPO ?= $(CONTROLLER_IMG)
+export APISERVER_IMAGE_REPO ?= $(SERVER_IMG)
+export IMAGE_TAG ?= $(IMG_TAG)
 release: goreleaser ## Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)
 
