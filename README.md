@@ -66,7 +66,7 @@ Thanks for your interest in contributing to `catalogd`!
 
 `catalogd` is in the very early stages of development and a more in depth contributing guide will come in the near future.
 
-In the mean time, it is assumed you know how to make contributions to open source projects in general and will only focus on how to manually test your changes (no automated testing yet).
+In the mean time, it is assumed you know how to make contributions to open source projects in general and this guide will only focus on how to manually test your changes (no automated testing yet).
 
 If you have any questions, feel free to reach out to us on the Kubernetes Slack channel [#olm-dev](https://kubernetes.slack.com/archives/C0181L6JYQ2) or [create an issue](https://github.com/operator-framework/catalogd/issues/new)
 ### Testing Local Changes
