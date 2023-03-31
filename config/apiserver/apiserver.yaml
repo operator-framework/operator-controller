@@ -52,11 +52,7 @@ spec:
       serviceAccountName: apiserver
       containers:
       - name: apiserver
-<<<<<<< HEAD:config/apiserver/apiserver.yaml
         image: apiserver:latest
-=======
-        image: quay.io/operator-framework/catalogd-server:devel
->>>>>>> 1ac8325 (fix manifest tags to match local build tags):config/aggregated-apiserver.yaml
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: catalogd-apiserver-certs
