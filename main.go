@@ -20,7 +20,7 @@ import (
 	"flag"
 	"os"
 
-	olmv0v1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	catsrcV1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -33,6 +33,7 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/resolution"
+	"github.com/operator-framework/operator-controller/internal/resolution/entity_sources/catalogsource"
 )
 
 var (
@@ -44,10 +45,11 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(catsrcV1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 
 	// required by the catalog source cache controller
-	utilruntime.Must(olmv0v1alpha1.AddToScheme(scheme))
+	// utilruntime.Must(olmv0v1alpha1.AddToScheme(scheme))
 }
 
 func main() {
@@ -91,20 +93,24 @@ func main() {
 		os.Exit(1)
 	}
 
-	catsrcReconciler := controllers.NewCatalogSourceReconciler(
-		mgr.GetClient(),
-		mgr.GetScheme(),
-		mgr.GetEventRecorderFor("catalogsource-controller"),
-	)
-	if err := catsrcReconciler.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create catalog source controller", "controller", "CatalogSource")
-		os.Exit(1)
-	}
+	// catsrcReconciler := controllers.NewCatalogSourceReconciler(
+	// 	mgr.GetClient(),
+	// 	mgr.GetScheme(),
+	// 	mgr.GetEventRecorderFor("catalogsource-controller"),
+	// )
+	// if err := catsrcReconciler.SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create catalog source controller", "controller", "CatalogSource")
+	// 	os.Exit(1)
+	// }
 
+	v1beta1CatsrcConnector := catalogsource.NewV1beta1CatalogSourceConnector(mgr.GetClient())
+
+	// TODO: Make the operator resolver accept multiple entity sources, with one containing the package information
+	// and the other with bundleMetadata contents.
 	if err = (&controllers.OperatorReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), catsrcReconciler),
+		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), v1beta1CatsrcConnector),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)

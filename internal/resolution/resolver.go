@@ -8,9 +8,8 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
-
 	"github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
 )
 
 type OperatorResolver struct {

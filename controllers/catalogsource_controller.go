@@ -101,14 +101,6 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// var v1beta1Catsrc = &catsrcv1beta1.CatalogSource{}
-	// if err := r.Client.Get(ctx, req.NamespacedName, v1beta1Catsrc); err != nil {
-	// 	if errors.IsNotFound(err) {
-	// 		r.dropSource(req.String())
-	// 	}
-	// 	return ctrl.Result{}, client.IgnoreNotFound(err)
-	// }
-
 	entities, err := r.registry.ListEntities(ctx, catalogSource)
 	// TODO: invalidate stale cache for failed updates
 	if err != nil {

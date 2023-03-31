@@ -2,22 +2,207 @@ package catalogsource
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"sort"
+	"sync"
 
-	catsrcv1beta1 "github.com/anik120/rukpak-packageserver/pkg/apis/core/v1beta1"
+	catsrcV1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-registry/alpha/property"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type newcatsrcClient struct {
-	ctx    context.Context
+type v1beta1CatalogSourceConnector struct {
+	sync.RWMutex
 	client client.Client
 }
 
-func NewCatSrcClient(ctx context.Context, cl client.Client) RegistryClient[catsrcv1beta1.CatalogSource] {
-	return newcatsrcClient{ctx: ctx, client: cl}
+func NewV1beta1CatalogSourceConnector(cl client.Client) *v1beta1CatalogSourceConnector {
+	return &v1beta1CatalogSourceConnector{
+		RWMutex: sync.RWMutex{},
+		client:  cl,
+	}
 }
 
-func (c newcatsrcClient) ListEntities(ctx context.Context, catsrc *catsrcv1beta1.CatalogSource) ([]*input.Entity, error) {
-	// TODO: implement
-	return nil, nil
+// id --> metadata.Name
+func (c *v1beta1CatalogSourceConnector) Get(ctx context.Context, id deppy.Identifier) *input.Entity {
+	bmdname := id.String()
+
+	// TODO: modify the fn signature to return error
+	bundleMetaData := &catsrcV1.BundleMetadata{}
+	if err := c.client.Get(ctx, types.NamespacedName{Name: bmdname}, bundleMetaData); err != nil {
+		fmt.Println("error fetching types %w", err)
+	}
+
+	entity, err := convertBMDToEntity(*bundleMetaData)
+	if err != nil {
+		fmt.Println("error while converting to entity %w", err)
+	}
+
+	return entity
+}
+
+func (c *v1beta1CatalogSourceConnector) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {
+	resultSet := input.EntityList{}
+	if err := c.Iterate(ctx, func(entity *input.Entity) error {
+		if filter(entity) {
+			resultSet = append(resultSet, *entity)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return resultSet, nil
+}
+
+func (c *v1beta1CatalogSourceConnector) GroupBy(ctx context.Context, fn input.GroupByFunction) (input.EntityListMap, error) {
+	resultSet := input.EntityListMap{}
+	if err := c.Iterate(ctx, func(entity *input.Entity) error {
+		keys := fn(entity)
+		for _, key := range keys {
+			resultSet[key] = append(resultSet[key], *entity)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return resultSet, nil
+}
+
+// 1. Using the client, it should get all the bundleMetadata.
+// 2. Convert each bundleMetadata's property into an entity.
+// 2.1 Create entity Id -> bundlemetadata.Name
+// 3. Call filter on the list of entities and return if there is any error
+func (c *v1beta1CatalogSourceConnector) Iterate(ctx context.Context, fn input.IteratorFunction) error {
+	catsrcBundleMetadata, err := c.getBundleMetadataList(ctx)
+	if err != nil {
+		return err
+	}
+
+	entityList, err := convertBundleMetadataToEntities(catsrcBundleMetadata)
+	if err != nil {
+		return err
+	}
+
+	for _, e := range entityList {
+		if err := fn(&e); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// getBundleMetadaList fetches all the bundleMetda objects from cluster.
+func (c *v1beta1CatalogSourceConnector) getBundleMetadataList(ctx context.Context) ([]catsrcV1.BundleMetadata, error) {
+	var bundleMetadataList catsrcV1.BundleMetadataList
+
+	if err := c.client.List(ctx, &bundleMetadataList); err != nil {
+		return nil, fmt.Errorf("error fetching the list of bundleMetadata %v", err)
+	}
+
+	var bundleMetadata []catsrcV1.BundleMetadata
+	for _, c := range bundleMetadataList.Items {
+		bundleMetadata = append(bundleMetadata, c)
+	}
+	return bundleMetadata, nil
+}
+
+// convertBundleMetadataToEntities converts bundleMetadata into entities.
+func convertBundleMetadataToEntities(bundlemetadataEntity []catsrcV1.BundleMetadata) (input.EntityList, error) {
+	var inputEntityList []input.Entity
+
+	var errs []error
+	for _, bmd := range bundlemetadataEntity {
+		entity, err := convertBMDToEntity(bmd)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		inputEntityList = append(inputEntityList, *entity)
+	}
+
+	return inputEntityList, errors.NewAggregate(errs)
+}
+
+func convertBMDToEntity(bd catsrcV1.BundleMetadata) (*input.Entity, error) {
+	properties := map[string]string{}
+	var errs []error
+
+	// Multivalue properties
+	propsList := map[string]map[string]struct{}{}
+
+	// TODO: repetitive code, remove in favor of what is present in internal/resolution/entity_sources/catalogSource
+	for _, p := range bd.Spec.Properties {
+		switch p.Type {
+		case property.TypeBundleObject:
+			// ignore - only need metadata for resolution and bundle path for installation
+		case property.TypePackage:
+			properties[p.Type] = string(p.Value)
+		default:
+			var v interface{}
+			// the keys in the marshaled object may be out of order.
+			// recreate the json object so this doesn't happen.
+			pValue := p.Value
+			err := json.Unmarshal(p.Value, &v)
+			if err == nil {
+				// don't force property values to be json
+				// but if unmarshalled successfully,
+				// marshaling again should not fail.
+				pValue, err = jsonMarshal(v)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+			}
+			if _, ok := propsList[p.Type]; !ok {
+				propsList[p.Type] = map[string]struct{}{}
+			}
+			if _, ok := propsList[p.Type][string(pValue)]; !ok {
+				propsList[p.Type][string(pValue)] = struct{}{}
+			}
+		}
+	}
+
+	for pType, pValues := range propsList {
+		var prop []interface{}
+		for pValue := range pValues {
+			var v interface{}
+			err := json.Unmarshal([]byte(pValue), &v)
+			if err == nil {
+				// the property value may not be json.
+				// if unable to unmarshal, treat property value as a string
+				prop = append(prop, v)
+			} else {
+				prop = append(prop, pValue)
+			}
+		}
+		if len(prop) == 0 {
+			continue
+		}
+		if len(prop) > 1 {
+			sort.Slice(prop, func(i, j int) bool {
+				// enforce some ordering for deterministic properties. Possibly a neater way to do this.
+				return fmt.Sprintf("%v", prop[i]) < fmt.Sprintf("%v", prop[j])
+			})
+		}
+		pValue, err := jsonMarshal(prop)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		properties[pType] = string(pValue)
+	}
+
+	properties[typeBundleSource] = bd.Spec.Image
+
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("failed to parse properties for bundle %s in %s: %v", bd.GetName(), bd.Spec.CatalogSource, errors.NewAggregate(errs))
+	}
+
+	return input.NewEntity(deppy.Identifier(bd.GetName()), properties), nil
 }
