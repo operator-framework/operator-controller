@@ -24,10 +24,10 @@ tasks:
       - task: build:manifest
         vars:
           KUSTOMIZE_DIR: "{{.KUSTOMIZE_DIR}}"
-          OPERATOR_CONTROLLER_MANIFEST: "{{.OPERATOR_CONTROLLER_MANIFEST}}"
+          CONTROLLER_MANIFEST: "{{.CONTROLLER_MANIFEST}}"
       - task: build:install-script
         vars:
-          OPERATOR_CONTROLLER_MANIFEST: "{{.OPERATOR_CONTROLLER_MANIFEST}}"
+          CONTROLLER_MANIFEST: "{{.CONTROLLER_MANIFEST}}"
       - task: kind:create
         vars:
           KIND_CLUSTER_NAME: "{{.KIND_CLUSTER_NAME}}"

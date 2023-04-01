@@ -1,11 +1,12 @@
 version: '3'
 
 vars:
+  PROJECT: "{{base .ROOT_DIR}}"
   TOOLSBIN: "{{.ROOT_DIR}}/hack/tools/bin"
   GO_BUILD_TAGS: upstream
 
 env:
-  IMAGE_REPO: quay.io/operator-framework/operator-controller
+  IMAGE_REPO: quay.io/operator-framework/{{.PROJECT}}
   IMAGE_TAG: devel
 
   GORELEASER_ARGS: --snapshot --clean
@@ -39,7 +40,7 @@ tasks:
         This task will run the operator in a kind cluster.
       
         The KIND_CLUSTER_NAME task variable is used to control the name of the
-        kind cluster. By default, this is set to "operator-controller".
+        kind cluster. By default, this is set to "{{.PROJECT}}".
     cmds:
       - task: deploy:kind
         vars:
@@ -64,6 +65,6 @@ tasks:
       - task: build:manifest
       - task: build:install-script
         vars:
-          OPERATOR_CONTROLLER_MANIFEST: https://github.com/operator-framework/operator-controller/releases/download/$IMAGE_TAG/operator-controller.yaml
+          CONTROLLER_MANIFEST: https://github.com/operator-framework/{{.PROJECT}}/releases/download/$IMAGE_TAG/{{.PROJECT}}.yaml
       - "{{.TOOLSBIN}}/goreleaser release $GORELEASER_ARGS"
     deps: [tools:goreleaser]

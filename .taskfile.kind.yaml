@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  KIND_CLUSTER_NAME: "operator-controller"
+  KIND_CLUSTER_NAME: "{{.PROJECT}}"
 
 includes:
   tools:

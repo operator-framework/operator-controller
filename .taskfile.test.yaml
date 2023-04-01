@@ -83,7 +83,7 @@ tasks:
       - task: deploy:kind
         vars:
           KUSTOMIZE_DIR: "config/e2e"
-          OPERATOR_CONTROLLER_MANIFEST: "operator-controller-e2e.yaml"
+          CONTROLLER_MANIFEST: "{{.PROJECT}}-e2e.yaml"
           KIND_CLUSTER_NAME: "{{.KIND_CLUSTER_NAME}}-e2e"
           KIND_EXTRA_FLAGS: "--config ./kind-e2e.yaml"
           GO_COVER: "true"
@@ -93,8 +93,8 @@ tasks:
             KIND_CLUSTER_NAME: "{{.KIND_CLUSTER_NAME}}-e2e"
       - "{{.TOOLSBIN}}/ginkgo --tags {{.GO_BUILD_TAGS}} --progress --trace {{with .FOCUS}}--focus '{{.}}'{{end}} ./test/e2e"
 
-      # Delete the operator controller manager pod to write the coverage data to disk.
-      - kubectl delete --wait pod -n operator-controller-system -l control-plane=controller-manager
+      # Delete the controller manager pod to write the coverage data to disk.
+      - kubectl delete --wait pod -n {{.PROJECT}}-system -l control-plane=controller-manager
       - go tool covdata percent -i={{.GOCOVERDIR}}
     deps: [tools:ginkgo]
 

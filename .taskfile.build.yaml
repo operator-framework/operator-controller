@@ -8,14 +8,14 @@ includes:
 vars:
   BIN: "{{.ROOT_DIR}}/bin"
   KUSTOMIZE_DIR: "config/default"
-  OPERATOR_CONTROLLER_MANIFEST: ./operator-controller.yaml
+  CONTROLLER_MANIFEST: ./{{.PROJECT}}.yaml
 
   OLMV0_VERSION: v0.24.0
   CERT_MANAGER_VERSION: v1.9.0
   RUKPAK_VERSION: v0.11.0
 
 env:
-  IMAGE_REPO: quay.io/operator-framework/operator-controller
+  IMAGE_REPO: quay.io/operator-framework/{{.PROJECT}}
   IMAGE_TAG: devel
 
 tasks:
@@ -58,7 +58,7 @@ tasks:
       GOARCH is taken from the environment to ensure a binary that will run on the local
       machine. GOOS is always set to `linux` for the docker build.
       
-      By default, the image is tagged as quay.io/operator-framework/operator-controller:devel.
+      By default, the image is tagged as quay.io/operator-framework/{{.PROJECT}}:devel.
       You can control the image repo and tag by setting the IMAGE_REPO and IMAGE_TAG
       environment variables.
     cmds:
@@ -79,7 +79,7 @@ tasks:
       with the controller image set to the IMAGE_REPO and IMAGE_TAG environment variables.
     cmds:
       - cd config/manager && {{.TOOLSBIN}}/kustomize edit set image controller=$IMAGE_REPO:$IMAGE_TAG
-      - "{{.TOOLSBIN}}/kustomize build {{.KUSTOMIZE_DIR}} > {{.OPERATOR_CONTROLLER_MANIFEST}}"
+      - "{{.TOOLSBIN}}/kustomize build {{.KUSTOMIZE_DIR}} > {{.CONTROLLER_MANIFEST}}"
     deps: [tools:kustomize, generate]
 
   install-script:
@@ -87,9 +87,9 @@ tasks:
     summary: |
       This task generates the install script that can be used to install the operator.
       
-      The OPERATOR_CONTROLLER_MANIFEST task variable is used to set the location that
-      will be used to `kubectl apply -f` the operator-controller manifest. By default,
-      this is set to `./operator-controller.yaml`. However this can be overridden during
+      The CONTROLLER_MANIFEST task variable is used to set the location that
+      will be used to `kubectl apply -f` the controller manifest. By default,
+      this is set to `./{{.PROJECT}}.yaml`. However this can be overridden during
       a release to reference the release manifest URL that is uploaded to GitHub during
       the release.
     silent: true
@@ -113,8 +113,8 @@ tasks:
         kubectl wait --for=condition=Available --namespace=rukpak-system deployment/rukpak-webhooks --timeout=60s
         kubectl wait --for=condition=Available --namespace=crdvalidator-system deployment/crd-validation-webhook --timeout=60s
 
-        # Install operator-controller
-        kubectl apply -f {{.OPERATOR_CONTROLLER_MANIFEST}}
-        kubectl wait --for=condition=Available --namespace=operator-controller-system deployment/operator-controller-controller-manager --timeout=60s
+        # Install controller
+        kubectl apply -f {{.CONTROLLER_MANIFEST}}
+        kubectl wait --for=condition=Available --namespace={{.PROJECT}}-system deployment/{{.PROJECT}}-controller-manager --timeout=60s
         EOF
       - chmod +x ./install.sh
