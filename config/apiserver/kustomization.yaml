@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: apiserver
   newName: quay.io/operator-framework/catalogd-server
-  newTag: latest
+  newTag: devel

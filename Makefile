@@ -1,9 +1,12 @@
 
 # Image URL to use all building/pushing controller image targets
-CONTROLLER_IMG ?= quay.io/operator-framework/catalogd-controller:latest
+CONTROLLER_IMG ?= quay.io/operator-framework/catalogd-controller
 
 # Image URL to use all building/pushing apiserver image targets
-SERVER_IMG ?= quay.io/operator-framework/catalogd-server:latest
+SERVER_IMG ?= quay.io/operator-framework/catalogd-server
+
+# Tag to use when building/pushing images
+IMG_TAG ?= devel
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.23
@@ -78,16 +81,16 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build-controller
-docker-build-controller: test ## Build docker image with the manager.
-	docker build -f controller.Dockerfile -t ${CONTROLLER_IMG} .
+docker-build-controller: build-controller test ## Build docker image with the manager.
+	docker build -f controller.Dockerfile -t ${CONTROLLER_IMG}:${IMG_TAG} .
 
 .PHONY: docker-push-controller
 docker-push-controller: ## Push docker image with the manager.
 	docker push ${CONTROLLER_IMG}
 
 .PHONY: docker-build-server
-docker-build-server: test ## Build docker image with the apiserver.
-	docker build -f apiserver.Dockerfile -t ${SERVER_IMG} .
+docker-build-server: build-server test ## Build docker image with the apiserver.
+	docker build -f apiserver.Dockerfile -t ${SERVER_IMG}:${IMG_TAG} .
 
 .PHONY: docker-push-server
 docker-push-server: ## Push docker image with the apiserver.
@@ -119,6 +122,14 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 .PHONY: cert-manager
 cert-manager: ## Deploy cert-manager on the cluster
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
+
+export ENABLE_RELEASE_PIPELINE ?= false
+export GORELEASER_ARGS ?= --snapshot --clean
+export CONTROLLER_IMAGE_REPO ?= $(CONTROLLER_IMG)
+export APISERVER_IMAGE_REPO ?= $(SERVER_IMG)
+export IMAGE_TAG ?= $(IMG_TAG)
+release: goreleaser ## Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
+	$(GORELEASER) $(GORELEASER_ARGS)
 
 ## Location to install dependencies to
 LOCALBIN ?= $(shell pwd)/bin
@@ -152,6 +163,13 @@ ENVTEST = $(shell pwd)/bin/setup-envtest
 .PHONY: envtest
 envtest: ## Download envtest-setup locally if necessary.
 	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
+
+GORELEASER := $(LOCALBIN)/goreleaser
+export GORELEASER_VERSION ?= v1.16.2
+.PHONY: goreleaser
+goreleaser: $(GORELEASER) ## Builds a local copy of goreleaser
+$(GORELEASER): $(LOCALBIN)
+	test -s $(LOCALBIN)/goreleaser || GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@${GORELEASER_VERSION}
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))

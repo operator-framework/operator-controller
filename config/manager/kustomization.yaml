@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/operator-framework/catalogd-controller
-  newTag: latest
+  newTag: devel
