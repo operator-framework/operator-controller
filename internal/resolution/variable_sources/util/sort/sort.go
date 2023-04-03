@@ -61,10 +61,13 @@ func channelOrder(e1, e2 *entity.BundleEntity) int {
 	if errComp != 0 {
 		return errComp
 	}
-	if channelProperties1.Priority != channelProperties2.Priority {
-		return channelProperties1.Priority - channelProperties2.Priority
+	if channelProperties1 != nil && channelProperties2 != nil {
+		if channelProperties1.Priority != channelProperties2.Priority {
+			return channelProperties1.Priority - channelProperties2.Priority
+		}
+		return strings.Compare(channelProperties1.ChannelName, channelProperties2.ChannelName)
 	}
-	return strings.Compare(channelProperties1.ChannelName, channelProperties2.ChannelName)
+	return 0
 }
 
 func versionOrder(e1, e2 *entity.BundleEntity) int {

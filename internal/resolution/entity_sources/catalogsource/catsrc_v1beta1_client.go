@@ -136,7 +136,7 @@ type channelData struct {
 
 // TODO: expose channel priorities in Package API
 // get package level properties to add to bundles for resolution
-func (c *v1beta1CatalogSourceConnector) getChannelData(ctx context.Context) (map[string]*channelData, error) {
+func (c *v1beta1CatalogSourceConnector) getChannelData(ctx context.Context) (map[string]channelData, error) {
 	var packageList catsrcV1.PackageList
 
 	if err := c.client.List(ctx, &packageList); err != nil {
@@ -144,14 +144,19 @@ func (c *v1beta1CatalogSourceConnector) getChannelData(ctx context.Context) (map
 	}
 
 	// map[package.spec.channel.entry]map[property.Type] = {property.Value} for olm.channel, olm.defaultChannel property types
-	bundleMetadata := make(map[string]*channelData, 0)
+	bundleMetadata := make(map[string]channelData, 0)
 	for _, pkg := range packageList.Items {
 		for _, ch := range pkg.Spec.Channels {
 			for _, b := range ch.Entries {
-				if bundleMetadata[b.Name] == nil {
-					bundleMetadata[b.Name] = &channelData{DefaultChannel: pkg.Spec.DefaultChannel}
+				var value channelData
+				if _, ok := bundleMetadata[b.Name]; !ok {
+					bundleMetadata[b.Name] = channelData{}
 				}
-				bundleMetadata[b.Name].Channels = append(bundleMetadata[b.Name].Channels, ch.Name)
+				value = bundleMetadata[b.Name]
+				value.DefaultChannel = pkg.Spec.DefaultChannel
+				value.Channels = append(value.Channels, ch.Name)
+
+				bundleMetadata[b.Name] = value
 			}
 		}
 	}
@@ -160,12 +165,12 @@ func (c *v1beta1CatalogSourceConnector) getChannelData(ctx context.Context) (map
 }
 
 // convertBundleMetadataToEntities converts bundleMetadata into entities.
-func convertBundleMetadataToEntities(bundlemetadataEntity []catsrcV1.BundleMetadata, channelMembershipData map[string]*channelData) (input.EntityList, error) {
+func convertBundleMetadataToEntities(bundlemetadataEntity []catsrcV1.BundleMetadata, channelMembershipData map[string]channelData) (input.EntityList, error) {
 	var inputEntityList []input.Entity
 
 	var errs []error
 	for _, bmd := range bundlemetadataEntity {
-		entity, err := convertBMDToEntity(bmd, *channelMembershipData[bmd.GetName()])
+		entity, err := convertBMDToEntity(bmd, channelMembershipData[bmd.GetName()])
 		if err != nil {
 			errs = append(errs, err)
 			continue
