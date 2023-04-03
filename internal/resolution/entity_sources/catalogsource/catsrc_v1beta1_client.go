@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 
 	catsrcV1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
@@ -30,7 +31,11 @@ func NewV1beta1CatalogSourceConnector(cl client.Client) *v1beta1CatalogSourceCon
 
 // id --> metadata.Name
 func (c *v1beta1CatalogSourceConnector) Get(ctx context.Context, id deppy.Identifier) *input.Entity {
-	bmdname := id.String()
+	bmdname, ch, err := bundleMetadataNameFromID(id)
+	if err != nil {
+		fmt.Printf("could not get bundlemetadata name from id: %v\n", err)
+		return nil
+	}
 
 	// TODO: modify the fn signature to return error
 	bundleMetaData := &catsrcV1.BundleMetadata{}
@@ -43,24 +48,15 @@ func (c *v1beta1CatalogSourceConnector) Get(ctx context.Context, id deppy.Identi
 		fmt.Println("error fetching types %w", err)
 	}
 
-	bundleChannels := make([]string, 0)
-	for _, ch := range packageData.Spec.Channels {
-		for _, entry := range ch.Entries {
-			if entry.Name == bmdname {
-				bundleChannels = append(bundleChannels, ch.Name)
-			}
-		}
-	}
-
-	entity, err := convertBMDToEntity(*bundleMetaData, channelData{
-		Channels:       bundleChannels,
+	entity, err := convertBMDToEntities(*bundleMetaData, channelData{
+		Channels:       []string{ch},
 		DefaultChannel: packageData.Spec.DefaultChannel,
 	})
 	if err != nil {
 		fmt.Println("error while converting to entity %w", err)
 	}
 
-	return entity
+	return &entity[0]
 }
 
 func (c *v1beta1CatalogSourceConnector) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {
@@ -170,19 +166,19 @@ func convertBundleMetadataToEntities(bundlemetadataEntity []catsrcV1.BundleMetad
 
 	var errs []error
 	for _, bmd := range bundlemetadataEntity {
-		entity, err := convertBMDToEntity(bmd, channelMembershipData[bmd.GetName()])
+		entities, err := convertBMDToEntities(bmd, channelMembershipData[bmd.GetName()])
 		if err != nil {
 			errs = append(errs, err)
 			continue
 		}
 
-		inputEntityList = append(inputEntityList, *entity)
+		inputEntityList = append(inputEntityList, entities...)
 	}
 
 	return inputEntityList, errors.NewAggregate(errs)
 }
 
-func convertBMDToEntity(bd catsrcV1.BundleMetadata, channelMembershipData channelData) (*input.Entity, error) {
+func convertBMDToEntities(bd catsrcV1.BundleMetadata, channelMembershipData channelData) ([]input.Entity, error) {
 	properties := map[string]string{}
 	var errs []error
 
@@ -218,22 +214,6 @@ func convertBMDToEntity(bd catsrcV1.BundleMetadata, channelMembershipData channe
 			if _, ok := propsList[p.Type][string(pValue)]; !ok {
 				propsList[p.Type][string(pValue)] = struct{}{}
 			}
-		}
-	}
-
-	for _, ch := range channelMembershipData.Channels {
-		pValue, err := jsonMarshal(property.Channel{
-			ChannelName: ch,
-		})
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		if _, ok := propsList[property.TypeChannel]; !ok {
-			propsList[property.TypeChannel] = map[string]struct{}{}
-		}
-		if _, ok := propsList[property.TypeChannel][string(pValue)]; !ok {
-			propsList[property.TypeChannel][string(pValue)] = struct{}{}
 		}
 	}
 
@@ -274,5 +254,32 @@ func convertBMDToEntity(bd catsrcV1.BundleMetadata, channelMembershipData channe
 		return nil, fmt.Errorf("failed to parse properties for bundle %s in %s: %v", bd.GetName(), bd.Spec.CatalogSource, errors.NewAggregate(errs))
 	}
 
-	return input.NewEntity(deppy.Identifier(bd.GetName()), properties), nil
+	entites := []input.Entity{}
+	for _, ch := range channelMembershipData.Channels {
+		pValue, err := jsonMarshal(property.Channel{
+			ChannelName: ch,
+		})
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		properties[property.TypeChannel] = string(pValue)
+
+		entites = append(entites, *input.NewEntity(bundleMetadataID(bd.GetName(), ch), properties))
+	}
+
+	return entites, nil
+}
+
+func bundleMetadataID(name, channel string) deppy.Identifier {
+	return deppy.Identifier(fmt.Sprintf("%s/%s", name, channel))
+}
+
+func bundleMetadataNameFromID(id deppy.Identifier) (name, channel string, err error) {
+	parts := strings.Split(id.String(), "/")
+	if len(parts) < 2 {
+		return "", "", fmt.Errorf("invalid ID format %s", id)
+	}
+	return parts[0], parts[1], nil
 }
