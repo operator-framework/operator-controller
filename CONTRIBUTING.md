@@ -2,14 +2,14 @@
 
 Operator Controller is an Apache 2.0 licensed project and accepts contributions via GitHub pull requests (PRs).
 
-Thanks for you interest in contributing to the Operator-Controller. 
+Thank you for your interest in contributing to the Operator-Controller.
 
 As you may or may not know, the Operator-Controller project aims to deliver the user experience described in the [Operator Lifecycle Manager (OLM) V1 Product Requirements Document (PRD)](https://docs.google.com/document/d/1-vsZ2dAODNfoHb7Nf0fbYeKDF7DUqEzS9HqgeMCvbDs/edit). The design requirements captured in the OLM V1 PRD were born from customer and community feedback based on the experience they had with the released version of [OLM V0](github.com/operator-framework/operator-lifecycle-manager).
 
 The user experience captured in the OLM V1 PRD introduces many requirements that are best satisfied by a microservices architecture. The OLM V1 experience currently relies on four projects:
 - [The Operator-Controller project](https://github.com/operator-framework/operator-controller/), which is the top level component allowing users to specify operators they'd like to install.
 - [The Catalogd project](https://github.com/operator-framework/catalogd/), which hosts operator content and helps users discover installable content.
-- [The Deppy project](https://github.com/operator-framework/deppy/), which enables the operator-controller to identify valid installs and upgrades from the list of installable content provided via the Catalod project
+- [The Deppy project](https://github.com/operator-framework/deppy/), which enables the operator-controller to identify valid installs and upgrades from the list of installable content provided via the Catalogd project.
 - [The RukPak project](https://github.com/operator-framework/rukpak/), which facilitates the installation of operators.
 
 Each of the projects listed above have their own governance, release milestones, and release cadence. However, from a technical perspective, the "OLM V1 experience" matches the experienced offered by the operator-controller project, the top level component which introduces dependencies on RukPak, Deppy, and the Catalogd projects.
@@ -18,11 +18,11 @@ Each of the projects listed above have their own governance, release milestones,
 
 > "We need to accept that random issues and pull requests will show up" - Joe L.
 
-Before diving into our process for coordinating community efforts, I think it's important to set the expectation that Open Source development can be messy. Any effort to introduce a formal workflow for project contributions will almost certainly be circumvented by new community users. Rather than pestering users to subscribe to a project-specific process, we strive to make it as simply as possible to provide valuable feedback. With that in mind, changes to the project will almost certainly follow this process:
+Before diving into our process for coordinating community efforts, I think it's important to set the expectation that Open Source development can be messy. Any effort to introduce a formal workflow for project contributions will almost certainly be circumvented by new community users. Rather than pestering users to subscribe to a project-specific process, we strive to make it as simple as possible to provide valuable feedback. With that in mind, changes to the project will almost certainly follow this process:
 
-1. The community engages in discussion in the #olm-dev slack channel.
-2. The community creates GitHub Issues, GitHub Discussions, or pull requests in the appropriate repos based on (1) and potentially continue the discussion.
-3. The community utilize the Working Group and talk about (1) and (2) stuff and anything else that comes to mind.
+1. The community engages in discussion in the [#olm-dev](https://kubernetes.slack.com/archives/C0181L6JYQ2) slack channel.
+2. The community creates GitHub Issues, GitHub Discussions, or pull requests in the appropriate repos based on (1) to continue the discussion.
+3. The community utilizes the Working Group Meeting to talk about items from (1) and (2) as well as anything else that comes to mind.
 
 The workflow defined above implies that the community is always ready for discussion and that ongoing work can be found in the GitHub repository as GitHub Issues, GitHub Discussions, or pull requests, and that milestone planning is async, happening as part of (1), (2), and (3).
 
@@ -60,10 +60,10 @@ As discussed earlier, the operator-controller adheres to a microservice architec
 ## Submitting Issues
 
 Unsure where to submit an issue? 
-- The Operator-Controller project
-- The RukPak project
-- The Deppy project
-- The Catalogd project
+- [The Operator-Controller project](https://github.com/operator-framework/operator-controller/), which is the top level component allowing users to specify operators they'd like to install.
+- [The Catalogd project](https://github.com/operator-framework/catalogd/), which hosts operator content and helps users discover installable content.
+- [The Deppy project](https://github.com/operator-framework/deppy/), which enables the operator-controller to identify valid installs and upgrades from the list of installable content provided via the Catalogd project.
+- [The RukPak project](https://github.com/operator-framework/rukpak/), which facilitates the installation of operators.
 
 Don't worry if you accidentally submit an issue against the wrong project, if we notice that an issue would fit better with a separate project we'll move it to the correct repository and mention it in the #olm-dev slack channel.
 
