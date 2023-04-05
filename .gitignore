@@ -19,6 +19,7 @@ Dockerfile.cross
 # Release output
 dist/**
 operator-controller.yaml
+install.sh
 
 # Kubernetes Generated files - skip generated files, except for vendored files
 

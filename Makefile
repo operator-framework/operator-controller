@@ -8,6 +8,7 @@ export GO_BUILD_TAGS ?= upstream
 export CERT_MGR_VERSION ?= v1.9.0
 export GORELEASER_VERSION ?= v1.16.2
 export OLM_V0_VERSION ?= v0.24.0
+export RUKPAK_VERSION=$(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/rukpak)
 export WAIT_TIMEOUT ?= 60s
 IMG?=$(IMAGE_REPO):$(IMAGE_TAG)
 
@@ -100,7 +101,7 @@ build: manifests generate fmt vet goreleaser ## Build manager binary using gorel
 	${GORELEASER} build ${GORELEASER_ARGS} --single-target -o bin/manager
 
 .PHONY: run
-run: docker-build kind-cluster kind-load cert-mgr rukpak install deploy wait ## Build the operator-controller then deploy it into a new kind cluster.
+run: docker-build kind-cluster kind-load install ## Build the operator-controller then deploy it into a new kind cluster.
 
 .PHONY: wait
 wait:
@@ -138,13 +139,15 @@ docker-buildx: test ## Build and push docker image for the manager for cross-pla
 ##@ Release:
 export ENABLE_RELEASE_PIPELINE ?= false
 export GORELEASER_ARGS ?= --snapshot --clean
+export VERSION ?= $(shell git describe --abbrev=0 --tags)
 
 release: goreleaser ## Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)
 
-quickstart: VERSION ?= $(shell git describe --abbrev=0 --tags)
-quickstart: kustomize generate ## Generate the installation release manifests
+quickstart: export MANIFEST="https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml"
+quickstart: kustomize generate ## Generate the installation release manifests and scripts
 	kubectl kustomize config/default | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
+	envsubst '$$OLM_V0_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
 ##@ Deployment
 
@@ -152,20 +155,11 @@ ifndef ignore-not-found
   ignore-not-found = false
 endif
 
-## TODO dfranz: replace cert-mgr and rukpak targets with our chosen method of distribution when available
-.PHONY: cert-mgr
-cert-mgr: ## Install cert-manager
-	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MGR_VERSION)/cert-manager.yaml
-	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=$(WAIT_TIMEOUT)
-
-.PHONY: rukpak
-rukpak: ## Install rukpak
-	kubectl apply -f https://github.com/operator-framework/rukpak/releases/latest/download/rukpak.yaml
-	kubectl wait --for=condition=Available --namespace=rukpak-system deployment/core --timeout=$(WAIT_TIMEOUT)
-
 .PHONY: install
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
+install: export MANIFEST="./operator-controller.yaml"
+install: manifests kustomize generate ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+	kubectl kustomize config/default > operator-controller.yaml
+	envsubst '$$OLM_V0_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: uninstall
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
