@@ -1,0 +1,48 @@
+#!/bin/bash
+
+operator_controller_manifest=$MANIFEST
+
+if [[ -z "$operator_controller_manifest" ]]; then
+    echo "Error: Missing required MANIFEST variable"
+    exit 1
+fi
+
+olm_version=$OLM_V0_VERSION
+cert_mgr_version=$CERT_MGR_VERSION
+rukpak_version=$RUKPAK_VERSION
+
+if [[ -z "$olm_version" || -z "$cert_mgr_version" || -z "$rukpak_version" ]]; then
+    err="Error: Missing component version(s) for: "
+    if [[ -z "$olm_version" ]]; then
+        err+="operator-lifecycle-manager "
+    fi 
+    if [[ -z "$cert_mgr_version" ]]; then
+        err+="cert-manager "
+    fi 
+    if [[ -z "$rukpak_version" ]]; then
+        err+="rukpak "
+    fi 
+    echo $err
+    exit 1
+fi
+
+function kubectl_wait() {
+    namespace=$1
+    runtime=$2
+    timeout=$3
+
+    kubectl wait --for=condition=Available --namespace="${namespace}" "${runtime}" --timeout="${timeout}"
+}
+
+curl -L -s "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${olm_version}/install.sh" | bash -s "${olm_version}"
+
+kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/${cert_mgr_version}/cert-manager.yaml"
+kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
+
+kubectl apply -f "https://github.com/operator-framework/rukpak/releases/download/${rukpak_version}/rukpak.yaml"
+kubectl_wait "rukpak-system" "deployment/core" "60s"
+kubectl_wait "rukpak-system" "deployment/helm-provisioner" "60s"
+kubectl_wait "rukpak-system" "deployment/rukpak-webhooks" "60s"
+
+kubectl apply -f "${operator_controller_manifest}"
+kubectl_wait "operator-controller-system" "deployment/operator-controller-controller-manager" "60s"

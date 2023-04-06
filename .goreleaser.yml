@@ -59,17 +59,10 @@ release:
   disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
   extra_files:
   - glob: 'operator-controller.yaml'
+  - glob: 'install.sh'
   header: |
     ## Installation
 
     ```bash
-    curl -L -s https://github.com/operator-framework/operator-lifecycle-manager/releases/download/{{ .Env.OLM_V0_VERSION }}/install.sh | bash -s {{ .Env.OLM_V0_VERSION }}
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/{{ .Env.CERT_MGR_VERSION }}/cert-manager.yaml
-    kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
-    kubectl apply -f https://github.com/operator-framework/rukpak/releases/latest/download/rukpak.yaml
-    kubectl wait --for=condition=Available --namespace=rukpak-system deployment/core --timeout=60s
-    kubectl wait --for=condition=Available --namespace=rukpak-system deployment/helm-provisioner --timeout=60s
-    kubectl wait --for=condition=Available --namespace=rukpak-system deployment/rukpak-webhooks --timeout=60s
-    kubectl apply -f https://github.com/operator-framework/operator-controller/releases/download/{{ .Tag }}/operator-controller.yaml
-    kubectl wait --for=condition=Available --namespace=operator-controller-system deployment/operator-controller-controller-manager --timeout=60s
+    curl -L -s https://github.com/operator-framework/operator-controller/releases/download/{{ .Tag }}/install.sh | bash -s
     ```
