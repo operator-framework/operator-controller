@@ -75,10 +75,18 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err != nil {
 		if errors.IsNotFound(err) {
 			if err = r.createUnpackJob(ctx, catalogSource); err != nil {
+				updateStatusError(&catalogSource, err)
+				if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
+					return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
+				}
 				return ctrl.Result{}, err
 			}
 			// after creating the job requeue
 			return ctrl.Result{Requeue: true}, nil
+		}
+		updateStatusError(&catalogSource, err)
+		if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
+			return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
 		}
 		return ctrl.Result{}, err
 	}
@@ -89,15 +97,27 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		if corev1beta1.IsUnpackPhaseError(err) {
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
+		updateStatusError(&catalogSource, err)
+		if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
+			return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
+		}
 		return ctrl.Result{}, err
 	}
 
 	// TODO: Can we create these resources in parallel using goroutines?
 	if err := r.buildPackages(ctx, declCfg, catalogSource); err != nil {
+		updateStatusError(&catalogSource, err)
+		if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
+			return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
+		}
 		return ctrl.Result{}, err
 	}
 
 	if err := r.buildBundleMetadata(ctx, declCfg, catalogSource); err != nil {
+		updateStatusError(&catalogSource, err)
+		if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
+			return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -107,7 +127,6 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
 		return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
 	}
-
 	return ctrl.Result{}, nil
 }
 
@@ -117,6 +136,15 @@ func updateStatusReady(catalogSource *corev1beta1.CatalogSource) {
 		Reason:  corev1beta1.ReasonContentsAvailable,
 		Status:  metav1.ConditionTrue,
 		Message: "catalog contents have been unpacked and are available on cluster",
+	})
+}
+
+func updateStatusError(catalogSource *corev1beta1.CatalogSource, err error) {
+	meta.SetStatusCondition(&catalogSource.Status.Conditions, metav1.Condition{
+		Type:    corev1beta1.TypeReady,
+		Status:  metav1.ConditionFalse,
+		Reason:  corev1beta1.ReasonUnpackError,
+		Message: err.Error(),
 	})
 }
 

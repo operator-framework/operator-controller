@@ -31,6 +31,7 @@ const (
 	TypeReady = "Ready"
 
 	ReasonContentsAvailable = "ContentsAvailable"
+	ReasonUnpackError       = "UnpackError"
 )
 
 // +genclient
