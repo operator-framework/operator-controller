@@ -27,14 +27,17 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	corev1beta1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 )
@@ -75,10 +78,18 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err != nil {
 		if errors.IsNotFound(err) {
 			if err = r.createUnpackJob(ctx, catalogSource); err != nil {
+				updateStatusError(&catalogSource, err)
+				if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
+					return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
+				}
 				return ctrl.Result{}, err
 			}
 			// after creating the job requeue
 			return ctrl.Result{Requeue: true}, nil
+		}
+		updateStatusError(&catalogSource, err)
+		if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
+			return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
 		}
 		return ctrl.Result{}, err
 	}
@@ -89,24 +100,68 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		if corev1beta1.IsUnpackPhaseError(err) {
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
+		updateStatusError(&catalogSource, err)
+		if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
+			return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
+		}
 		return ctrl.Result{}, err
 	}
 
 	// TODO: Can we create these resources in parallel using goroutines?
 	if err := r.buildPackages(ctx, declCfg, catalogSource); err != nil {
+		updateStatusError(&catalogSource, err)
+		if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
+			return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
+		}
 		return ctrl.Result{}, err
 	}
 
 	if err := r.buildBundleMetadata(ctx, declCfg, catalogSource); err != nil {
+		updateStatusError(&catalogSource, err)
+		if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
+			return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
+		}
 		return ctrl.Result{}, err
 	}
+
+	// update CatalogSource status as "Ready" since at this point
+	// all catalog content should be available on cluster
+	updateStatusReady(&catalogSource)
+	if err := r.Client.Status().Update(ctx, &catalogSource); err != nil {
+		return ctrl.Result{}, fmt.Errorf("updating catalogsource status: %v", err)
+	}
 	return ctrl.Result{}, nil
+}
+
+func updateStatusReady(catalogSource *corev1beta1.CatalogSource) {
+	meta.SetStatusCondition(&catalogSource.Status.Conditions, metav1.Condition{
+		Type:    corev1beta1.TypeReady,
+		Reason:  corev1beta1.ReasonContentsAvailable,
+		Status:  metav1.ConditionTrue,
+		Message: "catalog contents have been unpacked and are available on cluster",
+	})
+}
+
+func updateStatusError(catalogSource *corev1beta1.CatalogSource, err error) {
+	meta.SetStatusCondition(&catalogSource.Status.Conditions, metav1.Condition{
+		Type:    corev1beta1.TypeReady,
+		Status:  metav1.ConditionFalse,
+		Reason:  corev1beta1.ReasonUnpackError,
+		Message: err.Error(),
+	})
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *CatalogSourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&corev1beta1.CatalogSource{}).
+		// TODO: Due to us not having proper error handling,
+		// not having this results in the controller getting into
+		// an error state because once we update the status it requeues
+		// and then errors out when trying to create all the Packages again
+		// even though they already exist. This should be resolved by the fix
+		// for https://github.com/operator-framework/catalogd/issues/6. The fix for
+		// #6 should also remove the usage of `builder.WithPredicates(predicate.GenerationChangedPredicate{})`
+		For(&corev1beta1.CatalogSource{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Complete(r)
 }
 

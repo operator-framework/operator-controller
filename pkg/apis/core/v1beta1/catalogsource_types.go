@@ -27,12 +27,20 @@ import (
 	"sigs.k8s.io/apiserver-runtime/pkg/builder/resource/resourcestrategy"
 )
 
+const (
+	TypeReady = "Ready"
+
+	ReasonContentsAvailable = "ContentsAvailable"
+	ReasonUnpackError       = "UnpackError"
+)
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CatalogSource
 // +k8s:openapi-gen=true
 // +kubebuilder:resource:scope=Cluster
+// +kubebuilder:subresource:status
 type CatalogSource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -108,9 +116,8 @@ func (in *CatalogSourceList) GetListMeta() *metav1.ListMeta {
 
 // CatalogSourceStatus defines the observed state of CatalogSource
 type CatalogSourceStatus struct {
-
-	// The last time the image has been polled to ensure the image is up-to-date
-	LatestImagePoll *metav1.Time `json:"latestImagePoll"`
+	// Conditions store the status conditions of the CatalogSource instances
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 
 func (in CatalogSourceStatus) SubResourceName() string {
