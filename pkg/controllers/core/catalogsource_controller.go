@@ -151,6 +151,13 @@ func updateStatusError(catalogSource *corev1beta1.CatalogSource, err error) {
 // SetupWithManager sets up the controller with the Manager.
 func (r *CatalogSourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		// TODO: Due to us not having proper error handling,
+		// not having this results in the controller getting into
+		// an error state because once we update the status it requeues
+		// and then errors out when trying to create all the Packages again
+		// even though they already exist. This should be resolved by the fix
+		// for https://github.com/operator-framework/catalogd/issues/6. The fix for
+		// #6 should also remove the usage of `builder.WithPredicates(predicate.GenerationChangedPredicate{})`
 		For(&corev1beta1.CatalogSource{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Complete(r)
 }
