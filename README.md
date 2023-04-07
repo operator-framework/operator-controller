@@ -61,4 +61,55 @@ ack-opensearchservice-controller            77m
 .
 ```
 
- 
+## Contributing
+Thanks for your interest in contributing to `catalogd`!
+
+`catalogd` is in the very early stages of development and a more in depth contributing guide will come in the near future.
+
+In the mean time, it is assumed you know how to make contributions to open source projects in general and this guide will only focus on how to manually test your changes (no automated testing yet).
+
+If you have any questions, feel free to reach out to us on the Kubernetes Slack channel [#olm-dev](https://kubernetes.slack.com/archives/C0181L6JYQ2) or [create an issue](https://github.com/operator-framework/catalogd/issues/new)
+### Testing Local Changes
+**Prerequisites**
+- [Install kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+
+**Local (not on cluster)**
+> **Note**: This will work *only* for the controller
+- Create a cluster:
+```sh
+kind create cluster
+```
+- Install CRDs and run the controller locally:
+```sh
+kubectl apply -f config/crd/bases/ && make run
+```
+
+**On Cluster**
+- Build the images locally:
+```sh
+make docker-build-controller && make docker-build-server
+```
+- Create a cluster:
+```sh
+kind create cluster
+```
+- Load the images onto the cluster:
+```sh
+kind load docker-image quay.io/operator-framework/catalogd-controller:latest && kind load docker-image quay.io/operator-framework/catalogd-server:latest
+``` 
+- Install cert-manager:
+```sh
+ make cert-manager
+```
+- Install the CRDs
+```sh
+kubectl apply -f config/crd/bases/
+```
+- Deploy the apiserver, etcd, and controller: 
+```sh
+kubectl apply -f config/
+```
+- Create the sample CatalogSource (this will trigger the reconciliation loop): 
+```sh
+kubectl apply -f config/samples/catalogsource.yaml
+```
