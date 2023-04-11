@@ -1,31 +1,28 @@
 
+# Build info
+ 
+GIT_COMMIT              ?= $(shell git rev-parse HEAD)
+VERSION_FLAGS           ?= -ldflags "GitCommit=$(GIT_COMMIT)"
+GO_BUILD_TAGS           ?= upstream
 # Image URL to use all building/pushing controller image targets
-CONTROLLER_IMG ?= quay.io/operator-framework/catalogd-controller
-
+CONTROLLER_IMG          ?= quay.io/operator-framework/catalogd-controller
 # Image URL to use all building/pushing apiserver image targets
-SERVER_IMG ?= quay.io/operator-framework/catalogd-server
-
+SERVER_IMG              ?= quay.io/operator-framework/catalogd-server
 # Tag to use when building/pushing images
-IMG_TAG ?= devel
+IMG_TAG                 ?= devel
+## Location to build controller/apiserver binaries in
+LOCALBIN                ?= $(shell pwd)/bin
+$(LOCALBIN):
+	mkdir -p $(LOCALBIN)
 
-# ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.23
 
-# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
-ifeq (,$(shell go env GOBIN))
-GOBIN=$(shell go env GOPATH)/bin
-else
-GOBIN=$(shell go env GOBIN)
-endif
+# Dependencies
+CERT_MGR_VERSION        ?= v1.11.0
+ENVTEST_SERVER_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 
-# Setting SHELL to bash allows bash commands to be executed by recipes.
-# This is a requirement for 'setup-envtest.sh' in the test target.
-# Options are set to exit when a recipe line exits non-zero or a piped command fails.
-SHELL = /usr/bin/env bash -o pipefail
-.SHELLFLAGS = -ec
-
-.PHONY: all
-all: build
+# Cluster configuration
+KIND_CLUSTER_NAME       ?= catalogd
+CATALOGD_NAMESPACE      ?= catalogd-system
 
 ##@ General
 
@@ -42,17 +39,17 @@ all: build
 
 .PHONY: help
 help: ## Display this help.
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Development
 
-.PHONY: manifests
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+clean: ## Remove binaries and test artifacts
+	rm -rf bin
 
 .PHONY: generate
-generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: controller-gen ## Generate code and manifests.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -63,29 +60,38 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 .PHONY: test
-test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverprofile cover.out
+test-unit: generate fmt vet setup-envtest ## Run tests.
+	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION)) && go test ./... -coverprofile cover.out
+
+.PHONY: tidy
+tidy: ## Update dependencies
+	go mod tidy
+	(cd $(TOOLS_DIR) && go mod tidy)
+
+.PHONY: verify
+verify: tidy fmt generate ## Verify the current code generation and lint
+	git diff --exit-code
 
 ##@ Build
 
 .PHONY: build-controller
 build-controller: generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
+	CGO_ENABLED=0 GOOS=linux go build -tags $(GO_BUILD_TAGS) $(VERSION_FLAGS) -o bin/manager main.go
 
 .PHONY: build-server
-build-server: fmt vet ## Build api-server.
-	go build -o bin/apiserver cmd/apiserver/main.go
+build-server: fmt vet ## Build api-server binary.
+	CGO_ENABLED=0 GOOS=linux go build -tags $(GO_BUILD_TAGS) $(VERSION_FLAGS) -o bin/apiserver cmd/apiserver/main.go
 
 .PHONY: run
-run: manifests generate fmt vet ## Run a controller from your host.
+run: generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build-controller
-docker-build-controller: build-controller test ## Build docker image with the manager.
+docker-build-controller: build-controller test ## Build docker image with the controller manager.
 	docker build -f controller.Dockerfile -t ${CONTROLLER_IMG}:${IMG_TAG} .
 
 .PHONY: docker-push-controller
-docker-push-controller: ## Push docker image with the manager.
+docker-push-controller: ## Push docker image with the controller manager.
 	docker push ${CONTROLLER_IMG}
 
 .PHONY: docker-build-server
@@ -96,91 +102,96 @@ docker-build-server: build-server test ## Build docker image with the apiserver.
 docker-push-server: ## Push docker image with the apiserver.
 	docker push ${SERVER_IMG}
 
-##@ Deployment
+##@ Deploy
 
-ifndef ignore-not-found
-  ignore-not-found = false
-endif
+.PHONY: kind-cluster
+kind-cluster: kind kind-cluster-cleanup ## Standup a kind cluster
+	$(KIND) create cluster --name ${KIND_CLUSTER_NAME} 
+	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
 
-.PHONY: install
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
+.PHONY: kind-cluster-cleanup
+kind-cluster-cleanup: kind ## Delete the kind cluster
+	$(KIND) delete cluster --name ${KIND_CLUSTER_NAME}
 
-.PHONY: uninstall
-uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+.PHONY: kind-load
+kind-load: kind ## Load the built images onto the local cluster 
+	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
+	$(KIND) load docker-image $(CONTROLLER_IMG):${IMG_TAG} --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image $(SERVER_IMG):${IMG_TAG} --name $(KIND_CLUSTER_NAME)
 
+.PHONY: install 
+install: docker-build-server docker-build-controller kind-load cert-manager deploy wait ## Install local catalogd
+	
 .PHONY: deploy
-deploy: cert-manager manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+deploy: ## Deploy CatalogSource controller and ApiServer to the K8s cluster specified in ~/.kube/config.
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${CONTROLLER_IMG}:${IMG_TAG}
+	cd config/apiserver && $(KUSTOMIZE) edit set image apiserver=${SERVER_IMG}:${IMG_TAG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
-undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+undeploy: ## Undeploy CatalogSource controller and ApiServer from the K8s cluster specified in ~/.kube/config. 
+	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=true -f -	
+
+.PHONY: uninstall 
+uninstall: undeploy ## Uninstall local catalogd
+	kubectl wait --for=delete namespace/$(CATALOGD_NAMESPACE) --timeout=60s
 
 .PHONY: cert-manager
 cert-manager: ## Deploy cert-manager on the cluster
-	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
+	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MGR_VERSION)/cert-manager.yaml
+	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
+
+wait:
+	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-apiserver --timeout=60s
+	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
+	kubectl rollout status --watch --namespace=$(CATALOGD_NAMESPACE) statefulset/catalogd-etcd --timeout=60s
+
+##@ Release
 
 export ENABLE_RELEASE_PIPELINE ?= false
 export GORELEASER_ARGS ?= --snapshot --clean
 export CONTROLLER_IMAGE_REPO ?= $(CONTROLLER_IMG)
 export APISERVER_IMAGE_REPO ?= $(SERVER_IMG)
 export IMAGE_TAG ?= $(IMG_TAG)
-release: goreleaser ## Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
+release: goreleaser ## Runs goreleaser for catalogd. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)
+	
+################
+# Hack / Tools #
+################
+TOOLS_DIR := $(shell pwd)/hack/tools
+TOOLS_BIN_DIR := $(TOOLS_DIR)/bin
+$(TOOLS_BIN_DIR):
+	mkdir -p $(TOOLS_BIN_DIR)
 
-## Location to install dependencies to
-LOCALBIN ?= $(shell pwd)/bin
-$(LOCALBIN):
-	mkdir -p $(LOCALBIN)
 
-CONTROLLER_TOOLS_VERSION ?= v0.9.0
-CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
-
-.PHONY: controller-gen
-controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
-$(CONTROLLER_GEN): $(LOCALBIN)
-	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
-
-## Tool Binaries
-KUSTOMIZE ?= $(LOCALBIN)/kustomize
-## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.1
+KIND_VERSION ?= v0.15.0
+CONTROLLER_TOOLS_VERSION ?= v0.10.0
+GORELEASER_VERSION ?= v1.16.2
+ENVTEST_VERSION ?= latest
 
-KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
-.PHONY: kustomize
-kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
-$(KUSTOMIZE): $(LOCALBIN)
-	@if test -x $(LOCALBIN)/kustomize && ! $(LOCALBIN)/kustomize version | grep -q $(KUSTOMIZE_VERSION); then \
-		echo "$(LOCALBIN)/kustomize version is not expected $(KUSTOMIZE_VERSION). Removing it before installing."; \
-		rm -rf $(LOCALBIN)/kustomize; \
-	fi
-	test -s $(LOCALBIN)/kustomize || { curl -Ss $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); }
+##@ hack/tools:
 
-ENVTEST = $(shell pwd)/bin/setup-envtest
-.PHONY: envtest
-envtest: ## Download envtest-setup locally if necessary.
-	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
+.PHONY: controller-gen goreleaser kind setup-envtest kustomize
 
-GORELEASER := $(LOCALBIN)/goreleaser
-export GORELEASER_VERSION ?= v1.16.2
-.PHONY: goreleaser
-goreleaser: $(GORELEASER) ## Builds a local copy of goreleaser
-$(GORELEASER): $(LOCALBIN)
-	test -s $(LOCALBIN)/goreleaser || GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@${GORELEASER_VERSION}
+CONTROLLER_GEN := $(abspath $(TOOLS_BIN_DIR)/controller-gen)
+SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/setup-envtest)
+GORELEASER := $(abspath $(TOOLS_BIN_DIR)/goreleaser)
+KIND := $(abspath $(TOOLS_BIN_DIR)/kind)
+KUSTOMIZE := $(abspath $(TOOLS_BIN_DIR)/kustomize)
 
-# go-get-tool will 'go get' any package $2 and install it to $1.
-PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
-define go-get-tool
-@[ -f $(1) ] || { \
-set -e ;\
-TMP_DIR=$$(mktemp -d) ;\
-cd $$TMP_DIR ;\
-go mod init tmp ;\
-echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
-rm -rf $$TMP_DIR ;\
-}
-endef
+kind: $(TOOLS_BIN_DIR) ## Build a local copy of kind
+	GOBIN=$(TOOLS_BIN_DIR) go install sigs.k8s.io/kind@$(KIND_VERSION)
+
+controller-gen: $(TOOLS_BIN_DIR) ## Build a local copy of controller-gen
+	GOBIN=$(TOOLS_BIN_DIR) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
+
+goreleaser: $(TOOLS_BIN_DIR) ## Build a local copy of goreleaser
+	GOBIN=$(TOOLS_BIN_DIR) go install github.com/goreleaser/goreleaser@$(GORELEASER_VERSION)
+
+setup-envtest: $(TOOLS_BIN_DIR) ## Build a local copy of envtest
+	GOBIN=$(TOOLS_BIN_DIR) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@$(ENVTEST_VERSION)
+
+kustomize: $(TOOLS_BIN_DIR) ## Build a local copy of kustomize
+	GOBIN=$(TOOLS_BIN_DIR) go install sigs.k8s.io/kustomize/kustomize/v5@$(KUSTOMIZE_VERSION)
