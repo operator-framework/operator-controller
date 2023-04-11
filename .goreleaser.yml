@@ -11,7 +11,6 @@ builds:
   - id: catalogd-controller
     main: ./cmd/manager/
     binary: bin/manager
-    tags: $GO_BUILD_TAGS
     goos:
     - linux
     goarch:
@@ -19,12 +18,9 @@ builds:
     - arm64
     - ppc64le
     - s390x
-    ldflags:
-    - -X main.Version={{ .Version }}
   - id: catalogd-server
     main: ./cmd/apiserver/
     binary: bin/apiserver
-    tags: $GO_BUILD_TAGS
     goos:
     - linux
     goarch:
@@ -32,8 +28,6 @@ builds:
     - arm64
     - ppc64le
     - s390x
-    ldflags:
-    - -X main.Version={{ .Version }}
 dockers:
 - image_templates:
   - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
@@ -90,3 +84,12 @@ docker_manifests:
     - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
 release:
   disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
+  extra_files:
+  - glob: 'catalogd.yaml'
+  header: |
+    ## Installation
+    ```bash
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/{{ .Env.CERT_MGR_VERSION }}/cert-manager.yaml
+    kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
+    kubectl apply -f https://github.com/operator-framework/catalogd/releases/download/{{ .Tag }}/catalogd.yaml
+    ```

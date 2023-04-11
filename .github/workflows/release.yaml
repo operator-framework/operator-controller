@@ -51,6 +51,9 @@ jobs:
         else
           echo IMAGE_TAG="$(git describe --tags --always)" >> $GITHUB_ENV
         fi
+    - name: Create release manifests
+      run: make quickstart
+      
     - name: Run goreleaser
       run: make release
       env:

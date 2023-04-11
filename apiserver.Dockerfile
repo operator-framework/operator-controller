@@ -11,6 +11,6 @@
     #   targetPort: 8443
 FROM gcr.io/distroless/static:latest    
 WORKDIR /
-COPY bin/apiserver .
+COPY apiserver .
 
 ENTRYPOINT ["/apiserver"]
