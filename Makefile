@@ -67,7 +67,6 @@ test-unit: generate fmt vet setup-envtest ## Run tests.
 .PHONY: tidy
 tidy: ## Update dependencies
 	go mod tidy
-	(cd $(TOOLS_DIR) && go mod tidy)
 
 .PHONY: verify
 verify: tidy fmt generate ## Verify the current code generation and lint
