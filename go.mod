@@ -10,6 +10,7 @@ require (
 	github.com/operator-framework/deppy v0.0.0-20230125110717-dc02e928470f
 	github.com/operator-framework/operator-registry v1.26.2
 	github.com/operator-framework/rukpak v0.11.0
+	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	google.golang.org/grpc v1.47.0
 	k8s.io/api v0.25.0
@@ -70,7 +71,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.0.0-20220408190544-5352b0902921 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
