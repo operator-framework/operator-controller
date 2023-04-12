@@ -80,16 +80,16 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' not found", pkgName)))
 			})
 		})
-		When("the operator specifies a version range for which there are no bundles", func() {
+		When("the operator specifies a version that does not exist", func() {
 			var pkgName string
 			BeforeEach(func() {
 				By("initializing cluster state")
-				pkgName = fmt.Sprintf("non-existent-%s", rand.String(6))
+				pkgName = fmt.Sprintf("exists-%s", rand.String(6))
 				operator = &operatorsv1alpha1.Operator{
 					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
 					Spec: operatorsv1alpha1.OperatorSpec{
 						PackageName: pkgName,
-						Version:     ">=0.50.0",
+						Version:     "0.50.0", // this version of the package does not exist
 					},
 				}
 				err := cl.Create(ctx, operator)
@@ -99,7 +99,7 @@ var _ = Describe("Operator Controller Test", func() {
 				By("running reconcile")
 				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
 				Expect(res).To(Equal(ctrl.Result{}))
-				Expect(err).To(MatchError(fmt.Sprintf("package '%s' in version range '>=0.50.0' not found", pkgName)))
+				Expect(err).To(MatchError(fmt.Sprintf("package '%s' at version '0.50.0' not found", pkgName)))
 
 				By("fetching updated operator after reconcile")
 				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
@@ -109,7 +109,7 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
-				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' in version range '>=0.50.0' not found", pkgName)))
+				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' at version '0.50.0' not found", pkgName)))
 			})
 		})
 		When("the operator specifies a valid available package", func() {

@@ -94,8 +94,12 @@ func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context, entity
 }
 
 func (r *RequiredPackageVariableSource) notFoundError() error {
+	// TODO: update this error message when/if we decide to support version ranges as opposed to fixing the version
+	//  context: we originally wanted to support version ranges and take the highest version that satisfies the range
+	//  during the upstream call on the 2023-04-11 we decided to pin the version instead. But, we'll keep version range
+	//  support under the covers in case we decide to pivot back.
 	if r.versionRange != "" {
-		return fmt.Errorf("package '%s' in version range '%s' not found", r.packageName, r.versionRange)
+		return fmt.Errorf("package '%s' at version '%s' not found", r.packageName, r.versionRange)
 	}
 	return fmt.Errorf("package '%s' not found", r.packageName)
 }
