@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"sync"
 
 	catsrcV1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	"github.com/operator-framework/deppy/pkg/deppy"
@@ -18,14 +17,12 @@ import (
 )
 
 type v1beta1CatalogSourceConnector struct {
-	sync.RWMutex
 	client client.Client
 }
 
 func NewV1beta1CatalogSourceConnector(cl client.Client) *v1beta1CatalogSourceConnector {
 	return &v1beta1CatalogSourceConnector{
-		RWMutex: sync.RWMutex{},
-		client:  cl,
+		client: cl,
 	}
 }
 

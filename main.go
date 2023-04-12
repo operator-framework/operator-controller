@@ -93,16 +93,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// catsrcReconciler := controllers.NewCatalogSourceReconciler(
-	// 	mgr.GetClient(),
-	// 	mgr.GetScheme(),
-	// 	mgr.GetEventRecorderFor("catalogsource-controller"),
-	// )
-	// if err := catsrcReconciler.SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create catalog source controller", "controller", "CatalogSource")
-	// 	os.Exit(1)
-	// }
-
 	v1beta1CatsrcConnector := catalogsource.NewV1beta1CatalogSourceConnector(mgr.GetClient())
 
 	// TODO: Make the operator resolver accept multiple entity sources, with one containing the package information
