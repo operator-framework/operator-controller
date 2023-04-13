@@ -5,8 +5,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 func operator(spec operatorsv1alpha1.OperatorSpec) *operatorsv1alpha1.Operator {
@@ -68,7 +69,7 @@ var _ = Describe("Operator Spec Validations", func() {
 			}))
 
 			Expect(err).To(HaveOccurred(), "expected error for invalid semver %q", invalidSemver)
-			Expect(err.Error()).To(ContainSubstring("spec.version in body should match '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-(0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(\\.(0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\\+([0-9a-zA-Z-]+(\\.[0-9a-zA-Z-]+)*))?$"))
+			Expect(err.Error()).To(ContainSubstring("spec.version in body should match '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-(0|[1-9]\\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\\.(0|[1-9]\\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\\+([0-9a-zA-Z-]+(\\.[0-9a-zA-Z-]+)*))?$'"))
 		}
 	})
 })
