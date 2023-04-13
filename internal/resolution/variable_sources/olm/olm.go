@@ -5,6 +5,7 @@ import (
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/crd_constraints"
