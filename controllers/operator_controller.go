@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	"github.com/operator-framework/operator-controller/controllers/validators"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -108,6 +109,18 @@ func checkForUnexpectedFieldChange(a, b operatorsv1alpha1.Operator) bool {
 
 // Helper function to do the actual reconcile
 func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha1.Operator) (ctrl.Result, error) {
+	// validate spec
+	if err := validators.ValidateOperatorSpec(op); err != nil {
+		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
+			Type:               operatorsv1alpha1.TypeReady,
+			Status:             metav1.ConditionFalse,
+			Reason:             operatorsv1alpha1.ReasonInvalidSpec,
+			Message:            err.Error(),
+			ObservedGeneration: op.GetGeneration(),
+		})
+		return ctrl.Result{}, nil
+	}
+
 	// run resolution
 	solution, err := r.Resolver.Resolve(ctx)
 	if err != nil {

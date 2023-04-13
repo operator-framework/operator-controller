@@ -49,13 +49,26 @@ var _ = Describe("Operator Spec Validations", func() {
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("Too long: may not be longer than 64"))
 	})
-	It("should fail if an invalid semver range is given", func() {
-		err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
-			PackageName: "package",
-			Version:     "this-is-not-a-valid-semver",
-		}))
+	It("should fail if an invalid semver is given", func() {
+		invalidSemvers := []string{
+			"1.2.3.4",
+			"1.02.3",
+			"1.2.03",
+			"1.2.3-beta!",
+			"1.2.3.alpha",
+			"1..2.3",
+			"1.2.3-pre+bad_metadata",
+			"1.2.-3",
+			".1.2.3",
+		}
+		for _, invalidSemver := range invalidSemvers {
+			err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+				PackageName: "package",
+				Version:     invalidSemver,
+			}))
 
-		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("spec.version in body should match '^(\\|\\||\\s+)?([\\s~^><=]*)v?(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\-(.+))?$"))
+			Expect(err).To(HaveOccurred(), "expected error for invalid semver %q", invalidSemver)
+			Expect(err.Error()).To(ContainSubstring("spec.version in body should match '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-(0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(\\.(0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\\+([0-9a-zA-Z-]+(\\.[0-9a-zA-Z-]+)*))?$"))
+		}
 	})
 })

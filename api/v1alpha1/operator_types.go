@@ -29,8 +29,8 @@ type OperatorSpec struct {
 	PackageName string `json:"packageName"`
 
 	//+kubebuilder:validation:MaxLength:=64
-	//+kubebuilder:validation:Pattern:=^(\|\||\s+)?([\s~^><=]*)v?(\d+)(\.(\d+))?(\.(\d+))?(\-(.+))?$
-	//+kubebuilder:optional
+	//+kubebuilder:validation:Pattern=^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+([0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?$
+	//+kubebuilder:Optional
 	// Version is an optional is semver constraint on the package version. If not specified, the latest version available of the package will be installed.
 	// If specified, the specific version of the package will be installed so long as it is available in any of the content sources available.
 	// Examples:
@@ -51,6 +51,7 @@ const (
 	ReasonBundleLookupFailed        = "BundleLookupFailed"
 	ReasonInstallationFailed        = "InstallationFailed"
 	ReasonInstallationStatusUnknown = "InstallationStatusUnknown"
+	ReasonInvalidSpec               = "InvalidSpec"
 )
 
 func init() {
@@ -65,6 +66,7 @@ func init() {
 		ReasonBundleLookupFailed,
 		ReasonInstallationFailed,
 		ReasonInstallationStatusUnknown,
+		ReasonInvalidSpec,
 	)
 }
 
