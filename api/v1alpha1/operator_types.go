@@ -31,12 +31,9 @@ type OperatorSpec struct {
 	//+kubebuilder:validation:MaxLength:=64
 	//+kubebuilder:validation:Pattern=^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+([0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?$
 	//+kubebuilder:Optional
-	// Version is an optional is semver constraint on the package version. If not specified, the latest version available of the package will be installed.
+	// Version is an optional semver constraint on the package version. If not specified, the latest version available of the package will be installed.
 	// If specified, the specific version of the package will be installed so long as it is available in any of the content sources available.
-	// Examples:
-	//  - 1.2.3
-	//  - 1.0.0-alpha
-	//  - 1.0.0-rc.1
+	// Examples: 1.2.3, 1.0.0-alpha, 1.0.0-rc.1
 	//
 	// For more information on semver, please see https://semver.org/
 	Version string `json:"version,omitempty"`
