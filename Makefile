@@ -123,13 +123,13 @@ kind-load: kind ## Load the built images onto the local cluster
 install: docker-build-server docker-build-controller kind-load cert-manager deploy wait ## Install local catalogd
 	
 .PHONY: deploy
-deploy: ## Deploy CatalogSource controller and ApiServer to the K8s cluster specified in ~/.kube/config.
+deploy: kustomize ## Deploy CatalogSource controller and ApiServer to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${CONTROLLER_IMG}:${IMG_TAG}
 	cd config/apiserver && $(KUSTOMIZE) edit set image apiserver=${SERVER_IMG}:${IMG_TAG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
-undeploy: ## Undeploy CatalogSource controller and ApiServer from the K8s cluster specified in ~/.kube/config. 
+undeploy: kustomize ## Undeploy CatalogSource controller and ApiServer from the K8s cluster specified in ~/.kube/config. 
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=true -f -	
 
 .PHONY: uninstall 
