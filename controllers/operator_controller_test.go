@@ -16,6 +16,7 @@ import (
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/controllers"
@@ -78,6 +79,38 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
 				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' not found", pkgName)))
+			})
+		})
+		When("the operator specifies a version that does not exist", func() {
+			var pkgName string
+			BeforeEach(func() {
+				By("initializing cluster state")
+				pkgName = fmt.Sprintf("exists-%s", rand.String(6))
+				operator = &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: pkgName,
+						Version:     "0.50.0", // this version of the package does not exist
+					},
+				}
+				err := cl.Create(ctx, operator)
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("sets resolution failure status", func() {
+				By("running reconcile")
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(res).To(Equal(ctrl.Result{}))
+				Expect(err).To(MatchError(fmt.Sprintf("package '%s' at version '0.50.0' not found", pkgName)))
+
+				By("fetching updated operator after reconcile")
+				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+				By("checking the expected conditions")
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
+				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' at version '0.50.0' not found", pkgName)))
 			})
 		})
 		When("the operator specifies a valid available package", func() {
@@ -566,6 +599,54 @@ var _ = Describe("Operator Controller Test", func() {
 
 			err := cl.Delete(ctx, operator)
 			Expect(err).To(Not(HaveOccurred()))
+		})
+	})
+	When("an invalid semver is provided that bypasses the regex validation", func() {
+		var (
+			operator   *operatorsv1alpha1.Operator
+			opKey      types.NamespacedName
+			pkgName    string
+			fakeClient client.Client
+		)
+		BeforeEach(func() {
+			opKey = types.NamespacedName{Name: fmt.Sprintf("operator-validation-test-%s", rand.String(8))}
+
+			By("injecting creating a client with the bad operator CR")
+			pkgName = fmt.Sprintf("exists-%s", rand.String(6))
+			operator = &operatorsv1alpha1.Operator{
+				ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+				Spec: operatorsv1alpha1.OperatorSpec{
+					PackageName: pkgName,
+					Version:     "1.2.3-123abc_def", // bad semver that matches the regex on the CR validation
+				},
+			}
+
+			// this bypasses client/server-side CR validation and allows us to test the reconciler's validation
+			fakeClient = fake.NewClientBuilder().WithScheme(sch).WithObjects(operator).Build()
+
+			By("changing the reconciler client to the fake client")
+			reconciler.Client = fakeClient
+		})
+		AfterEach(func() {
+			By("changing the reconciler client back to the real client")
+			reconciler.Client = cl
+		})
+
+		It("should add an invalid spec condition and *not* re-enqueue for reconciliation", func() {
+			By("running reconcile")
+			res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+			Expect(res).To(Equal(ctrl.Result{}))
+			Expect(err).ToNot(HaveOccurred())
+
+			By("fetching updated operator after reconcile")
+			Expect(fakeClient.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+			By("checking the expected conditions")
+			cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+			Expect(cond).NotTo(BeNil())
+			Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+			Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInvalidSpec))
+			Expect(cond.Message).To(Equal("invalid .spec.version: Invalid character(s) found in prerelease \"123abc_def\""))
 		})
 	})
 })
