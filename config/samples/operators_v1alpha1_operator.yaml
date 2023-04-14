@@ -11,4 +11,3 @@ metadata:
 spec:
   # TODO(user): Add fields here
   packageName: prometheus
-  version: 3.0.0

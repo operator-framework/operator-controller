@@ -125,7 +125,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 	It("should filter by version range", func() {
 		// recreate source with version range option
 		var err error
-		rpvs, err = required_package.NewRequiredPackage(packageName, required_package.InVersionRange(">=1.0.0 !1.0.0 <3.0.0"))
+		rpvs, err = required_package.NewRequiredPackage(packageName, required_package.InVersionRange(">=1.0.0 !2.0.0 <3.0.0"))
 		Expect(err).NotTo(HaveOccurred())
 
 		variables, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
@@ -137,8 +137,8 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 
 		// ensure bundle entities are in version order (high to low)
 		Expect(reqPackageVar.BundleEntities()).To(Equal([]*olmentity.BundleEntity{
-			olmentity.NewBundleEntity(input.NewEntity("bundle-3", map[string]string{
-				property.TypePackage: `{"packageName": "test-package", "version": "2.0.0"}`,
+			olmentity.NewBundleEntity(input.NewEntity("bundle-1", map[string]string{
+				property.TypePackage: `{"packageName": "test-package", "version": "1.0.0"}`,
 				property.TypeChannel: `{"channelName":"stable","priority":0}`,
 			})),
 		}))
