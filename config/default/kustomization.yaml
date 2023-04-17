@@ -15,7 +15,8 @@ resources:
 - ../crd
 - ../rbac
 - ../manager
-- ../apiserver
-- ../etcd
+# TODO: When the apiserver is working properly, uncomment this
+# - ../apiserver
+# - ../etcd
 patches:
 - path: manager_auth_proxy_patch.yaml

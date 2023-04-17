@@ -18,16 +18,17 @@ builds:
     - arm64
     - ppc64le
     - s390x
-  - id: catalogd-server
-    main: ./cmd/apiserver/
-    binary: bin/apiserver
-    goos:
-    - linux
-    goarch:
-    - amd64
-    - arm64
-    - ppc64le
-    - s390x
+  # TODO: When the apiserver is working properly, uncomment this
+  # - id: catalogd-server
+  #   main: ./cmd/apiserver/
+  #   binary: bin/apiserver
+  #   goos:
+  #   - linux
+  #   goarch:
+  #   - amd64
+  #   - arm64
+  #   - ppc64le
+  #   - s390x
 dockers:
 - image_templates:
   - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
@@ -49,26 +50,27 @@ dockers:
   dockerfile: controller.Dockerfile
   goos: linux
   goarch: s390x
-- image_templates:
-  - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
-  dockerfile: apiserver.Dockerfile
-  goos: linux
-  goarch: amd64
-- image_templates:
-    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
-  dockerfile: apiserver.Dockerfile
-  goos: linux
-  goarch: arm64
-- image_templates:
-    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
-  dockerfile: apiserver.Dockerfile
-  goos: linux
-  goarch: ppc64le
-- image_templates:
-    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
-  dockerfile: apiserver.Dockerfile
-  goos: linux
-  goarch: s390x
+# TODO: When the apiserver is working properly, uncomment this:
+# - image_templates:
+#   - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+#   dockerfile: apiserver.Dockerfile
+#   goos: linux
+#   goarch: amd64
+# - image_templates:
+#     - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+#   dockerfile: apiserver.Dockerfile
+#   goos: linux
+#   goarch: arm64
+# - image_templates:
+#     - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+#   dockerfile: apiserver.Dockerfile
+#   goos: linux
+#   goarch: ppc64le
+# - image_templates:
+#     - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+#   dockerfile: apiserver.Dockerfile
+#   goos: linux
+#   goarch: s390x
 docker_manifests:
 - name_template: "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
   image_templates:
@@ -76,12 +78,13 @@ docker_manifests:
     - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
     - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
     - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
-- name_template: "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
-  image_templates:
-    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
-    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
-    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
-    - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+# TODO: When the apiserver is working properly, uncomment this:
+# - name_template: "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
+#   image_templates:
+#     - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+#     - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+#     - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+#     - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
 release:
   disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
   extra_files:

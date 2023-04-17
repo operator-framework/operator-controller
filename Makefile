@@ -8,7 +8,8 @@ VERSION                 ?= $(shell git describe --tags --always --dirty)
 # Image URL to use all building/pushing controller image targets
 CONTROLLER_IMG          ?= quay.io/operator-framework/catalogd-controller
 # Image URL to use all building/pushing apiserver image targets
-SERVER_IMG              ?= quay.io/operator-framework/catalogd-server
+# TODO: When the apiserver is working properly, uncomment this line:
+# SERVER_IMG              ?= quay.io/operator-framework/catalogd-server
 # Tag to use when building/pushing images
 IMG_TAG                 ?= devel
 ## Location to build controller/apiserver binaries in
@@ -78,9 +79,10 @@ verify: tidy fmt generate ## Verify the current code generation and lint
 build-controller: generate fmt vet ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux go build -tags $(GO_BUILD_TAGS) $(VERSION_FLAGS) -o bin/manager cmd/manager/main.go
 
-.PHONY: build-server
-build-server: fmt vet ## Build api-server binary.
-	CGO_ENABLED=0 GOOS=linux go build -tags $(GO_BUILD_TAGS) $(VERSION_FLAGS) -o bin/apiserver cmd/apiserver/main.go
+# TODO: When the apiserver is working properly, uncomment this target:
+# .PHONY: build-server
+# build-server: fmt vet ## Build api-server binary.
+# 	CGO_ENABLED=0 GOOS=linux go build -tags $(GO_BUILD_TAGS) $(VERSION_FLAGS) -o bin/apiserver cmd/apiserver/main.go
 
 .PHONY: run
 run: generate fmt vet ## Run a controller from your host.
@@ -94,13 +96,14 @@ docker-build-controller: build-controller test ## Build docker image with the co
 docker-push-controller: ## Push docker image with the controller manager.
 	docker push ${CONTROLLER_IMG}
 
-.PHONY: docker-build-server
-docker-build-server: build-server test ## Build docker image with the apiserver.
-	docker build -f apiserver.Dockerfile -t ${SERVER_IMG}:${IMG_TAG} bin/
+# TODO: When the apiserver is working properly, uncomment the 2 targets below:
+# .PHONY: docker-build-server
+# docker-build-server: build-server test ## Build docker image with the apiserver.
+# 	docker build -f apiserver.Dockerfile -t ${SERVER_IMG}:${IMG_TAG} bin/
 
-.PHONY: docker-push-server
-docker-push-server: ## Push docker image with the apiserver.
-	docker push ${SERVER_IMG}
+# .PHONY: docker-push-server
+# docker-push-server: ## Push docker image with the apiserver.
+# 	docker push ${SERVER_IMG}
 
 ##@ Deploy
 
@@ -113,19 +116,23 @@ kind-cluster: kind kind-cluster-cleanup ## Standup a kind cluster
 kind-cluster-cleanup: kind ## Delete the kind cluster
 	$(KIND) delete cluster --name ${KIND_CLUSTER_NAME}
 
+# TODO: When the apiserver is working properly, add this line back to the end of this target:
+# $(KIND) load docker-image $(SERVER_IMG):${IMG_TAG} --name $(KIND_CLUSTER_NAME)
 .PHONY: kind-load
 kind-load: kind ## Load the built images onto the local cluster 
 	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
 	$(KIND) load docker-image $(CONTROLLER_IMG):${IMG_TAG} --name $(KIND_CLUSTER_NAME)
-	$(KIND) load docker-image $(SERVER_IMG):${IMG_TAG} --name $(KIND_CLUSTER_NAME)
 
+
+# TODO: When the apiserver is working properly, add the `docker-build-server` and `cert-manager` targets back as a dependency to this target:
 .PHONY: install 
-install: docker-build-server docker-build-controller kind-load cert-manager deploy wait ## Install local catalogd
+install: docker-build-controller kind-load deploy wait ## Install local catalogd
 	
+# TODO: When the apiserver is working properly, add this line back after the manager edit:
+# cd config/apiserver && $(KUSTOMIZE) edit set image apiserver=${SERVER_IMG}:${IMG_TAG}
 .PHONY: deploy
 deploy: kustomize ## Deploy CatalogSource controller and ApiServer to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${CONTROLLER_IMG}:${IMG_TAG}
-	cd config/apiserver && $(KUSTOMIZE) edit set image apiserver=${SERVER_IMG}:${IMG_TAG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
@@ -136,28 +143,32 @@ undeploy: kustomize ## Undeploy CatalogSource controller and ApiServer from the 
 uninstall: undeploy ## Uninstall local catalogd
 	kubectl wait --for=delete namespace/$(CATALOGD_NAMESPACE) --timeout=60s
 
-.PHONY: cert-manager
-cert-manager: ## Deploy cert-manager on the cluster
-	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MGR_VERSION)/cert-manager.yaml
-	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
+# TODO: cert-manager was only needed due to the apiserver. When the apiserver is working properly, uncomment this target
+# .PHONY: cert-manager
+# cert-manager: ## Deploy cert-manager on the cluster
+# 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MGR_VERSION)/cert-manager.yaml
+# 	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
+
+# TODO: When the apiserver is working properly, add the following lines to this target:
+# kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-apiserver --timeout=60s
+# kubectl rollout status --watch --namespace=$(CATALOGD_NAMESPACE) statefulset/catalogd-etcd --timeout=60s
 
 wait:
-	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-apiserver --timeout=60s
 	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
-	kubectl rollout status --watch --namespace=$(CATALOGD_NAMESPACE) statefulset/catalogd-etcd --timeout=60s
 
 ##@ Release
 
 export ENABLE_RELEASE_PIPELINE ?= false
 export GORELEASER_ARGS ?= --snapshot --clean
 export CONTROLLER_IMAGE_REPO ?= $(CONTROLLER_IMG)
-export APISERVER_IMAGE_REPO ?= $(SERVER_IMG)
+# TODO: When the apiserver is working properly, uncomment this line:
+# export APISERVER_IMAGE_REPO ?= $(SERVER_IMG)
 export IMAGE_TAG ?= $(IMG_TAG)
 release: goreleaser ## Runs goreleaser for catalogd. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)
 
 quickstart: kustomize generate ## Generate the installation release manifests and scripts
-	kubectl kustomize config/default | sed "s/:devel/:$(VERSION)/g" > catalogd.yaml
+	$(KUSTOMIZE) build config/default | sed "s/:devel/:$(VERSION)/g" > catalogd.yaml
 	
 ################
 # Hack / Tools #
