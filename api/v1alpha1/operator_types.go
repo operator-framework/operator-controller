@@ -37,6 +37,11 @@ type OperatorSpec struct {
 	//
 	// For more information on semver, please see https://semver.org/
 	Version string `json:"version,omitempty"`
+
+	//+kubebuilder:validation:MaxLength:=48
+	//+kubebuilder:validation:Pattern:=^[a-z0-9]+(-[a-z0-9]+)*$
+	// Channel constraint defintion
+	Channel string `json:"channel,omitempty"`
 }
 
 const (
