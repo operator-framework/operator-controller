@@ -92,20 +92,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	catsrcReconciler := controllers.NewCatalogSourceReconciler(
+	entityReconciler := controllers.NewEntitySourceReconciler(
 		mgr.GetClient(),
 		mgr.GetScheme(),
-		mgr.GetEventRecorderFor("catalogsource-controller"),
+		mgr.GetEventRecorderFor("entitysource-reconciler"),
 	)
-	if err := catsrcReconciler.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create catalog source controller", "controller", "CatalogSource")
+	if err := entityReconciler.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create entitysource reconciler", "reconciler", "EntitySource")
 		os.Exit(1)
 	}
 
 	if err = (&controllers.OperatorReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), catsrcReconciler),
+		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), entityReconciler),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)

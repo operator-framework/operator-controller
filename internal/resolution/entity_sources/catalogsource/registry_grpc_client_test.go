@@ -146,7 +146,7 @@ var _ = Describe("Registry GRPC Client", func() {
 	})
 
 	It("lists entities from a grpc registry server", func() {
-		entities, err := catalogsource.NewRegistryGRPCClient(1*time.Minute).ListEntities(context.TODO(), &v1alpha1.CatalogSource{
+		entities, err := catalogsource.NewGRPCClientConnector(1*time.Minute).ListEntities(context.TODO(), &v1alpha1.CatalogSource{
 			Spec: v1alpha1.CatalogSourceSpec{
 				Address: ":50052",
 			},

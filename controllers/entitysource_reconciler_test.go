@@ -17,14 +17,14 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	catsrccontroller "github.com/operator-framework/operator-controller/controllers"
-	"github.com/operator-framework/operator-controller/internal/resolution/entity_sources/catalogsource"
+	"github.com/operator-framework/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/resolution"
 )
 
-var _ catalogsource.RegistryClient = &fakeRegistryClient{}
+var _ resolution.EntitySourceConnector = &fakeEntitySourceConnector{}
 
 const (
-	unmanagedCatalogSourceSyncInterface = 1 * time.Second
+	syncInterval = 1 * time.Second
 )
 
 type catalogContents struct {
@@ -32,29 +32,29 @@ type catalogContents struct {
 	err      error
 }
 
-type fakeRegistryClient struct {
+type fakeEntitySourceConnector struct {
 	catalogSource map[string]catalogContents
 }
 
-func newFakeRegistryClient() *fakeRegistryClient {
-	return &fakeRegistryClient{
+func newFakeRegistryClient() *fakeEntitySourceConnector {
+	return &fakeEntitySourceConnector{
 		catalogSource: map[string]catalogContents{},
 	}
 }
 
-func (r *fakeRegistryClient) setEntitiesForSource(catalogSourceID string, entities ...*input.Entity) {
+func (r *fakeEntitySourceConnector) setEntitiesForSource(catalogSourceID string, entities ...*input.Entity) {
 	r.catalogSource[catalogSourceID] = catalogContents{
 		Entities: entities,
 	}
 }
 
-func (r *fakeRegistryClient) setErrorForSource(catalogSourceID string, err error) {
+func (r *fakeEntitySourceConnector) setErrorForSource(catalogSourceID string, err error) {
 	r.catalogSource[catalogSourceID] = catalogContents{
 		err: err,
 	}
 }
 
-func (r *fakeRegistryClient) ListEntities(ctx context.Context, catsrc *v1alpha1.CatalogSource) ([]*input.Entity, error) {
+func (r *fakeEntitySourceConnector) ListEntities(ctx context.Context, catsrc *v1alpha1.CatalogSource) ([]*input.Entity, error) {
 	catalogSourceKey := types.NamespacedName{Namespace: catsrc.Namespace, Name: catsrc.Name}.String()
 	if src, ok := r.catalogSource[catalogSourceKey]; ok {
 		return src.Entities, src.err
@@ -62,23 +62,23 @@ func (r *fakeRegistryClient) ListEntities(ctx context.Context, catsrc *v1alpha1.
 	return []*input.Entity{}, nil
 }
 
-var _ = Describe("CatalogSource Controller Test", func() {
+var _ = Describe("EntitySource Reconciler Test", func() {
 	var (
 		ctx          context.Context
-		reconciler   *catsrccontroller.CatalogSourceReconciler
+		reconciler   *controllers.EntitySourceReconciler
 		fakeRecorder *record.FakeRecorder
-		fakeRegistry *fakeRegistryClient
+		fakeRegistry *fakeEntitySourceConnector
 	)
 	BeforeEach(func() {
 		ctx = context.Background()
 		fakeRecorder = record.NewFakeRecorder(5)
 		fakeRegistry = newFakeRegistryClient()
-		reconciler = catsrccontroller.NewCatalogSourceReconciler(
+		reconciler = controllers.NewEntitySourceReconciler(
 			cl,
 			sch,
 			fakeRecorder,
-			catsrccontroller.WithRegistryClient(fakeRegistry),
-			catsrccontroller.WithUnmanagedCatalogSourceSyncInterval(unmanagedCatalogSourceSyncInterface),
+			controllers.WithEntitySourceConnector(fakeRegistry),
+			controllers.WithSyncInterval(syncInterval),
 		)
 	})
 	Describe("cache managements", func() {
@@ -211,7 +211,7 @@ var _ = Describe("CatalogSource Controller Test", func() {
 				It("manages the cache", func() {
 					By("running reconcile")
 					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catSrcKey})
-					Expect(res).To(Equal(ctrl.Result{RequeueAfter: unmanagedCatalogSourceSyncInterface}))
+					Expect(res).To(Equal(ctrl.Result{RequeueAfter: syncInterval}))
 					Expect(err).ToNot(HaveOccurred())
 
 					By("checking the cache is empty")
@@ -231,7 +231,7 @@ var _ = Describe("CatalogSource Controller Test", func() {
 
 					By("re-running reconcile")
 					res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catSrcKey})
-					Expect(res).To(Equal(ctrl.Result{RequeueAfter: unmanagedCatalogSourceSyncInterface}))
+					Expect(res).To(Equal(ctrl.Result{RequeueAfter: syncInterval}))
 					Expect(err).ToNot(HaveOccurred())
 
 					By("checking the cache is populated")

@@ -17,12 +17,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/operator-framework/operator-controller/internal/resolution"
 	"github.com/operator-framework/operator-controller/internal/resolution/entity_sources/catalogsource"
 )
 
 const (
-	defaultCatalogSourceSyncInterval     = 5 * time.Minute
-	defaultRegistryGRPCConnectionTimeout = 10 * time.Second
+	defaultEntitySourceSyncInterval = 5 * time.Minute
 
 	eventTypeNormal  = "Normal"
 	eventTypeWarning = "Warning"
@@ -31,50 +31,50 @@ const (
 	eventReasonCacheUpdateFailed = "BundleCacheUpdateFailed"
 )
 
-type CatalogSourceReconcilerOption func(reconciler *CatalogSourceReconciler)
+type EntitySourceReconcilerOption func(reconciler *EntitySourceReconciler)
 
-func WithRegistryClient(registry catalogsource.RegistryClient) CatalogSourceReconcilerOption {
-	return func(reconciler *CatalogSourceReconciler) {
-		reconciler.registry = registry
+func WithEntitySourceConnector(entitysourceConnector resolution.EntitySourceConnector) EntitySourceReconcilerOption {
+	return func(reconciler *EntitySourceReconciler) {
+		reconciler.entitySourceConnector = entitysourceConnector
 	}
 }
 
-func WithUnmanagedCatalogSourceSyncInterval(interval time.Duration) CatalogSourceReconcilerOption {
-	return func(reconciler *CatalogSourceReconciler) {
-		reconciler.unmanagedCatalogSourceSyncInterval = interval
+func WithSyncInterval(interval time.Duration) EntitySourceReconcilerOption {
+	return func(reconciler *EntitySourceReconciler) {
+		reconciler.syncInterval = interval
 	}
 }
 
-// applyDefaults applies default values to empty CatalogSourceReconciler fields _after_ options have been applied
-func applyDefaults() CatalogSourceReconcilerOption {
-	return func(reconciler *CatalogSourceReconciler) {
-		if reconciler.registry == nil {
-			reconciler.registry = catalogsource.NewRegistryGRPCClient(defaultRegistryGRPCConnectionTimeout)
+// applyDefaults applies default values to empty EntitySourceReconciler fields _after_ options have been applied
+func applyDefaults() EntitySourceReconcilerOption {
+	return func(reconciler *EntitySourceReconciler) {
+		if reconciler.entitySourceConnector == nil {
+			reconciler.entitySourceConnector = catalogsource.NewGRPCClientConnector(0)
 		}
-		if reconciler.unmanagedCatalogSourceSyncInterval == 0 {
-			reconciler.unmanagedCatalogSourceSyncInterval = defaultCatalogSourceSyncInterval
+		if reconciler.syncInterval == 0 {
+			reconciler.syncInterval = defaultEntitySourceSyncInterval
 		}
 	}
 }
 
-type CatalogSourceReconciler struct {
+type EntitySourceReconciler struct {
 	sync.RWMutex
 	client.Client
-	scheme                             *runtime.Scheme
-	registry                           catalogsource.RegistryClient
-	recorder                           record.EventRecorder
-	unmanagedCatalogSourceSyncInterval time.Duration
-	cache                              map[string]map[deppy.Identifier]*input.Entity
+	scheme                *runtime.Scheme
+	entitySourceConnector resolution.EntitySourceConnector
+	recorder              record.EventRecorder
+	syncInterval          time.Duration
+	cache                 map[string]map[deppy.Identifier]*input.Entity
 }
 
-func NewCatalogSourceReconciler(client client.Client, scheme *runtime.Scheme, recorder record.EventRecorder, options ...CatalogSourceReconcilerOption) *CatalogSourceReconciler {
-	reconciler := &CatalogSourceReconciler{
-		RWMutex:                            sync.RWMutex{},
-		Client:                             client,
-		scheme:                             scheme,
-		recorder:                           recorder,
-		unmanagedCatalogSourceSyncInterval: 0,
-		cache:                              map[string]map[deppy.Identifier]*input.Entity{},
+func NewEntitySourceReconciler(client client.Client, scheme *runtime.Scheme, recorder record.EventRecorder, options ...EntitySourceReconcilerOption) *EntitySourceReconciler {
+	reconciler := &EntitySourceReconciler{
+		RWMutex:      sync.RWMutex{},
+		Client:       client,
+		scheme:       scheme,
+		recorder:     recorder,
+		syncInterval: 0,
+		cache:        map[string]map[deppy.Identifier]*input.Entity{},
 	}
 	// apply options
 	options = append(options, applyDefaults())
@@ -88,8 +88,8 @@ func NewCatalogSourceReconciler(client client.Client, scheme *runtime.Scheme, re
 // +kubebuilder:rbac:groups=operators.coreos.com,resources=catalogsources,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
-func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	l := log.FromContext(ctx).WithName("catalogsource-controller")
+func (r *EntitySourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	l := log.FromContext(ctx).WithName("entitysource-reconciler")
 	l.V(1).Info("starting")
 	defer l.V(1).Info("ending")
 
@@ -101,35 +101,36 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	entities, err := r.registry.ListEntities(ctx, catalogSource)
+	entities, err := r.entitySourceConnector.ListEntities(ctx, catalogSource)
 	// TODO: invalidate stale cache for failed updates
 	if err != nil {
 		r.recorder.Event(catalogSource, eventTypeWarning, eventReasonCacheUpdateFailed, fmt.Sprintf("Failed to update bundle cache from %s/%s: %v", catalogSource.GetNamespace(), catalogSource.GetName(), err))
-		return ctrl.Result{Requeue: !isManagedCatalogSource(*catalogSource)}, err
+		// return ctrl.Result{Requeue: !isManagedCatalogSource(*catalogSource)}, err
+		return ctrl.Result{Requeue: true}, err
 	}
 	if updated := r.updateCache(req.String(), entities); updated {
 		r.recorder.Event(catalogSource, eventTypeNormal, eventReasonCacheUpdated, fmt.Sprintf("Successfully updated bundle cache from %s/%s", catalogSource.GetNamespace(), catalogSource.GetName()))
 	}
 
-	if isManagedCatalogSource(*catalogSource) {
-		return ctrl.Result{}, nil
-	}
-	return ctrl.Result{RequeueAfter: r.unmanagedCatalogSourceSyncInterval}, nil
+	// if isManagedCatalogSource(*catalogSource) {
+	// 	return ctrl.Result{}, nil
+	// }
+	return ctrl.Result{RequeueAfter: r.syncInterval}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *CatalogSourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *EntitySourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.CatalogSource{}).
 		Complete(r)
 }
 
 // TODO: find better way to identify catalogSources unmanaged by olm
-func isManagedCatalogSource(catalogSource v1alpha1.CatalogSource) bool {
-	return len(catalogSource.Spec.Address) == 0
-}
+// func isManagedCatalogSource(catalogSource v1alpha1.CatalogSource) bool {
+// 	return len(catalogSource.Spec.Address) == 0
+// }
 
-func (r *CatalogSourceReconciler) updateCache(sourceID string, entities []*input.Entity) bool {
+func (r *EntitySourceReconciler) updateCache(sourceID string, entities []*input.Entity) bool {
 	newSourceCache := make(map[deppy.Identifier]*input.Entity)
 	for _, entity := range entities {
 		newSourceCache[entity.Identifier()] = entity
@@ -144,13 +145,13 @@ func (r *CatalogSourceReconciler) updateCache(sourceID string, entities []*input
 	return true
 }
 
-func (r *CatalogSourceReconciler) dropSource(sourceID string) {
+func (r *EntitySourceReconciler) dropSource(sourceID string) {
 	r.RWMutex.Lock()
 	defer r.RWMutex.Unlock()
 	delete(r.cache, sourceID)
 }
 
-func (r *CatalogSourceReconciler) Get(ctx context.Context, id deppy.Identifier) *input.Entity {
+func (r *EntitySourceReconciler) Get(ctx context.Context, id deppy.Identifier) *input.Entity {
 	r.RWMutex.RLock()
 	defer r.RWMutex.RUnlock()
 	// don't count on deppy ID to reflect its catalogsource
@@ -162,7 +163,7 @@ func (r *CatalogSourceReconciler) Get(ctx context.Context, id deppy.Identifier) 
 	return nil
 }
 
-func (r *CatalogSourceReconciler) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {
+func (r *EntitySourceReconciler) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {
 	resultSet := input.EntityList{}
 	if err := r.Iterate(ctx, func(entity *input.Entity) error {
 		if filter(entity) {
@@ -175,7 +176,7 @@ func (r *CatalogSourceReconciler) Filter(ctx context.Context, filter input.Predi
 	return resultSet, nil
 }
 
-func (r *CatalogSourceReconciler) GroupBy(ctx context.Context, fn input.GroupByFunction) (input.EntityListMap, error) {
+func (r *EntitySourceReconciler) GroupBy(ctx context.Context, fn input.GroupByFunction) (input.EntityListMap, error) {
 	resultSet := input.EntityListMap{}
 	if err := r.Iterate(ctx, func(entity *input.Entity) error {
 		keys := fn(entity)
@@ -189,7 +190,7 @@ func (r *CatalogSourceReconciler) GroupBy(ctx context.Context, fn input.GroupByF
 	return resultSet, nil
 }
 
-func (r *CatalogSourceReconciler) Iterate(ctx context.Context, fn input.IteratorFunction) error {
+func (r *EntitySourceReconciler) Iterate(ctx context.Context, fn input.IteratorFunction) error {
 	r.RWMutex.RLock()
 	defer r.RWMutex.RUnlock()
 	for _, source := range r.cache {

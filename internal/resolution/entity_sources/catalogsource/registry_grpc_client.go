@@ -12,6 +12,8 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-controller/internal/resolution"
+
 	catalogsourceapi "github.com/operator-framework/operator-registry/pkg/api"
 	"golang.org/x/net/http/httpproxy"
 	"golang.org/x/net/proxy"
@@ -20,22 +22,20 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type RegistryClient interface {
-	ListEntities(ctx context.Context, catsrc *v1alpha1.CatalogSource) ([]*input.Entity, error)
-}
+const DefaultGRPCTimeout = 2 * time.Minute
 
-type registryGRPCClient struct {
+type gRPCClientConnector struct {
 	timeout time.Duration
 }
 
-func NewRegistryGRPCClient(grpcTimeout time.Duration) RegistryClient {
+func NewGRPCClientConnector(grpcTimeout time.Duration) resolution.EntitySourceConnector {
 	if grpcTimeout == 0 {
 		grpcTimeout = DefaultGRPCTimeout
 	}
-	return &registryGRPCClient{timeout: grpcTimeout}
+	return gRPCClientConnector{timeout: grpcTimeout}
 }
 
-func (r *registryGRPCClient) ListEntities(ctx context.Context, catalogSource *v1alpha1.CatalogSource) ([]*input.Entity, error) {
+func (r gRPCClientConnector) ListEntities(ctx context.Context, catalogSource *v1alpha1.CatalogSource) ([]*input.Entity, error) {
 	// TODO: create GRPC connections separately
 	conn, err := ConnectGRPCWithTimeout(ctx, catalogSource.Address(), r.timeout)
 	if conn != nil {
@@ -84,8 +84,6 @@ func (r *registryGRPCClient) ListEntities(ctx context.Context, catalogSource *v1
 	}
 	return entities, nil
 }
-
-const DefaultGRPCTimeout = 2 * time.Minute
 
 func ConnectGRPCWithTimeout(ctx context.Context, address string, timeout time.Duration) (conn *grpc.ClientConn, err error) {
 	// based on https://github.com/operator-framework/operator-lifecycle-manager/blob/afc0848d102ecdc01a0b0f3b55d389bb66acf168/pkg/controller/registry/grpc/source.go#L149
