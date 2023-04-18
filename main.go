@@ -92,12 +92,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	entityReconciler := controllers.NewEntitySourceReconciler(
+	entityCacheBuilder := controllers.NewEntityCacheBuilder(
 		mgr.GetClient(),
 		mgr.GetScheme(),
 		mgr.GetEventRecorderFor("entitysource-reconciler"),
 	)
-	if err := entityReconciler.SetupWithManager(mgr); err != nil {
+	if err := entityCacheBuilder.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create entitysource reconciler", "reconciler", "EntitySource")
 		os.Exit(1)
 	}
@@ -105,7 +105,7 @@ func main() {
 	if err = (&controllers.OperatorReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), entityReconciler),
+		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), entityCacheBuilder.Cache),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)

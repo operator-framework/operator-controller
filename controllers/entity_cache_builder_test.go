@@ -65,7 +65,7 @@ func (r *fakeEntitySourceConnector) ListEntities(ctx context.Context, catsrc *v1
 var _ = Describe("EntitySource Reconciler Test", func() {
 	var (
 		ctx          context.Context
-		reconciler   *controllers.EntitySourceReconciler
+		reconciler   *controllers.EntityCacheBuilder
 		fakeRecorder *record.FakeRecorder
 		fakeRegistry *fakeEntitySourceConnector
 	)
@@ -73,7 +73,7 @@ var _ = Describe("EntitySource Reconciler Test", func() {
 		ctx = context.Background()
 		fakeRecorder = record.NewFakeRecorder(5)
 		fakeRegistry = newFakeRegistryClient()
-		reconciler = controllers.NewEntitySourceReconciler(
+		reconciler = controllers.NewEntityCacheBuilder(
 			cl,
 			sch,
 			fakeRecorder,
@@ -122,7 +122,7 @@ var _ = Describe("EntitySource Reconciler Test", func() {
 
 					By("checking the cache is empty")
 					var entities []*input.Entity
-					err = reconciler.Iterate(ctx, func(entity *input.Entity) error {
+					err = reconciler.Cache.Iterate(ctx, func(entity *input.Entity) error {
 						entities = append(entities, entity)
 						return nil
 					})
@@ -142,7 +142,7 @@ var _ = Describe("EntitySource Reconciler Test", func() {
 
 					By("checking the cache is populated")
 					entities = nil
-					err = reconciler.Iterate(ctx, func(entity *input.Entity) error {
+					err = reconciler.Cache.Iterate(ctx, func(entity *input.Entity) error {
 						entities = append(entities, entity)
 						return nil
 					})
@@ -163,7 +163,7 @@ var _ = Describe("EntitySource Reconciler Test", func() {
 
 					By("checking the cache is empty again")
 					entities = nil
-					err = reconciler.Iterate(ctx, func(entity *input.Entity) error {
+					err = reconciler.Cache.Iterate(ctx, func(entity *input.Entity) error {
 						entities = append(entities, entity)
 						return nil
 					})
@@ -216,7 +216,7 @@ var _ = Describe("EntitySource Reconciler Test", func() {
 
 					By("checking the cache is empty")
 					var entities []*input.Entity
-					err = reconciler.Iterate(ctx, func(entity *input.Entity) error {
+					err = reconciler.Cache.Iterate(ctx, func(entity *input.Entity) error {
 						entities = append(entities, entity)
 						return nil
 					})
@@ -236,7 +236,7 @@ var _ = Describe("EntitySource Reconciler Test", func() {
 
 					By("checking the cache is populated")
 					entities = nil
-					err = reconciler.Iterate(ctx, func(entity *input.Entity) error {
+					err = reconciler.Cache.Iterate(ctx, func(entity *input.Entity) error {
 						entities = append(entities, entity)
 						return nil
 					})
@@ -257,7 +257,7 @@ var _ = Describe("EntitySource Reconciler Test", func() {
 
 					By("checking the cache is empty again")
 					entities = nil
-					err = reconciler.Iterate(ctx, func(entity *input.Entity) error {
+					err = reconciler.Cache.Iterate(ctx, func(entity *input.Entity) error {
 						entities = append(entities, entity)
 						return nil
 					})
@@ -318,17 +318,17 @@ var _ = Describe("EntitySource Reconciler Test", func() {
 
 		Describe("Get", func() {
 			It("should fetch an entity by ID", func() {
-				Expect(reconciler.Get(ctx, deppy.Identifier(fmt.Sprintf("%s/%s/pkg1/chan1/0.1.0", catalogSourceName, namespace)))).To(
+				Expect(reconciler.Cache.Get(ctx, deppy.Identifier(fmt.Sprintf("%s/%s/pkg1/chan1/0.1.0", catalogSourceName, namespace)))).To(
 					Equal(input.NewEntity(deppy.Identifier(fmt.Sprintf("%s/%s/pkg1/chan1/0.1.0", catalogSourceName, namespace)), map[string]string{})),
 				)
 			})
 			It("should not fetch anything for nonexistent entity ID", func() {
-				Expect(reconciler.Get(ctx, "non-existent")).To(BeNil())
+				Expect(reconciler.Cache.Get(ctx, "non-existent")).To(BeNil())
 			})
 		})
 		Describe("Filter", func() {
 			It("should return entities that meet filter predicates", func() {
-				actual, err := reconciler.Filter(ctx, func(e *input.Entity) bool {
+				actual, err := reconciler.Cache.Filter(ctx, func(e *input.Entity) bool {
 					_, ok := e.Properties["k"]
 					return ok
 				})
@@ -338,7 +338,7 @@ var _ = Describe("EntitySource Reconciler Test", func() {
 		})
 		Describe("GroupBy", func() {
 			It("should group entities by the keys provided by the groupBy function", func() {
-				actual, err := reconciler.GroupBy(ctx, func(e *input.Entity) []string {
+				actual, err := reconciler.Cache.GroupBy(ctx, func(e *input.Entity) []string {
 					var keys []string
 					for k := range e.Properties {
 						keys = append(keys, k)
@@ -352,7 +352,7 @@ var _ = Describe("EntitySource Reconciler Test", func() {
 		Describe("Iterate", func() {
 			It("should go through all entities", func() {
 				var ids []string
-				Expect(reconciler.Iterate(ctx, func(e *input.Entity) error {
+				Expect(reconciler.Cache.Iterate(ctx, func(e *input.Entity) error {
 					ids = append(ids, e.Identifier().String())
 					return nil
 				})).To(BeNil())
