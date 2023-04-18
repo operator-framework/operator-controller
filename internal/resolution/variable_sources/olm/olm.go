@@ -46,5 +46,8 @@ func (o *OLMVariableSource) requiredPackageFromOperator(operator *operatorsv1alp
 	if operator.Spec.Version != "" {
 		opts = append(opts, required_package.InVersionRange(operator.Spec.Version))
 	}
+	if operator.Spec.Channel != "" {
+		opts = append(opts, required_package.InChannel(operator.Spec.Channel))
+	}
 	return required_package.NewRequiredPackage(operator.Spec.PackageName, opts...)
 }

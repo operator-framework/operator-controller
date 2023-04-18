@@ -54,9 +54,20 @@ func InVersionRange(versionRange string) RequiredPackageOption {
 	}
 }
 
+func InChannel(channelName string) RequiredPackageOption {
+	return func(r *RequiredPackageVariableSource) error {
+		if channelName != "" {
+			r.channelName = channelName
+			r.predicates = append(r.predicates, predicates.InChannel(channelName))
+		}
+		return nil
+	}
+}
+
 type RequiredPackageVariableSource struct {
 	packageName  string
 	versionRange string
+	channelName  string
 	predicates   []input.Predicate
 }
 
