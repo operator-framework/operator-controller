@@ -72,4 +72,31 @@ var _ = Describe("Operator Spec Validations", func() {
 			Expect(err.Error()).To(ContainSubstring("spec.version in body should match '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-(0|[1-9]\\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\\.(0|[1-9]\\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\\+([0-9a-zA-Z-]+(\\.[0-9a-zA-Z-]+)*))?$'"))
 		}
 	})
+	It("should fail if an invalid channel name is given", func() {
+		invalidChannels := []string{
+			"spaces spaces",
+			"Capitalized",
+			"camelCase",
+			"many/invalid$characters+in_name",
+			"-start-with-hyphen",
+			"end-with-hyphen-",
+			"channel-has-version-1.0.1",
+		}
+		for _, invalidChannel := range invalidChannels {
+			err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+				PackageName: "package",
+				Channel:     invalidChannel,
+			}))
+			Expect(err).To(HaveOccurred(), "expected error for invalid channel '%q'", invalidChannel)
+			Expect(err.Error()).To(ContainSubstring("spec.channel in body should match '^[a-z0-9]+(-[a-z0-9]+)*$'"))
+		}
+	})
+	It("should fail if an invalid channel name length", func() {
+		err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+			PackageName: "package",
+			Channel:     "longname01234567890123456789012345678901234567890",
+		}))
+		Expect(err).To(HaveOccurred(), "expected error for invalid channel length")
+		Expect(err.Error()).To(ContainSubstring("spec.channel: Too long: may not be longer than 48"))
+	})
 })
