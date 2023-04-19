@@ -39,7 +39,7 @@ type OperatorSpec struct {
 	Version string `json:"version,omitempty"`
 
 	//+kubebuilder:validation:MaxLength:=48
-	//+kubebuilder:validation:Pattern:=^[a-z0-9]+(-[a-z0-9]+)*$
+	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
 	// Channel constraint defintion
 	Channel string `json:"channel,omitempty"`
 }

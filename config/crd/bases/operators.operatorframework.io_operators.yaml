@@ -38,7 +38,7 @@ spec:
               channel:
                 description: Channel constraint defintion
                 maxLength: 48
-                pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+                pattern: ^[a-z0-9]+([\.-][a-z0-9]+)*$
                 type: string
               packageName:
                 maxLength: 48

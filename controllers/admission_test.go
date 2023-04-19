@@ -80,7 +80,8 @@ var _ = Describe("Operator Spec Validations", func() {
 			"many/invalid$characters+in_name",
 			"-start-with-hyphen",
 			"end-with-hyphen-",
-			"channel-has-version-1.0.1",
+			".start-with-period",
+			"end-with-period.",
 		}
 		for _, invalidChannel := range invalidChannels {
 			err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
@@ -88,7 +89,24 @@ var _ = Describe("Operator Spec Validations", func() {
 				Channel:     invalidChannel,
 			}))
 			Expect(err).To(HaveOccurred(), "expected error for invalid channel '%q'", invalidChannel)
-			Expect(err.Error()).To(ContainSubstring("spec.channel in body should match '^[a-z0-9]+(-[a-z0-9]+)*$'"))
+			Expect(err.Error()).To(ContainSubstring("spec.channel in body should match '^[a-z0-9]+([\\.-][a-z0-9]+)*$'"))
+		}
+	})
+	It("should pass if a valid channel name is given", func() {
+		validChannels := []string{
+			"hyphenated-name",
+			"dotted.name",
+			"channel-has-version-1.0.1",
+		}
+		for _, validChannel := range validChannels {
+			op := operator(operatorsv1alpha1.OperatorSpec{
+				PackageName: "package",
+				Channel:     validChannel,
+			})
+			err := cl.Create(ctx, op)
+			Expect(err).NotTo(HaveOccurred(), "unexpected error creating valid channel '%q': %w", validChannel, err)
+			err = cl.Delete(ctx, op)
+			Expect(err).NotTo(HaveOccurred(), "unexpected error deleting valid channel '%q': %w", validChannel, err)
 		}
 	})
 	It("should fail if an invalid channel name length", func() {
