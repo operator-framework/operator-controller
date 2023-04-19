@@ -1,4 +1,4 @@
-package hardcoded
+package resolution
 
 import (
 	"github.com/operator-framework/deppy/pkg/deppy"

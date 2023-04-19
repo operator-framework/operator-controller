@@ -10,10 +10,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 )
 
-const (
-	propertyBundlePath     = "olm.bundle.path"
-	propertyDefaultChannel = "olm.package.defaultChannel"
-)
+const PropertyBundlePath = "olm.bundle.path"
 
 type ChannelProperties struct {
 	property.Channel
@@ -60,6 +57,7 @@ type BundleEntity struct {
 	requiredPackages  []PackageRequired
 	channelProperties *ChannelProperties
 	semVersion        *semver.Version
+	bundlePath        string
 	mu                sync.RWMutex
 }
 
@@ -120,17 +118,10 @@ func (b *BundleEntity) ChannelProperties() (*ChannelProperties, error) {
 }
 
 func (b *BundleEntity) BundlePath() (string, error) {
-	if bundlePath, ok := b.Entity.Properties[propertyBundlePath]; ok && bundlePath != "" {
-		return bundlePath, nil
+	if err := b.loadBundlePath(); err != nil {
+		return "", err
 	}
-	return "", fmt.Errorf("error determining bundle path for entity '%s': property '%s' not found or empty", b.ID, propertyBundlePath)
-}
-
-func (b *BundleEntity) DefaultChannel() (string, error) {
-	if defaultChannel, ok := b.Entity.Properties[propertyDefaultChannel]; ok && defaultChannel != "" {
-		return defaultChannel, nil
-	}
-	return "", fmt.Errorf("error determining default channel for entity '%s': property '%s' not found or empty", b.ID, propertyDefaultChannel)
+	return b.bundlePath, nil
 }
 
 func (b *BundleEntity) loadPackage() error {
@@ -208,6 +199,19 @@ func (b *BundleEntity) loadChannelProperties() error {
 			return fmt.Errorf("error determining bundle channel properties for entity '%s': %w", b.ID, err)
 		}
 		b.channelProperties = &channel
+	}
+	return nil
+}
+
+func (b *BundleEntity) loadBundlePath() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.bundlePath == "" {
+		bundlePath, err := loadFromEntity[string](b.Entity, PropertyBundlePath, required)
+		if err != nil {
+			return fmt.Errorf("error determining bundle path for entity '%s': %w", b.ID, err)
+		}
+		b.bundlePath = bundlePath
 	}
 	return nil
 }
