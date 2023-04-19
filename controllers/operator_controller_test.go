@@ -667,7 +667,7 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Message).To(ContainSubstring("waiting for BundleDeployment"))
 			})
 		})
-		When("the operator specifies a channel that does not exist", func() {
+		When("the operator specifies a package version in a channel that does not exist", func() {
 			var pkgName string
 			var pkgVer string
 			var pkgChan string
@@ -691,7 +691,7 @@ var _ = Describe("Operator Controller Test", func() {
 				By("running reconcile")
 				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
 				Expect(res).To(Equal(ctrl.Result{}))
-				Expect(err).To(MatchError(fmt.Sprintf("package '%s' at version '%s' not found", pkgName, pkgVer)))
+				Expect(err).To(MatchError(fmt.Sprintf("package '%s' at version '%s' in channel '%s' not found", pkgName, pkgVer, pkgChan)))
 
 				By("fetching updated operator after reconcile")
 				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
@@ -701,7 +701,41 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
-				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' at version '%s' not found", pkgName, pkgVer)))
+				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' at version '%s' in channel '%s' not found", pkgName, pkgVer, pkgChan)))
+			})
+		})
+		When("the operator specifies a package in a channel that does not exist", func() {
+			var pkgName string
+			var pkgChan string
+			BeforeEach(func() {
+				By("initializing cluster state")
+				pkgName = "prometheus"
+				pkgChan = "alpha"
+				operator = &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: pkgName,
+						Channel:     pkgChan,
+					},
+				}
+				err := cl.Create(ctx, operator)
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("sets resolution failure status", func() {
+				By("running reconcile")
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(res).To(Equal(ctrl.Result{}))
+				Expect(err).To(MatchError(fmt.Sprintf("package '%s' in channel '%s' not found", pkgName, pkgChan)))
+
+				By("fetching updated operator after reconcile")
+				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+				By("checking the expected conditions")
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
+				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' in channel '%s' not found", pkgName, pkgChan)))
 			})
 		})
 		When("the operator specifies a package version that does not exist in the channel", func() {
@@ -728,7 +762,7 @@ var _ = Describe("Operator Controller Test", func() {
 				By("running reconcile")
 				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
 				Expect(res).To(Equal(ctrl.Result{}))
-				Expect(err).To(MatchError(fmt.Sprintf("package '%s' at version '%s' not found", pkgName, pkgVer)))
+				Expect(err).To(MatchError(fmt.Sprintf("package '%s' at version '%s' in channel '%s' not found", pkgName, pkgVer, pkgChan)))
 
 				By("fetching updated operator after reconcile")
 				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
@@ -738,7 +772,7 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
-				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' at version '%s' not found", pkgName, pkgVer)))
+				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' at version '%s' in channel '%s' not found", pkgName, pkgVer, pkgChan)))
 			})
 		})
 		AfterEach(func() {
