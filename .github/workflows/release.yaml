@@ -22,13 +22,13 @@ jobs:
         fetch-depth: 0
 
     - name: Install Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v4
       with:
         go-version-file: "go.mod"
 
     - name: Docker Login
       if: ${{ github.event_name != 'pull_request' }}
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       with:
         registry: quay.io
         username: ${{ secrets.QUAY_USERNAME }}
@@ -55,7 +55,8 @@ jobs:
     - name: Generate the operator-controller release manifests
       if: ${{ startsWith(github.ref, 'refs/tags/v') }}
       run: |
-        make quickstart VERSION=${GITHUB_REF#refs/tags/}
+        echo VERSION="${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        make quickstart
 
     - name: Run goreleaser
       run: make release
