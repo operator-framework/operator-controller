@@ -629,6 +629,15 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
 				Expect(cond.Message).To(ContainSubstring("waiting for BundleDeployment"))
+
+				By("fetching the bundled deployment")
+				bd := &rukpakv1alpha1.BundleDeployment{}
+				Expect(cl.Get(ctx, types.NamespacedName{Name: opKey.Name}, bd)).NotTo(HaveOccurred())
+				Expect(bd.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-plain"))
+				Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-registry"))
+				Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
+				Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
+				Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
 			})
 		})
 		When("the operator specifies a package that exists within a channel but no version specified", func() {
@@ -665,6 +674,15 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
 				Expect(cond.Message).To(ContainSubstring("waiting for BundleDeployment"))
+
+				By("fetching the bundled deployment")
+				bd := &rukpakv1alpha1.BundleDeployment{}
+				Expect(cl.Get(ctx, types.NamespacedName{Name: opKey.Name}, bd)).NotTo(HaveOccurred())
+				Expect(bd.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-plain"))
+				Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-registry"))
+				Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
+				Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
+				Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
 			})
 		})
 		When("the operator specifies a package version in a channel that does not exist", func() {
