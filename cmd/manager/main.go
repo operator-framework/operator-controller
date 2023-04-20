@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -31,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/operator-framework/catalogd/internal/version"
 	"github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	corecontrollers "github.com/operator-framework/catalogd/pkg/controllers/core"
 	"github.com/operator-framework/catalogd/pkg/profile"
@@ -50,11 +52,14 @@ func init() {
 }
 
 func main() {
-	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
-	var opmImage string
-	var profiling bool
+	var (
+		metricsAddr          string
+		enableLeaderElection bool
+		probeAddr            string
+		opmImage             string
+		profiling            bool
+		catalogdVersion      bool
+	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -65,8 +70,14 @@ func main() {
 		Development: true,
 	}
 	flag.BoolVar(&profiling, "profiling", false, "enable profiling endpoints to allow for using pprof")
+	flag.BoolVar(&catalogdVersion, "version", false, "print the catalogd version and exit")
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
+
+	if catalogdVersion {
+		fmt.Printf("catalogd version: %s", version.ControllerVersion())
+		os.Exit(0)
+	}
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 

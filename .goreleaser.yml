@@ -18,6 +18,8 @@ builds:
     - arm64
     - ppc64le
     - s390x
+    ldflags:
+    - -X {{ .Env.VERSION_PKG }}.gitVersion={{ .Env.GIT_VERSION }}
   # TODO: When the apiserver is working properly, uncomment this
   # - id: catalogd-server
   #   main: ./cmd/apiserver/
@@ -29,6 +31,11 @@ builds:
   #   - arm64
   #   - ppc64le
   #   - s390x
+  #   ldflags:
+  #   - -X {{ .Env.VERSION_PKG }}.gitVersion={{ .Env.GIT_VERSION }}
+  #   - -X {{ .Env.VERSION_PKG }}.gitCommit={{ .Env.GIT_COMMIT }}
+  #   - -X {{ .Env.VERSION_PKG }}.gitTreeState={{ .Env.GIT_TREE_STATE }}
+  #   - -X {{ .Env.VERSION_PKG }}.commitDate={{ .Env.COMMIT_DATE }}
 dockers:
 - image_templates:
   - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
