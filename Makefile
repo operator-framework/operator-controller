@@ -174,6 +174,7 @@ export GIT_VERSION             ?= $(GIT_VERSION)
 export GIT_COMMIT              ?= $(GIT_COMMIT)
 export GIT_TREE_STATE          ?= $(GIT_TREE_STATE)
 export COMMIT_DATE             ?= $(COMMIT_DATE)
+export CERT_MGR_VERSION        ?= $(CERT_MGR_VERSION)
 release: goreleaser ## Runs goreleaser for catalogd. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)
 
