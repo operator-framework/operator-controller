@@ -179,7 +179,7 @@ release: goreleaser ## Runs goreleaser for catalogd. By default, this will run o
 	$(GORELEASER) $(GORELEASER_ARGS)
 
 quickstart: kustomize generate ## Generate the installation release manifests and scripts
-	$(KUSTOMIZE) build config/default | sed "s/:devel/:$(VERSION)/g" > catalogd.yaml
+	$(KUSTOMIZE) build config/default | sed "s/:devel/:$(GIT_VERSION)/g" > catalogd.yaml
 	
 ################
 # Hack / Tools #
