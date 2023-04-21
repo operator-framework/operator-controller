@@ -30,6 +30,8 @@ install.sh
 *.swp
 *.swo
 *~
+\#*\#
+.\#*
 
 # TODO dfranz remove this line and the bin folder when tools binaries are moved to their own folder
 !bin/.dockerignore

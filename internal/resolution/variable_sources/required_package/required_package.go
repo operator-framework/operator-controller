@@ -54,9 +54,20 @@ func InVersionRange(versionRange string) RequiredPackageOption {
 	}
 }
 
+func InChannel(channelName string) RequiredPackageOption {
+	return func(r *RequiredPackageVariableSource) error {
+		if channelName != "" {
+			r.channelName = channelName
+			r.predicates = append(r.predicates, predicates.InChannel(channelName))
+		}
+		return nil
+	}
+}
+
 type RequiredPackageVariableSource struct {
 	packageName  string
 	versionRange string
+	channelName  string
 	predicates   []input.Predicate
 }
 
@@ -99,8 +110,14 @@ func (r *RequiredPackageVariableSource) notFoundError() error {
 	//  context: we originally wanted to support version ranges and take the highest version that satisfies the range
 	//  during the upstream call on the 2023-04-11 we decided to pin the version instead. But, we'll keep version range
 	//  support under the covers in case we decide to pivot back.
+	if r.versionRange != "" && r.channelName != "" {
+		return fmt.Errorf("package '%s' at version '%s' in channel '%s' not found", r.packageName, r.versionRange, r.channelName)
+	}
 	if r.versionRange != "" {
 		return fmt.Errorf("package '%s' at version '%s' not found", r.packageName, r.versionRange)
+	}
+	if r.channelName != "" {
+		return fmt.Errorf("package '%s' in channel '%s' not found", r.packageName, r.channelName)
 	}
 	return fmt.Errorf("package '%s' not found", r.packageName)
 }

@@ -85,7 +85,7 @@ var _ = Describe("Operator Controller Test", func() {
 			var pkgName string
 			BeforeEach(func() {
 				By("initializing cluster state")
-				pkgName = fmt.Sprintf("exists-%s", rand.String(6))
+				pkgName = "prometheus"
 				operator = &operatorsv1alpha1.Operator{
 					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
 					Spec: operatorsv1alpha1.OperatorSpec{
@@ -593,6 +593,205 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
+		})
+		When("the operator specifies a channel with version that exist", func() {
+			var pkgName string
+			var pkgVer string
+			var pkgChan string
+			BeforeEach(func() {
+				By("initializing cluster state")
+				pkgName = "prometheus"
+				pkgVer = "0.47.0"
+				pkgChan = "beta"
+				operator = &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: pkgName,
+						Version:     pkgVer,
+						Channel:     pkgChan,
+					},
+				}
+				err := cl.Create(ctx, operator)
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("sets resolution success status", func() {
+				By("running reconcile")
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(res).To(Equal(ctrl.Result{}))
+				Expect(err).NotTo(HaveOccurred())
+
+				By("fetching updated operator after reconcile")
+				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+				By("checking the expected conditions")
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+				Expect(cond.Message).To(ContainSubstring("waiting for BundleDeployment"))
+
+				By("fetching the bundled deployment")
+				bd := &rukpakv1alpha1.BundleDeployment{}
+				Expect(cl.Get(ctx, types.NamespacedName{Name: opKey.Name}, bd)).NotTo(HaveOccurred())
+				Expect(bd.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-plain"))
+				Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-registry"))
+				Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
+				Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
+				Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+			})
+		})
+		When("the operator specifies a package that exists within a channel but no version specified", func() {
+			var pkgName string
+			var pkgVer string
+			var pkgChan string
+			BeforeEach(func() {
+				By("initializing cluster state")
+				pkgName = "prometheus"
+				pkgChan = "beta"
+				operator = &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: pkgName,
+						Version:     pkgVer,
+						Channel:     pkgChan,
+					},
+				}
+				err := cl.Create(ctx, operator)
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("sets resolution success status", func() {
+				By("running reconcile")
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(res).To(Equal(ctrl.Result{}))
+				Expect(err).NotTo(HaveOccurred())
+
+				By("fetching updated operator after reconcile")
+				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+				By("checking the expected conditions")
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+				Expect(cond.Message).To(ContainSubstring("waiting for BundleDeployment"))
+
+				By("fetching the bundled deployment")
+				bd := &rukpakv1alpha1.BundleDeployment{}
+				Expect(cl.Get(ctx, types.NamespacedName{Name: opKey.Name}, bd)).NotTo(HaveOccurred())
+				Expect(bd.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-plain"))
+				Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-registry"))
+				Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
+				Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
+				Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+			})
+		})
+		When("the operator specifies a package version in a channel that does not exist", func() {
+			var pkgName string
+			var pkgVer string
+			var pkgChan string
+			BeforeEach(func() {
+				By("initializing cluster state")
+				pkgName = "prometheus"
+				pkgVer = "0.47.0"
+				pkgChan = "alpha"
+				operator = &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: pkgName,
+						Version:     pkgVer,
+						Channel:     pkgChan,
+					},
+				}
+				err := cl.Create(ctx, operator)
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("sets resolution failure status", func() {
+				By("running reconcile")
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(res).To(Equal(ctrl.Result{}))
+				Expect(err).To(MatchError(fmt.Sprintf("package '%s' at version '%s' in channel '%s' not found", pkgName, pkgVer, pkgChan)))
+
+				By("fetching updated operator after reconcile")
+				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+				By("checking the expected conditions")
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
+				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' at version '%s' in channel '%s' not found", pkgName, pkgVer, pkgChan)))
+			})
+		})
+		When("the operator specifies a package in a channel that does not exist", func() {
+			var pkgName string
+			var pkgChan string
+			BeforeEach(func() {
+				By("initializing cluster state")
+				pkgName = "prometheus"
+				pkgChan = "alpha"
+				operator = &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: pkgName,
+						Channel:     pkgChan,
+					},
+				}
+				err := cl.Create(ctx, operator)
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("sets resolution failure status", func() {
+				By("running reconcile")
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(res).To(Equal(ctrl.Result{}))
+				Expect(err).To(MatchError(fmt.Sprintf("package '%s' in channel '%s' not found", pkgName, pkgChan)))
+
+				By("fetching updated operator after reconcile")
+				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+				By("checking the expected conditions")
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
+				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' in channel '%s' not found", pkgName, pkgChan)))
+			})
+		})
+		When("the operator specifies a package version that does not exist in the channel", func() {
+			var pkgName string
+			var pkgVer string
+			var pkgChan string
+			BeforeEach(func() {
+				By("initializing cluster state")
+				pkgName = "prometheus"
+				pkgVer = "0.57.0"
+				pkgChan = "beta"
+				operator = &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: pkgName,
+						Version:     pkgVer,
+						Channel:     pkgChan,
+					},
+				}
+				err := cl.Create(ctx, operator)
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("sets resolution failure status", func() {
+				By("running reconcile")
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(res).To(Equal(ctrl.Result{}))
+				Expect(err).To(MatchError(fmt.Sprintf("package '%s' at version '%s' in channel '%s' not found", pkgName, pkgVer, pkgChan)))
+
+				By("fetching updated operator after reconcile")
+				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+				By("checking the expected conditions")
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeReady)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
+				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' at version '%s' in channel '%s' not found", pkgName, pkgVer, pkgChan)))
+			})
 		})
 		AfterEach(func() {
 			verifyInvariants(ctx, operator)
