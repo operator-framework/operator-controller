@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path/filepath"
 	"time"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
@@ -373,6 +374,8 @@ func (r *CatalogSourceReconciler) parseUnpackLogs(ctx context.Context, job *batc
 
 // unpackJob creates the manifest for an unpack Job given a CatalogSource
 func (r *CatalogSourceReconciler) unpackJob(cs *corev1beta1.CatalogSource) *batchv1.Job {
+	opmVol := "opm"
+	mountPath := "opmvol/"
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "catalogd-system",
@@ -386,14 +389,45 @@ func (r *CatalogSourceReconciler) unpackJob(cs *corev1beta1.CatalogSource) *batc
 				},
 				Spec: v1.PodSpec{
 					RestartPolicy: v1.RestartPolicyOnFailure,
-					Containers: []v1.Container{
+					InitContainers: []v1.Container{
 						{
 							Image: r.OpmImage,
+							Name:  "initializer",
+							Command: []string{
+								"cp",
+								"/bin/opm",
+								filepath.Join(mountPath, "opm"),
+							},
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      opmVol,
+									MountPath: mountPath,
+								},
+							},
+						},
+					},
+					Containers: []v1.Container{
+						{
+							Image: cs.Spec.Image,
 							Name:  "unpacker",
 							Command: []string{
-								"opm",
+								filepath.Join(mountPath, "opm"),
 								"render",
-								cs.Spec.Image,
+								"/configs/",
+							},
+							VolumeMounts: []v1.VolumeMount{
+								{
+									Name:      opmVol,
+									MountPath: mountPath,
+								},
+							},
+						},
+					},
+					Volumes: []v1.Volume{
+						{
+							Name: opmVol,
+							VolumeSource: v1.VolumeSource{
+								EmptyDir: &v1.EmptyDirVolumeSource{},
 							},
 						},
 					},
