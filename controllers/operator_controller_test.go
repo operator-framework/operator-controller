@@ -24,7 +24,7 @@ import (
 	operatorutil "github.com/operator-framework/operator-controller/internal/util"
 )
 
-var _ = Describe("Reconcile Test", func() {
+var _ = Describe("Operator Controller Test", func() {
 	var (
 		ctx        context.Context
 		reconciler *controllers.OperatorReconciler

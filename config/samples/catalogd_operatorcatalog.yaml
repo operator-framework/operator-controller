@@ -1,0 +1,6 @@
+apiVersion: catalogd.operatorframework.io/v1beta1
+kind: CatalogSource
+metadata: 
+  name: operatorhubio
+spec:
+  image: quay.io/operatorhubio/catalog:latest

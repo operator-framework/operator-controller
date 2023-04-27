@@ -11,6 +11,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 )
@@ -37,6 +38,8 @@ var _ = BeforeSuite(func() {
 	err = rukpakv1alpha1.AddToScheme(scheme)
 	Expect(err).To(Not(HaveOccurred()))
 
+	err = catalogd.AddToScheme(scheme)
+	Expect(err).ToNot(HaveOccurred())
 	c, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).To(Not(HaveOccurred()))
 })
