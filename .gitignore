@@ -8,6 +8,7 @@ vendor
 *.dylib
 bin/*
 testbin/*
+/hack/tools/bin/*
 Dockerfile.cross
 
 # Test binary, build with `go test -c`
@@ -33,5 +34,3 @@ install.sh
 \#*\#
 .\#*
 
-# TODO dfranz remove this line and the bin folder when tools binaries are moved to their own folder
-!bin/.dockerignore
