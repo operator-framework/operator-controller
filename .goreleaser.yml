@@ -42,21 +42,33 @@ dockers:
   dockerfile: controller.Dockerfile
   goos: linux
   goarch: amd64
+  use: buildx
+  build_flag_templates:
+    - "--platform=linux/amd64"
 - image_templates:
     - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
   dockerfile: controller.Dockerfile
   goos: linux
   goarch: arm64
+  use: buildx
+  build_flag_templates:
+    - "--platform=linux/arm64"
 - image_templates:
     - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
   dockerfile: controller.Dockerfile
   goos: linux
   goarch: ppc64le
+  use: buildx
+  build_flag_templates:
+    - "--platform=linux/ppc64le"
 - image_templates:
     - "{{ .Env.CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
   dockerfile: controller.Dockerfile
   goos: linux
   goarch: s390x
+  use: buildx
+  build_flag_templates:
+    - "--platform=linux/s390x"
 # TODO: When the apiserver is working properly, uncomment this:
 # - image_templates:
 #   - "{{ .Env.APISERVER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
