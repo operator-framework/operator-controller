@@ -30,9 +30,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/controllers"
 	"github.com/operator-framework/operator-controller/internal/resolution"
+	"github.com/operator-framework/operator-controller/internal/resolution/entitysources"
 )
 
 var (
@@ -45,6 +47,8 @@ func init() {
 
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(catalogd.AddToScheme(scheme))
+
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -92,7 +96,7 @@ func main() {
 	if err = (&controllers.OperatorReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), resolution.HardcodedEntitySource),
+		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), entitysources.NewCatalogdEntitySource(mgr.GetClient())),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)

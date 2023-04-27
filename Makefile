@@ -6,8 +6,8 @@ export IMAGE_REPO ?= quay.io/operator-framework/operator-controller
 export IMAGE_TAG ?= devel
 export GO_BUILD_TAGS ?= upstream
 export CERT_MGR_VERSION ?= v1.9.0
+export CATALOGD_VERSION ?= v0.1.3
 export GORELEASER_VERSION ?= v1.16.2
-export OLM_V0_VERSION ?= v0.24.0
 export RUKPAK_VERSION=$(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/rukpak)
 export WAIT_TIMEOUT ?= 60s
 IMG?=$(IMAGE_REPO):$(IMAGE_TAG)
@@ -148,7 +148,7 @@ release: goreleaser ## Runs goreleaser for the operator-controller. By default, 
 quickstart: export MANIFEST="https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml"
 quickstart: kustomize generate ## Generate the installation release manifests and scripts
 	kubectl kustomize config/default | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
-	envsubst '$$OLM_V0_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh > install.sh
+	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
 ##@ Deployment
 
@@ -160,7 +160,7 @@ endif
 install: export MANIFEST="./operator-controller.yaml"
 install: manifests kustomize generate ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	kubectl kustomize config/default > operator-controller.yaml
-	envsubst '$$OLM_V0_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh | bash -s
+	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: uninstall
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
