@@ -98,6 +98,7 @@ kind-cluster-cleanup: kind ## Delete the kind cluster
 
 .PHONY: build
 build: manifests generate fmt vet goreleaser ## Build manager binary using goreleaser for current GOOS and GOARCH.
+	mkdir -p bin
 	${GORELEASER} build ${GORELEASER_ARGS} --single-target -o bin/manager
 
 .PHONY: run
@@ -174,10 +175,12 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
-##@ Build Dependencies
+################
+# Hack / Tools #
+################
 
 ## Location to install dependencies to
-LOCALBIN ?= $(shell pwd)/bin
+LOCALBIN ?= $(shell pwd)/hack/tools/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
