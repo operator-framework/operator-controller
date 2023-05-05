@@ -17,22 +17,14 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/apiserver-runtime/pkg/builder/resource"
-	"sigs.k8s.io/apiserver-runtime/pkg/builder/resource/resourcestrategy"
 )
 
-// +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+//+kubebuilder:object:root=true
+//+kubebuilder:resource:scope=Cluster
 
-// BundleMetadata
-// +k8s:openapi-gen=true
-// +kubebuilder:resource:scope=Cluster
+// BundleMetadata is the Schema for the bundlemetadata API
 type BundleMetadata struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -41,8 +33,9 @@ type BundleMetadata struct {
 	Status BundleMetadataStatus `json:"status,omitempty"`
 }
 
-// BundleMetadataList
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+//+kubebuilder:object:root=true
+
+// BundleMetadataList contains a list of BundleMetadata
 type BundleMetadataList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -68,83 +61,25 @@ type BundleMetadataSpec struct {
 	RelatedImages []RelatedImage `json:"relatedImages"`
 }
 
-// TODO: In the future we should remove this in favor of using `property.Property` from
-// https://pkg.go.dev/github.com/operator-framework/operator-registry@v1.26.3/alpha/property#Property
-// This will likely require some changes to the `property.Property` type to
-// make it suitable for usage within the Spec for a CustomResource
 type Property struct {
-	Type  string `json:"type"`
-	Value []byte `json:"value"`
+	Type string `json:"type"`
+
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Value runtime.RawExtension `json:"value"`
 }
 
-// TODO: In the future we should remove this in favor of using `model.RelatedImage` (or similar) from
-// https://pkg.go.dev/github.com/operator-framework/operator-registry@v1.26.3/alpha/model#RelatedImage
-// This will likely require some changes to the `model.RelatedImage` type
+// TODO: In the future we should remove this in favor of using `declcfg.RelatedImage` (or similar) from
+// https://pkg.go.dev/github.com/operator-framework/operator-registry@v1.26.3/alpha/declcfg#RelatedImage
+// This will likely require some changes to the `declcfg.RelatedImage` type
 // to make it suitable for usage within the Spec for a CustomResource
 type RelatedImage struct {
 	Name  string `json:"name"`
 	Image string `json:"image"`
 }
 
-var _ resource.Object = &BundleMetadata{}
-var _ resourcestrategy.Validater = &BundleMetadata{}
-
-func (in *BundleMetadata) GetObjectMeta() *metav1.ObjectMeta {
-	return &in.ObjectMeta
-}
-
-func (in *BundleMetadata) NamespaceScoped() bool {
-	return false
-}
-
-func (in *BundleMetadata) New() runtime.Object {
-	return &BundleMetadata{}
-}
-
-func (in *BundleMetadata) NewList() runtime.Object {
-	return &BundleMetadataList{}
-}
-
-func (in *BundleMetadata) GetGroupVersionResource() schema.GroupVersionResource {
-	return schema.GroupVersionResource{
-		Group:    "catalogd.operatorframework.io",
-		Version:  "v1beta1",
-		Resource: "bundlemetadata",
-	}
-}
-
-func (in *BundleMetadata) IsStorageVersion() bool {
-	return true
-}
-
-func (in *BundleMetadata) Validate(ctx context.Context) field.ErrorList {
-	// TODO(user): Modify it, adding your API validation here.
-	return nil
-}
-
-var _ resource.ObjectList = &BundleMetadataList{}
-
-func (in *BundleMetadataList) GetListMeta() *metav1.ListMeta {
-	return &in.ListMeta
-}
-
 // BundleMetadataStatus defines the observed state of BundleMetadata
 type BundleMetadataStatus struct{}
 
-func (in BundleMetadataStatus) SubResourceName() string {
-	return "status"
-}
-
-// BundleMetadata implements ObjectWithStatusSubResource interface.
-var _ resource.ObjectWithStatusSubResource = &BundleMetadata{}
-
-func (in *BundleMetadata) GetStatus() resource.StatusSubResource {
-	return in.Status
-}
-
-// BundleMetadataStatus{} implements StatusSubResource interface.
-var _ resource.StatusSubResource = &BundleMetadataStatus{}
-
-func (in BundleMetadataStatus) CopyTo(parent resource.ObjectWithStatusSubResource) {
-	parent.(*BundleMetadata).Status = in
+func init() {
+	SchemeBuilder.Register(&BundleMetadata{}, &BundleMetadataList{})
 }

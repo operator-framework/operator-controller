@@ -17,14 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/apiserver-runtime/pkg/builder/resource"
-	"sigs.k8s.io/apiserver-runtime/pkg/builder/resource/resourcestrategy"
 )
 
 const (
@@ -34,13 +27,11 @@ const (
 	ReasonUnpackError       = "UnpackError"
 )
 
-// +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+//+kubebuilder:object:root=true
+//+kubebuilder:resource:scope=Cluster
+//+kubebuilder:subresource:status
 
-// CatalogSource
-// +k8s:openapi-gen=true
-// +kubebuilder:resource:scope=Cluster
-// +kubebuilder:subresource:status
+// CatalogSource is the Schema for the catalogsources API
 type CatalogSource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -49,8 +40,9 @@ type CatalogSource struct {
 	Status CatalogSourceStatus `json:"status,omitempty"`
 }
 
-// CatalogSourceList
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+//+kubebuilder:object:root=true
+
+// CatalogSourceList contains a list of CatalogSource
 type CatalogSourceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -72,88 +64,12 @@ type CatalogSourceSpec struct {
 	PollingInterval *metav1.Duration `json:"pollingInterval,omitempty"`
 }
 
-var _ resource.Object = &CatalogSource{}
-var _ resourcestrategy.Validater = &CatalogSource{}
-
-func (in *CatalogSource) GetObjectMeta() *metav1.ObjectMeta {
-	return &in.ObjectMeta
-}
-
-func (in *CatalogSource) NamespaceScoped() bool {
-	return false
-}
-
-func (in *CatalogSource) New() runtime.Object {
-	return &CatalogSource{}
-}
-
-func (in *CatalogSource) NewList() runtime.Object {
-	return &CatalogSourceList{}
-}
-
-func (in *CatalogSource) GetGroupVersionResource() schema.GroupVersionResource {
-	return schema.GroupVersionResource{
-		Group:    "catalogd.operatorframework.io",
-		Version:  "v1beta1",
-		Resource: "catalogsources",
-	}
-}
-
-func (in *CatalogSource) IsStorageVersion() bool {
-	return true
-}
-
-func (in *CatalogSource) Validate(ctx context.Context) field.ErrorList {
-	// TODO(user): Modify it, adding your API validation here.
-	return nil
-}
-
-var _ resource.ObjectList = &CatalogSourceList{}
-
-func (in *CatalogSourceList) GetListMeta() *metav1.ListMeta {
-	return &in.ListMeta
-}
-
 // CatalogSourceStatus defines the observed state of CatalogSource
 type CatalogSourceStatus struct {
 	// Conditions store the status conditions of the CatalogSource instances
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 
-func (in CatalogSourceStatus) SubResourceName() string {
-	return "status"
-}
-
-// CatalogSource implements ObjectWithStatusSubResource interface.
-var _ resource.ObjectWithStatusSubResource = &CatalogSource{}
-
-func (in *CatalogSource) GetStatus() resource.StatusSubResource {
-	return in.Status
-}
-
-// CatalogSourceStatus{} implements StatusSubResource interface.
-var _ resource.StatusSubResource = &CatalogSourceStatus{}
-
-func (in CatalogSourceStatus) CopyTo(parent resource.ObjectWithStatusSubResource) {
-	parent.(*CatalogSource).Status = in
-}
-
-// TODO: We should probably move this to a specific errors package
-type UnpackPhaseError struct {
-	message string
-}
-
-func NewUnpackPhaseError(message string) *UnpackPhaseError {
-	return &UnpackPhaseError{
-		message: message,
-	}
-}
-
-func (upe *UnpackPhaseError) Error() string {
-	return upe.message
-}
-
-func IsUnpackPhaseError(err error) bool {
-	_, ok := err.(*UnpackPhaseError)
-	return ok
+func init() {
+	SchemeBuilder.Register(&CatalogSource{}, &CatalogSourceList{})
 }

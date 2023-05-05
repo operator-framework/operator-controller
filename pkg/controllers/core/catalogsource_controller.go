@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	apimacherrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -42,7 +43,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	corev1beta1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
-	apimacherrors "k8s.io/apimachinery/pkg/util/errors"
 )
 
 // CatalogSourceReconciler reconciles a CatalogSource object
@@ -256,7 +256,7 @@ func (r *CatalogSourceReconciler) createBundleMetadata(ctx context.Context, decl
 
 			bundleMeta.Spec.Properties = append(bundleMeta.Spec.Properties, corev1beta1.Property{
 				Type:  prop.Type,
-				Value: prop.Value,
+				Value: runtime.RawExtension{Raw: prop.Value},
 			})
 		}
 

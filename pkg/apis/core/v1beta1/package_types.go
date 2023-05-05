@@ -17,24 +17,13 @@ limitations under the License.
 package v1beta1
 
 import (
-	"context"
-
-	"github.com/operator-framework/api/pkg/lib/version"
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/apiserver-runtime/pkg/builder/resource"
-	"sigs.k8s.io/apiserver-runtime/pkg/builder/resource/resourcestrategy"
 )
 
-// +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+//+kubebuilder:object:root=true
+//+kubebuilder:resource:scope=Cluster
 
-// Package
-// +k8s:openapi-gen=true
-// +kubebuilder:resource:scope=Cluster
+// Package is the Schema for the packages API
 type Package struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -43,8 +32,9 @@ type Package struct {
 	Status PackageStatus `json:"status,omitempty"`
 }
 
-// PackageList
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+//+kubebuilder:object:root=true
+
+// PackageList contains a list of Package
 type PackageList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -101,124 +91,9 @@ type Icon struct {
 	Mediatype  string `json:"mediatype,omitempty"`
 }
 
-var _ resource.Object = &Package{}
-var _ resourcestrategy.Validater = &Package{}
-
-func (in *Package) GetObjectMeta() *metav1.ObjectMeta {
-	return &in.ObjectMeta
-}
-
-func (in *Package) NamespaceScoped() bool {
-	return false
-}
-
-func (in *Package) New() runtime.Object {
-	return &Package{}
-}
-
-func (in *Package) NewList() runtime.Object {
-	return &PackageList{}
-}
-
-func (in *Package) GetGroupVersionResource() schema.GroupVersionResource {
-	return schema.GroupVersionResource{
-		Group:    "catalogd.operatorframework.io",
-		Version:  "v1beta1",
-		Resource: "packages",
-	}
-}
-
-func (in *Package) IsStorageVersion() bool {
-	return true
-}
-
-func (in *Package) Validate(ctx context.Context) field.ErrorList {
-	// TODO(user): Modify it, adding your API validation here.
-	return nil
-}
-
-var _ resource.ObjectList = &PackageList{}
-
-func (in *PackageList) GetListMeta() *metav1.ListMeta {
-	return &in.ListMeta
-}
-
-// TODO: Audit this section
-// ---- START AUDIT SECTION ----
-
-// AppLink defines a link to an application
-type AppLink struct {
-	Name string `json:"name,omitempty"`
-	URL  string `json:"url,omitempty"`
-}
-
-// Maintainer defines a project maintainer
-type Maintainer struct {
-	Name  string `json:"name,omitempty"`
-	Email string `json:"email,omitempty"`
-}
-
-// Description
-type Description struct {
-	// DisplayName
-	DisplayName string `json:"displayName,omitempty"`
-
-	// Icon is the base64 encoded icon
-	// +listType=set
-	Icon []Icon `json:"icon,omitempty"`
-
-	// Version
-	Version version.OperatorVersion `json:"version,omitempty"`
-
-	// Provider
-	Provider AppLink `json:"provider,omitempty"`
-	// // +listType=map
-	// Annotations map[string]string `json:"annotations,omitempty"`
-	// +listType=set
-	Keywords []string `json:"keywords,omitempty"`
-	// +listType=set
-	Links []AppLink `json:"links,omitempty"`
-	// +listType=set
-	Maintainers []Maintainer `json:"maintainers,omitempty"`
-	Maturity    string       `json:"maturity,omitempty"`
-
-	// LongDescription
-	LongDescription string `json:"description,omitempty"`
-
-	// InstallModes specify supported installation types
-	// +listType=set
-	InstallModes []operatorv1alpha1.InstallMode `json:"installModes,omitempty"`
-
-	CustomResourceDefinitions operatorv1alpha1.CustomResourceDefinitions `json:"customresourcedefinitions,omitempty"`
-	APIServiceDefinitions     operatorv1alpha1.APIServiceDefinitions     `json:"apiservicedefinitions,omitempty"`
-	NativeAPIs                []metav1.GroupVersionKind                  `json:"nativeApis,omitempty"`
-
-	// Minimum Kubernetes version for operator installation
-	MinKubeVersion string `json:"minKubeVersion,omitempty"`
-
-	// List of related images
-	RelatedImages []string `json:"relatedImages,omitempty"`
-}
-
-// ---- END AUDIT SECTION ----
-
 // PackageStatus defines the observed state of Package
 type PackageStatus struct{}
 
-func (in PackageStatus) SubResourceName() string {
-	return "status"
-}
-
-// Package implements ObjectWithStatusSubResource interface.
-var _ resource.ObjectWithStatusSubResource = &Package{}
-
-func (in *Package) GetStatus() resource.StatusSubResource {
-	return in.Status
-}
-
-// PackageStatus{} implements StatusSubResource interface.
-var _ resource.StatusSubResource = &PackageStatus{}
-
-func (in PackageStatus) CopyTo(parent resource.ObjectWithStatusSubResource) {
-	parent.(*Package).Status = in
+func init() {
+	SchemeBuilder.Register(&Package{}, &PackageList{})
 }
