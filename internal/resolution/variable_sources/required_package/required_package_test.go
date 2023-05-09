@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
@@ -15,90 +14,80 @@ import (
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
 )
 
-func TestRequiredPackage(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "RequiredPackageVariableSource Suite")
-}
-
-var _ = Describe("RequiredPackageVariable", func() {
+func TestRequiredPackageVariable(t *testing.T) {
+	RegisterTestingT(t)
 	var (
 		rpv            *required_package.RequiredPackageVariable
 		packageName    string
 		bundleEntities []*olmentity.BundleEntity
 	)
-
-	BeforeEach(func() {
-		packageName = "test-package"
-		bundleEntities = []*olmentity.BundleEntity{
-			olmentity.NewBundleEntity(input.NewEntity("bundle-1", map[string]string{
-				property.TypePackage: `{"packageName": "test-package", "version": "1.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			})),
-			olmentity.NewBundleEntity(input.NewEntity("bundle-2", map[string]string{
-				property.TypePackage: `{"packageName": "test-package", "version": "2.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			})),
-			olmentity.NewBundleEntity(input.NewEntity("bundle-3", map[string]string{
-				property.TypePackage: `{"packageName": "test-package", "version": "3.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			})),
-		}
-		rpv = required_package.NewRequiredPackageVariable(packageName, bundleEntities)
-	})
-
-	It("should return the correct package name", func() {
+	packageName = "test-package"
+	bundleEntities = []*olmentity.BundleEntity{
+		olmentity.NewBundleEntity(input.NewEntity("bundle-1", map[string]string{
+			property.TypePackage: `{"packageName": "test-package", "version": "1.0.0"}`,
+			property.TypeChannel: `{"channelName":"stable","priority":0}`,
+		})),
+		olmentity.NewBundleEntity(input.NewEntity("bundle-2", map[string]string{
+			property.TypePackage: `{"packageName": "test-package", "version": "2.0.0"}`,
+			property.TypeChannel: `{"channelName":"stable","priority":0}`,
+		})),
+		olmentity.NewBundleEntity(input.NewEntity("bundle-3", map[string]string{
+			property.TypePackage: `{"packageName": "test-package", "version": "3.0.0"}`,
+			property.TypeChannel: `{"channelName":"stable","priority":0}`,
+		})),
+	}
+	rpv = required_package.NewRequiredPackageVariable(packageName, bundleEntities)
+	t.Run("ShouldReturnCorrectPackageName", func(t *testing.T) {
 		Expect(rpv.Identifier()).To(Equal(deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))))
 	})
 
-	It("should return the correct bundle entities", func() {
+	t.Run("ShouldReturnTheCorrectBundleEntities", func(t *testing.T) {
 		Expect(rpv.BundleEntities()).To(Equal(bundleEntities))
 	})
 
-	It("should contain both mandatory and dependency constraints", func() {
-		// TODO: add this test once https://github.com/operator-framework/deppy/pull/85 gets merged
-		//       then we'll be able to inspect constraint types
+	// TODO: add this test once https://github.com/operator-framework/deppy/pull/85 gets merged
+	t.Run("ShouldContainBothMandatoryAndDependencyConstraints", func(t *testing.T) {
 	})
-})
+}
 
-var _ = Describe("RequiredPackageVariableSource", func() {
+func TestRequiredPackageVariableSource(t *testing.T) {
+	RegisterTestingT(t)
 	var (
 		rpvs             *required_package.RequiredPackageVariableSource
 		packageName      string
 		mockEntitySource input.EntitySource
 	)
 
-	BeforeEach(func() {
-		var err error
-		packageName = "test-package"
-		rpvs, err = required_package.NewRequiredPackage(packageName)
-		Expect(err).NotTo(HaveOccurred())
-		mockEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{
-			"bundle-1": *input.NewEntity("bundle-1", map[string]string{
-				property.TypePackage: `{"packageName": "test-package", "version": "1.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-			"bundle-2": *input.NewEntity("bundle-2", map[string]string{
-				property.TypePackage: `{"packageName": "test-package", "version": "3.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-			"bundle-3": *input.NewEntity("bundle-3", map[string]string{
-				property.TypePackage: `{"packageName": "test-package", "version": "2.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
+	var err error
+	packageName = "test-package"
+	rpvs, err = required_package.NewRequiredPackage(packageName)
+	Expect(err).NotTo(HaveOccurred())
+	mockEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{
+		"bundle-1": *input.NewEntity("bundle-1", map[string]string{
+			property.TypePackage: `{"packageName": "test-package", "version": "1.0.0"}`,
+			property.TypeChannel: `{"channelName":"stable","priority":0}`,
+		}),
+		"bundle-2": *input.NewEntity("bundle-2", map[string]string{
+			property.TypePackage: `{"packageName": "test-package", "version": "3.0.0"}`,
+			property.TypeChannel: `{"channelName":"stable","priority":0}`,
+		}),
+		"bundle-3": *input.NewEntity("bundle-3", map[string]string{
+			property.TypePackage: `{"packageName": "test-package", "version": "2.0.0"}`,
+			property.TypeChannel: `{"channelName":"stable","priority":0}`,
+		}),
 
-			// add some bundles from a different package
-			"bundle-4": *input.NewEntity("bundle-4", map[string]string{
-				property.TypePackage: `{"packageName": "test-package-2", "version": "1.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-			"bundle-5": *input.NewEntity("bundle-5", map[string]string{
-				property.TypePackage: `{"packageName": "test-package-2", "version": "1.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-		})
+		// add some bundles from a different package
+		"bundle-4": *input.NewEntity("bundle-4", map[string]string{
+			property.TypePackage: `{"packageName": "test-package-2", "version": "1.0.0"}`,
+			property.TypeChannel: `{"channelName":"stable","priority":0}`,
+		}),
+		"bundle-5": *input.NewEntity("bundle-5", map[string]string{
+			property.TypePackage: `{"packageName": "test-package-2", "version": "1.0.0"}`,
+			property.TypeChannel: `{"channelName":"stable","priority":0}`,
+		}),
 	})
 
-	It("should return the correct package variable", func() {
+	t.Run("ShouldReturnTheCorrectPackageVariable", func(t *testing.T) {
 		variables, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(variables)).To(Equal(1))
@@ -121,11 +110,9 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 				property.TypeChannel: `{"channelName":"stable","priority":0}`})),
 		}))
 	})
-
-	It("should filter by version range", func() {
+	t.Run("ShouldFilterByVersionRange", func(t *testing.T) {
 		// recreate source with version range option
-		var err error
-		rpvs, err = required_package.NewRequiredPackage(packageName, required_package.InVersionRange(">=1.0.0 !2.0.0 <3.0.0"))
+		rpvs, err := required_package.NewRequiredPackage(packageName, required_package.InVersionRange(">=1.0.0 !2.0.0 <3.0.0"))
 		Expect(err).NotTo(HaveOccurred())
 
 		variables, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
@@ -144,15 +131,16 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 		}))
 	})
 
-	It("should fail with bad semver range", func() {
+	t.Run("ShouldFailWithBadSemverRange", func(t *testing.T) {
 		_, err := required_package.NewRequiredPackage(packageName, required_package.InVersionRange("not a valid semver"))
 		Expect(err).To(HaveOccurred())
 	})
 
-	It("should return an error if package not found", func() {
+	t.Run("ShouldReturnAnErrorIfPackageNotFound", func(t *testing.T) {
 		mockEntitySource := input.NewCacheQuerier(map[deppy.Identifier]input.Entity{})
 		_, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(Equal("package 'test-package' not found"))
 	})
-})
+
+}
