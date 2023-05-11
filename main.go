@@ -32,7 +32,7 @@ import (
 
 	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/resolution"
 	"github.com/operator-framework/operator-controller/internal/resolution/entitysources"
 )

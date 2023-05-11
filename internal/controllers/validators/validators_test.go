@@ -5,7 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/controllers/validators"
+	"github.com/operator-framework/operator-controller/internal/controllers/validators"
 )
 
 var _ = Describe("Validators", func() {
