@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/rand"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 const (
@@ -70,8 +70,18 @@ var _ = Describe("Operator Install", func() {
 			Eventually(func(g Gomega) {
 				err = c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)
 				g.Expect(err).ToNot(HaveOccurred())
-				g.Expect(len(operator.Status.Conditions)).To(Equal(1))
-				g.Expect(operator.Status.Conditions[0].Message).To(Equal("install was successful"))
+				g.Expect(len(operator.Status.Conditions)).To(Equal(2))
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeReady)
+				g.Expect(cond).ToNot(BeNil())
+				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonInstallationSucceeded))
+				g.Expect(cond.Message).To(Equal("install was successful"))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+				g.Expect(cond).ToNot(BeNil())
+				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
+				g.Expect(cond.Message).To(ContainSubstring("resolved to"))
+				g.Expect(operator.Status.ResolvedBundleResource).ToNot(BeEmpty())
 			}).WithTimeout(defaultTimeout).WithPolling(defaultPoll).Should(Succeed())
 
 			By("eventually installing the package successfully")
