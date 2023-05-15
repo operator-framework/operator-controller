@@ -113,6 +113,16 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 			Message:            err.Error(),
 			ObservedGeneration: op.GetGeneration(),
 		})
+		// Set the TypeResolved condition to Unknown to indicate that the resolution
+		// hasn't been attempted yet, due to the spec being invalid.
+		op.Status.ResolvedBundleResource = ""
+		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
+			Type:               operatorsv1alpha1.TypeResolved,
+			Status:             metav1.ConditionUnknown,
+			Reason:             operatorsv1alpha1.ReasonResolutionUnknown,
+			Message:            "validation has not been attempted as spec is invalid",
+			ObservedGeneration: op.GetGeneration(),
+		})
 		return ctrl.Result{}, nil
 	}
 	// run resolution
@@ -120,6 +130,14 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	if err != nil {
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeReady,
+			Status:             metav1.ConditionFalse,
+			Reason:             operatorsv1alpha1.ReasonResolutionFailed,
+			Message:            err.Error(),
+			ObservedGeneration: op.GetGeneration(),
+		})
+		op.Status.ResolvedBundleResource = ""
+		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
+			Type:               operatorsv1alpha1.TypeResolved,
 			Status:             metav1.ConditionFalse,
 			Reason:             operatorsv1alpha1.ReasonResolutionFailed,
 			Message:            err.Error(),
@@ -139,6 +157,14 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 			Message:            err.Error(),
 			ObservedGeneration: op.GetGeneration(),
 		})
+		op.Status.ResolvedBundleResource = ""
+		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
+			Type:               operatorsv1alpha1.TypeResolved,
+			Status:             metav1.ConditionFalse,
+			Reason:             operatorsv1alpha1.ReasonResolutionFailed,
+			Message:            err.Error(),
+			ObservedGeneration: op.GetGeneration(),
+		})
 		return ctrl.Result{}, err
 	}
 
@@ -152,8 +178,26 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 			Message:            err.Error(),
 			ObservedGeneration: op.GetGeneration(),
 		})
+		op.Status.ResolvedBundleResource = ""
+		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
+			Type:               operatorsv1alpha1.TypeResolved,
+			Status:             metav1.ConditionFalse,
+			Reason:             operatorsv1alpha1.ReasonResolutionFailed,
+			Message:            err.Error(),
+			ObservedGeneration: op.GetGeneration(),
+		})
 		return ctrl.Result{}, err
 	}
+
+	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundleImage value.
+	op.Status.ResolvedBundleResource = bundleImage
+	apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
+		Type:               operatorsv1alpha1.TypeResolved,
+		Status:             metav1.ConditionTrue,
+		Reason:             operatorsv1alpha1.ReasonSuccess,
+		Message:            fmt.Sprintf("resolved to %q", bundleImage),
+		ObservedGeneration: op.GetGeneration(),
+	})
 
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
 	// image we just looked up in the solution.
