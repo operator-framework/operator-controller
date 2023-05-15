@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.4
-  name: catalogsources.catalogd.operatorframework.io
+  name: catalogs.catalogd.operatorframework.io
 spec:
   group: catalogd.operatorframework.io
   names:
-    kind: CatalogSource
-    listKind: CatalogSourceList
-    plural: catalogsources
-    singular: catalogsource
+    kind: Catalog
+    listKind: CatalogList
+    plural: catalogs
+    singular: catalog
   scope: Cluster
   versions:
   - name: v1beta1
     schema:
       openAPIV3Schema:
-        description: CatalogSource is the Schema for the catalogsources API
+        description: Catalog is the Schema for the Catalogs API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -32,7 +32,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: CatalogSourceSpec defines the desired state of CatalogSource
+            description: CatalogSpec defines the desired state of Catalog
             properties:
               image:
                 description: Image is the Catalog image that contains Operators' metadata
@@ -49,10 +49,10 @@ spec:
             - image
             type: object
           status:
-            description: CatalogSourceStatus defines the observed state of CatalogSource
+            description: CatalogStatus defines the observed state of Catalog
             properties:
               conditions:
-                description: Conditions store the status conditions of the CatalogSource
+                description: Conditions store the status conditions of the Catalog
                   instances
                 items:
                   description: "Condition contains details for one aspect of the current

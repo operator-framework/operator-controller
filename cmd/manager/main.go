@@ -94,13 +94,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&corecontrollers.CatalogSourceReconciler{
+	if err = (&corecontrollers.CatalogReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Cfg:      mgr.GetConfig(),
 		OpmImage: opmImage,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CatalogSource")
+		setupLog.Error(err, "unable to create controller", "controller", "Catalog")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

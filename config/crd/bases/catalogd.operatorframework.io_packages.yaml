@@ -35,7 +35,7 @@ spec:
             description: PackageSpec defines the desired state of Package
             properties:
               catalogSource:
-                description: CatalogSource is the name of the CatalogSource this package
+                description: CatalogSource is the name of the Catalog this package
                   belongs to
                 type: string
               catalogSourceDisplayName:

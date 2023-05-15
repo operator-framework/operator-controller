@@ -45,7 +45,7 @@ type BundleMetadataList struct {
 
 // BundleMetadataSpec defines the desired state of BundleMetadata
 type BundleMetadataSpec struct {
-	// CatalogSource is the name of the CatalogSource that provides this bundle
+	// CatalogSource is the name of the Catalog that provides this bundle
 	CatalogSource string `json:"catalogSource"`
 
 	// Package is the name of the package that provides this bundle

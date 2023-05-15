@@ -35,7 +35,7 @@ spec:
             description: BundleMetadataSpec defines the desired state of BundleMetadata
             properties:
               catalogSource:
-                description: CatalogSource is the name of the CatalogSource that provides
+                description: CatalogSource is the name of the Catalog that provides
                   this bundle
                 type: string
               image:

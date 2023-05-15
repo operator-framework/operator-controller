@@ -45,17 +45,17 @@ import (
 	corev1beta1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 )
 
-// CatalogSourceReconciler reconciles a CatalogSource object
-type CatalogSourceReconciler struct {
+// CatalogReconciler reconciles a Catalog object
+type CatalogReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Cfg      *rest.Config
 	OpmImage string
 }
 
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogsources,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogsources/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogsources/finalizers,verbs=update
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs/finalizers,verbs=update
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=bundlemetadata,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=bundlemetadata/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=bundlemetadata/finalizers,verbs=update
@@ -71,11 +71,11 @@ type CatalogSourceReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
-func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *CatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// TODO: Where and when should we be logging errors and at which level?
 	_ = log.FromContext(ctx).WithName("catalogd-controller")
 
-	existingCatsrc := corev1beta1.CatalogSource{}
+	existingCatsrc := corev1beta1.Catalog{}
 	if err := r.Client.Get(ctx, req.NamespacedName, &existingCatsrc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -94,7 +94,7 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 			return res, apimacherrors.NewAggregate([]error{reconcileErr, updateErr})
 		}
 	}
-	existingCatsrc.Status, reconciledCatsrc.Status = corev1beta1.CatalogSourceStatus{}, corev1beta1.CatalogSourceStatus{}
+	existingCatsrc.Status, reconciledCatsrc.Status = corev1beta1.CatalogStatus{}, corev1beta1.CatalogStatus{}
 	if !equality.Semantic.DeepEqual(existingCatsrc, reconciledCatsrc) {
 		if updateErr := r.Client.Update(ctx, reconciledCatsrc); updateErr != nil {
 			return res, apimacherrors.NewAggregate([]error{reconcileErr, updateErr})
@@ -104,7 +104,7 @@ func (r *CatalogSourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *CatalogSourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *CatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		// TODO: Due to us not having proper error handling,
 		// not having this results in the controller getting into
@@ -113,20 +113,20 @@ func (r *CatalogSourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		// even though they already exist. This should be resolved by the fix
 		// for https://github.com/operator-framework/catalogd/issues/6. The fix for
 		// #6 should also remove the usage of `builder.WithPredicates(predicate.GenerationChangedPredicate{})`
-		For(&corev1beta1.CatalogSource{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		For(&corev1beta1.Catalog{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Complete(r)
 }
 
-func (r *CatalogSourceReconciler) reconcile(ctx context.Context, catalogSource *corev1beta1.CatalogSource) (ctrl.Result, error) {
-	job, err := r.ensureUnpackJob(ctx, catalogSource)
+func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *corev1beta1.Catalog) (ctrl.Result, error) {
+	job, err := r.ensureUnpackJob(ctx, catalog)
 	if err != nil {
-		updateStatusError(catalogSource, err)
+		updateStatusError(catalog, err)
 		return ctrl.Result{}, fmt.Errorf("ensuring unpack job: %v", err)
 	}
 
 	complete, err := r.checkUnpackJobComplete(ctx, job)
 	if err != nil {
-		updateStatusError(catalogSource, err)
+		updateStatusError(catalog, err)
 		return ctrl.Result{}, fmt.Errorf("ensuring unpack job completed: %v", err)
 	}
 	if !complete {
@@ -135,38 +135,38 @@ func (r *CatalogSourceReconciler) reconcile(ctx context.Context, catalogSource *
 
 	declCfg, err := r.parseUnpackLogs(ctx, job)
 	if err != nil {
-		updateStatusError(catalogSource, err)
+		updateStatusError(catalog, err)
 		return ctrl.Result{}, err
 	}
 
-	if err := r.createPackages(ctx, declCfg, catalogSource); err != nil {
-		updateStatusError(catalogSource, err)
+	if err := r.createPackages(ctx, declCfg, catalog); err != nil {
+		updateStatusError(catalog, err)
 		return ctrl.Result{}, err
 	}
 
-	if err := r.createBundleMetadata(ctx, declCfg, catalogSource); err != nil {
-		updateStatusError(catalogSource, err)
+	if err := r.createBundleMetadata(ctx, declCfg, catalog); err != nil {
+		updateStatusError(catalog, err)
 		return ctrl.Result{}, err
 	}
 
-	// update CatalogSource status as "Ready" since at this point
+	// update Catalog status as "Ready" since at this point
 	// all catalog content should be available on cluster
-	updateStatusReady(catalogSource)
+	updateStatusReady(catalog)
 	return ctrl.Result{}, nil
 }
 
 // ensureUnpackJob will ensure that an unpack job has been created for the given
-// CatalogSource. It will return the unpack job if successful (either the Job already
+// Catalog. It will return the unpack job if successful (either the Job already
 // exists or one was successfully created) or an error if it is unsuccessful
-func (r *CatalogSourceReconciler) ensureUnpackJob(ctx context.Context, catalogSource *corev1beta1.CatalogSource) (*batchv1.Job, error) {
-	// Create the unpack Job manifest for the given CatalogSource
-	job := r.unpackJob(catalogSource)
+func (r *CatalogReconciler) ensureUnpackJob(ctx context.Context, catalog *corev1beta1.Catalog) (*batchv1.Job, error) {
+	// Create the unpack Job manifest for the given Catalog
+	job := r.unpackJob(catalog)
 
 	// If the Job already exists just return it. If it doesn't then attempt to create it
 	err := r.Client.Get(ctx, client.ObjectKeyFromObject(job), job)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			if err = r.createUnpackJob(ctx, catalogSource); err != nil {
+			if err = r.createUnpackJob(ctx, catalog); err != nil {
 				return nil, err
 			}
 			return job, nil
@@ -182,7 +182,7 @@ func (r *CatalogSourceReconciler) ensureUnpackJob(ctx context.Context, catalogSo
 // false if the Job has not completed, or an error if the Job is completed but in a
 // "Failed", "FailureTarget", or "Suspended" state or an error is encountered
 // when attempting to check the status of the Job
-func (r *CatalogSourceReconciler) checkUnpackJobComplete(ctx context.Context, job *batchv1.Job) (bool, error) {
+func (r *CatalogReconciler) checkUnpackJobComplete(ctx context.Context, job *batchv1.Job) (bool, error) {
 	// If the completion time is non-nil that means the Job has completed
 	if job.Status.CompletionTime != nil {
 		// Loop through the conditions and check for any fail conditions
@@ -197,12 +197,12 @@ func (r *CatalogSourceReconciler) checkUnpackJobComplete(ctx context.Context, jo
 	return false, nil
 }
 
-// updateStatusReady will update the CatalogSource.Status.Conditions
+// updateStatusReady will update the Catalog.Status.Conditions
 // to have the "Ready" condition with a status of "True" and a Reason
-// of "ContentsAvailable". This function is used to signal that a CatalogSource
+// of "ContentsAvailable". This function is used to signal that a Catalog
 // has been successfully unpacked and all catalog contents are available on cluster
-func updateStatusReady(catalogSource *corev1beta1.CatalogSource) {
-	meta.SetStatusCondition(&catalogSource.Status.Conditions, metav1.Condition{
+func updateStatusReady(catalog *corev1beta1.Catalog) {
+	meta.SetStatusCondition(&catalog.Status.Conditions, metav1.Condition{
 		Type:    corev1beta1.TypeReady,
 		Reason:  corev1beta1.ReasonContentsAvailable,
 		Status:  metav1.ConditionTrue,
@@ -210,12 +210,12 @@ func updateStatusReady(catalogSource *corev1beta1.CatalogSource) {
 	})
 }
 
-// updateStatusError will update the CatalogSource.Status.Conditions
+// updateStatusError will update the Catalog.Status.Conditions
 // to have the condition Type "Ready" with a Status of "False" and a Reason
-// of "UnpackError". This function is used to signal that a CatalogSource
+// of "UnpackError". This function is used to signal that a Catalog
 // is in an error state and that catalog contents are not available on cluster
-func updateStatusError(catalogSource *corev1beta1.CatalogSource, err error) {
-	meta.SetStatusCondition(&catalogSource.Status.Conditions, metav1.Condition{
+func updateStatusError(catalog *corev1beta1.Catalog, err error) {
+	meta.SetStatusCondition(&catalog.Status.Conditions, metav1.Condition{
 		Type:    corev1beta1.TypeReady,
 		Status:  metav1.ConditionFalse,
 		Reason:  corev1beta1.ReasonUnpackError,
@@ -226,14 +226,14 @@ func updateStatusError(catalogSource *corev1beta1.CatalogSource, err error) {
 // createBundleMetadata will create a `BundleMetadata` resource for each
 // "olm.bundle" object that exists for the given catalog contents. Returns an
 // error if any are encountered.
-func (r *CatalogSourceReconciler) createBundleMetadata(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalogSource *corev1beta1.CatalogSource) error {
+func (r *CatalogReconciler) createBundleMetadata(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalog *corev1beta1.Catalog) error {
 	for _, bundle := range declCfg.Bundles {
 		bundleMeta := corev1beta1.BundleMetadata{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: bundle.Name,
 			},
 			Spec: corev1beta1.BundleMetadataSpec{
-				CatalogSource: catalogSource.Name,
+				CatalogSource: catalog.Name,
 				Package:       bundle.Package,
 				Image:         bundle.Image,
 				Properties:    []corev1beta1.Property{},
@@ -260,7 +260,7 @@ func (r *CatalogSourceReconciler) createBundleMetadata(ctx context.Context, decl
 			})
 		}
 
-		ctrlutil.SetOwnerReference(catalogSource, &bundleMeta, r.Scheme)
+		ctrlutil.SetOwnerReference(catalog, &bundleMeta, r.Scheme)
 
 		if err := r.Client.Create(ctx, &bundleMeta); err != nil {
 			return fmt.Errorf("creating bundlemetadata %q: %w", bundleMeta.Name, err)
@@ -274,7 +274,7 @@ func (r *CatalogSourceReconciler) createBundleMetadata(ctx context.Context, decl
 // "olm.package" object that exists for the given catalog contents.
 // `Package.Spec.Channels` is populated by filtering all "olm.channel" objects
 // where the "packageName" == `Package.Name`. Returns an error if any are encountered.
-func (r *CatalogSourceReconciler) createPackages(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalogSource *corev1beta1.CatalogSource) error {
+func (r *CatalogReconciler) createPackages(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalog *corev1beta1.Catalog) error {
 	for _, pkg := range declCfg.Packages {
 		pack := corev1beta1.Package{
 			ObjectMeta: metav1.ObjectMeta{
@@ -286,7 +286,7 @@ func (r *CatalogSourceReconciler) createPackages(ctx context.Context, declCfg *d
 				Name: pkg.Name,
 			},
 			Spec: corev1beta1.PackageSpec{
-				CatalogSource:  catalogSource.Name,
+				CatalogSource:  catalog.Name,
 				DefaultChannel: pkg.DefaultChannel,
 				Channels:       []corev1beta1.PackageChannel{},
 				Description:    pkg.Description,
@@ -311,7 +311,7 @@ func (r *CatalogSourceReconciler) createPackages(ctx context.Context, declCfg *d
 			}
 		}
 
-		ctrlutil.SetOwnerReference(catalogSource, &pack, r.Scheme)
+		ctrlutil.SetOwnerReference(catalog, &pack, r.Scheme)
 
 		if err := r.Client.Create(ctx, &pack); err != nil {
 			return fmt.Errorf("creating package %q: %w", pack.Name, err)
@@ -320,8 +320,8 @@ func (r *CatalogSourceReconciler) createPackages(ctx context.Context, declCfg *d
 	return nil
 }
 
-// createUnpackJob creates an unpack Job for the given CatalogSource
-func (r *CatalogSourceReconciler) createUnpackJob(ctx context.Context, cs *corev1beta1.CatalogSource) error {
+// createUnpackJob creates an unpack Job for the given Catalog
+func (r *CatalogReconciler) createUnpackJob(ctx context.Context, cs *corev1beta1.Catalog) error {
 	job := r.unpackJob(cs)
 
 	ctrlutil.SetOwnerReference(cs, job, r.Scheme)
@@ -335,7 +335,7 @@ func (r *CatalogSourceReconciler) createUnpackJob(ctx context.Context, cs *corev
 
 // parseUnpackLogs parses the Pod logs from the Pod created by the
 // provided unpack Job into a `declcfg.DeclarativeConfig` object
-func (r *CatalogSourceReconciler) parseUnpackLogs(ctx context.Context, job *batchv1.Job) (*declcfg.DeclarativeConfig, error) {
+func (r *CatalogReconciler) parseUnpackLogs(ctx context.Context, job *batchv1.Job) (*declcfg.DeclarativeConfig, error) {
 	clientset, err := kubernetes.NewForConfig(r.Cfg)
 	if err != nil {
 		return nil, fmt.Errorf("creating clientset: %w", err)
@@ -372,8 +372,8 @@ func (r *CatalogSourceReconciler) parseUnpackLogs(ctx context.Context, job *batc
 	return declcfg.LoadReader(bytes.NewReader(logs))
 }
 
-// unpackJob creates the manifest for an unpack Job given a CatalogSource
-func (r *CatalogSourceReconciler) unpackJob(cs *corev1beta1.CatalogSource) *batchv1.Job {
+// unpackJob creates the manifest for an unpack Job given a Catalog
+func (r *CatalogReconciler) unpackJob(cs *corev1beta1.Catalog) *batchv1.Job {
 	opmVol := "opm"
 	mountPath := "opmvol/"
 	return &batchv1.Job{

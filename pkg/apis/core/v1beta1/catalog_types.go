@@ -31,27 +31,27 @@ const (
 //+kubebuilder:resource:scope=Cluster
 //+kubebuilder:subresource:status
 
-// CatalogSource is the Schema for the catalogsources API
-type CatalogSource struct {
+// Catalog is the Schema for the Catalogs API
+type Catalog struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CatalogSourceSpec   `json:"spec,omitempty"`
-	Status CatalogSourceStatus `json:"status,omitempty"`
+	Spec   CatalogSpec   `json:"spec,omitempty"`
+	Status CatalogStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// CatalogSourceList contains a list of CatalogSource
-type CatalogSourceList struct {
+// CatalogList contains a list of Catalog
+type CatalogList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []CatalogSource `json:"items"`
+	Items []Catalog `json:"items"`
 }
 
-// CatalogSourceSpec defines the desired state of CatalogSource
-type CatalogSourceSpec struct {
+// CatalogSpec defines the desired state of Catalog
+type CatalogSpec struct {
 
 	// Image is the Catalog image that contains Operators' metadata in the FBC format
 	// https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
@@ -64,12 +64,12 @@ type CatalogSourceSpec struct {
 	PollingInterval *metav1.Duration `json:"pollingInterval,omitempty"`
 }
 
-// CatalogSourceStatus defines the observed state of CatalogSource
-type CatalogSourceStatus struct {
-	// Conditions store the status conditions of the CatalogSource instances
+// CatalogStatus defines the observed state of Catalog
+type CatalogStatus struct {
+	// Conditions store the status conditions of the Catalog instances
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 
 func init() {
-	SchemeBuilder.Register(&CatalogSource{}, &CatalogSourceList{})
+	SchemeBuilder.Register(&Catalog{}, &CatalogList{})
 }

@@ -42,7 +42,7 @@ rules:
 - apiGroups:
   - catalogd.operatorframework.io
   resources:
-  - catalogsources
+  - catalogs
   verbs:
   - create
   - delete
@@ -54,13 +54,13 @@ rules:
 - apiGroups:
   - catalogd.operatorframework.io
   resources:
-  - catalogsources/finalizers
+  - catalogs/finalizers
   verbs:
   - update
 - apiGroups:
   - catalogd.operatorframework.io
   resources:
-  - catalogsources/status
+  - catalogs/status
   verbs:
   - get
   - patch

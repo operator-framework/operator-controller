@@ -44,7 +44,7 @@ type PackageList struct {
 
 // PackageSpec defines the desired state of Package
 type PackageSpec struct {
-	// CatalogSource is the name of the CatalogSource this package belongs to
+	// CatalogSource is the name of the Catalog this package belongs to
 	CatalogSource            string `json:"catalogSource"`
 	CatalogSourceDisplayName string `json:"catalogSourceDisplayName,omitempty"`
 	CatalogSourcePublisher   string `json:"catalogSourcePublisher,omitempty"`

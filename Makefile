@@ -136,12 +136,12 @@ install: docker-build-controller kind-load deploy wait ## Install local catalogd
 # TODO: When the apiserver is working properly, add this line back after the manager edit:
 # cd config/apiserver && $(KUSTOMIZE) edit set image apiserver=${SERVER_IMG}:${IMG_TAG}
 .PHONY: deploy
-deploy: kustomize ## Deploy CatalogSource controller and ApiServer to the K8s cluster specified in ~/.kube/config.
+deploy: kustomize ## Deploy Catalog controller and ApiServer to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${CONTROLLER_IMG}:${IMG_TAG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
-undeploy: kustomize ## Undeploy CatalogSource controller and ApiServer from the K8s cluster specified in ~/.kube/config. 
+undeploy: kustomize ## Undeploy Catalog controller and ApiServer from the K8s cluster specified in ~/.kube/config. 
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=true -f -	
 
 .PHONY: uninstall 
