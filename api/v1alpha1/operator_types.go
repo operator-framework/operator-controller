@@ -46,34 +46,43 @@ type OperatorSpec struct {
 
 const (
 	// TODO(user): add more Types, here and into init()
-	TypeReady = "Ready"
+	TypeReady    = "Ready"
+	TypeResolved = "Resolved"
 
-	ReasonInstallationSucceeded     = "InstallationSucceeded"
-	ReasonResolutionFailed          = "ResolutionFailed"
 	ReasonBundleLookupFailed        = "BundleLookupFailed"
 	ReasonInstallationFailed        = "InstallationFailed"
 	ReasonInstallationStatusUnknown = "InstallationStatusUnknown"
+	ReasonInstallationSucceeded     = "InstallationSucceeded"
 	ReasonInvalidSpec               = "InvalidSpec"
+	ReasonResolutionFailed          = "ResolutionFailed"
+	ReasonResolutionUnknown         = "ResolutionUnknown"
+	ReasonSuccess                   = "Success"
 )
 
 func init() {
 	// TODO(user): add Types from above
 	operatorutil.ConditionTypes = append(operatorutil.ConditionTypes,
 		TypeReady,
+		TypeResolved,
 	)
 	// TODO(user): add Reasons from above
 	operatorutil.ConditionReasons = append(operatorutil.ConditionReasons,
 		ReasonInstallationSucceeded,
 		ReasonResolutionFailed,
+		ReasonResolutionUnknown,
 		ReasonBundleLookupFailed,
 		ReasonInstallationFailed,
 		ReasonInstallationStatusUnknown,
 		ReasonInvalidSpec,
+		ReasonSuccess,
 	)
 }
 
 // OperatorStatus defines the observed state of Operator
 type OperatorStatus struct {
+	// +optional
+	ResolvedBundleResource string `json:"resolvedBundleResource,omitempty"`
+
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +listType=map
