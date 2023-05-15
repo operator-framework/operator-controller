@@ -75,6 +75,18 @@ make manifests
 
 More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
 
+### Additional Components
+
+To add support for Prometheus via `prometheus-operator/kube-prometheus`, add the following to the `make` command-line:
+* `KUSTOMIZE_TARGET=config/kube-prometheus` - add `ServiceMonitor`, `Role` and `RoleBinding` resources
+* `KUBE_PROMETHEUS_VERSION=v0.12.0` - install this version of `prometheus-operator/kube-prometheus`
+
+```sh
+make quickstart KUSTOMIZE_TARGET=config/kube-prometheus KUBE_PROMETHEUS_VERSION=v0.12.0
+
+make install KUSTOMIZE_TARGET=config/kube-prometheus KUBE_PROMETHEUS_VERSION=v0.12.0
+```
+
 ## License
 
 Copyright 2022-2023.

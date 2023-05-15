@@ -19,6 +19,13 @@ export XDG_DATA_HOME ?= /tmp/.local/share
 # bingo manages consistent tooling versions for things like kind, kustomize, etc.
 include .bingo/Variables.mk
 
+# Update these values to support kube-prometheus
+ifndef KUBE_PROMETHEUS_VERSION
+KUBE_PROMETHEUS_VERSION =
+endif
+export KUBE_PROMETHEUS_VERSION
+KUSTOMIZE_TARGET ?= config/default
+
 OPERATOR_CONTROLLER_NAMESPACE ?= operator-controller-system
 KIND_CLUSTER_NAME ?= operator-controller
 
@@ -225,7 +232,7 @@ release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By d
 quickstart: export MANIFEST="https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml"
 quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the installation release manifests and scripts.
 	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
-	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh > install.sh
+	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST,$$KUBE_PROMETHEUS_VERSION' < scripts/install.tpl.sh > install.sh
 
 #SECTION Deployment
 

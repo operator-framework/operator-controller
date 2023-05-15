@@ -24,6 +24,8 @@ resources:
 # [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'. 'WEBHOOK' components are required.
 #- ../certmanager
 # [PROMETHEUS] To enable prometheus monitor, uncomment all sections with 'PROMETHEUS'.
+# This adds custom resources for use by Prometheus, this is a bit of a chicken-and-egg thing, as the prometheus operator
+# might be managed by operator-controller!
 #- ../prometheus
 
 patches:

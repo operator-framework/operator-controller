@@ -1,0 +1,9 @@
+# Using this file as a target for kustomize will install resources for use with
+# prometheus-operator/kube-promethus, and possibly other installations of prometheus
+
+# Adds namespace to all resources.
+namespace: operator-controller-system
+
+resources:
+- ../default
+- ../prometheus
