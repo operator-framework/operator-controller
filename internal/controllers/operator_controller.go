@@ -20,7 +20,9 @@ import (
 	"context"
 	"fmt"
 
+	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	"github.com/operator-framework/operator-controller/controllers/validators"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -31,11 +33,13 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
-
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/resolution"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
@@ -57,6 +61,7 @@ type OperatorReconciler struct {
 
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=bundlemetadata,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=packages,verbs=list;watch
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogsources,verbs=list;watch
 
 func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("operator-controller")
@@ -287,6 +292,9 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&operatorsv1alpha1.Operator{}).
+		Watches(source.NewKindWithCache(&catalogd.CatalogSource{}, mgr.GetCache()),
+			handler.EnqueueRequestsFromMapFunc(operatorRequestsForCatalog(context.TODO(), mgr.GetClient(), mgr.GetLogger())),
+			builder.WithPredicates(newCatalogReadyTransitionPredicate())).
 		Owns(&rukpakv1alpha1.BundleDeployment{}).
 		Complete(r)
 
