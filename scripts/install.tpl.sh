@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 
 operator_controller_manifest=$MANIFEST
 
@@ -22,7 +24,7 @@ if [[ -z "$catalogd_version" || -z "$cert_mgr_version" || -z "$rukpak_version" ]
     if [[ -z "$rukpak_version" ]]; then
         err+="rukpak "
     fi 
-    echo $err
+    echo "$err"
     exit 1
 fi
 
@@ -42,7 +44,7 @@ kubectl_wait "rukpak-system" "deployment/core" "60s"
 kubectl_wait "rukpak-system" "deployment/helm-provisioner" "60s"
 kubectl_wait "rukpak-system" "deployment/rukpak-webhooks" "60s"
 
-kubectl apply -f https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/catalogd.yaml
+kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/catalogd.yaml"
 kubectl_wait "catalogd-system" "deployment/catalogd-controller-manager" "60s"
 
 kubectl apply -f "${operator_controller_manifest}"
