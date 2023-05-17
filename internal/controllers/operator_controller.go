@@ -20,9 +20,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
+	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
-	"github.com/operator-framework/operator-controller/controllers/validators"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -33,14 +34,14 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"github.com/operator-framework/operator-controller/internal/controllers/validators"
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/controllers/validators"
 	"github.com/operator-framework/operator-controller/internal/resolution"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
@@ -293,8 +294,7 @@ func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&operatorsv1alpha1.Operator{}).
 		Watches(source.NewKindWithCache(&catalogd.CatalogSource{}, mgr.GetCache()),
-			handler.EnqueueRequestsFromMapFunc(operatorRequestsForCatalog(context.TODO(), mgr.GetClient(), mgr.GetLogger())),
-			builder.WithPredicates(newCatalogReadyTransitionPredicate())).
+			handler.EnqueueRequestsFromMapFunc(operatorRequestsForCatalog(context.TODO(), mgr.GetClient(), mgr.GetLogger()))).
 		Owns(&rukpakv1alpha1.BundleDeployment{}).
 		Complete(r)
 
@@ -429,4 +429,27 @@ func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message 
 		Message:            message,
 		ObservedGeneration: generation,
 	})
+}
+
+// Generate reconcile requests for all operators affected by a catalog change
+func operatorRequestsForCatalog(ctx context.Context, c client.Reader, logger logr.Logger) handler.MapFunc {
+	return func(object client.Object) []reconcile.Request {
+		// no way of associating an operator to a catalog so create reconcile requests for everything
+		operators := operatorv1.OperatorList{}
+		err := c.List(ctx, &operators)
+		if err != nil {
+			logger.Error(err, "unable to enqueue operators for catalog reconcile")
+			return nil
+		}
+		var requests []reconcile.Request
+		for _, op := range operators.Items {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: op.GetNamespace(),
+					Name:      op.GetName(),
+				},
+			})
+		}
+		return requests
+	}
 }
