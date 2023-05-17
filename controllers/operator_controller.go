@@ -106,13 +106,6 @@ func checkForUnexpectedFieldChange(a, b operatorsv1alpha1.Operator) bool {
 func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha1.Operator) (ctrl.Result, error) {
 	// validate spec
 	if err := validators.ValidateOperatorSpec(op); err != nil {
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeReady,
-			Status:             metav1.ConditionFalse,
-			Reason:             operatorsv1alpha1.ReasonInvalidSpec,
-			Message:            err.Error(),
-			ObservedGeneration: op.GetGeneration(),
-		})
 		// Set the TypeResolved condition to Unknown to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
 		op.Status.ResolvedBundleResource = ""
@@ -128,13 +121,6 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	// run resolution
 	solution, err := r.Resolver.Resolve(ctx)
 	if err != nil {
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeReady,
-			Status:             metav1.ConditionFalse,
-			Reason:             operatorsv1alpha1.ReasonResolutionFailed,
-			Message:            err.Error(),
-			ObservedGeneration: op.GetGeneration(),
-		})
 		op.Status.ResolvedBundleResource = ""
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeResolved,
@@ -150,13 +136,6 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	// Operator's desired package name.
 	bundleEntity, err := r.getBundleEntityFromSolution(solution, op.Spec.PackageName)
 	if err != nil {
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeReady,
-			Status:             metav1.ConditionFalse,
-			Reason:             operatorsv1alpha1.ReasonBundleLookupFailed,
-			Message:            err.Error(),
-			ObservedGeneration: op.GetGeneration(),
-		})
 		op.Status.ResolvedBundleResource = ""
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeResolved,
@@ -171,13 +150,6 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	// Get the bundle image reference for the bundle
 	bundleImage, err := bundleEntity.BundlePath()
 	if err != nil {
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeReady,
-			Status:             metav1.ConditionFalse,
-			Reason:             operatorsv1alpha1.ReasonBundleLookupFailed,
-			Message:            err.Error(),
-			ObservedGeneration: op.GetGeneration(),
-		})
 		op.Status.ResolvedBundleResource = ""
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeResolved,
@@ -203,31 +175,18 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	// image we just looked up in the solution.
 	dep := r.generateExpectedBundleDeployment(*op, bundleImage)
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeReady,
-			Status:             metav1.ConditionFalse,
-			Reason:             operatorsv1alpha1.ReasonInstallationFailed,
-			Message:            err.Error(),
-			ObservedGeneration: op.GetGeneration(),
-		})
+		// originally Reason: operatorsv1alpha1.ReasonInstallationFailed
 		return ctrl.Result{}, err
 	}
 
 	// convert existing unstructured object into bundleDeployment for easier mapping of status.
 	existingTypedBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(dep.UnstructuredContent(), existingTypedBundleDeployment); err != nil {
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeReady,
-			Status:             metav1.ConditionUnknown,
-			Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
-			Message:            err.Error(),
-			ObservedGeneration: op.GetGeneration(),
-		})
+		// originally Reason: operatorsv1alpha1.ReasonInstallationStatusUnknown
 		return ctrl.Result{}, err
 	}
 
 	// set the status of the operator based on the respective bundle deployment status conditions.
-	apimeta.SetStatusCondition(&op.Status.Conditions, mapBDStatusToReadyCondition(existingTypedBundleDeployment, op.GetGeneration()))
 	return ctrl.Result{}, nil
 }
 
@@ -357,43 +316,6 @@ func verifyBDStatus(dep *rukpakv1alpha1.BundleDeployment) (metav1.ConditionStatu
 		return metav1.ConditionTrue, "install was successful"
 	}
 	return metav1.ConditionUnknown, fmt.Sprintf("could not determine the state of BundleDeployment %s", dep.Name)
-}
-
-// mapBDStatusToReadyCondition returns the operator object's "TypeReady" condition based on the bundle deployment statuses.
-func mapBDStatusToReadyCondition(existingBD *rukpakv1alpha1.BundleDeployment, observedGeneration int64) metav1.Condition {
-	// if BundleDeployment status is stale, return an unknown condition.
-	if isBundleDepStale(existingBD) {
-		return metav1.Condition{
-			Type:               operatorsv1alpha1.TypeReady,
-			Status:             metav1.ConditionUnknown,
-			Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
-			Message:            fmt.Sprintf("waiting for BundleDeployment %q status to be updated. BundleDeployment conditions out of date.", existingBD.Name),
-			ObservedGeneration: observedGeneration,
-		}
-	}
-	// update operator status:
-	// 1. If the Operator "Ready" status is "Unknown": The status of successful bundleDeployment is unknown, wait till Rukpak updates the BD status.
-	// 2. If the Operator "Ready" status is "True": Update the "successful resolution" status and return the result.
-	// 3. If the Operator "Ready" status is "False": There is error observed from Rukpak. Update the status accordingly.
-	status, message := verifyBDStatus(existingBD)
-	var reason string
-
-	switch status {
-	case metav1.ConditionTrue:
-		reason = operatorsv1alpha1.ReasonInstallationSucceeded
-	case metav1.ConditionFalse:
-		reason = operatorsv1alpha1.ReasonInstallationFailed
-	default:
-		reason = operatorsv1alpha1.ReasonInstallationStatusUnknown
-	}
-
-	return metav1.Condition{
-		Type:               operatorsv1alpha1.TypeReady,
-		Status:             status,
-		Reason:             reason,
-		Message:            message,
-		ObservedGeneration: observedGeneration,
-	}
 }
 
 // isBundleDepStale returns true if conditions are out of date.

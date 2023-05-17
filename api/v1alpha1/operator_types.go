@@ -46,7 +46,6 @@ type OperatorSpec struct {
 
 const (
 	// TODO(user): add more Types, here and into init()
-	TypeReady    = "Ready"
 	TypeResolved = "Resolved"
 
 	ReasonBundleLookupFailed        = "BundleLookupFailed"
@@ -62,7 +61,6 @@ const (
 func init() {
 	// TODO(user): add Types from above
 	operatorutil.ConditionTypes = append(operatorutil.ConditionTypes,
-		TypeReady,
 		TypeResolved,
 	)
 	// TODO(user): add Reasons from above
