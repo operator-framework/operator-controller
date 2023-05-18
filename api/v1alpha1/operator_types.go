@@ -46,7 +46,8 @@ type OperatorSpec struct {
 
 const (
 	// TODO(user): add more Types, here and into init()
-	TypeResolved = "Resolved"
+	TypeInstalled = "Installed"
+	TypeResolved  = "Resolved"
 
 	ReasonBundleLookupFailed        = "BundleLookupFailed"
 	ReasonInstallationFailed        = "InstallationFailed"
@@ -61,6 +62,7 @@ const (
 func init() {
 	// TODO(user): add Types from above
 	operatorutil.ConditionTypes = append(operatorutil.ConditionTypes,
+		TypeInstalled,
 		TypeResolved,
 	)
 	// TODO(user): add Reasons from above
@@ -78,6 +80,8 @@ func init() {
 
 // OperatorStatus defines the observed state of Operator
 type OperatorStatus struct {
+	// +optional
+	InstalledBundleSource string `json:"installedBundleSource,omitempty"`
 	// +optional
 	ResolvedBundleResource string `json:"resolvedBundleResource,omitempty"`
 
