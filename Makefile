@@ -96,10 +96,18 @@ kind-cluster-cleanup: kind ## Delete the kind cluster
 
 ##@ Build
 
+BUILDCMD = sh -c 'mkdir -p $(BUILDBIN) && ${GORELEASER} build ${GORELEASER_ARGS} --single-target -o $(BUILDBIN)/manager'
+BUILDDEPS = manifests generate fmt vet goreleaser
+
 .PHONY: build
-build: manifests generate fmt vet goreleaser ## Build manager binary using goreleaser for current GOOS and GOARCH.
-	mkdir -p bin
-	${GORELEASER} build ${GORELEASER_ARGS} --single-target -o bin/manager
+build: BUILDBIN = bin
+build: $(BUILDDEPS) ## Build manager binary using goreleaser for current GOOS and GOARCH.
+	$(BUILDCMD)
+
+.PHONY: build-linux
+build-linux: BUILDBIN = bin/linux
+build-linux: $(BUILDDEPS) ## Build manager binary using goreleaser for GOOS=linux and local GOARCH.
+	GOOS=linux $(BUILDCMD)
 
 .PHONY: run
 run: docker-build kind-cluster kind-load install ## Build the operator-controller then deploy it into a new kind cluster.
@@ -108,30 +116,9 @@ run: docker-build kind-cluster kind-load install ## Build the operator-controlle
 wait:
 	kubectl wait --for=condition=Available --namespace=$(OPERATOR_CONTROLLER_NAMESPACE) deployment/operator-controller-controller-manager --timeout=$(WAIT_TIMEOUT)
 
-# If you wish built the manager image targeting other platforms you can use the --platform flag.
-# (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.
-# More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
-docker-build: export GOOS=linux
-docker-build: build ## Build docker image with the operator-controller.
-	docker build -t ${IMG} -f Dockerfile ./bin/
-
-# PLATFORMS defines the target platforms for  the manager image be build to provide support to multiple
-# architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:
-# - able to use docker buildx . More info: https://docs.docker.com/build/buildx/
-# - have enable BuildKit, More info: https://docs.docker.com/develop/develop-images/build_enhancements/
-# - be able to push the image for your registry (i.e. if you do not inform a valid value via IMG=<myregistry/image:<tag>> then the export will fail)
-# To properly provided solutions that supports more than one platform you should use this option.
-PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
-.PHONY: docker-buildx
-docker-buildx: test ## Build and push docker image for the manager for cross-platform support
-	# copy existing Dockerfile and insert --platform=${BUILDPLATFORM} into Dockerfile.cross, and preserve the original Dockerfile
-	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
-	- docker buildx create --name project-v3-builder
-	docker buildx use project-v3-builder
-	- docker buildx build --push --platform=$(PLATFORMS) --tag ${IMG} -f Dockerfile.cross .
-	- docker buildx rm project-v3-builder
-	rm Dockerfile.cross
+docker-build: build-linux ## Build docker image for operator-controller with GOOS=linux and local GOARCH.
+	docker build -t ${IMG} -f Dockerfile ./bin/linux
 
 ###########
 # Release #
