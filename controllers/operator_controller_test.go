@@ -75,6 +75,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -110,6 +111,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -117,6 +119,11 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
 				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' at version '0.50.0' not found", pkgName)))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+				Expect(cond.Message).To(Equal("installation has not been attempted as resolution failed"))
 			})
 		})
 		When("the operator specifies a valid available package", func() {
@@ -154,12 +161,20 @@ var _ = Describe("Operator Controller Test", func() {
 				It("sets the resolvedBundleResource status field", func() {
 					Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
 				})
+				It("sets the InstalledBundleSource status field", func() {
+					Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				})
 				It("sets the status on operator", func() {
 					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
 					Expect(cond).NotTo(BeNil())
 					Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 					Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
 					Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+					cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+					Expect(cond).NotTo(BeNil())
+					Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+					Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+					Expect(cond.Message).To(Equal("bundledeployment status is unknown"))
 				})
 			})
 			When("the expected BundleDeployment already exists", func() {
@@ -225,6 +240,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 						By("Checking the status fields")
 						Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+						Expect(operator.Status.InstalledBundleSource).To(Equal(""))
 
 						By("checking the expected status conditions")
 						cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -232,6 +248,11 @@ var _ = Describe("Operator Controller Test", func() {
 						Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 						Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
 						Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+						cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+						Expect(cond).NotTo(BeNil())
+						Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+						Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+						Expect(cond.Message).To(Equal("bundledeployment status is unknown"))
 					})
 				})
 
@@ -267,6 +288,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 							By("Checking the status fields")
 							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.InstalledBundleSource).To(Equal(""))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -274,6 +296,11 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
 							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							cond = apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+							Expect(cond).NotTo(BeNil())
+							Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+							Expect(cond.Message).To(Equal("bundledeployment status is unknown"))
 						})
 
 						It("verify operator status when `HasValidBundle` condition of rukpak is false", func() {
@@ -300,6 +327,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 							By("Checking the status fields")
 							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.InstalledBundleSource).To(Equal(""))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -307,6 +335,11 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
 							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							cond = apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+							Expect(cond).NotTo(BeNil())
+							Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+							Expect(cond.Message).To(Equal("bundledeployment status is unknown"))
 						})
 
 						It("verify operator status when `InstallReady` condition of rukpak is false", func() {
@@ -333,6 +366,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 							By("Checking the status fields")
 							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.InstalledBundleSource).To(Equal(""))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -340,6 +374,11 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
 							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							cond = apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+							Expect(cond).NotTo(BeNil())
+							Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationFailed))
+							Expect(cond.Message).To(ContainSubstring(`failed to install`))
 						})
 
 						It("verify operator status when `InstallReady` condition of rukpak is true", func() {
@@ -366,6 +405,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 							By("Checking the status fields")
 							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.InstalledBundleSource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -373,6 +413,11 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
 							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							cond = apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+							Expect(cond).NotTo(BeNil())
+							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
+							Expect(cond.Message).To(Equal("installed from \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
 						})
 
 						It("verify any other unknown status of bundledeployment", func() {
@@ -406,6 +451,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 							By("Checking the status fields")
 							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.InstalledBundleSource).To(Equal(""))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -413,6 +459,11 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
 							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							cond = apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+							Expect(cond).NotTo(BeNil())
+							Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationFailed))
+							Expect(cond.Message).To(Equal("bundledeployment not ready: installing"))
 						})
 
 						It("verify operator status when bundleDeployment installation status is unknown", func() {
@@ -439,6 +490,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 							By("Checking the status fields")
 							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.InstalledBundleSource).To(Equal(""))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -446,6 +498,11 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
 							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							cond = apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+							Expect(cond).NotTo(BeNil())
+							Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationFailed))
+							Expect(cond.Message).To(Equal("bundledeployment not ready: installing"))
 						})
 
 					})
@@ -501,12 +558,20 @@ var _ = Describe("Operator Controller Test", func() {
 				It("sets the resolvedBundleResource status field", func() {
 					Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
 				})
+				It("sets the InstalledBundleSource status field", func() {
+					Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				})
 				It("sets resolution to unknown status", func() {
 					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
 					Expect(cond).NotTo(BeNil())
 					Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 					Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
 					Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+					cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+					Expect(cond).NotTo(BeNil())
+					Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+					Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+					Expect(cond.Message).To(Equal("bundledeployment status is unknown"))
 				})
 			})
 		})
@@ -532,6 +597,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -539,6 +605,11 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
 				Expect(cond.Message).To(ContainSubstring(`error determining bundle path for entity`))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+				Expect(cond.Message).To(Equal("installation has not been attempted as resolution failed"))
 			})
 		})
 		When("the operator specifies a duplicate package", func() {
@@ -579,6 +650,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -586,6 +658,11 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
 				Expect(cond.Message).To(Equal(`duplicate identifier "required package prometheus" in input`))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+				Expect(cond.Message).To(Equal("installation has not been attempted as resolution failed"))
 			})
 		})
 		When("the existing operator status is based on bundleDeployment", func() {
@@ -664,6 +741,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -671,6 +749,11 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
 				Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+				Expect(cond.Message).To(Equal("bundledeployment status is unknown"))
 
 				By("fetching the bundled deployment")
 				bd := &rukpakv1alpha1.BundleDeployment{}
@@ -712,6 +795,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -719,6 +803,11 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
 				Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+				Expect(cond.Message).To(Equal("bundledeployment status is unknown"))
 
 				By("fetching the bundled deployment")
 				bd := &rukpakv1alpha1.BundleDeployment{}
@@ -761,6 +850,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -768,6 +858,11 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
 				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' at version '%s' in channel '%s' not found", pkgName, pkgVer, pkgChan)))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+				Expect(cond.Message).To(Equal("installation has not been attempted as resolution failed"))
 			})
 		})
 		When("the operator specifies a package in a channel that does not exist", func() {
@@ -798,6 +893,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -805,6 +901,11 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
 				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' in channel '%s' not found", pkgName, pkgChan)))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+				Expect(cond.Message).To(Equal("installation has not been attempted as resolution failed"))
 			})
 		})
 		When("the operator specifies a package version that does not exist in the channel", func() {
@@ -838,6 +939,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -845,6 +947,11 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
 				Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' at version '%s' in channel '%s' not found", pkgName, pkgVer, pkgChan)))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+				Expect(cond.Message).To(Equal("installation has not been attempted as resolution failed"))
 			})
 		})
 		AfterEach(func() {
@@ -896,6 +1003,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 			By("Checking the status fields")
 			Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
+			Expect(operator.Status.InstalledBundleSource).To(Equal(""))
 
 			By("checking the expected conditions")
 			cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -903,6 +1011,11 @@ var _ = Describe("Operator Controller Test", func() {
 			Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
 			Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionUnknown))
 			Expect(cond.Message).To(Equal("validation has not been attempted as spec is invalid"))
+			cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+			Expect(cond).NotTo(BeNil())
+			Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+			Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+			Expect(cond.Message).To(Equal("installation has not been attempted as spec is invalid"))
 		})
 	})
 })

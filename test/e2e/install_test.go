@@ -70,7 +70,7 @@ var _ = Describe("Operator Install", func() {
 			Eventually(func(g Gomega) {
 				err = c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)
 				g.Expect(err).ToNot(HaveOccurred())
-				g.Expect(len(operator.Status.Conditions)).To(Equal(1))
+				g.Expect(len(operator.Status.Conditions)).To(Equal(2))
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
 				g.Expect(cond).ToNot(BeNil())
 				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
@@ -81,6 +81,14 @@ var _ = Describe("Operator Install", func() {
 
 			By("eventually installing the package successfully")
 			Eventually(func(g Gomega) {
+				err = c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)
+				g.Expect(err).ToNot(HaveOccurred())
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeInstalled)
+				g.Expect(cond).ToNot(BeNil())
+				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
+				g.Expect(cond.Message).To(ContainSubstring("installed from"))
+				g.Expect(operator.Status.InstalledBundleSource).ToNot(BeEmpty())
 				bd := rukpakv1alpha1.BundleDeployment{}
 				err = c.Get(ctx, types.NamespacedName{Name: operatorName}, &bd)
 				g.Expect(err).ToNot(HaveOccurred())
