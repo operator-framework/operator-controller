@@ -20,8 +20,8 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/controllers"
+	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/resolution"
-	operatorutil "github.com/operator-framework/operator-controller/internal/util"
 )
 
 var _ = Describe("Operator Controller Test", func() {
@@ -1033,12 +1033,12 @@ func verifyConditionsInvariants(op *operatorsv1alpha1.Operator) {
 	// condition types for the Operator API. Every reconcile should always
 	// ensure every condition type's status/reason/message reflects the state
 	// read during _this_ reconcile call.
-	Expect(op.Status.Conditions).To(HaveLen(len(operatorutil.ConditionTypes)))
-	for _, t := range operatorutil.ConditionTypes {
+	Expect(op.Status.Conditions).To(HaveLen(len(conditionsets.ConditionTypes)))
+	for _, t := range conditionsets.ConditionTypes {
 		cond := apimeta.FindStatusCondition(op.Status.Conditions, t)
 		Expect(cond).To(Not(BeNil()))
 		Expect(cond.Status).NotTo(BeEmpty())
-		Expect(cond.Reason).To(BeElementOf(operatorutil.ConditionReasons))
+		Expect(cond.Reason).To(BeElementOf(conditionsets.ConditionReasons))
 		Expect(cond.ObservedGeneration).To(Equal(op.GetGeneration()))
 	}
 }

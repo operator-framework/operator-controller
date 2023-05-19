@@ -19,7 +19,7 @@ package v1alpha1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	operatorutil "github.com/operator-framework/operator-controller/internal/util"
+	"github.com/operator-framework/operator-controller/internal/conditionsets"
 )
 
 // OperatorSpec defines the desired state of Operator
@@ -61,12 +61,12 @@ const (
 
 func init() {
 	// TODO(user): add Types from above
-	operatorutil.ConditionTypes = append(operatorutil.ConditionTypes,
+	conditionsets.ConditionTypes = append(conditionsets.ConditionTypes,
 		TypeInstalled,
 		TypeResolved,
 	)
 	// TODO(user): add Reasons from above
-	operatorutil.ConditionReasons = append(operatorutil.ConditionReasons,
+	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
 		ReasonInstallationSucceeded,
 		ReasonResolutionFailed,
 		ReasonResolutionUnknown,

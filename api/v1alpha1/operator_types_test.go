@@ -12,30 +12,30 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	operatorutil "github.com/operator-framework/operator-controller/internal/util"
+	"github.com/operator-framework/operator-controller/internal/conditionsets"
 )
 
 var _ = Describe("OperatorTypes", func() {
 	Describe("Condition Type and Reason constants", func() {
-		It("should register types in operatorutil.ConditionTypes", func() {
+		It("should register types in conditionsets.ConditionTypes", func() {
 			types, err := parseConstants("Type")
 			Expect(err).NotTo(HaveOccurred())
 
 			for _, t := range types {
-				Expect(t).To(BeElementOf(operatorutil.ConditionTypes), "Append Type%s to operatorutil.ConditionTypes in this package's init function.", t)
+				Expect(t).To(BeElementOf(conditionsets.ConditionTypes), "Append Type%s to conditionsets.ConditionTypes in this package's init function.", t)
 			}
-			for _, t := range operatorutil.ConditionTypes {
+			for _, t := range conditionsets.ConditionTypes {
 				Expect(t).To(BeElementOf(types), "There must be a Type%[1]s string literal constant for type %[1]q (i.e. 'const Type%[1]s = %[1]q')", t)
 			}
 		})
-		It("should register reasons in operatorutil.ConditionReasons", func() {
+		It("should register reasons in conditionsets.ConditionReasons", func() {
 			reasons, err := parseConstants("Reason")
 			Expect(err).NotTo(HaveOccurred())
 
 			for _, r := range reasons {
-				Expect(r).To(BeElementOf(operatorutil.ConditionReasons), "Append Reason%s to operatorutil.ConditionReasons in this package's init function.", r)
+				Expect(r).To(BeElementOf(conditionsets.ConditionReasons), "Append Reason%s to conditionsets.ConditionReasons in this package's init function.", r)
 			}
-			for _, r := range operatorutil.ConditionReasons {
+			for _, r := range conditionsets.ConditionReasons {
 				Expect(r).To(BeElementOf(reasons), "There must be a Reason%[1]s string literal constant for reason %[1]q (i.e. 'const Reason%[1]s = %[1]q')", r)
 			}
 		})
