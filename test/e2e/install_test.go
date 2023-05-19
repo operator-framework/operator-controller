@@ -101,7 +101,75 @@ var _ = Describe("Operator Install", func() {
 				g.Expect(bd.Status.Conditions[0].Reason).To(Equal("UnpackSuccessful"))
 				g.Expect(bd.Status.Conditions[1].Reason).To(Equal("InstallationSucceeded"))
 			}).WithTimeout(defaultTimeout).WithPolling(defaultPoll).Should(Succeed())
+		})
+		AfterEach(func() {
+			err := c.Delete(ctx, operatorCatalog)
+			Expect(err).ToNot(HaveOccurred())
+			err = c.Delete(ctx, operator)
+			Expect(err).ToNot(HaveOccurred())
+		})
+	})
+	When("resolving for an unavailable operator package", func() {
+		BeforeEach(func() {
+			ctx = context.Background()
+			pkgName = "argocd-operator"
+			operatorName = fmt.Sprintf("operator-%s", rand.String(8))
+			operator = &operatorv1alpha1.Operator{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: operatorName,
+				},
+				Spec: operatorv1alpha1.OperatorSpec{
+					PackageName: pkgName,
+				},
+			}
+			operatorCatalog = &catalogd.CatalogSource{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-catalog",
+				},
+				Spec: catalogd.CatalogSourceSpec{
+					// (TODO): Set up a local image registry, and build and store a test catalog in it
+					// to use in the test suite
+					Image: "quay.io/operatorhubio/catalog:latest",
+				},
+			}
+		})
 
+		It("resolves again when a new catalog is available", func() {
+			By("creating the Operator resource")
+			err := c.Create(ctx, operator)
+			Expect(err).ToNot(HaveOccurred())
+
+			By("failing to find Operator during resolution")
+			Eventually(func(g Gomega) {
+				err = c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)
+				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(len(operator.Status.Conditions)).To(Equal(2))
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+				g.Expect(cond).ToNot(BeNil())
+				g.Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonResolutionFailed))
+				g.Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' not found", pkgName)))
+			}).WithTimeout(defaultTimeout).WithPolling(defaultPoll).Should(Succeed())
+
+			By("creating an Operator catalog with the desired package")
+			err = c.Create(ctx, operatorCatalog)
+			Expect(err).ToNot(HaveOccurred())
+			Eventually(func(g Gomega) {
+				err = c.Get(ctx, types.NamespacedName{Name: "test-catalog"}, operatorCatalog)
+				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(len(operatorCatalog.Status.Conditions)).To(Equal(1))
+				g.Expect(operatorCatalog.Status.Conditions[0].Message).To(Equal("catalog contents have been unpacked and are available on cluster"))
+			}).WithTimeout(5 * time.Minute).WithPolling(defaultPoll).Should(Succeed())
+
+			By("eventually installing the package successfully")
+			Eventually(func(g Gomega) {
+				bd := rukpakv1alpha1.BundleDeployment{}
+				err = c.Get(ctx, types.NamespacedName{Name: operatorName}, &bd)
+				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(len(bd.Status.Conditions)).To(Equal(2))
+				g.Expect(bd.Status.Conditions[0].Reason).To(Equal("UnpackSuccessful"))
+				g.Expect(bd.Status.Conditions[1].Reason).To(Equal("InstallationSucceeded"))
+			}).WithTimeout(defaultTimeout).WithPolling(defaultPoll).Should(Succeed())
 		})
 		AfterEach(func() {
 			err := c.Delete(ctx, operatorCatalog)
