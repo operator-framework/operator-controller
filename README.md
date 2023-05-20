@@ -2,11 +2,15 @@
 The operator-controller is the central component of Operator Lifecycle Manager (OLM) v1. It extends Kubernetes with an API through which users can install Operators.
 
 ## Description
-OLM v1 is the follow-up to OLM v0, located [here](https://github.com/operator-framework/operator-lifecycle-manager). It consists of four different components, including this one, which are as follows:
+OLM v1 is the follow-up to [OLM v0](https://github.com/operator-framework/operator-lifecycle-manager). The vision for OLM V1 is discussed in detail in the [OLM V1 Product Requirements Document](https://docs.google.com/document/d/1-vsZ2dAODNfoHb7Nf0fbYeKDF7DUqEzS9HqgeMCvbDs/edit). 
+
+The Operator Controller project consists of four different components, including this one, which are as follows:
 * operator-controller
 * [deppy](https://github.com/operator-framework/deppy)
 * [rukpak](https://github.com/operator-framework/rukpak)
 * [catalogd](https://github.com/operator-framework/catalogd)
+
+Ongoing feature development can always be tracked at the [OLM V1 GitHub Project](https://github.com/orgs/operator-framework/projects/8) by looking at `Milestone #` tabs. 
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
@@ -39,20 +43,20 @@ make uninstall
 ```
 
 ### Undeploy controller
-UnDeploy the controller to the cluster:
+Undeploy the controller to the cluster:
 
 ```sh
 make undeploy
 ```
 
 ## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
+If you are interested in getting involved, please see the [CONTRIBUTING.md](TO/Be/Added) for more information.
 
 ### How it works
 This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
 
 It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/) 
-which provides a reconcile function responsible for synchronizing resources untile the desired state is reached on the cluster 
+which provides a reconcile function responsible for synchronizing resources until the desired state is reached on the cluster 
 
 ### Test It Out
 1. Install the CRDs into the cluster:
