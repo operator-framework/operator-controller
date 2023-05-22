@@ -1,0 +1,29 @@
+name: deploy-test
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+    - main
+
+jobs:
+  deploy-basic:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-go@v4
+      with:
+        go-version-file: go.mod
+
+    - name: Run basic deploy/undeploy
+      run: |
+        make kind-cluster
+        make deploy
+        kubectl get crds operators.operators.operatorframework.io
+        kubectl get ns operator-controller-system
+        make undeploy
+        ! kubectl get ns operator-controller-system
+        ! kubectl get crds operators.operators.operatorframework.io
