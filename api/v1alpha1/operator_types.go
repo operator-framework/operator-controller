@@ -81,7 +81,7 @@ func init() {
 // OperatorStatus defines the observed state of Operator
 type OperatorStatus struct {
 	// +optional
-	InstalledBundleSource string `json:"installedBundleSource,omitempty"`
+	InstalledBundleResource string `json:"installedBundleResource,omitempty"`
 	// +optional
 	ResolvedBundleResource string `json:"resolvedBundleResource,omitempty"`
 

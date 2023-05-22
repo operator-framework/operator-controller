@@ -75,7 +75,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
-				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -111,7 +111,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
-				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -161,8 +161,8 @@ var _ = Describe("Operator Controller Test", func() {
 				It("sets the resolvedBundleResource status field", func() {
 					Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
 				})
-				It("sets the InstalledBundleSource status field", func() {
-					Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				It("sets the InstalledBundleResource status field", func() {
+					Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 				})
 				It("sets the status on operator", func() {
 					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -240,7 +240,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 						By("Checking the status fields")
 						Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
-						Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+						Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 						By("checking the expected status conditions")
 						cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -288,7 +288,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 							By("Checking the status fields")
 							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
-							Expect(op.Status.InstalledBundleSource).To(Equal(""))
+							Expect(op.Status.InstalledBundleResource).To(Equal(""))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -327,7 +327,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 							By("Checking the status fields")
 							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
-							Expect(op.Status.InstalledBundleSource).To(Equal(""))
+							Expect(op.Status.InstalledBundleResource).To(Equal(""))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -366,7 +366,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 							By("Checking the status fields")
 							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
-							Expect(op.Status.InstalledBundleSource).To(Equal(""))
+							Expect(op.Status.InstalledBundleResource).To(Equal(""))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -405,7 +405,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 							By("Checking the status fields")
 							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
-							Expect(op.Status.InstalledBundleSource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.InstalledBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -451,7 +451,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 							By("Checking the status fields")
 							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
-							Expect(op.Status.InstalledBundleSource).To(Equal(""))
+							Expect(op.Status.InstalledBundleResource).To(Equal(""))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -490,7 +490,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 							By("Checking the status fields")
 							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
-							Expect(op.Status.InstalledBundleSource).To(Equal(""))
+							Expect(op.Status.InstalledBundleResource).To(Equal(""))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -558,8 +558,8 @@ var _ = Describe("Operator Controller Test", func() {
 				It("sets the resolvedBundleResource status field", func() {
 					Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
 				})
-				It("sets the InstalledBundleSource status field", func() {
-					Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				It("sets the InstalledBundleResource status field", func() {
+					Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 				})
 				It("sets resolution to unknown status", func() {
 					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -597,7 +597,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
-				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -650,7 +650,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
-				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -741,7 +741,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
-				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -795,7 +795,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
-				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -850,7 +850,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
-				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -893,7 +893,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
-				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -939,7 +939,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 				By("Checking the status fields")
 				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
-				Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 				By("checking the expected conditions")
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
@@ -1003,7 +1003,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 			By("Checking the status fields")
 			Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
-			Expect(operator.Status.InstalledBundleSource).To(Equal(""))
+			Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 			By("checking the expected conditions")
 			cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
