@@ -131,7 +131,7 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
-              installedBundleSource:
+              installedBundleResource:
                 type: string
               resolvedBundleResource:
                 type: string

@@ -88,7 +88,7 @@ var _ = Describe("Operator Install", func() {
 				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
 				g.Expect(cond.Message).To(ContainSubstring("installed from"))
-				g.Expect(operator.Status.InstalledBundleSource).ToNot(BeEmpty())
+				g.Expect(operator.Status.InstalledBundleResource).ToNot(BeEmpty())
 				bd := rukpakv1alpha1.BundleDeployment{}
 				err = c.Get(ctx, types.NamespacedName{Name: operatorName}, &bd)
 				g.Expect(err).ToNot(HaveOccurred())

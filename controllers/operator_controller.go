@@ -108,7 +108,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	if err := validators.ValidateOperatorSpec(op); err != nil {
 		// Set the TypeInstalled condition to Unknown to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
-		op.Status.InstalledBundleSource = ""
+		op.Status.InstalledBundleResource = ""
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeInstalled,
 			Status:             metav1.ConditionUnknown,
@@ -131,7 +131,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	// run resolution
 	solution, err := r.Resolver.Resolve(ctx)
 	if err != nil {
-		op.Status.InstalledBundleSource = ""
+		op.Status.InstalledBundleResource = ""
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeInstalled,
 			Status:             metav1.ConditionUnknown,
@@ -154,7 +154,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	// Operator's desired package name.
 	bundleEntity, err := r.getBundleEntityFromSolution(solution, op.Spec.PackageName)
 	if err != nil {
-		op.Status.InstalledBundleSource = ""
+		op.Status.InstalledBundleResource = ""
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeInstalled,
 			Status:             metav1.ConditionUnknown,
@@ -176,7 +176,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	// Get the bundle image reference for the bundle
 	bundleImage, err := bundleEntity.BundlePath()
 	if err != nil {
-		op.Status.InstalledBundleSource = ""
+		op.Status.InstalledBundleResource = ""
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeInstalled,
 			Status:             metav1.ConditionUnknown,
@@ -210,7 +210,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	dep := r.generateExpectedBundleDeployment(*op, bundleImage)
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
 		// originally Reason: operatorsv1alpha1.ReasonInstallationFailed
-		op.Status.InstalledBundleSource = ""
+		op.Status.InstalledBundleResource = ""
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeInstalled,
 			Status:             metav1.ConditionFalse,
@@ -225,7 +225,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	existingTypedBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(dep.UnstructuredContent(), existingTypedBundleDeployment); err != nil {
 		// originally Reason: operatorsv1alpha1.ReasonInstallationStatusUnknown
-		op.Status.InstalledBundleSource = ""
+		op.Status.InstalledBundleResource = ""
 		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
 			Type:               operatorsv1alpha1.TypeInstalled,
 			Status:             metav1.ConditionUnknown,
@@ -236,11 +236,11 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		return ctrl.Result{}, err
 	}
 
-	// Let's set the proper Installed condition and installedBundleSource field based on the
+	// Let's set the proper Installed condition and InstalledBundleResource field based on the
 	// existing BundleDeployment object status.
-	installedCond, installedBundleSource := mapBDStatusToInstalledCondition(existingTypedBundleDeployment, op)
+	installedCond, InstalledBundleResource := mapBDStatusToInstalledCondition(existingTypedBundleDeployment, op)
 	apimeta.SetStatusCondition(&op.Status.Conditions, installedCond)
-	op.Status.InstalledBundleSource = installedBundleSource
+	op.Status.InstalledBundleResource = InstalledBundleResource
 
 	// set the status of the operator based on the respective bundle deployment status conditions.
 	return ctrl.Result{}, nil
