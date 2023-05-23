@@ -109,44 +109,20 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		// Set the TypeInstalled condition to Unknown to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
 		op.Status.InstalledBundleResource = ""
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeInstalled,
-			Status:             metav1.ConditionUnknown,
-			Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
-			Message:            "installation has not been attempted as spec is invalid",
-			ObservedGeneration: op.GetGeneration(),
-		})
+		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as spec is invalid", op.GetGeneration())
 		// Set the TypeResolved condition to Unknown to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
 		op.Status.ResolvedBundleResource = ""
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeResolved,
-			Status:             metav1.ConditionUnknown,
-			Reason:             operatorsv1alpha1.ReasonResolutionUnknown,
-			Message:            "validation has not been attempted as spec is invalid",
-			ObservedGeneration: op.GetGeneration(),
-		})
+		setResolvedStatusConditionUnknown(&op.Status.Conditions, "validation has not been attempted as spec is invalid", op.GetGeneration())
 		return ctrl.Result{}, nil
 	}
 	// run resolution
 	solution, err := r.Resolver.Resolve(ctx)
 	if err != nil {
 		op.Status.InstalledBundleResource = ""
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeInstalled,
-			Status:             metav1.ConditionUnknown,
-			Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
-			Message:            "installation has not been attempted as resolution failed",
-			ObservedGeneration: op.GetGeneration(),
-		})
+		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
 		op.Status.ResolvedBundleResource = ""
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeResolved,
-			Status:             metav1.ConditionFalse,
-			Reason:             operatorsv1alpha1.ReasonResolutionFailed,
-			Message:            err.Error(),
-			ObservedGeneration: op.GetGeneration(),
-		})
+		setResolvedStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -155,21 +131,9 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	bundleEntity, err := r.getBundleEntityFromSolution(solution, op.Spec.PackageName)
 	if err != nil {
 		op.Status.InstalledBundleResource = ""
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeInstalled,
-			Status:             metav1.ConditionUnknown,
-			Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
-			Message:            "installation has not been attempted as resolution failed",
-			ObservedGeneration: op.GetGeneration(),
-		})
+		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
 		op.Status.ResolvedBundleResource = ""
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeResolved,
-			Status:             metav1.ConditionFalse,
-			Reason:             operatorsv1alpha1.ReasonResolutionFailed,
-			Message:            err.Error(),
-			ObservedGeneration: op.GetGeneration(),
-		})
+		setResolvedStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -177,33 +141,16 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	bundleImage, err := bundleEntity.BundlePath()
 	if err != nil {
 		op.Status.InstalledBundleResource = ""
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeInstalled,
-			Status:             metav1.ConditionUnknown,
-			Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
-			Message:            "installation has not been attempted as resolution failed",
-			ObservedGeneration: op.GetGeneration(),
-		})
+		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
+
 		op.Status.ResolvedBundleResource = ""
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeResolved,
-			Status:             metav1.ConditionFalse,
-			Reason:             operatorsv1alpha1.ReasonResolutionFailed,
-			Message:            err.Error(),
-			ObservedGeneration: op.GetGeneration(),
-		})
+		setResolvedStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
 	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundleImage value.
 	op.Status.ResolvedBundleResource = bundleImage
-	apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-		Type:               operatorsv1alpha1.TypeResolved,
-		Status:             metav1.ConditionTrue,
-		Reason:             operatorsv1alpha1.ReasonSuccess,
-		Message:            fmt.Sprintf("resolved to %q", bundleImage),
-		ObservedGeneration: op.GetGeneration(),
-	})
+	setResolvedStatusConditionSuccess(&op.Status.Conditions, fmt.Sprintf("resolved to %q", bundleImage), op.GetGeneration())
 
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
 	// image we just looked up in the solution.
@@ -211,13 +158,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
 		// originally Reason: operatorsv1alpha1.ReasonInstallationFailed
 		op.Status.InstalledBundleResource = ""
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeInstalled,
-			Status:             metav1.ConditionFalse,
-			Reason:             operatorsv1alpha1.ReasonInstallationFailed,
-			Message:            err.Error(),
-			ObservedGeneration: op.GetGeneration(),
-		})
+		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -226,74 +167,60 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(dep.UnstructuredContent(), existingTypedBundleDeployment); err != nil {
 		// originally Reason: operatorsv1alpha1.ReasonInstallationStatusUnknown
 		op.Status.InstalledBundleResource = ""
-		apimeta.SetStatusCondition(&op.Status.Conditions, metav1.Condition{
-			Type:               operatorsv1alpha1.TypeInstalled,
-			Status:             metav1.ConditionUnknown,
-			Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
-			Message:            err.Error(),
-			ObservedGeneration: op.GetGeneration(),
-		})
+		setInstalledStatusConditionUnknown(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
 	// Let's set the proper Installed condition and InstalledBundleResource field based on the
 	// existing BundleDeployment object status.
-	installedCond, InstalledBundleResource := mapBDStatusToInstalledCondition(existingTypedBundleDeployment, op)
-	apimeta.SetStatusCondition(&op.Status.Conditions, installedCond)
-	op.Status.InstalledBundleResource = InstalledBundleResource
+	mapBDStatusToInstalledCondition(existingTypedBundleDeployment, op)
 
 	// set the status of the operator based on the respective bundle deployment status conditions.
 	return ctrl.Result{}, nil
 }
 
-func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha1.BundleDeployment, op *operatorsv1alpha1.Operator) (metav1.Condition, string) {
+func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha1.BundleDeployment, op *operatorsv1alpha1.Operator) {
 	bundleDeploymentReady := apimeta.FindStatusCondition(existingTypedBundleDeployment.Status.Conditions, rukpakv1alpha1.TypeInstalled)
 	if bundleDeploymentReady == nil {
-		return metav1.Condition{
-			Type:               operatorsv1alpha1.TypeInstalled,
-			Status:             metav1.ConditionUnknown,
-			Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
-			Message:            "bundledeployment status is unknown",
-			ObservedGeneration: op.GetGeneration(),
-		}, ""
+		op.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionUnknown(&op.Status.Conditions, "bundledeployment status is unknown", op.GetGeneration())
+		return
 	}
 
 	if bundleDeploymentReady.Status != metav1.ConditionTrue {
-		return metav1.Condition{
-			Type:               operatorsv1alpha1.TypeInstalled,
-			Status:             metav1.ConditionFalse,
-			Reason:             operatorsv1alpha1.ReasonInstallationFailed,
-			Message:            fmt.Sprintf("bundledeployment not ready: %s", bundleDeploymentReady.Message),
-			ObservedGeneration: op.GetGeneration(),
-		}, ""
+		op.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionFailed(
+			&op.Status.Conditions,
+			fmt.Sprintf("bundledeployment not ready: %s", bundleDeploymentReady.Message),
+			op.GetGeneration(),
+		)
+		return
 	}
 
 	bundleDeploymentSource := existingTypedBundleDeployment.Spec.Template.Spec.Source
 	switch bundleDeploymentSource.Type {
 	case rukpakv1alpha1.SourceTypeImage:
-		return metav1.Condition{
-			Type:               operatorsv1alpha1.TypeInstalled,
-			Status:             metav1.ConditionTrue,
-			Reason:             operatorsv1alpha1.ReasonSuccess,
-			Message:            fmt.Sprintf("installed from %q", bundleDeploymentSource.Image.Ref),
-			ObservedGeneration: op.GetGeneration(),
-		}, bundleDeploymentSource.Image.Ref
+		op.Status.InstalledBundleResource = bundleDeploymentSource.Image.Ref
+		setInstalledStatusConditionSuccess(
+			&op.Status.Conditions,
+			fmt.Sprintf("installed from %q", bundleDeploymentSource.Image.Ref),
+			op.GetGeneration(),
+		)
 	case rukpakv1alpha1.SourceTypeGit:
-		return metav1.Condition{
-			Type:               operatorsv1alpha1.TypeInstalled,
-			Status:             metav1.ConditionTrue,
-			Reason:             operatorsv1alpha1.ReasonSuccess,
-			Message:            fmt.Sprintf("installed from %q", bundleDeploymentSource.Git.Repository+"@"+bundleDeploymentSource.Git.Ref.Commit),
-			ObservedGeneration: op.GetGeneration(),
-		}, bundleDeploymentSource.Git.Repository + "@" + bundleDeploymentSource.Git.Ref.Commit
+		resource := bundleDeploymentSource.Git.Repository + "@" + bundleDeploymentSource.Git.Ref.Commit
+		op.Status.InstalledBundleResource = resource
+		setInstalledStatusConditionSuccess(
+			&op.Status.Conditions,
+			fmt.Sprintf("installed from %q", resource),
+			op.GetGeneration(),
+		)
 	default:
-		return metav1.Condition{
-			Type:               operatorsv1alpha1.TypeInstalled,
-			Status:             metav1.ConditionUnknown,
-			Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
-			Message:            fmt.Sprintf("unknown bundledeployment source type %q", bundleDeploymentSource.Type),
-			ObservedGeneration: op.GetGeneration(),
-		}, ""
+		op.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionUnknown(
+			&op.Status.Conditions,
+			fmt.Sprintf("unknown bundledeployment source type %q", bundleDeploymentSource.Type),
+			op.GetGeneration(),
+		)
 	}
 }
 
@@ -428,4 +355,70 @@ func verifyBDStatus(dep *rukpakv1alpha1.BundleDeployment) (metav1.ConditionStatu
 // isBundleDepStale returns true if conditions are out of date.
 func isBundleDepStale(bd *rukpakv1alpha1.BundleDeployment) bool {
 	return bd != nil && bd.Status.ObservedGeneration != bd.GetGeneration()
+}
+
+// setResolvedStatusConditionSuccess sets the resolved status condition to success.
+func setResolvedStatusConditionSuccess(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               operatorsv1alpha1.TypeResolved,
+		Status:             metav1.ConditionTrue,
+		Reason:             operatorsv1alpha1.ReasonSuccess,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+// setResolvedStatusConditionFailed sets the resolved status condition to failed.
+func setResolvedStatusConditionFailed(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               operatorsv1alpha1.TypeResolved,
+		Status:             metav1.ConditionFalse,
+		Reason:             operatorsv1alpha1.ReasonResolutionFailed,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+// setResolvedStatusConditionUnknown sets the resolved status condition to unknown.
+func setResolvedStatusConditionUnknown(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               operatorsv1alpha1.TypeResolved,
+		Status:             metav1.ConditionUnknown,
+		Reason:             operatorsv1alpha1.ReasonResolutionUnknown,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+// setInstalledStatusConditionSuccess sets the installed status condition to success.
+func setInstalledStatusConditionSuccess(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               operatorsv1alpha1.TypeInstalled,
+		Status:             metav1.ConditionTrue,
+		Reason:             operatorsv1alpha1.ReasonSuccess,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+// setInstalledStatusConditionFailed sets the installed status condition to failed.
+func setInstalledStatusConditionFailed(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               operatorsv1alpha1.TypeInstalled,
+		Status:             metav1.ConditionFalse,
+		Reason:             operatorsv1alpha1.ReasonInstallationFailed,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+// setInstalledStatusConditionUnknown sets the installed status condition to unknown.
+func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               operatorsv1alpha1.TypeInstalled,
+		Status:             metav1.ConditionUnknown,
+		Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
 }
