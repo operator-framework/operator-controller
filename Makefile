@@ -1,26 +1,13 @@
 # Build info
-GIT_COMMIT              ?= $(shell git rev-parse HEAD)
-GIT_VERSION             ?= $(shell git describe --tags --always --dirty)
-GIT_STATUS				?= $(shell git status --porcelain)
-GIT_TREE_STATE          ?= $(shell [ -z "${GIT_STATUS}" ] && echo "clean" || echo "dirty")
-COMMIT_DATE             ?= $(shell git show -s --date=format:'%Y-%m-%dT%H:%M:%SZ' --format=%cd)
-ORG                     ?= github.com/operator-framework
-REPO                    ?= $(ORG)/catalogd
-VERSION_PKG             ?= $(REPO)/internal/version
-CTRL_LDFLAGS            ?= -ldflags="-X '$(VERSION_PKG).gitVersion=$(GIT_VERSION)'"
-SERVER_LDFLAGS          ?= -ldflags "-X '$(VERSION_PKG).gitVersion=$(GIT_VERSION)' -X '$(VERSION_PKG).gitCommit=$(GIT_COMMIT)' -X '$(VERSION_PKG).gitTreeState=$(GIT_TREE_STATE)' -X '$(VERSION_PKG).commitDate=$(COMMIT_DATE)'"
-GO_BUILD_TAGS           ?= upstream
-# Image URL to use all building/pushing controller image targets
-CONTROLLER_IMG          ?= quay.io/operator-framework/catalogd-controller
-# Image URL to use all building/pushing apiserver image targets
-# TODO: When the apiserver is working properly, uncomment this line:
-# SERVER_IMG              ?= quay.io/operator-framework/catalogd-server
-# Tag to use when building/pushing images
-IMG_TAG                 ?= devel
-## Location to build controller/apiserver binaries in
-LOCALBIN                ?= $(shell pwd)/bin
-$(LOCALBIN):
-	mkdir -p $(LOCALBIN)
+export GO_BUILD_TAGS  ?= ''
+export GIT_COMMIT     ?= $(shell git rev-parse HEAD)
+export GIT_VERSION    ?= $(shell git describe --tags --always --dirty)
+export GIT_TREE_STATE ?= $(shell [ -z "$(shell git status --porcelain)" ] && echo "clean" || echo "dirty")
+export VERSION_PKG    ?= $(shell go list -m)/internal/version
+
+export IMAGE_REPO                ?= quay.io/operator-framework/catalogd
+export IMAGE_TAG                 ?= devel
+IMAGE=$(IMAGE_REPO):$(IMAGE_TAG)
 
 
 # Dependencies
@@ -64,7 +51,7 @@ fmt: ## Run go fmt against code.
 
 .PHONY: vet
 vet: ## Run go vet against code.
-	go vet ./...
+	go vet -tags $(GO_BUILD_TAGS) ./...
 
 .PHONY: test
 test-unit: generate fmt vet setup-envtest ## Run tests.
@@ -75,88 +62,68 @@ tidy: ## Update dependencies
 	go mod tidy
 
 .PHONY: verify
-verify: tidy fmt generate ## Verify the current code generation and lint
+verify: tidy fmt vet generate ## Verify the current code generation and lint
 	git diff --exit-code
 
 ##@ Build
 
-.PHONY: build-controller
-build-controller: generate fmt vet ## Build manager binary.
-	CGO_ENABLED=0 GOOS=linux go build -tags $(GO_BUILD_TAGS) $(CTRL_LDFLAGS) -o bin/manager cmd/manager/main.go
+BINARIES=manager
+LINUX_BINARIES=$(join $(addprefix linux/,$(BINARIES)), )
 
-# TODO: When the apiserver is working properly, uncomment this target:
-# .PHONY: build-server
-# build-server: fmt vet ## Build api-server binary.
-# 	CGO_ENABLED=0 GOOS=linux go build -tags $(GO_BUILD_TAGS) $(SERVER_LDFLAGS) -o bin/apiserver cmd/apiserver/main.go
+BUILDCMD = sh -c 'mkdir -p $(BUILDBIN) && $(GORELEASER) build $(GORELEASER_ARGS) --id $(notdir $@) --single-target -o $(BUILDBIN)/$(notdir $@)'
+BUILDDEPS = goreleaser
+
+.PHONY: build
+build: $(BINARIES)  ## Build all project binaries for the local OS and architecture.
+
+.PHONY: build-linux
+build-linux: $(LINUX_BINARIES) ## Build all project binaries for GOOS=linux and the local architecture.
+
+.PHONY: $(BINARIES)
+$(BINARIES): BUILDBIN = bin
+$(BINARIES): $(BUILDDEPS)
+	$(BUILDCMD)
+
+.PHONY: $(LINUX_BINARIES)
+$(LINUX_BINARIES): BUILDBIN = bin/linux
+$(LINUX_BINARIES): $(BUILDDEPS)
+	GOOS=linux $(BUILDCMD)
 
 .PHONY: run
-run: generate fmt vet ## Run a controller from your host.
-	go run ./main.go
+run: generate kind-cluster install ## Create a kind cluster and install a local build of catalogd
 
-.PHONY: docker-build-controller
-docker-build-controller: build-controller test ## Build docker image with the controller manager.
-	docker build -f controller.Dockerfile -t ${CONTROLLER_IMG}:${IMG_TAG} bin/
-
-.PHONY: docker-push-controller
-docker-push-controller: ## Push docker image with the controller manager.
-	docker push ${CONTROLLER_IMG}
-
-# TODO: When the apiserver is working properly, uncomment the 2 targets below:
-# .PHONY: docker-build-server
-# docker-build-server: build-server test ## Build docker image with the apiserver.
-# 	docker build -f apiserver.Dockerfile -t ${SERVER_IMG}:${IMG_TAG} bin/
-
-# .PHONY: docker-push-server
-# docker-push-server: ## Push docker image with the apiserver.
-# 	docker push ${SERVER_IMG}
+.PHONY: build-container
+build-container: build-linux ## Build docker image for catalogd.
+	docker build -f Dockerfile -t $(IMAGE) bin/linux
 
 ##@ Deploy
 
 .PHONY: kind-cluster
 kind-cluster: kind kind-cluster-cleanup ## Standup a kind cluster
-	$(KIND) create cluster --name ${KIND_CLUSTER_NAME} 
-	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
+	$(KIND) create cluster --name $(KIND_CLUSTER_NAME)
+	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-cluster-cleanup
 kind-cluster-cleanup: kind ## Delete the kind cluster
-	$(KIND) delete cluster --name ${KIND_CLUSTER_NAME}
+	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
 
-# TODO: When the apiserver is working properly, add this line back to the end of this target:
-# $(KIND) load docker-image $(SERVER_IMG):${IMG_TAG} --name $(KIND_CLUSTER_NAME)
 .PHONY: kind-load
 kind-load: kind ## Load the built images onto the local cluster 
-	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
-	$(KIND) load docker-image $(CONTROLLER_IMG):${IMG_TAG} --name $(KIND_CLUSTER_NAME)
+	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image $(IMAGE) --name $(KIND_CLUSTER_NAME)
 
 
-# TODO: When the apiserver is working properly, add the `docker-build-server` and `cert-manager` targets back as a dependency to this target:
 .PHONY: install 
-install: docker-build-controller kind-load deploy wait ## Install local catalogd
+install: build-container kind-load deploy wait ## Install local catalogd
 	
-# TODO: When the apiserver is working properly, add this line back after the manager edit:
-# cd config/apiserver && $(KUSTOMIZE) edit set image apiserver=${SERVER_IMG}:${IMG_TAG}
 .PHONY: deploy
-deploy: kustomize ## Deploy Catalog controller and ApiServer to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${CONTROLLER_IMG}:${IMG_TAG}
+deploy: kustomize ## Deploy Catalogd to the K8s cluster specified in ~/.kube/config.
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
-undeploy: kustomize ## Undeploy Catalog controller and ApiServer from the K8s cluster specified in ~/.kube/config. 
+undeploy: kustomize ## Undeploy Catalogd from the K8s cluster specified in ~/.kube/config. 
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=true -f -	
-
-.PHONY: uninstall 
-uninstall: undeploy ## Uninstall local catalogd
-	kubectl wait --for=delete namespace/$(CATALOGD_NAMESPACE) --timeout=60s
-
-# TODO: cert-manager was only needed due to the apiserver. When the apiserver is working properly, uncomment this target
-# .PHONY: cert-manager
-# cert-manager: ## Deploy cert-manager on the cluster
-# 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/$(CERT_MGR_VERSION)/cert-manager.yaml
-# 	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
-
-# TODO: When the apiserver is working properly, add the following lines to this target:
-# kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-apiserver --timeout=60s
-# kubectl rollout status --watch --namespace=$(CATALOGD_NAMESPACE) statefulset/catalogd-etcd --timeout=60s
 
 wait:
 	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
@@ -165,15 +132,6 @@ wait:
 
 export ENABLE_RELEASE_PIPELINE ?= false
 export GORELEASER_ARGS         ?= --snapshot --clean
-export CONTROLLER_IMAGE_REPO   ?= $(CONTROLLER_IMG)
-# TODO: When the apiserver is working properly, uncomment this line:
-# export APISERVER_IMAGE_REPO ?= $(SERVER_IMG)
-export IMAGE_TAG               ?= $(IMG_TAG)
-export VERSION_PKG             ?= $(VERSION_PKG)
-export GIT_VERSION             ?= $(GIT_VERSION)
-export GIT_COMMIT              ?= $(GIT_COMMIT)
-export GIT_TREE_STATE          ?= $(GIT_TREE_STATE)
-export COMMIT_DATE             ?= $(COMMIT_DATE)
 export CERT_MGR_VERSION        ?= $(CERT_MGR_VERSION)
 release: goreleaser ## Runs goreleaser for catalogd. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)

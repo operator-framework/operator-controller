@@ -79,7 +79,7 @@ func main() {
 	flag.Parse()
 
 	if catalogdVersion {
-		fmt.Printf("catalogd version: %s", version.ControllerVersion())
+		fmt.Printf("%#v\n", version.Version())
 		os.Exit(0)
 	}
 

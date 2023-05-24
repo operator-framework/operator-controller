@@ -16,7 +16,3 @@ resources:
 - auth_proxy_role.yaml
 - auth_proxy_role_binding.yaml
 - auth_proxy_client_clusterrole.yaml
-# TODO: When the apiserver is working properly, uncomment the following lines:
-# - apiserver_role.yaml
-# - apiserver_rolebindings.yaml
-# - apiserver_service_account.yaml

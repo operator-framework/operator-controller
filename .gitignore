@@ -12,7 +12,3 @@ bin/
 dist/
 cover.out
 catalogd.yaml
-
-
-# apiserver certificates 
-config/certificates
