@@ -20,11 +20,25 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	TypeReady = "Ready"
+// TODO: The source types, reason, etc. are all copy/pasted from the rukpak
+//   repository. We should look into whether it is possible to share these.
 
-	ReasonContentsAvailable = "ContentsAvailable"
-	ReasonUnpackError       = "UnpackError"
+type SourceType string
+
+const (
+	SourceTypeImage SourceType = "image"
+
+	TypeUnpacked = "Unpacked"
+
+	ReasonUnpackPending    = "UnpackPending"
+	ReasonUnpacking        = "Unpacking"
+	ReasonUnpackSuccessful = "UnpackSuccessful"
+	ReasonUnpackFailed     = "UnpackFailed"
+
+	PhasePending   = "Pending"
+	PhaseUnpacking = "Unpacking"
+	PhaseFailing   = "Failing"
+	PhaseUnpacked  = "Unpacked"
 )
 
 //+kubebuilder:object:root=true
@@ -52,22 +66,34 @@ type CatalogList struct {
 
 // CatalogSpec defines the desired state of Catalog
 type CatalogSpec struct {
-
-	// Image is the Catalog image that contains Operators' metadata in the FBC format
+	// Source is the source of a Catalog that contains Operators' metadata in the FBC format
 	// https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
-	Image string `json:"image"`
-
-	// PollingInterval is used to determine the time interval between checks of the
-	// latest index image version. The image is polled to see if a new version of the
-	// image is available. If available, the latest image is pulled and the cache is
-	// updated to contain the new content.
-	PollingInterval *metav1.Duration `json:"pollingInterval,omitempty"`
+	Source CatalogSource `json:"source"`
 }
 
 // CatalogStatus defines the observed state of Catalog
 type CatalogStatus struct {
 	// Conditions store the status conditions of the Catalog instances
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+
+	ResolvedSource *CatalogSource `json:"resolvedSource,omitempty"`
+	Phase          string         `json:"phase,omitempty"`
+}
+
+// CatalogSource contains the sourcing information for a Catalog
+type CatalogSource struct {
+	// Type defines the kind of Catalog content being sourced.
+	Type SourceType `json:"type"`
+	// Image is the catalog image that backs the content of this catalog.
+	Image *ImageSource `json:"image,omitempty"`
+}
+
+// ImageSource contains information required for sourcing a Catalog from an OCI image
+type ImageSource struct {
+	// Ref contains the reference to a container image containing Catalog contents.
+	Ref string `json:"ref"`
+	// PullSecret contains the name of the image pull secret in the namespace that catalogd is deployed.
+	PullSecret string `json:"pullSecret,omitempty"`
 }
 
 func init() {

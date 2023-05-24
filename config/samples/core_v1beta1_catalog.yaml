@@ -1,13 +1,9 @@
 apiVersion: catalogd.operatorframework.io/v1beta1
 kind: Catalog
 metadata: 
-  labels:
-    app.kubernetes.io/name: catalog
-    app.kubernetes.io/instance: catalog-sample
-    app.kubernetes.io/part-of: catalogd
-    app.kuberentes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: catalogd
-  name: catalog-sample
+  name: operatorhubio
 spec:
-  image: quay.io/operatorhubio/catalog:latest
-  pollingInterval: 45m
+  source:
+    type: image
+    image:
+      ref: quay.io/operatorhubio/catalog:latest

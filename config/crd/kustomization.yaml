@@ -6,3 +6,11 @@ resources:
 - bases/catalogd.operatorframework.io_packages.yaml
 - bases/catalogd.operatorframework.io_catalogs.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
+
+patches:
+- path: patches/catalog_validation.yaml
+  target:
+    group: apiextensions.k8s.io
+    version: v1
+    kind: CustomResourceDefinition
+    name: catalogs.catalogd.operatorframework.io

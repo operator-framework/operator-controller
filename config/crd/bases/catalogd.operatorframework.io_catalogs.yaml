@@ -34,19 +34,33 @@ spec:
           spec:
             description: CatalogSpec defines the desired state of Catalog
             properties:
-              image:
-                description: Image is the Catalog image that contains Operators' metadata
-                  in the FBC format https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
-                type: string
-              pollingInterval:
-                description: PollingInterval is used to determine the time interval
-                  between checks of the latest index image version. The image is polled
-                  to see if a new version of the image is available. If available,
-                  the latest image is pulled and the cache is updated to contain the
-                  new content.
-                type: string
+              source:
+                description: Source is the source of a Catalog that contains Operators'
+                  metadata in the FBC format https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
+                properties:
+                  image:
+                    description: Image is the catalog image that backs the content
+                      of this catalog.
+                    properties:
+                      pullSecret:
+                        description: PullSecret contains the name of the image pull
+                          secret in the namespace that catalogd is deployed.
+                        type: string
+                      ref:
+                        description: Ref contains the reference to a container image
+                          containing Catalog contents.
+                        type: string
+                    required:
+                    - ref
+                    type: object
+                  type:
+                    description: Type defines the kind of Catalog content being sourced.
+                    type: string
+                required:
+                - type
+                type: object
             required:
-            - image
+            - source
             type: object
           status:
             description: CatalogStatus defines the observed state of Catalog
@@ -121,6 +135,33 @@ spec:
                   - type
                   type: object
                 type: array
+              phase:
+                type: string
+              resolvedSource:
+                description: CatalogSource contains the sourcing information for a
+                  Catalog
+                properties:
+                  image:
+                    description: Image is the catalog image that backs the content
+                      of this catalog.
+                    properties:
+                      pullSecret:
+                        description: PullSecret contains the name of the image pull
+                          secret in the namespace that catalogd is deployed.
+                        type: string
+                      ref:
+                        description: Ref contains the reference to a container image
+                          containing Catalog contents.
+                        type: string
+                    required:
+                    - ref
+                    type: object
+                  type:
+                    description: Type defines the kind of Catalog content being sourced.
+                    type: string
+                required:
+                - type
+                type: object
             type: object
         type: object
     served: true

@@ -3,6 +3,9 @@ module github.com/operator-framework/catalogd
 go 1.19
 
 require (
+	github.com/nlepage/go-tarfs v1.1.0
+	github.com/onsi/ginkgo/v2 v2.6.0
+	github.com/onsi/gomega v1.24.1
 	github.com/operator-framework/operator-registry v1.26.3
 	k8s.io/api v0.26.0
 	k8s.io/apimachinery v0.26.0

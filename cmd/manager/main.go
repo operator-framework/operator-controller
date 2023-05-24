@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/operator-framework/catalogd/internal/source"
 	"github.com/operator-framework/catalogd/internal/version"
 	"github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	corecontrollers "github.com/operator-framework/catalogd/pkg/controllers/core"
@@ -56,16 +57,19 @@ func main() {
 		metricsAddr          string
 		enableLeaderElection bool
 		probeAddr            string
-		opmImage             string
+		unpackImage          string
 		profiling            bool
 		catalogdVersion      bool
+		sysNs                string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&opmImage, "opm-image", "quay.io/operator-framework/opm:v1.26", "The opm image to use when unpacking catalog images")
+	// TODO: should we move the unpacker to some common place? Or... hear me out... should catalogd just be a rukpak provisioner?
+	flag.StringVar(&unpackImage, "unpack-image", "quay.io/operator-framework/rukpak:v0.12.0", "The unpack image to use when unpacking catalog images")
+	flag.StringVar(&sysNs, "system-ns", "catalogd-system", "The namespace catalogd uses for internal state, configuration, and workloads")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -94,11 +98,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	unpacker, err := source.NewDefaultUnpacker(mgr, sysNs, unpackImage)
+	if err != nil {
+		setupLog.Error(err, "unable to create unpacker")
+		os.Exit(1)
+	}
+
 	if err = (&corecontrollers.CatalogReconciler{
 		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Cfg:      mgr.GetConfig(),
-		OpmImage: opmImage,
+		Unpacker: unpacker,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Catalog")
 		os.Exit(1)
