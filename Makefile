@@ -5,10 +5,14 @@
 export IMAGE_REPO ?= quay.io/operator-framework/operator-controller
 export IMAGE_TAG ?= devel
 export GO_BUILD_TAGS ?= upstream
+
+# If any of these versions are modified, remember to run `make ensure-external-manifests` to update 
+# the manifests in the testdata/manifests directory.
 export CERT_MGR_VERSION ?= v1.9.0
 export CATALOGD_VERSION ?= v0.1.3
-export GORELEASER_VERSION ?= v1.16.2
 export RUKPAK_VERSION=$(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/rukpak)
+
+export GORELEASER_VERSION ?= v1.16.2
 export WAIT_TIMEOUT ?= 60s
 IMG?=$(IMAGE_REPO):$(IMAGE_TAG)
 
