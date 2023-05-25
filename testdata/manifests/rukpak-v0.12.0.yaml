@@ -1,0 +1,1742 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: crdvalidator-system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: latest
+  name: rukpak-system
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.4
+  name: bundledeployments.core.rukpak.io
+spec:
+  group: core.rukpak.io
+  names:
+    kind: BundleDeployment
+    listKind: BundleDeploymentList
+    plural: bundledeployments
+    shortNames:
+    - bd
+    - bds
+    singular: bundledeployment
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.activeBundle
+      name: Active Bundle
+      type: string
+    - jsonPath: .status.conditions[?(.type=="Installed")].reason
+      name: Install State
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .spec.provisionerClassName
+      name: Provisioner
+      priority: 1
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: BundleDeployment is the Schema for the bundledeployments API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            properties:
+              name:
+                maxLength: 45
+                type: string
+            type: object
+          spec:
+            description: BundleDeploymentSpec defines the desired state of BundleDeployment
+            properties:
+              config:
+                description: Config is provisioner specific configurations
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              provisionerClassName:
+                description: ProvisionerClassName sets the name of the provisioner
+                  that should reconcile this BundleDeployment.
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                type: string
+              template:
+                description: Template describes the generated Bundle that this deployment
+                  will manage.
+                properties:
+                  metadata:
+                    description: 'Standard object''s metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata'
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      finalizers:
+                        items:
+                          type: string
+                        type: array
+                      labels:
+                        additionalProperties:
+                          type: string
+                        type: object
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    type: object
+                  spec:
+                    description: 'Specification of the desired behavior of the Bundle.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status'
+                    properties:
+                      provisionerClassName:
+                        description: ProvisionerClassName sets the name of the provisioner
+                          that should reconcile this BundleDeployment.
+                        pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                        type: string
+                      source:
+                        description: Source defines the configuration for the underlying
+                          Bundle content.
+                        properties:
+                          configMaps:
+                            description: ConfigMaps is a list of config map references
+                              and their relative directory paths that represent a
+                              bundle filesystem.
+                            items:
+                              properties:
+                                configMap:
+                                  description: ConfigMap is a reference to a configmap
+                                    in the rukpak system namespace
+                                  properties:
+                                    name:
+                                      description: 'Name of the referent. More info:
+                                        https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                        TODO: Add other useful fields. apiVersion,
+                                        kind, uid?'
+                                      type: string
+                                  type: object
+                                  x-kubernetes-map-type: atomic
+                                path:
+                                  description: Path is the relative directory path
+                                    within the bundle where the files from the configmap
+                                    will be present when the bundle is unpacked.
+                                  type: string
+                              required:
+                              - configMap
+                              type: object
+                            type: array
+                          git:
+                            description: Git is the git repository that backs the
+                              content of this Bundle.
+                            properties:
+                              auth:
+                                description: Auth configures the authorization method
+                                  if necessary.
+                                properties:
+                                  insecureSkipVerify:
+                                    description: InsecureSkipVerify controls whether
+                                      a client verifies the server's certificate chain
+                                      and host name. If InsecureSkipVerify is true,
+                                      the clone operation will accept any certificate
+                                      presented by the server and any host name in
+                                      that certificate. In this mode, TLS is susceptible
+                                      to machine-in-the-middle attacks unless custom
+                                      verification is used. This should be used only
+                                      for testing.
+                                    type: boolean
+                                  secret:
+                                    description: Secret contains reference to the
+                                      secret that has authorization information and
+                                      is in the namespace that the provisioner is
+                                      deployed. The secret is expected to contain
+                                      `data.username` and `data.password` for the
+                                      username and password, respectively for http(s)
+                                      scheme. Refer to https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
+                                      For the ssh authorization of the GitSource,
+                                      the secret is expected to contain `data.ssh-privatekey`
+                                      and `data.ssh-knownhosts` for the ssh privatekey
+                                      and the host entry in the known_hosts file respectively.
+                                      Refer to https://kubernetes.io/docs/concepts/configuration/secret/#ssh-authentication-secrets
+                                    properties:
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion,
+                                          kind, uid?'
+                                        type: string
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                type: object
+                              directory:
+                                description: Directory refers to the location of the
+                                  bundle within the git repository. Directory is optional
+                                  and if not set defaults to ./manifests.
+                                type: string
+                              ref:
+                                description: Ref configures the git source to clone
+                                  a specific branch, tag, or commit from the specified
+                                  repo. Ref is required, and exactly one field within
+                                  Ref is required. Setting more than one field or
+                                  zero fields will result in an error.
+                                properties:
+                                  branch:
+                                    description: Branch refers to the branch to checkout
+                                      from the repository. The Branch should contain
+                                      the bundle manifests in the specified directory.
+                                    type: string
+                                  commit:
+                                    description: Commit refers to the commit to checkout
+                                      from the repository. The Commit should contain
+                                      the bundle manifests in the specified directory.
+                                    type: string
+                                  tag:
+                                    description: Tag refers to the tag to checkout
+                                      from the repository. The Tag should contain
+                                      the bundle manifests in the specified directory.
+                                    type: string
+                                type: object
+                              repository:
+                                description: Repository is a URL link to the git repository
+                                  containing the bundle. Repository is required and
+                                  the URL should be parsable by a standard git tool.
+                                type: string
+                            required:
+                            - ref
+                            - repository
+                            type: object
+                          http:
+                            description: HTTP is the remote location that backs the
+                              content of this Bundle.
+                            properties:
+                              auth:
+                                description: Auth configures the authorization method
+                                  if necessary.
+                                properties:
+                                  insecureSkipVerify:
+                                    description: InsecureSkipVerify controls whether
+                                      a client verifies the server's certificate chain
+                                      and host name. If InsecureSkipVerify is true,
+                                      the clone operation will accept any certificate
+                                      presented by the server and any host name in
+                                      that certificate. In this mode, TLS is susceptible
+                                      to machine-in-the-middle attacks unless custom
+                                      verification is used. This should be used only
+                                      for testing.
+                                    type: boolean
+                                  secret:
+                                    description: Secret contains reference to the
+                                      secret that has authorization information and
+                                      is in the namespace that the provisioner is
+                                      deployed. The secret is expected to contain
+                                      `data.username` and `data.password` for the
+                                      username and password, respectively for http(s)
+                                      scheme. Refer to https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
+                                      For the ssh authorization of the GitSource,
+                                      the secret is expected to contain `data.ssh-privatekey`
+                                      and `data.ssh-knownhosts` for the ssh privatekey
+                                      and the host entry in the known_hosts file respectively.
+                                      Refer to https://kubernetes.io/docs/concepts/configuration/secret/#ssh-authentication-secrets
+                                    properties:
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion,
+                                          kind, uid?'
+                                        type: string
+                                    type: object
+                                    x-kubernetes-map-type: atomic
+                                type: object
+                              url:
+                                description: URL is where the bundle contents is.
+                                type: string
+                            required:
+                            - url
+                            type: object
+                          image:
+                            description: Image is the bundle image that backs the
+                              content of this bundle.
+                            properties:
+                              pullSecret:
+                                description: ImagePullSecretName contains the name
+                                  of the image pull secret in the namespace that the
+                                  provisioner is deployed.
+                                type: string
+                              ref:
+                                description: Ref contains the reference to a container
+                                  image containing Bundle contents.
+                                type: string
+                            required:
+                            - ref
+                            type: object
+                          type:
+                            description: Type defines the kind of Bundle content being
+                              sourced.
+                            type: string
+                          upload:
+                            description: Upload is a source that enables this Bundle's
+                              content to be uploaded via Rukpak's bundle upload service.
+                              This source type is primarily useful with bundle development
+                              workflows because it enables bundle developers to inject
+                              a local bundle directly into the cluster.
+                            type: object
+                        required:
+                        - type
+                        type: object
+                    required:
+                    - provisionerClassName
+                    - source
+                    type: object
+                required:
+                - spec
+                type: object
+            required:
+            - provisionerClassName
+            - template
+            type: object
+          status:
+            description: BundleDeploymentStatus defines the observed state of BundleDeployment
+            properties:
+              activeBundle:
+                type: string
+              conditions:
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource. --- This struct is intended for direct
+                    use as an array at the field path .status.conditions.  For example,
+                    \n type FooStatus struct{ // Represents the observations of a
+                    foo's current state. // Known .status.conditions.type are: \"Available\",
+                    \"Progressing\", and \"Degraded\" // +patchMergeKey=type // +patchStrategy=merge
+                    // +listType=map // +listMapKey=type Conditions []metav1.Condition
+                    `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\"
+                    protobuf:\"bytes,1,rep,name=conditions\"` \n // other fields }"
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition
+                        transitioned from one status to another. This should be when
+                        the underlying condition changed.  If that is not known, then
+                        using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating
+                        details about the transition. This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.generation
+                        that the condition was set based upon. For instance, if .metadata.generation
+                        is currently 12, but the .status.conditions[x].observedGeneration
+                        is 9, the condition is out of date with respect to the current
+                        state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating
+                        the reason for the condition's last transition. Producers
+                        of specific condition types may define expected values and
+                        meanings for this field, and whether the values are considered
+                        a guaranteed API. The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                        --- Many .condition.type values are consistent across resources
+                        like Available, but because arbitrary conditions can be useful
+                        (see .node.status.conditions), the ability to deconflict is
+                        important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              observedGeneration:
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.4
+  name: bundles.core.rukpak.io
+spec:
+  group: core.rukpak.io
+  names:
+    kind: Bundle
+    listKind: BundleList
+    plural: bundles
+    singular: bundle
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.source.type
+      name: Type
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .spec.provisionerClassName
+      name: Provisioner
+      priority: 1
+      type: string
+    - jsonPath: .status.resolvedSource
+      name: Resolved Source
+      priority: 1
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Bundle is the Schema for the bundles API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            properties:
+              name:
+                maxLength: 52
+                type: string
+            type: object
+          spec:
+            description: BundleSpec defines the desired state of Bundle
+            properties:
+              provisionerClassName:
+                description: ProvisionerClassName sets the name of the provisioner
+                  that should reconcile this BundleDeployment.
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                type: string
+              source:
+                description: Source defines the configuration for the underlying Bundle
+                  content.
+                oneOf:
+                - required:
+                  - git
+                - required:
+                  - image
+                - required:
+                  - configMaps
+                - required:
+                  - upload
+                - required:
+                  - http
+                properties:
+                  configMaps:
+                    description: ConfigMaps is a list of config map references and
+                      their relative directory paths that represent a bundle filesystem.
+                    items:
+                      properties:
+                        configMap:
+                          description: ConfigMap is a reference to a configmap in
+                            the rukpak system namespace
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                TODO: Add other useful fields. apiVersion, kind, uid?'
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        path:
+                          description: Path is the relative directory path within
+                            the bundle where the files from the configmap will be
+                            present when the bundle is unpacked.
+                          type: string
+                      required:
+                      - configMap
+                      type: object
+                    type: array
+                  git:
+                    description: Git is the git repository that backs the content
+                      of this Bundle.
+                    properties:
+                      auth:
+                        description: Auth configures the authorization method if necessary.
+                        properties:
+                          insecureSkipVerify:
+                            description: InsecureSkipVerify controls whether a client
+                              verifies the server's certificate chain and host name.
+                              If InsecureSkipVerify is true, the clone operation will
+                              accept any certificate presented by the server and any
+                              host name in that certificate. In this mode, TLS is
+                              susceptible to machine-in-the-middle attacks unless
+                              custom verification is used. This should be used only
+                              for testing.
+                            type: boolean
+                          secret:
+                            description: Secret contains reference to the secret that
+                              has authorization information and is in the namespace
+                              that the provisioner is deployed. The secret is expected
+                              to contain `data.username` and `data.password` for the
+                              username and password, respectively for http(s) scheme.
+                              Refer to https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
+                              For the ssh authorization of the GitSource, the secret
+                              is expected to contain `data.ssh-privatekey` and `data.ssh-knownhosts`
+                              for the ssh privatekey and the host entry in the known_hosts
+                              file respectively. Refer to https://kubernetes.io/docs/concepts/configuration/secret/#ssh-authentication-secrets
+                            properties:
+                              name:
+                                description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  TODO: Add other useful fields. apiVersion, kind,
+                                  uid?'
+                                type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                      directory:
+                        description: Directory refers to the location of the bundle
+                          within the git repository. Directory is optional and if
+                          not set defaults to ./manifests.
+                        type: string
+                      ref:
+                        description: Ref configures the git source to clone a specific
+                          branch, tag, or commit from the specified repo. Ref is required,
+                          and exactly one field within Ref is required. Setting more
+                          than one field or zero fields will result in an error.
+                        oneOf:
+                        - required:
+                          - branch
+                        - required:
+                          - commit
+                        - required:
+                          - tag
+                        properties:
+                          branch:
+                            description: Branch refers to the branch to checkout from
+                              the repository. The Branch should contain the bundle
+                              manifests in the specified directory.
+                            type: string
+                          commit:
+                            description: Commit refers to the commit to checkout from
+                              the repository. The Commit should contain the bundle
+                              manifests in the specified directory.
+                            type: string
+                          tag:
+                            description: Tag refers to the tag to checkout from the
+                              repository. The Tag should contain the bundle manifests
+                              in the specified directory.
+                            type: string
+                        type: object
+                      repository:
+                        description: Repository is a URL link to the git repository
+                          containing the bundle. Repository is required and the URL
+                          should be parsable by a standard git tool.
+                        type: string
+                    required:
+                    - ref
+                    - repository
+                    type: object
+                  http:
+                    description: HTTP is the remote location that backs the content
+                      of this Bundle.
+                    properties:
+                      auth:
+                        description: Auth configures the authorization method if necessary.
+                        properties:
+                          insecureSkipVerify:
+                            description: InsecureSkipVerify controls whether a client
+                              verifies the server's certificate chain and host name.
+                              If InsecureSkipVerify is true, the clone operation will
+                              accept any certificate presented by the server and any
+                              host name in that certificate. In this mode, TLS is
+                              susceptible to machine-in-the-middle attacks unless
+                              custom verification is used. This should be used only
+                              for testing.
+                            type: boolean
+                          secret:
+                            description: Secret contains reference to the secret that
+                              has authorization information and is in the namespace
+                              that the provisioner is deployed. The secret is expected
+                              to contain `data.username` and `data.password` for the
+                              username and password, respectively for http(s) scheme.
+                              Refer to https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
+                              For the ssh authorization of the GitSource, the secret
+                              is expected to contain `data.ssh-privatekey` and `data.ssh-knownhosts`
+                              for the ssh privatekey and the host entry in the known_hosts
+                              file respectively. Refer to https://kubernetes.io/docs/concepts/configuration/secret/#ssh-authentication-secrets
+                            properties:
+                              name:
+                                description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  TODO: Add other useful fields. apiVersion, kind,
+                                  uid?'
+                                type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                      url:
+                        description: URL is where the bundle contents is.
+                        type: string
+                    required:
+                    - url
+                    type: object
+                  image:
+                    description: Image is the bundle image that backs the content
+                      of this bundle.
+                    properties:
+                      pullSecret:
+                        description: ImagePullSecretName contains the name of the
+                          image pull secret in the namespace that the provisioner
+                          is deployed.
+                        type: string
+                      ref:
+                        description: Ref contains the reference to a container image
+                          containing Bundle contents.
+                        type: string
+                    required:
+                    - ref
+                    type: object
+                  type:
+                    description: Type defines the kind of Bundle content being sourced.
+                    type: string
+                  upload:
+                    description: Upload is a source that enables this Bundle's content
+                      to be uploaded via Rukpak's bundle upload service. This source
+                      type is primarily useful with bundle development workflows because
+                      it enables bundle developers to inject a local bundle directly
+                      into the cluster.
+                    type: object
+                required:
+                - type
+                type: object
+            required:
+            - provisionerClassName
+            - source
+            type: object
+          status:
+            description: BundleStatus defines the observed state of Bundle
+            properties:
+              conditions:
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource. --- This struct is intended for direct
+                    use as an array at the field path .status.conditions.  For example,
+                    \n type FooStatus struct{ // Represents the observations of a
+                    foo's current state. // Known .status.conditions.type are: \"Available\",
+                    \"Progressing\", and \"Degraded\" // +patchMergeKey=type // +patchStrategy=merge
+                    // +listType=map // +listMapKey=type Conditions []metav1.Condition
+                    `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\"
+                    protobuf:\"bytes,1,rep,name=conditions\"` \n // other fields }"
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition
+                        transitioned from one status to another. This should be when
+                        the underlying condition changed.  If that is not known, then
+                        using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating
+                        details about the transition. This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.generation
+                        that the condition was set based upon. For instance, if .metadata.generation
+                        is currently 12, but the .status.conditions[x].observedGeneration
+                        is 9, the condition is out of date with respect to the current
+                        state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating
+                        the reason for the condition's last transition. Producers
+                        of specific condition types may define expected values and
+                        meanings for this field, and whether the values are considered
+                        a guaranteed API. The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                        --- Many .condition.type values are consistent across resources
+                        like Available, but because arbitrary conditions can be useful
+                        (see .node.status.conditions), the ability to deconflict is
+                        important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              contentURL:
+                type: string
+              observedGeneration:
+                format: int64
+                type: integer
+              phase:
+                type: string
+              resolvedSource:
+                properties:
+                  configMaps:
+                    description: ConfigMaps is a list of config map references and
+                      their relative directory paths that represent a bundle filesystem.
+                    items:
+                      properties:
+                        configMap:
+                          description: ConfigMap is a reference to a configmap in
+                            the rukpak system namespace
+                          properties:
+                            name:
+                              description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                TODO: Add other useful fields. apiVersion, kind, uid?'
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        path:
+                          description: Path is the relative directory path within
+                            the bundle where the files from the configmap will be
+                            present when the bundle is unpacked.
+                          type: string
+                      required:
+                      - configMap
+                      type: object
+                    type: array
+                  git:
+                    description: Git is the git repository that backs the content
+                      of this Bundle.
+                    properties:
+                      auth:
+                        description: Auth configures the authorization method if necessary.
+                        properties:
+                          insecureSkipVerify:
+                            description: InsecureSkipVerify controls whether a client
+                              verifies the server's certificate chain and host name.
+                              If InsecureSkipVerify is true, the clone operation will
+                              accept any certificate presented by the server and any
+                              host name in that certificate. In this mode, TLS is
+                              susceptible to machine-in-the-middle attacks unless
+                              custom verification is used. This should be used only
+                              for testing.
+                            type: boolean
+                          secret:
+                            description: Secret contains reference to the secret that
+                              has authorization information and is in the namespace
+                              that the provisioner is deployed. The secret is expected
+                              to contain `data.username` and `data.password` for the
+                              username and password, respectively for http(s) scheme.
+                              Refer to https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
+                              For the ssh authorization of the GitSource, the secret
+                              is expected to contain `data.ssh-privatekey` and `data.ssh-knownhosts`
+                              for the ssh privatekey and the host entry in the known_hosts
+                              file respectively. Refer to https://kubernetes.io/docs/concepts/configuration/secret/#ssh-authentication-secrets
+                            properties:
+                              name:
+                                description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  TODO: Add other useful fields. apiVersion, kind,
+                                  uid?'
+                                type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                      directory:
+                        description: Directory refers to the location of the bundle
+                          within the git repository. Directory is optional and if
+                          not set defaults to ./manifests.
+                        type: string
+                      ref:
+                        description: Ref configures the git source to clone a specific
+                          branch, tag, or commit from the specified repo. Ref is required,
+                          and exactly one field within Ref is required. Setting more
+                          than one field or zero fields will result in an error.
+                        properties:
+                          branch:
+                            description: Branch refers to the branch to checkout from
+                              the repository. The Branch should contain the bundle
+                              manifests in the specified directory.
+                            type: string
+                          commit:
+                            description: Commit refers to the commit to checkout from
+                              the repository. The Commit should contain the bundle
+                              manifests in the specified directory.
+                            type: string
+                          tag:
+                            description: Tag refers to the tag to checkout from the
+                              repository. The Tag should contain the bundle manifests
+                              in the specified directory.
+                            type: string
+                        type: object
+                      repository:
+                        description: Repository is a URL link to the git repository
+                          containing the bundle. Repository is required and the URL
+                          should be parsable by a standard git tool.
+                        type: string
+                    required:
+                    - ref
+                    - repository
+                    type: object
+                  http:
+                    description: HTTP is the remote location that backs the content
+                      of this Bundle.
+                    properties:
+                      auth:
+                        description: Auth configures the authorization method if necessary.
+                        properties:
+                          insecureSkipVerify:
+                            description: InsecureSkipVerify controls whether a client
+                              verifies the server's certificate chain and host name.
+                              If InsecureSkipVerify is true, the clone operation will
+                              accept any certificate presented by the server and any
+                              host name in that certificate. In this mode, TLS is
+                              susceptible to machine-in-the-middle attacks unless
+                              custom verification is used. This should be used only
+                              for testing.
+                            type: boolean
+                          secret:
+                            description: Secret contains reference to the secret that
+                              has authorization information and is in the namespace
+                              that the provisioner is deployed. The secret is expected
+                              to contain `data.username` and `data.password` for the
+                              username and password, respectively for http(s) scheme.
+                              Refer to https://kubernetes.io/docs/concepts/configuration/secret/#basic-authentication-secret
+                              For the ssh authorization of the GitSource, the secret
+                              is expected to contain `data.ssh-privatekey` and `data.ssh-knownhosts`
+                              for the ssh privatekey and the host entry in the known_hosts
+                              file respectively. Refer to https://kubernetes.io/docs/concepts/configuration/secret/#ssh-authentication-secrets
+                            properties:
+                              name:
+                                description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  TODO: Add other useful fields. apiVersion, kind,
+                                  uid?'
+                                type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        type: object
+                      url:
+                        description: URL is where the bundle contents is.
+                        type: string
+                    required:
+                    - url
+                    type: object
+                  image:
+                    description: Image is the bundle image that backs the content
+                      of this bundle.
+                    properties:
+                      pullSecret:
+                        description: ImagePullSecretName contains the name of the
+                          image pull secret in the namespace that the provisioner
+                          is deployed.
+                        type: string
+                      ref:
+                        description: Ref contains the reference to a container image
+                          containing Bundle contents.
+                        type: string
+                    required:
+                    - ref
+                    type: object
+                  type:
+                    description: Type defines the kind of Bundle content being sourced.
+                    type: string
+                  upload:
+                    description: Upload is a source that enables this Bundle's content
+                      to be uploaded via Rukpak's bundle upload service. This source
+                      type is primarily useful with bundle development workflows because
+                      it enables bundle developers to inject a local bundle directly
+                      into the cluster.
+                    type: object
+                required:
+                - type
+                type: object
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: crd-validation-webhook
+  namespace: crdvalidator-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: core-admin
+  namespace: rukpak-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: helm-provisioner-admin
+  namespace: rukpak-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rukpak-webhooks-admin
+  namespace: rukpak-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: bundle-reader
+rules:
+- nonResourceURLs:
+  - /bundles/*
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: bundle-uploader
+rules:
+- nonResourceURLs:
+  - /bundles/*
+  verbs:
+  - put
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: core-admin
+rules:
+- nonResourceURLs:
+  - /bundles/*
+  - /uploads/*
+  verbs:
+  - get
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundledeployments
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundledeployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundledeployments/status
+  verbs:
+  - patch
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundles
+  verbs:
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundles/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundles/status
+  verbs:
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: crd-validation-webhook
+rules:
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: helm-provisioner-admin
+rules:
+- nonResourceURLs:
+  - /bundles/*
+  - /uploads/*
+  verbs:
+  - get
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundledeployments
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundledeployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundledeployments/status
+  verbs:
+  - patch
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundles
+  verbs:
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundles/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundles/status
+  verbs:
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rukpak-webhooks-admin
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - core.rukpak.io
+  resources:
+  - bundles
+  verbs:
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: core-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: core-admin
+subjects:
+- apiGroup: ""
+  kind: ServiceAccount
+  name: core-admin
+  namespace: rukpak-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: crd-validation-webhook
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: crd-validation-webhook
+subjects:
+- kind: ServiceAccount
+  name: crd-validation-webhook
+  namespace: crdvalidator-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: helm-provisioner-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: helm-provisioner-admin
+subjects:
+- apiGroup: ""
+  kind: ServiceAccount
+  name: helm-provisioner-admin
+  namespace: rukpak-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: rukpak-webhooks-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: rukpak-webhooks-admin
+subjects:
+- apiGroup: ""
+  kind: ServiceAccount
+  name: rukpak-webhooks-admin
+  namespace: rukpak-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: crd-validation-webhook
+  namespace: crdvalidator-system
+spec:
+  ports:
+  - port: 9443
+    protocol: TCP
+    targetPort: 9443
+  selector:
+    app: crd-validation-webhook
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: core
+  namespace: rukpak-system
+spec:
+  ports:
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    app: core
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: helm-provisioner
+  namespace: rukpak-system
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    app: helm-provisioner
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rukpak-webhook-service
+  namespace: rukpak-system
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 9443
+  selector:
+    app: webhooks
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crd-validation-webhook
+  namespace: crdvalidator-system
+spec:
+  selector:
+    matchLabels:
+      app: crd-validation-webhook
+  template:
+    metadata:
+      labels:
+        app: crd-validation-webhook
+    spec:
+      containers:
+      - command:
+        - /crdvalidator
+        image: quay.io/operator-framework/rukpak:v0.12.0
+        imagePullPolicy: IfNotPresent
+        name: crd-validation-webhook
+        resources:
+          requests:
+            cpu: 1m
+            memory: 15Mi
+        volumeMounts:
+        - mountPath: /etc/admission-webhook/tls
+          name: tls
+      serviceAccountName: crd-validation-webhook
+      volumes:
+      - name: tls
+        secret:
+          secretName: crd-validation-webhook-certificate
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: core
+  name: core
+  namespace: rukpak-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: core
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        app: core
+    spec:
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=1
+        - --client-ca-file=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        - --tls-cert-file=/etc/pki/tls/tls.crt
+        - --tls-private-key-file=/etc/pki/tls/tls.key
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 1m
+            memory: 15Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /etc/pki/tls
+          name: certs
+      - args:
+        - --unpack-image=quay.io/operator-framework/rukpak:v0.12.0
+        - --base-upload-manager-url=https://core.rukpak-system.svc
+        - --provisioner-storage-dir=/var/cache/bundles
+        - --upload-storage-dir=/var/cache/uploads
+        - --http-bind-address=127.0.0.1:8080
+        - --http-external-address=https://core.rukpak-system.svc
+        - --bundle-ca-file=/etc/pki/tls/ca.crt
+        command:
+        - /core
+        image: quay.io/operator-framework/rukpak:v0.12.0
+        imagePullPolicy: IfNotPresent
+        name: manager
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 10m
+            memory: 160Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /var/cache/bundles
+          name: bundle-cache
+        - mountPath: /var/cache/uploads
+          name: upload-cache
+        - mountPath: /etc/pki/tls
+          name: certs
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: core-admin
+      volumes:
+      - emptyDir: {}
+        name: bundle-cache
+      - emptyDir: {}
+        name: upload-cache
+      - name: certs
+        secret:
+          optional: false
+          secretName: core-cert
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: helm-provisioner
+  name: helm-provisioner
+  namespace: rukpak-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: helm-provisioner
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        app: helm-provisioner
+    spec:
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=1
+        - --client-ca-file=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        - --tls-cert-file=/etc/pki/tls/tls.crt
+        - --tls-private-key-file=/etc/pki/tls/tls.key
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 1m
+            memory: 15Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /etc/pki/tls
+          name: certs
+      - args:
+        - --unpack-image=quay.io/operator-framework/rukpak:v0.12.0
+        - --base-upload-manager-url=https://core.rukpak-system.svc
+        - --storage-dir=/var/cache/bundles
+        - --http-bind-address=127.0.0.1:8080
+        - --http-external-address=https://helm-provisioner.rukpak-system.svc
+        - --bundle-ca-file=/etc/pki/tls/ca.crt
+        command:
+        - /helm
+        image: quay.io/operator-framework/rukpak:v0.12.0
+        imagePullPolicy: IfNotPresent
+        name: manager
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 10m
+            memory: 160Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /var/cache/bundles
+          name: bundle-cache
+        - mountPath: /etc/pki/tls
+          name: certs
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: helm-provisioner-admin
+      volumes:
+      - emptyDir: {}
+        name: bundle-cache
+      - name: certs
+        secret:
+          optional: false
+          secretName: helm-provisioner-cert
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: webhooks
+  name: rukpak-webhooks
+  namespace: rukpak-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webhooks
+  template:
+    metadata:
+      labels:
+        app: webhooks
+    spec:
+      containers:
+      - command:
+        - /webhooks
+        image: quay.io/operator-framework/rukpak:v0.12.0
+        imagePullPolicy: IfNotPresent
+        name: webhooks
+        ports:
+        - containerPort: 8080
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 1m
+            memory: 15Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: rukpak-webhooks-admin
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: rukpak-webhook-certificate
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: crd-validation-webhook-certificate
+  namespace: crdvalidator-system
+spec:
+  dnsNames:
+  - crd-validation-webhook.crdvalidator-system.svc
+  issuerRef:
+    name: selfsigned
+  secretName: crd-validation-webhook-certificate
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: core
+  namespace: rukpak-system
+spec:
+  dnsNames:
+  - localhost
+  - core.rukpak-system.svc
+  - core.rukpak-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: rukpak-ca-issuer
+  secretName: core-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: helm-provisioner
+  namespace: rukpak-system
+spec:
+  dnsNames:
+  - helm-provisioner.rukpak-system.svc
+  - helm-provisioner.rukpak-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: rukpak-ca-issuer
+  secretName: helm-provisioner-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rukpak-ca
+  namespace: rukpak-system
+spec:
+  dnsNames:
+  - rukpak.io
+  duration: 2160h
+  isCA: true
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: rukpak-selfsigned-issuer
+  privateKey:
+    algorithm: ECDSA
+    rotationPolicy: Always
+    size: 256
+  renewBefore: 360h
+  secretName: rukpak-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: rukpak-webhook-certificate
+  namespace: rukpak-system
+spec:
+  dnsNames:
+  - rukpak-webhook-service.rukpak-system.svc
+  - rukpak-webhook-service.rukpak-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: rukpak-selfsigned
+  secretName: rukpak-webhook-certificate
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: rukpak-selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned
+  namespace: crdvalidator-system
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: rukpak-ca-issuer
+  namespace: rukpak-system
+spec:
+  ca:
+    secretName: rukpak-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: rukpak-selfsigned
+  namespace: rukpak-system
+spec:
+  selfSigned: {}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: crdvalidator-system/crd-validation-webhook-certificate
+  name: crd-validation-webhook
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: crd-validation-webhook
+      namespace: crdvalidator-system
+      path: /validate-crd
+      port: 9443
+  name: webhook.crdvalidator.io
+  objectSelector:
+    matchLabels:
+      core.rukpak.io/owner-kind: BundleDeployment
+  rules:
+  - apiGroups:
+    - apiextensions.k8s.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - customresourcedefinitions
+    scope: '*'
+  sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: rukpak-system/rukpak-webhook-certificate
+  name: rukpak-validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: rukpak-webhook-service
+      namespace: rukpak-system
+      path: /validate-core-v1-configmap
+  failurePolicy: Fail
+  name: vconfigmaps.core.rukpak.io
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: rukpak-system
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - DELETE
+    resources:
+    - configmaps
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: rukpak-webhook-service
+      namespace: rukpak-system
+      path: /validate-core-rukpak-io-v1alpha1-bundle
+  failurePolicy: Fail
+  name: vbundles.core.rukpak.io
+  rules:
+  - apiGroups:
+    - core.rukpak.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - bundles
+  sideEffects: None
