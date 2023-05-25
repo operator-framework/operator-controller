@@ -9,6 +9,12 @@ export IMAGE_REPO                ?= quay.io/operator-framework/catalogd
 export IMAGE_TAG                 ?= devel
 IMAGE=$(IMAGE_REPO):$(IMAGE_TAG)
 
+# setup-envtest on *nix uses XDG_DATA_HOME, falling back to HOME, as the default storage directory. Some CI setups
+# don't have XDG_DATA_HOME set; in those cases, we set it here so setup-envtest functions correctly. This shouldn't
+# affect developers.
+export XDG_DATA_HOME ?= /tmp/.local/share
+
+# bingo manages consistent tooling versions for things like kind, kustomize, etc.
 include .bingo/Variables.mk
 
 # Dependencies
