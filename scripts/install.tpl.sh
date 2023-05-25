@@ -36,16 +36,16 @@ function kubectl_wait() {
     kubectl wait --for=condition=Available --namespace="${namespace}" "${runtime}" --timeout="${timeout}"
 }
 
-kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/${cert_mgr_version}/cert-manager.yaml"
+kubectl apply -f testdata/manifests/cert-manager-${cert_mgr_version}.yaml
 kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
 
-kubectl apply -f "https://github.com/operator-framework/rukpak/releases/download/${rukpak_version}/rukpak.yaml"
+kubectl apply -f testdata/manifests/rukpak-${rukpak_version}.yaml
 kubectl_wait "rukpak-system" "deployment/core" "60s"
 kubectl_wait "rukpak-system" "deployment/helm-provisioner" "60s"
 kubectl_wait "rukpak-system" "deployment/rukpak-webhooks" "60s"
 
-kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/catalogd.yaml"
+kubectl apply -f testdata/manifests/catalogd-${catalogd_version}.yaml
 kubectl_wait "catalogd-system" "deployment/catalogd-controller-manager" "60s"
 
-kubectl apply -f "${operator_controller_manifest}"
+kubectl apply -f ${operator_controller_manifest}
 kubectl_wait "operator-controller-system" "deployment/operator-controller-controller-manager" "60s"

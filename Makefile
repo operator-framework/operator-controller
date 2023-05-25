@@ -110,7 +110,15 @@ build-linux: $(BUILDDEPS) ## Build manager binary using goreleaser for GOOS=linu
 	GOOS=linux $(BUILDCMD)
 
 .PHONY: run
-run: docker-build kind-cluster kind-load install ## Build the operator-controller then deploy it into a new kind cluster.
+run: docker-build kind-cluster kind-load ensure-external-manifests ensure-external-images-kindload install ## Build the operator-controller then deploy it into a new kind cluster.
+
+.PHONY: ensure-external-manifests ## Ensure that the external manifests are present in the manifests directory.
+ensure-external-manifests:
+	./scripts/pull-manifests.sh
+
+.PHONY: ensure-external-images-kindload
+ensure-external-images-kindload: ensure-external-manifests ## Ensure that the external images are loaded into the kind cluster.
+	./scripts/kind-load-images.sh
 
 .PHONY: wait
 wait:
@@ -133,7 +141,7 @@ release: goreleaser ## Runs goreleaser for the operator-controller. By default, 
 	$(GORELEASER) $(GORELEASER_ARGS)
 
 quickstart: export MANIFEST="https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml"
-quickstart: kustomize generate ## Generate the installation release manifests and scripts
+quickstart: kustomize generate ensure-external-manifests ## Generate the installation release manifests and scripts
 	kubectl kustomize config/default | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
 	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
