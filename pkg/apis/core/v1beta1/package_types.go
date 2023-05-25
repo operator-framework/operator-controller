@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -44,14 +45,11 @@ type PackageList struct {
 
 // PackageSpec defines the desired state of Package
 type PackageSpec struct {
-	// CatalogSource is the name of the Catalog this package belongs to
-	CatalogSource            string `json:"catalogSource"`
-	CatalogSourceDisplayName string `json:"catalogSourceDisplayName,omitempty"`
-	CatalogSourcePublisher   string `json:"catalogSourcePublisher,omitempty"`
+	// Catalog is the name of the Catalog this package belongs to
+	Catalog corev1.LocalObjectReference `json:"catalog"`
 
-	// TODO(everettraven): can we remove this? Can the package metadata.name can be used instead?
-	// // PackageName is the name of the overall package, ala `etcd`.
-	// PackageName string `json:"packageName"`
+	// Name is the name of the package, ala `etcd`.
+	Name string `json:"packageName"`
 
 	// Description is the description of the package
 	Description string `json:"description"`
@@ -60,7 +58,7 @@ type PackageSpec struct {
 	Channels []PackageChannel `json:"channels"`
 
 	//Icon is the Base64data image of the package for console display
-	Icon Icon `json:"icon,omitempty"`
+	Icon *Icon `json:"icon,omitempty"`
 
 	// DefaultChannel is, if specified, the name of the default channel for the package. The
 	// default channel will be installed if no other channel is explicitly given. If the package
@@ -87,8 +85,8 @@ type ChannelEntry struct {
 
 // Icon defines a base64 encoded icon and media type
 type Icon struct {
-	Base64Data string `json:"base64data,omitempty"`
-	Mediatype  string `json:"mediatype,omitempty"`
+	Data      []byte `json:"data,omitempty"`
+	MediaType string `json:"mediatype,omitempty"`
 }
 
 // PackageStatus defines the observed state of Package

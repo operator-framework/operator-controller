@@ -17,8 +17,10 @@ limitations under the License.
 package v1beta1
 
 import (
+	"encoding/json"
+
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 //+kubebuilder:object:root=true
@@ -45,8 +47,8 @@ type BundleMetadataList struct {
 
 // BundleMetadataSpec defines the desired state of BundleMetadata
 type BundleMetadataSpec struct {
-	// CatalogSource is the name of the Catalog that provides this bundle
-	CatalogSource string `json:"catalogSource"`
+	// Catalog is the name of the Catalog that provides this bundle
+	Catalog corev1.LocalObjectReference `json:"catalog"`
 
 	// Package is the name of the package that provides this bundle
 	Package string `json:"package"`
@@ -65,7 +67,8 @@ type Property struct {
 	Type string `json:"type"`
 
 	// +kubebuilder:pruning:PreserveUnknownFields
-	Value runtime.RawExtension `json:"value"`
+	// +kubebuilder:validation:Schemaless
+	Value json.RawMessage `json:"value"`
 }
 
 // TODO: In the future we should remove this in favor of using `declcfg.RelatedImage` (or similar) from

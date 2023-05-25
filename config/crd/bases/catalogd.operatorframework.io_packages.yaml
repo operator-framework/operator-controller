@@ -34,14 +34,16 @@ spec:
           spec:
             description: PackageSpec defines the desired state of Package
             properties:
-              catalogSource:
-                description: CatalogSource is the name of the Catalog this package
-                  belongs to
-                type: string
-              catalogSourceDisplayName:
-                type: string
-              catalogSourcePublisher:
-                type: string
+              catalog:
+                description: Catalog is the name of the Catalog this package belongs
+                  to
+                properties:
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
               channels:
                 description: Channels are the declared channels for the package, ala
                   `stable` or `alpha`.
@@ -89,16 +91,21 @@ spec:
                 description: Icon is the Base64data image of the package for console
                   display
                 properties:
-                  base64data:
+                  data:
+                    format: byte
                     type: string
                   mediatype:
                     type: string
                 type: object
+              packageName:
+                description: Name is the name of the package, ala `etcd`.
+                type: string
             required:
-            - catalogSource
+            - catalog
             - channels
             - defaultChannel
             - description
+            - packageName
             type: object
           status:
             description: PackageStatus defines the observed state of Package

@@ -9,15 +9,16 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/operator-framework/catalogd/internal/source"
-	catalogdv1beta1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
-	"github.com/operator-framework/catalogd/pkg/controllers/core"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/operator-framework/catalogd/internal/source"
+	catalogdv1beta1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	"github.com/operator-framework/catalogd/pkg/controllers/core"
 )
 
 var _ source.Unpacker = &MockSource{}
@@ -228,8 +229,14 @@ var _ = Describe("Catalogd Controller Test", func() {
 					testPackage                 = fmt.Sprintf(testPackageTemplate, testPackageDefaultChannel, testPackageName)
 					testBundle                  = fmt.Sprintf(testBundleTemplate, testBundleImage, testBundleName, testPackageName, testBundleRelatedImageName, testBundleRelatedImageImage, testBundleObjectData)
 					testChannel                 = fmt.Sprintf(testChannelTemplate, testPackageName, testChannelName, testBundleName)
+
+					testBundleMetaName  string
+					testPackageMetaName string
 				)
 				BeforeEach(func() {
+					testBundleMetaName = fmt.Sprintf("%s-%s", catalog.Name, testBundleName)
+					testPackageMetaName = fmt.Sprintf("%s-%s", catalog.Name, testPackageName)
+
 					filesys := &fstest.MapFS{
 						"bundle.yaml":  &fstest.MapFile{Data: []byte(testBundle), Mode: os.ModePerm},
 						"package.yaml": &fstest.MapFile{Data: []byte(testPackage), Mode: os.ModePerm},
@@ -253,7 +260,7 @@ var _ = Describe("Catalogd Controller Test", func() {
 					// clean up package
 					pkg := &catalogdv1beta1.Package{
 						ObjectMeta: metav1.ObjectMeta{
-							Name: testPackageName,
+							Name: testPackageMetaName,
 						},
 					}
 					Expect(cl.Delete(ctx, pkg)).NotTo(HaveOccurred())
@@ -261,7 +268,7 @@ var _ = Describe("Catalogd Controller Test", func() {
 					// clean up bundlemetadata
 					bm := &catalogdv1beta1.BundleMetadata{
 						ObjectMeta: metav1.ObjectMeta{
-							Name: testBundleName,
+							Name: testBundleMetaName,
 						},
 					}
 					Expect(cl.Delete(ctx, bm)).NotTo(HaveOccurred())
@@ -285,9 +292,9 @@ var _ = Describe("Catalogd Controller Test", func() {
 					Expect(cl.List(ctx, bundlemetadatas)).To(Succeed())
 					Expect(bundlemetadatas.Items).To(HaveLen(1))
 					bundlemetadata := bundlemetadatas.Items[0]
-					Expect(bundlemetadata.Name).To(Equal(testBundleName))
+					Expect(bundlemetadata.Name).To(Equal(testBundleMetaName))
 					Expect(bundlemetadata.Spec.Image).To(Equal(testBundleImage))
-					Expect(bundlemetadata.Spec.CatalogSource).To(Equal(catalog.Name))
+					Expect(bundlemetadata.Spec.Catalog.Name).To(Equal(catalog.Name))
 					Expect(bundlemetadata.Spec.Package).To(Equal(testPackageName))
 					Expect(bundlemetadata.Spec.RelatedImages).To(HaveLen(1))
 					Expect(bundlemetadata.Spec.RelatedImages[0].Name).To(Equal(testBundleRelatedImageName))
@@ -301,9 +308,9 @@ var _ = Describe("Catalogd Controller Test", func() {
 					Expect(cl.List(ctx, packages)).To(Succeed())
 					Expect(packages.Items).To(HaveLen(1))
 					pack := packages.Items[0]
-					Expect(pack.Name).To(Equal(testPackageName))
+					Expect(pack.Name).To(Equal(testPackageMetaName))
 					Expect(pack.Spec.DefaultChannel).To(Equal(testPackageDefaultChannel))
-					Expect(pack.Spec.CatalogSource).To(Equal(catalog.Name))
+					Expect(pack.Spec.Catalog.Name).To(Equal(catalog.Name))
 					Expect(pack.Spec.Channels).To(HaveLen(1))
 					Expect(pack.Spec.Channels[0].Name).To(Equal(testChannelName))
 					Expect(pack.Spec.Channels[0].Entries).To(HaveLen(1))
