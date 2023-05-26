@@ -15,7 +15,7 @@ rules:
 - apiGroups:
   - catalogd.operatorframework.io
   resources:
-  - catalogsources
+  - catalogs
   verbs:
   - list
   - watch

@@ -21,7 +21,6 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
@@ -62,7 +61,7 @@ type OperatorReconciler struct {
 
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=bundlemetadata,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=packages,verbs=list;watch
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogsources,verbs=list;watch
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs,verbs=list;watch
 
 func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("operator-controller")
@@ -293,7 +292,7 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&operatorsv1alpha1.Operator{}).
-		Watches(source.NewKindWithCache(&catalogd.CatalogSource{}, mgr.GetCache()),
+		Watches(source.NewKindWithCache(&catalogd.Catalog{}, mgr.GetCache()),
 			handler.EnqueueRequestsFromMapFunc(operatorRequestsForCatalog(context.TODO(), mgr.GetClient(), mgr.GetLogger()))).
 		Owns(&rukpakv1alpha1.BundleDeployment{}).
 		Complete(r)
@@ -435,7 +434,7 @@ func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message 
 func operatorRequestsForCatalog(ctx context.Context, c client.Reader, logger logr.Logger) handler.MapFunc {
 	return func(object client.Object) []reconcile.Request {
 		// no way of associating an operator to a catalog so create reconcile requests for everything
-		operators := operatorv1.OperatorList{}
+		operators := operatorsv1alpha1.OperatorList{}
 		err := c.List(ctx, &operators)
 		if err != nil {
 			logger.Error(err, "unable to enqueue operators for catalog reconcile")
