@@ -72,6 +72,10 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
+.PHONY: verify
+verify: fmt vet manifests generate ensure-external-manifests ## Run all verification steps.
+	git diff --exit-code
+
 .PHONY: test test-e2e e2e kind-load kind-cluster kind-cluster-cleanup
 test: manifests generate fmt vet test-unit e2e ## Run all tests.
 
