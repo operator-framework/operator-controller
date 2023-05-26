@@ -78,7 +78,7 @@ BINARIES=manager
 LINUX_BINARIES=$(join $(addprefix linux/,$(BINARIES)), )
 
 BUILDCMD = sh -c 'mkdir -p $(BUILDBIN) && $(GORELEASER) build $(GORELEASER_ARGS) --id $(notdir $@) --single-target -o $(BUILDBIN)/$(notdir $@)'
-BUILDDEPS = goreleaser
+BUILDDEPS = $(GORELEASER)
 
 .PHONY: build
 build: $(BINARIES)  ## Build all project binaries for the local OS and architecture.
