@@ -8,6 +8,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/env"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -61,6 +64,13 @@ var _ = BeforeSuite(func() {
 	Expect(catalogd.AddToScheme(scheme)).To(Succeed())
 
 	var err error
+
+	err = appsv1.AddToScheme(scheme)
+	Expect(err).ToNot(HaveOccurred())
+
+	err = corev1.AddToScheme(scheme)
+	Expect(err).ToNot(HaveOccurred())
+
 	c, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).To(Not(HaveOccurred()))
 
@@ -82,7 +92,10 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	ctx := context.Background()
-
+	if basePath := env.GetString("ARTIFACT_PATH", ""); basePath != "" {
+		// get all the artifacts from the test run and save them to the artifact path
+		getArtifactsOutput(ctx, basePath)
+	}
 	Expect(c.Delete(ctx, operatorCatalog)).To(Succeed())
 	Eventually(func(g Gomega) {
 		err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, &catalogd.Catalog{})
