@@ -17,7 +17,6 @@ import (
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -243,14 +242,13 @@ var _ = Describe("Operator Install", func() {
 })
 
 // getArtifactsOutput gets all the artifacts from the test run and saves them to the artifact path.
-// right now it will save:
+// Currently it saves:
 // - operators
 // - pods logs
 // - deployments
 // - bundle
 // - bundledeployments
 // - catalogsources
-
 func getArtifactsOutput(ctx context.Context, basePath string) {
 	kubeClient, err := kubeclient.NewForConfig(cfg)
 	Expect(err).To(Not(HaveOccurred()))
@@ -282,7 +280,7 @@ func getArtifactsOutput(ctx context.Context, basePath string) {
 			GinkgoWriter.Printf("Failed to marshal operator %w", err)
 			continue
 		}
-		if err := os.WriteFile(filepath.Join(artifactPath, operator.Name+"-operator.yaml"), operatorYaml, 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(artifactPath, operator.Name+"-operator.yaml"), operatorYaml, 0600); err != nil {
 			GinkgoWriter.Printf("Failed to write operator to file %w", err)
 		}
 	}
@@ -299,7 +297,7 @@ func getArtifactsOutput(ctx context.Context, basePath string) {
 			GinkgoWriter.Printf("Failed to marshal catalogsource %w", err)
 			continue
 		}
-		if err := os.WriteFile(filepath.Join(artifactPath, catalogsource.Name+"-catalogsource.yaml"), catalogsourceYaml, 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(artifactPath, catalogsource.Name+"-catalogsource.yaml"), catalogsourceYaml, 0600); err != nil {
 			GinkgoWriter.Printf("Failed to write catalogsource to file %w", err)
 		}
 	}
@@ -316,7 +314,7 @@ func getArtifactsOutput(ctx context.Context, basePath string) {
 			GinkgoWriter.Printf("Failed to marshal bundle %w", err)
 			continue
 		}
-		if err := os.WriteFile(filepath.Join(artifactPath, bundle.Name+"-bundle.yaml"), bundleYaml, 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(artifactPath, bundle.Name+"-bundle.yaml"), bundleYaml, 0600); err != nil {
 			GinkgoWriter.Printf("Failed to write bundle to file %w", err)
 		}
 	}
@@ -333,7 +331,7 @@ func getArtifactsOutput(ctx context.Context, basePath string) {
 			GinkgoWriter.Printf("Failed to marshal bundleDeployment %w", err)
 			continue
 		}
-		if err := os.WriteFile(filepath.Join(artifactPath, bundleDeployment.Name+"-bundleDeployment.yaml"), bundleDeploymentYaml, 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(artifactPath, bundleDeployment.Name+"-bundleDeployment.yaml"), bundleDeploymentYaml, 0600); err != nil {
 			GinkgoWriter.Printf("Failed to write bundleDeployment to file %w", err)
 		}
 	}
@@ -364,7 +362,7 @@ func getArtifactsOutput(ctx context.Context, basePath string) {
 				GinkgoWriter.Printf("Failed to marshal deployment %w", err)
 				continue
 			}
-			if err := os.WriteFile(filepath.Join(namespacedArtifactPath, deployment.Name+"-deployment.yaml"), deploymentYaml, 0644); err != nil {
+			if err := os.WriteFile(filepath.Join(namespacedArtifactPath, deployment.Name+"-deployment.yaml"), deploymentYaml, 0600); err != nil {
 				GinkgoWriter.Printf("Failed to write deployment to file %w", err)
 			}
 		}
@@ -375,11 +373,11 @@ func getArtifactsOutput(ctx context.Context, basePath string) {
 			GinkgoWriter.Printf("Failed to list pods %w in namespace: %q", err, namespace.Name)
 		}
 		for _, pod := range pods.Items {
-			if pod.Status.Phase != v1.PodRunning && pod.Status.Phase != v1.PodSucceeded && pod.Status.Phase != v1.PodFailed {
+			if pod.Status.Phase != corev1.PodRunning && pod.Status.Phase != corev1.PodSucceeded && pod.Status.Phase != corev1.PodFailed {
 				continue
 			}
 			for _, container := range pod.Spec.Containers {
-				logs, err := kubeClient.CoreV1().Pods(namespace.Name).GetLogs(pod.Name, &v1.PodLogOptions{Container: container.Name}).Stream(ctx)
+				logs, err := kubeClient.CoreV1().Pods(namespace.Name).GetLogs(pod.Name, &corev1.PodLogOptions{Container: container.Name}).Stream(ctx)
 				if err != nil {
 					GinkgoWriter.Printf("Failed to get logs for pod %q in namespace %q: %w", pod.Name, namespace.Name, err)
 					continue
