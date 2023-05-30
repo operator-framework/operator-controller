@@ -27,7 +27,7 @@ var _ = Describe("Operator Install", func() {
 		pkgName         string
 		operatorName    string
 		operator        *operatorv1alpha1.Operator
-		operatorCatalog *catalogd.CatalogSource
+		operatorCatalog *catalogd.Catalog
 	)
 	When("An operator is installed from an operator catalog", func() {
 		BeforeEach(func() {
@@ -42,14 +42,19 @@ var _ = Describe("Operator Install", func() {
 					PackageName: pkgName,
 				},
 			}
-			operatorCatalog = &catalogd.CatalogSource{
+			operatorCatalog = &catalogd.Catalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-catalog",
 				},
-				Spec: catalogd.CatalogSourceSpec{
-					// (TODO): Set up a local image registry, and build and store a test catalog in it
-					// to use in the test suite
-					Image: "quay.io/operatorhubio/catalog:latest",
+				Spec: catalogd.CatalogSpec{
+					Source: catalogd.CatalogSource{
+						Type: catalogd.SourceTypeImage,
+						Image: &catalogd.ImageSource{
+							// (TODO): Set up a local image registry, and build and store a test catalog in it
+							// to use in the test suite
+							Ref: "quay.io/operatorhubio/catalog:latest",
+						},
+					},
 				},
 			}
 			err := c.Create(ctx, operatorCatalog)
@@ -58,7 +63,7 @@ var _ = Describe("Operator Install", func() {
 				err = c.Get(ctx, types.NamespacedName{Name: "test-catalog"}, operatorCatalog)
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(len(operatorCatalog.Status.Conditions)).To(Equal(1))
-				g.Expect(operatorCatalog.Status.Conditions[0].Message).To(Equal("catalog contents have been unpacked and are available on cluster"))
+				g.Expect(operatorCatalog.Status.Conditions[0].Message).To(ContainSubstring("successfully unpacked the catalog image"))
 			}).WithTimeout(5 * time.Minute).WithPolling(defaultPoll).Should(Succeed())
 		})
 		It("resolves the specified package with correct bundle path", func() {
