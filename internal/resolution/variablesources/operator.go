@@ -13,23 +13,29 @@ import (
 var _ input.VariableSource = &OperatorVariableSource{}
 
 type OperatorVariableSource struct {
-	client client.Client
+	client              client.Client
+	inputVariableSource input.VariableSource
 }
 
-func NewOperatorVariableSource(cl client.Client) *OperatorVariableSource {
+func NewOperatorVariableSource(cl client.Client, inputVariableSource input.VariableSource) *OperatorVariableSource {
 	return &OperatorVariableSource{
-		client: cl,
+		client:              cl,
+		inputVariableSource: inputVariableSource,
 	}
 }
 
 func (o *OperatorVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
+	variableSources := SliceVariableSource{}
+	if o.inputVariableSource != nil {
+		variableSources = append(variableSources, o.inputVariableSource)
+	}
+
 	operatorList := operatorsv1alpha1.OperatorList{}
 	if err := o.client.List(ctx, &operatorList); err != nil {
 		return nil, err
 	}
 
 	// build required package variable sources
-	inputVariableSources := make([]input.VariableSource, 0, len(operatorList.Items))
 	for _, operator := range operatorList.Items {
 		rps, err := NewRequiredPackageVariableSource(
 			operator.Spec.PackageName,
@@ -39,10 +45,8 @@ func (o *OperatorVariableSource) GetVariables(ctx context.Context, entitySource 
 		if err != nil {
 			return nil, err
 		}
-		inputVariableSources = append(inputVariableSources, rps)
+		variableSources = append(variableSources, rps)
 	}
 
-	// build variable source pipeline
-	variableSource := NewCRDUniquenessConstraintsVariableSource(NewBundlesAndDepsVariableSource(inputVariableSources...))
-	return variableSource.GetVariables(ctx, entitySource)
+	return variableSources.GetVariables(ctx, entitySource)
 }

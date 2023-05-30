@@ -108,6 +108,12 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 		mockEntitySource := input.NewCacheQuerier(map[deppy.Identifier]input.Entity{})
 		_, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
 		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(Equal("package 'test-package' not found"))
+		Expect(err).To(MatchError("package 'test-package' not found"))
+	})
+
+	It("should return an error if entity source errors", func() {
+		_, err := rpvs.GetVariables(context.TODO(), FailEntitySource{})
+		Expect(err).To(HaveOccurred())
+		Expect(err).To(MatchError("error executing filter"))
 	})
 })

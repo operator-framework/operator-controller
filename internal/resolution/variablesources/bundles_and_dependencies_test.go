@@ -2,6 +2,7 @@ package variablesources_test
 
 import (
 	"context"
+	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -196,15 +197,27 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 		mockEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{})
 		_, err := bdvs.GetVariables(context.TODO(), mockEntitySource)
 		Expect(err).To(HaveOccurred())
+		Expect(err).To(MatchError("could not determine dependencies for entity with id 'bundle-2': could not find package dependencies for bundle 'bundle-2'"))
+	})
+
+	It("should return error if an inner variable source returns an error", func() {
+		bdvs = variablesources.NewBundlesAndDepsVariableSource(
+			&MockRequiredPackageSource{Error: errors.New("fake error")},
+		)
+		mockEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{})
+		_, err := bdvs.GetVariables(context.TODO(), mockEntitySource)
+		Expect(err).To(HaveOccurred())
+		Expect(err).To(MatchError("fake error"))
 	})
 })
 
 type MockRequiredPackageSource struct {
 	ResultSet []deppy.Variable
+	Error     error
 }
 
 func (m *MockRequiredPackageSource) GetVariables(_ context.Context, _ input.EntitySource) ([]deppy.Variable, error) {
-	return m.ResultSet, nil
+	return m.ResultSet, m.Error
 }
 
 func VariableWithID(id deppy.Identifier) func(vars []*olmvariables.BundleVariable) *olmvariables.BundleVariable {
