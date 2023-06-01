@@ -11,6 +11,7 @@ require (
 	github.com/operator-framework/deppy v0.0.0-20230602120738-cbf2c66b141b
 	github.com/operator-framework/operator-registry v1.26.3
 	github.com/operator-framework/rukpak v0.12.0
+	github.com/stretchr/testify v1.8.1
 	go.uber.org/zap v1.24.0
 	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.26.1
@@ -49,6 +50,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
