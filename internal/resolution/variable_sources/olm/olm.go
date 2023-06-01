@@ -29,7 +29,11 @@ func (o *OLMVariableSource) GetVariables(ctx context.Context, entitySource input
 
 	// build required package variable sources
 	for _, operator := range o.operators {
-		rps, err := o.requiredPackageFromOperator(&operator)
+		rps, err := required_package.NewRequiredPackage(
+			operator.Spec.PackageName,
+			required_package.InVersionRange(operator.Spec.Version),
+			required_package.InChannel(operator.Spec.Channel),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -39,15 +43,4 @@ func (o *OLMVariableSource) GetVariables(ctx context.Context, entitySource input
 	// build variable source pipeline
 	variableSource := crd_constraints.NewCRDUniquenessConstraintsVariableSource(bundles_and_dependencies.NewBundlesAndDepsVariableSource(inputVariableSources...))
 	return variableSource.GetVariables(ctx, entitySource)
-}
-
-func (o *OLMVariableSource) requiredPackageFromOperator(operator *operatorsv1alpha1.Operator) (*required_package.RequiredPackageVariableSource, error) {
-	var opts []required_package.RequiredPackageOption
-	if operator.Spec.Version != "" {
-		opts = append(opts, required_package.InVersionRange(operator.Spec.Version))
-	}
-	if operator.Spec.Channel != "" {
-		opts = append(opts, required_package.InChannel(operator.Spec.Channel))
-	}
-	return required_package.NewRequiredPackage(operator.Spec.PackageName, opts...)
 }
