@@ -41,7 +41,6 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
-	"github.com/operator-framework/operator-controller/internal/resolution"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
 )
@@ -50,7 +49,7 @@ import (
 type OperatorReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
-	Resolver *resolution.OperatorResolver
+	Resolver *solver.DeppySolver
 }
 
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators,verbs=get;list;watch
@@ -122,7 +121,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		return ctrl.Result{}, nil
 	}
 	// run resolution
-	solution, err := r.Resolver.Resolve(ctx)
+	solution, err := r.Resolver.Solve(ctx)
 	if err != nil {
 		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())

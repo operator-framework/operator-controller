@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +22,7 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	"github.com/operator-framework/operator-controller/internal/resolution"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
 )
 
 var _ = Describe("Operator Controller Test", func() {
@@ -34,7 +35,7 @@ var _ = Describe("Operator Controller Test", func() {
 		reconciler = &controllers.OperatorReconciler{
 			Client:   cl,
 			Scheme:   sch,
-			Resolver: resolution.NewOperatorResolver(cl, testEntitySource),
+			Resolver: solver.NewDeppySolver(testEntitySource, olm.NewOLMVariableSource(cl)),
 		}
 	})
 	When("the operator does not exist", func() {

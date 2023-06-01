@@ -20,6 +20,7 @@ import (
 	"flag"
 	"os"
 
+	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,8 +34,8 @@ import (
 	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	"github.com/operator-framework/operator-controller/internal/resolution"
 	"github.com/operator-framework/operator-controller/internal/resolution/entitysources"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
 )
 
 var (
@@ -94,9 +95,12 @@ func main() {
 	}
 
 	if err = (&controllers.OperatorReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), entitysources.NewCatalogdEntitySource(mgr.GetClient())),
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Resolver: solver.NewDeppySolver(
+			entitysources.NewCatalogdEntitySource(mgr.GetClient()),
+			olm.NewOLMVariableSource(mgr.GetClient()),
+		),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)

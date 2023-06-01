@@ -11,13 +11,24 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-controller/api/v1alpha1"
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/crd_constraints"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
+
+func FakeClient(objects ...client.Object) client.Client {
+	scheme := runtime.NewScheme()
+	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objects...).Build()
+}
 
 func TestGlobalConstraints(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -59,7 +70,7 @@ func withVersionRange(versionRange string) opOption {
 	}
 }
 
-func operator(name string, opts ...opOption) operatorsv1alpha1.Operator {
+func operator(name string, opts ...opOption) *operatorsv1alpha1.Operator {
 	op := operatorsv1alpha1.Operator{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -73,7 +84,7 @@ func operator(name string, opts ...opOption) operatorsv1alpha1.Operator {
 			Fail(err.Error())
 		}
 	}
-	return op
+	return &op
 }
 
 var _ = Describe("OLMVariableSource", func() {
@@ -84,20 +95,30 @@ var _ = Describe("OLMVariableSource", func() {
 	})
 
 	It("should produce RequiredPackage variables", func() {
-		olmVariableSource := olm.NewOLMVariableSource(operator("prometheus"), operator("packageA"))
+		cl := FakeClient(operator("prometheus"), operator("packageA"))
+
+		olmVariableSource := olm.NewOLMVariableSource(cl)
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
 		packageRequiredVariables := filterVariables[*required_package.RequiredPackageVariable](variables)
 		Expect(packageRequiredVariables).To(HaveLen(2))
-		Expect(packageRequiredVariables[0].Identifier()).To(Equal(deppy.IdentifierFromString("required package prometheus")))
-		Expect(packageRequiredVariables[0].BundleEntities()).To(HaveLen(2))
-		Expect(packageRequiredVariables[1].Identifier()).To(Equal(deppy.IdentifierFromString("required package packageA")))
-		Expect(packageRequiredVariables[1].BundleEntities()).To(HaveLen(1))
+		Expect(packageRequiredVariables).To(WithTransform(func(bvars []*required_package.RequiredPackageVariable) map[deppy.Identifier]int {
+			out := map[deppy.Identifier]int{}
+			for _, variable := range bvars {
+				out[variable.Identifier()] = len(variable.BundleEntities())
+			}
+			return out
+		}, Equal(map[deppy.Identifier]int{
+			deppy.IdentifierFromString("required package prometheus"): 2,
+			deppy.IdentifierFromString("required package packageA"):   1,
+		})))
 	})
 
 	It("should produce BundleVariables variables", func() {
-		olmVariableSource := olm.NewOLMVariableSource(operator("prometheus"), operator("packageA"))
+		cl := FakeClient(operator("prometheus"), operator("packageA"))
+
+		olmVariableSource := olm.NewOLMVariableSource(cl)
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -109,7 +130,7 @@ var _ = Describe("OLMVariableSource", func() {
 				out = append(out, variable.BundleEntity().Entity)
 			}
 			return out
-		}, Equal([]*input.Entity{
+		}, ConsistOf([]*input.Entity{
 			entityFromCache("operatorhub/prometheus/0.47.0"),
 			entityFromCache("operatorhub/prometheus/0.37.0"),
 			entityFromCache("operatorhub/packageA/2.0.0"),
@@ -117,7 +138,9 @@ var _ = Describe("OLMVariableSource", func() {
 	})
 
 	It("should produce version filtered BundleVariables variables", func() {
-		olmVariableSource := olm.NewOLMVariableSource(operator("prometheus", withVersionRange(">0.40.0")), operator("packageA"))
+		cl := FakeClient(operator("prometheus", withVersionRange(">0.40.0")), operator("packageA"))
+
+		olmVariableSource := olm.NewOLMVariableSource(cl)
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -129,7 +152,7 @@ var _ = Describe("OLMVariableSource", func() {
 				out = append(out, variable.BundleEntity().Entity)
 			}
 			return out
-		}, Equal([]*input.Entity{
+		}, ConsistOf([]*input.Entity{
 			entityFromCache("operatorhub/prometheus/0.47.0"),
 			// filtered out
 			// entityFromCache("operatorhub/prometheus/0.37.0"),
@@ -138,7 +161,9 @@ var _ = Describe("OLMVariableSource", func() {
 	})
 
 	It("should produce GlobalConstraints variables", func() {
-		olmVariableSource := olm.NewOLMVariableSource(operator("prometheus"), operator("packageA"))
+		cl := FakeClient(operator("prometheus"), operator("packageA"))
+
+		olmVariableSource := olm.NewOLMVariableSource(cl)
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -166,7 +191,9 @@ var _ = Describe("OLMVariableSource", func() {
 	})
 
 	It("should return an errors when they occur", func() {
-		olmVariableSource := olm.NewOLMVariableSource(operator("prometheus"), operator("packageA"))
+		cl := FakeClient(operator("prometheus"), operator("packageA"))
+
+		olmVariableSource := olm.NewOLMVariableSource(cl)
 		_, err := olmVariableSource.GetVariables(context.Background(), FailEntitySource{})
 		Expect(err).To(HaveOccurred())
 	})

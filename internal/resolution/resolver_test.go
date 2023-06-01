@@ -9,13 +9,14 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/resolution"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
 )
 
 func TestOperatorResolver(t *testing.T) {
@@ -74,8 +75,9 @@ var _ = Describe("OperatorResolver", func() {
 		}
 		client := FakeClient(resources...)
 		entitySource := input.NewCacheQuerier(testEntityCache)
-		resolver := resolution.NewOperatorResolver(client, entitySource)
-		solution, err := resolver.Resolve(context.Background())
+		variableSource := olm.NewOLMVariableSource(client)
+		resolver := solver.NewDeppySolver(entitySource, variableSource)
+		solution, err := resolver.Solve(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 		// 2 * required package variables + 2 * bundle variables
 		Expect(solution.SelectedVariables()).To(HaveLen(4))
@@ -93,8 +95,9 @@ var _ = Describe("OperatorResolver", func() {
 		var resources []client.Object
 		client := FakeClient(resources...)
 		entitySource := input.NewCacheQuerier(testEntityCache)
-		resolver := resolution.NewOperatorResolver(client, entitySource)
-		solution, err := resolver.Resolve(context.Background())
+		variableSource := olm.NewOLMVariableSource(client)
+		resolver := solver.NewDeppySolver(entitySource, variableSource)
+		solution, err := resolver.Solve(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 		Expect(solution.SelectedVariables()).To(HaveLen(0))
 	})
@@ -110,8 +113,9 @@ var _ = Describe("OperatorResolver", func() {
 		}
 		client := FakeClient(resource)
 		entitySource := FailEntitySource{}
-		resolver := resolution.NewOperatorResolver(client, entitySource)
-		solution, err := resolver.Resolve(context.Background())
+		variableSource := olm.NewOLMVariableSource(client)
+		resolver := solver.NewDeppySolver(entitySource, variableSource)
+		solution, err := resolver.Solve(context.Background())
 		Expect(solution).To(BeNil())
 		Expect(err).To(HaveOccurred())
 	})
@@ -119,8 +123,9 @@ var _ = Describe("OperatorResolver", func() {
 	It("should return an error if the client throws an error", func() {
 		client := NewFailClientWithError(fmt.Errorf("something bad happened"))
 		entitySource := input.NewCacheQuerier(testEntityCache)
-		resolver := resolution.NewOperatorResolver(client, entitySource)
-		solution, err := resolver.Resolve(context.Background())
+		variableSource := olm.NewOLMVariableSource(client)
+		resolver := solver.NewDeppySolver(entitySource, variableSource)
+		solution, err := resolver.Solve(context.Background())
 		Expect(solution).To(BeNil())
 		Expect(err).To(HaveOccurred())
 	})
