@@ -14,7 +14,7 @@ spec:
     singular: bundlemetadata
   scope: Cluster
   versions:
-  - name: v1beta1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: BundleMetadata is the Schema for the bundlemetadata API

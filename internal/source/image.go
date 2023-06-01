@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	catalogdv1beta1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
 )
 
 type Image struct {
@@ -33,9 +33,9 @@ type Image struct {
 
 const imageCatalogUnpackContainerName = "catalog"
 
-func (i *Image) Unpack(ctx context.Context, catalog *catalogdv1beta1.Catalog) (*Result, error) {
-	if catalog.Spec.Source.Type != catalogdv1beta1.SourceTypeImage {
-		panic(fmt.Sprintf("source type %q is unable to handle specified catalog source type %q", catalogdv1beta1.SourceTypeImage, catalog.Spec.Source.Type))
+func (i *Image) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Catalog) (*Result, error) {
+	if catalog.Spec.Source.Type != catalogdv1alpha1.SourceTypeImage {
+		panic(fmt.Sprintf("source type %q is unable to handle specified catalog source type %q", catalogdv1alpha1.SourceTypeImage, catalog.Spec.Source.Type))
 	}
 	if catalog.Spec.Source.Image == nil {
 		return nil, fmt.Errorf("catalog source image configuration is unset")
@@ -63,7 +63,7 @@ func (i *Image) Unpack(ctx context.Context, catalog *catalogdv1beta1.Catalog) (*
 	}
 }
 
-func (i *Image) ensureUnpackPod(ctx context.Context, catalog *catalogdv1beta1.Catalog, pod *corev1.Pod) (controllerutil.OperationResult, error) {
+func (i *Image) ensureUnpackPod(ctx context.Context, catalog *catalogdv1alpha1.Catalog, pod *corev1.Pod) (controllerutil.OperationResult, error) {
 	existingPod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Namespace: i.PodNamespace, Name: catalog.Name}}
 	if err := i.Client.Get(ctx, client.ObjectKeyFromObject(existingPod), existingPod); client.IgnoreNotFound(err) != nil {
 		return controllerutil.OperationResultNone, err
@@ -98,7 +98,7 @@ func (i *Image) ensureUnpackPod(ctx context.Context, catalog *catalogdv1beta1.Ca
 	return controllerutil.OperationResultUpdated, nil
 }
 
-func (i *Image) getDesiredPodApplyConfig(catalog *catalogdv1beta1.Catalog) *applyconfigurationcorev1.PodApplyConfiguration {
+func (i *Image) getDesiredPodApplyConfig(catalog *catalogdv1alpha1.Catalog) *applyconfigurationcorev1.PodApplyConfiguration {
 	// TODO: Address unpacker pod allowing root users for image sources
 	//
 	// In our current implementation, we are creating a pod that uses the image
@@ -202,9 +202,9 @@ func (i *Image) succeededPodResult(ctx context.Context, pod *corev1.Pod) (*Resul
 		return nil, fmt.Errorf("get catalog image digest: %v", err)
 	}
 
-	resolvedSource := &catalogdv1beta1.CatalogSource{
-		Type:  catalogdv1beta1.SourceTypeImage,
-		Image: &catalogdv1beta1.ImageSource{Ref: digest},
+	resolvedSource := &catalogdv1alpha1.CatalogSource{
+		Type:  catalogdv1alpha1.SourceTypeImage,
+		Image: &catalogdv1alpha1.ImageSource{Ref: digest},
 	}
 
 	message := fmt.Sprintf("successfully unpacked the catalog image %q", digest)

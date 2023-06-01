@@ -34,8 +34,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
+	"github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/catalogd/internal/source"
-	corev1beta1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 )
 
 // TODO (everettraven): Add unit tests for the CatalogReconciler
@@ -67,7 +67,7 @@ func (r *CatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	// TODO: Where and when should we be logging errors and at which level?
 	_ = log.FromContext(ctx).WithName("catalogd-controller")
 
-	existingCatsrc := corev1beta1.Catalog{}
+	existingCatsrc := v1alpha1.Catalog{}
 	if err := r.Client.Get(ctx, req.NamespacedName, &existingCatsrc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -86,7 +86,7 @@ func (r *CatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return res, apimacherrors.NewAggregate([]error{reconcileErr, updateErr})
 		}
 	}
-	existingCatsrc.Status, reconciledCatsrc.Status = corev1beta1.CatalogStatus{}, corev1beta1.CatalogStatus{}
+	existingCatsrc.Status, reconciledCatsrc.Status = v1alpha1.CatalogStatus{}, v1alpha1.CatalogStatus{}
 	if !equality.Semantic.DeepEqual(existingCatsrc, reconciledCatsrc) {
 		if updateErr := r.Client.Update(ctx, reconciledCatsrc); updateErr != nil {
 			return res, apimacherrors.NewAggregate([]error{reconcileErr, updateErr})
@@ -105,12 +105,12 @@ func (r *CatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		// even though they already exist. This should be resolved by the fix
 		// for https://github.com/operator-framework/catalogd/issues/6. The fix for
 		// #6 should also remove the usage of `builder.WithPredicates(predicate.GenerationChangedPredicate{})`
-		For(&corev1beta1.Catalog{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		For(&v1alpha1.Catalog{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&corev1.Pod{}).
 		Complete(r)
 }
 
-func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *corev1beta1.Catalog) (ctrl.Result, error) {
+func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.Catalog) (ctrl.Result, error) {
 	unpackResult, err := r.Unpacker.Unpack(ctx, catalog)
 	if err != nil {
 		return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("source bundle content: %v", err))
@@ -149,46 +149,46 @@ func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *corev1beta1.
 
 }
 
-func updateStatusUnpackPending(status *corev1beta1.CatalogStatus, result *source.Result) {
+func updateStatusUnpackPending(status *v1alpha1.CatalogStatus, result *source.Result) {
 	status.ResolvedSource = nil
-	status.Phase = corev1beta1.PhasePending
+	status.Phase = v1alpha1.PhasePending
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    corev1beta1.TypeUnpacked,
+		Type:    v1alpha1.TypeUnpacked,
 		Status:  metav1.ConditionFalse,
-		Reason:  corev1beta1.ReasonUnpackPending,
+		Reason:  v1alpha1.ReasonUnpackPending,
 		Message: result.Message,
 	})
 }
 
-func updateStatusUnpacking(status *corev1beta1.CatalogStatus, result *source.Result) {
+func updateStatusUnpacking(status *v1alpha1.CatalogStatus, result *source.Result) {
 	status.ResolvedSource = nil
-	status.Phase = corev1beta1.PhaseUnpacking
+	status.Phase = v1alpha1.PhaseUnpacking
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    corev1beta1.TypeUnpacked,
+		Type:    v1alpha1.TypeUnpacked,
 		Status:  metav1.ConditionFalse,
-		Reason:  corev1beta1.ReasonUnpacking,
+		Reason:  v1alpha1.ReasonUnpacking,
 		Message: result.Message,
 	})
 }
 
-func updateStatusUnpacked(status *corev1beta1.CatalogStatus, result *source.Result) {
+func updateStatusUnpacked(status *v1alpha1.CatalogStatus, result *source.Result) {
 	status.ResolvedSource = result.ResolvedSource
-	status.Phase = corev1beta1.PhaseUnpacked
+	status.Phase = v1alpha1.PhaseUnpacked
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    corev1beta1.TypeUnpacked,
+		Type:    v1alpha1.TypeUnpacked,
 		Status:  metav1.ConditionTrue,
-		Reason:  corev1beta1.ReasonUnpackSuccessful,
+		Reason:  v1alpha1.ReasonUnpackSuccessful,
 		Message: result.Message,
 	})
 }
 
-func updateStatusUnpackFailing(status *corev1beta1.CatalogStatus, err error) error {
+func updateStatusUnpackFailing(status *v1alpha1.CatalogStatus, err error) error {
 	status.ResolvedSource = nil
-	status.Phase = corev1beta1.PhaseFailing
+	status.Phase = v1alpha1.PhaseFailing
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    corev1beta1.TypeUnpacked,
+		Type:    v1alpha1.TypeUnpacked,
 		Status:  metav1.ConditionFalse,
-		Reason:  corev1beta1.ReasonUnpackFailed,
+		Reason:  v1alpha1.ReasonUnpackFailed,
 		Message: err.Error(),
 	})
 	return err
@@ -197,15 +197,15 @@ func updateStatusUnpackFailing(status *corev1beta1.CatalogStatus, err error) err
 // syncBundleMetadata will create a `BundleMetadata` resource for each
 // "olm.bundle" object that exists for the given catalog contents. Returns an
 // error if any are encountered.
-func (r *CatalogReconciler) syncBundleMetadata(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalog *corev1beta1.Catalog) error {
-	newBundles := map[string]*corev1beta1.BundleMetadata{}
+func (r *CatalogReconciler) syncBundleMetadata(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalog *v1alpha1.Catalog) error {
+	newBundles := map[string]*v1alpha1.BundleMetadata{}
 
 	for _, bundle := range declCfg.Bundles {
 		bundleName := fmt.Sprintf("%s-%s", catalog.Name, bundle.Name)
 
-		bundleMeta := corev1beta1.BundleMetadata{
+		bundleMeta := v1alpha1.BundleMetadata{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: corev1beta1.GroupVersion.String(),
+				APIVersion: v1alpha1.GroupVersion.String(),
 				Kind:       "BundleMetadata",
 			},
 			ObjectMeta: metav1.ObjectMeta{
@@ -214,7 +214,7 @@ func (r *CatalogReconciler) syncBundleMetadata(ctx context.Context, declCfg *dec
 					"catalog": catalog.Name,
 				},
 				OwnerReferences: []metav1.OwnerReference{{
-					APIVersion:         corev1beta1.GroupVersion.String(),
+					APIVersion:         v1alpha1.GroupVersion.String(),
 					Kind:               "Catalog",
 					Name:               catalog.Name,
 					UID:                catalog.UID,
@@ -222,7 +222,7 @@ func (r *CatalogReconciler) syncBundleMetadata(ctx context.Context, declCfg *dec
 					Controller:         pointer.Bool(true),
 				}},
 			},
-			Spec: corev1beta1.BundleMetadataSpec{
+			Spec: v1alpha1.BundleMetadataSpec{
 				Catalog: corev1.LocalObjectReference{Name: catalog.Name},
 				Package: bundle.Package,
 				Image:   bundle.Image,
@@ -230,7 +230,7 @@ func (r *CatalogReconciler) syncBundleMetadata(ctx context.Context, declCfg *dec
 		}
 
 		for _, relatedImage := range bundle.RelatedImages {
-			bundleMeta.Spec.RelatedImages = append(bundleMeta.Spec.RelatedImages, corev1beta1.RelatedImage{
+			bundleMeta.Spec.RelatedImages = append(bundleMeta.Spec.RelatedImages, v1alpha1.RelatedImage{
 				Name:  relatedImage.Name,
 				Image: relatedImage.Image,
 			})
@@ -242,7 +242,7 @@ func (r *CatalogReconciler) syncBundleMetadata(ctx context.Context, declCfg *dec
 				continue
 			}
 
-			bundleMeta.Spec.Properties = append(bundleMeta.Spec.Properties, corev1beta1.Property{
+			bundleMeta.Spec.Properties = append(bundleMeta.Spec.Properties, v1alpha1.Property{
 				Type:  prop.Type,
 				Value: prop.Value,
 			})
@@ -250,7 +250,7 @@ func (r *CatalogReconciler) syncBundleMetadata(ctx context.Context, declCfg *dec
 		newBundles[bundleName] = &bundleMeta
 	}
 
-	var existingBundles corev1beta1.BundleMetadataList
+	var existingBundles v1alpha1.BundleMetadataList
 	if err := r.List(ctx, &existingBundles); err != nil {
 		return fmt.Errorf("list existing bundle metadatas: %v", err)
 	}
@@ -276,21 +276,21 @@ func (r *CatalogReconciler) syncBundleMetadata(ctx context.Context, declCfg *dec
 // "olm.package" object that exists for the given catalog contents.
 // `Package.Spec.Channels` is populated by filtering all "olm.channel" objects
 // where the "packageName" == `Package.Name`. Returns an error if any are encountered.
-func (r *CatalogReconciler) syncPackages(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalog *corev1beta1.Catalog) error {
-	newPkgs := map[string]*corev1beta1.Package{}
+func (r *CatalogReconciler) syncPackages(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalog *v1alpha1.Catalog) error {
+	newPkgs := map[string]*v1alpha1.Package{}
 
 	for _, pkg := range declCfg.Packages {
 		name := fmt.Sprintf("%s-%s", catalog.Name, pkg.Name)
-		var icon *corev1beta1.Icon
+		var icon *v1alpha1.Icon
 		if pkg.Icon != nil {
-			icon = &corev1beta1.Icon{
+			icon = &v1alpha1.Icon{
 				Data:      pkg.Icon.Data,
 				MediaType: pkg.Icon.MediaType,
 			}
 		}
-		newPkgs[name] = &corev1beta1.Package{
+		newPkgs[name] = &v1alpha1.Package{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: corev1beta1.GroupVersion.String(),
+				APIVersion: v1alpha1.GroupVersion.String(),
 				Kind:       "Package",
 			},
 			ObjectMeta: metav1.ObjectMeta{
@@ -299,7 +299,7 @@ func (r *CatalogReconciler) syncPackages(ctx context.Context, declCfg *declcfg.D
 					"catalog": catalog.Name,
 				},
 				OwnerReferences: []metav1.OwnerReference{{
-					APIVersion:         corev1beta1.GroupVersion.String(),
+					APIVersion:         v1alpha1.GroupVersion.String(),
 					Kind:               "Catalog",
 					Name:               catalog.Name,
 					UID:                catalog.UID,
@@ -307,13 +307,13 @@ func (r *CatalogReconciler) syncPackages(ctx context.Context, declCfg *declcfg.D
 					Controller:         pointer.Bool(true),
 				}},
 			},
-			Spec: corev1beta1.PackageSpec{
+			Spec: v1alpha1.PackageSpec{
 				Catalog:        corev1.LocalObjectReference{Name: catalog.Name},
 				Name:           pkg.Name,
 				DefaultChannel: pkg.DefaultChannel,
 				Description:    pkg.Description,
 				Icon:           icon,
-				Channels:       []corev1beta1.PackageChannel{},
+				Channels:       []v1alpha1.PackageChannel{},
 			},
 		}
 	}
@@ -324,9 +324,9 @@ func (r *CatalogReconciler) syncPackages(ctx context.Context, declCfg *declcfg.D
 		if !ok {
 			return fmt.Errorf("channel %q references package %q which does not exist", ch.Name, ch.Package)
 		}
-		pkgChannel := corev1beta1.PackageChannel{Name: ch.Name}
+		pkgChannel := v1alpha1.PackageChannel{Name: ch.Name}
 		for _, entry := range ch.Entries {
-			pkgChannel.Entries = append(pkgChannel.Entries, corev1beta1.ChannelEntry{
+			pkgChannel.Entries = append(pkgChannel.Entries, v1alpha1.ChannelEntry{
 				Name:      entry.Name,
 				Replaces:  entry.Replaces,
 				Skips:     entry.Skips,
@@ -336,7 +336,7 @@ func (r *CatalogReconciler) syncPackages(ctx context.Context, declCfg *declcfg.D
 		pkg.Spec.Channels = append(pkg.Spec.Channels, pkgChannel)
 	}
 
-	var existingPkgs corev1beta1.PackageList
+	var existingPkgs v1alpha1.PackageList
 	if err := r.List(ctx, &existingPkgs); err != nil {
 		return fmt.Errorf("list existing packages: %v", err)
 	}

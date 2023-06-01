@@ -16,8 +16,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	"github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/catalogd/internal/source"
-	catalogdv1beta1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	"github.com/operator-framework/catalogd/pkg/controllers/core"
 )
 
@@ -32,7 +32,7 @@ type MockSource struct {
 	shouldError bool
 }
 
-func (ms *MockSource) Unpack(ctx context.Context, catalog *catalogdv1beta1.Catalog) (*source.Result, error) {
+func (ms *MockSource) Unpack(ctx context.Context, catalog *v1alpha1.Catalog) (*source.Result, error) {
 	if ms.shouldError {
 		return nil, errors.New("mocksource error")
 	}
@@ -52,8 +52,8 @@ var _ = Describe("Catalogd Controller Test", func() {
 		reconciler = &core.CatalogReconciler{
 			Client: cl,
 			Unpacker: source.NewUnpacker(
-				map[catalogdv1beta1.SourceType]source.Unpacker{
-					catalogdv1beta1.SourceTypeImage: mockSource,
+				map[v1alpha1.SourceType]source.Unpacker{
+					v1alpha1.SourceTypeImage: mockSource,
 				},
 			),
 		}
@@ -82,7 +82,7 @@ var _ = Describe("Catalogd Controller Test", func() {
 
 	When("the catalog exists", func() {
 		var (
-			catalog *catalogdv1beta1.Catalog
+			catalog *v1alpha1.Catalog
 			cKey    types.NamespacedName
 		)
 		BeforeEach(func() {
@@ -92,10 +92,10 @@ var _ = Describe("Catalogd Controller Test", func() {
 		When("the catalog specifies an invalid source", func() {
 			BeforeEach(func() {
 				By("initializing cluster state")
-				catalog = &catalogdv1beta1.Catalog{
+				catalog = &v1alpha1.Catalog{
 					ObjectMeta: metav1.ObjectMeta{Name: cKey.Name},
-					Spec: catalogdv1beta1.CatalogSpec{
-						Source: catalogdv1beta1.CatalogSource{
+					Spec: v1alpha1.CatalogSpec{
+						Source: v1alpha1.CatalogSource{
 							Type: "invalid-source",
 						},
 					},
@@ -114,13 +114,13 @@ var _ = Describe("Catalogd Controller Test", func() {
 				Expect(err).To(HaveOccurred())
 
 				// get the catalog and ensure status is set properly
-				cat := &catalogdv1beta1.Catalog{}
+				cat := &v1alpha1.Catalog{}
 				Expect(cl.Get(ctx, cKey, cat)).To(Succeed())
 				Expect(cat.Status.ResolvedSource).To(BeNil())
-				Expect(cat.Status.Phase).To(Equal(catalogdv1beta1.PhaseFailing))
-				cond := meta.FindStatusCondition(cat.Status.Conditions, catalogdv1beta1.TypeUnpacked)
+				Expect(cat.Status.Phase).To(Equal(v1alpha1.PhaseFailing))
+				cond := meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeUnpacked)
 				Expect(cond).ToNot(BeNil())
-				Expect(cond.Reason).To(Equal(catalogdv1beta1.ReasonUnpackFailed))
+				Expect(cond.Reason).To(Equal(v1alpha1.ReasonUnpackFailed))
 				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 			})
 		})
@@ -128,12 +128,12 @@ var _ = Describe("Catalogd Controller Test", func() {
 		When("the catalog specifies a valid source", func() {
 			BeforeEach(func() {
 				By("initializing cluster state")
-				catalog = &catalogdv1beta1.Catalog{
+				catalog = &v1alpha1.Catalog{
 					ObjectMeta: metav1.ObjectMeta{Name: cKey.Name},
-					Spec: catalogdv1beta1.CatalogSpec{
-						Source: catalogdv1beta1.CatalogSource{
+					Spec: v1alpha1.CatalogSpec{
+						Source: v1alpha1.CatalogSource{
 							Type: "image",
-							Image: &catalogdv1beta1.ImageSource{
+							Image: &v1alpha1.ImageSource{
 								Ref: "somecatalog:latest",
 							},
 						},
@@ -159,13 +159,13 @@ var _ = Describe("Catalogd Controller Test", func() {
 					Expect(err).ToNot(HaveOccurred())
 
 					// get the catalog and ensure status is set properly
-					cat := &catalogdv1beta1.Catalog{}
+					cat := &v1alpha1.Catalog{}
 					Expect(cl.Get(ctx, cKey, cat)).To(Succeed())
 					Expect(cat.Status.ResolvedSource).To(BeNil())
-					Expect(cat.Status.Phase).To(Equal(catalogdv1beta1.PhasePending))
-					cond := meta.FindStatusCondition(cat.Status.Conditions, catalogdv1beta1.TypeUnpacked)
+					Expect(cat.Status.Phase).To(Equal(v1alpha1.PhasePending))
+					cond := meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeUnpacked)
 					Expect(cond).ToNot(BeNil())
-					Expect(cond.Reason).To(Equal(catalogdv1beta1.ReasonUnpackPending))
+					Expect(cond.Reason).To(Equal(v1alpha1.ReasonUnpackPending))
 					Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				})
 			})
@@ -182,13 +182,13 @@ var _ = Describe("Catalogd Controller Test", func() {
 					Expect(err).ToNot(HaveOccurred())
 
 					// get the catalog and ensure status is set properly
-					cat := &catalogdv1beta1.Catalog{}
+					cat := &v1alpha1.Catalog{}
 					Expect(cl.Get(ctx, cKey, cat)).To(Succeed())
 					Expect(cat.Status.ResolvedSource).To(BeNil())
-					Expect(cat.Status.Phase).To(Equal(catalogdv1beta1.PhaseUnpacking))
-					cond := meta.FindStatusCondition(cat.Status.Conditions, catalogdv1beta1.TypeUnpacked)
+					Expect(cat.Status.Phase).To(Equal(v1alpha1.PhaseUnpacking))
+					cond := meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeUnpacked)
 					Expect(cond).ToNot(BeNil())
-					Expect(cond.Reason).To(Equal(catalogdv1beta1.ReasonUnpacking))
+					Expect(cond.Reason).To(Equal(v1alpha1.ReasonUnpacking))
 					Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				})
 			})
@@ -205,13 +205,13 @@ var _ = Describe("Catalogd Controller Test", func() {
 					Expect(err).To(HaveOccurred())
 
 					// get the catalog and ensure status is set properly
-					cat := &catalogdv1beta1.Catalog{}
+					cat := &v1alpha1.Catalog{}
 					Expect(cl.Get(ctx, cKey, cat)).To(Succeed())
 					Expect(cat.Status.ResolvedSource).To(BeNil())
-					Expect(cat.Status.Phase).To(Equal(catalogdv1beta1.PhaseFailing))
-					cond := meta.FindStatusCondition(cat.Status.Conditions, catalogdv1beta1.TypeUnpacked)
+					Expect(cat.Status.Phase).To(Equal(v1alpha1.PhaseFailing))
+					cond := meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeUnpacked)
 					Expect(cond).ToNot(BeNil())
-					Expect(cond.Reason).To(Equal(catalogdv1beta1.ReasonUnpackFailed))
+					Expect(cond.Reason).To(Equal(v1alpha1.ReasonUnpackFailed))
 					Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				})
 			})
@@ -258,7 +258,7 @@ var _ = Describe("Catalogd Controller Test", func() {
 
 				AfterEach(func() {
 					// clean up package
-					pkg := &catalogdv1beta1.Package{
+					pkg := &v1alpha1.Package{
 						ObjectMeta: metav1.ObjectMeta{
 							Name: testPackageMetaName,
 						},
@@ -266,7 +266,7 @@ var _ = Describe("Catalogd Controller Test", func() {
 					Expect(cl.Delete(ctx, pkg)).NotTo(HaveOccurred())
 
 					// clean up bundlemetadata
-					bm := &catalogdv1beta1.BundleMetadata{
+					bm := &v1alpha1.BundleMetadata{
 						ObjectMeta: metav1.ObjectMeta{
 							Name: testBundleMetaName,
 						},
@@ -276,19 +276,19 @@ var _ = Describe("Catalogd Controller Test", func() {
 
 				It("should set unpacking status to 'unpacked'", func() {
 					// get the catalog and ensure status is set properly
-					cat := &catalogdv1beta1.Catalog{}
+					cat := &v1alpha1.Catalog{}
 					Expect(cl.Get(ctx, cKey, cat)).ToNot(HaveOccurred())
 					Expect(cat.Status.ResolvedSource).ToNot(BeNil())
-					Expect(cat.Status.Phase).To(Equal(catalogdv1beta1.PhaseUnpacked))
-					cond := meta.FindStatusCondition(cat.Status.Conditions, catalogdv1beta1.TypeUnpacked)
+					Expect(cat.Status.Phase).To(Equal(v1alpha1.PhaseUnpacked))
+					cond := meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeUnpacked)
 					Expect(cond).ToNot(BeNil())
-					Expect(cond.Reason).To(Equal(catalogdv1beta1.ReasonUnpackSuccessful))
+					Expect(cond.Reason).To(Equal(v1alpha1.ReasonUnpackSuccessful))
 					Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 				})
 
 				It("should create BundleMetadata resources", func() {
 					// validate bundlemetadata resources
-					bundlemetadatas := &catalogdv1beta1.BundleMetadataList{}
+					bundlemetadatas := &v1alpha1.BundleMetadataList{}
 					Expect(cl.List(ctx, bundlemetadatas)).To(Succeed())
 					Expect(bundlemetadatas.Items).To(HaveLen(1))
 					bundlemetadata := bundlemetadatas.Items[0]
@@ -304,7 +304,7 @@ var _ = Describe("Catalogd Controller Test", func() {
 
 				It("should create Package resources", func() {
 					// validate package resources
-					packages := &catalogdv1beta1.PackageList{}
+					packages := &v1alpha1.PackageList{}
 					Expect(cl.List(ctx, packages)).To(Succeed())
 					Expect(packages.Items).To(HaveLen(1))
 					pack := packages.Items[0]

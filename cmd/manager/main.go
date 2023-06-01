@@ -34,10 +34,10 @@ import (
 
 	"github.com/operator-framework/catalogd/internal/source"
 	"github.com/operator-framework/catalogd/internal/version"
-	"github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	corecontrollers "github.com/operator-framework/catalogd/pkg/controllers/core"
 	"github.com/operator-framework/catalogd/pkg/profile"
 	//+kubebuilder:scaffold:imports
+	"github.com/operator-framework/catalogd/api/core/v1alpha1"
 )
 
 var (
@@ -48,7 +48,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(v1beta1.AddToScheme(scheme))
+	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

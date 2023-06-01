@@ -8,7 +8,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/cluster"
 
-	catalogdv1beta1 "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
 )
 
 // TODO: This package is almost entirely copy/pasted from rukpak. We should look
@@ -32,7 +32,7 @@ import (
 // specifications. A source should treat a catalog root directory as an opaque
 // file tree and delegate catalog format concerns to catalog parsers.
 type Unpacker interface {
-	Unpack(context.Context, *catalogdv1beta1.Catalog) (*Result, error)
+	Unpack(context.Context, *catalogdv1alpha1.Catalog) (*Result, error)
 }
 
 // Result conveys progress information about unpacking catalog content.
@@ -49,7 +49,7 @@ type Result struct {
 	// For example, resolved image sources should reference a container image
 	// digest rather than an image tag, and git sources should reference a
 	// commit hash rather than a branch or tag.
-	ResolvedSource *catalogdv1beta1.CatalogSource
+	ResolvedSource *catalogdv1alpha1.CatalogSource
 
 	// State is the current state of unpacking the catalog content.
 	State State
@@ -76,16 +76,16 @@ const (
 )
 
 type unpacker struct {
-	sources map[catalogdv1beta1.SourceType]Unpacker
+	sources map[catalogdv1alpha1.SourceType]Unpacker
 }
 
 // NewUnpacker returns a new composite Source that unpacks catalogs using the source
 // mapping provided by the configured sources.
-func NewUnpacker(sources map[catalogdv1beta1.SourceType]Unpacker) Unpacker {
+func NewUnpacker(sources map[catalogdv1alpha1.SourceType]Unpacker) Unpacker {
 	return &unpacker{sources: sources}
 }
 
-func (s *unpacker) Unpack(ctx context.Context, catalog *catalogdv1beta1.Catalog) (*Result, error) {
+func (s *unpacker) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Catalog) (*Result, error) {
 	source, ok := s.sources[catalog.Spec.Source.Type]
 	if !ok {
 		return nil, fmt.Errorf("source type %q not supported", catalog.Spec.Source.Type)
@@ -104,8 +104,8 @@ func NewDefaultUnpacker(systemNsCluster cluster.Cluster, namespace, unpackImage 
 	if err != nil {
 		return nil, err
 	}
-	return NewUnpacker(map[catalogdv1beta1.SourceType]Unpacker{
-		catalogdv1beta1.SourceTypeImage: &Image{
+	return NewUnpacker(map[catalogdv1alpha1.SourceType]Unpacker{
+		catalogdv1alpha1.SourceTypeImage: &Image{
 			Client:       systemNsCluster.GetClient(),
 			KubeClient:   kubeClient,
 			PodNamespace: namespace,

@@ -14,7 +14,7 @@ $ kind create cluster
 $ kubectl apply -f https://github.com/operator-framework/catalogd/config/crd/bases/
 $ kubectl apply -f https://github.com/operator-framework/catalogd/config/
 $ kubectl create ns test
-$ kubectl apply -f config/samples/core_v1beta1_catalog.yaml
+$ kubectl apply -f config/samples/core_v1alpha1_catalog.yaml
 
 $ kubectl get catalog -n test 
 NAME                   AGE
@@ -111,5 +111,5 @@ kubectl apply -f config/
 ```
 - Create the sample Catalog (this will trigger the reconciliation loop): 
 ```sh
-kubectl apply -f config/samples/core_v1beta1_catalog.yaml
+kubectl apply -f config/samples/core_v1alpha1_catalog.yaml
 ```

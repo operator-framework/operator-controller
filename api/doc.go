@@ -19,4 +19,4 @@ limitations under the License.
 //
 // +domain=operatorframework.io
 
-package apis
+package api

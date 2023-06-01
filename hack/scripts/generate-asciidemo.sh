@@ -28,7 +28,7 @@ function run() {
     typeline 'kubectl get crds -A'
 
     typeline -x "# create a catalog"
-    typeline "kubectl apply -f config/samples/core_v1beta1_catalog.yaml" # or other
+    typeline "kubectl apply -f config/samples/core_v1alpha1_catalog.yaml" # or other
     typeline "kubectl get catalog -A" # shows catalog-sample
     typeline -x "# waiting for catalog to report ready status"
     typeline "kubectl wait --for=condition=Ready catalog/catalog-sample --timeout=1h"
@@ -43,4 +43,3 @@ function run() {
 }
 
 run
-
