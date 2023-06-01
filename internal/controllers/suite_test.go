@@ -23,6 +23,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -71,6 +72,8 @@ var _ = BeforeSuite(func() {
 	err = operatorsv1alpha1.AddToScheme(sch)
 	Expect(err).NotTo(HaveOccurred())
 	err = rukpakv1alpha1.AddToScheme(sch)
+	Expect(err).NotTo(HaveOccurred())
+	err = catalogd.AddToScheme(sch)
 	Expect(err).NotTo(HaveOccurred())
 
 	cl, err = client.New(cfg, client.Options{Scheme: sch})
