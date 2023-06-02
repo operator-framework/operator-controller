@@ -7,7 +7,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.8.3
 	github.com/onsi/gomega v1.27.1
 	github.com/operator-framework/catalogd v0.2.0
-	github.com/operator-framework/deppy v0.0.0-20230125110717-dc02e928470f
+	github.com/operator-framework/deppy v0.0.0-20230602120738-cbf2c66b141b
 	github.com/operator-framework/operator-registry v1.26.3
 	github.com/operator-framework/rukpak v0.12.0
 	go.uber.org/zap v1.24.0

@@ -25,7 +25,7 @@ func NewCatalogdEntitySource(client client.Client) *catalogdEntitySource {
 	return &catalogdEntitySource{client: client}
 }
 
-func (es *catalogdEntitySource) Get(ctx context.Context, id deppy.Identifier) *input.Entity {
+func (es *catalogdEntitySource) Get(ctx context.Context, id deppy.Identifier) (*input.Entity, error) {
 	panic("not implemented")
 }
 

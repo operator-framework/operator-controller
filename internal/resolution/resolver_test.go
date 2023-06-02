@@ -130,8 +130,8 @@ var _ input.EntitySource = &FailEntitySource{}
 
 type FailEntitySource struct{}
 
-func (f FailEntitySource) Get(ctx context.Context, id deppy.Identifier) *input.Entity {
-	return nil
+func (f FailEntitySource) Get(ctx context.Context, id deppy.Identifier) (*input.Entity, error) {
+	return nil, fmt.Errorf("error calling get in entity source")
 }
 
 func (f FailEntitySource) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {

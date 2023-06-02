@@ -33,10 +33,7 @@ func (o *OperatorResolver) Resolve(ctx context.Context) (*solver.Solution, error
 	}
 
 	olmVariableSource := olm.NewOLMVariableSource(operatorList.Items...)
-	deppySolver, err := solver.NewDeppySolver(o.entitySource, olmVariableSource)
-	if err != nil {
-		return nil, err
-	}
+	deppySolver := solver.NewDeppySolver(o.entitySource, olmVariableSource)
 
 	solution, err := deppySolver.Solve(ctx)
 	if err != nil {
