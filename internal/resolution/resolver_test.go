@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -20,28 +20,28 @@ import (
 
 func TestOperatorResolver(t *testing.T) {
 
-	testEntityCache := map[deppy.Identifier]input.Entity{ "operatorhub/prometheus/0.37.0": *input.NewEntity("operatorhub/prometheus/0.37.0" , map[string]string{
-			"olm.bundle.path": `"quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"`,
-			"olm.channel":     "{\"channelName\":\"beta\",\"priority\":0,\"replaces\":\"prometheusoperator.0.32.0\"}",
-			"olm.gvk":         "[{\"group\":\"monitoring.coreos.com\",\"kind\":\"Alertmanager\",\"version\":\"v1\"}, {\"group\":\"monitoring.coreos.com\",\"kind\":\"Prometheus\",\"version\":\"v1\"}]",
-			"olm.package":     "{\"packageName\":\"prometheus\",\"version\":\"0.37.0\"}",
-		}),
+	testEntityCache := map[deppy.Identifier]input.Entity{"operatorhub/prometheus/0.37.0": *input.NewEntity("operatorhub/prometheus/0.37.0", map[string]string{
+		"olm.bundle.path": `"quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"`,
+		"olm.channel":     "{\"channelName\":\"beta\",\"priority\":0,\"replaces\":\"prometheusoperator.0.32.0\"}",
+		"olm.gvk":         "[{\"group\":\"monitoring.coreos.com\",\"kind\":\"Alertmanager\",\"version\":\"v1\"}, {\"group\":\"monitoring.coreos.com\",\"kind\":\"Prometheus\",\"version\":\"v1\"}]",
+		"olm.package":     "{\"packageName\":\"prometheus\",\"version\":\"0.37.0\"}",
+	}),
 		"operatorhub/prometheus/0.47.0": *input.NewEntity("operatorhub/prometheus/0.47.0", map[string]string{
 			"olm.bundle.path": `"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"`,
 			"olm.channel":     "{\"channelName\":\"beta\",\"priority\":0,\"replaces\":\"prometheusoperator.0.37.0\"}",
 			"olm.gvk":         "[{\"group\":\"monitoring.coreos.com\",\"kind\":\"Alertmanager\",\"version\":\"v1\"}, {\"group\":\"monitoring.coreos.com\",\"kind\":\"Prometheus\",\"version\":\"v1alpha1\"}]",
 			"olm.package":     "{\"packageName\":\"prometheus\",\"version\":\"0.47.0\"}",
-		}),	
+		}),
 		"operatorhub/packageA/2.0.0": *input.NewEntity("operatorhub/packageA/2.0.0", map[string]string{
 			"olm.bundle.path": `"foo.io/packageA/packageA:v2.0.0"`,
 			"olm.channel":     "{\"channelName\":\"stable\",\"priority\":0}",
 			"olm.gvk":         "[{\"group\":\"foo.io\",\"kind\":\"Foo\",\"version\":\"v1\"}]",
 			"olm.package":     "{\"packageName\":\"packageA\",\"version\":\"2.0.0\"}",
-		}),			
+		}),
 	}
 	testEntitySource := input.NewCacheQuerier(testEntityCache)
 
-	testResource := []client.Object{ 
+	testResource := []client.Object{
 		&v1alpha1.Operator{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "prometheus",
@@ -59,48 +59,46 @@ func TestOperatorResolver(t *testing.T) {
 			},
 		},
 	}
-	
-	errorClient := NewFailClientWithError(fmt.Errorf("something bad happened"))
 
 	for _, tt := range []struct {
-		Name				string
-		Client				client.Client
-		EntitySource		input.EntitySource
-		SelectedVariableCnt	int
-		ExpectedError		error
-	}{	
+		Name                string
+		Client              client.Client
+		EntitySource        input.EntitySource
+		SelectedVariableCnt int
+		ExpectedError       error
+	}{
 		{
-			Name: "should resolve the packages described by the available Operator resources",
-			Client: FakeClient(testResource...),
-			EntitySource: testEntitySource,
+			Name:                "should resolve the packages described by the available Operator resources",
+			Client:              FakeClient(testResource...),
+			EntitySource:        testEntitySource,
 			SelectedVariableCnt: 4,
-			ExpectedError: nil,
+			ExpectedError:       nil,
 		},
 		{
-			Name: "should not return an error if there are no Operator resources",
-			Client: FakeClient([]client.Object{}...),
-			EntitySource: testEntitySource,
+			Name:                "should not return an error if there are no Operator resources",
+			Client:              FakeClient(),
+			EntitySource:        testEntitySource,
 			SelectedVariableCnt: 0,
-			ExpectedError: nil,
+			ExpectedError:       nil,
 		},
 		{
-			Name: "should return an error if the entity source throws an error",
-			Client: FakeClient(testResource...),
-			EntitySource: FailEntitySource{},
+			Name:          "should return an error if the entity source throws an error",
+			Client:        FakeClient(testResource...),
+			EntitySource:  FailEntitySource{},
 			ExpectedError: fmt.Errorf("error calling filter in entity source"),
-		}, 
+		},
 		{
-			Name: "should return an error if the client throws an error",
-			Client: errorClient,
-			EntitySource: testEntitySource,
+			Name:          "should return an error if the client throws an error",
+			Client:        NewFailClientWithError(fmt.Errorf("something bad happened")),
+			EntitySource:  testEntitySource,
 			ExpectedError: fmt.Errorf("something bad happened"),
-		}, 
+		},
 	} {
-		t.Run(tt.Name, func(t *testing.T)  {
-			client :=  tt.Client
-			entitySource := tt.EntitySource 
+		t.Run(tt.Name, func(t *testing.T) {
+			client := tt.Client
+			entitySource := tt.EntitySource
 			resolver := resolution.NewOperatorResolver(client, entitySource)
-			solution, err := resolver.Resolve(context.Background())	
+			solution, err := resolver.Resolve(context.Background())
 
 			if err != nil {
 				assert.Equal(t, err, tt.ExpectedError)
