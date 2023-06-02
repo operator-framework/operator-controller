@@ -11,9 +11,12 @@ export GORELEASER_VERSION ?= v1.16.2
 export RUKPAK_VERSION=$(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/rukpak)
 export WAIT_TIMEOUT ?= 60s
 IMG?=$(IMAGE_REPO):$(IMAGE_TAG)
+TESTDATA_DIR := testdata
 
 OPERATOR_CONTROLLER_NAMESPACE ?= operator-controller-system
 KIND_CLUSTER_NAME ?= operator-controller
+
+CONTAINER_RUNTIME ?= docker
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -82,7 +85,7 @@ test-unit: envtest ## Run the unit tests
 	eval $$($(ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
 
 e2e: KIND_CLUSTER_NAME=operator-controller-e2e
-e2e: run test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
+e2e: run kind-load-test-artifacts test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
 
 kind-load: kind ## Loads the currently constructed image onto the cluster
 	$(KIND) load docker-image $(IMG) --name $(KIND_CLUSTER_NAME)
@@ -93,6 +96,12 @@ kind-cluster: kind kind-cluster-cleanup ## Standup a kind cluster
 
 kind-cluster-cleanup: kind ## Delete the kind cluster
 	$(KIND) delete cluster --name ${KIND_CLUSTER_NAME}
+
+kind-load-test-artifacts: kind ## Load the e2e testdata container images into a kind cluster
+	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/registry-v1/prometheus-operator.v0.47.0 -t localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0
+	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/catalogs -f $(TESTDATA_DIR)/catalogs/test-catalog.Dockerfile -t localhost/testdata/catalogs/test-catalog:e2e
+	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0 --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image localhost/testdata/catalogs/test-catalog:e2e --name $(KIND_CLUSTER_NAME)
 
 ##@ Build
 

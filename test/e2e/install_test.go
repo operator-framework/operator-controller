@@ -18,8 +18,10 @@ import (
 )
 
 const (
-	defaultTimeout = 30 * time.Second
-	defaultPoll    = 1 * time.Second
+	defaultTimeout  = 30 * time.Second
+	defaultPoll     = 1 * time.Second
+	testCatalogRef  = "localhost/testdata/catalogs/test-catalog:e2e"
+	testCatalogName = "test-catalog"
 )
 
 var _ = Describe("Operator Install", func() {
@@ -33,7 +35,7 @@ var _ = Describe("Operator Install", func() {
 	When("An operator is installed from an operator catalog", func() {
 		BeforeEach(func() {
 			ctx = context.Background()
-			pkgName = "argocd-operator"
+			pkgName = "prometheus"
 			operatorName = fmt.Sprintf("operator-%s", rand.String(8))
 			operator = &operatorv1alpha1.Operator{
 				ObjectMeta: metav1.ObjectMeta{
@@ -45,15 +47,13 @@ var _ = Describe("Operator Install", func() {
 			}
 			operatorCatalog = &catalogd.Catalog{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-catalog",
+					Name: testCatalogName,
 				},
 				Spec: catalogd.CatalogSpec{
 					Source: catalogd.CatalogSource{
 						Type: catalogd.SourceTypeImage,
 						Image: &catalogd.ImageSource{
-							// (TODO): Set up a local image registry, and build and store a test catalog in it
-							// to use in the test suite
-							Ref: "quay.io/olmtest/e2e-index:single-package-fbc", //generated from: "quay.io/operatorhubio/catalog:latest",
+							Ref: testCatalogRef,
 						},
 					},
 				},
@@ -63,7 +63,7 @@ var _ = Describe("Operator Install", func() {
 			err := c.Create(ctx, operatorCatalog)
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(func(g Gomega) {
-				err = c.Get(ctx, types.NamespacedName{Name: "test-catalog"}, operatorCatalog)
+				err = c.Get(ctx, types.NamespacedName{Name: testCatalogName}, operatorCatalog)
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(len(operatorCatalog.Status.Conditions)).To(Equal(1))
 				cond := apimeta.FindStatusCondition(operatorCatalog.Status.Conditions, catalogd.TypeUnpacked)
@@ -71,7 +71,7 @@ var _ = Describe("Operator Install", func() {
 				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 				g.Expect(cond.Reason).To(Equal(catalogd.ReasonUnpackSuccessful))
 				g.Expect(cond.Message).To(ContainSubstring("successfully unpacked the catalog image"))
-			}).WithTimeout(5 * time.Minute).WithPolling(defaultPoll).Should(Succeed())
+			}).WithTimeout(defaultTimeout).WithPolling(defaultPoll).Should(Succeed())
 
 			By("creating the Operator resource")
 			err = c.Create(ctx, operator)
