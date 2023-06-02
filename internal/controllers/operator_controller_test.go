@@ -9,7 +9,7 @@ import (
 	"github.com/go-logr/logr/funcr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
@@ -1101,7 +1101,7 @@ var _ = Describe("Operator Controller Test", func() {
 					g.Expect(testLogs[len(testLogs)-len(opNames):]).To(ContainElement(ContainSubstring(fmt.Sprintf("\"Operator\"={\"name\":\"%s\"}", p))))
 				}
 				logCount = len(testLogs)
-			}).WithTimeout(2 * time.Second).WithPolling(1 * time.Second).WithArguments().Should(Succeed())
+			}).WithTimeout(2 * time.Second).WithPolling(1 * time.Second).Should(Succeed())
 		})
 
 		It("reconciles all affected operators on cluster", func() {
@@ -1111,12 +1111,12 @@ var _ = Describe("Operator Controller Test", func() {
 			Expect(err).To(BeNil())
 			Eventually(func(g Gomega) {
 				By("verifying operator reconcile logs on catalog create")
-				g.Expect(len(testLogs)).To(Equal(logCount + len(opNames)))
+				g.Expect(testLogs).To(HaveLen(logCount + len(opNames)))
 				for _, p := range opNames {
 					g.Expect(testLogs[len(testLogs)-len(opNames):]).To(ContainElement(ContainSubstring(fmt.Sprintf("\"Operator\"={\"name\":\"%s\"}", p))))
 				}
 				logCount = len(testLogs)
-			}).WithTimeout(2 * time.Second).WithPolling(1 * time.Second).WithArguments().Should(Succeed())
+			}).WithTimeout(2 * time.Second).WithPolling(1 * time.Second).Should(Succeed())
 
 			By("updating a catalog")
 			catalog.Spec.Source.Image.Ref = "s"
@@ -1124,23 +1124,23 @@ var _ = Describe("Operator Controller Test", func() {
 			Expect(err).To(BeNil())
 			Eventually(func(g Gomega) {
 				By("verifying operator reconcile logs on catalog update")
-				g.Expect(len(testLogs)).To(Equal(logCount + len(opNames)))
+				g.Expect(testLogs).To(HaveLen(logCount + len(opNames)))
 				for _, p := range opNames {
 					g.Expect(testLogs[len(testLogs)-len(opNames):]).To(ContainElement(ContainSubstring(fmt.Sprintf("\"Operator\"={\"name\":\"%s\"}", p))))
 				}
 				logCount = len(testLogs)
-			}).WithTimeout(2 * time.Second).WithPolling(1 * time.Second).WithArguments().Should(Succeed())
+			}).WithTimeout(2 * time.Second).WithPolling(1 * time.Second).Should(Succeed())
 
 			By("deleting a catalog")
 			err = cl.Delete(ctx, catalog)
 			Expect(err).To(BeNil())
 			Eventually(func(g Gomega) {
 				By("verifying operator reconcile logs on catalog delete")
-				g.Expect(len(testLogs)).To(Equal(logCount + len(opNames)))
+				g.Expect(testLogs).To(HaveLen(logCount + len(opNames)))
 				for _, p := range opNames {
 					g.Expect(testLogs[len(testLogs)-len(opNames):]).To(ContainElement(ContainSubstring(fmt.Sprintf("\"Operator\"={\"name\":\"%s\"}", p))))
 				}
-			}).WithTimeout(2 * time.Second).WithPolling(1 * time.Second).WithArguments().Should(Succeed())
+			}).WithTimeout(2 * time.Second).WithPolling(1 * time.Second).Should(Succeed())
 		})
 		AfterEach(func() {
 			for _, p := range opNames {

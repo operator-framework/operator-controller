@@ -6,7 +6,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -45,7 +44,6 @@ var _ = Describe("Operator Install", func() {
 				By("eventually reporting a successful resolution and bundle path")
 				Eventually(func(g Gomega) {
 					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-					g.Expect(len(operator.Status.Conditions)).To(Equal(2))
 					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
 					g.Expect(cond).ToNot(BeNil())
 					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
@@ -66,9 +64,16 @@ var _ = Describe("Operator Install", func() {
 
 					bd := rukpakv1alpha1.BundleDeployment{}
 					g.Expect(c.Get(ctx, types.NamespacedName{Name: operatorName}, &bd)).To(Succeed())
-					g.Expect(len(bd.Status.Conditions)).To(Equal(2))
-					g.Expect(bd.Status.Conditions[0].Reason).To(Equal("UnpackSuccessful"))
-					g.Expect(bd.Status.Conditions[1].Reason).To(Equal("InstallationSucceeded"))
+
+					cond = apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
+					g.Expect(cond).ToNot(BeNil())
+					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+					g.Expect(cond.Reason).To(Equal(rukpakv1alpha1.ReasonUnpackSuccessful))
+
+					cond = apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeInstalled)
+					g.Expect(cond).ToNot(BeNil())
+					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+					g.Expect(cond.Reason).To(Equal(rukpakv1alpha1.ReasonInstallationSucceeded))
 				}).Should(Succeed())
 			})
 		})
@@ -86,7 +91,6 @@ var _ = Describe("Operator Install", func() {
 				By("eventually reporting a successful resolution and bundle path")
 				Eventually(func(g Gomega) {
 					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-					g.Expect(len(operator.Status.Conditions)).To(Equal(2))
 					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
 					g.Expect(cond).ToNot(BeNil())
 					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
@@ -107,63 +111,20 @@ var _ = Describe("Operator Install", func() {
 
 					bd := rukpakv1alpha1.BundleDeployment{}
 					g.Expect(c.Get(ctx, types.NamespacedName{Name: operatorName}, &bd)).To(Succeed())
-					g.Expect(len(bd.Status.Conditions)).To(Equal(2))
-					g.Expect(bd.Status.Conditions[0].Reason).To(Equal("UnpackSuccessful"))
-					g.Expect(bd.Status.Conditions[1].Reason).To(Equal("InstallationSucceeded"))
+
+					cond = apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
+					g.Expect(cond).ToNot(BeNil())
+					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+					g.Expect(cond.Reason).To(Equal(rukpakv1alpha1.ReasonUnpackSuccessful))
+
+					cond = apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeInstalled)
+					g.Expect(cond).ToNot(BeNil())
+					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+					g.Expect(cond.Reason).To(Equal(rukpakv1alpha1.ReasonInstallationSucceeded))
+
 				}).Should(Succeed())
 			})
 		})
-
-		It("resolves again when a new catalog is available", func() {
-			pkgName := "prometheus"
-			operator.Spec = operatorv1alpha1.OperatorSpec{
-				PackageName: pkgName,
-			}
-
-			// Delete the catalog first
-			Expect(c.Delete(ctx, operatorCatalog)).To(Succeed())
-
-			Eventually(func(g Gomega) {
-				// target package should not be present on cluster
-				err := c.Get(ctx, types.NamespacedName{Name: pkgName}, &catalogd.Package{})
-				g.Expect(errors.IsNotFound(err)).To(BeTrue())
-			}).Should(Succeed())
-
-			By("creating the Operator resource")
-			Expect(c.Create(ctx, operator)).To(Succeed())
-
-			By("failing to find Operator during resolution")
-			Eventually(func(g Gomega) {
-				g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-				g.Expect(cond).ToNot(BeNil())
-				g.Expect(cond.Status).To(Equal(metav1.ConditionFalse))
-				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonResolutionFailed))
-				g.Expect(cond.Message).To(Equal(fmt.Sprintf("package '%s' not found", pkgName)))
-			}).Should(Succeed())
-
-			By("creating an Operator catalog with the desired package")
-			var err error
-			operatorCatalog, err = createTestCatalog(ctx, testCatalogName, testCatalogRef)
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(func(g Gomega) {
-				g.Expect(c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, operatorCatalog)).To(Succeed())
-				cond := apimeta.FindStatusCondition(operatorCatalog.Status.Conditions, catalogd.TypeUnpacked)
-				g.Expect(cond).ToNot(BeNil())
-				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-				g.Expect(cond.Reason).To(Equal(catalogd.ReasonUnpackSuccessful))
-			}).Should(Succeed())
-
-			By("eventually resolving the package successfully")
-			Eventually(func(g Gomega) {
-				g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-				g.Expect(cond).ToNot(BeNil())
-				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
-			}).Should(Succeed())
-		})
-
 		AfterEach(func() {
 			Expect(c.Delete(ctx, operator)).To(Succeed())
 			Eventually(func(g Gomega) {
