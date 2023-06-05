@@ -62,18 +62,16 @@ func TestOperatorResolver(t *testing.T) {
 	}
 
 	for _, tt := range []struct {
-		Name                string
-		Client              client.Client
-		EntitySource        input.EntitySource
-		SelectedVariableCnt int
-		SelectedVariables   []deppy.Identifier
-		ExpectedError       error
+		Name              string
+		Client            client.Client
+		EntitySource      input.EntitySource
+		SelectedVariables []deppy.Identifier
+		ExpectedError     error
 	}{
 		{
-			Name:                "should resolve the packages described by the available Operator resources",
-			Client:              FakeClient(testResource...),
-			EntitySource:        testEntitySource,
-			SelectedVariableCnt: 4,
+			Name:         "should resolve the packages described by the available Operator resources",
+			Client:       FakeClient(testResource...),
+			EntitySource: testEntitySource,
 			SelectedVariables: []deppy.Identifier{"operatorhub/packageA/2.0.0",
 				"operatorhub/prometheus/0.47.0",
 				"required package packageA",
@@ -81,11 +79,11 @@ func TestOperatorResolver(t *testing.T) {
 			ExpectedError: nil,
 		},
 		{
-			Name:                "should not return an error if there are no Operator resources",
-			Client:              FakeClient(),
-			EntitySource:        testEntitySource,
-			SelectedVariableCnt: 0,
-			ExpectedError:       nil,
+			Name:              "should not return an error if there are no Operator resources",
+			Client:            FakeClient(),
+			EntitySource:      testEntitySource,
+			SelectedVariables: []deppy.Identifier{},
+			ExpectedError:     nil,
 		},
 		{
 			Name:          "should return an error if the entity source throws an error",
@@ -110,7 +108,7 @@ func TestOperatorResolver(t *testing.T) {
 				assert.Equal(t, err, tt.ExpectedError)
 				assert.Nil(t, solution)
 			} else {
-				assert.Len(t, solution.SelectedVariables(), tt.SelectedVariableCnt)
+				assert.Len(t, solution.SelectedVariables(), len(tt.SelectedVariables))
 				for _, identifier := range tt.SelectedVariables {
 					assert.True(t, solution.IsSelected(identifier))
 				}
