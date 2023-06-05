@@ -39,6 +39,7 @@ func TestOperatorResolver(t *testing.T) {
 			"olm.package":     "{\"packageName\":\"packageA\",\"version\":\"2.0.0\"}",
 		}),
 	}
+
 	testEntitySource := input.NewCacheQuerier(testEntityCache)
 
 	testResource := []client.Object{
@@ -65,6 +66,7 @@ func TestOperatorResolver(t *testing.T) {
 		Client              client.Client
 		EntitySource        input.EntitySource
 		SelectedVariableCnt int
+		SelectedVariables   []deppy.Identifier
 		ExpectedError       error
 	}{
 		{
@@ -72,7 +74,11 @@ func TestOperatorResolver(t *testing.T) {
 			Client:              FakeClient(testResource...),
 			EntitySource:        testEntitySource,
 			SelectedVariableCnt: 4,
-			ExpectedError:       nil,
+			SelectedVariables: []deppy.Identifier{"operatorhub/packageA/2.0.0",
+				"operatorhub/prometheus/0.47.0",
+				"required package packageA",
+				"required package prometheus"},
+			ExpectedError: nil,
 		},
 		{
 			Name:                "should not return an error if there are no Operator resources",
@@ -105,12 +111,8 @@ func TestOperatorResolver(t *testing.T) {
 				assert.Nil(t, solution)
 			} else {
 				assert.Len(t, solution.SelectedVariables(), tt.SelectedVariableCnt)
-				if len(solution.SelectedVariables()) == 4 {
-					assert.True(t, solution.IsSelected("operatorhub/packageA/2.0.0"))
-					assert.True(t, solution.IsSelected("operatorhub/prometheus/0.47.0"))
-					assert.True(t, solution.IsSelected("required package packageA"))
-					assert.True(t, solution.IsSelected("required package prometheus"))
-					assert.False(t, solution.IsSelected("operatorhub/prometheus/0.37.0"))
+				for _, identifier := range tt.SelectedVariables {
+					assert.True(t, solution.IsSelected(identifier))
 				}
 				assert.NoError(t, err)
 			}
