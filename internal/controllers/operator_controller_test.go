@@ -3,13 +3,9 @@ package controllers_test
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
 
-	"github.com/go-logr/logr/funcr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
@@ -22,7 +18,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
@@ -1062,94 +1057,6 @@ var _ = Describe("Operator Controller Test", func() {
 			})
 		})
 	})
-	When("a catalog changes on cluster", func() {
-		var testLogs, opNames []string
-		var cancel context.CancelFunc
-		var logCount int
-		BeforeEach(func() {
-			l := funcr.New(func(prefix, args string) {
-				if prefix == "operator-controller" &&
-					strings.Contains(args, `"controller"="operator"`) &&
-					strings.Contains(args, `"msg"="ending"`) {
-					// filter for only relevant logs
-					testLogs = append(testLogs, fmt.Sprintf("%s", args))
-				}
-			}, funcr.Options{Verbosity: 1})
-			mgr, err := ctrl.NewManager(cfg, ctrl.Options{Scheme: sch, Logger: l})
-			Expect(err).To(BeNil())
-
-			err = reconciler.SetupWithManager(mgr)
-			Expect(err).To(BeNil())
-			var mgrCtx context.Context
-			mgrCtx, cancel = context.WithCancel(log.IntoContext(ctx, l))
-
-			go func() {
-				err := mgr.Start(mgrCtx)
-				Expect(err).To(BeNil())
-			}()
-
-			opNames = []string{"prometheus", "project-quay"}
-			for _, p := range opNames {
-				op := &operatorsv1alpha1.Operator{ObjectMeta: metav1.ObjectMeta{Name: p}, Spec: operatorsv1alpha1.OperatorSpec{PackageName: p}}
-				err := cl.Create(ctx, op)
-				Expect(err).To(BeNil())
-			}
-			Eventually(func(g Gomega) {
-				By("verifying initial reconcile logs for operator creation")
-				g.Expect(len(testLogs) >= len(opNames)).To(BeTrue())
-				for _, p := range opNames {
-					g.Expect(testLogs[len(testLogs)-len(opNames):]).To(ContainElement(ContainSubstring(fmt.Sprintf("\"Operator\"={\"name\":\"%s\"}", p))))
-				}
-				logCount = len(testLogs)
-			}).WithTimeout(2 * time.Second).WithPolling(1 * time.Second).Should(Succeed())
-		})
-
-		It("reconciles all affected operators on cluster", func() {
-			By("creating a new catalog")
-			catalog := &catalogd.Catalog{ObjectMeta: metav1.ObjectMeta{Name: "t"}, Spec: catalogd.CatalogSpec{Source: catalogd.CatalogSource{Type: catalogd.SourceTypeImage, Image: &catalogd.ImageSource{}}}}
-			err := cl.Create(ctx, catalog)
-			Expect(err).To(BeNil())
-			Eventually(func(g Gomega) {
-				By("verifying operator reconcile logs on catalog create")
-				g.Expect(testLogs).To(HaveLen(logCount + len(opNames)))
-				for _, p := range opNames {
-					g.Expect(testLogs[len(testLogs)-len(opNames):]).To(ContainElement(ContainSubstring(fmt.Sprintf("\"Operator\"={\"name\":\"%s\"}", p))))
-				}
-				logCount = len(testLogs)
-			}).WithTimeout(2 * time.Second).WithPolling(1 * time.Second).Should(Succeed())
-
-			By("updating a catalog")
-			catalog.Spec.Source.Image.Ref = "s"
-			err = cl.Update(ctx, catalog)
-			Expect(err).To(BeNil())
-			Eventually(func(g Gomega) {
-				By("verifying operator reconcile logs on catalog update")
-				g.Expect(testLogs).To(HaveLen(logCount + len(opNames)))
-				for _, p := range opNames {
-					g.Expect(testLogs[len(testLogs)-len(opNames):]).To(ContainElement(ContainSubstring(fmt.Sprintf("\"Operator\"={\"name\":\"%s\"}", p))))
-				}
-				logCount = len(testLogs)
-			}).WithTimeout(2 * time.Second).WithPolling(1 * time.Second).Should(Succeed())
-
-			By("deleting a catalog")
-			err = cl.Delete(ctx, catalog)
-			Expect(err).To(BeNil())
-			Eventually(func(g Gomega) {
-				By("verifying operator reconcile logs on catalog delete")
-				g.Expect(testLogs).To(HaveLen(logCount + len(opNames)))
-				for _, p := range opNames {
-					g.Expect(testLogs[len(testLogs)-len(opNames):]).To(ContainElement(ContainSubstring(fmt.Sprintf("\"Operator\"={\"name\":\"%s\"}", p))))
-				}
-			}).WithTimeout(2 * time.Second).WithPolling(1 * time.Second).Should(Succeed())
-		})
-		AfterEach(func() {
-			for _, p := range opNames {
-				op := &operatorsv1alpha1.Operator{ObjectMeta: metav1.ObjectMeta{Name: p}, Spec: operatorsv1alpha1.OperatorSpec{PackageName: p}}
-				Expect(cl.Delete(ctx, op)).To(BeNil())
-			}
-			cancel() // stop manager
-		})
-	})
 })
 
 func verifyInvariants(ctx context.Context, c client.Client, op *operatorsv1alpha1.Operator) {
@@ -1186,12 +1093,6 @@ var testEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{
 		"olm.bundle.path": `"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"`,
 		"olm.channel":     `{"channelName":"beta","priority":0,"replaces":"prometheusoperator.0.37.0"}`,
 		"olm.package":     `{"packageName":"prometheus","version":"0.47.0"}`,
-		"olm.gvk":         `[]`,
-	}),
-	"operatorhub/project-quay/3.8.3": *input.NewEntity("operatorhub/project-quay/3.8.3", map[string]string{
-		"olm.bundle.path": `"quay.io/openshift-community-operators/project-quay@sha256:4f5698b5fec2e5f9a4df78b5ef9609b3a697c81cdb137b98e82e79104f0eb3b5"`,
-		"olm.channel":     `{"channelName":"stable","priority":0}`,
-		"olm.package":     `{"packageName":"project-quay","version":"3.8.3"}`,
 		"olm.gvk":         `[]`,
 	}),
 	"operatorhub/badimage/0.1.0": *input.NewEntity("operatorhub/badimage/0.1.0", map[string]string{

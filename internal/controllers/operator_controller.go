@@ -298,7 +298,7 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func SetupWithManager(r reconcile.Reconciler, mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&operatorsv1alpha1.Operator{}).
 		Watches(source.NewKindWithCache(&catalogd.Catalog{}, mgr.GetCache()),

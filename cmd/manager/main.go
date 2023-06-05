@@ -94,14 +94,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.OperatorReconciler{
+	if err = controllers.SetupWithManager(&controllers.OperatorReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 		Resolver: solver.NewDeppySolver(
 			entitysources.NewCatalogdEntitySource(mgr.GetClient()),
 			olm.NewOLMVariableSource(mgr.GetClient()),
 		),
-	}).SetupWithManager(mgr); err != nil {
+	}, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)
 	}
