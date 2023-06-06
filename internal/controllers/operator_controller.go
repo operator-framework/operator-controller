@@ -156,9 +156,19 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	op.Status.ResolvedBundleResource = bundleImage
 	setResolvedStatusConditionSuccess(&op.Status.Conditions, fmt.Sprintf("resolved to %q", bundleImage), op.GetGeneration())
 
+	mediaType, err := bundleEntity.MediaType()
+	if err != nil {
+		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		return ctrl.Result{}, err
+	}
+	bundleProvisioner, err := mapBundleMediaTypeToBundleProvisioner(mediaType)
+	if err != nil {
+		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		return ctrl.Result{}, err
+	}
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
 	// image we just looked up in the solution.
-	dep := r.generateExpectedBundleDeployment(*op, bundleImage)
+	dep := r.generateExpectedBundleDeployment(*op, bundleImage, bundleProvisioner)
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
 		// originally Reason: operatorsv1alpha1.ReasonInstallationFailed
 		op.Status.InstalledBundleResource = ""
@@ -244,12 +254,13 @@ func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Soluti
 	return nil, fmt.Errorf("entity for package %q not found in solution", packageName)
 }
 
-func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string) *unstructured.Unstructured {
+func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {
 	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
 	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
 	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
 	// unstructured ensures that the patch contains only what is specified. Using unstructured like this is basically
 	// identical to "kubectl apply -f"
+
 	bd := &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": rukpakv1alpha1.GroupVersion.String(),
 		"kind":       rukpakv1alpha1.BundleDeploymentKind,
@@ -261,8 +272,7 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 			"provisionerClassName": "core-rukpak-io-plain",
 			"template": map[string]interface{}{
 				"spec": map[string]interface{}{
-					// TODO: Don't assume registry provisioner
-					"provisionerClassName": "core-rukpak-io-registry",
+					"provisionerClassName": bundleProvisioner,
 					"source": map[string]interface{}{
 						// TODO: Don't assume image type
 						"type": string(rukpakv1alpha1.SourceTypeImage),
@@ -361,6 +371,23 @@ func verifyBDStatus(dep *rukpakv1alpha1.BundleDeployment) (metav1.ConditionStatu
 // isBundleDepStale returns true if conditions are out of date.
 func isBundleDepStale(bd *rukpakv1alpha1.BundleDeployment) bool {
 	return bd != nil && bd.Status.ObservedGeneration != bd.GetGeneration()
+}
+
+// mapBundleMediaTypeToBundleProvisioner maps an olm.bundle.mediatype property to a
+// rukpak bundle provisioner class name that is capable of unpacking the bundle type
+func mapBundleMediaTypeToBundleProvisioner(mediaType string) (string, error) {
+	switch mediaType {
+	case entity.MediaTypePlain:
+		return "core-rukpak-io-plain", nil
+	// To ensure compatibility with bundles created with OLMv0 where the
+	// olm.bundle.mediatype property doesn't exist, we assume that if the
+	// property is empty (i.e doesn't exist) that the bundle is one created
+	// with OLMv0 and therefore should use the registry provisioner
+	case entity.MediaTypeRegistry, "":
+		return "core-rukpak-io-registry", nil
+	default:
+		return "", fmt.Errorf("unknown bundle mediatype: %s", mediaType)
+	}
 }
 
 // setResolvedStatusConditionSuccess sets the resolved status condition to success.

@@ -1,6 +1,7 @@
 package entity_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/blang/semver/v4"
@@ -265,6 +266,34 @@ var _ = Describe("BundleEntity", func() {
 			bundlePath, err := bundleEntity.BundlePath()
 			Expect(bundlePath).To(BeEmpty())
 			Expect(err.Error()).To(Equal("error determining bundle path for entity 'operatorhub/prometheus/0.14.0': property 'olm.bundle.path' ('badBundlePath') could not be parsed: invalid character 'b' looking for beginning of value"))
+		})
+	})
+
+	Describe("MediaType", func() {
+		It("should return the bundle mediatype property if present", func() {
+			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
+				olmentity.PropertyBundleMediaType: fmt.Sprintf(`"%s"`, olmentity.MediaTypePlain),
+			})
+			bundleEntity := olmentity.NewBundleEntity(entity)
+			mediaType, err := bundleEntity.MediaType()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(mediaType).To(Equal(olmentity.MediaTypePlain))
+		})
+		It("should not return an error if the property is not found", func() {
+			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{})
+			bundleEntity := olmentity.NewBundleEntity(entity)
+			mediaType, err := bundleEntity.MediaType()
+			Expect(mediaType).To(BeEmpty())
+			Expect(err).To(BeNil())
+		})
+		It("should return error if the property is malformed", func() {
+			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
+				olmentity.PropertyBundleMediaType: "badtype",
+			})
+			bundleEntity := olmentity.NewBundleEntity(entity)
+			mediaType, err := bundleEntity.MediaType()
+			Expect(mediaType).To(BeEmpty())
+			Expect(err.Error()).To(Equal("error determining bundle mediatype for entity 'operatorhub/prometheus/0.14.0': property 'olm.bundle.mediatype' ('badtype') could not be parsed: invalid character 'b' looking for beginning of value"))
 		})
 	})
 })

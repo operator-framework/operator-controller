@@ -7,6 +7,7 @@ import (
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -80,12 +81,16 @@ func getEntities(ctx context.Context, client client.Client) (input.EntityList, e
 	for _, bundle := range bundleMetadatas.Items {
 		props := map[string]string{}
 
+		// TODO: We should make sure all properties are forwarded
+		// through and avoid a lossy translation from FBC --> entity
 		for _, prop := range bundle.Spec.Properties {
 			switch prop.Type {
 			case property.TypePackage:
 				// this is already a json marshalled object, so it doesn't need to be marshalled
 				// like the other ones
 				props[property.TypePackage] = string(prop.Value)
+			case entity.PropertyBundleMediaType:
+				props[entity.PropertyBundleMediaType] = string(prop.Value)
 			}
 		}
 
