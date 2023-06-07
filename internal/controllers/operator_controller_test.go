@@ -965,7 +965,7 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhub/plain@sha256:plain"))
 			})
 		})
-		When("the operator specifies a package with a bade bundle mediatype", func() {
+		When("the operator specifies a package with a bad bundle mediatype", func() {
 			var pkgName string
 			var pkgVer string
 			var pkgChan string
