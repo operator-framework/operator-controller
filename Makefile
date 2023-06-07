@@ -4,7 +4,6 @@
 # Image URL to use all building/pushing image targets
 export IMAGE_REPO ?= quay.io/operator-framework/operator-controller
 export IMAGE_TAG ?= devel
-export GO_BUILD_TAGS ?= upstream
 export CERT_MGR_VERSION ?= v1.9.0
 export CATALOGD_VERSION ?= v0.2.0
 export RUKPAK_VERSION=$(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/rukpak)
@@ -112,17 +111,28 @@ kind-load-test-artifacts: $(KIND) ## Load the e2e testdata container images into
 
 ##@ Build
 
-BUILDCMD = sh -c 'mkdir -p $(BUILDBIN) && $(GORELEASER) build ${GORELEASER_ARGS} --single-target -o $(BUILDBIN)/manager'
-BUILDDEPS = manifests generate fmt vet $(GORELEASER)
+export VERSION           ?= $(shell git describe --tags --always --dirty)
+export CGO_ENABLED       ?= 0
+export GO_BUILD_ASMFLAGS ?= all=-trimpath=${PWD}
+export GO_BUILD_LDFLAGS  ?= -s -w -X $(shell go list -m)/version.Version=$(VERSION)
+export GO_BUILD_GCFLAGS  ?= all=-trimpath=${PWD}
+export GO_BUILD_TAGS     ?= upstream
 
-.PHONY: build
-build: BUILDBIN = bin
-build: $(BUILDDEPS) ## Build manager binary using goreleaser for current GOOS and GOARCH.
+BUILDCMD = go build -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/manager ./cmd/manager
+
+.PHONY: build-deps
+build-deps: manifests generate fmt vet
+
+.PHONY: build go-build-local
+build: build-deps go-build-local ## Build manager binary for current GOOS and GOARCH.
+go-build-local: BUILDBIN = bin
+go-build-local:
 	$(BUILDCMD)
 
-.PHONY: build-linux
-build-linux: BUILDBIN = bin/linux
-build-linux: $(BUILDDEPS) ## Build manager binary using goreleaser for GOOS=linux and local GOARCH.
+.PHONY: build-linux go-build-linux
+build-linux: build-deps go-build-linux ## Build manager binary for GOOS=linux and local GOARCH.
+go-build-linux: BUILDBIN = bin/linux
+go-build-linux:
 	GOOS=linux $(BUILDCMD)
 
 .PHONY: run
@@ -143,7 +153,6 @@ docker-build: build-linux ## Build docker image for operator-controller with GOO
 ##@ Release:
 export ENABLE_RELEASE_PIPELINE ?= false
 export GORELEASER_ARGS ?= --snapshot --clean
-export VERSION ?= $(shell git describe --abbrev=0 --tags)
 
 release: $(GORELEASER) ## Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)
