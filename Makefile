@@ -1,10 +1,3 @@
-# Build info
-export GO_BUILD_TAGS  ?= ''
-export GIT_COMMIT     ?= $(shell git rev-parse HEAD)
-export GIT_VERSION    ?= $(shell git describe --tags --always --dirty)
-export GIT_TREE_STATE ?= $(shell [ -z "$(shell git status --porcelain)" ] && echo "clean" || echo "dirty")
-export VERSION_PKG    ?= $(shell go list -m)/internal/version
-
 export IMAGE_REPO                ?= quay.io/operator-framework/catalogd
 export IMAGE_TAG                 ?= devel
 IMAGE=$(IMAGE_REPO):$(IMAGE_TAG)
@@ -58,7 +51,7 @@ fmt: ## Run go fmt against code.
 
 .PHONY: vet
 vet: ## Run go vet against code.
-	go vet -tags $(GO_BUILD_TAGS) ./...
+	go vet -tags '$(GO_BUILD_TAGS)' ./...
 
 .PHONY: test
 test-unit: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
@@ -77,24 +70,43 @@ verify: tidy fmt vet generate ## Verify the current code generation and lint
 BINARIES=manager
 LINUX_BINARIES=$(join $(addprefix linux/,$(BINARIES)), )
 
-BUILDCMD = sh -c 'mkdir -p $(BUILDBIN) && $(GORELEASER) build $(GORELEASER_ARGS) --id $(notdir $@) --single-target -o $(BUILDBIN)/$(notdir $@)'
-BUILDDEPS = $(GORELEASER)
+# Build info
+export VERSION_PKG     ?= $(shell go list -m)/internal/version
 
-.PHONY: build
-build: $(BINARIES)  ## Build all project binaries for the local OS and architecture.
+export GIT_COMMIT      ?= $(shell git rev-parse HEAD)
+export GIT_VERSION     ?= $(shell git describe --tags --always --dirty)
+export GIT_TREE_STATE  ?= $(shell [ -z "$(shell git status --porcelain)" ] && echo "clean" || echo "dirty")
+export GIT_COMMIT_DATE ?= $(shell TZ=UTC0 git show --quiet --date=format:'%Y-%m-%dT%H:%M:%SZ' --format="%cd")
 
-.PHONY: build-linux
-build-linux: $(LINUX_BINARIES) ## Build all project binaries for GOOS=linux and the local architecture.
+export CGO_ENABLED       ?= 0
+export GO_BUILD_ASMFLAGS ?= all=-trimpath=${PWD}
+export GO_BUILD_LDFLAGS  ?= -s -w \
+    -X "$(VERSION_PKG).gitVersion=$(GIT_VERSION)" \
+    -X "$(VERSION_PKG).gitCommit=$(GIT_COMMIT)" \
+    -X "$(VERSION_PKG).gitTreeState=$(GIT_TREE_STATE)" \
+    -X "$(VERSION_PKG).commitDate=$(GIT_COMMIT_DATE)"
+export GO_BUILD_GCFLAGS  ?= all=-trimpath=${PWD}
+export GO_BUILD_TAGS     ?=
 
-.PHONY: $(BINARIES)
+BUILDCMD = go build -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$(notdir $@) ./cmd/$(notdir $@)
+
+.PHONY: build-deps
+build-deps: generate fmt vet
+
+.PHONY: build go-build-local $(BINARIES)
+build: build-deps go-build-local ## Build binaries for current GOOS and GOARCH.
+go-build-local: $(BINARIES)
 $(BINARIES): BUILDBIN = bin
-$(BINARIES): $(BUILDDEPS)
+$(BINARIES):
 	$(BUILDCMD)
 
-.PHONY: $(LINUX_BINARIES)
+.PHONY: build-linux go-build-linux $(LINUX_BINARIES)
+build-linux: build-deps go-build-linux ## Build binaries for GOOS=linux and local GOARCH.
+go-build-linux: $(LINUX_BINARIES)
 $(LINUX_BINARIES): BUILDBIN = bin/linux
-$(LINUX_BINARIES): $(BUILDDEPS)
+$(LINUX_BINARIES):
 	GOOS=linux $(BUILDCMD)
+
 
 .PHONY: run
 run: generate kind-cluster install ## Create a kind cluster and install a local build of catalogd

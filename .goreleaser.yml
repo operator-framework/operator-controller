@@ -1,8 +1,3 @@
-
-env:
-- GOPROXY=https://proxy.golang.org|direct
-- GO111MODULE=on
-- CGO_ENABLED=0
 before:
   hooks:
     - go mod tidy
@@ -11,6 +6,12 @@ builds:
   - id: manager
     main: ./cmd/manager/
     binary: manager
+    asmflags: "{{ .Env.GO_BUILD_ASMFLAGS }}"
+    gcflags: "{{ .Env.GO_BUILD_GCFLAGS }}"
+    ldflags: "{{ .Env.GO_BUILD_LDFLAGS }}"
+    tags:
+    - "{{ .Env.GO_BUILD_TAGS }}"
+    mod_timestamp: "{{ .CommitTimestamp }}"
     goos:
     - linux
     goarch:
@@ -18,18 +19,6 @@ builds:
     - arm64
     - ppc64le
     - s390x
-    tags:
-    - "{{ .Env.GO_BUILD_TAGS }}"
-    mod_timestamp: "{{ .CommitTimestamp }}"
-    asmflags:
-      - all=-trimpath={{ dir .Env.PWD }}
-    gcflags:
-      - all=-trimpath={{ dir .Env.PWD }}
-    ldflags:
-    - -X {{ .Env.VERSION_PKG }}.gitVersion={{ .Env.GIT_VERSION }}
-    - -X {{ .Env.VERSION_PKG }}.gitCommit={{ .Env.GIT_COMMIT }}
-    - -X {{ .Env.VERSION_PKG }}.gitTreeState={{ .Env.GIT_TREE_STATE }}
-    - -X {{ .Env.VERSION_PKG }}.commitDate={{ .CommitTimestamp }}
 dockers:
 - image_templates:
   - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
