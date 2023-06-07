@@ -29,6 +29,12 @@ $(CONTROLLER_GEN): $(BINGO_DIR)/controller-gen.mod
 	@echo "(re)installing $(GOBIN)/controller-gen-v0.11.4"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=controller-gen.mod -o=$(GOBIN)/controller-gen-v0.11.4 "sigs.k8s.io/controller-tools/cmd/controller-gen"
 
+GINKGO := $(GOBIN)/ginkgo-v2.9.7
+$(GINKGO): $(BINGO_DIR)/ginkgo.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/ginkgo-v2.9.7"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=ginkgo.mod -o=$(GOBIN)/ginkgo-v2.9.7 "github.com/onsi/ginkgo/v2/ginkgo"
+
 GORELEASER := $(GOBIN)/goreleaser-v1.16.2
 $(GORELEASER): $(BINGO_DIR)/goreleaser.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.

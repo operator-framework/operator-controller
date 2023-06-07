@@ -18,6 +18,10 @@ ENVTEST_SERVER_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | s
 KIND_CLUSTER_NAME       ?= catalogd
 CATALOGD_NAMESPACE      ?= catalogd-system
 
+# E2E configuration
+TESTDATA_DIR            ?= testdata
+CONTAINER_RUNTIME ?= docker
+
 ##@ General
 
 # The help target prints out all targets with their descriptions organized
@@ -55,7 +59,15 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test-unit: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION)) && go test ./... -coverprofile cover.out
+	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION)) && go test $(shell go list ./... | grep -v /test/e2e) -coverprofile cover.out
+
+FOCUS := $(if $(TEST),-v -focus "$(TEST)")
+E2E_FLAGS ?= ""
+test-e2e: $(GINKGO) ## Run the e2e tests
+	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/e2e
+
+e2e: KIND_CLUSTER_NAME=catalogd-e2e
+e2e: run kind-load-test-artifacts test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
 
 .PHONY: tidy
 tidy: ## Update dependencies
@@ -131,6 +143,9 @@ kind-load: $(KIND) ## Load the built images onto the local cluster
 	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image $(IMAGE) --name $(KIND_CLUSTER_NAME)
 
+kind-load-test-artifacts: $(KIND) ## Load the e2e testdata container images into a kind cluster
+	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/catalogs -f $(TESTDATA_DIR)/catalogs/test-catalog.Dockerfile -t localhost/testdata/catalogs/test-catalog:e2e
+	$(KIND) load docker-image localhost/testdata/catalogs/test-catalog:e2e --name $(KIND_CLUSTER_NAME)
 
 .PHONY: install
 install: build-container kind-load deploy wait ## Install local catalogd
