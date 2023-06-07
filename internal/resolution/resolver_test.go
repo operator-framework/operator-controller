@@ -24,19 +24,16 @@ func TestOperatorResolver(t *testing.T) {
 		"operatorhub/prometheus/0.37.0", map[string]string{
 			"olm.bundle.path": `"foo.io/bar/baz"`,
 			"olm.channel":     "{\"channelName\":\"beta\",\"priority\":0,\"replaces\":\"prometheusoperator.0.32.0\"}",
-			"olm.gvk":         "[{\"group\":\"monitoring.coreos.com\",\"kind\":\"Alertmanager\",\"version\":\"v1\"}, {\"group\":\"monitoring.coreos.com\",\"kind\":\"Prometheus\",\"version\":\"v1\"}]",
 			"olm.package":     "{\"packageName\":\"prometheus\",\"version\":\"0.37.0\"}",
 		}),
 		"operatorhub/prometheus/0.47.0": *input.NewEntity("operatorhub/prometheus/0.47.0", map[string]string{
 			"olm.bundle.path": `"foo.io/bar/baz"`,
 			"olm.channel":     "{\"channelName\":\"beta\",\"priority\":0,\"replaces\":\"prometheusoperator.0.37.0\"}",
-			"olm.gvk":         "[{\"group\":\"monitoring.coreos.com\",\"kind\":\"Alertmanager\",\"version\":\"v1\"}, {\"group\":\"monitoring.coreos.com\",\"kind\":\"Prometheus\",\"version\":\"v1alpha1\"}]",
 			"olm.package":     "{\"packageName\":\"prometheus\",\"version\":\"0.47.0\"}",
 		}),
 		"operatorhub/packageA/2.0.0": *input.NewEntity("operatorhub/packageA/2.0.0", map[string]string{
 			"olm.bundle.path": `"foo.io/packageA/packageA:v2.0.0"`,
 			"olm.channel":     "{\"channelName\":\"stable\",\"priority\":0}",
-			"olm.gvk":         "[{\"group\":\"foo.io\",\"kind\":\"Foo\",\"version\":\"v1\"}]",
 			"olm.package":     "{\"packageName\":\"packageA\",\"version\":\"2.0.0\"}",
 		}),
 	}
