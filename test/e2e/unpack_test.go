@@ -100,12 +100,6 @@ var _ = Describe("Catalog Unpacking", func() {
 						Value: json.RawMessage(`{"packageName":"prometheus","version":"0.47.0"}`),
 					},
 				},
-				RelatedImages: []catalogd.RelatedImage{
-					{
-						Name:  "",
-						Image: "",
-					},
-				},
 			}
 			err = c.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s-%s", catalog.Name, bundle)}, bm)
 			Expect(err).ToNot(HaveOccurred())

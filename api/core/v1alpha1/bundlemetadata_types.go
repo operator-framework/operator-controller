@@ -57,10 +57,10 @@ type BundleMetadataSpec struct {
 	Image string `json:"image"`
 
 	// Properties is a string of references to property objects that are part of the bundle
-	Properties []Property `json:"properties"`
+	Properties []Property `json:"properties,omitempty"`
 
 	// RelatedImages are the RelatedImages in the bundle
-	RelatedImages []RelatedImage `json:"relatedImages"`
+	RelatedImages []RelatedImage `json:"relatedImages,omitempty"`
 }
 
 type Property struct {

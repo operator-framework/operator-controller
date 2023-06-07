@@ -87,8 +87,6 @@ spec:
             - catalog
             - image
             - package
-            - properties
-            - relatedImages
             type: object
           status:
             description: BundleMetadataStatus defines the observed state of BundleMetadata

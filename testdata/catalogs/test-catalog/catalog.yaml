@@ -13,9 +13,6 @@ schema: olm.bundle
 name: prometheus-operator.0.47.0
 package: prometheus
 image: localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0
-relatedImages:
-  - name: ""
-    image: ""
 properties:
   - type: olm.package
     value:
