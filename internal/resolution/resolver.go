@@ -7,9 +7,8 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
-
 	"github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
 )
 
 type OperatorResolver struct {
@@ -34,10 +33,7 @@ func (o *OperatorResolver) Resolve(ctx context.Context) (*solver.Solution, error
 	}
 
 	olmVariableSource := olm.NewOLMVariableSource(operatorList.Items...)
-	deppySolver, err := solver.NewDeppySolver(o.entitySource, olmVariableSource)
-	if err != nil {
-		return nil, err
-	}
+	deppySolver := solver.NewDeppySolver(o.entitySource, olmVariableSource)
 
 	solution, err := deppySolver.Solve(ctx)
 	if err != nil {

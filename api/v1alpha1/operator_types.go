@@ -19,7 +19,7 @@ package v1alpha1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	operatorutil "github.com/operator-framework/operator-controller/internal/util"
+	"github.com/operator-framework/operator-controller/internal/conditionsets"
 )
 
 // OperatorSpec defines the desired state of Operator
@@ -39,41 +39,52 @@ type OperatorSpec struct {
 	Version string `json:"version,omitempty"`
 
 	//+kubebuilder:validation:MaxLength:=48
-	//+kubebuilder:validation:Pattern:=^[a-z0-9]+(-[a-z0-9]+)*$
+	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
 	// Channel constraint defintion
 	Channel string `json:"channel,omitempty"`
 }
 
 const (
 	// TODO(user): add more Types, here and into init()
-	TypeReady = "Ready"
+	TypeInstalled = "Installed"
+	TypeResolved  = "Resolved"
 
-	ReasonInstallationSucceeded     = "InstallationSucceeded"
-	ReasonResolutionFailed          = "ResolutionFailed"
 	ReasonBundleLookupFailed        = "BundleLookupFailed"
 	ReasonInstallationFailed        = "InstallationFailed"
 	ReasonInstallationStatusUnknown = "InstallationStatusUnknown"
+	ReasonInstallationSucceeded     = "InstallationSucceeded"
 	ReasonInvalidSpec               = "InvalidSpec"
+	ReasonResolutionFailed          = "ResolutionFailed"
+	ReasonResolutionUnknown         = "ResolutionUnknown"
+	ReasonSuccess                   = "Success"
 )
 
 func init() {
 	// TODO(user): add Types from above
-	operatorutil.ConditionTypes = append(operatorutil.ConditionTypes,
-		TypeReady,
+	conditionsets.ConditionTypes = append(conditionsets.ConditionTypes,
+		TypeInstalled,
+		TypeResolved,
 	)
 	// TODO(user): add Reasons from above
-	operatorutil.ConditionReasons = append(operatorutil.ConditionReasons,
+	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
 		ReasonInstallationSucceeded,
 		ReasonResolutionFailed,
+		ReasonResolutionUnknown,
 		ReasonBundleLookupFailed,
 		ReasonInstallationFailed,
 		ReasonInstallationStatusUnknown,
 		ReasonInvalidSpec,
+		ReasonSuccess,
 	)
 }
 
 // OperatorStatus defines the observed state of Operator
 type OperatorStatus struct {
+	// +optional
+	InstalledBundleResource string `json:"installedBundleResource,omitempty"`
+	// +optional
+	ResolvedBundleResource string `json:"resolvedBundleResource,omitempty"`
+
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +listType=map

@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 
 operator_controller_manifest=$MANIFEST
 
@@ -7,14 +9,14 @@ if [[ -z "$operator_controller_manifest" ]]; then
     exit 1
 fi
 
-olm_version=$OLM_V0_VERSION
+catalogd_version=$CATALOGD_VERSION
 cert_mgr_version=$CERT_MGR_VERSION
 rukpak_version=$RUKPAK_VERSION
 
-if [[ -z "$olm_version" || -z "$cert_mgr_version" || -z "$rukpak_version" ]]; then
+if [[ -z "$catalogd_version" || -z "$cert_mgr_version" || -z "$rukpak_version" ]]; then
     err="Error: Missing component version(s) for: "
-    if [[ -z "$olm_version" ]]; then
-        err+="operator-lifecycle-manager "
+    if [[ -z "$catalogd_version" ]]; then
+        err+="catalogd "
     fi 
     if [[ -z "$cert_mgr_version" ]]; then
         err+="cert-manager "
@@ -22,7 +24,7 @@ if [[ -z "$olm_version" || -z "$cert_mgr_version" || -z "$rukpak_version" ]]; th
     if [[ -z "$rukpak_version" ]]; then
         err+="rukpak "
     fi 
-    echo $err
+    echo "$err"
     exit 1
 fi
 
@@ -34,8 +36,6 @@ function kubectl_wait() {
     kubectl wait --for=condition=Available --namespace="${namespace}" "${runtime}" --timeout="${timeout}"
 }
 
-curl -L -s "https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${olm_version}/install.sh" | bash -s "${olm_version}"
-
 kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/${cert_mgr_version}/cert-manager.yaml"
 kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
 
@@ -43,6 +43,9 @@ kubectl apply -f "https://github.com/operator-framework/rukpak/releases/download
 kubectl_wait "rukpak-system" "deployment/core" "60s"
 kubectl_wait "rukpak-system" "deployment/helm-provisioner" "60s"
 kubectl_wait "rukpak-system" "deployment/rukpak-webhooks" "60s"
+
+kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/catalogd.yaml"
+kubectl_wait "catalogd-system" "deployment/catalogd-controller-manager" "60s"
 
 kubectl apply -f "${operator_controller_manifest}"
 kubectl_wait "operator-controller-system" "deployment/operator-controller-controller-manager" "60s"

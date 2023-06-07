@@ -46,7 +46,8 @@ make undeploy
 ```
 
 ## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
+
+Refer to [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
 
 ### How it works
 This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
@@ -55,19 +56,13 @@ It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controlle
 which provides a reconcile function responsible for synchronizing resources untile the desired state is reached on the cluster 
 
 ### Test It Out
-1. Install the CRDs into the cluster:
 
-```sh
-make install
-```
-
-2. Run your controller (this will run in the foreground, so switch to a new terminal if you want to leave it running):
-
+Install the CRDs and the operator-controller into a new [KIND cluster](https://kind.sigs.k8s.io/):
 ```sh
 make run
 ```
-
-**NOTE:** You can also run this in one step by running: `make install run`
+This will build a local container image of the operator-controller, create a new KIND cluster and then deploy onto that cluster.
+This will also deploy the catalogd, rukpak and cert-manager dependencies.
 
 ### Modifying the API definitions
 If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
@@ -76,13 +71,13 @@ If you are editing the API definitions, generate the manifests such as CRs or CR
 make manifests
 ```
 
-**NOTE:** Run `make --help` for more information on all potential `make` targets
+**NOTE:** Run `make help` for more information on all potential `make` targets
 
 More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
 
 ## License
 
-Copyright 2022.
+Copyright 2022-2023.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

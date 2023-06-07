@@ -4,16 +4,25 @@
 # Image URL to use all building/pushing image targets
 export IMAGE_REPO ?= quay.io/operator-framework/operator-controller
 export IMAGE_TAG ?= devel
-export GO_BUILD_TAGS ?= upstream
 export CERT_MGR_VERSION ?= v1.9.0
-export GORELEASER_VERSION ?= v1.16.2
-export OLM_V0_VERSION ?= v0.24.0
+export CATALOGD_VERSION ?= v0.2.0
 export RUKPAK_VERSION=$(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/rukpak)
 export WAIT_TIMEOUT ?= 60s
 IMG?=$(IMAGE_REPO):$(IMAGE_TAG)
+TESTDATA_DIR := testdata
+
+# setup-envtest on *nix uses XDG_DATA_HOME, falling back to HOME, as the default storage directory. Some CI setups
+# don't have XDG_DATA_HOME set; in those cases, we set it here so setup-envtest functions correctly. This shouldn't
+# affect developers.
+export XDG_DATA_HOME ?= /tmp/.local/share
+
+# bingo manages consistent tooling versions for things like kind, kustomize, etc.
+include .bingo/Variables.mk
 
 OPERATOR_CONTROLLER_NAMESPACE ?= operator-controller-system
 KIND_CLUSTER_NAME ?= operator-controller
+
+CONTAINER_RUNTIME ?= docker
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -53,11 +62,11 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: manifests
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: $(CONTROLLER_GEN) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate
-generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: fmt
@@ -73,32 +82,58 @@ test: manifests generate fmt vet test-unit e2e ## Run all tests.
 
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 E2E_FLAGS ?= ""
-test-e2e: ginkgo ## Run the e2e tests
+test-e2e: $(GINKGO) ## Run the e2e tests
 	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/e2e
 
 ENVTEST_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 UNIT_TEST_DIRS=$(shell go list ./... | grep -v /test/)
-test-unit: envtest ## Run the unit tests
-	eval $$($(ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
+test-unit: $(SETUP_ENVTEST) ## Run the unit tests
+	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
 
 e2e: KIND_CLUSTER_NAME=operator-controller-e2e
-e2e: run test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
+e2e: run kind-load-test-artifacts test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
 
-kind-load: kind ## Loads the currently constructed image onto the cluster
+kind-load: $(KIND) ## Loads the currently constructed image onto the cluster
 	$(KIND) load docker-image $(IMG) --name $(KIND_CLUSTER_NAME)
 
-kind-cluster: kind kind-cluster-cleanup ## Standup a kind cluster
+kind-cluster: $(KIND) kind-cluster-cleanup ## Standup a kind cluster
 	$(KIND) create cluster --name ${KIND_CLUSTER_NAME}
 	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
 
-kind-cluster-cleanup: kind ## Delete the kind cluster
+kind-cluster-cleanup: $(KIND) ## Delete the kind cluster
 	$(KIND) delete cluster --name ${KIND_CLUSTER_NAME}
+
+kind-load-test-artifacts: $(KIND) ## Load the e2e testdata container images into a kind cluster
+	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/registry-v1/prometheus-operator.v0.47.0 -t localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0
+	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/catalogs -f $(TESTDATA_DIR)/catalogs/test-catalog.Dockerfile -t localhost/testdata/catalogs/test-catalog:e2e
+	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0 --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image localhost/testdata/catalogs/test-catalog:e2e --name $(KIND_CLUSTER_NAME)
 
 ##@ Build
 
-.PHONY: build
-build: manifests generate fmt vet goreleaser ## Build manager binary using goreleaser for current GOOS and GOARCH.
-	${GORELEASER} build ${GORELEASER_ARGS} --single-target -o bin/manager
+export VERSION           ?= $(shell git describe --tags --always --dirty)
+export CGO_ENABLED       ?= 0
+export GO_BUILD_ASMFLAGS ?= all=-trimpath=${PWD}
+export GO_BUILD_LDFLAGS  ?= -s -w -X $(shell go list -m)/version.Version=$(VERSION)
+export GO_BUILD_GCFLAGS  ?= all=-trimpath=${PWD}
+export GO_BUILD_TAGS     ?= upstream
+
+BUILDCMD = go build -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/manager ./cmd/manager
+
+.PHONY: build-deps
+build-deps: manifests generate fmt vet
+
+.PHONY: build go-build-local
+build: build-deps go-build-local ## Build manager binary for current GOOS and GOARCH.
+go-build-local: BUILDBIN = bin
+go-build-local:
+	$(BUILDCMD)
+
+.PHONY: build-linux go-build-linux
+build-linux: build-deps go-build-linux ## Build manager binary for GOOS=linux and local GOARCH.
+go-build-linux: BUILDBIN = bin/linux
+go-build-linux:
+	GOOS=linux $(BUILDCMD)
 
 .PHONY: run
 run: docker-build kind-cluster kind-load install ## Build the operator-controller then deploy it into a new kind cluster.
@@ -107,30 +142,9 @@ run: docker-build kind-cluster kind-load install ## Build the operator-controlle
 wait:
 	kubectl wait --for=condition=Available --namespace=$(OPERATOR_CONTROLLER_NAMESPACE) deployment/operator-controller-controller-manager --timeout=$(WAIT_TIMEOUT)
 
-# If you wish built the manager image targeting other platforms you can use the --platform flag.
-# (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.
-# More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
-docker-build: export GOOS=linux
-docker-build: build ## Build docker image with the operator-controller.
-	docker build -t ${IMG} -f Dockerfile ./bin/
-
-# PLATFORMS defines the target platforms for  the manager image be build to provide support to multiple
-# architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:
-# - able to use docker buildx . More info: https://docs.docker.com/build/buildx/
-# - have enable BuildKit, More info: https://docs.docker.com/develop/develop-images/build_enhancements/
-# - be able to push the image for your registry (i.e. if you do not inform a valid value via IMG=<myregistry/image:<tag>> then the export will fail)
-# To properly provided solutions that supports more than one platform you should use this option.
-PLATFORMS ?= linux/arm64,linux/amd64,linux/s390x,linux/ppc64le
-.PHONY: docker-buildx
-docker-buildx: test ## Build and push docker image for the manager for cross-platform support
-	# copy existing Dockerfile and insert --platform=${BUILDPLATFORM} into Dockerfile.cross, and preserve the original Dockerfile
-	sed -e '1 s/\(^FROM\)/FROM --platform=\$$\{BUILDPLATFORM\}/; t' -e ' 1,// s//FROM --platform=\$$\{BUILDPLATFORM\}/' Dockerfile > Dockerfile.cross
-	- docker buildx create --name project-v3-builder
-	docker buildx use project-v3-builder
-	- docker buildx build --push --platform=$(PLATFORMS) --tag ${IMG} -f Dockerfile.cross .
-	- docker buildx rm project-v3-builder
-	rm Dockerfile.cross
+docker-build: build-linux ## Build docker image for operator-controller with GOOS=linux and local GOARCH.
+	docker build -t ${IMG} -f Dockerfile ./bin/linux
 
 ###########
 # Release #
@@ -139,15 +153,14 @@ docker-buildx: test ## Build and push docker image for the manager for cross-pla
 ##@ Release:
 export ENABLE_RELEASE_PIPELINE ?= false
 export GORELEASER_ARGS ?= --snapshot --clean
-export VERSION ?= $(shell git describe --abbrev=0 --tags)
 
-release: goreleaser ## Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
+release: $(GORELEASER) ## Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)
 
 quickstart: export MANIFEST="https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml"
-quickstart: kustomize generate ## Generate the installation release manifests and scripts
-	kubectl kustomize config/default | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
-	envsubst '$$OLM_V0_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh > install.sh
+quickstart: $(KUSTOMIZE) generate ## Generate the installation release manifests and scripts
+	$(KUSTOMIZE) build config/default | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
+	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
 ##@ Deployment
 
@@ -157,74 +170,19 @@ endif
 
 .PHONY: install
 install: export MANIFEST="./operator-controller.yaml"
-install: manifests kustomize generate ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	kubectl kustomize config/default > operator-controller.yaml
-	envsubst '$$OLM_V0_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh | bash -s
+install: manifests $(KUSTOMIZE) generate ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/default > operator-controller.yaml
+	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: uninstall
-uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
+uninstall: manifests $(KUSTOMIZE) ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
 
 .PHONY: deploy
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: manifests $(KUSTOMIZE) ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
-
-##@ Build Dependencies
-
-## Location to install dependencies to
-LOCALBIN ?= $(shell pwd)/bin
-$(LOCALBIN):
-	mkdir -p $(LOCALBIN)
-
-## Tool Binaries
-KUSTOMIZE ?= $(LOCALBIN)/kustomize
-CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
-KIND ?= $(LOCALBIN)/kind
-GINKGO ?= $(LOCALBIN)/ginkgo
-GORELEASER := $(LOCALBIN)/goreleaser
-ENVTEST ?= $(LOCALBIN)/setup-envtest
-
-## Tool Versions
-KUSTOMIZE_VERSION ?= v4.5.7
-CONTROLLER_TOOLS_VERSION ?= v0.10.0
-
-.PHONY: kind
-kind: $(KIND) ## Download kind locally if necessary.
-$(KIND): $(LOCALBIN)
-	test -s $(LOCALBIN)/kind || GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@v0.15.0
-
-.PHONY: ginkgo
-ginkgo: $(GINKGO) ## Download ginkgo locally if necessary.
-$(GINKGO): $(LOCALBIN)
-	test -s $(LOCALBIN)/ginkgo || GOBIN=$(LOCALBIN) go install github.com/onsi/ginkgo/v2/ginkgo@v2.1.4
-
-.PHONY: goreleaser
-goreleaser: $(GORELEASER) ## Builds a local copy of goreleaser
-$(GORELEASER): $(LOCALBIN)
-	test -s $(LOCALBIN)/goreleaser || GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@${GORELEASER_VERSION}
-
-KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
-.PHONY: kustomize
-kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary. If wrong version is installed, it will be removed before downloading.
-$(KUSTOMIZE): $(LOCALBIN)
-	@if test -x $(LOCALBIN)/kustomize && ! $(LOCALBIN)/kustomize version | grep -q $(KUSTOMIZE_VERSION); then \
-		echo "$(LOCALBIN)/kustomize version is not expected $(KUSTOMIZE_VERSION). Removing it before installing."; \
-		rm -rf $(LOCALBIN)/kustomize; \
-	fi
-	test -s $(LOCALBIN)/kustomize || { curl -Ss $(KUSTOMIZE_INSTALL_SCRIPT) | bash -s -- $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); }
-
-.PHONY: controller-gen
-controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.
-$(CONTROLLER_GEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/controller-gen && $(LOCALBIN)/controller-gen --version | grep -q $(CONTROLLER_TOOLS_VERSION) || \
-	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
-
-.PHONY: envtest
-envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
-$(ENVTEST): $(LOCALBIN)
-	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest

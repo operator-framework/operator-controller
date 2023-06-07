@@ -276,8 +276,8 @@ var _ input.EntitySource = &PanicEntitySource{}
 
 type PanicEntitySource struct{}
 
-func (p PanicEntitySource) Get(ctx context.Context, id deppy.Identifier) *input.Entity {
-	return nil
+func (p PanicEntitySource) Get(ctx context.Context, id deppy.Identifier) (*input.Entity, error) {
+	return nil, fmt.Errorf("if you are seeing this it is because the global variable source is calling the entity source - this shouldn't happen")
 }
 
 func (p PanicEntitySource) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {

@@ -16,6 +16,8 @@ kind: Deployment
 metadata:
   name: controller-manager
   namespace: system
+  annotations:
+    kubectl.kubernetes.io/default-logs-container: manager
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: deployment
