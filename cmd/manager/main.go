@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/resolution/entitysources"

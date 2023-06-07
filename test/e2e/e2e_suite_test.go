@@ -11,7 +11,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 )

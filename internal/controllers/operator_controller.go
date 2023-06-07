@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"

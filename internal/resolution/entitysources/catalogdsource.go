@@ -10,7 +10,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 )
 
 // catalogdEntitySource is a source for(/collection of) deppy defined input.Entity, built from content
