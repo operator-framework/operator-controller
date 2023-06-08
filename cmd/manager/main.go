@@ -35,7 +35,10 @@ import (
 	"github.com/operator-framework/catalogd/internal/source"
 	"github.com/operator-framework/catalogd/internal/version"
 	corecontrollers "github.com/operator-framework/catalogd/pkg/controllers/core"
+	"github.com/operator-framework/catalogd/pkg/features"
 	"github.com/operator-framework/catalogd/pkg/profile"
+	"github.com/spf13/pflag"
+
 	//+kubebuilder:scaffold:imports
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
 )
@@ -70,13 +73,17 @@ func main() {
 	// TODO: should we move the unpacker to some common place? Or... hear me out... should catalogd just be a rukpak provisioner?
 	flag.StringVar(&unpackImage, "unpack-image", "quay.io/operator-framework/rukpak:v0.12.0", "The unpack image to use when unpacking catalog images")
 	flag.StringVar(&sysNs, "system-ns", "catalogd-system", "The namespace catalogd uses for internal state, configuration, and workloads")
+	flag.BoolVar(&profiling, "profiling", false, "enable profiling endpoints to allow for using pprof")
+	flag.BoolVar(&catalogdVersion, "version", false, "print the catalogd version and exit")
 	opts := zap.Options{
 		Development: true,
 	}
-	flag.BoolVar(&profiling, "profiling", false, "enable profiling endpoints to allow for using pprof")
-	flag.BoolVar(&catalogdVersion, "version", false, "print the catalogd version and exit")
 	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
+
+	// Combine both flagsets and parse them
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	features.CatalogdFeatureGate.AddFlag(pflag.CommandLine)
+	pflag.Parse()
 
 	if catalogdVersion {
 		fmt.Printf("%#v\n", version.Version())
