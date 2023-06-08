@@ -78,29 +78,24 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	ctx := context.Background()
 
-	err := c.Delete(ctx, operatorCatalog)
-	Expect(err).ToNot(HaveOccurred())
+	Expect(c.Delete(ctx, operatorCatalog)).To(Succeed())
 	Eventually(func(g Gomega) {
-		err = c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, &catalogd.Catalog{})
+		err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, &catalogd.Catalog{})
 		Expect(errors.IsNotFound(err)).To(BeTrue())
 	}).Should(Succeed())
 
 	// speed up delete without waiting for gc
-	err = c.DeleteAllOf(ctx, &catalogd.BundleMetadata{})
-	Expect(err).ToNot(HaveOccurred())
-	err = c.DeleteAllOf(ctx, &catalogd.Package{})
-	Expect(err).ToNot(HaveOccurred())
+	Expect(c.DeleteAllOf(ctx, &catalogd.BundleMetadata{})).To(Succeed())
+	Expect(c.DeleteAllOf(ctx, &catalogd.Package{})).To(Succeed())
 
 	Eventually(func(g Gomega) {
 		// ensure resource cleanup
 		packages := &catalogd.PackageList{}
-		err = c.List(ctx, packages)
-		g.Expect(err).To(BeNil())
+		g.Expect(c.List(ctx, packages)).To(Succeed())
 		g.Expect(packages.Items).To(BeEmpty())
 
 		bmd := &catalogd.BundleMetadataList{}
-		err = c.List(ctx, bmd)
-		g.Expect(err).To(BeNil())
+		g.Expect(c.List(ctx, bmd)).To(Succeed())
 		g.Expect(bmd.Items).To(BeEmpty())
 	}).Should(Succeed())
 })
