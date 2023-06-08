@@ -17,12 +17,14 @@ limitations under the License.
 package controllers_test
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -77,7 +79,27 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
+	var operators operatorsv1alpha1.OperatorList
+	var bundleDeployments rukpakv1alpha1.BundleDeploymentList
+
+	Expect(cl.List(context.Background(), &operators)).To(Succeed())
+	Expect(cl.List(context.Background(), &bundleDeployments)).To(Succeed())
+
+	Expect(namesFromList(&operators)).To(BeEmpty(), "operators left in the cluster")
+	Expect(namesFromList(&bundleDeployments)).To(BeEmpty(), "bundle deployments left in the cluster")
+
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
+
+func namesFromList(list client.ObjectList) []string {
+	var names []string
+
+	items, err := meta.ExtractList(list)
+	Expect(err).NotTo(HaveOccurred())
+	for _, item := range items {
+		names = append(names, item.(client.Object).GetName())
+	}
+	return names
+}
