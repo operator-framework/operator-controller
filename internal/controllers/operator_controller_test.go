@@ -52,6 +52,11 @@ var _ = Describe("Operator Controller Test", func() {
 		BeforeEach(func() {
 			opKey = types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 		})
+		AfterEach(func() {
+			verifyInvariants(ctx, reconciler.Client, operator)
+			Expect(cl.DeleteAllOf(ctx, &operatorsv1alpha1.Operator{})).To(Succeed())
+			Expect(cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{})).To(Succeed())
+		})
 		When("the operator specifies a non-existent package", func() {
 			var pkgName string
 			BeforeEach(func() {
@@ -137,7 +142,6 @@ var _ = Describe("Operator Controller Test", func() {
 				err := cl.Create(ctx, operator)
 				Expect(err).NotTo(HaveOccurred())
 			})
-
 			When("the BundleDeployment does not exist", func() {
 				BeforeEach(func() {
 					By("running reconcile")
@@ -210,16 +214,16 @@ var _ = Describe("Operator Controller Test", func() {
 							},
 						},
 					}
-
 				})
 
 				When("the BundleDeployment spec is out of date", func() {
-					It("results in the expected BundleDeployment", func() {
+					BeforeEach(func() {
 						By("modifying the BD spec and creating the object")
 						bd.Spec.ProvisionerClassName = "core-rukpak-io-helm"
 						err := cl.Create(ctx, bd)
 						Expect(err).NotTo(HaveOccurred())
-
+					})
+					It("results in the expected BundleDeployment", func() {
 						By("running reconcile")
 						res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
 						Expect(res).To(Equal(ctrl.Result{}))
@@ -508,17 +512,12 @@ var _ = Describe("Operator Controller Test", func() {
 					})
 
 				})
-
-				AfterEach(func() {
-					err := cl.Delete(ctx, bd)
-					Expect(err).NotTo(HaveOccurred())
-				})
-
 			})
 			When("an out-of-date BundleDeployment exists", func() {
+				var bd *rukpakv1alpha1.BundleDeployment
 				BeforeEach(func() {
 					By("creating the expected BD")
-					err := cl.Create(ctx, &rukpakv1alpha1.BundleDeployment{
+					bd = &rukpakv1alpha1.BundleDeployment{
 						ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
 						Spec: rukpakv1alpha1.BundleDeploymentSpec{
 							ProvisionerClassName: "foo",
@@ -534,7 +533,8 @@ var _ = Describe("Operator Controller Test", func() {
 								},
 							},
 						},
-					})
+					}
+					err := cl.Create(ctx, bd)
 					Expect(err).NotTo(HaveOccurred())
 
 					By("running reconcile")
@@ -633,12 +633,6 @@ var _ = Describe("Operator Controller Test", func() {
 				err = cl.Create(ctx, operator)
 				Expect(err).NotTo(HaveOccurred())
 			})
-
-			AfterEach(func() {
-				err := cl.Delete(ctx, dupOperator)
-				Expect(err).NotTo(HaveOccurred())
-			})
-
 			It("sets resolution failure status", func() {
 				By("running reconcile")
 				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
@@ -664,51 +658,6 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
 				Expect(cond.Message).To(Equal("installation has not been attempted as resolution failed"))
 			})
-		})
-		When("the existing operator status is based on bundleDeployment", func() {
-			const pkgName = "prometheus"
-			var (
-				bd *rukpakv1alpha1.BundleDeployment
-			)
-			BeforeEach(func() {
-				By("creating the expected BundleDeployment")
-				bd = &rukpakv1alpha1.BundleDeployment{
-					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
-					Spec: rukpakv1alpha1.BundleDeploymentSpec{
-						ProvisionerClassName: "core-rukpak-io-plain",
-						Template: &rukpakv1alpha1.BundleTemplate{
-							Spec: rukpakv1alpha1.BundleSpec{
-								ProvisionerClassName: "core-rukpak-io-registry",
-								Source: rukpakv1alpha1.BundleSource{
-									Type: rukpakv1alpha1.SourceTypeImage,
-									Image: &rukpakv1alpha1.ImageSource{
-										Ref: "quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed",
-									},
-								},
-							},
-						},
-					},
-				}
-				err := cl.Create(ctx, bd)
-				Expect(err).NotTo(HaveOccurred())
-
-				By("creating the operator object")
-				operator = &operatorsv1alpha1.Operator{
-					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
-					Spec: operatorsv1alpha1.OperatorSpec{
-						PackageName: pkgName,
-					},
-				}
-				err = cl.Create(ctx, operator)
-				Expect(err).NotTo(HaveOccurred())
-
-			})
-
-			AfterEach(func() {
-				err := cl.Delete(ctx, bd)
-				Expect(err).NotTo(HaveOccurred())
-			})
-
 		})
 		When("the operator specifies a channel with version that exist", func() {
 			var pkgName string
@@ -954,75 +903,64 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Message).To(Equal("installation has not been attempted as resolution failed"))
 			})
 		})
-		AfterEach(func() {
-			verifyInvariants(ctx, operator)
+		When("an invalid semver is provided that bypasses the regex validation", func() {
+			var (
+				pkgName    string
+				fakeClient client.Client
+			)
+			BeforeEach(func() {
+				opKey = types.NamespacedName{Name: fmt.Sprintf("operator-validation-test-%s", rand.String(8))}
 
-			err := cl.Delete(ctx, operator)
-			Expect(err).To(Not(HaveOccurred()))
+				By("injecting creating a client with the bad operator CR")
+				pkgName = fmt.Sprintf("exists-%s", rand.String(6))
+				operator = &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: pkgName,
+						Version:     "1.2.3-123abc_def", // bad semver that matches the regex on the CR validation
+					},
+				}
+
+				// this bypasses client/server-side CR validation and allows us to test the reconciler's validation
+				fakeClient = fake.NewClientBuilder().WithScheme(sch).WithObjects(operator).Build()
+
+				By("changing the reconciler client to the fake client")
+				reconciler.Client = fakeClient
+			})
+
+			It("should add an invalid spec condition and *not* re-enqueue for reconciliation", func() {
+				By("running reconcile")
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(res).To(Equal(ctrl.Result{}))
+				Expect(err).ToNot(HaveOccurred())
+
+				By("fetching updated operator after reconcile")
+				Expect(fakeClient.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+				By("Checking the status fields")
+				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
+
+				By("checking the expected conditions")
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionUnknown))
+				Expect(cond.Message).To(Equal("validation has not been attempted as spec is invalid"))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+				Expect(cond.Message).To(Equal("installation has not been attempted as spec is invalid"))
+			})
 		})
-	})
-	When("an invalid semver is provided that bypasses the regex validation", func() {
-		var (
-			operator   *operatorsv1alpha1.Operator
-			opKey      types.NamespacedName
-			pkgName    string
-			fakeClient client.Client
-		)
-		BeforeEach(func() {
-			opKey = types.NamespacedName{Name: fmt.Sprintf("operator-validation-test-%s", rand.String(8))}
 
-			By("injecting creating a client with the bad operator CR")
-			pkgName = fmt.Sprintf("exists-%s", rand.String(6))
-			operator = &operatorsv1alpha1.Operator{
-				ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
-				Spec: operatorsv1alpha1.OperatorSpec{
-					PackageName: pkgName,
-					Version:     "1.2.3-123abc_def", // bad semver that matches the regex on the CR validation
-				},
-			}
-
-			// this bypasses client/server-side CR validation and allows us to test the reconciler's validation
-			fakeClient = fake.NewClientBuilder().WithScheme(sch).WithObjects(operator).Build()
-
-			By("changing the reconciler client to the fake client")
-			reconciler.Client = fakeClient
-		})
-		AfterEach(func() {
-			By("changing the reconciler client back to the real client")
-			reconciler.Client = cl
-		})
-
-		It("should add an invalid spec condition and *not* re-enqueue for reconciliation", func() {
-			By("running reconcile")
-			res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
-			Expect(res).To(Equal(ctrl.Result{}))
-			Expect(err).ToNot(HaveOccurred())
-
-			By("fetching updated operator after reconcile")
-			Expect(fakeClient.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
-
-			By("Checking the status fields")
-			Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
-			Expect(operator.Status.InstalledBundleResource).To(Equal(""))
-
-			By("checking the expected conditions")
-			cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
-			Expect(cond).NotTo(BeNil())
-			Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
-			Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionUnknown))
-			Expect(cond.Message).To(Equal("validation has not been attempted as spec is invalid"))
-			cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
-			Expect(cond).NotTo(BeNil())
-			Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
-			Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
-			Expect(cond.Message).To(Equal("installation has not been attempted as spec is invalid"))
-		})
 	})
 })
 
-func verifyInvariants(ctx context.Context, op *operatorsv1alpha1.Operator) {
+func verifyInvariants(ctx context.Context, c client.Client, op *operatorsv1alpha1.Operator) {
 	key := client.ObjectKeyFromObject(op)
-	err := cl.Get(ctx, key, op)
+	err := c.Get(ctx, key, op)
 	Expect(err).To(BeNil())
 
 	verifyConditionsInvariants(op)
