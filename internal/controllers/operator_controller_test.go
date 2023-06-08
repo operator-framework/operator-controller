@@ -904,12 +904,6 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Message).To(Equal("installation has not been attempted as resolution failed"))
 			})
 		})
-		AfterEach(func() {
-			verifyInvariants(ctx, operator)
-
-			err := cl.Delete(ctx, operator)
-			Expect(err).To(Not(HaveOccurred()))
-		})
 		When("the operator specifies a package with a plain+v0 bundle", func() {
 			var pkgName string
 			var pkgVer string
@@ -935,7 +929,6 @@ var _ = Describe("Operator Controller Test", func() {
 				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
 				Expect(res).To(Equal(ctrl.Result{}))
 				Expect(err).NotTo(HaveOccurred())
-
 				By("fetching updated operator after reconcile")
 				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
 
@@ -1022,58 +1015,49 @@ var _ = Describe("Operator Controller Test", func() {
 		)
 		BeforeEach(func() {
 			opKey = types.NamespacedName{Name: fmt.Sprintf("operator-validation-test-%s", rand.String(8))}
-		When("an invalid semver is provided that bypasses the regex validation", func() {
-			var (
-				pkgName    string
-				fakeClient client.Client
-			)
-			BeforeEach(func() {
-				opKey = types.NamespacedName{Name: fmt.Sprintf("operator-validation-test-%s", rand.String(8))}
 
-				By("injecting creating a client with the bad operator CR")
-				pkgName = fmt.Sprintf("exists-%s", rand.String(6))
-				operator = &operatorsv1alpha1.Operator{
-					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
-					Spec: operatorsv1alpha1.OperatorSpec{
-						PackageName: pkgName,
-						Version:     "1.2.3-123abc_def", // bad semver that matches the regex on the CR validation
-					},
-				}
+			By("injecting creating a client with the bad operator CR")
+			pkgName = fmt.Sprintf("exists-%s", rand.String(6))
+			operator = &operatorsv1alpha1.Operator{
+				ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+				Spec: operatorsv1alpha1.OperatorSpec{
+					PackageName: pkgName,
+					Version:     "1.2.3-123abc_def", // bad semver that matches the regex on the CR validation
+				},
+			}
 
-				// this bypasses client/server-side CR validation and allows us to test the reconciler's validation
-				fakeClient = fake.NewClientBuilder().WithScheme(sch).WithObjects(operator).Build()
+			// this bypasses client/server-side CR validation and allows us to test the reconciler's validation
+			fakeClient = fake.NewClientBuilder().WithScheme(sch).WithObjects(operator).Build()
 
-				By("changing the reconciler client to the fake client")
-				reconciler.Client = fakeClient
-			})
-
-			It("should add an invalid spec condition and *not* re-enqueue for reconciliation", func() {
-				By("running reconcile")
-				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
-				Expect(res).To(Equal(ctrl.Result{}))
-				Expect(err).ToNot(HaveOccurred())
-
-				By("fetching updated operator after reconcile")
-				Expect(fakeClient.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
-
-				By("Checking the status fields")
-				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
-				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
-
-				By("checking the expected conditions")
-				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
-				Expect(cond).NotTo(BeNil())
-				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
-				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionUnknown))
-				Expect(cond.Message).To(Equal("validation has not been attempted as spec is invalid"))
-				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
-				Expect(cond).NotTo(BeNil())
-				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
-				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
-				Expect(cond.Message).To(Equal("installation has not been attempted as spec is invalid"))
-			})
+			By("changing the reconciler client to the fake client")
+			reconciler.Client = fakeClient
 		})
 
+		It("should add an invalid spec condition and *not* re-enqueue for reconciliation", func() {
+			By("running reconcile")
+			res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+			Expect(res).To(Equal(ctrl.Result{}))
+			Expect(err).ToNot(HaveOccurred())
+
+			By("fetching updated operator after reconcile")
+			Expect(fakeClient.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+			By("Checking the status fields")
+			Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
+			Expect(operator.Status.InstalledBundleResource).To(Equal(""))
+
+			By("checking the expected conditions")
+			cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+			Expect(cond).NotTo(BeNil())
+			Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+			Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionUnknown))
+			Expect(cond.Message).To(Equal("validation has not been attempted as spec is invalid"))
+			cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+			Expect(cond).NotTo(BeNil())
+			Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+			Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+			Expect(cond.Message).To(Equal("installation has not been attempted as spec is invalid"))
+		})
 	})
 })
 
