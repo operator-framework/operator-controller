@@ -12,6 +12,19 @@ import (
 
 const PropertyBundlePath = "olm.bundle.path"
 
+// TODO: Is this the right place for these?
+// ----
+const PropertyBundleMediaType = "olm.bundle.mediatype"
+
+type MediaType string
+
+const (
+	MediaTypePlain    = "plain+v0"
+	MediaTypeRegistry = "registry+v1"
+)
+
+// ----
+
 type ChannelProperties struct {
 	property.Channel
 	Replaces  string   `json:"replaces,omitempty"`
@@ -58,6 +71,7 @@ type BundleEntity struct {
 	channelProperties *ChannelProperties
 	semVersion        *semver.Version
 	bundlePath        string
+	mediaType         string
 	mu                sync.RWMutex
 }
 
@@ -122,6 +136,27 @@ func (b *BundleEntity) BundlePath() (string, error) {
 		return "", err
 	}
 	return b.bundlePath, nil
+}
+
+func (b *BundleEntity) MediaType() (string, error) {
+	if err := b.loadMediaType(); err != nil {
+		return "", err
+	}
+
+	return b.mediaType, nil
+}
+
+func (b *BundleEntity) loadMediaType() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.mediaType == "" {
+		mediaType, err := loadFromEntity[string](b.Entity, PropertyBundleMediaType, optional)
+		if err != nil {
+			return fmt.Errorf("error determining bundle mediatype for entity '%s': %w", b.ID, err)
+		}
+		b.mediaType = mediaType
+	}
+	return nil
 }
 
 func (b *BundleEntity) loadPackage() error {

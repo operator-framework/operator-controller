@@ -904,6 +904,107 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Message).To(Equal("installation has not been attempted as resolution failed"))
 			})
 		})
+		When("the operator specifies a package with a plain+v0 bundle", func() {
+			var pkgName string
+			var pkgVer string
+			var pkgChan string
+			BeforeEach(func() {
+				By("initializing cluster state")
+				pkgName = "plain"
+				pkgVer = "0.1.0"
+				pkgChan = "beta"
+				operator = &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: pkgName,
+						Version:     pkgVer,
+						Channel:     pkgChan,
+					},
+				}
+				err := cl.Create(ctx, operator)
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("sets resolution success status", func() {
+				By("running reconcile")
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(res).To(Equal(ctrl.Result{}))
+				Expect(err).NotTo(HaveOccurred())
+				By("fetching updated operator after reconcile")
+				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+				By("Checking the status fields")
+				Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhub/plain@sha256:plain"))
+				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
+
+				By("checking the expected conditions")
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
+				Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhub/plain@sha256:plain\""))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
+				Expect(cond.Message).To(Equal("bundledeployment status is unknown"))
+
+				By("fetching the bundled deployment")
+				bd := &rukpakv1alpha1.BundleDeployment{}
+				Expect(cl.Get(ctx, types.NamespacedName{Name: opKey.Name}, bd)).NotTo(HaveOccurred())
+				Expect(bd.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-plain"))
+				Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-plain"))
+				Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
+				Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
+				Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhub/plain@sha256:plain"))
+			})
+		})
+		When("the operator specifies a package with a bad bundle mediatype", func() {
+			var pkgName string
+			var pkgVer string
+			var pkgChan string
+			BeforeEach(func() {
+				By("initializing cluster state")
+				pkgName = "badmedia"
+				pkgVer = "0.1.0"
+				pkgChan = "beta"
+				operator = &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: pkgName,
+						Version:     pkgVer,
+						Channel:     pkgChan,
+					},
+				}
+				err := cl.Create(ctx, operator)
+				Expect(err).NotTo(HaveOccurred())
+			})
+			It("sets resolution success status", func() {
+				By("running reconcile")
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(res).To(Equal(ctrl.Result{}))
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal("unknown bundle mediatype: badmedia+v1"))
+
+				By("fetching updated operator after reconcile")
+				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+				By("Checking the status fields")
+				Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhub/badmedia@sha256:badmedia"))
+				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
+
+				By("checking the expected conditions")
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
+				Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhub/badmedia@sha256:badmedia\""))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationFailed))
+				Expect(cond.Message).To(Equal("unknown bundle mediatype: badmedia+v1"))
+			})
+		})
 		When("an invalid semver is provided that bypasses the regex validation", func() {
 			var (
 				pkgName    string
@@ -955,7 +1056,6 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Message).To(Equal("installation has not been attempted as spec is invalid"))
 			})
 		})
-
 	})
 })
 
@@ -999,5 +1099,19 @@ var testEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{
 		"olm.bundle.path": `{"name": "quay.io/operatorhubio/badimage:v0.1.0"}`,
 		"olm.package":     `{"packageName":"badimage","version":"0.1.0"}`,
 		"olm.gvk":         `[]`,
+	}),
+	"operatorhub/plain/0.1.0": *input.NewEntity("operatorhub/plain/0.1.0", map[string]string{
+		"olm.bundle.path":      `"quay.io/operatorhub/plain@sha256:plain"`,
+		"olm.channel":          `{"channelName":"beta","priority":0}`,
+		"olm.package":          `{"packageName":"plain","version":"0.1.0"}`,
+		"olm.gvk":              `[]`,
+		"olm.bundle.mediatype": `"plain+v0"`,
+	}),
+	"operatorhub/badmedia/0.1.0": *input.NewEntity("operatorhub/badmedia/0.1.0", map[string]string{
+		"olm.bundle.path":      `"quay.io/operatorhub/badmedia@sha256:badmedia"`,
+		"olm.channel":          `{"channelName":"beta","priority":0}`,
+		"olm.package":          `{"packageName":"badmedia","version":"0.1.0"}`,
+		"olm.gvk":              `[]`,
+		"olm.bundle.mediatype": `"badmedia+v1"`,
 	}),
 })
