@@ -98,8 +98,9 @@ func TestOperatorResolver(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			resolver := resolution.NewOperatorResolver(tt.client, tt.entitySource)
-			solution, err := resolver.Resolve(context.Background())
+			variableSource := olm.NewOLMVariableSource(tt.client)
+			resolver := solver.NewDeppySolver(tt.entitySource, variableSource)
+			solution, err := resolver.Solve(context.Background())
 
 			if tt.expectedError != nil {
 				assert.Equal(t, tt.expectedError, err)
