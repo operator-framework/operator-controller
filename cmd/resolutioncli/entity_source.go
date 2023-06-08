@@ -117,6 +117,12 @@ func (es *indexRefEntitySource) entities(ctx context.Context) (input.EntityList,
 	return es.entitiesCache, nil
 }
 
+// TODO: Reduce code duplication: share a function with catalogdEntitySource (see getEntities)
+// We don't want to maintain two functions performing conversion into input.EntityList.
+// For this we need some common format. So we need a package which will be able
+// to convert from declfcg structs into CRD structs directly or via model.Model.
+// One option would be to make this piece of code from catalogd reusable and exportable:
+// https://github.com/operator-framework/catalogd/blob/9fe45a628de2e74d9cd73c3650fa2582aaac5213/pkg/controllers/core/catalog_controller.go#L200-L360
 func modelToEntities(model model.Model) (input.EntityList, error) {
 	entities := input.EntityList{}
 

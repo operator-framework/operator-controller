@@ -25,11 +25,11 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 
@@ -49,10 +49,13 @@ const (
 	flagNamePackageVersion = "package-version"
 	flagNamePackageChannel = "package-channel"
 	flagNameIndexRef       = "index-ref"
+	flagNameInputDir       = "input-dir"
 )
 
 var (
 	scheme = runtime.NewScheme()
+
+	codecs = serializer.NewCodecFactory(scheme)
 )
 
 func init() {
@@ -71,11 +74,13 @@ func main() {
 	var packageVersion string
 	var packageChannel string
 	var indexRef string
+	var inputDir string
 	flag.StringVar(&packageName, flagNamePackageName, "", "Name of the package to resolve")
 	flag.StringVar(&packageVersion, flagNamePackageVersion, "", "Version of the package")
 	flag.StringVar(&packageChannel, flagNamePackageChannel, "", "Channel of the package")
 	// TODO: Consider adding support of multiple refs
 	flag.StringVar(&indexRef, flagNameIndexRef, "", "Index reference (FBC image or dir)")
+	flag.StringVar(&inputDir, flagNameInputDir, "", "Directory containing Kubernetes manifests (such as Operator) to be used as an input for resolution")
 	flag.Parse()
 
 	if err := validateFlags(packageName, indexRef); err != nil {
@@ -84,7 +89,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err := run(ctx, packageName, packageVersion, packageChannel, indexRef)
+	err := run(ctx, packageName, packageVersion, packageChannel, indexRef, inputDir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -103,17 +108,24 @@ func validateFlags(packageName, indexRef string) error {
 	return nil
 }
 
-func run(ctx context.Context, packageName, packageVersion, packageChannel, catalogRef string) error {
-	client, err := client.New(config.GetConfigOrDie(), client.Options{Scheme: scheme})
-	if err != nil {
-		return fmt.Errorf("failed to create client: %w", err)
+func run(ctx context.Context, packageName, packageVersion, packageChannel, catalogRef, inputDir string) error {
+	clientBuilder := fake.NewClientBuilder().WithScheme(scheme)
+
+	if inputDir != "" {
+		objects, err := readManifestFiles(inputDir)
+		if err != nil {
+			return err
+		}
+
+		clientBuilder.WithRuntimeObjects(objects...)
 	}
 
+	cl := clientBuilder.Build()
 	resolver := solver.NewDeppySolver(
 		newIndexRefEntitySourceEntitySource(catalogRef),
 		append(
 			variablesources.NestedVariableSource{newPackageVariableSource(packageName, packageVersion, packageChannel)},
-			controllers.NewVariableSource(client)...,
+			controllers.NewVariableSource(cl)...,
 		),
 	)
 
