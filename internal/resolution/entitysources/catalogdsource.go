@@ -98,7 +98,7 @@ func getEntities(ctx context.Context, client client.Client) (input.EntityList, e
 		if err != nil {
 			return nil, err
 		}
-		props["olm.bundle.path"] = string(imgValue)
+		props[entity.PropertyBundlePath] = string(imgValue)
 		catalogScopedPkgName := fmt.Sprintf("%s-%s", bundle.Spec.Catalog.Name, bundle.Spec.Package)
 		bundlePkg := packageMetdatas[catalogScopedPkgName]
 		for _, ch := range bundlePkg.Spec.Channels {
