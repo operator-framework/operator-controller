@@ -31,7 +31,7 @@ func (b *BundleVariable) Dependencies() []*olmentity.BundleEntity {
 }
 
 func NewBundleVariable(bundleEntity *olmentity.BundleEntity, dependencyBundleEntities []*olmentity.BundleEntity) *BundleVariable {
-	var dependencyIDs []deppy.Identifier
+	dependencyIDs := make([]deppy.Identifier, 0, len(dependencyBundleEntities))
 	for _, bundle := range dependencyBundleEntities {
 		dependencyIDs = append(dependencyIDs, bundle.ID)
 	}

@@ -25,7 +25,7 @@ func (r *RequiredPackageVariable) BundleEntities() []*olmentity.BundleEntity {
 
 func NewRequiredPackageVariable(packageName string, bundleEntities []*olmentity.BundleEntity) *RequiredPackageVariable {
 	id := deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))
-	var entityIDs []deppy.Identifier
+	entityIDs := make([]deppy.Identifier, 0, len(bundleEntities))
 	for _, bundle := range bundleEntities {
 		entityIDs = append(entityIDs, bundle.ID)
 	}
@@ -42,13 +42,14 @@ type RequiredPackageOption func(*RequiredPackageVariableSource) error
 func InVersionRange(versionRange string) RequiredPackageOption {
 	return func(r *RequiredPackageVariableSource) error {
 		if versionRange != "" {
-			if vr, err := semver.ParseRange(versionRange); err == nil {
+			vr, err := semver.ParseRange(versionRange)
+			if err == nil {
 				r.versionRange = versionRange
 				r.predicates = append(r.predicates, predicates.InSemverRange(vr))
 				return nil
-			} else {
-				return fmt.Errorf("invalid version range '%s': %v", versionRange, err)
 			}
+
+			return fmt.Errorf("invalid version range '%s': %v", versionRange, err)
 		}
 		return nil
 	}

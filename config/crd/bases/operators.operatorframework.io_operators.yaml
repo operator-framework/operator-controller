@@ -36,7 +36,7 @@ spec:
             description: OperatorSpec defines the desired state of Operator
             properties:
               channel:
-                description: Channel constraint defintion
+                description: Channel constraint definition
                 maxLength: 48
                 pattern: ^[a-z0-9]+([\.-][a-z0-9]+)*$
                 type: string

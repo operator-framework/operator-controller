@@ -239,7 +239,7 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 		}
 		variables, err := crdConstraintVariableSource.GetVariables(ctx, entitySource)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(len(variables)).To(Equal(26))
+		Expect(variables).To(HaveLen(26))
 		var crdConstraintVariables []*crd_constraints.BundleUniquenessVariable
 		for _, variable := range variables {
 			switch v := variable.(type) {
@@ -247,7 +247,7 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 				crdConstraintVariables = append(crdConstraintVariables, v)
 			}
 		}
-		Expect(len(crdConstraintVariables)).To(Equal(11))
+		Expect(crdConstraintVariables).To(HaveLen(11))
 		Expect(crdConstraintVariables).To(WithTransform(CollectGlobalConstraintVariableIDs, ContainElements([]string{
 			"another-package package uniqueness",
 			"bar-package package uniqueness",
@@ -276,19 +276,19 @@ var _ input.EntitySource = &PanicEntitySource{}
 
 type PanicEntitySource struct{}
 
-func (p PanicEntitySource) Get(ctx context.Context, id deppy.Identifier) (*input.Entity, error) {
+func (p PanicEntitySource) Get(_ context.Context, _ deppy.Identifier) (*input.Entity, error) {
 	return nil, fmt.Errorf("if you are seeing this it is because the global variable source is calling the entity source - this shouldn't happen")
 }
 
-func (p PanicEntitySource) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {
+func (p PanicEntitySource) Filter(_ context.Context, _ input.Predicate) (input.EntityList, error) {
 	return nil, fmt.Errorf("if you are seeing this it is because the global variable source is calling the entity source - this shouldn't happen")
 }
 
-func (p PanicEntitySource) GroupBy(ctx context.Context, fn input.GroupByFunction) (input.EntityListMap, error) {
+func (p PanicEntitySource) GroupBy(_ context.Context, _ input.GroupByFunction) (input.EntityListMap, error) {
 	return nil, fmt.Errorf("if you are seeing this it is because the global variable source is calling the entity source - this shouldn't happen")
 }
 
-func (p PanicEntitySource) Iterate(ctx context.Context, fn input.IteratorFunction) error {
+func (p PanicEntitySource) Iterate(_ context.Context, _ input.IteratorFunction) error {
 	return fmt.Errorf("if you are seeing this it is because the global variable source is calling the entity source - this shouldn't happen")
 }
 
@@ -297,7 +297,7 @@ type MockInputVariableSource struct {
 	Err       error
 }
 
-func (m *MockInputVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
+func (m *MockInputVariableSource) GetVariables(_ context.Context, _ input.EntitySource) ([]deppy.Variable, error) {
 	if m.Err != nil {
 		return nil, m.Err
 	}
@@ -305,7 +305,7 @@ func (m *MockInputVariableSource) GetVariables(ctx context.Context, entitySource
 }
 
 func CollectGlobalConstraintVariableIDs(vars []*crd_constraints.BundleUniquenessVariable) []string {
-	var ids []string
+	ids := make([]string, 0, len(vars))
 	for _, v := range vars {
 		ids = append(ids, v.Identifier().String())
 	}

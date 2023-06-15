@@ -102,7 +102,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			providedGvks, err := bundleEntity.ProvidedGVKs()
 			Expect(providedGvks).To(BeNil())
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -133,7 +133,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			requiredGvks, err := bundleEntity.RequiredGVKs()
 			Expect(requiredGvks).To(BeNil())
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -164,7 +164,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			requiredPackages, err := bundleEntity.RequiredPackages()
 			Expect(requiredPackages).To(BeNil())
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -284,7 +284,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			mediaType, err := bundleEntity.MediaType()
 			Expect(mediaType).To(BeEmpty())
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 		It("should return error if the property is malformed", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{

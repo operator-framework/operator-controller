@@ -7,6 +7,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,8 +18,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+
+	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 var (
@@ -43,14 +45,12 @@ var _ = BeforeSuite(func() {
 	cfg = ctrl.GetConfigOrDie()
 
 	scheme := runtime.NewScheme()
-	err := operatorv1alpha1.AddToScheme(scheme)
-	Expect(err).To(Not(HaveOccurred()))
 
-	err = rukpakv1alpha1.AddToScheme(scheme)
-	Expect(err).To(Not(HaveOccurred()))
+	Expect(operatorv1alpha1.AddToScheme(scheme)).To(Succeed())
+	Expect(rukpakv1alpha1.AddToScheme(scheme)).To(Succeed())
+	Expect(catalogd.AddToScheme(scheme)).To(Succeed())
 
-	err = catalogd.AddToScheme(scheme)
-	Expect(err).ToNot(HaveOccurred())
+	var err error
 	c, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).To(Not(HaveOccurred()))
 

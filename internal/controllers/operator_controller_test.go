@@ -1061,8 +1061,7 @@ var _ = Describe("Operator Controller Test", func() {
 
 func verifyInvariants(ctx context.Context, c client.Client, op *operatorsv1alpha1.Operator) {
 	key := client.ObjectKeyFromObject(op)
-	err := c.Get(ctx, key, op)
-	Expect(err).To(BeNil())
+	Expect(c.Get(ctx, key, op)).To(Succeed())
 
 	verifyConditionsInvariants(op)
 }

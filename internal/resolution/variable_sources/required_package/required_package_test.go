@@ -101,7 +101,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 	It("should return the correct package variable", func() {
 		variables, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(len(variables)).To(Equal(1))
+		Expect(variables).To(HaveLen(1))
 		reqPackageVar, ok := variables[0].(*required_package.RequiredPackageVariable)
 		Expect(ok).To(BeTrue())
 		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))))
@@ -130,7 +130,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 
 		variables, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(len(variables)).To(Equal(1))
+		Expect(variables).To(HaveLen(1))
 		reqPackageVar, ok := variables[0].(*required_package.RequiredPackageVariable)
 		Expect(ok).To(BeTrue())
 		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))))

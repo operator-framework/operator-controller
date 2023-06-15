@@ -107,6 +107,12 @@ func checkForUnexpectedFieldChange(a, b operatorsv1alpha1.Operator) bool {
 }
 
 // Helper function to do the actual reconcile
+//
+// Today we always return ctrl.Result{} and an error.
+// But in the future we might update this function
+// to return different results (e.g. requeue).
+//
+//nolint:unparam
 func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha1.Operator) (ctrl.Result, error) {
 	// validate spec
 	if err := validators.ValidateOperatorSpec(op); err != nil {
@@ -346,31 +352,6 @@ func (r *OperatorReconciler) existingBundleDeploymentUnstructured(ctx context.Co
 		return nil, err
 	}
 	return &unstructured.Unstructured{Object: unstrExistingBundleDeploymentObj}, nil
-}
-
-// verifyBDStatus reads the various possibilities of status in bundle deployment and translates
-// into corresponding operator condition status and message.
-func verifyBDStatus(dep *rukpakv1alpha1.BundleDeployment) (metav1.ConditionStatus, string) {
-	isValidBundleCond := apimeta.FindStatusCondition(dep.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
-	isInstalledCond := apimeta.FindStatusCondition(dep.Status.Conditions, rukpakv1alpha1.TypeInstalled)
-
-	if isValidBundleCond != nil && isValidBundleCond.Status == metav1.ConditionFalse {
-		return metav1.ConditionFalse, isValidBundleCond.Message
-	}
-
-	if isInstalledCond != nil && isInstalledCond.Status == metav1.ConditionFalse {
-		return metav1.ConditionFalse, isInstalledCond.Message
-	}
-
-	if isInstalledCond != nil && isInstalledCond.Status == metav1.ConditionTrue {
-		return metav1.ConditionTrue, "install was successful"
-	}
-	return metav1.ConditionUnknown, fmt.Sprintf("could not determine the state of BundleDeployment %s", dep.Name)
-}
-
-// isBundleDepStale returns true if conditions are out of date.
-func isBundleDepStale(bd *rukpakv1alpha1.BundleDeployment) bool {
-	return bd != nil && bd.Status.ObservedGeneration != bd.GetGeneration()
 }
 
 // mapBundleMediaTypeToBundleProvisioner maps an olm.bundle.mediatype property to a

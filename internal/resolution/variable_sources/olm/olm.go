@@ -13,27 +13,26 @@ import (
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
 )
 
-var _ input.VariableSource = &OLMVariableSource{}
+var _ input.VariableSource = &VariableSource{}
 
-type OLMVariableSource struct {
+type VariableSource struct {
 	client client.Client
 }
 
-func NewOLMVariableSource(cl client.Client) *OLMVariableSource {
-	return &OLMVariableSource{
+func NewOLMVariableSource(cl client.Client) *VariableSource {
+	return &VariableSource{
 		client: cl,
 	}
 }
 
-func (o *OLMVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
+func (o *VariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
 	operatorList := operatorsv1alpha1.OperatorList{}
 	if err := o.client.List(ctx, &operatorList); err != nil {
 		return nil, err
 	}
 
-	var inputVariableSources []input.VariableSource
-
 	// build required package variable sources
+	inputVariableSources := make([]input.VariableSource, 0, len(operatorList.Items))
 	for _, operator := range operatorList.Items {
 		rps, err := required_package.NewRequiredPackage(
 			operator.Spec.PackageName,

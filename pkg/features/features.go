@@ -1,6 +1,7 @@
 package features
 
 import (
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/component-base/featuregate"
 )
 
@@ -17,5 +18,5 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 var OperatorControllerFeatureGate featuregate.MutableFeatureGate = featuregate.NewFeatureGate()
 
 func init() {
-	OperatorControllerFeatureGate.Add(operatorControllerFeatureGates)
+	utilruntime.Must(OperatorControllerFeatureGate.Add(operatorControllerFeatureGates))
 }

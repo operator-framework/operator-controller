@@ -94,10 +94,10 @@ var _ = AfterSuite(func() {
 })
 
 func namesFromList(list client.ObjectList) []string {
-	var names []string
-
 	items, err := meta.ExtractList(list)
 	Expect(err).NotTo(HaveOccurred())
+
+	names := make([]string, 0, len(items))
 	for _, item := range items {
 		names = append(names, item.(client.Object).GetName())
 	}
