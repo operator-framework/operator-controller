@@ -40,7 +40,7 @@ type OperatorSpec struct {
 
 	//+kubebuilder:validation:MaxLength:=48
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
-	// Channel constraint defintion
+	// Channel constraint definition
 	Channel string `json:"channel,omitempty"`
 }
 

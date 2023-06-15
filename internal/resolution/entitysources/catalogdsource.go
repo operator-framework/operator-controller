@@ -5,67 +5,66 @@ import (
 	"encoding/json"
 	"fmt"
 
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
 )
 
-// catalogdEntitySource is a source for(/collection of) deppy defined input.Entity, built from content
+// CatalogdEntitySource is a source for(/collection of) deppy defined input.Entity, built from content
 // made accessible on-cluster by https://github.com/operator-framework/catalogd.
 // It is an implementation of deppy defined input.EntitySource
-type catalogdEntitySource struct {
+type CatalogdEntitySource struct {
 	client client.Client
 }
 
-func NewCatalogdEntitySource(client client.Client) *catalogdEntitySource {
-
-	return &catalogdEntitySource{client: client}
+func NewCatalogdEntitySource(client client.Client) *CatalogdEntitySource {
+	return &CatalogdEntitySource{client: client}
 }
 
-func (es *catalogdEntitySource) Get(ctx context.Context, id deppy.Identifier) (*input.Entity, error) {
+func (es *CatalogdEntitySource) Get(_ context.Context, _ deppy.Identifier) (*input.Entity, error) {
 	panic("not implemented")
 }
 
-func (es *catalogdEntitySource) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {
+func (es *CatalogdEntitySource) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {
 	resultSet := input.EntityList{}
 	entities, err := getEntities(ctx, es.client)
 	if err != nil {
 		return nil, err
 	}
-	for _, entity := range entities {
-		if filter(&entity) {
-			resultSet = append(resultSet, entity)
+	for i := range entities {
+		if filter(&entities[i]) {
+			resultSet = append(resultSet, entities[i])
 		}
 	}
 	return resultSet, nil
 }
 
-func (es *catalogdEntitySource) GroupBy(ctx context.Context, fn input.GroupByFunction) (input.EntityListMap, error) {
+func (es *CatalogdEntitySource) GroupBy(ctx context.Context, fn input.GroupByFunction) (input.EntityListMap, error) {
 	entities, err := getEntities(ctx, es.client)
 	if err != nil {
 		return nil, err
 	}
 	resultSet := input.EntityListMap{}
-	for _, entity := range entities {
-		keys := fn(&entity)
+	for i := range entities {
+		keys := fn(&entities[i])
 		for _, key := range keys {
-			resultSet[key] = append(resultSet[key], entity)
+			resultSet[key] = append(resultSet[key], entities[i])
 		}
 	}
 	return resultSet, nil
 }
 
-func (es *catalogdEntitySource) Iterate(ctx context.Context, fn input.IteratorFunction) error {
+func (es *CatalogdEntitySource) Iterate(ctx context.Context, fn input.IteratorFunction) error {
 	entities, err := getEntities(ctx, es.client)
 	if err != nil {
 		return err
 	}
-	for _, entity := range entities {
-		if err := fn(&entity); err != nil {
+	for i := range entities {
+		if err := fn(&entities[i]); err != nil {
 			return err
 		}
 	}

@@ -99,7 +99,7 @@ var _ = Describe("OperatorResolver", func() {
 		resolver := solver.NewDeppySolver(entitySource, variableSource)
 		solution, err := resolver.Solve(context.Background())
 		Expect(err).ToNot(HaveOccurred())
-		Expect(solution.SelectedVariables()).To(HaveLen(0))
+		Expect(solution.SelectedVariables()).To(BeEmpty())
 	})
 
 	It("should return an error if the entity source throws an error", func() {
@@ -135,19 +135,19 @@ var _ input.EntitySource = &FailEntitySource{}
 
 type FailEntitySource struct{}
 
-func (f FailEntitySource) Get(ctx context.Context, id deppy.Identifier) (*input.Entity, error) {
+func (f FailEntitySource) Get(_ context.Context, _ deppy.Identifier) (*input.Entity, error) {
 	return nil, fmt.Errorf("error calling get in entity source")
 }
 
-func (f FailEntitySource) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {
+func (f FailEntitySource) Filter(_ context.Context, _ input.Predicate) (input.EntityList, error) {
 	return nil, fmt.Errorf("error calling filter in entity source")
 }
 
-func (f FailEntitySource) GroupBy(ctx context.Context, fn input.GroupByFunction) (input.EntityListMap, error) {
+func (f FailEntitySource) GroupBy(_ context.Context, _ input.GroupByFunction) (input.EntityListMap, error) {
 	return nil, fmt.Errorf("error calling group by in entity source")
 }
 
-func (f FailEntitySource) Iterate(ctx context.Context, fn input.IteratorFunction) error {
+func (f FailEntitySource) Iterate(_ context.Context, _ input.IteratorFunction) error {
 	return fmt.Errorf("error calling iterate in entity source")
 }
 
@@ -165,30 +165,30 @@ func NewFailClientWithError(err error) client.Client {
 	}
 }
 
-func (f FailClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+func (f FailClient) Get(_ context.Context, _ client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
 	return f.err
 }
 
-func (f FailClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+func (f FailClient) List(_ context.Context, _ client.ObjectList, _ ...client.ListOption) error {
 	return f.err
 }
 
-func (f FailClient) Create(ctx context.Context, obj client.Object, opts ...client.CreateOption) error {
+func (f FailClient) Create(_ context.Context, _ client.Object, _ ...client.CreateOption) error {
 	return f.err
 }
 
-func (f FailClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
+func (f FailClient) Delete(_ context.Context, _ client.Object, _ ...client.DeleteOption) error {
 	return f.err
 }
 
-func (f FailClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+func (f FailClient) Update(_ context.Context, _ client.Object, _ ...client.UpdateOption) error {
 	return f.err
 }
 
-func (f FailClient) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+func (f FailClient) Patch(_ context.Context, _ client.Object, _ client.Patch, _ ...client.PatchOption) error {
 	return f.err
 }
 
-func (f FailClient) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
+func (f FailClient) DeleteAllOf(_ context.Context, _ client.Object, _ ...client.DeleteAllOfOption) error {
 	return f.err
 }

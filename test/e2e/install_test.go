@@ -6,14 +6,17 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+
+	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 var _ = Describe("Operator Install", func() {
@@ -45,7 +48,7 @@ var _ = Describe("Operator Install", func() {
 				By("eventually reporting a successful resolution and bundle path")
 				Eventually(func(g Gomega) {
 					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-					g.Expect(len(operator.Status.Conditions)).To(Equal(2))
+					g.Expect(operator.Status.Conditions).To(HaveLen(2))
 					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
 					g.Expect(cond).ToNot(BeNil())
 					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
@@ -66,7 +69,7 @@ var _ = Describe("Operator Install", func() {
 
 					bd := rukpakv1alpha1.BundleDeployment{}
 					g.Expect(c.Get(ctx, types.NamespacedName{Name: operatorName}, &bd)).To(Succeed())
-					g.Expect(len(bd.Status.Conditions)).To(Equal(2))
+					g.Expect(bd.Status.Conditions).To(HaveLen(2))
 					g.Expect(bd.Status.Conditions[0].Reason).To(Equal("UnpackSuccessful"))
 					g.Expect(bd.Status.Conditions[1].Reason).To(Equal("InstallationSucceeded"))
 				}).Should(Succeed())
@@ -86,7 +89,7 @@ var _ = Describe("Operator Install", func() {
 				By("eventually reporting a successful resolution and bundle path")
 				Eventually(func(g Gomega) {
 					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-					g.Expect(len(operator.Status.Conditions)).To(Equal(2))
+					g.Expect(operator.Status.Conditions).To(HaveLen(2))
 					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
 					g.Expect(cond).ToNot(BeNil())
 					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
@@ -107,7 +110,7 @@ var _ = Describe("Operator Install", func() {
 
 					bd := rukpakv1alpha1.BundleDeployment{}
 					g.Expect(c.Get(ctx, types.NamespacedName{Name: operatorName}, &bd)).To(Succeed())
-					g.Expect(len(bd.Status.Conditions)).To(Equal(2))
+					g.Expect(bd.Status.Conditions).To(HaveLen(2))
 					g.Expect(bd.Status.Conditions[0].Reason).To(Equal("UnpackSuccessful"))
 					g.Expect(bd.Status.Conditions[1].Reason).To(Equal("InstallationSucceeded"))
 				}).Should(Succeed())

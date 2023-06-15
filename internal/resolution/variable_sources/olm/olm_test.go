@@ -9,24 +9,26 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/operator-framework/deppy/pkg/deppy"
-	"github.com/operator-framework/deppy/pkg/deppy/input"
-	"github.com/operator-framework/operator-controller/api/v1alpha1"
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/crd_constraints"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	"github.com/operator-framework/deppy/pkg/deppy"
+	"github.com/operator-framework/deppy/pkg/deppy/input"
+
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/crd_constraints"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/requiredpackage"
 )
 
 func FakeClient(objects ...client.Object) client.Client {
 	scheme := runtime.NewScheme()
-	utilruntime.Must(v1alpha1.AddToScheme(scheme))
+	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objects...).Build()
 }
 
@@ -101,9 +103,9 @@ var _ = Describe("OLMVariableSource", func() {
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
-		packageRequiredVariables := filterVariables[*required_package.RequiredPackageVariable](variables)
+		packageRequiredVariables := filterVariables[*requiredpackage.RequiredPackageVariable](variables)
 		Expect(packageRequiredVariables).To(HaveLen(2))
-		Expect(packageRequiredVariables).To(WithTransform(func(bvars []*required_package.RequiredPackageVariable) map[deppy.Identifier]int {
+		Expect(packageRequiredVariables).To(WithTransform(func(bvars []*requiredpackage.RequiredPackageVariable) map[deppy.Identifier]int {
 			out := map[deppy.Identifier]int{}
 			for _, variable := range bvars {
 				out[variable.Identifier()] = len(variable.BundleEntities())
@@ -204,19 +206,19 @@ var _ input.EntitySource = &FailEntitySource{}
 type FailEntitySource struct {
 }
 
-func (f FailEntitySource) Get(ctx context.Context, id deppy.Identifier) (*input.Entity, error) {
+func (f FailEntitySource) Get(_ context.Context, _ deppy.Identifier) (*input.Entity, error) {
 	return nil, fmt.Errorf("error executing get")
 }
 
-func (f FailEntitySource) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {
+func (f FailEntitySource) Filter(_ context.Context, _ input.Predicate) (input.EntityList, error) {
 	return nil, fmt.Errorf("error executing filter")
 }
 
-func (f FailEntitySource) GroupBy(ctx context.Context, fn input.GroupByFunction) (input.EntityListMap, error) {
+func (f FailEntitySource) GroupBy(_ context.Context, _ input.GroupByFunction) (input.EntityListMap, error) {
 	return nil, fmt.Errorf("error executing group by")
 }
 
-func (f FailEntitySource) Iterate(ctx context.Context, fn input.IteratorFunction) error {
+func (f FailEntitySource) Iterate(_ context.Context, _ input.IteratorFunction) error {
 	return fmt.Errorf("error executing iterate")
 }
 
