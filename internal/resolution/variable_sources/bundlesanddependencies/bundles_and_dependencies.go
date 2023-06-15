@@ -74,7 +74,7 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context, entityS
 	var bundleEntityQueue []*olmentity.BundleEntity
 	for _, variable := range variables {
 		switch v := variable.(type) {
-		case *requiredpackage.RequiredPackageVariable:
+		case *requiredpackage.Variable:
 			bundleEntityQueue = append(bundleEntityQueue, v.BundleEntities()...)
 		}
 	}

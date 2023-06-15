@@ -103,9 +103,9 @@ var _ = Describe("OLMVariableSource", func() {
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
-		packageRequiredVariables := filterVariables[*requiredpackage.RequiredPackageVariable](variables)
+		packageRequiredVariables := filterVariables[*requiredpackage.Variable](variables)
 		Expect(packageRequiredVariables).To(HaveLen(2))
-		Expect(packageRequiredVariables).To(WithTransform(func(bvars []*requiredpackage.RequiredPackageVariable) map[deppy.Identifier]int {
+		Expect(packageRequiredVariables).To(WithTransform(func(bvars []*requiredpackage.Variable) map[deppy.Identifier]int {
 			out := map[deppy.Identifier]int{}
 			for _, variable := range bvars {
 				out[variable.Identifier()] = len(variable.BundleEntities())

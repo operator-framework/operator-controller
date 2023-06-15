@@ -22,7 +22,7 @@ func TestRequiredPackage(t *testing.T) {
 
 var _ = Describe("RequiredPackageVariable", func() {
 	var (
-		rpv            *requiredpackage.RequiredPackageVariable
+		rpv            *requiredpackage.Variable
 		packageName    string
 		bundleEntities []*olmentity.BundleEntity
 	)
@@ -62,7 +62,7 @@ var _ = Describe("RequiredPackageVariable", func() {
 
 var _ = Describe("RequiredPackageVariableSource", func() {
 	var (
-		rpvs             *requiredpackage.RequiredPackageVariableSource
+		rpvs             *requiredpackage.VariableSource
 		packageName      string
 		mockEntitySource input.EntitySource
 	)
@@ -102,7 +102,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 		variables, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(variables).To(HaveLen(1))
-		reqPackageVar, ok := variables[0].(*requiredpackage.RequiredPackageVariable)
+		reqPackageVar, ok := variables[0].(*requiredpackage.Variable)
 		Expect(ok).To(BeTrue())
 		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))))
 
@@ -131,7 +131,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 		variables, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(variables).To(HaveLen(1))
-		reqPackageVar, ok := variables[0].(*requiredpackage.RequiredPackageVariable)
+		reqPackageVar, ok := variables[0].(*requiredpackage.Variable)
 		Expect(ok).To(BeTrue())
 		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))))
 
