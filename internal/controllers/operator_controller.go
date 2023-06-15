@@ -228,6 +228,13 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 			fmt.Sprintf("installed from %q", resource),
 			op.GetGeneration(),
 		)
+	case rukpakv1alpha1.SourceTypeOCIArtifact:
+		op.Status.InstalledBundleResource = bundleDeploymentSource.OCIArtifact.Ref
+		setInstalledStatusConditionSuccess(
+			&op.Status.Conditions,
+			fmt.Sprintf("installed from %q", bundleDeploymentSource.OCIArtifact.Ref),
+			op.GetGeneration(),
+		)
 	default:
 		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(
@@ -274,9 +281,9 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 				"spec": map[string]interface{}{
 					"provisionerClassName": bundleProvisioner,
 					"source": map[string]interface{}{
-						// TODO: Don't assume image type
-						"type": string(rukpakv1alpha1.SourceTypeImage),
-						"image": map[string]interface{}{
+						// TODO: Don't assume artifact type
+						"type": rukpakv1alpha1.SourceTypeOCIArtifact,
+						string(rukpakv1alpha1.SourceTypeOCIArtifact): map[string]interface{}{
 							"ref": bundlePath,
 						},
 					},
