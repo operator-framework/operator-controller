@@ -1,4 +1,4 @@
-package required_package
+package requiredpackage
 
 import (
 	"context"

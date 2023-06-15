@@ -1,4 +1,4 @@
-package required_package_test
+package requiredpackage_test
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 
 	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/requiredpackage"
 )
 
 func TestRequiredPackage(t *testing.T) {
@@ -22,7 +22,7 @@ func TestRequiredPackage(t *testing.T) {
 
 var _ = Describe("RequiredPackageVariable", func() {
 	var (
-		rpv            *required_package.RequiredPackageVariable
+		rpv            *requiredpackage.RequiredPackageVariable
 		packageName    string
 		bundleEntities []*olmentity.BundleEntity
 	)
@@ -43,7 +43,7 @@ var _ = Describe("RequiredPackageVariable", func() {
 				property.TypeChannel: `{"channelName":"stable","priority":0}`,
 			})),
 		}
-		rpv = required_package.NewRequiredPackageVariable(packageName, bundleEntities)
+		rpv = requiredpackage.NewRequiredPackageVariable(packageName, bundleEntities)
 	})
 
 	It("should return the correct package name", func() {
@@ -62,7 +62,7 @@ var _ = Describe("RequiredPackageVariable", func() {
 
 var _ = Describe("RequiredPackageVariableSource", func() {
 	var (
-		rpvs             *required_package.RequiredPackageVariableSource
+		rpvs             *requiredpackage.RequiredPackageVariableSource
 		packageName      string
 		mockEntitySource input.EntitySource
 	)
@@ -70,7 +70,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 	BeforeEach(func() {
 		var err error
 		packageName = "test-package"
-		rpvs, err = required_package.NewRequiredPackage(packageName)
+		rpvs, err = requiredpackage.NewRequiredPackage(packageName)
 		Expect(err).NotTo(HaveOccurred())
 		mockEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{
 			"bundle-1": *input.NewEntity("bundle-1", map[string]string{
@@ -102,7 +102,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 		variables, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(variables).To(HaveLen(1))
-		reqPackageVar, ok := variables[0].(*required_package.RequiredPackageVariable)
+		reqPackageVar, ok := variables[0].(*requiredpackage.RequiredPackageVariable)
 		Expect(ok).To(BeTrue())
 		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))))
 
@@ -125,13 +125,13 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 	It("should filter by version range", func() {
 		// recreate source with version range option
 		var err error
-		rpvs, err = required_package.NewRequiredPackage(packageName, required_package.InVersionRange(">=1.0.0 !2.0.0 <3.0.0"))
+		rpvs, err = requiredpackage.NewRequiredPackage(packageName, requiredpackage.InVersionRange(">=1.0.0 !2.0.0 <3.0.0"))
 		Expect(err).NotTo(HaveOccurred())
 
 		variables, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(variables).To(HaveLen(1))
-		reqPackageVar, ok := variables[0].(*required_package.RequiredPackageVariable)
+		reqPackageVar, ok := variables[0].(*requiredpackage.RequiredPackageVariable)
 		Expect(ok).To(BeTrue())
 		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))))
 
@@ -145,7 +145,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 	})
 
 	It("should fail with bad semver range", func() {
-		_, err := required_package.NewRequiredPackage(packageName, required_package.InVersionRange("not a valid semver"))
+		_, err := requiredpackage.NewRequiredPackage(packageName, requiredpackage.InVersionRange("not a valid semver"))
 		Expect(err).To(HaveOccurred())
 	})
 

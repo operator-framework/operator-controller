@@ -41,7 +41,7 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundlesanddependencies"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
 )
 
@@ -247,7 +247,7 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Solution, packageName string) (*entity.BundleEntity, error) {
 	for _, variable := range solution.SelectedVariables() {
 		switch v := variable.(type) {
-		case *bundles_and_dependencies.BundleVariable:
+		case *bundlesanddependencies.BundleVariable:
 			entityPkgName, err := v.BundleEntity().PackageName()
 			if err != nil {
 				return nil, err

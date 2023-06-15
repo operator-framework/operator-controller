@@ -1,4 +1,4 @@
-package crd_constraints
+package crdconstraints
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/constraint"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundlesanddependencies"
 	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
 )
 
@@ -63,7 +63,7 @@ func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Contex
 	gvkToBundleMap := map[string]map[deppy.Identifier]struct{}{}
 	for _, variable := range variables {
 		switch v := variable.(type) {
-		case *bundles_and_dependencies.BundleVariable:
+		case *bundlesanddependencies.BundleVariable:
 			bundleEntities := []*olmentity.BundleEntity{v.BundleEntity()}
 			bundleEntities = append(bundleEntities, v.Dependencies()...)
 			for _, bundleEntity := range bundleEntities {
