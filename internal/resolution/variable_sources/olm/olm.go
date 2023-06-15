@@ -8,9 +8,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/crd_constraints"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/required_package"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundlesanddependencies"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/crdconstraints"
+	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/requiredpackage"
 )
 
 var _ input.VariableSource = &VariableSource{}
@@ -34,10 +34,10 @@ func (o *VariableSource) GetVariables(ctx context.Context, entitySource input.En
 	// build required package variable sources
 	inputVariableSources := make([]input.VariableSource, 0, len(operatorList.Items))
 	for _, operator := range operatorList.Items {
-		rps, err := required_package.NewRequiredPackage(
+		rps, err := requiredpackage.NewRequiredPackage(
 			operator.Spec.PackageName,
-			required_package.InVersionRange(operator.Spec.Version),
-			required_package.InChannel(operator.Spec.Channel),
+			requiredpackage.InVersionRange(operator.Spec.Version),
+			requiredpackage.InChannel(operator.Spec.Channel),
 		)
 		if err != nil {
 			return nil, err
@@ -46,6 +46,6 @@ func (o *VariableSource) GetVariables(ctx context.Context, entitySource input.En
 	}
 
 	// build variable source pipeline
-	variableSource := crd_constraints.NewCRDUniquenessConstraintsVariableSource(bundles_and_dependencies.NewBundlesAndDepsVariableSource(inputVariableSources...))
+	variableSource := crdconstraints.NewCRDUniquenessConstraintsVariableSource(bundlesanddependencies.NewBundlesAndDepsVariableSource(inputVariableSources...))
 	return variableSource.GetVariables(ctx, entitySource)
 }
