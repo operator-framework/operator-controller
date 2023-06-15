@@ -61,6 +61,14 @@ help: ## Display this help.
 
 ##@ Development
 
+.PHONY: lint
+lint: $(GOLANGCI_LINT) ## Run golangci linter.
+	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
+
+.PHONY: tidy
+tidy: ## Update dependencies.
+	$(Q)go mod tidy
+
 .PHONY: manifests
 manifests: $(CONTROLLER_GEN) ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
@@ -68,6 +76,10 @@ manifests: $(CONTROLLER_GEN) ## Generate WebhookConfiguration, ClusterRole and C
 .PHONY: generate
 generate: $(CONTROLLER_GEN) ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+.PHONY: verify
+verify: tidy fmt generate ## Verify the current code generation.
+	git diff --exit-code
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
