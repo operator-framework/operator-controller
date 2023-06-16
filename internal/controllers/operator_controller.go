@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
@@ -152,6 +153,12 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		return ctrl.Result{}, err
 	}
 
+	sourceType := rukpakv1alpha1.SourceTypeImage
+	if strings.HasPrefix(bundleImage, "oci://") {
+		sourceType = rukpakv1alpha1.SourceTypeOCIArtifact
+		bundleImage = strings.TrimPrefix(bundleImage, "oci://")
+	}
+
 	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundleImage value.
 	op.Status.ResolvedBundleResource = bundleImage
 	setResolvedStatusConditionSuccess(&op.Status.Conditions, fmt.Sprintf("resolved to %q", bundleImage), op.GetGeneration())
@@ -166,9 +173,10 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
 	}
+
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
 	// image we just looked up in the solution.
-	dep := r.generateExpectedBundleDeployment(*op, bundleImage, bundleProvisioner)
+	dep := r.generateExpectedBundleDeployment(*op, bundleImage, bundleProvisioner, sourceType)
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
 		// originally Reason: operatorsv1alpha1.ReasonInstallationFailed
 		op.Status.InstalledBundleResource = ""
@@ -261,7 +269,7 @@ func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Soluti
 	return nil, fmt.Errorf("entity for package %q not found in solution", packageName)
 }
 
-func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {
+func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string, bundleProvisioner string, sourceType rukpakv1alpha1.SourceType) *unstructured.Unstructured {
 	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
 	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
 	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
@@ -281,9 +289,8 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 				"spec": map[string]interface{}{
 					"provisionerClassName": bundleProvisioner,
 					"source": map[string]interface{}{
-						// TODO: Don't assume artifact type
-						"type": rukpakv1alpha1.SourceTypeOCIArtifact,
-						string(rukpakv1alpha1.SourceTypeOCIArtifact): map[string]interface{}{
+						"type": sourceType,
+						string(sourceType): map[string]interface{}{
 							"ref": bundlePath,
 						},
 					},
