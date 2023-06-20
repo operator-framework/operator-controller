@@ -7,12 +7,13 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 )
 
 const (
@@ -66,7 +67,7 @@ var _ = Describe("Catalog Unpacking", func() {
 			By("Ensuring the expected Package resource is created")
 			pack := &catalogd.Package{}
 			expectedPackSpec := catalogd.PackageSpec{
-				Catalog: v1.LocalObjectReference{
+				Catalog: corev1.LocalObjectReference{
 					Name: catalogName,
 				},
 				Channels: []catalogd.PackageChannel{
@@ -89,7 +90,7 @@ var _ = Describe("Catalog Unpacking", func() {
 			By("Ensuring the expected BundleMetadata resource is created")
 			bm := &catalogd.BundleMetadata{}
 			expectedBMSpec := catalogd.BundleMetadataSpec{
-				Catalog: v1.LocalObjectReference{
+				Catalog: corev1.LocalObjectReference{
 					Name: catalogName,
 				},
 				Package: pkg,

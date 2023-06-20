@@ -32,7 +32,7 @@ type MockSource struct {
 	shouldError bool
 }
 
-func (ms *MockSource) Unpack(ctx context.Context, catalog *v1alpha1.Catalog) (*source.Result, error) {
+func (ms *MockSource) Unpack(_ context.Context, _ *v1alpha1.Catalog) (*source.Result, error) {
 	if ms.shouldError {
 		return nil, errors.New("mocksource error")
 	}
@@ -314,7 +314,7 @@ var _ = Describe("Catalogd Controller Test", func() {
 					Expect(pack.Spec.Channels).To(HaveLen(1))
 					Expect(pack.Spec.Channels[0].Name).To(Equal(testChannelName))
 					Expect(pack.Spec.Channels[0].Entries).To(HaveLen(1))
-					Expect(Expect(pack.Spec.Channels[0].Entries[0].Name).To(Equal(testBundleName)))
+					Expect(pack.Spec.Channels[0].Entries[0].Name).To(Equal(testBundleName))
 				})
 			})
 		})

@@ -77,6 +77,10 @@ tidy: ## Update dependencies
 verify: tidy fmt vet generate ## Verify the current code generation and lint
 	git diff --exit-code
 
+.PHONY: lint
+lint: $(GOLANGCI_LINT) ## Run golangci linter.
+	$(GOLANGCI_LINT) run $(GOLANGCI_LINT_ARGS)
+
 ##@ Build
 
 BINARIES=manager
