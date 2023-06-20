@@ -22,6 +22,7 @@ import (
 
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -36,6 +37,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/resolution/entitysources"
 	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
+	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
 var (
@@ -66,7 +68,10 @@ func main() {
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
+
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	features.OperatorControllerFeatureGate.AddFlag(pflag.CommandLine)
+	pflag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts), zap.StacktraceLevel(zapcore.DPanicLevel)))
 

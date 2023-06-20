@@ -11,9 +11,11 @@ require (
 	github.com/operator-framework/deppy v0.0.0-20230602120738-cbf2c66b141b
 	github.com/operator-framework/operator-registry v1.26.3
 	github.com/operator-framework/rukpak v0.12.0
+	github.com/spf13/pflag v1.0.5
 	go.uber.org/zap v1.24.0
 	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.26.1
+	k8s.io/component-base v0.26.1
 	k8s.io/utils v0.0.0-20221128185143-99ec85e7a448
 	sigs.k8s.io/controller-runtime v0.14.4
 )
@@ -53,7 +55,6 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
@@ -71,7 +72,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.26.1 // indirect
 	k8s.io/apiextensions-apiserver v0.26.1 // indirect
-	k8s.io/component-base v0.26.1 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
