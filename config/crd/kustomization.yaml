@@ -5,6 +5,7 @@ resources:
 - bases/catalogd.operatorframework.io_bundlemetadata.yaml
 - bases/catalogd.operatorframework.io_packages.yaml
 - bases/catalogd.operatorframework.io_catalogs.yaml
+- bases/catalogd.operatorframework.io_catalogmetadata.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patches:

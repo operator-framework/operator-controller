@@ -19,6 +19,7 @@ import (
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/catalogd/internal/source"
 	"github.com/operator-framework/catalogd/pkg/controllers/core"
+	"github.com/operator-framework/catalogd/pkg/features"
 )
 
 var _ source.Unpacker = &MockSource{}
@@ -48,6 +49,8 @@ var _ = Describe("Catalogd Controller Test", func() {
 	)
 	BeforeEach(func() {
 		ctx = context.Background()
+		Expect(features.CatalogdFeatureGate.Set("PackagesBundleMetadataAPIs=true")).To(Succeed())
+		Expect(features.CatalogdFeatureGate.Set("CatalogMetadataAPI=true")).To(Succeed())
 		mockSource = &MockSource{}
 		reconciler = &core.CatalogReconciler{
 			Client: cl,
@@ -82,40 +85,40 @@ var _ = Describe("Catalogd Controller Test", func() {
 
 	When("the catalog exists", func() {
 		var (
-			catalog *v1alpha1.Catalog
-			cKey    types.NamespacedName
+			catalog    *v1alpha1.Catalog
+			catalogKey types.NamespacedName
 		)
 		BeforeEach(func() {
-			cKey = types.NamespacedName{Name: fmt.Sprintf("catalogd-test-%s", rand.String(8))}
+			catalogKey = types.NamespacedName{Name: fmt.Sprintf("catalogd-test-%s", rand.String(8))}
 		})
 
 		When("the catalog specifies an invalid source", func() {
 			BeforeEach(func() {
 				By("initializing cluster state")
 				catalog = &v1alpha1.Catalog{
-					ObjectMeta: metav1.ObjectMeta{Name: cKey.Name},
+					ObjectMeta: metav1.ObjectMeta{Name: catalogKey.Name},
 					Spec: v1alpha1.CatalogSpec{
 						Source: v1alpha1.CatalogSource{
 							Type: "invalid-source",
 						},
 					},
 				}
-				Expect(cl.Create(ctx, catalog)).NotTo(HaveOccurred())
+				Expect(cl.Create(ctx, catalog)).To(Succeed())
 			})
 
 			AfterEach(func() {
 				By("tearing down cluster state")
-				Expect(cl.Delete(ctx, catalog)).NotTo(HaveOccurred())
+				Expect(cl.Delete(ctx, catalog)).To(Succeed())
 			})
 
 			It("should set unpacking status to failed and return an error", func() {
-				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: cKey})
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
 				Expect(res).To(Equal(ctrl.Result{}))
 				Expect(err).To(HaveOccurred())
 
 				// get the catalog and ensure status is set properly
 				cat := &v1alpha1.Catalog{}
-				Expect(cl.Get(ctx, cKey, cat)).To(Succeed())
+				Expect(cl.Get(ctx, catalogKey, cat)).To(Succeed())
 				Expect(cat.Status.ResolvedSource).To(BeNil())
 				Expect(cat.Status.Phase).To(Equal(v1alpha1.PhaseFailing))
 				cond := meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeUnpacked)
@@ -129,7 +132,7 @@ var _ = Describe("Catalogd Controller Test", func() {
 			BeforeEach(func() {
 				By("initializing cluster state")
 				catalog = &v1alpha1.Catalog{
-					ObjectMeta: metav1.ObjectMeta{Name: cKey.Name},
+					ObjectMeta: metav1.ObjectMeta{Name: catalogKey.Name},
 					Spec: v1alpha1.CatalogSpec{
 						Source: v1alpha1.CatalogSource{
 							Type: "image",
@@ -144,7 +147,7 @@ var _ = Describe("Catalogd Controller Test", func() {
 
 			AfterEach(func() {
 				By("tearing down cluster state")
-				Expect(cl.Delete(ctx, catalog)).NotTo(HaveOccurred())
+				Expect(cl.Delete(ctx, catalog)).To(Succeed())
 			})
 
 			When("unpacker returns source.Result with state == 'Pending'", func() {
@@ -154,13 +157,13 @@ var _ = Describe("Catalogd Controller Test", func() {
 				})
 
 				It("should update status to reflect the pending state", func() {
-					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: cKey})
+					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
 					Expect(res).To(Equal(ctrl.Result{}))
 					Expect(err).ToNot(HaveOccurred())
 
 					// get the catalog and ensure status is set properly
 					cat := &v1alpha1.Catalog{}
-					Expect(cl.Get(ctx, cKey, cat)).To(Succeed())
+					Expect(cl.Get(ctx, catalogKey, cat)).To(Succeed())
 					Expect(cat.Status.ResolvedSource).To(BeNil())
 					Expect(cat.Status.Phase).To(Equal(v1alpha1.PhasePending))
 					cond := meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeUnpacked)
@@ -177,13 +180,13 @@ var _ = Describe("Catalogd Controller Test", func() {
 				})
 
 				It("should update status to reflect the unpacking state", func() {
-					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: cKey})
+					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
 					Expect(res).To(Equal(ctrl.Result{}))
 					Expect(err).ToNot(HaveOccurred())
 
 					// get the catalog and ensure status is set properly
 					cat := &v1alpha1.Catalog{}
-					Expect(cl.Get(ctx, cKey, cat)).To(Succeed())
+					Expect(cl.Get(ctx, catalogKey, cat)).To(Succeed())
 					Expect(cat.Status.ResolvedSource).To(BeNil())
 					Expect(cat.Status.Phase).To(Equal(v1alpha1.PhaseUnpacking))
 					cond := meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeUnpacked)
@@ -200,13 +203,13 @@ var _ = Describe("Catalogd Controller Test", func() {
 				})
 
 				It("should set unpacking status to failed and return an error", func() {
-					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: cKey})
+					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
 					Expect(res).To(Equal(ctrl.Result{}))
 					Expect(err).To(HaveOccurred())
 
 					// get the catalog and ensure status is set properly
 					cat := &v1alpha1.Catalog{}
-					Expect(cl.Get(ctx, cKey, cat)).To(Succeed())
+					Expect(cl.Get(ctx, catalogKey, cat)).To(Succeed())
 					Expect(cat.Status.ResolvedSource).To(BeNil())
 					Expect(cat.Status.Phase).To(Equal(v1alpha1.PhaseFailing))
 					cond := meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeUnpacked)
@@ -251,33 +254,35 @@ var _ = Describe("Catalogd Controller Test", func() {
 					}
 
 					// reconcile
-					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: cKey})
+					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
 					Expect(res).To(Equal(ctrl.Result{}))
 					Expect(err).ToNot(HaveOccurred())
 				})
 
 				AfterEach(func() {
-					// clean up package
-					pkg := &v1alpha1.Package{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: testPackageMetaName,
-						},
-					}
-					Expect(cl.Delete(ctx, pkg)).NotTo(HaveOccurred())
+					if features.CatalogdFeatureGate.Enabled(features.PackagesBundleMetadataAPIs) {
+						// clean up package
+						pkg := &v1alpha1.Package{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: testPackageMetaName,
+							},
+						}
+						Expect(cl.Delete(ctx, pkg)).To(Succeed())
 
-					// clean up bundlemetadata
-					bm := &v1alpha1.BundleMetadata{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: testBundleMetaName,
-						},
+						// clean up bundlemetadata
+						bm := &v1alpha1.BundleMetadata{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: testBundleMetaName,
+							},
+						}
+						Expect(cl.Delete(ctx, bm)).To(Succeed())
 					}
-					Expect(cl.Delete(ctx, bm)).NotTo(HaveOccurred())
 				})
 
 				It("should set unpacking status to 'unpacked'", func() {
 					// get the catalog and ensure status is set properly
 					cat := &v1alpha1.Catalog{}
-					Expect(cl.Get(ctx, cKey, cat)).ToNot(HaveOccurred())
+					Expect(cl.Get(ctx, catalogKey, cat)).To(Succeed())
 					Expect(cat.Status.ResolvedSource).ToNot(BeNil())
 					Expect(cat.Status.Phase).To(Equal(v1alpha1.PhaseUnpacked))
 					cond := meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeUnpacked)
@@ -286,36 +291,58 @@ var _ = Describe("Catalogd Controller Test", func() {
 					Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 				})
 
-				It("should create BundleMetadata resources", func() {
-					// validate bundlemetadata resources
-					bundlemetadatas := &v1alpha1.BundleMetadataList{}
-					Expect(cl.List(ctx, bundlemetadatas)).To(Succeed())
-					Expect(bundlemetadatas.Items).To(HaveLen(1))
-					bundlemetadata := bundlemetadatas.Items[0]
-					Expect(bundlemetadata.Name).To(Equal(testBundleMetaName))
-					Expect(bundlemetadata.Spec.Image).To(Equal(testBundleImage))
-					Expect(bundlemetadata.Spec.Catalog.Name).To(Equal(catalog.Name))
-					Expect(bundlemetadata.Spec.Package).To(Equal(testPackageName))
-					Expect(bundlemetadata.Spec.RelatedImages).To(HaveLen(1))
-					Expect(bundlemetadata.Spec.RelatedImages[0].Name).To(Equal(testBundleRelatedImageName))
-					Expect(bundlemetadata.Spec.RelatedImages[0].Image).To(Equal(testBundleRelatedImageImage))
-					Expect(bundlemetadata.Spec.Properties).To(HaveLen(1))
-				})
+				if features.CatalogdFeatureGate.Enabled(features.PackagesBundleMetadataAPIs) {
+					// TODO (rashmigottipati): Add testing of BundleMetadata sync process.
+					It("should create BundleMetadata resources", func() {
+						// validate bundlemetadata resources
+						bundlemetadatas := &v1alpha1.BundleMetadataList{}
+						Expect(cl.List(ctx, bundlemetadatas)).To(Succeed())
+						Expect(bundlemetadatas.Items).To(HaveLen(1))
+						bundlemetadata := bundlemetadatas.Items[0]
+						Expect(bundlemetadata.Name).To(Equal(testBundleMetaName))
+						Expect(bundlemetadata.Spec.Image).To(Equal(testBundleImage))
+						Expect(bundlemetadata.Spec.Catalog.Name).To(Equal(catalog.Name))
+						Expect(bundlemetadata.Spec.Package).To(Equal(testPackageName))
+						Expect(bundlemetadata.Spec.RelatedImages).To(HaveLen(1))
+						Expect(bundlemetadata.Spec.RelatedImages[0].Name).To(Equal(testBundleRelatedImageName))
+						Expect(bundlemetadata.Spec.RelatedImages[0].Image).To(Equal(testBundleRelatedImageImage))
+						Expect(bundlemetadata.Spec.Properties).To(HaveLen(1))
+					})
 
-				It("should create Package resources", func() {
-					// validate package resources
-					packages := &v1alpha1.PackageList{}
-					Expect(cl.List(ctx, packages)).To(Succeed())
-					Expect(packages.Items).To(HaveLen(1))
-					pack := packages.Items[0]
-					Expect(pack.Name).To(Equal(testPackageMetaName))
-					Expect(pack.Spec.DefaultChannel).To(Equal(testPackageDefaultChannel))
-					Expect(pack.Spec.Catalog.Name).To(Equal(catalog.Name))
-					Expect(pack.Spec.Channels).To(HaveLen(1))
-					Expect(pack.Spec.Channels[0].Name).To(Equal(testChannelName))
-					Expect(pack.Spec.Channels[0].Entries).To(HaveLen(1))
-					Expect(pack.Spec.Channels[0].Entries[0].Name).To(Equal(testBundleName))
-				})
+					// TODO (rashmigottipati): Add testing of Package sync process.
+					It("should create Package resources", func() {
+						// validate package resources
+						packages := &v1alpha1.PackageList{}
+						Expect(cl.List(ctx, packages)).To(Succeed())
+						Expect(packages.Items).To(HaveLen(1))
+						pack := packages.Items[0]
+						Expect(pack.Name).To(Equal(testPackageMetaName))
+						Expect(pack.Spec.DefaultChannel).To(Equal(testPackageDefaultChannel))
+						Expect(pack.Spec.Catalog.Name).To(Equal(catalog.Name))
+						Expect(pack.Spec.Channels).To(HaveLen(1))
+						Expect(pack.Spec.Channels[0].Name).To(Equal(testChannelName))
+						Expect(pack.Spec.Channels[0].Entries).To(HaveLen(1))
+						Expect(pack.Spec.Channels[0].Entries[0].Name).To(Equal(testBundleName))
+					})
+				}
+
+				if features.CatalogdFeatureGate.Enabled(features.CatalogMetadataAPI) {
+					// TODO (rashmigottipati): Add testing of CatalogMetadata sync process.
+					It("should create CatalogMetadata resources", func() {
+						catalogMetadatas := &v1alpha1.CatalogMetadataList{}
+						Expect(cl.List(ctx, catalogMetadatas)).To(Succeed())
+						Expect(catalogMetadatas.Items).To(HaveLen(3))
+						for _, catalogMetadata := range catalogMetadatas.Items {
+							Expect(catalogMetadata.Name).To(ContainSubstring(catalogKey.Name))
+							Expect(catalogMetadata.Kind).To(Equal("CatalogMetadata"))
+							Expect(catalogMetadata.GetLabels()).To(HaveLen(5))
+							Expect(catalogMetadata.OwnerReferences).To(HaveLen(1))
+							Expect(catalogMetadata.OwnerReferences[0].Name).To(Equal(catalogKey.Name))
+							Expect(catalogMetadata.Spec.Catalog.Name).To(Equal(catalogKey.Name))
+						}
+					})
+				}
+
 			})
 		})
 

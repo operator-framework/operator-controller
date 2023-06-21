@@ -18,7 +18,12 @@ package core
 
 import (
 	"context"
+	// #nosec
+	"crypto/sha1"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io/fs"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	corev1 "k8s.io/api/core/v1"
@@ -36,6 +41,7 @@ import (
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/catalogd/internal/source"
+	"github.com/operator-framework/catalogd/pkg/features"
 )
 
 // TODO (everettraven): Add unit tests for the CatalogReconciler
@@ -55,6 +61,7 @@ type CatalogReconciler struct {
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=packages,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=packages/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=packages/finalizers,verbs=update
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=create;update;patch;delete;get;list;watch
 //+kubebuilder:rbac:groups=core,resources=pods/log,verbs=get;list;watch
 
@@ -141,12 +148,20 @@ func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.Cat
 			return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("load FBC from filesystem: %v", err))
 		}
 
-		if err := r.syncPackages(ctx, fbc, catalog); err != nil {
-			return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("create package objects: %v", err))
+		if features.CatalogdFeatureGate.Enabled(features.PackagesBundleMetadataAPIs) {
+			if err := r.syncPackages(ctx, fbc, catalog); err != nil {
+				return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("create package objects: %v", err))
+			}
+
+			if err := r.syncBundleMetadata(ctx, fbc, catalog); err != nil {
+				return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("create bundle metadata objects: %v", err))
+			}
 		}
 
-		if err := r.syncBundleMetadata(ctx, fbc, catalog); err != nil {
-			return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("create bundle metadata objects: %v", err))
+		if features.CatalogdFeatureGate.Enabled(features.CatalogMetadataAPI) {
+			if err = r.syncCatalogMetadata(ctx, unpackResult.FS, catalog); err != nil {
+				return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("create catalog metadata objects: %v", err))
+			}
 		}
 
 		updateStatusUnpacked(&catalog.Status, unpackResult)
@@ -366,4 +381,115 @@ func (r *CatalogReconciler) syncPackages(ctx context.Context, declCfg *declcfg.D
 		}
 	}
 	return nil
+}
+
+// syncCatalogMetadata will sync all of the catalog contents to `CatalogMetadata` objects
+// by creating, updating and deleting the objects as necessary. Returns an
+// error if any are encountered.
+func (r *CatalogReconciler) syncCatalogMetadata(ctx context.Context, fsys fs.FS, catalog *v1alpha1.Catalog) error {
+	newCatalogMetadataObjs := map[string]*v1alpha1.CatalogMetadata{}
+
+	err := declcfg.WalkMetasFS(fsys, func(path string, meta *declcfg.Meta, err error) error {
+		if err != nil {
+			return fmt.Errorf("error in parsing catalog content files in the filesystem: %w", err)
+		}
+
+		packageOrName := meta.Package
+		if packageOrName == "" {
+			packageOrName = meta.Name
+		}
+
+		var objName string
+		if objName, err = generateCatalogMetadataName(ctx, catalog.Name, meta); err != nil {
+			return fmt.Errorf("error in generating catalog metadata name: %w", err)
+		}
+
+		catalogMetadata := &v1alpha1.CatalogMetadata{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: v1alpha1.GroupVersion.String(),
+				Kind:       "CatalogMetadata",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: objName,
+				Labels: map[string]string{
+					"catalog":       catalog.Name,
+					"schema":        meta.Schema,
+					"package":       meta.Package,
+					"name":          meta.Name,
+					"packageOrName": packageOrName,
+				},
+				OwnerReferences: []metav1.OwnerReference{{
+					APIVersion:         v1alpha1.GroupVersion.String(),
+					Kind:               "Catalog",
+					Name:               catalog.Name,
+					UID:                catalog.UID,
+					BlockOwnerDeletion: pointer.Bool(true),
+					Controller:         pointer.Bool(true),
+				}},
+			},
+			Spec: v1alpha1.CatalogMetadataSpec{
+				Catalog: corev1.LocalObjectReference{Name: catalog.Name},
+				Name:    meta.Name,
+				Schema:  meta.Schema,
+				Package: meta.Package,
+				Content: meta.Blob,
+			},
+		}
+
+		newCatalogMetadataObjs[catalogMetadata.Name] = catalogMetadata
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("unable to parse declarative config into CatalogMetadata API: %w", err)
+	}
+
+	var existingCatalogMetadataObjs v1alpha1.CatalogMetadataList
+	if err := r.List(ctx, &existingCatalogMetadataObjs); err != nil {
+		return fmt.Errorf("list existing catalog metadata: %v", err)
+	}
+	for i, existingCatalogMetadata := range existingCatalogMetadataObjs.Items {
+		if _, ok := newCatalogMetadataObjs[existingCatalogMetadata.Name]; !ok {
+			// delete existing catalog metadata
+			err := r.Delete(ctx, &existingCatalogMetadataObjs.Items[i])
+			if err != nil {
+				return fmt.Errorf("delete existing catalog metadata %q: %v", existingCatalogMetadata.Name, err)
+			}
+		}
+	}
+
+	ordered := sets.List(sets.KeySet(newCatalogMetadataObjs))
+	for _, catalogMetadataName := range ordered {
+		newcatalogMetadata := newCatalogMetadataObjs[catalogMetadataName]
+		if err := r.Client.Patch(ctx, newcatalogMetadata, client.Apply, &client.PatchOptions{Force: pointer.Bool(true), FieldManager: "catalog-controller"}); err != nil {
+			return fmt.Errorf("applying catalog metadata %q: %w", newcatalogMetadata.Name, err)
+		}
+	}
+
+	return nil
+}
+
+// generateCatalogMetadataName will generate unique names for the CatalogMetadata objects that are constructed with the
+// catalog name and `meta.Schema`. Additionally, if the `meta.Package` and `meta.Name` exist, they are appended to the CatalogMetadata name.
+// In the place of the empty `meta.Name`, it computes a hash of `meta.Blob` to prevent multiple FBC blobs colliding on the the object name.
+// Possible outcomes are: "{catalogName}-{meta.Schema}-{meta.Name}", "{catalogName}-{meta.Schema}-{meta.Package}-{meta.Name}",
+// "{catalogName}-{meta.Schema}-{hash{meta.Blob}}", "{catalogName}-{meta.Schema}-{meta.Package}-{hash{meta.Blob}}".
+func generateCatalogMetadataName(_ context.Context, catalogName string, meta *declcfg.Meta) (string, error) {
+	objName := fmt.Sprintf("%s-%s", catalogName, meta.Schema)
+	if meta.Package != "" {
+		objName = fmt.Sprintf("%s-%s", objName, meta.Package)
+	}
+	if meta.Name != "" {
+		objName = fmt.Sprintf("%s-%s", objName, meta.Name)
+	} else {
+		metaJSON, err := json.Marshal(meta.Blob)
+		if err != nil {
+			return "", fmt.Errorf("JSON marshal error: %v", err)
+		}
+		// #nosec
+		h := sha1.New()
+		h.Write(metaJSON)
+		objName = fmt.Sprintf("%s-%s", objName, hex.EncodeToString(h.Sum(nil)))
+	}
+	return objName, nil
 }
