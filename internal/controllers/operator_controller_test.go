@@ -162,6 +162,9 @@ var _ = Describe("Operator Controller Test", func() {
 					Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
 					Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
 					Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+
+					By("verifying annotations")
+					verifyBundleDeploymentAnnotations(bd)
 				})
 				It("sets the resolvedBundleResource status field", func() {
 					Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
@@ -242,6 +245,9 @@ var _ = Describe("Operator Controller Test", func() {
 						Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
 						Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
 						Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+
+						By("verifying annotations")
+						verifyBundleDeploymentAnnotations(bd)
 
 						By("Checking the status fields")
 						Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
@@ -555,6 +561,9 @@ var _ = Describe("Operator Controller Test", func() {
 					Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
 					Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
 					Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+
+					By("verifying annotations")
+					verifyBundleDeploymentAnnotations(bd)
 				})
 				It("sets the resolvedBundleResource status field", func() {
 					Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
@@ -1079,6 +1088,12 @@ func verifyConditionsInvariants(op *operatorsv1alpha1.Operator) {
 		Expect(cond.Reason).To(BeElementOf(conditionsets.ConditionReasons))
 		Expect(cond.ObservedGeneration).To(Equal(op.GetGeneration()))
 	}
+}
+
+func verifyBundleDeploymentAnnotations(bd *rukpakv1alpha1.BundleDeployment) {
+	annotations := bd.GetAnnotations()
+	Expect(annotations["operator_channel"]).To(BeEquivalentTo("beta"))
+	Expect(annotations["operator_version"]).To(BeEquivalentTo("0.47.0"))
 }
 
 var testEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{

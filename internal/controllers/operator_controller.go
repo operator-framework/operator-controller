@@ -52,6 +52,13 @@ type OperatorReconciler struct {
 	Resolver *solver.DeppySolver
 }
 
+// bundleDeploymentMetadata serves as an extensible struct holding
+// any metadata that is to be added to bundleDeployments.
+type bundleDeploymentMetadata struct {
+	channel string
+	version string
+}
+
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators,verbs=get;list;watch
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators/finalizers,verbs=update
@@ -73,7 +80,7 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	reconciledOp := existingOp.DeepCopy()
-	res, reconcileErr := r.reconcile(ctx, reconciledOp)
+	res, reconcileErr := r.reconcile(ctx, reconciledOp, l)
 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingOp.Status, reconciledOp.Status)
@@ -113,7 +120,7 @@ func checkForUnexpectedFieldChange(a, b operatorsv1alpha1.Operator) bool {
 // to return different results (e.g. requeue).
 //
 //nolint:unparam
-func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha1.Operator) (ctrl.Result, error) {
+func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha1.Operator, log logr.Logger) (ctrl.Result, error) {
 	// validate spec
 	if err := validators.ValidateOperatorSpec(op); err != nil {
 		// Set the TypeInstalled condition to Unknown to indicate that the resolution
@@ -172,9 +179,17 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
 	}
+
+	// Get annotations which needs to be added to the bundleDeployment.
+	// An error here need not re-trigger a reconcile.
+	bundleDeploymentAnnotations := &bundleDeploymentMetadata{}
+	if err = bundleDeploymentAnnotations.CompleteBundleDeploymentMetadata(bundleEntity); err != nil {
+		log.Error(err, "unable to fetch annotations from the resolved bundleEntity")
+	}
+
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
 	// image we just looked up in the solution.
-	dep := r.generateExpectedBundleDeployment(*op, bundleImage, bundleProvisioner)
+	dep := r.generateExpectedBundleDeployment(*op, bundleImage, bundleProvisioner, bundleDeploymentAnnotations)
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
 		// originally Reason: operatorsv1alpha1.ReasonInstallationFailed
 		op.Status.InstalledBundleResource = ""
@@ -260,7 +275,7 @@ func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Soluti
 	return nil, fmt.Errorf("entity for package %q not found in solution", packageName)
 }
 
-func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {
+func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string, bundleProvisioner string, annotations *bundleDeploymentMetadata) *unstructured.Unstructured {
 	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
 	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
 	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
@@ -272,6 +287,10 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 		"kind":       rukpakv1alpha1.BundleDeploymentKind,
 		"metadata": map[string]interface{}{
 			"name": o.GetName(),
+			"annotations": map[string]string{
+				"operator_version": annotations.version,
+				"operator_channel": annotations.channel,
+			},
 		},
 		"spec": map[string]interface{}{
 			// TODO: Don't assume plain provisioner
@@ -458,4 +477,28 @@ func operatorRequestsForCatalog(ctx context.Context, c client.Reader, logger log
 		}
 		return requests
 	}
+}
+
+// Complete fills in the annotations from the information received from
+// bundleEntities.
+func (bdm *bundleDeploymentMetadata) CompleteBundleDeploymentMetadata(entity *entity.BundleEntity) error {
+	var errs []error
+
+	channel, err := entity.ChannelName()
+	if err != nil || channel == "" {
+		errs = append(errs, fmt.Errorf("unable to find the channel name from resolved entity: %v", err))
+		channel = "unknown"
+	}
+	bdm.channel = channel
+
+	var version string
+	semverVer, err := entity.Version()
+	version = semverVer.String()
+	if err != nil || version == "" {
+		errs = append(errs, fmt.Errorf("unable to find the version of operator to be installed from resolved entity: %v", err))
+		version = "unknown"
+	}
+	bdm.version = version
+
+	return utilerrors.NewAggregate(errs)
 }
