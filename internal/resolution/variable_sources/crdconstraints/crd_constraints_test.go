@@ -247,8 +247,7 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 				crdConstraintVariables = append(crdConstraintVariables, v)
 			}
 		}
-		Expect(crdConstraintVariables).To(HaveLen(11))
-		Expect(crdConstraintVariables).To(WithTransform(CollectGlobalConstraintVariableIDs, ContainElements([]string{
+		Expect(crdConstraintVariables).To(WithTransform(CollectGlobalConstraintVariableIDs, ConsistOf([]string{
 			"another-package package uniqueness",
 			"bar-package package uniqueness",
 			"test-package-2 package uniqueness",

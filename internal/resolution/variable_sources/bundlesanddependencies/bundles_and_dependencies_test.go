@@ -199,7 +199,6 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 				bundleVariables = append(bundleVariables, v)
 			}
 		}
-		Expect(bundleVariables).To(HaveLen(12))
 		Expect(bundleVariables).To(WithTransform(CollectBundleVariableIDs, Equal([]string{"bundle-2", "bundle-1", "bundle-15", "bundle-16", "bundle-17", "bundle-9", "bundle-8", "bundle-7", "bundle-5", "bundle-4", "bundle-11", "bundle-10"})))
 
 		// check dependencies for one of the bundles
