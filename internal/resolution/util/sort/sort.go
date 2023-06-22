@@ -5,7 +5,7 @@ import (
 
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
+	"github.com/operator-framework/operator-controller/internal/resolution/entities"
 )
 
 // ByChannelAndVersion is an entity sort function that orders the entities in
@@ -13,8 +13,8 @@ import (
 // if a property does not exist for one of the entities, the one missing the property is pushed down
 // if both entities are missing the same property they are ordered by id
 func ByChannelAndVersion(entity1 *input.Entity, entity2 *input.Entity) bool {
-	e1 := entity.NewBundleEntity(entity1)
-	e2 := entity.NewBundleEntity(entity2)
+	e1 := entities.NewBundleEntity(entity1)
+	e2 := entities.NewBundleEntity(entity2)
 
 	// first sort package lexical order
 	pkgOrder := packageOrder(e1, e2)
@@ -44,7 +44,7 @@ func compareErrors(err1 error, err2 error) int {
 	return 0
 }
 
-func packageOrder(e1, e2 *entity.BundleEntity) int {
+func packageOrder(e1, e2 *entities.BundleEntity) int {
 	name1, err1 := e1.PackageName()
 	name2, err2 := e2.PackageName()
 	errComp := compareErrors(err1, err2)
@@ -54,7 +54,7 @@ func packageOrder(e1, e2 *entity.BundleEntity) int {
 	return strings.Compare(name1, name2)
 }
 
-func channelOrder(e1, e2 *entity.BundleEntity) int {
+func channelOrder(e1, e2 *entities.BundleEntity) int {
 	channelProperties1, err1 := e1.ChannelProperties()
 	channelProperties2, err2 := e2.ChannelProperties()
 	errComp := compareErrors(err1, err2)
@@ -67,7 +67,7 @@ func channelOrder(e1, e2 *entity.BundleEntity) int {
 	return strings.Compare(channelProperties1.ChannelName, channelProperties2.ChannelName)
 }
 
-func versionOrder(e1, e2 *entity.BundleEntity) int {
+func versionOrder(e1, e2 *entities.BundleEntity) int {
 	ver1, err1 := e1.Version()
 	ver2, err2 := e2.Version()
 	errComp := compareErrors(err1, err2)

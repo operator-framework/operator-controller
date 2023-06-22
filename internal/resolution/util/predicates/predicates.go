@@ -4,7 +4,7 @@ import (
 	"github.com/blang/semver/v4"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
+	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
 )
 
 func WithPackageName(packageName string) input.Predicate {

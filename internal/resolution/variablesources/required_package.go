@@ -1,4 +1,4 @@
-package requiredpackage
+package variablesources
 
 import (
 	"context"
@@ -9,38 +9,38 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/constraint"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/util/predicates"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/util/sort"
+	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
+	"github.com/operator-framework/operator-controller/internal/resolution/util/predicates"
+	"github.com/operator-framework/operator-controller/internal/resolution/util/sort"
 )
 
-type Variable struct {
+type RequiredPackageVariable struct {
 	*input.SimpleVariable
 	bundleEntities []*olmentity.BundleEntity
 }
 
-func (r *Variable) BundleEntities() []*olmentity.BundleEntity {
+func (r *RequiredPackageVariable) BundleEntities() []*olmentity.BundleEntity {
 	return r.bundleEntities
 }
 
-func NewRequiredPackageVariable(packageName string, bundleEntities []*olmentity.BundleEntity) *Variable {
+func NewRequiredPackageVariable(packageName string, bundleEntities []*olmentity.BundleEntity) *RequiredPackageVariable {
 	id := deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))
 	entityIDs := make([]deppy.Identifier, 0, len(bundleEntities))
 	for _, bundle := range bundleEntities {
 		entityIDs = append(entityIDs, bundle.ID)
 	}
-	return &Variable{
+	return &RequiredPackageVariable{
 		SimpleVariable: input.NewSimpleVariable(id, constraint.Mandatory(), constraint.Dependency(entityIDs...)),
 		bundleEntities: bundleEntities,
 	}
 }
 
-var _ input.VariableSource = &VariableSource{}
+var _ input.VariableSource = &RequiredPackageVariableSource{}
 
-type Option func(*VariableSource) error
+type RequiredPackageVariableSourceOption func(*RequiredPackageVariableSource) error
 
-func InVersionRange(versionRange string) Option {
-	return func(r *VariableSource) error {
+func InVersionRange(versionRange string) RequiredPackageVariableSourceOption {
+	return func(r *RequiredPackageVariableSource) error {
 		if versionRange != "" {
 			vr, err := semver.ParseRange(versionRange)
 			if err == nil {
@@ -55,8 +55,8 @@ func InVersionRange(versionRange string) Option {
 	}
 }
 
-func InChannel(channelName string) Option {
-	return func(r *VariableSource) error {
+func InChannel(channelName string) RequiredPackageVariableSourceOption {
+	return func(r *RequiredPackageVariableSource) error {
 		if channelName != "" {
 			r.channelName = channelName
 			r.predicates = append(r.predicates, predicates.InChannel(channelName))
@@ -65,18 +65,18 @@ func InChannel(channelName string) Option {
 	}
 }
 
-type VariableSource struct {
+type RequiredPackageVariableSource struct {
 	packageName  string
 	versionRange string
 	channelName  string
 	predicates   []input.Predicate
 }
 
-func NewRequiredPackage(packageName string, options ...Option) (*VariableSource, error) {
+func NewRequiredPackageVariableSource(packageName string, options ...RequiredPackageVariableSourceOption) (*RequiredPackageVariableSource, error) {
 	if packageName == "" {
 		return nil, fmt.Errorf("package name must not be empty")
 	}
-	r := &VariableSource{
+	r := &RequiredPackageVariableSource{
 		packageName: packageName,
 		predicates:  []input.Predicate{predicates.WithPackageName(packageName)},
 	}
@@ -88,7 +88,7 @@ func NewRequiredPackage(packageName string, options ...Option) (*VariableSource,
 	return r, nil
 }
 
-func (r *VariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
+func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
 	resultSet, err := entitySource.Filter(ctx, input.And(r.predicates...))
 	if err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func (r *VariableSource) GetVariables(ctx context.Context, entitySource input.En
 	}, nil
 }
 
-func (r *VariableSource) notFoundError() error {
+func (r *RequiredPackageVariableSource) notFoundError() error {
 	// TODO: update this error message when/if we decide to support version ranges as opposed to fixing the version
 	//  context: we originally wanted to support version ranges and take the highest version that satisfies the range
 	//  during the upstream call on the 2023-04-11 we decided to pin the version instead. But, we'll keep version range

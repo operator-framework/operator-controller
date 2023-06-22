@@ -1,4 +1,4 @@
-package entity_test
+package entities_test
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
+	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
 )
 
 func TestBundleEntity(t *testing.T) {

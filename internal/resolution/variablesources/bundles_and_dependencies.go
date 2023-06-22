@@ -1,4 +1,4 @@
-package bundlesanddependencies
+package variablesources
 
 import (
 	"context"
@@ -10,10 +10,9 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/constraint"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/requiredpackage"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/util/predicates"
-	entitysort "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/util/sort"
+	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
+	"github.com/operator-framework/operator-controller/internal/resolution/util/predicates"
+	entitysort "github.com/operator-framework/operator-controller/internal/resolution/util/sort"
 )
 
 type BundleVariable struct {
@@ -74,7 +73,7 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context, entityS
 	var bundleEntityQueue []*olmentity.BundleEntity
 	for _, variable := range variables {
 		switch v := variable.(type) {
-		case *requiredpackage.Variable:
+		case *RequiredPackageVariable:
 			bundleEntityQueue = append(bundleEntityQueue, v.BundleEntities()...)
 		}
 	}

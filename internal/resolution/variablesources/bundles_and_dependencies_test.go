@@ -1,8 +1,7 @@
-package bundlesanddependencies_test
+package variablesources_test
 
 import (
 	"context"
-	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -10,19 +9,13 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundlesanddependencies"
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/requiredpackage"
+	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
+	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
-
-func TestBundlesAndDeps(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "BundlesAndDependenciesVariableSource Suite")
-}
 
 var _ = Describe("BundleVariable", func() {
 	var (
-		bv           *bundlesanddependencies.BundleVariable
+		bv           *variablesources.BundleVariable
 		bundleEntity *olmentity.BundleEntity
 		dependencies []*olmentity.BundleEntity
 	)
@@ -42,7 +35,7 @@ var _ = Describe("BundleVariable", func() {
 				property.TypeChannel: `{"channelName":"stable","priority":0}`,
 			})),
 		}
-		bv = bundlesanddependencies.NewBundleVariable(bundleEntity, dependencies)
+		bv = variablesources.NewBundleVariable(bundleEntity, dependencies)
 	})
 
 	It("should return the correct bundle entity", func() {
@@ -56,16 +49,16 @@ var _ = Describe("BundleVariable", func() {
 
 var _ = Describe("BundlesAndDepsVariableSource", func() {
 	var (
-		bdvs             *bundlesanddependencies.BundlesAndDepsVariableSource
+		bdvs             *variablesources.BundlesAndDepsVariableSource
 		mockEntitySource input.EntitySource
 	)
 
 	BeforeEach(func() {
-		bdvs = bundlesanddependencies.NewBundlesAndDepsVariableSource(
+		bdvs = variablesources.NewBundlesAndDepsVariableSource(
 			&MockRequiredPackageSource{
 				ResultSet: []deppy.Variable{
 					// must match data in mockEntitySource
-					requiredpackage.NewRequiredPackageVariable("test-package", []*olmentity.BundleEntity{
+					variablesources.NewRequiredPackageVariable("test-package", []*olmentity.BundleEntity{
 						olmentity.NewBundleEntity(input.NewEntity("bundle-2", map[string]string{
 							property.TypePackage:         `{"packageName": "test-package", "version": "2.0.0"}`,
 							property.TypeChannel:         `{"channelName":"stable","priority":0}`,
@@ -83,7 +76,7 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 			&MockRequiredPackageSource{
 				ResultSet: []deppy.Variable{
 					// must match data in mockEntitySource
-					requiredpackage.NewRequiredPackageVariable("test-package-2", []*olmentity.BundleEntity{
+					variablesources.NewRequiredPackageVariable("test-package-2", []*olmentity.BundleEntity{
 						// test-package-2 required package - no dependencies
 						olmentity.NewBundleEntity(input.NewEntity("bundle-15", map[string]string{
 							property.TypePackage: `{"packageName": "test-package-2", "version": "1.5.0"}`,
@@ -192,10 +185,10 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 		variables, err := bdvs.GetVariables(context.TODO(), mockEntitySource)
 		Expect(err).NotTo(HaveOccurred())
 
-		var bundleVariables []*bundlesanddependencies.BundleVariable
+		var bundleVariables []*variablesources.BundleVariable
 		for _, variable := range variables {
 			switch v := variable.(type) {
-			case *bundlesanddependencies.BundleVariable:
+			case *variablesources.BundleVariable:
 				bundleVariables = append(bundleVariables, v)
 			}
 		}
@@ -247,8 +240,8 @@ func (m *MockRequiredPackageSource) GetVariables(_ context.Context, _ input.Enti
 	return m.ResultSet, nil
 }
 
-func VariableWithID(id deppy.Identifier) func(vars []*bundlesanddependencies.BundleVariable) *bundlesanddependencies.BundleVariable {
-	return func(vars []*bundlesanddependencies.BundleVariable) *bundlesanddependencies.BundleVariable {
+func VariableWithID(id deppy.Identifier) func(vars []*variablesources.BundleVariable) *variablesources.BundleVariable {
+	return func(vars []*variablesources.BundleVariable) *variablesources.BundleVariable {
 		for i := 0; i < len(vars); i++ {
 			if vars[i].Identifier() == id {
 				return vars[i]
@@ -258,7 +251,7 @@ func VariableWithID(id deppy.Identifier) func(vars []*bundlesanddependencies.Bun
 	}
 }
 
-func CollectBundleVariableIDs(vars []*bundlesanddependencies.BundleVariable) []string {
+func CollectBundleVariableIDs(vars []*variablesources.BundleVariable) []string {
 	ids := make([]string, 0, len(vars))
 	for _, v := range vars {
 		ids = append(ids, v.Identifier().String())

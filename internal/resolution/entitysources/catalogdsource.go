@@ -11,7 +11,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
+	"github.com/operator-framework/operator-controller/internal/resolution/entities"
 )
 
 // CatalogdEntitySource is a source for(/collection of) deppy defined input.Entity, built from content
@@ -72,7 +72,7 @@ func (es *CatalogdEntitySource) Iterate(ctx context.Context, fn input.IteratorFu
 }
 
 func getEntities(ctx context.Context, client client.Client) (input.EntityList, error) {
-	entities := input.EntityList{}
+	entityList := input.EntityList{}
 	bundleMetadatas, packageMetdatas, err := fetchMetadata(ctx, client)
 	if err != nil {
 		return nil, err
@@ -88,8 +88,8 @@ func getEntities(ctx context.Context, client client.Client) (input.EntityList, e
 				// this is already a json marshalled object, so it doesn't need to be marshalled
 				// like the other ones
 				props[property.TypePackage] = string(prop.Value)
-			case entity.PropertyBundleMediaType:
-				props[entity.PropertyBundleMediaType] = string(prop.Value)
+			case entities.PropertyBundleMediaType:
+				props[entities.PropertyBundleMediaType] = string(prop.Value)
 			}
 		}
 
@@ -97,7 +97,7 @@ func getEntities(ctx context.Context, client client.Client) (input.EntityList, e
 		if err != nil {
 			return nil, err
 		}
-		props[entity.PropertyBundlePath] = string(imgValue)
+		props[entities.PropertyBundlePath] = string(imgValue)
 		catalogScopedPkgName := fmt.Sprintf("%s-%s", bundle.Spec.Catalog.Name, bundle.Spec.Package)
 		bundlePkg := packageMetdatas[catalogScopedPkgName]
 		for _, ch := range bundlePkg.Spec.Channels {
@@ -110,12 +110,12 @@ func getEntities(ctx context.Context, client client.Client) (input.EntityList, e
 						ID:         deppy.IdentifierFromString(fmt.Sprintf("%s%s%s", bundle.Name, bundle.Spec.Package, ch.Name)),
 						Properties: props,
 					}
-					entities = append(entities, entity)
+					entityList = append(entityList, entity)
 				}
 			}
 		}
 	}
-	return entities, nil
+	return entityList, nil
 }
 
 func fetchMetadata(ctx context.Context, client client.Client) (catalogd.BundleMetadataList, map[string]catalogd.Package, error) {
