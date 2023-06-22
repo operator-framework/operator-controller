@@ -41,8 +41,8 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundlesanddependencies"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
+	"github.com/operator-framework/operator-controller/internal/resolution/entities"
+	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
 // OperatorReconciler reconciles a Operator object
@@ -244,10 +244,10 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 	}
 }
 
-func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Solution, packageName string) (*entity.BundleEntity, error) {
+func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Solution, packageName string) (*entities.BundleEntity, error) {
 	for _, variable := range solution.SelectedVariables() {
 		switch v := variable.(type) {
-		case *bundlesanddependencies.BundleVariable:
+		case *variablesources.BundleVariable:
 			entityPkgName, err := v.BundleEntity().PackageName()
 			if err != nil {
 				return nil, err
@@ -358,13 +358,13 @@ func (r *OperatorReconciler) existingBundleDeploymentUnstructured(ctx context.Co
 // rukpak bundle provisioner class name that is capable of unpacking the bundle type
 func mapBundleMediaTypeToBundleProvisioner(mediaType string) (string, error) {
 	switch mediaType {
-	case entity.MediaTypePlain:
+	case entities.MediaTypePlain:
 		return "core-rukpak-io-plain", nil
 	// To ensure compatibility with bundles created with OLMv0 where the
 	// olm.bundle.mediatype property doesn't exist, we assume that if the
 	// property is empty (i.e doesn't exist) that the bundle is one created
 	// with OLMv0 and therefore should use the registry provisioner
-	case entity.MediaTypeRegistry, "":
+	case entities.MediaTypeRegistry, "":
 		return "core-rukpak-io-registry", nil
 	default:
 		return "", fmt.Errorf("unknown bundle mediatype: %s", mediaType)

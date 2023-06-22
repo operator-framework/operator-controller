@@ -1,9 +1,8 @@
-package crdconstraints_test
+package variablesources_test
 
 import (
 	"context"
 	"fmt"
-	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -12,22 +11,15 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundlesanddependencies"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/crdconstraints"
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/requiredpackage"
+	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
+	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
-
-func TestGlobalConstraints(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "CRDUniquenessConstraintsVariableSource Suite")
-}
 
 var _ = Describe("BundleUniquenessVariable", func() {
 	var (
 		id                       deppy.Identifier
 		atMostIDs                []deppy.Identifier
-		globalConstraintVariable *crdconstraints.BundleUniquenessVariable
+		globalConstraintVariable *variablesources.BundleUniquenessVariable
 	)
 
 	BeforeEach(func() {
@@ -36,7 +28,7 @@ var _ = Describe("BundleUniquenessVariable", func() {
 			deppy.IdentifierFromString("test-at-most-id-1"),
 			deppy.IdentifierFromString("test-at-most-id-2"),
 		}
-		globalConstraintVariable = crdconstraints.NewBundleUniquenessVariable(id, atMostIDs...)
+		globalConstraintVariable = variablesources.NewBundleUniquenessVariable(id, atMostIDs...)
 	})
 
 	It("should initialize a new global constraint variable", func() {
@@ -145,14 +137,14 @@ var bundleSet = map[deppy.Identifier]*input.Entity{
 var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 	var (
 		inputVariableSource         *MockInputVariableSource
-		crdConstraintVariableSource *crdconstraints.CRDUniquenessConstraintsVariableSource
+		crdConstraintVariableSource *variablesources.CRDUniquenessConstraintsVariableSource
 		ctx                         context.Context
 		entitySource                input.EntitySource
 	)
 
 	BeforeEach(func() {
 		inputVariableSource = &MockInputVariableSource{}
-		crdConstraintVariableSource = crdconstraints.NewCRDUniquenessConstraintsVariableSource(inputVariableSource)
+		crdConstraintVariableSource = variablesources.NewCRDUniquenessConstraintsVariableSource(inputVariableSource)
 		ctx = context.Background()
 
 		// the entity is not used in this variable source
@@ -161,16 +153,16 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 
 	It("should get variables from the input variable source and create global constraint variables", func() {
 		inputVariableSource.ResultSet = []deppy.Variable{
-			requiredpackage.NewRequiredPackageVariable("test-package", []*olmentity.BundleEntity{
+			variablesources.NewRequiredPackageVariable("test-package", []*olmentity.BundleEntity{
 				olmentity.NewBundleEntity(bundleSet["bundle-2"]),
 				olmentity.NewBundleEntity(bundleSet["bundle-1"]),
 			}),
-			requiredpackage.NewRequiredPackageVariable("test-package-2", []*olmentity.BundleEntity{
+			variablesources.NewRequiredPackageVariable("test-package-2", []*olmentity.BundleEntity{
 				olmentity.NewBundleEntity(bundleSet["bundle-14"]),
 				olmentity.NewBundleEntity(bundleSet["bundle-15"]),
 				olmentity.NewBundleEntity(bundleSet["bundle-16"]),
 			}),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-2"]),
 				[]*olmentity.BundleEntity{
 					olmentity.NewBundleEntity(bundleSet["bundle-3"]),
@@ -180,7 +172,7 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 					olmentity.NewBundleEntity(bundleSet["bundle-7"]),
 				},
 			),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-1"]),
 				[]*olmentity.BundleEntity{
 					olmentity.NewBundleEntity(bundleSet["bundle-6"]),
@@ -188,23 +180,23 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 					olmentity.NewBundleEntity(bundleSet["bundle-8"]),
 				},
 			),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-3"]),
 				[]*olmentity.BundleEntity{},
 			),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-4"]),
 				[]*olmentity.BundleEntity{},
 			),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-5"]),
 				[]*olmentity.BundleEntity{},
 			),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-6"]),
 				[]*olmentity.BundleEntity{},
 			),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-7"]),
 				[]*olmentity.BundleEntity{
 					olmentity.NewBundleEntity(bundleSet["bundle-8"]),
@@ -212,27 +204,27 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 					olmentity.NewBundleEntity(bundleSet["bundle-10"]),
 				},
 			),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-8"]),
 				[]*olmentity.BundleEntity{},
 			),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-9"]),
 				[]*olmentity.BundleEntity{},
 			),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-10"]),
 				[]*olmentity.BundleEntity{},
 			),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-14"]),
 				[]*olmentity.BundleEntity{},
 			),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-15"]),
 				[]*olmentity.BundleEntity{},
 			),
-			bundlesanddependencies.NewBundleVariable(
+			variablesources.NewBundleVariable(
 				olmentity.NewBundleEntity(bundleSet["bundle-16"]),
 				[]*olmentity.BundleEntity{},
 			),
@@ -240,10 +232,10 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 		variables, err := crdConstraintVariableSource.GetVariables(ctx, entitySource)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(variables).To(HaveLen(26))
-		var crdConstraintVariables []*crdconstraints.BundleUniquenessVariable
+		var crdConstraintVariables []*variablesources.BundleUniquenessVariable
 		for _, variable := range variables {
 			switch v := variable.(type) {
-			case *crdconstraints.BundleUniquenessVariable:
+			case *variablesources.BundleUniquenessVariable:
 				crdConstraintVariables = append(crdConstraintVariables, v)
 			}
 		}
@@ -264,7 +256,7 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 
 	It("should return an error if input variable source returns an error", func() {
 		inputVariableSource = &MockInputVariableSource{Err: fmt.Errorf("error getting variables")}
-		crdConstraintVariableSource = crdconstraints.NewCRDUniquenessConstraintsVariableSource(inputVariableSource)
+		crdConstraintVariableSource = variablesources.NewCRDUniquenessConstraintsVariableSource(inputVariableSource)
 		_, err := crdConstraintVariableSource.GetVariables(ctx, entitySource)
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("error getting variables"))
@@ -303,7 +295,7 @@ func (m *MockInputVariableSource) GetVariables(_ context.Context, _ input.Entity
 	return m.ResultSet, nil
 }
 
-func CollectGlobalConstraintVariableIDs(vars []*crdconstraints.BundleUniquenessVariable) []string {
+func CollectGlobalConstraintVariableIDs(vars []*variablesources.BundleUniquenessVariable) []string {
 	ids := make([]string, 0, len(vars))
 	for _, v := range vars {
 		ids = append(ids, v.Identifier().String())

@@ -16,7 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/olm"
+	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
 func TestOperatorResolver(t *testing.T) {
@@ -75,7 +75,7 @@ var _ = Describe("OperatorResolver", func() {
 		}
 		client := FakeClient(resources...)
 		entitySource := input.NewCacheQuerier(testEntityCache)
-		variableSource := olm.NewOLMVariableSource(client)
+		variableSource := variablesources.NewOperatorVariableSource(client)
 		resolver := solver.NewDeppySolver(entitySource, variableSource)
 		solution, err := resolver.Solve(context.Background())
 		Expect(err).ToNot(HaveOccurred())
@@ -95,7 +95,7 @@ var _ = Describe("OperatorResolver", func() {
 		var resources []client.Object
 		client := FakeClient(resources...)
 		entitySource := input.NewCacheQuerier(testEntityCache)
-		variableSource := olm.NewOLMVariableSource(client)
+		variableSource := variablesources.NewOperatorVariableSource(client)
 		resolver := solver.NewDeppySolver(entitySource, variableSource)
 		solution, err := resolver.Solve(context.Background())
 		Expect(err).ToNot(HaveOccurred())
@@ -113,7 +113,7 @@ var _ = Describe("OperatorResolver", func() {
 		}
 		client := FakeClient(resource)
 		entitySource := FailEntitySource{}
-		variableSource := olm.NewOLMVariableSource(client)
+		variableSource := variablesources.NewOperatorVariableSource(client)
 		resolver := solver.NewDeppySolver(entitySource, variableSource)
 		solution, err := resolver.Solve(context.Background())
 		Expect(solution).To(BeNil())
@@ -123,7 +123,7 @@ var _ = Describe("OperatorResolver", func() {
 	It("should return an error if the client throws an error", func() {
 		client := NewFailClientWithError(fmt.Errorf("something bad happened"))
 		entitySource := input.NewCacheQuerier(testEntityCache)
-		variableSource := olm.NewOLMVariableSource(client)
+		variableSource := variablesources.NewOperatorVariableSource(client)
 		resolver := solver.NewDeppySolver(entitySource, variableSource)
 		solution, err := resolver.Solve(context.Background())
 		Expect(solution).To(BeNil())
