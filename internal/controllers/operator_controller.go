@@ -42,7 +42,7 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
 	"github.com/operator-framework/operator-controller/internal/resolution/entities"
-	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
+	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
 // OperatorReconciler reconciles a Operator object
@@ -247,7 +247,7 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Solution, packageName string) (*entities.BundleEntity, error) {
 	for _, variable := range solution.SelectedVariables() {
 		switch v := variable.(type) {
-		case *variablesources.BundleVariable:
+		case *olmvariables.BundleVariable:
 			entityPkgName, err := v.BundleEntity().PackageName()
 			if err != nil {
 				return nil, err

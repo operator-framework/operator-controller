@@ -19,6 +19,7 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
@@ -94,9 +95,9 @@ var _ = Describe("OLMVariableSource", func() {
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
-		packageRequiredVariables := filterVariables[*variablesources.RequiredPackageVariable](variables)
+		packageRequiredVariables := filterVariables[*olmvariables.RequiredPackageVariable](variables)
 		Expect(packageRequiredVariables).To(HaveLen(2))
-		Expect(packageRequiredVariables).To(WithTransform(func(bvars []*variablesources.RequiredPackageVariable) map[deppy.Identifier]int {
+		Expect(packageRequiredVariables).To(WithTransform(func(bvars []*olmvariables.RequiredPackageVariable) map[deppy.Identifier]int {
 			out := map[deppy.Identifier]int{}
 			for _, variable := range bvars {
 				out[variable.Identifier()] = len(variable.BundleEntities())
@@ -115,9 +116,9 @@ var _ = Describe("OLMVariableSource", func() {
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
-		bundleVariables := filterVariables[*variablesources.BundleVariable](variables)
+		bundleVariables := filterVariables[*olmvariables.BundleVariable](variables)
 		Expect(bundleVariables).To(HaveLen(3))
-		Expect(bundleVariables).To(WithTransform(func(bvars []*variablesources.BundleVariable) []*input.Entity {
+		Expect(bundleVariables).To(WithTransform(func(bvars []*olmvariables.BundleVariable) []*input.Entity {
 			var out []*input.Entity
 			for _, variable := range bvars {
 				out = append(out, variable.BundleEntity().Entity)
@@ -137,9 +138,9 @@ var _ = Describe("OLMVariableSource", func() {
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
-		bundleVariables := filterVariables[*variablesources.BundleVariable](variables)
+		bundleVariables := filterVariables[*olmvariables.BundleVariable](variables)
 		Expect(bundleVariables).To(HaveLen(2))
-		Expect(bundleVariables).To(WithTransform(func(bvars []*variablesources.BundleVariable) []*input.Entity {
+		Expect(bundleVariables).To(WithTransform(func(bvars []*olmvariables.BundleVariable) []*input.Entity {
 			var out []*input.Entity
 			for _, variable := range bvars {
 				out = append(out, variable.BundleEntity().Entity)
@@ -160,11 +161,11 @@ var _ = Describe("OLMVariableSource", func() {
 		variables, err := olmVariableSource.GetVariables(context.Background(), testEntitySource)
 		Expect(err).ToNot(HaveOccurred())
 
-		globalConstraintsVariables := filterVariables[*variablesources.BundleUniquenessVariable](variables)
+		globalConstraintsVariables := filterVariables[*olmvariables.BundleUniquenessVariable](variables)
 		Expect(globalConstraintsVariables).To(HaveLen(6))
 
 		// check global variables have the right names
-		Expect(globalConstraintsVariables).To(WithTransform(func(gvars []*variablesources.BundleUniquenessVariable) []string {
+		Expect(globalConstraintsVariables).To(WithTransform(func(gvars []*olmvariables.BundleUniquenessVariable) []string {
 			var out []string
 			for _, variable := range gvars {
 				out = append(out, string(variable.Identifier()))
