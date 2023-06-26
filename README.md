@@ -5,7 +5,7 @@ This repository is a prototype for a custom apiserver that uses a (dedicated ect
 
 ## Enhacement 
 
-https://hackmd.io/@i2YBW1rSQ8GcKcTIHn9CCA/B1cMe1kHj
+https://hackmd.io/@of-olm/B1cMe1kHj
 
 ## Quickstart. 
 
