@@ -39,6 +39,7 @@ var _ = Describe("Operator Install", func() {
 			BeforeEach(func() {
 				operator.Spec = operatorv1alpha1.OperatorSpec{
 					PackageName: "prometheus",
+					Version:     "0.47.0",
 				}
 			})
 			It("resolves the specified package with correct bundle path", func() {
@@ -164,6 +165,50 @@ var _ = Describe("Operator Install", func() {
 				g.Expect(cond).ToNot(BeNil())
 				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
+			}).Should(Succeed())
+		})
+
+		It("handles upgrade edges correctly", func() {
+			By("creating a valid Operator resource")
+			operator.Spec = operatorv1alpha1.OperatorSpec{
+				PackageName: "prometheus",
+				Version:     "0.37.0",
+			}
+			Expect(c.Create(ctx, operator)).To(Succeed())
+			By("eventually reporting a successful resolution")
+			Eventually(func(g Gomega) {
+				g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+				g.Expect(cond).ToNot(BeNil())
+				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
+				g.Expect(cond.Message).To(ContainSubstring("resolved to"))
+				g.Expect(operator.Status.ResolvedBundleResource).ToNot(BeEmpty())
+			}).Should(Succeed())
+
+			By("updating the Operator resource to an invalid version")
+			operator.Spec.Version = "0.65.1" // the correct one should be 0.47.0
+			Expect(c.Update(ctx, operator)).To(Succeed())
+			By("eventually reporting a failed resolution")
+			Eventually(func(g Gomega) {
+				g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+				g.Expect(cond).ToNot(BeNil())
+				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonResolutionFailed))
+				g.Expect(cond.Message).To(ContainSubstring("entity for package \"prometheus\" not found in solutio"))
+				g.Expect(operator.Status.ResolvedBundleResource).To(BeEmpty())
+			}).Should(Succeed())
+
+			By("updating the Operator resource to a valid upgrade edge")
+			operator.Spec.Version = "0.47.0"
+			Expect(c.Update(ctx, operator)).To(Succeed())
+			By("eventually reporting a successful resolution and bundle path")
+			Eventually(func(g Gomega) {
+				g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+				g.Expect(cond).ToNot(BeNil())
+				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
+				g.Expect(cond.Message).To(ContainSubstring("resolved to"))
+				g.Expect(operator.Status.ResolvedBundleResource).ToNot(BeEmpty())
 			}).Should(Succeed())
 		})
 

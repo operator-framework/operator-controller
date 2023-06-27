@@ -55,8 +55,8 @@ func packageOrder(e1, e2 *entities.BundleEntity) int {
 }
 
 func channelOrder(e1, e2 *entities.BundleEntity) int {
-	channelProperties1, err1 := e1.ChannelProperties()
-	channelProperties2, err2 := e2.ChannelProperties()
+	channelProperties1, err1 := e1.Channel()
+	channelProperties2, err2 := e2.Channel()
 	errComp := compareErrors(err1, err2)
 	if errComp != 0 {
 		return errComp

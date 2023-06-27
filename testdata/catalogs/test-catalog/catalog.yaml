@@ -7,7 +7,21 @@ schema: olm.channel
 name: beta
 package: prometheus
 entries:
+  - name: prometheus-operator.0.37.0
   - name: prometheus-operator.0.47.0
+    replaces: "prometheus.v0.37.0"
+  - name: prometheus-operator.0.65.1
+    replaces: prometheus.v0.47.0
+---
+schema: olm.bundle
+name: prometheus-operator.0.37.0
+package: prometheus
+image: localhost/testdata/bundles/registry-v1/prometheus-operator:v0.37.0
+properties:
+  - type: olm.package
+    value:
+      packageName: prometheus
+      version: 0.37.0
 ---
 schema: olm.bundle
 name: prometheus-operator.0.47.0
@@ -18,6 +32,16 @@ properties:
     value:
       packageName: prometheus
       version: 0.47.0
+---
+schema: olm.bundle
+name: prometheus-operator.0.65.1
+package: prometheus
+image: localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1
+properties:
+  - type: olm.package
+    value:
+      packageName: prometheus
+      version: 0.65.1
 ---
 schema: olm.package
 name: plain

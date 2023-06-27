@@ -10,3 +10,4 @@ metadata:
   name: operator-sample
 spec:
   packageName: argocd-operator
+  version: 0.6.0

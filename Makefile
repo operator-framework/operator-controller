@@ -130,10 +130,14 @@ kind-cluster-cleanup: $(KIND) ## Delete the kind cluster
 
 .PHONY: kind-load-test-artifacts
 kind-load-test-artifacts: $(KIND) ## Load the e2e testdata container images into a kind cluster
+	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/registry-v1/prometheus-operator.v0.37.0 -t localhost/testdata/bundles/registry-v1/prometheus-operator:v0.37.0
 	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/registry-v1/prometheus-operator.v0.47.0 -t localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0
+	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/registry-v1/prometheus-operator.v0.65.1 -t localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1
 	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/plain-v0/plain.v0.1.0 -t localhost/testdata/bundles/plain-v0/plain:v0.1.0
 	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/catalogs -f $(TESTDATA_DIR)/catalogs/test-catalog.Dockerfile -t localhost/testdata/catalogs/test-catalog:e2e
+	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v0.37.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0 --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/plain-v0/plain:v0.1.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/catalogs/test-catalog:e2e --name $(KIND_CLUSTER_NAME)
 

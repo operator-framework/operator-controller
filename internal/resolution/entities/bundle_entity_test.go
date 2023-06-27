@@ -205,28 +205,24 @@ var _ = Describe("BundleEntity", func() {
 		})
 	})
 
-	Describe("ChannelProperties", func() {
+	Describe("Channel", func() {
 		It("should return the bundle channel properties if present", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
 				"olm.channel": `{"channelName":"beta","priority":0, "replaces": "bundle.v1.0.0", "skips": ["bundle.v0.9.0", "bundle.v0.9.6"], "skipRange": ">=0.9.0 <=0.9.6"}`,
 			})
 			bundleEntity := olmentity.NewBundleEntity(entity)
-			channelProperties, err := bundleEntity.ChannelProperties()
+			channelProperties, err := bundleEntity.Channel()
 			Expect(err).ToNot(HaveOccurred())
-			Expect(*channelProperties).To(Equal(olmentity.ChannelProperties{
-				Channel: property.Channel{
-					ChannelName: "beta",
-					Priority:    0,
-				},
-				Replaces:  "bundle.v1.0.0",
-				Skips:     []string{"bundle.v0.9.0", "bundle.v0.9.6"},
-				SkipRange: ">=0.9.0 <=0.9.6",
-			}))
+			Expect(*channelProperties).To(Equal(property.Channel{
+				ChannelName: "beta",
+				Priority:    0,
+			},
+			))
 		})
 		It("should return an error if the property is not found", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{})
 			bundleEntity := olmentity.NewBundleEntity(entity)
-			channelProperties, err := bundleEntity.ChannelProperties()
+			channelProperties, err := bundleEntity.Channel()
 			Expect(channelProperties).To(BeNil())
 			Expect(err.Error()).To(Equal("error determining bundle channel properties for entity 'operatorhub/prometheus/0.14.0': required property 'olm.channel' not found"))
 		})
@@ -235,7 +231,7 @@ var _ = Describe("BundleEntity", func() {
 				"olm.channel": "badChannelPropertiesStructure",
 			})
 			bundleEntity := olmentity.NewBundleEntity(entity)
-			channelProperties, err := bundleEntity.ChannelProperties()
+			channelProperties, err := bundleEntity.Channel()
 			Expect(channelProperties).To(BeNil())
 			Expect(err.Error()).To(Equal("error determining bundle channel properties for entity 'operatorhub/prometheus/0.14.0': property 'olm.channel' ('badChannelPropertiesStructure') could not be parsed: invalid character 'b' looking for beginning of value"))
 		})
@@ -269,6 +265,27 @@ var _ = Describe("BundleEntity", func() {
 		})
 	})
 
+	Describe("Replaces", func() {
+		It("should return the replaces property if present", func() {
+			entity := input.NewEntity("test", map[string]string{
+				"olm.replaces": `{"replaces": "test.v0.2.0"}`,
+			})
+			bundleEntity := olmentity.NewBundleEntity(entity)
+			replaces, err := bundleEntity.Replaces()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(replaces).To(Equal("test.v0.2.0"))
+		})
+		It("should not return an error if the property is not found", func() {
+			entity := input.NewEntity("test", map[string]string{
+				"olm.thingy": `{"whatever":"this"}`,
+			})
+			bundleEntity := olmentity.NewBundleEntity(entity)
+			replaces, err := bundleEntity.Replaces()
+			Expect(replaces).To(BeEmpty())
+			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
 	Describe("MediaType", func() {
 		It("should return the bundle mediatype property if present", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
@@ -294,6 +311,48 @@ var _ = Describe("BundleEntity", func() {
 			mediaType, err := bundleEntity.MediaType()
 			Expect(mediaType).To(BeEmpty())
 			Expect(err.Error()).To(Equal("error determining bundle mediatype for entity 'operatorhub/prometheus/0.14.0': property 'olm.bundle.mediatype' ('badtype') could not be parsed: invalid character 'b' looking for beginning of value"))
+		})
+	})
+
+	// Increase test coverage
+	Describe("GVKRequired properties", func() {
+		It("should return the GVKRequired properties", func() {
+			gvk := olmentity.GVKRequired{
+				Group:   "foo.io",
+				Kind:    "Foo",
+				Version: "v1",
+			}
+			Expect(gvk.AsGVK().Version).To(Equal("v1"))
+			Expect(gvk.AsGVK().Group).To(Equal("foo.io"))
+			Expect(gvk.AsGVK().Kind).To(Equal("Foo"))
+		})
+		It("should return the GVKRequired properties as a string", func() {
+			gvk := olmentity.GVKRequired{
+				Group:   "foo.io",
+				Kind:    "Foo",
+				Version: "v1",
+			}
+			Expect(gvk.String()).To(Equal(`group:"foo.io" version:"v1" kind:"Foo"`))
+		})
+	})
+	Describe("GVK properties", func() {
+		It("should return the gvk properties", func() {
+			gvk := olmentity.GVK{
+				Group:   "foo.io",
+				Kind:    "Foo",
+				Version: "v1",
+			}
+			Expect(gvk.Version).To(Equal("v1"))
+			Expect(gvk.Group).To(Equal("foo.io"))
+			Expect(gvk.Kind).To(Equal("Foo"))
+		})
+		It("should return the gvk properties as a string", func() {
+			gvk := olmentity.GVK{
+				Group:   "foo.io",
+				Kind:    "Foo",
+				Version: "v1",
+			}
+			Expect(gvk.String()).To(Equal(`group:"foo.io" version:"v1" kind:"Foo"`))
 		})
 	})
 })
