@@ -45,6 +45,8 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context, entityS
 		switch v := variable.(type) {
 		case *olmvariables.RequiredPackageVariable:
 			bundleEntityQueue = append(bundleEntityQueue, v.BundleEntities()...)
+		case *olmvariables.InstalledPackageVariable:
+			bundleEntityQueue = append(bundleEntityQueue, v.BundleEntities()...)
 		}
 	}
 

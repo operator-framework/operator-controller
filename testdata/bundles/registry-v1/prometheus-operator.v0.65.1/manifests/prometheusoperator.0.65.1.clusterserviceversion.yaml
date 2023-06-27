@@ -115,21 +115,153 @@ metadata:
               "receiver": "example"
             }
           }
+        },
+        {
+          "apiVersion": "monitoring.coreos.com/v1alpha1",
+          "kind": "ScrapeConfig",
+          "metadata": { "name": "example" },
+          "spec":
+            {
+              "staticConfigs":
+                [
+                  {
+                    "targets": ["example:9090"],
+                    "labels": { "exampleLabel": "example" }
+                  }
+                ]
+            }
+        },
+        {
+          "apiVersion": "monitoring.coreos.com/v1",
+          "kind": "Probe",
+          "metadata": { "name": "example" },
+          "spec":
+            {
+              "jobName": "example",
+              "prober": { "url": "blackbox-prometheus-blackbox-exporter:9115" },
+              "targets":
+                {
+                  "ingress":
+                    {
+                      "selector": { "matchLabels": { "probe": "example" } },
+                      "namespaceSelector": { "matchNames": ["default"] }
+                    },
+                  "module": "http_2xx",
+                  "interval": "15s"
+                }
+            }
+        },
+        {
+          "apiVersion": "monitoring.coreos.com/v1alpha1",
+          "kind": "PrometheusAgent",
+          "metadata": { "name": "example" },
+          "spec": {
+              "replicas": 2,
+              "serviceAccountName": "prometheus-k8s",
+              "serviceMonitorSelector": {},
+              "ruleSelector": {},
+              "podMonitorSelector": {},
+              "probeSelector": {}
+          }
+        },
+        {
+          "apiVersion": "monitoring.coreos.com/v1",
+          "kind": "ThanosRuler",
+          "metadata": { "name": "example" },
+          "spec": {
+            "image": "quay.io/thanos/thanos:v0.28.1",
+            "ruleSelector": {
+              "matchLabels": {
+                "role": "example"
+              }
+            },
+            "queryEndpoints": [
+              "dnssrv+_http._tcp.example.monitoring.svc.cluster.local"
+            ]
+          }
         }
       ]
     capabilities: Deep Insights
     categories: Monitoring
     certified: "false"
-    containerImage: quay.io/prometheus-operator/prometheus-operator:v0.47.0
-    createdAt: "2021-04-15T23:43:00Z"
+    containerImage: quay.io/prometheus-operator/prometheus-operator:v0.65.1
+    createdAt: "2023-05-05T18:09:45Z"
     description: Manage the full lifecycle of configuring and managing Prometheus and Alertmanager servers.
     repository: https://github.com/prometheus-operator/prometheus-operator
     support: Red Hat, Inc.
-  name: prometheusoperator.0.47.0
+    operators.operatorframework.io/builder: operator-sdk-v1.28.0
+    operators.operatorframework.io/project_layout: unknown
+  name: prometheusoperator.v0.65.1
   namespace: placeholder
 spec:
+  apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
+      - description: Configures subsections of Alertmanager configuration specific to each namespace
+        displayName: AlertmanagerConfig
+        kind: AlertmanagerConfig
+        name: alertmanagerconfigs.monitoring.coreos.com
+        version: v1alpha1
+      - description: Configures an Alertmanager for the namespace
+        displayName: Alertmanager
+        kind: Alertmanager
+        name: alertmanagers.monitoring.coreos.com
+        resources:
+          - kind: StatefulSet
+            version: v1beta2
+          - kind: Pod
+            version: v1
+          - kind: Service
+            version: v1
+        specDescriptors:
+          - description: Desired number of Pods for the cluster
+            displayName: Size
+            path: replicas
+            x-descriptors:
+              - urn:alm:descriptor:com.tectonic.ui:podCount
+          - description:
+              Limits describes the minimum/maximum amount of compute resources
+              required/allowed
+            displayName: Resource Requirements
+            path: resources
+            x-descriptors:
+              - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        version: v1
+      - description: Configures prometheus to monitor a particular pod
+        displayName: Pod Monitor
+        kind: PodMonitor
+        name: podmonitors.monitoring.coreos.com
+        resources:
+          - kind: Pod
+            version: v1
+        specDescriptors:
+          - description: The label to use to retrieve the job name from
+            displayName: Job Label
+            path: jobLabel
+            x-descriptors:
+              - urn:alm:descriptor:com.tectonic.ui:label
+          - description: A list of endpoints allowed as part of this PodMonitor
+            displayName: Pod Metrics Endpoints
+            path: podMetricsEndpoints
+            x-descriptors:
+              - urn:alm:descriptor:com.tectonic.ui:endpointList
+        version: v1
+      - description: Defines how groups of ingresses and static targets should be monitored.
+        displayName: Probe
+        kind: Probe
+        name: probes.monitoring.coreos.com
+        specDescriptors:
+          - description: Service that monitors the target and provides metrics for Prometheus to scrape
+            displayName: Prober URL
+            path: prober.url
+            x-descriptors:
+              - "urn:alm:descriptor:com.tectonic.ui:text"
+        version: v1
+      - description: Defines a Prometheus deployment running in Agent mode.
+        kind: PrometheusAgent
+        displayName: Prometheus Agent
+        name: prometheusagents.monitoring.coreos.com
+        version: v1alpha1
       - description: A running Prometheus instance
         displayName: Prometheus
         kind: Prometheus
@@ -182,13 +314,16 @@ spec:
             x-descriptors:
               - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         version: v1
-      - description:
-          A Prometheus Rule configures groups of sequentially evaluated recording
-          and alerting rules.
+      - description: A Prometheus Rule configures groups of sequentially evaluated recording and alerting rules.
         displayName: Prometheus Rule
         kind: PrometheusRule
         name: prometheusrules.monitoring.coreos.com
         version: v1
+      - description: Declaratively specifies scrape configurations to be added to Prometheus for resources outside of the cluster.
+        kind: ScrapeConfig
+        displayName: Scrape Config
+        name: scrapeconfigs.monitoring.coreos.com
+        version: v1alpha1
       - description: Configures prometheus to monitor a particular k8s service
         displayName: Service Monitor
         kind: ServiceMonitor
@@ -207,66 +342,6 @@ spec:
             path: endpoints
             x-descriptors:
               - urn:alm:descriptor:com.tectonic.ui:endpointList
-        version: v1
-      - description: Configures prometheus to monitor a particular pod
-        displayName: Pod Monitor
-        kind: PodMonitor
-        name: podmonitors.monitoring.coreos.com
-        resources:
-          - kind: Pod
-            version: v1
-        specDescriptors:
-          - description: The label to use to retrieve the job name from
-            displayName: Job Label
-            path: jobLabel
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:label
-          - description: A list of endpoints allowed as part of this PodMonitor
-            displayName: Pod Metrics Endpoints
-            path: podMetricsEndpoints
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:endpointList
-        version: v1
-      - description: Configures an Alertmanager for the namespace
-        displayName: Alertmanager
-        kind: Alertmanager
-        name: alertmanagers.monitoring.coreos.com
-        resources:
-          - kind: StatefulSet
-            version: v1beta2
-          - kind: Pod
-            version: v1
-          - kind: Service
-            version: v1
-        specDescriptors:
-          - description: Desired number of Pods for the cluster
-            displayName: Size
-            path: replicas
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:podCount
-          - description:
-              Limits describes the minimum/maximum amount of compute resources
-              required/allowed
-            displayName: Resource Requirements
-            path: resources
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
-        version: v1
-      - description: Configures subsections of Alertmanager configuration specific to each namespace
-        displayName: AlertmanagerConfig
-        kind: AlertmanagerConfig
-        name: alertmanagerconfigs.monitoring.coreos.com
-        version: v1alpha1
-      - description: Defines how groups of ingresses and static targets should be monitored.
-        displayName: Probe
-        kind: Probe
-        name: probes.monitoring.coreos.com
-        specDescriptors:
-          - description: Service that monitors the target and provides metrics for Prometheus to scrape
-            displayName: Prober URL
-            path: prober.url
-            x-descriptors:
-              - "urn:alm:descriptor:com.tectonic.ui:text"
         version: v1
       - description: Allows recording and alerting rules to be processed across multiple Prometheus instances.
         displayName: ThanosRuler
@@ -310,100 +385,25 @@ spec:
       mediatype: image/svg+xml
   install:
     spec:
-      deployments:
-        - name: prometheus-operator
-          spec:
-            replicas: 1
-            selector:
-              matchLabels:
-                k8s-app: prometheus-operator
-            template:
-              metadata:
-                labels:
-                  app.kubernetes.io/component: controller
-                  app.kubernetes.io/name: prometheus-operator
-                  app.kubernetes.io/version: 0.47.0
-                  k8s-app: prometheus-operator
-              spec:
-                containers:
-                  - args:
-                      - --namespaces=$(TARGET_NAMESPACES)
-                      - --prometheus-instance-namespaces=$(OPERATOR_NAMESPACE)
-                      - --alertmanager-instance-namespaces=$(OPERATOR_NAMESPACE)
-                      - --thanos-ruler-instance-namespaces=$(OPERATOR_NAMESPACE)
-                      - --prometheus-config-reloader=quay.io/prometheus-operator/prometheus-config-reloader:v0.47.0
-                    env:
-                      - name: OPERATOR_NAMESPACE
-                        valueFrom:
-                          fieldRef:
-                            fieldPath: metadata.annotations['olm.operatorNamespace']
-                      - name: TARGET_NAMESPACES
-                        valueFrom:
-                          fieldRef:
-                            fieldPath: metadata.annotations['olm.targetNamespaces']
-                    image: quay.io/prometheus-operator/prometheus-operator:v0.47.0
-                    name: prometheus-operator
-                    ports:
-                      - containerPort: 8080
-                        name: http
-                    resources:
-                      limits:
-                        cpu: 300m
-                        memory: 3Gi
-                      requests:
-                        cpu: 100m
-                        memory: 100Mi
-                    securityContext:
-                      allowPrivilegeEscalation: false
-                nodeSelector:
-                  beta.kubernetes.io/os: linux
-                serviceAccount: prometheus-operator
-      permissions:
-        - rules:
-            - apiGroups:
-                - ""
-              resources:
-                - services
-                - endpoints
-                - pods
-              verbs:
-                - get
-                - list
-                - watch
-            - apiGroups:
-                - extensions
-              resources:
-                - ingresses
-              verbs:
-                - get
-                - list
-                - watch
-            - apiGroups:
-                - networking.k8s.io
-              resources:
-                - ingresses
-              verbs:
-                - get
-                - list
-                - watch
-            - apiGroups:
-                - ""
-              resources:
-                - configmaps
-              verbs:
-                - get
-          serviceAccountName: prometheus-k8s
+      clusterPermissions:
         - rules:
             - apiGroups:
                 - monitoring.coreos.com
               resources:
                 - alertmanagers
                 - alertmanagers/finalizers
+                - alertmanagers/status
                 - alertmanagerconfigs
                 - prometheuses
                 - prometheuses/finalizers
+                - prometheuses/status
+                - prometheusagents
+                - prometheusagents/finalizers
+                - prometheusagents/status
                 - thanosrulers
                 - thanosrulers/finalizers
+                - thanosrulers/status
+                - scrapeconfigs
                 - servicemonitors
                 - podmonitors
                 - probes
@@ -465,6 +465,59 @@ spec:
                 - list
                 - watch
           serviceAccountName: prometheus-operator
+      deployments:
+        - label:
+            app.kubernetes.io/component: controller
+            app.kubernetes.io/name: prometheus-operator
+            app.kubernetes.io/version: 0.65.1
+          name: prometheus-operator
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app.kubernetes.io/component: controller
+                app.kubernetes.io/name: prometheus-operator
+            strategy: {}
+            template:
+              metadata:
+                annotations:
+                  kubectl.kubernetes.io/default-container: prometheus-operator
+                labels:
+                  app.kubernetes.io/component: controller
+                  app.kubernetes.io/name: prometheus-operator
+                  app.kubernetes.io/version: 0.65.1
+              spec:
+                automountServiceAccountToken: true
+                containers:
+                  - args:
+                      - --kubelet-service=kube-system/kubelet
+                      - --prometheus-config-reloader=quay.io/prometheus-operator/prometheus-config-reloader:v0.65.1
+                    image: quay.io/prometheus-operator/prometheus-operator:v0.65.1
+                    name: prometheus-operator
+                    ports:
+                      - containerPort: 8080
+                        name: http
+                    resources:
+                      limits:
+                        cpu: 200m
+                        memory: 200Mi
+                      requests:
+                        cpu: 100m
+                        memory: 100Mi
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                        drop:
+                          - ALL
+                      readOnlyRootFilesystem: true
+                nodeSelector:
+                  kubernetes.io/os: linux
+                securityContext:
+                  runAsNonRoot: true
+                  runAsUser: 65534
+                  seccompProfile:
+                    type: RuntimeDefault
+                serviceAccountName: prometheus-operator
     strategy: deployment
   installModes:
     - supported: true
@@ -483,7 +536,7 @@ spec:
     - observability
   labels:
     alm-owner-prometheus: prometheusoperator
-    alm-status-descriptors: prometheusoperator.0.47.0
+    alm-status-descriptors: prometheusoperator.0.65.1
   links:
     - name: Prometheus
       url: https://www.prometheus.io/
@@ -498,8 +551,8 @@ spec:
   minKubeVersion: 1.16.0
   provider:
     name: Red Hat
-  replaces: prometheusoperator.0.37.0
+  replaces: prometheusoperator.0.47.0
   selector:
     matchLabels:
       alm-owner-prometheus: prometheusoperator
-  version: 0.47.0
+  version: 0.65.1

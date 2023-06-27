@@ -3,11 +3,11 @@ package variablesources
 import (
 	"context"
 
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 var _ input.VariableSource = &OperatorVariableSource{}

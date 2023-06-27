@@ -27,6 +27,10 @@ var _ = Describe("Predicates", func() {
 			Expect(predicates.WithPackageName("mypackage")(entity)).To(BeTrue())
 			Expect(predicates.WithPackageName("notmypackage")(entity)).To(BeFalse())
 		})
+		It("should return false when the entity does not have a package name", func() {
+			entity := input.NewEntity("test", map[string]string{})
+			Expect(predicates.WithPackageName("mypackage")(entity)).To(BeFalse())
+		})
 	})
 
 	Describe("InSemverRange", func() {
@@ -39,6 +43,11 @@ var _ = Describe("Predicates", func() {
 			Expect(predicates.InSemverRange(inRange)(entity)).To(BeTrue())
 			Expect(predicates.InSemverRange(notInRange)(entity)).To(BeFalse())
 		})
+		It("should return false when the entity does not have a version", func() {
+			entity := input.NewEntity("test", map[string]string{})
+			inRange := semver.MustParseRange(">=1.0.0")
+			Expect(predicates.InSemverRange(inRange)(entity)).To(BeFalse())
+		})
 	})
 
 	Describe("InChannel", func() {
@@ -48,6 +57,10 @@ var _ = Describe("Predicates", func() {
 			})
 			Expect(predicates.InChannel("stable")(entity)).To(BeTrue())
 			Expect(predicates.InChannel("unstable")(entity)).To(BeFalse())
+		})
+		It("should return false when the entity does not have a channel", func() {
+			entity := input.NewEntity("test", map[string]string{})
+			Expect(predicates.InChannel("stable")(entity)).To(BeFalse())
 		})
 	})
 
@@ -66,6 +79,48 @@ var _ = Describe("Predicates", func() {
 				Version: "v1alpha1",
 				Kind:    "Baz",
 			})(entity)).To(BeFalse())
+		})
+		It("should return false when the entity does not provide a gvk", func() {
+			entity := input.NewEntity("test", map[string]string{})
+			Expect(predicates.ProvidesGVK(&olmentity.GVK{
+				Group:   "foo.io",
+				Version: "v1",
+				Kind:    "Foo",
+			})(entity)).To(BeFalse())
+		})
+	})
+
+	Describe("WithBundleImage", func() {
+		It("should return true when the entity provides the same bundle image", func() {
+			entity := input.NewEntity("test", map[string]string{
+				olmentity.PropertyBundlePath: `"registry.io/repo/image@sha256:1234567890"`,
+			})
+			Expect(predicates.WithBundleImage("registry.io/repo/image@sha256:1234567890")(entity)).To(BeTrue())
+			Expect(predicates.WithBundleImage("registry.io/repo/image@sha256:0987654321")(entity)).To(BeFalse())
+		})
+		It("should return false when the entity does not provide a bundle image", func() {
+			entity := input.NewEntity("test", map[string]string{})
+			Expect(predicates.WithBundleImage("registry.io/repo/image@sha256:1234567890")(entity)).To(BeFalse())
+		})
+	})
+
+	Describe("Replaces", func() {
+		It("should return true when the entity provides the replaces property", func() {
+			entity := input.NewEntity("test", map[string]string{
+				"olm.replaces": `{"replaces": "test.v0.2.0"}`,
+			})
+			Expect(predicates.Replaces("test.v0.2.0")(entity)).To(BeTrue())
+			Expect(predicates.Replaces("test.v0.1.0")(entity)).To(BeFalse())
+		})
+		It("should return false when the entity does not provide a replaces property", func() {
+			entity := input.NewEntity("test", map[string]string{})
+			Expect(predicates.Replaces("test.v0.2.0")(entity)).To(BeFalse())
+		})
+		It("should return false when the replace value is not a valid json", func() {
+			entity := input.NewEntity("test", map[string]string{
+				"olm.replaces": `{"replaces"}`,
+			})
+			Expect(predicates.Replaces("test.v0.2.0")(entity)).To(BeFalse())
 		})
 	})
 })

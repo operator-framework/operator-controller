@@ -25,13 +25,6 @@ const (
 
 // ----
 
-type ChannelProperties struct {
-	property.Channel
-	Replaces  string   `json:"replaces,omitempty"`
-	Skips     []string `json:"skips,omitempty"`
-	SkipRange string   `json:"skipRange,omitempty"`
-}
-
 type propertyRequirement bool
 
 const (
@@ -45,6 +38,10 @@ type PackageRequired struct {
 }
 
 type GVK property.GVK
+
+type Replaces struct {
+	Replaces string `json:"replaces"`
+}
 
 func (g GVK) String() string {
 	return fmt.Sprintf(`group:"%s" version:"%s" kind:"%s"`, g.Group, g.Version, g.Kind)
@@ -64,15 +61,16 @@ type BundleEntity struct {
 	*input.Entity
 
 	// these properties are lazy loaded as they are requested
-	bundlePackage     *property.Package
-	providedGVKs      []GVK
-	requiredGVKs      []GVKRequired
-	requiredPackages  []PackageRequired
-	channelProperties *ChannelProperties
-	semVersion        *semver.Version
-	bundlePath        string
-	mediaType         string
-	mu                sync.RWMutex
+	bundlePackage    *property.Package
+	providedGVKs     []GVK
+	requiredGVKs     []GVKRequired
+	requiredPackages []PackageRequired
+	channel          *property.Channel
+	replaces         *Replaces
+	semVersion       *semver.Version
+	bundlePath       string
+	mediaType        string
+	mu               sync.RWMutex
 }
 
 func NewBundleEntity(entity *input.Entity) *BundleEntity {
@@ -121,14 +119,34 @@ func (b *BundleEntity) ChannelName() (string, error) {
 	if err := b.loadChannelProperties(); err != nil {
 		return "", err
 	}
-	return b.channelProperties.ChannelName, nil
+	return b.channel.ChannelName, nil
 }
 
-func (b *BundleEntity) ChannelProperties() (*ChannelProperties, error) {
+func (b *BundleEntity) Channel() (*property.Channel, error) {
 	if err := b.loadChannelProperties(); err != nil {
 		return nil, err
 	}
-	return b.channelProperties, nil
+	return b.channel, nil
+}
+
+func (b *BundleEntity) Replaces() (string, error) {
+	if err := b.loadReplaces(); err != nil {
+		return "", err
+	}
+	return b.replaces.Replaces, nil
+}
+
+func (b *BundleEntity) loadReplaces() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.replaces == nil {
+		replaces, err := loadFromEntity[Replaces](b.Entity, "olm.replaces", optional)
+		if err != nil {
+			return fmt.Errorf("error determining replaces for entity '%s': %w", b.ID, err)
+		}
+		b.replaces = &replaces
+	}
+	return nil
 }
 
 func (b *BundleEntity) BundlePath() (string, error) {
@@ -228,12 +246,12 @@ func (b *BundleEntity) loadRequiredPackages() error {
 func (b *BundleEntity) loadChannelProperties() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	if b.channelProperties == nil {
-		channel, err := loadFromEntity[ChannelProperties](b.Entity, property.TypeChannel, required)
+	if b.channel == nil {
+		channel, err := loadFromEntity[property.Channel](b.Entity, property.TypeChannel, required)
 		if err != nil {
 			return fmt.Errorf("error determining bundle channel properties for entity '%s': %w", b.ID, err)
 		}
-		b.channelProperties = &channel
+		b.channel = &channel
 	}
 	return nil
 }
@@ -255,6 +273,8 @@ func loadFromEntity[T interface{}](entity *input.Entity, propertyName string, re
 	deserializedProperty := *new(T)
 	propertyValue, ok := entity.Properties[propertyName]
 	if ok {
+		// TODO: In order to avoid invalid properties we should use a decoder that only allows the properties we expect.
+		//       ie. decoder.DisallowUnknownFields()
 		if err := json.Unmarshal([]byte(propertyValue), &deserializedProperty); err != nil {
 			return deserializedProperty, fmt.Errorf("property '%s' ('%s') could not be parsed: %w", propertyName, propertyValue, err)
 		}
