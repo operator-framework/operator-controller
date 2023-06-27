@@ -21,3 +21,9 @@ jobs:
     - name: Run basic unit tests
       run: |
         make test-unit
+
+    - uses: codecov/codecov-action@v3
+      with:
+        files: cover.out
+        fail_ci_if_error: true
+        functionalities: fixes
