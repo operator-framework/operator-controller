@@ -174,7 +174,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	}
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
 	// image we just looked up in the solution.
-	dep := r.generateExpectedBundleDeployment(*op, bundleImage, bundleProvisioner)
+	dep := r.generateExpectedBundleDeployment(*op, bundleImage, bundleProvisioner, bundleEntity)
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
 		// originally Reason: operatorsv1alpha1.ReasonInstallationFailed
 		op.Status.InstalledBundleResource = ""
@@ -260,18 +260,38 @@ func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Soluti
 	return nil, fmt.Errorf("entity for package %q not found in solution", packageName)
 }
 
-func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {
+func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string, bundleProvisioner string, bundleEntity *entities.BundleEntity) *unstructured.Unstructured {
 	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
 	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
 	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
 	// unstructured ensures that the patch contains only what is specified. Using unstructured like this is basically
 	// identical to "kubectl apply -f"
 
+	channelName, err := bundleEntity.ChannelName()
+	if err != nil {
+		return nil
+	}
+
+	packageName, err := bundleEntity.PackageName()
+	if err != nil {
+		return nil
+	}
+
+	packageVersion, err := bundleEntity.Version()
+	if err != nil {
+		return nil
+	}
+
 	bd := &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": rukpakv1alpha1.GroupVersion.String(),
 		"kind":       rukpakv1alpha1.BundleDeploymentKind,
 		"metadata": map[string]interface{}{
 			"name": o.GetName(),
+			"annotations": map[string]interface{}{
+				"operators.operatorframework.io/package": packageName,
+				"operators.operatorframework.io/channel": channelName,
+				"operators.operatorframework.io/version": packageVersion,
+			},
 		},
 		"spec": map[string]interface{}{
 			// TODO: Don't assume plain provisioner
