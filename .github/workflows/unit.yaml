@@ -16,3 +16,9 @@ jobs:
         with:
           go-version-file: "go.mod"
       - run: make test-unit
+
+      - uses: codecov/codecov-action@v3
+        with:
+          files: cover.out
+          fail_ci_if_error: true
+          functionalities: fixes
