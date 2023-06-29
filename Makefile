@@ -105,11 +105,19 @@ UNIT_TEST_DIRS=$(shell go list ./... | grep -v /test/)
 test-unit: $(SETUP_ENVTEST) ## Run the unit tests
 	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
 
+.PHONY: test-operator-framework-e2e
+test-operator-framework-e2e: $(GINKGO) ## Run operator create, upgrade and delete tests
+	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress test/operator-e2e
+
 .PHONY: e2e
 e2e: KIND_CLUSTER_NAME=operator-controller-e2e
 e2e: KUSTOMIZE_BUILD_DIR=config/e2e
 e2e: GO_BUILD_FLAGS=-cover
 e2e: run kind-load-test-artifacts test-e2e e2e-coverage kind-cluster-cleanup ## Run e2e test suite on local kind cluster
+
+.PHONY: operator-framework-e2e
+operator-framework-e2e: KIND_CLUSTER_NAME=operator-controller-e2e  ## Run operator-framework e2e on local kind cluster
+operator-framework-e2e: run kind-load-test-artifacts kind-load-test-artifacts-e2e test-operator-framework-e2e kind-cluster-cleanup
 
 .PHONY: e2e-coverage
 e2e-coverage:
@@ -141,6 +149,11 @@ kind-load-test-artifacts: $(KIND) ## Load the e2e testdata container images into
 	$(KIND) load docker-image localhost/testdata/bundles/plain-v0/plain:v0.1.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/catalogs/test-catalog:e2e --name $(KIND_CLUSTER_NAME)
 
+kind-load-test-artifacts-e2e: $(KIND) ## Load the operator-framework e2e testdata container images into a kind cluster
+	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/plain-v0/plain.v0.1.1 -t localhost/testdata/bundles/plain-v0/plain:v0.1.1
+	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/catalogs -f $(TESTDATA_DIR)/catalogs/plainv0-test-catalog.Dockerfile -t localhost/testdata/catalogs/plainv0-test-catalog:e2e
+	$(KIND) load docker-image localhost/testdata/bundles/plain-v0/plain:v0.1.1 --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image localhost/testdata/catalogs/plainv0-test-catalog:e2e --name $(KIND_CLUSTER_NAME)
 ##@ Build
 
 export VERSION           ?= $(shell git describe --tags --always --dirty)

@@ -1,0 +1,35 @@
+schema: olm.package
+name: plain
+defaultChannel: beta
+---
+schema: olm.channel
+name: beta
+package: plain
+entries:
+  - name: plain.0.1.0
+  - name: plain.0.1.1
+    replaces: plain.0.1.0
+---
+schema: olm.bundle
+name: plain.0.1.0
+package: plain
+image:  localhost/testdata/bundles/plain-v0/plain:v0.1.0
+properties:
+  - type: olm.package
+    value:
+      packageName: plain
+      version: 0.1.0
+  - type: olm.bundle.mediatype
+    value: plain+v0
+---
+schema: olm.bundle
+name: plain.0.1.1
+package: plain
+image: localhost/testdata/bundles/plain-v0/plain:v0.1.1
+properties:
+  - type: olm.package
+    value:
+      packageName: plain
+      version: 0.1.1
+  - type: olm.bundle.mediatype
+    value: plain+v0
