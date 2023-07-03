@@ -24,6 +24,8 @@ KIND_CLUSTER_NAME ?= operator-controller
 
 CONTAINER_RUNTIME ?= docker
 
+KUSTOMIZE_BUILD_DIR ?= config/default
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -103,7 +105,13 @@ test-unit: $(SETUP_ENVTEST) ## Run the unit tests
 	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
 
 e2e: KIND_CLUSTER_NAME=operator-controller-e2e
-e2e: run kind-load-test-artifacts test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
+e2e: KUSTOMIZE_BUILD_DIR=config/e2e
+e2e: GO_BUILD_FLAGS=-cover
+e2e: run kind-load-test-artifacts test-e2e e2e-coverage kind-cluster-cleanup ## Run e2e test suite on local kind cluster
+
+.PHONY: e2e-coverage
+e2e-coverage:
+	COVERAGE_OUTPUT=./e2e-cover.out ./hack/e2e-coverage.sh
 
 kind-load: $(KIND) ## Loads the currently constructed image onto the cluster
 	$(KIND) load docker-image $(IMG) --name $(KIND_CLUSTER_NAME)
@@ -115,6 +123,7 @@ kind-cluster: $(KIND) kind-cluster-cleanup ## Standup a kind cluster
 kind-cluster-cleanup: $(KIND) ## Delete the kind cluster
 	$(KIND) delete cluster --name ${KIND_CLUSTER_NAME}
 
+.PHONY: kind-load-test-artifacts
 kind-load-test-artifacts: $(KIND) ## Load the e2e testdata container images into a kind cluster
 	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/registry-v1/prometheus-operator.v0.47.0 -t localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0
 	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/plain-v0/plain.v0.1.0 -t localhost/testdata/bundles/plain-v0/plain:v0.1.0
@@ -174,7 +183,7 @@ release: $(GORELEASER) ## Runs goreleaser for the operator-controller. By defaul
 
 quickstart: export MANIFEST="https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml"
 quickstart: $(KUSTOMIZE) generate ## Generate the installation release manifests and scripts
-	$(KUSTOMIZE) build config/default | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
+	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
 	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
 ##@ Deployment
@@ -186,7 +195,7 @@ endif
 .PHONY: install
 install: export MANIFEST="./operator-controller.yaml"
 install: manifests $(KUSTOMIZE) generate ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/default > operator-controller.yaml
+	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) > operator-controller.yaml
 	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: uninstall
@@ -196,8 +205,8 @@ uninstall: manifests $(KUSTOMIZE) ## Uninstall CRDs from the K8s cluster specifi
 .PHONY: deploy
 deploy: manifests $(KUSTOMIZE) ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | kubectl apply -f -
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
