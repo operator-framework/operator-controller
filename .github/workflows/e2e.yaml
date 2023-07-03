@@ -22,4 +22,17 @@ jobs:
 
     - name: Run e2e tests
       run: |
-        make e2e
+        # By default make stops building on first non-zero exit code which
+        # in case of E2E tests will mean that code coverage will only be
+        # collected on successful runs. We want to collect coverage even
+        # after failing tests.
+        # With -k flag make will continue the build, but will return non-zero
+        # exit code in case of any errors.
+        make -k e2e
+
+    - uses: codecov/codecov-action@v3
+      with:
+        files: e2e-cover.out
+        flags: e2e
+        fail_ci_if_error: true
+        functionalities: fixes

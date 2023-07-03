@@ -1,0 +1,9 @@
+namespace: operator-controller-system
+
+resources:
+- ../default
+- manager_e2e_coverage_pvc.yaml
+- manager_e2e_coverage_copy_pod.yaml
+
+patches:
+- path: manager_e2e_coverage_patch.yaml
