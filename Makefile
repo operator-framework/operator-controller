@@ -131,8 +131,9 @@ export GO_BUILD_ASMFLAGS ?= all=-trimpath=${PWD}
 export GO_BUILD_LDFLAGS  ?= -s -w -X $(shell go list -m)/version.Version=$(VERSION)
 export GO_BUILD_GCFLAGS  ?= all=-trimpath=${PWD}
 export GO_BUILD_TAGS     ?= upstream
+export GO_BUILD_FLAGS    ?=
 
-BUILDCMD = go build -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/manager ./cmd/manager
+BUILDCMD = go build $(GO_BUILD_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/manager ./cmd/manager
 
 .PHONY: build-deps
 build-deps: manifests generate fmt vet
