@@ -26,6 +26,8 @@ metadata:
     app.kubernetes.io/created-by: operator-controller
     app.kubernetes.io/part-of: operator-controller
     app.kubernetes.io/managed-by: kustomize
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
 spec:
   selector:
     matchLabels:
