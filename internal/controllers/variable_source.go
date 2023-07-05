@@ -30,6 +30,9 @@ func NewVariableSource(cl client.Client) variablesources.NestedVariableSource {
 			return variablesources.NewOperatorVariableSource(cl, inputVariableSource), nil
 		},
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
+			return variablesources.NewBundleDeploymentVariableSource(cl, inputVariableSource), nil
+		},
+		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
 			return variablesources.NewBundlesAndDepsVariableSource(inputVariableSource), nil
 		},
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {

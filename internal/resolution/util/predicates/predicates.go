@@ -67,3 +67,14 @@ func WithBundleImage(bundleImage string) input.Predicate {
 		return bundlePath == bundleImage
 	}
 }
+
+func Replaces(bundleID string) input.Predicate {
+	return func(entity *input.Entity) bool {
+		bundleEntity := olmentity.NewBundleEntity(entity)
+		channelProperties, err := bundleEntity.ChannelProperties()
+		if err != nil {
+			return false
+		}
+		return channelProperties.Replaces == bundleID
+	}
+}
