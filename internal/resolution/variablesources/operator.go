@@ -54,10 +54,7 @@ func (o *OperatorVariableSource) GetVariables(ctx context.Context, entitySource 
 	}
 
 	for _, bundleDeployment := range bundleDeployments.Items {
-		if _, ok := bundleDeployment.Annotations["operators.operatorframework.io/package"]; !ok {
-			continue
-		}
-		ips, err := NewInstalledPackageVariableSource(&bundleDeployment)
+		ips, err := NewInstalledPackageVariableSource(bundleDeployment.Spec.Template.Spec.Source.Image.Ref)
 		if err != nil {
 			return nil, err
 		}

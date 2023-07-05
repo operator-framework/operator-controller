@@ -267,31 +267,11 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 	// unstructured ensures that the patch contains only what is specified. Using unstructured like this is basically
 	// identical to "kubectl apply -f"
 
-	channelName, err := bundleEntity.ChannelName()
-	if err != nil {
-		return nil
-	}
-
-	packageName, err := bundleEntity.PackageName()
-	if err != nil {
-		return nil
-	}
-
-	packageVersion, err := bundleEntity.Version()
-	if err != nil {
-		return nil
-	}
-
 	bd := &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": rukpakv1alpha1.GroupVersion.String(),
 		"kind":       rukpakv1alpha1.BundleDeploymentKind,
 		"metadata": map[string]interface{}{
 			"name": o.GetName(),
-			"annotations": map[string]interface{}{
-				"operators.operatorframework.io/package": packageName,
-				"operators.operatorframework.io/channel": channelName,
-				"operators.operatorframework.io/version": packageVersion,
-			},
 		},
 		"spec": map[string]interface{}{
 			// TODO: Don't assume plain provisioner

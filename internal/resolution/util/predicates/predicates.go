@@ -56,3 +56,14 @@ func ProvidesGVK(gvk *olmentity.GVK) input.Predicate {
 		return false
 	}
 }
+
+func WithBundleImage(bundleImage string) input.Predicate {
+	return func(entity *input.Entity) bool {
+		bundleEntity := olmentity.NewBundleEntity(entity)
+		bundlePath, err := bundleEntity.BundlePath()
+		if err != nil {
+			return false
+		}
+		return bundlePath == bundleImage
+	}
+}

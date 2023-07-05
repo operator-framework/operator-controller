@@ -19,8 +19,8 @@ func (r *InstalledPackageVariable) BundleEntities() []*olmentity.BundleEntity {
 	return r.bundleEntities
 }
 
-func NewInstalledPackageVariable(packageName string, bundleEntities []*olmentity.BundleEntity) *InstalledPackageVariable {
-	id := deppy.IdentifierFromString(fmt.Sprintf("installed package %s", packageName))
+func NewInstalledPackageVariable(bundleImage string, bundleEntities []*olmentity.BundleEntity) *InstalledPackageVariable {
+	id := deppy.IdentifierFromString(fmt.Sprintf("installed package %s", bundleImage))
 	var entityIDs []deppy.Identifier
 	for _, bundle := range bundleEntities {
 		entityIDs = append(entityIDs, bundle.ID)
