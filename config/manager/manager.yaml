@@ -9,6 +9,8 @@ metadata:
     app.kubernetes.io/created-by: catalogd
     app.kubernetes.io/part-of: catalogd
     app.kubernetes.io/managed-by: kustomize
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: latest
   name: system
 ---
 apiVersion: apps/v1
