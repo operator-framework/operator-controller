@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -17,14 +18,24 @@ import (
 )
 
 const (
-	catalogRef  = "localhost/testdata/catalogs/test-catalog:e2e"
-	catalogName = "test-catalog"
-	pkg         = "prometheus"
-	version     = "0.47.0"
-	channel     = "beta"
-	bundle      = "prometheus-operator.0.47.0"
-	bundleImage = "localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0"
+	catalogRefEnvVar = "TEST_CATALOG_IMAGE"
+	catalogName      = "test-catalog"
+	pkg              = "prometheus"
+	version          = "0.47.0"
+	channel          = "beta"
+	bundle           = "prometheus-operator.0.47.0"
+	bundleImage      = "localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0"
 )
+
+// catalogImageRef returns the image reference for the test catalog image, defaulting to the value of the environment
+// variable TEST_CATALOG_IMAGE if set, falling back to localhost/testdata/catalogs/test-catalog:e2e otherwise.
+func catalogImageRef() string {
+	if s := os.Getenv(catalogRefEnvVar); s != "" {
+		return s
+	}
+
+	return "localhost/testdata/catalogs/test-catalog:e2e"
+}
 
 var _ = Describe("Catalog Unpacking", func() {
 	var (
@@ -35,6 +46,7 @@ var _ = Describe("Catalog Unpacking", func() {
 		BeforeEach(func() {
 			ctx = context.Background()
 			var err error
+
 			catalog = &catalogd.Catalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: catalogName,
@@ -43,7 +55,7 @@ var _ = Describe("Catalog Unpacking", func() {
 					Source: catalogd.CatalogSource{
 						Type: catalogd.SourceTypeImage,
 						Image: &catalogd.ImageSource{
-							Ref: catalogRef,
+							Ref: catalogImageRef(),
 						},
 					},
 				},
