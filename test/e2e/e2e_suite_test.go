@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -30,9 +31,18 @@ var (
 )
 
 const (
-	testCatalogRef  = "localhost/testdata/catalogs/test-catalog:e2e"
-	testCatalogName = "test-catalog"
+	testCatalogRefEnvVar  = "TEST_CATALOG_IMAGE"
+	testCatalogRefDefault = "localhost/testdata/catalogs/test-catalog:e2e"
+	testCatalogName       = "test-catalog"
 )
+
+// returns the image reference for the test, checking for environment variable substitution, with a default of localhost/testdata/catalogs/test-catalog:e2e
+func getCatalogImageRef() string {
+	if s := os.Getenv(testCatalogRefEnvVar); s != "" {
+		return s
+	}
+	return testCatalogRefDefault
+}
 
 func TestE2E(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -55,7 +65,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).To(Not(HaveOccurred()))
 
 	ctx := context.Background()
-	operatorCatalog, err = createTestCatalog(ctx, testCatalogName, testCatalogRef)
+	operatorCatalog, err = createTestCatalog(ctx, testCatalogName, getCatalogImageRef())
 	Expect(err).ToNot(HaveOccurred())
 
 	Eventually(func(g Gomega) {
