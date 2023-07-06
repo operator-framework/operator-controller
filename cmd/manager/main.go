@@ -64,7 +64,7 @@ func main() {
 		unpackImage          string
 		profiling            bool
 		catalogdVersion      bool
-		sysNs                string
+		systemNamespace      string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -73,7 +73,7 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	// TODO: should we move the unpacker to some common place? Or... hear me out... should catalogd just be a rukpak provisioner?
 	flag.StringVar(&unpackImage, "unpack-image", "quay.io/operator-framework/rukpak:v0.12.0", "The unpack image to use when unpacking catalog images")
-	flag.StringVar(&sysNs, "system-ns", "catalogd-system", "The namespace catalogd uses for internal state, configuration, and workloads")
+	flag.StringVar(&systemNamespace, "system-namespace", "", "The namespace catalogd uses for internal state, configuration, and workloads")
 	flag.BoolVar(&profiling, "profiling", false, "enable profiling endpoints to allow for using pprof")
 	flag.BoolVar(&catalogdVersion, "version", false, "print the catalogd version and exit")
 	opts := zap.Options{
@@ -106,7 +106,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	unpacker, err := source.NewDefaultUnpacker(mgr, sysNs, unpackImage)
+	if systemNamespace == "" {
+		systemNamespace = podNamespace()
+	}
+
+	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, unpackImage)
 	if err != nil {
 		setupLog.Error(err, "unable to create unpacker")
 		os.Exit(1)
@@ -143,4 +147,12 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func podNamespace() string {
+	namespace, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		return "catalogd-system"
+	}
+	return string(namespace)
 }
