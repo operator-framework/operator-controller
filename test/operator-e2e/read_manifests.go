@@ -1,8 +1,8 @@
-package operator_e2e
+package operatore2e
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -24,14 +24,14 @@ func collectKubernetesObjects(packageName string, version string) ([]Object, err
 	objects := []Object{}
 
 	bundleManifestPath := filepath.Join(bundlePath, packageName+".v"+version, "manifests")
-	files, err := ioutil.ReadDir(bundleManifestPath)
+	files, err := os.ReadDir(bundleManifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading directory: %v", err)
 	}
 
 	for _, file := range files {
 		filePath := filepath.Join(bundleManifestPath, file.Name())
-		content, err := ioutil.ReadFile(filePath)
+		content, err := os.ReadFile(filePath)
 		if err != nil {
 			return nil, fmt.Errorf("error reading file: %v", err)
 		}

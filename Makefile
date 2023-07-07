@@ -117,7 +117,7 @@ e2e: run kind-load-test-artifacts test-e2e e2e-coverage kind-cluster-cleanup ## 
 
 .PHONY: operator-framework-e2e
 operator-framework-e2e: KIND_CLUSTER_NAME=operator-controller-e2e  ## Run operator-framework e2e on local kind cluster
-operator-framework-e2e: run kind-load-test-artifacts kind-load-test-artifacts-e2e test-operator-framework-e2e kind-cluster-cleanup
+operator-framework-e2e: run opm test-operator-framework-e2e kind-cluster-cleanup
 
 .PHONY: e2e-coverage
 e2e-coverage:
@@ -149,11 +149,24 @@ kind-load-test-artifacts: $(KIND) ## Load the e2e testdata container images into
 	$(KIND) load docker-image localhost/testdata/bundles/plain-v0/plain:v0.1.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/catalogs/test-catalog:e2e --name $(KIND_CLUSTER_NAME)
 
-kind-load-test-artifacts-e2e: $(KIND) ## Load the operator-framework e2e testdata container images into a kind cluster
-	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/plain-v0/plain.v0.1.1 -t localhost/testdata/bundles/plain-v0/plain:v0.1.1
-	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/catalogs -f $(TESTDATA_DIR)/catalogs/plainv0-test-catalog.Dockerfile -t localhost/testdata/catalogs/plainv0-test-catalog:e2e
-	$(KIND) load docker-image localhost/testdata/bundles/plain-v0/plain:v0.1.1 --name $(KIND_CLUSTER_NAME)
-	$(KIND) load docker-image localhost/testdata/catalogs/plainv0-test-catalog:e2e --name $(KIND_CLUSTER_NAME)
+.PHONY: opm
+OPM = ./bin/opm
+OPM_VERSION = v1.28.0
+opm: ## Download opm locally if necessary.
+ifeq (,$(wildcard $(OPM)))
+ifeq (,$(shell which opm 2>/dev/null))
+	@{ \
+	set -e ;\
+	mkdir -p $(dir $(OPM)) ;\
+	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
+	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/$(OPM_VERSION)/$${OS}-$${ARCH}-opm ;\
+	chmod +x $(OPM) ;\
+	}
+else
+OPM = $(shell which opm)
+endif
+endif
+
 ##@ Build
 
 export VERSION           ?= $(shell git describe --tags --always --dirty)
