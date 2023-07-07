@@ -24,9 +24,6 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
-          limits:
-            cpu: 100m
-            memory: 30Mi
         env:
         - name: ETCD_DATA_DIR
           value: /etcd-data-dir
