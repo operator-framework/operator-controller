@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"strings"
 	"testing"
 	"time"
 
@@ -41,7 +42,7 @@ var (
 	err             error
 	ctx             context.Context
 	bundleInfo      = []BundleInfo{
-		{
+		{ // The bundle directories of the plain bundles whose image is to be created and pushed along with the image reference
 			BundleImageRef:  "localhost/testdata/bundles/plain-v0/plain:v0.1.0",
 			BundleDirectory: "plain.v0.1.0",
 		},
@@ -100,10 +101,10 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	Expect(c.Delete(ctx, operatorCatalog)).To(Succeed())
 	Eventually(func(g Gomega) {
-		err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, &catalogd.Catalog{})
-		Expect(errors.IsNotFound(err)).To(BeTrue())
+		// Deleting the catalog object and checking if the deletion was successful
+		err = deleteAndCheckCatalogDeleted(operatorCatalog)
+		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}).Should(Succeed())
 })
 
@@ -163,18 +164,27 @@ var _ = Describe("Operator Framework E2E", func() {
 	})
 	When("A catalog object is created from the FBC image and deployed", func() {
 		It("Deploy catalog object with FBC image", func() {
-			By("Creating a operator catalog object")
+			By("Creating an operator catalog object")
 			operatorCatalog, err = createTestCatalog(ctx, catalogName, catalogImageRef)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Eventually checking if catalog unpacking is successful")
-			checkCatalogUnpacked(operatorCatalog)
+			Eventually(func(g Gomega) {
+				err = checkCatalogUnpacked(operatorCatalog)
+				g.Expect(err).ToNot(HaveOccurred())
+			}, 10*time.Second, 1).Should(Succeed())
 
 			By("Eventually checking if package is created")
-			checkPackageCreated()
+			Eventually(func(g Gomega) {
+				err = checkPackageCreated()
+				g.Expect(err).ToNot(HaveOccurred())
+			}, 10*time.Second, 1).Should(Succeed())
 
 			By("Eventually checking if bundle metadata is created")
-			checkBundleMetadataCreated()
+			Eventually(func(g Gomega) {
+				err = checkBundleMetadataCreated()
+				g.Expect(err).ToNot(HaveOccurred())
+			}).Should(Succeed())
 
 		})
 	})
@@ -185,16 +195,28 @@ var _ = Describe("Operator Framework E2E", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Eventually reporting a successful resolution and bundle path")
-			checkResolutionAndBundlePath(operator, createPkgVersion)
+			Eventually(func(g Gomega) {
+				err = checkResolutionAndBundlePath(operator)
+				g.Expect(err).ToNot(HaveOccurred())
+			}, 10*time.Second, 1).Should(Succeed())
 
 			By("Eventually installing the operator successfully")
-			checkOperatorInstalled(operator)
+			Eventually(func(g Gomega) {
+				err = checkOperatorInstalled(operator, createPkgVersion)
+				g.Expect(err).ToNot(HaveOccurred())
+			}, 10*time.Second, 1).Should(Succeed())
 
 			By("Eventually installing the package successfully")
-			checkPackageInstalled(operator)
+			Eventually(func(g Gomega) {
+				err = checkPackageInstalled(operator)
+				g.Expect(err).ToNot(HaveOccurred())
+			}, 10*time.Second, 1).Should(Succeed())
 
 			By("Eventually verifying the presence of relevant manifest on cluster from the bundle")
-			checkManifestPresence(createPkgName, createPkgVersion)
+			Eventually(func(g Gomega) {
+				err = checkManifestPresence(createPkgName, createPkgVersion)
+				g.Expect(err).ToNot(HaveOccurred())
+			}).Should(Succeed())
 		})
 	})
 	When("An operator is upgraded to a higher version", func() {
@@ -203,17 +225,28 @@ var _ = Describe("Operator Framework E2E", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Eventually reporting a successful resolution and bundle path for the upgraded version")
-			checkResolutionAndBundlePath(operator, updatePkgVersion)
+			Eventually(func(g Gomega) {
+				err = checkResolutionAndBundlePath(operator)
+				g.Expect(err).ToNot(HaveOccurred())
+			}, 10*time.Second, 1).Should(Succeed())
 
 			By("Eventually upgrading the operator successfully")
-			checkOperatorInstalled(operator)
+			Eventually(func(g Gomega) {
+				err = checkOperatorInstalled(operator, updatePkgVersion)
+				g.Expect(err).ToNot(HaveOccurred())
+			}, 10*time.Second, 1).Should(Succeed())
 
 			By("Eventually upgrading the package successfully")
-			checkPackageInstalled(operator)
+			Eventually(func(g Gomega) {
+				err = checkPackageInstalled(operator)
+				g.Expect(err).ToNot(HaveOccurred())
+			}, 10*time.Second, 1).Should(Succeed())
 
 			By("Eventually verifying the presence of relevant manifest on cluster from the bundle")
-			checkManifestPresence(createPkgName, createPkgVersion)
-
+			Eventually(func(g Gomega) {
+				err = checkManifestPresence(updatePkgName, updatePkgVersion)
+				g.Expect(err).ToNot(HaveOccurred())
+			}).Should(Succeed())
 		})
 	})
 	When("An operator is deleted", func() {
@@ -222,7 +255,10 @@ var _ = Describe("Operator Framework E2E", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Eventually the operator should not exists")
-			checkOperatorDeleted(operator)
+			Eventually(func(g Gomega) {
+				err = checkOperatorDeleted(operator)
+				g.Expect(errors.IsNotFound(err)).To(BeTrue())
+			}).Should(Succeed())
 		})
 	})
 })
@@ -245,10 +281,6 @@ func buildContainer(tag, dockerfilePath, dockerContext string, w io.Writer) erro
 }
 
 func pushLoadImages(w io.Writer, kindServerName string, images ...string) error {
-	if err != nil {
-		return err
-	}
-
 	for _, image := range images {
 		cmd := exec.Command("kind", "load", "docker-image", image, "--name", kindServerName)
 		cmd.Stderr = w
@@ -261,96 +293,161 @@ func pushLoadImages(w io.Writer, kindServerName string, images ...string) error 
 	return nil
 }
 
-func checkCatalogUnpacked(operatorCatalog *catalogd.Catalog) {
-	Eventually(func(g Gomega) {
-		err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, operatorCatalog)
-		g.Expect(err).ToNot(HaveOccurred())
-		cond := apimeta.FindStatusCondition(operatorCatalog.Status.Conditions, catalogd.TypeUnpacked)
-		g.Expect(cond).ToNot(BeNil())
-		g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-		g.Expect(cond.Reason).To(Equal(catalogd.ReasonUnpackSuccessful))
-	}, 10*time.Second, 1).Should(Succeed())
+func checkConditionEquals(actualCond, expectedCond *metav1.Condition) error {
+	if actualCond == nil {
+		return fmt.Errorf("Expected condition %s to not be nil", expectedCond.Type)
+	}
+	if actualCond.Status != expectedCond.Status {
+		return fmt.Errorf("Expected status: %s, but got: %s", expectedCond.Status, actualCond.Status)
+	}
+	if actualCond.Reason != expectedCond.Reason {
+		return fmt.Errorf("Expected reason: %s but got: %s", expectedCond.Reason, actualCond.Reason)
+	}
+	if !strings.Contains(actualCond.Message, expectedCond.Message) {
+		return fmt.Errorf("Expected message: %s but got: %s", expectedCond.Message, actualCond.Message)
+	}
+	return nil
 }
 
-func checkPackageCreated() {
-	Eventually(func(g Gomega) {
-		pList := &catalogd.PackageList{}
-		err = c.List(ctx, pList)
-		g.Expect(err).ToNot(HaveOccurred())
-		g.Expect(pList.Items).ToNot(BeEmpty()) // Checking if atleast one package is created
-	}).Should(Succeed())
+func checkCatalogUnpacked(operatorCatalog *catalogd.Catalog) error {
+	err = c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, operatorCatalog)
+	if err != nil {
+		return err
+	}
+	cond := apimeta.FindStatusCondition(operatorCatalog.Status.Conditions, catalogd.TypeUnpacked)
+	expectedCond := &metav1.Condition{
+		Type:    catalogd.TypeUnpacked,
+		Status:  metav1.ConditionTrue,
+		Reason:  catalogd.ReasonUnpackSuccessful,
+		Message: "successfully unpacked the catalog image",
+	}
+	err = checkConditionEquals(cond, expectedCond)
+	return err
 }
 
-func checkBundleMetadataCreated() {
-	Eventually(func(g Gomega) {
-		bmList := &catalogd.BundleMetadataList{}
-		err = c.List(ctx, bmList)
-		g.Expect(err).ToNot(HaveOccurred())
-		g.Expect(bmList.Items).ToNot(BeEmpty()) // Checking if atleast one bundle metadata is created
-	}).Should(Succeed())
+func checkPackageCreated() error {
+	pList := &catalogd.PackageList{}
+	err = c.List(ctx, pList)
+	if err != nil {
+		return err
+	}
+	if len(pList.Items) == 0 {
+		return fmt.Errorf("Package is not created")
+	}
+	return nil
 }
 
-func checkResolutionAndBundlePath(operator *operatorv1alpha1.Operator, operatorVersion string) {
-	Eventually(func(g Gomega) {
-		g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-		g.Expect(operator.Status.Conditions).To(HaveLen(2))
-		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-		g.Expect(cond).ToNot(BeNil())
-		g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-		g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
-		g.Expect(cond.Message).To(ContainSubstring("resolved to"))
-		g.Expect(operator.Status.ResolvedBundleResource).ToNot(BeEmpty())
-		g.Expect(operator.Spec.Version).To(Equal(operatorVersion))
-	}, 10*time.Second, 1).Should(Succeed())
+func checkBundleMetadataCreated() error {
+	bmList := &catalogd.BundleMetadataList{}
+	err = c.List(ctx, bmList)
+	if err != nil {
+		return err
+	}
+	if len(bmList.Items) == 0 {
+		return fmt.Errorf("Bundle metadata is not created")
+	}
+	return nil
 }
 
-func checkOperatorInstalled(operator *operatorv1alpha1.Operator) {
-	Eventually(func(g Gomega) {
-		g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeInstalled)
-		g.Expect(cond).ToNot(BeNil())
-		g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-		g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
-		g.Expect(cond.Message).To(ContainSubstring("installed from"))
-		g.Expect(operator.Status.InstalledBundleResource).ToNot(BeEmpty())
-	}, 10*time.Second, 1).Should(Succeed())
+func checkResolutionAndBundlePath(operator *operatorv1alpha1.Operator) error {
+	err = c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)
+	if err != nil {
+		return err
+	}
+	cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+	expectedCond := &metav1.Condition{
+		Type:    operatorv1alpha1.TypeResolved,
+		Status:  metav1.ConditionTrue,
+		Reason:  operatorv1alpha1.ReasonSuccess,
+		Message: "resolved to",
+	}
+	err = checkConditionEquals(cond, expectedCond)
+	if err != nil {
+		return err
+	}
+	if operator.Status.ResolvedBundleResource == "" {
+		return fmt.Errorf("Resoved Bundle Resource is not found")
+	}
+	return nil
 }
 
-func checkPackageInstalled(operator *operatorv1alpha1.Operator) {
-	Eventually(func(g Gomega) {
-		bd := rukpakv1alpha1.BundleDeployment{}
-		g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, &bd)).To(Succeed())
-		g.Expect(bd.Status.Conditions).To(HaveLen(2))
-		g.Expect(bd.Status.Conditions[0].Reason).To(Equal("UnpackSuccessful"))
-		g.Expect(bd.Status.Conditions[1].Reason).To(Equal("InstallationSucceeded"))
-	}, 10*time.Second, 1).Should(Succeed())
+func checkOperatorInstalled(operator *operatorv1alpha1.Operator, operatorVersion string) error {
+	err = c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)
+	if err != nil {
+		return err
+	}
+	cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeInstalled)
+	expectedCond := &metav1.Condition{
+		Type:    operatorv1alpha1.TypeResolved,
+		Status:  metav1.ConditionTrue,
+		Reason:  operatorv1alpha1.ReasonSuccess,
+		Message: "installed from",
+	}
+	err = checkConditionEquals(cond, expectedCond)
+	if err != nil {
+		return err
+	}
+	if operator.Status.InstalledBundleResource == "" {
+		return fmt.Errorf("Installed Bundle Resource is not found")
+	}
+	if operator.Spec.Version != operatorVersion {
+		return fmt.Errorf("Expected operator version: %s but got: %s", operator.Spec.Version, operatorVersion)
+	}
+	return nil
 }
 
-func checkManifestPresence(packageName string, version string) {
-	Eventually(func(g Gomega) {
-		resources, _ := collectKubernetesObjects(packageName, version)
-		for _, resource := range resources {
-			gvk := schema.GroupVersionKind{
-				Group:   "",
-				Version: resource.APIVersion,
-				Kind:    resource.Kind,
-			}
+func checkPackageInstalled(operator *operatorv1alpha1.Operator) error {
+	bd := rukpakv1alpha1.BundleDeployment{}
+	err = c.Get(ctx, types.NamespacedName{Name: operator.Name}, &bd)
+	if err != nil {
+		return err
+	}
+	if len(bd.Status.Conditions) != 2 {
+		return fmt.Errorf("Two conditions for successful unpack and successful installation are not populated")
+	}
+	if bd.Status.Conditions[0].Reason != "UnpackSuccessful" {
+		return fmt.Errorf("Expected status condition reason for successful unpack is not populated")
+	}
+	if bd.Status.Conditions[1].Reason != "InstallationSucceeded" {
+		return fmt.Errorf("Expected status condition reason for successful installation is not populated")
+	}
+	return nil
+}
 
-			obj := &unstructured.Unstructured{}
-			obj.SetGroupVersionKind(gvk)
-			g.Expect(c.Get(ctx, types.NamespacedName{Name: resource.Metadata.Name, Namespace: nameSpace}, obj)).To(Succeed())
+func checkManifestPresence(packageName, version string) error {
+	resources, _ := collectKubernetesObjects(packageName, version)
+	for _, resource := range resources {
+		gvk := schema.GroupVersionKind{
+			Group:   "",
+			Version: resource.APIVersion,
+			Kind:    resource.Kind,
 		}
-	}).Should(Succeed())
+
+		obj := &unstructured.Unstructured{}
+		obj.SetGroupVersionKind(gvk)
+		err = c.Get(ctx, types.NamespacedName{Name: resource.Metadata.Name, Namespace: nameSpace}, obj)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func checkOperatorDeleted(operator *operatorv1alpha1.Operator) {
-	Eventually(func(g Gomega) {
-		err := c.Get(ctx, types.NamespacedName{Name: operator.Name}, &operatorv1alpha1.Operator{})
-		g.Expect(errors.IsNotFound(err)).To(BeTrue())
-	}).Should(Succeed())
+func checkOperatorDeleted(operator *operatorv1alpha1.Operator) error {
+	err = c.Get(ctx, types.NamespacedName{Name: operator.Name}, &operatorv1alpha1.Operator{})
+	return err
 }
 
-func createTestCatalog(ctx context.Context, name string, imageRef string) (*catalogd.Catalog, error) {
+func deleteAndCheckCatalogDeleted(catalog *catalogd.Catalog) error {
+	err = c.Delete(ctx, operatorCatalog)
+	if err != nil {
+		return err
+	}
+	err = c.Get(ctx, types.NamespacedName{Name: catalog.Name}, &catalogd.Catalog{})
+	return err
+}
+
+func createTestCatalog(ctx context.Context, name, imageRef string) (*catalogd.Catalog, error) {
 	catalog := &catalogd.Catalog{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -369,7 +466,7 @@ func createTestCatalog(ctx context.Context, name string, imageRef string) (*cata
 	return catalog, err
 }
 
-func createOperator(ctx context.Context, operatorName string, packageName string, version string) (*operatorv1alpha1.Operator, error) {
+func createOperator(ctx context.Context, operatorName, packageName, version string) (*operatorv1alpha1.Operator, error) {
 	operator := &operatorv1alpha1.Operator{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: operatorName,
@@ -384,7 +481,7 @@ func createOperator(ctx context.Context, operatorName string, packageName string
 	return operator, err
 }
 
-func updateOperator(ctx context.Context, operatorName string, packageName string, version string) (*operatorv1alpha1.Operator, error) {
+func updateOperator(ctx context.Context, operatorName, packageName, version string) (*operatorv1alpha1.Operator, error) {
 	operator := &operatorv1alpha1.Operator{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: operatorName,

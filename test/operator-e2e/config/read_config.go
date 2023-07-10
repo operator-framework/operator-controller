@@ -36,6 +36,7 @@ type Config struct {
 	BundleData  []BundleData  `json:"bundleData"`
 }
 
+// Reads the catalog-config.yaml and maps it to the above structs
 func ReadFile(f string) (*Config, error) {
 	b, err := readFile(f)
 	if err != nil {

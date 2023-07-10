@@ -19,8 +19,8 @@ type Object struct {
 	} `yaml:"metadata"`
 }
 
-// collects the Kubernetes objects present in the bundle manifest folder
-func collectKubernetesObjects(packageName string, version string) ([]Object, error) {
+// collects the Kubernetes objects present in the bundle manifest folder for a particular package and its version
+func collectKubernetesObjects(packageName, version string) ([]Object, error) {
 	objects := []Object{}
 
 	bundleManifestPath := filepath.Join(bundlePath, packageName+".v"+version, "manifests")

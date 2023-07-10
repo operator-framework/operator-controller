@@ -20,6 +20,7 @@ const (
 	BundleMediatype       = "plain+v0"
 )
 
+// Reads the catalog-config and creates the FBC by calling functions for forming the package, channel and bundles.
 func CreateFBC(configFilePath string) (*declcfg.DeclarativeConfig, error) {
 	config, err := config.ReadFile(configFilePath)
 	if err != nil {
@@ -38,6 +39,7 @@ func CreateFBC(configFilePath string) (*declcfg.DeclarativeConfig, error) {
 	return &fbc, nil
 }
 
+// Forms package schema for the FBC
 func formPackage(config config.Config) declcfg.Package {
 	packageFormed := declcfg.Package{
 		Schema:         SchemaPackage,
@@ -47,6 +49,7 @@ func formPackage(config config.Config) declcfg.Package {
 	return packageFormed
 }
 
+// Forms channel schema for the FBC
 func formChannel(config config.Config) []declcfg.Channel {
 	channelFormed := make([]declcfg.Channel, 0, len(config.ChannelData))
 	for _, channel := range config.ChannelData {
@@ -61,6 +64,7 @@ func formChannel(config config.Config) []declcfg.Channel {
 	return channelFormed
 }
 
+// Forms the uprade graph for the FBC
 func formChannelEntries(pkgName string, channel config.ChannelData) []declcfg.ChannelEntry {
 	channelEntries := make([]declcfg.ChannelEntry, 0, len(channel.ChannelEntries))
 	for _, channelEntry := range channel.ChannelEntries {
@@ -73,7 +77,7 @@ func formChannelEntries(pkgName string, channel config.ChannelData) []declcfg.Ch
 		if len(channelEntry.Skips) != 0 {
 			for _, s := range channelEntry.Skips {
 				if s != "" {
-					skip = append(skip, s)
+					skip = append(skip, pkgName+"."+s)
 				}
 			}
 		}
@@ -87,6 +91,7 @@ func formChannelEntries(pkgName string, channel config.ChannelData) []declcfg.Ch
 	return channelEntries
 }
 
+// Forms bundle schema for the FBC
 func formBundle(config config.Config) []declcfg.Bundle {
 	bundleFormed := make([]declcfg.Bundle, 0, len(config.BundleData))
 	for _, bundle := range config.BundleData {
@@ -111,7 +116,8 @@ func formBundle(config config.Config) []declcfg.Bundle {
 	return bundleFormed
 }
 
-func WriteFBC(fbc declcfg.DeclarativeConfig, fbcFilePath string, fbcFileName string) error {
+// Writes the formed FBC into catalog.yaml file
+func WriteFBC(fbc declcfg.DeclarativeConfig, fbcFilePath, fbcFileName string) error {
 	var buf bytes.Buffer
 	err := declcfg.WriteYAML(fbc, &buf)
 	if err != nil {
@@ -122,13 +128,11 @@ func WriteFBC(fbc declcfg.DeclarativeConfig, fbcFilePath string, fbcFileName str
 	if os.IsNotExist(err) {
 		err := os.MkdirAll(fbcFilePath, 0755)
 		if err != nil {
-			fmt.Printf("Failed to create directory: %v\n", err)
 			return err
 		}
 	}
 	file, err := os.Create(fbcFilePath + "/" + fbcFileName)
 	if err != nil {
-		fmt.Printf("Failed to create file: %v\n", err)
 		return err
 	}
 	defer file.Close()

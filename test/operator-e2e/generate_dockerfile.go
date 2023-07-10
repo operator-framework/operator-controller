@@ -6,7 +6,8 @@ import (
 	"text/template"
 )
 
-func generateDockerFile(dockerFilePath string, yamlFolderName string, dockerFileName string) error {
+// generates Dockerfile and its contents for a given yaml file
+func generateDockerFile(dockerFilePath, yamlFolderName, dockerFileName string) error {
 	t, err := template.New("dockerfile").Parse(dockerfileTmpl)
 	if err != nil {
 		panic(err)

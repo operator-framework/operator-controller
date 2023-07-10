@@ -6,12 +6,12 @@ channelData:
   - entryVersion: 0.1.0
     replaces: null
     skips: 
-      - 0.1.1
+      - null
     skipRange: null
   - entryVersion: 0.1.1
-    replaces: 0.1.0
+    replaces: null
     skips: 
-    - null
+    - 0.1.0
     skipRange: null
 - channelName: foo
   channelEntries:
