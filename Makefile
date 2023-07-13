@@ -99,6 +99,10 @@ E2E_FLAGS ?= ""
 test-e2e: $(GINKGO) ## Run the e2e tests
 	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/e2e
 
+.PHONY: test-operator-developer-e2e
+test-operator-developer-e2e: $(GINKGO) ## Run operator create, upgrade and delete tests
+	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress test/operator-framework-e2e
+
 .PHONY: test-unit
 ENVTEST_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 UNIT_TEST_DIRS=$(shell go list ./... | grep -v /test/)
@@ -115,9 +119,8 @@ e2e: KUSTOMIZE_BUILD_DIR=config/e2e
 e2e: GO_BUILD_FLAGS=-cover
 e2e: run kind-load-test-artifacts test-e2e e2e-coverage kind-cluster-cleanup ## Run e2e test suite on local kind cluster
 
-.PHONY: operator-framework-e2e
-operator-framework-e2e: KIND_CLUSTER_NAME=operator-controller-e2e  ## Run operator-framework e2e on local kind cluster
-operator-framework-e2e: run opm test-operator-framework-e2e kind-cluster-cleanup
+operator-developer-e2e: KIND_CLUSTER_NAME=operator-controller-e2e  ## Run operator-developer e2e on local kind cluster
+operator-developer-e2e: run opm install-operator-sdk deploy-local-registry test-operator-developer-e2e stop-local-registry kind-cluster-cleanup
 
 .PHONY: e2e-coverage
 e2e-coverage:
@@ -166,6 +169,25 @@ else
 OPM = $(shell which opm)
 endif
 endif
+
+.PHONY: install-operator-sdk
+OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.30.0
+export OS=$(shell go env GOOS)
+export ARCH=$(shell go env GOARCH) 
+install-operator-sdk:  ## Install operator-sdk
+	if [ ! -f ~/bin/operator-sdk ]; then \
+		curl -LO $(OPERATOR_SDK_DL_URL)/operator-sdk_${OS}_${ARCH} ; \
+		chmod +x operator-sdk_${OS}_${ARCH} ; \
+		mv operator-sdk_$(OS)_$(ARCH) /usr/local/bin/operator-sdk ; \
+	fi
+
+.PHONY: deploy-local-registry
+deploy-local-registry: ## Deploy local docker registry
+	docker run -d -p 5000:5000 --restart=always --name local-registry registry:2
+
+.PHONY: stop-local-registry
+stop-local-registry: ## Stop and remove local registry
+	docker container stop local-registry && docker container rm -v local-registry
 
 ##@ Build
 

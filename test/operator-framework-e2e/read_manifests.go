@@ -9,8 +9,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const bundlePath = "bundles/plain-v0"
-
 type Object struct {
 	Kind       string `yaml:"kind"`
 	APIVersion string `yaml:"apiVersion"`
@@ -20,7 +18,7 @@ type Object struct {
 }
 
 // collects the Kubernetes objects present in the bundle manifest folder for a particular package and its version
-func collectKubernetesObjects(packageName, version string) ([]Object, error) {
+func collectKubernetesObjects(bundlePath, packageName, version string) ([]Object, error) {
 	objects := []Object{}
 
 	bundleManifestPath := filepath.Join(bundlePath, packageName+".v"+version, "manifests")
