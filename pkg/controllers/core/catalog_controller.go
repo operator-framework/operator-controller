@@ -273,7 +273,7 @@ func (r *CatalogReconciler) syncBundleMetadata(ctx context.Context, declCfg *dec
 	}
 
 	var existingBundles v1alpha1.BundleMetadataList
-	if err := r.List(ctx, &existingBundles); err != nil {
+	if err := r.List(ctx, &existingBundles, &client.MatchingLabels{"catalog": catalog.Name}); err != nil {
 		return fmt.Errorf("list existing bundle metadatas: %v", err)
 	}
 	for i := range existingBundles.Items {
@@ -360,7 +360,7 @@ func (r *CatalogReconciler) syncPackages(ctx context.Context, declCfg *declcfg.D
 	}
 
 	var existingPkgs v1alpha1.PackageList
-	if err := r.List(ctx, &existingPkgs); err != nil {
+	if err := r.List(ctx, &existingPkgs, &client.MatchingLabels{"catalog": catalog.Name}); err != nil {
 		return fmt.Errorf("list existing packages: %v", err)
 	}
 	for i := range existingPkgs.Items {
@@ -445,7 +445,7 @@ func (r *CatalogReconciler) syncCatalogMetadata(ctx context.Context, fsys fs.FS,
 	}
 
 	var existingCatalogMetadataObjs v1alpha1.CatalogMetadataList
-	if err := r.List(ctx, &existingCatalogMetadataObjs); err != nil {
+	if err := r.List(ctx, &existingCatalogMetadataObjs, &client.MatchingLabels{"catalog": catalog.Name}); err != nil {
 		return fmt.Errorf("list existing catalog metadata: %v", err)
 	}
 	for i, existingCatalogMetadata := range existingCatalogMetadataObjs.Items {
