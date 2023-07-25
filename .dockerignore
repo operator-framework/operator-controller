@@ -5,3 +5,4 @@ bin/goreleaser
 bin/kustomize
 bin/envtest
 testbin/
+.tiltbuild/

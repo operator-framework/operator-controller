@@ -12,3 +12,5 @@ bin/
 dist/
 cover.out
 catalogd.yaml
+
+.tiltbuild/
