@@ -41,8 +41,7 @@ SHELL = /usr/bin/env bash -o pipefail
 # Disable -j flag for make
 .NOTPARALLEL:
 
-.PHONY: all
-all: build
+.DEFAULT_GOAL := build
 
 ##@ General
 
@@ -91,19 +90,22 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-.PHONY: test test-e2e e2e kind-load kind-cluster kind-cluster-cleanup
+.PHONY: test
 test: manifests generate fmt vet test-unit e2e ## Run all tests.
 
+.PHONY: test-e2e
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 E2E_FLAGS ?= ""
 test-e2e: $(GINKGO) ## Run the e2e tests
 	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/e2e
 
+.PHONY: test-unit
 ENVTEST_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 UNIT_TEST_DIRS=$(shell go list ./... | grep -v /test/)
 test-unit: $(SETUP_ENVTEST) ## Run the unit tests
 	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
 
+.PHONY: e2e
 e2e: KIND_CLUSTER_NAME=operator-controller-e2e
 e2e: KUSTOMIZE_BUILD_DIR=config/e2e
 e2e: GO_BUILD_FLAGS=-cover
@@ -113,13 +115,16 @@ e2e: run kind-load-test-artifacts test-e2e e2e-coverage kind-cluster-cleanup ## 
 e2e-coverage:
 	COVERAGE_OUTPUT=./e2e-cover.out ./hack/e2e-coverage.sh
 
+.PHONY: kind-load
 kind-load: $(KIND) ## Loads the currently constructed image onto the cluster
 	$(KIND) load docker-image $(IMG) --name $(KIND_CLUSTER_NAME)
 
+.PHONY: kind-cluster
 kind-cluster: $(KIND) ## Standup a kind cluster
 	$(KIND) create cluster --name ${KIND_CLUSTER_NAME}
 	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
 
+.PHONY: kind-cluster-cleanup
 kind-cluster-cleanup: $(KIND) ## Delete the kind cluster
 	$(KIND) delete cluster --name ${KIND_CLUSTER_NAME}
 
@@ -162,10 +167,6 @@ go-build-linux:
 .PHONY: run
 run: docker-build kind-cluster kind-load install ## Build the operator-controller then deploy it into a new kind cluster.
 
-.PHONY: wait
-wait:
-	kubectl wait --for=condition=Available --namespace=$(OPERATOR_CONTROLLER_NAMESPACE) deployment/operator-controller-controller-manager --timeout=$(WAIT_TIMEOUT)
-
 .PHONY: docker-build
 docker-build: build-linux ## Build docker image for operator-controller with GOOS=linux and local GOARCH.
 	docker build -t ${IMG} -f Dockerfile ./bin/linux
@@ -178,9 +179,11 @@ docker-build: build-linux ## Build docker image for operator-controller with GOO
 export ENABLE_RELEASE_PIPELINE ?= false
 export GORELEASER_ARGS ?= --snapshot --clean
 
+.PHONY: release
 release: $(GORELEASER) ## Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)
 
+.PHONY: quickstart
 quickstart: export MANIFEST="https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml"
 quickstart: $(KUSTOMIZE) generate ## Generate the installation release manifests and scripts
 	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
