@@ -116,7 +116,7 @@ e2e-coverage:
 kind-load: $(KIND) ## Loads the currently constructed image onto the cluster
 	$(KIND) load docker-image $(IMG) --name $(KIND_CLUSTER_NAME)
 
-kind-cluster: $(KIND) kind-cluster-cleanup ## Standup a kind cluster
+kind-cluster: $(KIND) ## Standup a kind cluster
 	$(KIND) create cluster --name ${KIND_CLUSTER_NAME}
 	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
 
