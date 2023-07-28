@@ -1,5 +1,7 @@
 name: go-apidiff
-on: [ pull_request ]
+on:
+  pull_request:
+  merge_group:
 jobs:
   go-apidiff:
     runs-on: ubuntu-latest
