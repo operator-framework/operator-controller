@@ -26,5 +26,4 @@ jobs:
       with:
         files: cover.out
         flags: unit
-        fail_ci_if_error: true
         functionalities: fixes
