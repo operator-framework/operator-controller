@@ -34,5 +34,4 @@ jobs:
       with:
         files: e2e-cover.out
         flags: e2e
-        fail_ci_if_error: true
         functionalities: fixes
