@@ -20,17 +20,12 @@ func generateDockerFile(dockerFilePath, yamlFolderName, dockerFileName string) e
 	}
 	defer file.Close()
 
-	_, err = file.WriteString("FROM scratch\n")
-	if err != nil {
-		return err
-	}
-	err = t.Execute(file, struct{ YamlDir string }{yamlFolderName})
-	if err != nil {
+	if _, err = file.WriteString("FROM scratch\n"); err != nil {
 		return err
 	}
 
-	return nil
+	err = t.Execute(file, struct{ YamlDir string }{yamlFolderName})
+	return err
 }
 
-const dockerfileTmpl = `ADD {{.YamlDir}} /configs/{{.YamlDir}}
-`
+const dockerfileTmpl = "ADD {{.YamlDir}} /configs/{{.YamlDir}}\n"

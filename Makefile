@@ -99,9 +99,9 @@ E2E_FLAGS ?= ""
 test-e2e: $(GINKGO) ## Run the e2e tests
 	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/e2e
 
-.PHONY: test-operator-developer-e2e
-test-operator-developer-e2e: $(GINKGO) ## Run operator create, upgrade and delete tests
-	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress test/operator-framework-e2e
+.PHONY: test-op-dev-e2e
+test-op-dev-e2e: $(GINKGO) ## Run operator create, upgrade and delete tests
+	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/operator-framework-e2e
 
 .PHONY: test-unit
 ENVTEST_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
@@ -109,18 +109,15 @@ UNIT_TEST_DIRS=$(shell go list ./... | grep -v /test/)
 test-unit: $(SETUP_ENVTEST) ## Run the unit tests
 	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
 
-.PHONY: test-operator-framework-e2e
-test-operator-framework-e2e: $(GINKGO) ## Run operator create, upgrade and delete tests
-	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress test/operator-e2e
-
 .PHONY: e2e
 e2e: KIND_CLUSTER_NAME=operator-controller-e2e
 e2e: KUSTOMIZE_BUILD_DIR=config/e2e
 e2e: GO_BUILD_FLAGS=-cover
 e2e: run kind-load-test-artifacts test-e2e e2e-coverage kind-cluster-cleanup ## Run e2e test suite on local kind cluster
 
-operator-developer-e2e: KIND_CLUSTER_NAME=operator-controller-e2e  ## Run operator-developer e2e on local kind cluster
-operator-developer-e2e: run opm install-operator-sdk deploy-local-registry test-operator-developer-e2e stop-local-registry kind-cluster-cleanup
+.PHONY: operator-developer-e2e
+operator-developer-e2e: KIND_CLUSTER_NAME=operator-controller-op-dev-e2e  ## Run operator-developer e2e on local kind cluster
+operator-developer-e2e: run setup-op-dev-e2e deploy-local-registry test-op-dev-e2e stop-local-registry remove-local-registry kind-cluster-cleanup
 
 .PHONY: e2e-coverage
 e2e-coverage:
@@ -152,42 +149,26 @@ kind-load-test-artifacts: $(KIND) ## Load the e2e testdata container images into
 	$(KIND) load docker-image localhost/testdata/bundles/plain-v0/plain:v0.1.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/catalogs/test-catalog:e2e --name $(KIND_CLUSTER_NAME)
 
-.PHONY: opm
-OPM = ./bin/opm
-OPM_VERSION = v1.28.0
-opm: ## Download opm locally if necessary.
-ifeq (,$(wildcard $(OPM)))
-ifeq (,$(shell which opm 2>/dev/null))
-	@{ \
-	set -e ;\
-	mkdir -p $(dir $(OPM)) ;\
-	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPM) https://github.com/operator-framework/operator-registry/releases/download/$(OPM_VERSION)/$${OS}-$${ARCH}-opm ;\
-	chmod +x $(OPM) ;\
-	}
-else
-OPM = $(shell which opm)
-endif
-endif
-
-.PHONY: install-operator-sdk
-OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.30.0
-export OS=$(shell go env GOOS)
-export ARCH=$(shell go env GOARCH) 
-install-operator-sdk:  ## Install operator-sdk
-	if [ ! -f ~/bin/operator-sdk ]; then \
-		curl -LO $(OPERATOR_SDK_DL_URL)/operator-sdk_${OS}_${ARCH} ; \
-		chmod +x operator-sdk_${OS}_${ARCH} ; \
-		mv operator-sdk_$(OS)_$(ARCH) /usr/local/bin/operator-sdk ; \
-	fi
-
 .PHONY: deploy-local-registry
 deploy-local-registry: ## Deploy local docker registry
-	docker run -d -p 5000:5000 --restart=always --name local-registry registry:2
+	$(CONTAINER_RUNTIME) run -d -p 5000:5000 --restart=always --name local-registry registry:2
 
 .PHONY: stop-local-registry
-stop-local-registry: ## Stop and remove local registry
-	docker container stop local-registry && docker container rm -v local-registry
+stop-local-registry: ## Stop local registry
+	$(CONTAINER_RUNTIME) container stop local-registry
+
+.PHONY: remove-local-registry
+remove-local-registry: ## Remove local registry
+	$(CONTAINER_RUNTIME) container rm -v local-registry
+
+.PHONY: setup-op-dev-e2e
+setup-op-dev-e2e: $(OPM) $(OPERATOR_SDK)
+
+opm: $(OPM)
+	$(OPM) $(OPM_ARGS)
+
+operator-sdk: $(OPERATOR_SDK)
+	(cd $(OPERATOR_SDK_PROJECT_PATH) && $(OPERATOR_SDK) $(OPERATOR_SDK_ARGS))
 
 ##@ Build
 

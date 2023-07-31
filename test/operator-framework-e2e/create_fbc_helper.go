@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
@@ -20,10 +21,15 @@ const (
 )
 
 // Forms the FBC declartive config and creates the FBC by calling functions for forming the package, channel and bundles.
-func CreateFBC(operatorName, defaultChannel string, bundleRef, bundleVersions []string) *declcfg.DeclarativeConfig {
+func CreateFBC(operatorName, defaultChannel string, bundleRefsVersions map[string]string) *declcfg.DeclarativeConfig {
 	dPackage := formPackage(operatorName)
+	bundleVersions := make([]string, 0)
+	for _, bundleVersion := range bundleRefsVersions {
+		bundleVersions = append(bundleVersions, bundleVersion)
+	}
 	dChannel := formChannel(operatorName, defaultChannel, bundleVersions)
-	dBundle := formBundle(operatorName, bundleVersions, bundleRef)
+
+	dBundle := formBundle(operatorName, bundleRefsVersions)
 
 	fbc := declcfg.DeclarativeConfig{
 		Packages: []declcfg.Package{dPackage},
@@ -72,13 +78,13 @@ func formChannelEntries(pkgName string, bundleVersions []string) []declcfg.Chann
 }
 
 // Forms bundle schema for the FBC
-func formBundle(pkgName string, versions, imageRefs []string) []declcfg.Bundle {
-	bundleFormed := make([]declcfg.Bundle, 0, len(imageRefs))
-	for i := 0; i < len(imageRefs); i++ {
+func formBundle(pkgName string, imgRefsVersions map[string]string) []declcfg.Bundle {
+	bundleFormed := make([]declcfg.Bundle, 0, len(imgRefsVersions))
+	for imgRef, version := range imgRefsVersions {
 		var properties []property.Property
 		properties = append(properties, property.Property{
 			Type:  SchemaPackage,
-			Value: json.RawMessage(fmt.Sprintf(`{"packageName": "%s", "version": "%s"}`, pkgName, versions[i])),
+			Value: json.RawMessage(fmt.Sprintf(`{"packageName": "%s", "version": "%s"}`, pkgName, version)),
 		})
 		properties = append(properties, property.Property{
 			Type:  SchemaBundleMediatype,
@@ -87,9 +93,9 @@ func formBundle(pkgName string, versions, imageRefs []string) []declcfg.Bundle {
 
 		bundleFormed = append(bundleFormed, declcfg.Bundle{
 			Schema:     SchemaBundle,
-			Name:       pkgName + ".v" + versions[i],
+			Name:       pkgName + ".v" + version,
 			Package:    pkgName,
-			Image:      imageRefs[i],
+			Image:      imgRef,
 			Properties: properties,
 		})
 	}
@@ -99,30 +105,24 @@ func formBundle(pkgName string, versions, imageRefs []string) []declcfg.Bundle {
 // Writes the formed FBC into catalog.yaml file
 func WriteFBC(fbc declcfg.DeclarativeConfig, fbcFilePath, fbcFileName string) error {
 	var buf bytes.Buffer
-	err := declcfg.WriteYAML(fbc, &buf)
-	if err != nil {
+	if err := declcfg.WriteYAML(fbc, &buf); err != nil {
 		return err
 	}
 
-	_, err = os.Stat(fbcFilePath)
-	if os.IsNotExist(err) {
-		err := os.MkdirAll(fbcFilePath, 0755)
-		if err != nil {
+	if _, err := os.Stat(fbcFilePath); os.IsNotExist(err) {
+		if err := os.MkdirAll(fbcFilePath, 0755); err != nil {
 			return err
 		}
 	}
-	file, err := os.Create(fbcFilePath + "/" + fbcFileName)
+
+	file, err := os.Create(filepath.Join(fbcFilePath, fbcFileName))
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	err = os.WriteFile(fbcFilePath+"/"+fbcFileName, buf.Bytes(), 0600)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	err = os.WriteFile(filepath.Join(fbcFilePath, fbcFileName), buf.Bytes(), 0600)
+	return err
 }
 
 // Generates the semver using the bundle images passed
@@ -146,8 +146,7 @@ stable:
 	}
 	defer file.Close()
 
-	_, err = file.WriteString(fileContent)
-	if err != nil {
+	if _, err = file.WriteString(fileContent); err != nil {
 		return fmt.Errorf("error forming the semver yaml file %v : %v", semverFileName, err)
 	}
 

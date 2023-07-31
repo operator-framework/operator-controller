@@ -73,10 +73,10 @@ type SdkProjectInfo struct {
 }
 
 const (
-	remoteRegistryRepo = "localhost:5000/"
-	kindServer         = "operator-controller-e2e"
-	opmPath            = "../../bin/opm"
-	deployedNameSpace  = "rukpak-system"
+	remoteRegistryRepo     = "localhost:5000/"
+	kindServer             = "operator-controller-op-dev-e2e"
+	deployedNameSpace      = "rukpak-system"
+	operatorControllerHome = "../.."
 )
 
 func TestOperatorFramework(t *testing.T) {
@@ -95,13 +95,13 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	err = operatorv1alpha1.AddToScheme(scheme)
-	Expect(err).To(Not(HaveOccurred()))
+	Expect(err).ToNot(HaveOccurred())
 
 	err = rukpakv1alpha1.AddToScheme(scheme)
-	Expect(err).To(Not(HaveOccurred()))
+	Expect(err).ToNot(HaveOccurred())
 
 	c, err = client.New(cfg, client.Options{Scheme: scheme})
-	Expect(err).To(Not(HaveOccurred()))
+	Expect(err).ToNot(HaveOccurred())
 
 	ctx = context.Background()
 
@@ -149,38 +149,36 @@ var _ = Describe("Operator Framework E2E for plain bundles", func() {
 	When("Build and load plain+v0 bundle images into the test environment", func() {
 		It("Build the plain bundle images and load them", func() {
 			for _, b := range bundleInfo.bundles {
-				dockerContext := bundleInfo.baseFolderPath + "/" + b.bInputDir
-				dockerfilePath := dockerContext + "/Dockerfile"
+				dockerContext := filepath.Join(bundleInfo.baseFolderPath, b.bInputDir)
+				dockerfilePath := filepath.Join(dockerContext, "Dockerfile")
 				err = buildPushLoadContainer(b.imageRef, dockerfilePath, dockerContext, kindServer, GinkgoWriter)
-				Expect(err).To(Not(HaveOccurred()))
+				Expect(err).ToNot(HaveOccurred())
 			}
 		})
 	})
 	When("Create the FBC", func() {
 		It("Create a FBC", func() {
 			By("Creating FBC for plain bundle using custom routine")
-			var imageRefs []string
-			var bundleVersions []string
+			imageRefsBundleVersions := make(map[string]string)
 			for _, b := range bundleInfo.bundles {
-				imageRefs = append(imageRefs, b.imageRef)
-				bundleVersions = append(bundleVersions, b.bundleVersion)
+				imageRefsBundleVersions[b.imageRef] = b.bundleVersion
 			}
-			fbc := CreateFBC(catalogDInfo.operatorName, catalogDInfo.desiredChannelName, imageRefs, bundleVersions)
-			err = WriteFBC(*fbc, catalogDInfo.baseFolderPath+"/"+catalogDInfo.catalogDir, catalogDInfo.fbcFileName)
-			Expect(err).To(Not(HaveOccurred()))
+			fbc := CreateFBC(catalogDInfo.operatorName, catalogDInfo.desiredChannelName, imageRefsBundleVersions)
+			err = WriteFBC(*fbc, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir), catalogDInfo.fbcFileName)
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 	When("Build and load the FBC image into the test environment", func() {
 		It("Generate the docker file, build and load FBC image", func() {
 			By("Calling generate dockerfile function written")
 			err = generateDockerFile(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir, catalogDInfo.catalogDir+".Dockerfile")
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Building the catalog image and loading into the test environment")
 			dockerContext := catalogDInfo.baseFolderPath
-			dockerfilePath := dockerContext + "/" + catalogDInfo.catalogDir + ".Dockerfile"
+			dockerfilePath := filepath.Join(dockerContext, catalogDInfo.catalogDir) + ".Dockerfile"
 			err = buildPushLoadContainer(catalogDInfo.imageRef, dockerfilePath, dockerContext, kindServer, GinkgoWriter)
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 	When("Create a catalog object and check if the resources are created", func() {
@@ -190,7 +188,7 @@ var _ = Describe("Operator Framework E2E for plain bundles", func() {
 				bundleVersions[i] = bundle.bundleVersion
 			}
 			operatorCatalog, err = createCatalogCheckResources(operatorCatalog, catalogDInfo, bundleVersions)
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 	When("Install an operator and check if the operator operations succeed", func() {
@@ -199,7 +197,7 @@ var _ = Describe("Operator Framework E2E for plain bundles", func() {
 			operator, err = createOperator(ctx, catalogDInfo.operatorName, operatorAction.installVersion)
 			Expect(err).ToNot(HaveOccurred())
 
-			By("Checking if the operator operations suceceded")
+			By("Checking if the operator operations succeeded")
 			checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.installVersion, bundleInfo.baseFolderPath)
 		})
 	})
@@ -220,7 +218,7 @@ var _ = Describe("Operator Framework E2E for plain bundles", func() {
 
 			By("Verifying the operator doesn't exist")
 			Eventually(func(g Gomega) {
-				err = checkOperatorDeleted(catalogDInfo.operatorName)
+				err = validateOperatorDeletion(catalogDInfo.operatorName)
 				g.Expect(errors.IsNotFound(err)).To(BeTrue())
 			}).Should(Succeed())
 		})
@@ -229,13 +227,13 @@ var _ = Describe("Operator Framework E2E for plain bundles", func() {
 		It("Clearing up data generated for the test", func() {
 			//Deleting the catalog object and checking if the deletion was successful
 			Eventually(func(g Gomega) {
-				err = deleteAndCheckCatalogDeleted(operatorCatalog)
+				err = deleteAndValidateCatalogDeletion(operatorCatalog)
 				g.Expect(errors.IsNotFound(err)).To(BeTrue())
 			}).Should(Succeed())
 
 			var toDelete []string
-			toDelete = append(toDelete, catalogDInfo.baseFolderPath+"/"+catalogDInfo.catalogDir)               // delete the FBC formed
-			toDelete = append(toDelete, catalogDInfo.baseFolderPath+"/"+catalogDInfo.catalogDir+".Dockerfile") // delete the catalog Dockerfile generated
+			toDelete = append(toDelete, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir))               // delete the FBC formed
+			toDelete = append(toDelete, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir+".Dockerfile")) // delete the catalog Dockerfile generated
 			err = deleteFolderFile(toDelete)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -294,18 +292,18 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 	When("Build registry+v1 bundles with operator-sdk", func() {
 		It("Initialize new operator-sdk project and create new api and controller", func() {
 			err = sdkInitialize(sdkInfo)
-			Expect(err).NotTo(HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 		})
 		It("Generate manifests and CSV for the operator", func() {
 			err = sdkGenerateManifestsCSV(sdkInfo)
-			Expect(err).NotTo(HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 		})
 		It("Generate and build registry+v1 bundle", func() {
 			// Creates bundle structure for the specified bundle versions
 			// Bundle content is same for the bundles now
 			for _, b := range bundleInfo.bundles {
 				err = sdkComplete(sdkInfo, bundleInfo.baseFolderPath, b)
-				Expect(err).NotTo(HaveOccurred())
+				Expect(err).ToNot(HaveOccurred())
 			}
 		})
 	})
@@ -321,8 +319,12 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Forming the FBC using semver")
-			cmd := exec.Command(opmPath, "alpha", "render-template", "semver", semverFileName, "-o", "yaml", "--use-http")
-			output, err := cmd.CombinedOutput()
+			semverFileAbsPath, err := filepath.Abs(semverFileName)
+			Expect(err).ToNot(HaveOccurred())
+			opmArgs := "OPM_ARGS=alpha render-template semver " + semverFileAbsPath + " -o yaml --use-http"
+			cmd := exec.Command("make", "-s", "opm", opmArgs)
+			cmd.Dir = operatorControllerHome
+			output, err := cmd.Output()
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Saving the output under catalogs in testdata")
@@ -337,23 +339,26 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 		})
 		It("Validate FBC", func() {
 			By("By validating the FBC using opm validate")
-			err = validateFBC(catalogDInfo.baseFolderPath + "/" + catalogDInfo.catalogDir)
-			Expect(err).To(Not(HaveOccurred()))
+			err = validateFBC(filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir))
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 	When("Generate docker file and FBC image and load the FBC image into test environment", func() {
 		It("Create the docker file", func() {
 			By("By using opm generate tool")
-			dockerFolderPath := catalogDInfo.baseFolderPath + "/" + catalogDInfo.catalogDir
-			cmd := exec.Command(opmPath, "generate", "dockerfile", dockerFolderPath)
+			dockerFolderAbsPath, err := filepath.Abs(filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir))
+			Expect(err).ToNot(HaveOccurred())
+			opmArgs := "OPM_ARGS=generate dockerfile " + dockerFolderAbsPath
+			cmd := exec.Command("make", "opm", opmArgs)
+			cmd.Dir = operatorControllerHome
 			err = cmd.Run()
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Building the catalog image and loading into the test environment")
 			dockerContext := catalogDInfo.baseFolderPath
-			dockerFilePath := dockerContext + "/" + catalogDInfo.catalogDir + ".Dockerfile"
+			dockerFilePath := filepath.Join(dockerContext, catalogDInfo.catalogDir+".Dockerfile")
 			err = buildPushLoadContainer(catalogDInfo.imageRef, dockerFilePath, dockerContext, kindServer, GinkgoWriter)
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 	When("Create a catalog object and check if the resources are created", func() {
@@ -363,7 +368,7 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 				bundleVersions[i] = bundle.bundleVersion
 			}
 			operatorCatalog, err = createCatalogCheckResources(operatorCatalog, catalogDInfo, bundleVersions)
-			Expect(err).To(Not(HaveOccurred()))
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 	When("Install an operator and check if the operator operations succeed", func() {
@@ -393,7 +398,7 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 
 			By("Eventually the operator should not exists")
 			Eventually(func(g Gomega) {
-				err = checkOperatorDeleted(catalogDInfo.operatorName)
+				err = validateOperatorDeletion(catalogDInfo.operatorName)
 				g.Expect(errors.IsNotFound(err)).To(BeTrue())
 			}).Should(Succeed())
 		})
@@ -402,7 +407,7 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 		It("Clearing up data generated for the test", func() {
 			//Deleting the catalog object and checking if the deletion was successful
 			Eventually(func(g Gomega) {
-				err = deleteAndCheckCatalogDeleted(operatorCatalog)
+				err = deleteAndValidateCatalogDeletion(operatorCatalog)
 				g.Expect(errors.IsNotFound(err)).To(BeTrue())
 			}).Should(Succeed())
 
@@ -410,10 +415,10 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 			for _, b := range bundleInfo.bundles {
 				toDelete = append(toDelete, bundleInfo.baseFolderPath+"/"+b.bInputDir) // delete the registry+v1 bundles formed
 			}
-			toDelete = append(toDelete, sdkInfo.projectName)                                                   //delete the sdk project directory
-			toDelete = append(toDelete, semverFileName)                                                        // delete the semver yaml formed
-			toDelete = append(toDelete, catalogDInfo.baseFolderPath+"/"+catalogDInfo.catalogDir)               // delete the FBC formed
-			toDelete = append(toDelete, catalogDInfo.baseFolderPath+"/"+catalogDInfo.catalogDir+".Dockerfile") // delete the catalog Dockerfile generated
+			toDelete = append(toDelete, sdkInfo.projectName)                                                               //delete the sdk project directory
+			toDelete = append(toDelete, semverFileName)                                                                    // delete the semver yaml formed
+			toDelete = append(toDelete, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir))               // delete the FBC formed
+			toDelete = append(toDelete, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir+".Dockerfile")) // delete the catalog Dockerfile generated
 			err = deleteFolderFile(toDelete)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -422,29 +427,29 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 
 func sdkInitialize(sdkInfo *SdkProjectInfo) error {
 	// Create new project for the operator
-	err := os.Mkdir(sdkInfo.projectName, 0755)
-	if err != nil {
+	if err := os.Mkdir(sdkInfo.projectName, 0755); err != nil {
 		return fmt.Errorf("Error creating the sdk project %v:%v", sdkInfo.projectName, err)
 	}
 
 	// Initialize the operator-sdk project
-	domain := "--domain=" + sdkInfo.domainName
-	cmd := exec.Command("operator-sdk", "init", domain)
-	cmd.Dir = sdkInfo.projectName
-	err = cmd.Run()
+	operatorSdkProjectAbsPath, _ := filepath.Abs(sdkInfo.projectName)
+	operatorSdkProjectPath := "OPERATOR_SDK_PROJECT_PATH=" + operatorSdkProjectAbsPath
+	operatorSdkArgs := "OPERATOR_SDK_ARGS= init --domain=" + sdkInfo.domainName
+	cmd := exec.Command("make", "operator-sdk", operatorSdkProjectPath, operatorSdkArgs)
+	cmd.Dir = operatorControllerHome
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Error initializing the operator-sdk project %v:%v", sdkInfo.projectName, err)
+		return fmt.Errorf("Error initializing the operator-sdk project %v: %v : %v", sdkInfo.projectName, string(output), err)
 	}
 
 	// Create new API and controller
-	group := "--group=" + sdkInfo.group
-	version := "--version=" + sdkInfo.version
-	kind := "--kind=" + sdkInfo.kind
-	cmd = exec.Command("operator-sdk", "create", "api", group, version, kind, "--resource", "--controller")
-	cmd.Dir = sdkInfo.projectName
-	err = cmd.Run()
+	operatorSdkProjectPath = "OPERATOR_SDK_PROJECT_PATH=" + operatorSdkProjectAbsPath
+	operatorSdkArgs = "OPERATOR_SDK_ARGS= create api --group=" + sdkInfo.group + " --version=" + sdkInfo.version + " --kind=" + sdkInfo.kind + " --resource --controller"
+	cmd = exec.Command("make", "operator-sdk", operatorSdkProjectPath, operatorSdkArgs)
+	cmd.Dir = operatorControllerHome
+	output, err = cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Error creating new API and controller for the operator-sdk project %v:%v", sdkInfo.projectName, err)
+		return fmt.Errorf("Error creating new API and controller for the operator-sdk project %v: %v : %v", sdkInfo.projectName, string(output), err)
 	}
 
 	// Checking if the API was created in the expected path
@@ -462,16 +467,14 @@ func sdkGenerateManifestsCSV(sdkInfo *SdkProjectInfo) error {
 	// Update the generated code for the resources
 	cmd := exec.Command("make", "generate")
 	cmd.Dir = sdkInfo.projectName
-	err := cmd.Run()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("Error updating generated code for the operator-sdk project %v:%v", sdkInfo.projectName, err)
 	}
 
 	// Generate and update the CRD manifests
 	cmd = exec.Command("make", "manifests")
 	cmd.Dir = sdkInfo.projectName
-	err = cmd.Run()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("Error generating and updating crd manifests for the operator-sdk project %v:%v", sdkInfo.projectName, err)
 	}
 
@@ -480,11 +483,14 @@ func sdkGenerateManifestsCSV(sdkInfo *SdkProjectInfo) error {
 	Expect(crdFilePath).To(BeAnExistingFile())
 
 	// Generate CSV for the bundle with default values
-	cmd = exec.Command("operator-sdk", "generate", "kustomize", "manifests", "--interactive=false")
-	cmd.Dir = sdkInfo.projectName
-	err = cmd.Run()
+	operatorSdkProjectAbsPath, _ := filepath.Abs(sdkInfo.projectName)
+	operatorSdkProjectPath := "OPERATOR_SDK_PROJECT_PATH=" + operatorSdkProjectAbsPath
+	operatorSdkArgs := "OPERATOR_SDK_ARGS= generate kustomize manifests --interactive=false"
+	cmd = exec.Command("make", "operator-sdk", operatorSdkProjectPath, operatorSdkArgs)
+	cmd.Dir = operatorControllerHome
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Error generating CSV for the operator-sdk project %v:%v", sdkInfo.projectName, err)
+		return fmt.Errorf("Error generating CSV for the operator-sdk project %v: %v: %v", sdkInfo.projectName, output, err)
 	}
 
 	// Checking if CRD manifests are generated
@@ -499,9 +505,9 @@ func sdkComplete(sdkInfo *SdkProjectInfo, rootBundlePath string, bundleData Bund
 	bundleGenFlags := "BUNDLE_GEN_FLAGS=-q --overwrite=false --version " + bundleData.bundleVersion + " $(BUNDLE_METADATA_OPTS)"
 	cmd := exec.Command("make", "bundle", bundleGenFlags)
 	cmd.Dir = sdkInfo.projectName
-	err := cmd.Run()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Error generating bundle format for the bundle %v:%v", bundleData.bInputDir, err)
+		return fmt.Errorf("Error generating bundle format for the bundle %v: %v :%v", bundleData.bInputDir, string(output), err)
 	}
 
 	// Check if bundle manifests are created
@@ -516,33 +522,32 @@ func sdkComplete(sdkInfo *SdkProjectInfo, rootBundlePath string, bundleData Bund
 	bundleImg := "BUNDLE_IMG=" + bundleData.imageRef
 	cmd = exec.Command("make", "bundle-build", bundleImg)
 	cmd.Dir = sdkInfo.projectName
-	err = cmd.Run()
+	output, err = cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Error building bundle image %v with tag %v :%v", bundleData.imageRef, bundleData.bundleVersion, err)
+		return fmt.Errorf("Error building bundle image %v with tag %v :%v: %v", bundleData.imageRef, bundleData.bundleVersion, string(output), err)
 	}
 
 	// Push the bundle image
 	cmd = exec.Command("make", "bundle-push", bundleImg)
 	cmd.Dir = sdkInfo.projectName
-	err = cmd.Run()
+	output, err = cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Error pushing bundle image %v with tag %v :%v", bundleData.imageRef, bundleData.bundleVersion, err)
+		return fmt.Errorf("Error pushing bundle image %v with tag %v : %v: %v", bundleData.imageRef, bundleData.bundleVersion, string(output), err)
 	}
 
 	// Load the bundle image into test environment
-	err = loadImages(GinkgoWriter, kindServer, bundleData.imageRef)
-	if err != nil {
+	if err = loadImages(GinkgoWriter, kindServer, bundleData.imageRef); err != nil {
 		return err
 	}
 
 	// Move the bundle structure into correct testdata folder for bundles
-	err = moveFolderContents(sdkInfo.projectName+"/"+"bundle", rootBundlePath+"/"+bundleData.bInputDir)
-	Expect(err).NotTo(HaveOccurred())
-	Expect(rootBundlePath + "/" + bundleData.bInputDir).To(BeAnExistingFile())
+	err = moveFolderContents(filepath.Join(sdkInfo.projectName, "bundle"), filepath.Join(rootBundlePath, bundleData.bInputDir))
+	Expect(err).ToNot(HaveOccurred())
+	Expect(filepath.Join(rootBundlePath, bundleData.bInputDir)).To(BeAnExistingFile())
 
 	// Move the generated dockerfile to correct path
-	err = os.Rename(sdkInfo.projectName+"/"+"bundle.Dockerfile", rootBundlePath+"/"+bundleData.bInputDir+"/"+"bundle.Dockerfile")
-	Expect(err).NotTo(HaveOccurred())
+	err = os.Rename(filepath.Join(sdkInfo.projectName, "bundle.Dockerfile"), filepath.Join(rootBundlePath, bundleData.bInputDir, "bundle.Dockerfile"))
+	Expect(err).ToNot(HaveOccurred())
 
 	return nil
 }
@@ -559,20 +564,18 @@ func buildPushLoadContainer(tag, dockerfilePath, dockerContext, kindServer strin
 	cmd := exec.Command("docker", "build", "-t", tag, "-f", dockerfilePath, dockerContext)
 	cmd.Stderr = w
 	cmd.Stdout = w
-	err := cmd.Run()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("Error building Docker container image %s : %v", tag, err)
 	}
 
 	cmd = exec.Command("docker", "push", tag)
 	cmd.Stderr = w
 	cmd.Stdout = w
-	err = cmd.Run()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("Error pushing Docker container image: %s to the registry: %v", tag, err)
 	}
 
-	err = loadImages(w, kindServer, tag)
+	err := loadImages(w, kindServer, tag)
 	return err
 }
 
@@ -587,8 +590,7 @@ func loadImages(w io.Writer, kindServerName string, images ...string) error {
 		cmd := exec.Command("kind", "load", "docker-image", image, "--name", kindServerName)
 		cmd.Stderr = w
 		cmd.Stdout = w
-		err := cmd.Run()
-		if err != nil {
+		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("Error loading the container image %s into the cluster %s : %v", image, kindServerName, err)
 		}
 	}
@@ -597,7 +599,13 @@ func loadImages(w io.Writer, kindServerName string, images ...string) error {
 
 // Validates the FBC using opm tool
 func validateFBC(fbcDirPath string) error {
-	cmd := exec.Command(opmPath, "validate", fbcDirPath)
+	fbcDirAbsPath, err := filepath.Abs(fbcDirPath)
+	if err != nil {
+		return fmt.Errorf("FBC validation error in absolute path %s: %s", fbcDirPath, err)
+	}
+	opmArgs := "OPM_ARGS=validate " + fbcDirAbsPath
+	cmd := exec.Command("make", "opm", opmArgs)
+	cmd.Dir = operatorControllerHome
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("FBC validation failed: %s", output)
@@ -648,30 +656,28 @@ func upgradeOperator(ctx context.Context, opName, version string) (*operatorv1al
 			Name: opName,
 		},
 	}
-	err := c.Get(ctx, types.NamespacedName{Name: opName}, operator)
-	if err != nil {
+	if err := c.Get(ctx, types.NamespacedName{Name: opName}, operator); err != nil {
 		return nil, err
 	}
 	operator.Spec.PackageName = opName
 	operator.Spec.Version = version
 
-	err = c.Update(ctx, operator)
+	err := c.Update(ctx, operator)
 	return operator, err
 }
 
 // Deletes the operator opName
 func deleteOperator(ctx context.Context, opName string) error {
 	operator := &operatorv1alpha1.Operator{}
-	err := c.Get(ctx, types.NamespacedName{Name: opName}, operator)
-	if err != nil {
+	if err := c.Get(ctx, types.NamespacedName{Name: opName}, operator); err != nil {
 		return fmt.Errorf("Error deleting the operator %v for the version %v : %v", opName, operator.Spec.Version, err)
 	}
 
-	err = c.Delete(ctx, operator)
+	err := c.Delete(ctx, operator)
 	return err
 }
 
-// Checks if the expected condition and actual condition for a resource matches
+// Checks if the expected condition and actual condition for a resource matches and returns error if not.
 func checkConditionEquals(actualCond, expectedCond *metav1.Condition) error {
 	if actualCond == nil {
 		return fmt.Errorf("Expected condition %s to not be nil", expectedCond.Type)
@@ -688,10 +694,9 @@ func checkConditionEquals(actualCond, expectedCond *metav1.Condition) error {
 	return nil
 }
 
-// Checks if the catalog resource is successfully unpacked
-func checkCatalogUnpacked(operatorCatalog *catalogd.Catalog) error {
-	err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, operatorCatalog)
-	if err != nil {
+// Checks if the catalog resource is successfully unpacked and returns error if not.
+func validateCatalogUnpacking(operatorCatalog *catalogd.Catalog) error {
+	if err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, operatorCatalog); err != nil {
 		return fmt.Errorf("Error retrieving catalog %v:%v", operatorCatalog.Name, err)
 	}
 
@@ -702,8 +707,7 @@ func checkCatalogUnpacked(operatorCatalog *catalogd.Catalog) error {
 		Reason:  catalogd.ReasonUnpackSuccessful,
 		Message: "successfully unpacked the catalog image",
 	}
-	err = checkConditionEquals(cond, expectedCond)
-	if err != nil {
+	if err := checkConditionEquals(cond, expectedCond); err != nil {
 		return fmt.Errorf("Status conditions for the catalog instance %v is not as expected:%v", operatorCatalog.Name, err)
 	}
 	return nil
@@ -718,20 +722,20 @@ func createCatalogCheckResources(operatorCatalog *catalogd.Catalog, catalogDInfo
 
 	// checking if catalog unpacking is successful
 	Eventually(func(g Gomega) {
-		err = checkCatalogUnpacked(operatorCatalog)
+		err = validateCatalogUnpacking(operatorCatalog)
 		g.Expect(err).ToNot(HaveOccurred())
-	}, 20*time.Second, 1).Should(Succeed())
+	}, 2*time.Minute, 1).Should(Succeed())
 
 	// checking if the packages are created
 	Eventually(func(g Gomega) {
-		err = checkPackageCreated(operatorCatalog, catalogDInfo.operatorName)
+		err = validatePackageCreation(operatorCatalog, catalogDInfo.operatorName)
 		g.Expect(err).ToNot(HaveOccurred())
-	}, 20*time.Second, 1).Should(Succeed())
+	}, 2*time.Minute, 1).Should(Succeed())
 
 	// checking if the bundle metadatas are created
 	By("Eventually checking if bundle metadata is created")
 	Eventually(func(g Gomega) {
-		err = checkBundleMetadataCreated(operatorCatalog, catalogDInfo.operatorName, bundleVersions)
+		err = validateBundleMetadataCreation(operatorCatalog, catalogDInfo.operatorName, bundleVersions)
 		g.Expect(err).ToNot(HaveOccurred())
 	}).Should(Succeed())
 	return operatorCatalog, nil
@@ -741,21 +745,21 @@ func createCatalogCheckResources(operatorCatalog *catalogd.Catalog, catalogDInfo
 func checkOperatorOperationsSuccess(operator *operatorv1alpha1.Operator, pkgName, opVersion, bundlePath string) {
 	// checking for a successful resolution and bundle path
 	Eventually(func(g Gomega) {
-		err := checkResolutionAndBundlePath(operator)
+		err := validateResolutionAndBundlePath(operator)
 		g.Expect(err).ToNot(HaveOccurred())
-	}, 15*time.Second, 1).Should(Succeed())
+	}, 2*time.Minute, 1).Should(Succeed())
 
 	// checking for a successful operator installation
 	Eventually(func(g Gomega) {
-		err := checkOperatorInstalled(operator, opVersion)
+		err := validateOperatorInstallation(operator, opVersion)
 		g.Expect(err).ToNot(HaveOccurred())
-	}, 15*time.Second, 1).Should(Succeed())
+	}, 2*time.Minute, 1).Should(Succeed())
 
 	// checking for a successful package installation
 	Eventually(func(g Gomega) {
-		err := checkPackageInstalled(operator)
+		err := validatePackageInstallation(operator)
 		g.Expect(err).ToNot(HaveOccurred())
-	}, 15*time.Second, 1).Should(Succeed())
+	}, 2*time.Minute, 1).Should(Succeed())
 
 	// verifying the presence of relevant manifest from the bundle on cluster
 	Eventually(func(g Gomega) {
@@ -764,14 +768,13 @@ func checkOperatorOperationsSuccess(operator *operatorv1alpha1.Operator, pkgName
 	}).Should(Succeed())
 }
 
-// Checks if the packages are created from the catalog.
+// Checks if the packages are created from the catalog and returns error if not.
 // The expected pkgName is taken as input and is compared against the packages collected whose catalog name
 // matches the catalog under consideration.
-func checkPackageCreated(operatorCatalog *catalogd.Catalog, pkgName string) error {
+func validatePackageCreation(operatorCatalog *catalogd.Catalog, pkgName string) error {
 	var pkgCollected string
 	pList := &catalogd.PackageList{}
-	err := c.List(ctx, pList)
-	if err != nil {
+	if err := c.List(ctx, pList); err != nil {
 		return fmt.Errorf("Error retrieving the packages after %v catalog instance creation: %v", operatorCatalog.Name, err)
 	}
 	for _, pack := range pList.Items {
@@ -785,11 +788,11 @@ func checkPackageCreated(operatorCatalog *catalogd.Catalog, pkgName string) erro
 	return nil
 }
 
-// Checks if the bundle metadatas are created from the catalog.
+// Checks if the bundle metadatas are created from the catalog and returns error if not.
 // The expected pkgNames and their versions are taken as input. This is then compared against the collected bundle versions.
 // The collected bundle versions are formed by reading the version from "olm.package" property type whose catalog name
 // matches the catalog name and pkgName matches the pkgName under consideration.
-func checkBundleMetadataCreated(operatorCatalog *catalogd.Catalog, pkgName string, versions []string) error {
+func validateBundleMetadataCreation(operatorCatalog *catalogd.Catalog, pkgName string, versions []string) error {
 	type Package struct {
 		PackageName string `json:"packageName"`
 		Version     string `json:"version"`
@@ -797,8 +800,7 @@ func checkBundleMetadataCreated(operatorCatalog *catalogd.Catalog, pkgName strin
 	var pkgValue Package
 	collectedBundleVersions := make([]string, 0)
 	bmList := &catalogd.BundleMetadataList{}
-	err := c.List(ctx, bmList)
-	if err != nil {
+	if err := c.List(ctx, bmList); err != nil {
 		return fmt.Errorf("Error retrieving the bundle metadata after %v catalog instance creation: %v", operatorCatalog.Name, err)
 	}
 
@@ -821,10 +823,9 @@ func checkBundleMetadataCreated(operatorCatalog *catalogd.Catalog, pkgName strin
 	return nil
 }
 
-// Checks for a successful resolution and bundle path for the operator
-func checkResolutionAndBundlePath(operator *operatorv1alpha1.Operator) error {
-	err := c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)
-	if err != nil {
+// Checks for a successful resolution and bundle path for the operator and returns error if not.
+func validateResolutionAndBundlePath(operator *operatorv1alpha1.Operator) error {
+	if err := c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator); err != nil {
 		return fmt.Errorf("Error retrieving operator %v:%v", operator.Name, err)
 	}
 	cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
@@ -834,8 +835,7 @@ func checkResolutionAndBundlePath(operator *operatorv1alpha1.Operator) error {
 		Reason:  operatorv1alpha1.ReasonSuccess,
 		Message: "resolved to",
 	}
-	err = checkConditionEquals(cond, expectedCond)
-	if err != nil {
+	if err := checkConditionEquals(cond, expectedCond); err != nil {
 		return fmt.Errorf("Status conditions for the operator %v for the version %v is not as expected:%v", operator.Name, operator.Spec.Version, err)
 	}
 	if operator.Status.ResolvedBundleResource == "" {
@@ -844,21 +844,19 @@ func checkResolutionAndBundlePath(operator *operatorv1alpha1.Operator) error {
 	return nil
 }
 
-// Checks if the operator installation succeeded
-func checkOperatorInstalled(operator *operatorv1alpha1.Operator, operatorVersion string) error {
-	err := c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)
-	if err != nil {
+// Checks if the operator installation succeeded and returns error if not.
+func validateOperatorInstallation(operator *operatorv1alpha1.Operator, operatorVersion string) error {
+	if err := c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator); err != nil {
 		return fmt.Errorf("Error retrieving operator %v:%v", operator.Name, err)
 	}
 	cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeInstalled)
 	expectedCond := &metav1.Condition{
-		Type:    operatorv1alpha1.TypeResolved,
+		Type:    operatorv1alpha1.TypeInstalled,
 		Status:  metav1.ConditionTrue,
 		Reason:  operatorv1alpha1.ReasonSuccess,
 		Message: "installed from",
 	}
-	err = checkConditionEquals(cond, expectedCond)
-	if err != nil {
+	if err := checkConditionEquals(cond, expectedCond); err != nil {
 		return fmt.Errorf("Status conditions for the operator %v for the version %v is not as expected:%v", operator.Name, operator.Spec.Version, err)
 	}
 	if operator.Status.InstalledBundleResource == "" {
@@ -870,22 +868,34 @@ func checkOperatorInstalled(operator *operatorv1alpha1.Operator, operatorVersion
 	return nil
 }
 
-// Checks if bundle deployment succeeded
-func checkPackageInstalled(operator *operatorv1alpha1.Operator) error {
+// Checks if bundle deployment succeeded and returns error if not.
+func validatePackageInstallation(operator *operatorv1alpha1.Operator) error {
 	bd := rukpakv1alpha1.BundleDeployment{}
-	err := c.Get(ctx, types.NamespacedName{Name: operator.Name}, &bd)
-	if err != nil {
+	if err := c.Get(ctx, types.NamespacedName{Name: operator.Name}, &bd); err != nil {
 		return fmt.Errorf("Error retrieving the bundle deployments for the operator %v:%v", operator.Name, err)
 	}
-	if len(bd.Status.Conditions) != 2 {
-		return fmt.Errorf("Two conditions for successful unpack and successful installation for the operater %v for version %v are not populated", operator.Name, operator.Spec.Version)
+	cond := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
+	expectedCond := &metav1.Condition{
+		Type:    rukpakv1alpha1.TypeHasValidBundle,
+		Status:  metav1.ConditionTrue,
+		Reason:  rukpakv1alpha1.ReasonUnpackSuccessful,
+		Message: "Successfully unpacked",
 	}
-	if bd.Status.Conditions[0].Reason != "UnpackSuccessful" {
-		return fmt.Errorf("Expected status condition reason for successful unpack is not populated for the operater %v for version %v are not populated", operator.Name, operator.Spec.Version)
+	if err := checkConditionEquals(cond, expectedCond); err != nil {
+		return fmt.Errorf("Status conditions of the bundle deployment for the operator %v for the version %v is not as expected:%v", operator.Name, operator.Spec.Version, err)
 	}
-	if bd.Status.Conditions[1].Reason != "InstallationSucceeded" {
-		return fmt.Errorf("Expected status condition reason for successful installation is not populated for the operater %v for version %v are not populated", operator.Name, operator.Spec.Version)
+
+	cond = apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeInstalled)
+	expectedCond = &metav1.Condition{
+		Type:    rukpakv1alpha1.TypeInstalled,
+		Status:  metav1.ConditionTrue,
+		Reason:  rukpakv1alpha1.ReasonInstallationSucceeded,
+		Message: "Instantiated bundle",
 	}
+	if err := checkConditionEquals(cond, expectedCond); err != nil {
+		return fmt.Errorf("Status conditions of the bundle deployment for the operator %v for the version %v is not as expected:%v", operator.Name, operator.Spec.Version, err)
+	}
+
 	return nil
 }
 
@@ -907,27 +917,25 @@ func checkManifestPresence(bundlePath, operatorName, version string) error {
 
 		obj := &unstructured.Unstructured{}
 		obj.SetGroupVersionKind(gvk)
-		err = c.Get(ctx, types.NamespacedName{Name: resource.Metadata.Name, Namespace: deployedNameSpace}, obj)
-		if err != nil {
+		if err = c.Get(ctx, types.NamespacedName{Name: resource.Metadata.Name, Namespace: deployedNameSpace}, obj); err != nil {
 			return fmt.Errorf("Error retrieving the resources %v from the namespace %v: %v", resource.Metadata.Name, deployedNameSpace, err)
 		}
 	}
 	return nil
 }
 
-// Checks if the operator was successfully deleted
-func checkOperatorDeleted(opName string) error {
+// Checks if the operator was successfully deleted and returns error if not.
+func validateOperatorDeletion(opName string) error {
 	err := c.Get(ctx, types.NamespacedName{Name: opName}, &operatorv1alpha1.Operator{})
 	return err
 }
 
-// Deletes the catalog and checks if the deletion was successful
-func deleteAndCheckCatalogDeleted(catalog *catalogd.Catalog) error {
-	err := c.Delete(ctx, catalog)
-	if err != nil {
+// Deletes the catalog and checks if the deletion was successful. Returns error if not.
+func deleteAndValidateCatalogDeletion(catalog *catalogd.Catalog) error {
+	if err := c.Delete(ctx, catalog); err != nil {
 		return fmt.Errorf("Error deleting the catalog instance: %v", err)
 	}
-	err = c.Get(ctx, types.NamespacedName{Name: catalog.Name}, &catalogd.Catalog{})
+	err := c.Get(ctx, types.NamespacedName{Name: catalog.Name}, &catalogd.Catalog{})
 	return err
 }
 
@@ -942,13 +950,11 @@ func moveFolderContents(currentPath, newPath string) error {
 		oldPath := filepath.Join(currentPath, file.Name())
 		newFilePath := filepath.Join(newPath, file.Name())
 
-		err = os.MkdirAll(filepath.Dir(newFilePath), os.ModePerm)
-		if err != nil {
+		if err = os.MkdirAll(filepath.Dir(newFilePath), os.ModePerm); err != nil {
 			return fmt.Errorf("Failed to create directory for file %s: %v", file.Name(), err)
 		}
 
-		err = os.Rename(oldPath, newFilePath)
-		if err != nil {
+		if err = os.Rename(oldPath, newFilePath); err != nil {
 			return fmt.Errorf("Failed to move file %s: %v", file.Name(), err)
 		}
 	}
@@ -959,8 +965,7 @@ func moveFolderContents(currentPath, newPath string) error {
 // Delete the folders or file in the collection array
 func deleteFolderFile(collection []string) error {
 	for _, c := range collection {
-		err := os.RemoveAll(c)
-		if err != nil {
+		if err := os.RemoveAll(c); err != nil {
 			if os.IsNotExist(err) {
 				return fmt.Errorf("Error deleting %v:%v", c, err)
 			}

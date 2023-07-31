@@ -59,6 +59,18 @@ $(KUSTOMIZE): $(BINGO_DIR)/kustomize.mod
 	@echo "(re)installing $(GOBIN)/kustomize-v4.5.7"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kustomize.mod -o=$(GOBIN)/kustomize-v4.5.7 "sigs.k8s.io/kustomize/kustomize/v4"
 
+OPERATOR_SDK := $(GOBIN)/operator-sdk-v1.31.0
+$(OPERATOR_SDK): $(BINGO_DIR)/operator-sdk.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/operator-sdk-v1.31.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -ldflags=-X=github.com/operator-framework/operator-sdk/internal/version.Version=v1.31.0 -mod=mod -modfile=operator-sdk.mod -o=$(GOBIN)/operator-sdk-v1.31.0 "github.com/operator-framework/operator-sdk/cmd/operator-sdk"
+
+OPM := $(GOBIN)/opm-v1.28.0
+$(OPM): $(BINGO_DIR)/opm.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/opm-v1.28.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=opm.mod -o=$(GOBIN)/opm-v1.28.0 "github.com/operator-framework/operator-registry/cmd/opm"
+
 SETUP_ENVTEST := $(GOBIN)/setup-envtest-v0.0.0-20230606045100-e54088c8c7da
 $(SETUP_ENVTEST): $(BINGO_DIR)/setup-envtest.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
