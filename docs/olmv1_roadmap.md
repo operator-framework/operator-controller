@@ -1,25 +1,10 @@
+---
+title: Product Requriement Doc
+layout: default
+nav_order: 2
+---
+
 # OLM v1 roadmap
-
-## OLM overview and use cases
-
-OLMs purpose is to manage cluster extensions centrally and declaratively on Kubernetes clusters. Its mission is to make installing, running, and updating functional add-ons to the cluster easy, safe, and reproducible for cluster administrators and PaaS administrators throughout the lifecycle of the underlying cluster as well as those of add-ons. The scope of OLM is currently the one cluster it is running on.
-
-OLM has unique support for the specific needs of cluster extensions, which are commonly referred to as operators. These are classified as one or more Kubernetes controllers shipping with one or more API extensions (CustomResourceDefinitions) to provide additional functionality to the cluster (though there are deviations from this coupling of CRDs and controllers, discussed below). They are managed centrally by OLM running on the cluster, where OLMs functionality is implemented following the Kubernetes operator pattern as well.
-
-OLM defines a lifecycle for these extensions in which they get installed, potentially causing other extensions to be installed as well, a limited set of customization of configuration at runtime, an update model following a path defined by the extension developer, and eventual decommission and removal.
-
-There is a dependency model in which extensions can rely on each other for required services that are out of scope of the primary purpose of the extension, allowing each extension to focus on a specific purpose. OLM also prevents conflicting extensions from running on the cluster, either with conflicting dependency constraints or conflicts in ownership of services provided via APIs.
-
-Since cluster extensions need to be supported with an enterprise-grade product lifecycle the specific scenarios in which an extension can be installed or updated are going to be limited by the author of the extension, primarily to align with what was tested by their QE processes. OLM allows the author to enforce these support  limitations in the form of additional constraints.
-
-During their lifecycle on the cluster, OLM also manages the permissions and capabilities extensions have on the cluster as well as the permission and access tenants on the cluster have to the extensions. This is done using the Kubernetes RBAC system in combination with tenant isolation using Kubernetes namespaces. The interaction surface of the extensions is solely composed of Kubernetes APIs the extensions define.
-
-OLM also defines a packaging model in which catalogs of extensions, usually containing the entire version history of each extension, are made available to clusters for cluster users to browse and select from. Via new versions of extensions delivered with this packaging system, OLM is able to apply updates to existing running extensions on the cluster in a way where the integrity of the cluster is maintained and constraints and dependencies are kept satisfied.
-
-The scope of all these features is a single cluster so far with namespace-based handling of catalog access and extension API accessibility and discoverability. Expansion of this scope is indirectly expected through the work of the Kubernetes Control Plane (kcp) project, which in its first incarnation will likely use its own synchronization mechanism to get OLM-managed extensions deployed eventually on one or more physical clusters from a shared, virtual control plane called a “workspace”. This is an area under active development and subject to change, OLM might need to become aware of kcp in a future state.
-
-**Verdict:** The purpose of OLM remains the same. The scope of OLM will increase to span multiple clusters following the kcp model, though likely many aspects of this will become transparent to OLM itself through the workspace abstraction that kcp provides. What needs to change in OLM 1.0 is how the above tasks are carried out from the user perspective and how much control users have in the process and which persona is involved.
-
 ## Functional Requirements
 _Priority Rating: 1 highest, 2 medium, 3 lower (e.g. P2 = Medium Priority)_
 

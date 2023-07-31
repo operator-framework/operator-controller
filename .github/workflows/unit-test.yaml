@@ -3,6 +3,7 @@ name: unit-test
 on:
   workflow_dispatch:
   pull_request:
+  merge_group:
   push:
     branches:
     - main
@@ -25,5 +26,5 @@ jobs:
     - uses: codecov/codecov-action@v3
       with:
         files: cover.out
-        fail_ci_if_error: true
+        flags: unit
         functionalities: fixes

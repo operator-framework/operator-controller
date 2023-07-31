@@ -14,8 +14,9 @@ Dockerfile.cross
 # Test binary, build with `go test -c`
 *.test
 
-# Output of the go coverage tool, specifically when used with LiteIDE
+# Output of the go coverage tools
 *.out
+coverage
 
 # Release output
 dist/**
@@ -34,3 +35,7 @@ install.sh
 \#*\#
 .\#*
 
+# documentation website asset folder
+docs/_site
+
+.tiltbuild/
