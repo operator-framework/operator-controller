@@ -5,66 +5,66 @@ import (
 	"encoding/json"
 	"fmt"
 
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	"github.com/operator-framework/operator-controller/internal/resolution/entities"
 )
 
-// catalogdEntitySource is a source for(/collection of) deppy defined input.Entity, built from content
+// CatalogdEntitySource is a source for(/collection of) deppy defined input.Entity, built from content
 // made accessible on-cluster by https://github.com/operator-framework/catalogd.
 // It is an implementation of deppy defined input.EntitySource
-type catalogdEntitySource struct {
+type CatalogdEntitySource struct {
 	client client.Client
 }
 
-func NewCatalogdEntitySource(client client.Client) *catalogdEntitySource {
-
-	return &catalogdEntitySource{client: client}
+func NewCatalogdEntitySource(client client.Client) *CatalogdEntitySource {
+	return &CatalogdEntitySource{client: client}
 }
 
-func (es *catalogdEntitySource) Get(ctx context.Context, id deppy.Identifier) (*input.Entity, error) {
+func (es *CatalogdEntitySource) Get(_ context.Context, _ deppy.Identifier) (*input.Entity, error) {
 	panic("not implemented")
 }
 
-func (es *catalogdEntitySource) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {
+func (es *CatalogdEntitySource) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {
 	resultSet := input.EntityList{}
 	entities, err := getEntities(ctx, es.client)
 	if err != nil {
 		return nil, err
 	}
-	for _, entity := range entities {
-		if filter(&entity) {
-			resultSet = append(resultSet, entity)
+	for i := range entities {
+		if filter(&entities[i]) {
+			resultSet = append(resultSet, entities[i])
 		}
 	}
 	return resultSet, nil
 }
 
-func (es *catalogdEntitySource) GroupBy(ctx context.Context, fn input.GroupByFunction) (input.EntityListMap, error) {
+func (es *CatalogdEntitySource) GroupBy(ctx context.Context, fn input.GroupByFunction) (input.EntityListMap, error) {
 	entities, err := getEntities(ctx, es.client)
 	if err != nil {
 		return nil, err
 	}
 	resultSet := input.EntityListMap{}
-	for _, entity := range entities {
-		keys := fn(&entity)
+	for i := range entities {
+		keys := fn(&entities[i])
 		for _, key := range keys {
-			resultSet[key] = append(resultSet[key], entity)
+			resultSet[key] = append(resultSet[key], entities[i])
 		}
 	}
 	return resultSet, nil
 }
 
-func (es *catalogdEntitySource) Iterate(ctx context.Context, fn input.IteratorFunction) error {
+func (es *CatalogdEntitySource) Iterate(ctx context.Context, fn input.IteratorFunction) error {
 	entities, err := getEntities(ctx, es.client)
 	if err != nil {
 		return err
 	}
-	for _, entity := range entities {
-		if err := fn(&entity); err != nil {
+	for i := range entities {
+		if err := fn(&entities[i]); err != nil {
 			return err
 		}
 	}
@@ -72,7 +72,7 @@ func (es *catalogdEntitySource) Iterate(ctx context.Context, fn input.IteratorFu
 }
 
 func getEntities(ctx context.Context, client client.Client) (input.EntityList, error) {
-	entities := input.EntityList{}
+	entityList := input.EntityList{}
 	bundleMetadatas, packageMetdatas, err := fetchMetadata(ctx, client)
 	if err != nil {
 		return nil, err
@@ -80,12 +80,16 @@ func getEntities(ctx context.Context, client client.Client) (input.EntityList, e
 	for _, bundle := range bundleMetadatas.Items {
 		props := map[string]string{}
 
+		// TODO: We should make sure all properties are forwarded
+		// through and avoid a lossy translation from FBC --> entity
 		for _, prop := range bundle.Spec.Properties {
 			switch prop.Type {
 			case property.TypePackage:
 				// this is already a json marshalled object, so it doesn't need to be marshalled
 				// like the other ones
 				props[property.TypePackage] = string(prop.Value)
+			case entities.PropertyBundleMediaType:
+				props[entities.PropertyBundleMediaType] = string(prop.Value)
 			}
 		}
 
@@ -93,7 +97,7 @@ func getEntities(ctx context.Context, client client.Client) (input.EntityList, e
 		if err != nil {
 			return nil, err
 		}
-		props["olm.bundle.path"] = string(imgValue)
+		props[entities.PropertyBundlePath] = string(imgValue)
 		catalogScopedPkgName := fmt.Sprintf("%s-%s", bundle.Spec.Catalog.Name, bundle.Spec.Package)
 		bundlePkg := packageMetdatas[catalogScopedPkgName]
 		for _, ch := range bundlePkg.Spec.Channels {
@@ -106,12 +110,12 @@ func getEntities(ctx context.Context, client client.Client) (input.EntityList, e
 						ID:         deppy.IdentifierFromString(fmt.Sprintf("%s%s%s", bundle.Name, bundle.Spec.Package, ch.Name)),
 						Properties: props,
 					}
-					entities = append(entities, entity)
+					entityList = append(entityList, entity)
 				}
 			}
 		}
 	}
-	return entities, nil
+	return entityList, nil
 }
 
 func fetchMetadata(ctx context.Context, client client.Client) (catalogd.BundleMetadataList, map[string]catalogd.Package, error) {

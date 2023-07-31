@@ -20,7 +20,7 @@ import (
 	"flag"
 	"os"
 
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -30,11 +30,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	"github.com/operator-framework/operator-controller/internal/resolution"
 	"github.com/operator-framework/operator-controller/internal/resolution/entitysources"
+	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
 var (
@@ -65,7 +68,10 @@ func main() {
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
+
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	features.OperatorControllerFeatureGate.AddFlag(pflag.CommandLine)
+	pflag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts), zap.StacktraceLevel(zapcore.DPanicLevel)))
 
@@ -94,9 +100,12 @@ func main() {
 	}
 
 	if err = (&controllers.OperatorReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Resolver: resolution.NewOperatorResolver(mgr.GetClient(), entitysources.NewCatalogdEntitySource(mgr.GetClient())),
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Resolver: solver.NewDeppySolver(
+			entitysources.NewCatalogdEntitySource(mgr.GetClient()),
+			controllers.NewVariableSource(mgr.GetClient()),
+		),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)

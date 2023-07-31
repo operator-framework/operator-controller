@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # OLM v1 roadmap
 
 ## OLM overview and use cases
@@ -19,7 +20,15 @@ OLM also defines a packaging model in which catalogs of extensions, usually cont
 The scope of all these features is a single cluster so far with namespace-based handling of catalog access and extension API accessibility and discoverability. Expansion of this scope is indirectly expected through the work of the Kubernetes Control Plane (kcp) project, which in its first incarnation will likely use its own synchronization mechanism to get OLM-managed extensions deployed eventually on one or more physical clusters from a shared, virtual control plane called a “workspace”. This is an area under active development and subject to change, OLM might need to become aware of kcp in a future state.
 
 **Verdict:** The purpose of OLM remains the same. The scope of OLM will increase to span multiple clusters following the kcp model, though likely many aspects of this will become transparent to OLM itself through the workspace abstraction that kcp provides. What needs to change in OLM 1.0 is how the above tasks are carried out from the user perspective and how much control users have in the process and which persona is involved.
+=======
+---
+title: Product Requriement Doc
+layout: default
+nav_order: 2
+---
+>>>>>>> upstream/main
 
+# OLM v1 roadmap
 ## Functional Requirements
 _Priority Rating: 1 highest, 2 medium, 3 lower (e.g. P2 = Medium Priority)_
 

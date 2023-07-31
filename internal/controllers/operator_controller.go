@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	catalogd "github.com/operator-framework/catalogd/pkg/apis/core/v1beta1"
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -41,16 +41,15 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
-	"github.com/operator-framework/operator-controller/internal/resolution"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/bundles_and_dependencies"
-	"github.com/operator-framework/operator-controller/internal/resolution/variable_sources/entity"
+	"github.com/operator-framework/operator-controller/internal/resolution/entities"
+	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
 // OperatorReconciler reconciles a Operator object
 type OperatorReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
-	Resolver *resolution.OperatorResolver
+	Resolver *solver.DeppySolver
 }
 
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators,verbs=get;list;watch
@@ -108,6 +107,12 @@ func checkForUnexpectedFieldChange(a, b operatorsv1alpha1.Operator) bool {
 }
 
 // Helper function to do the actual reconcile
+//
+// Today we always return ctrl.Result{} and an error.
+// But in the future we might update this function
+// to return different results (e.g. requeue).
+//
+//nolint:unparam
 func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha1.Operator) (ctrl.Result, error) {
 	// validate spec
 	if err := validators.ValidateOperatorSpec(op); err != nil {
@@ -122,7 +127,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		return ctrl.Result{}, nil
 	}
 	// run resolution
-	solution, err := r.Resolver.Resolve(ctx)
+	solution, err := r.Resolver.Solve(ctx)
 	if err != nil {
 		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
@@ -157,9 +162,19 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	op.Status.ResolvedBundleResource = bundleImage
 	setResolvedStatusConditionSuccess(&op.Status.Conditions, fmt.Sprintf("resolved to %q", bundleImage), op.GetGeneration())
 
+	mediaType, err := bundleEntity.MediaType()
+	if err != nil {
+		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		return ctrl.Result{}, err
+	}
+	bundleProvisioner, err := mapBundleMediaTypeToBundleProvisioner(mediaType)
+	if err != nil {
+		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		return ctrl.Result{}, err
+	}
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
 	// image we just looked up in the solution.
-	dep := r.generateExpectedBundleDeployment(*op, bundleImage)
+	dep := r.generateExpectedBundleDeployment(*op, bundleImage, bundleProvisioner)
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
 		// originally Reason: operatorsv1alpha1.ReasonInstallationFailed
 		op.Status.InstalledBundleResource = ""
@@ -229,10 +244,10 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 	}
 }
 
-func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Solution, packageName string) (*entity.BundleEntity, error) {
+func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Solution, packageName string) (*entities.BundleEntity, error) {
 	for _, variable := range solution.SelectedVariables() {
 		switch v := variable.(type) {
-		case *bundles_and_dependencies.BundleVariable:
+		case *olmvariables.BundleVariable:
 			entityPkgName, err := v.BundleEntity().PackageName()
 			if err != nil {
 				return nil, err
@@ -245,12 +260,13 @@ func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Soluti
 	return nil, fmt.Errorf("entity for package %q not found in solution", packageName)
 }
 
-func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string) *unstructured.Unstructured {
+func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {
 	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
 	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
 	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
 	// unstructured ensures that the patch contains only what is specified. Using unstructured like this is basically
 	// identical to "kubectl apply -f"
+
 	bd := &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": rukpakv1alpha1.GroupVersion.String(),
 		"kind":       rukpakv1alpha1.BundleDeploymentKind,
@@ -262,8 +278,7 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 			"provisionerClassName": "core-rukpak-io-plain",
 			"template": map[string]interface{}{
 				"spec": map[string]interface{}{
-					// TODO: Don't assume registry provisioner
-					"provisionerClassName": "core-rukpak-io-registry",
+					"provisionerClassName": bundleProvisioner,
 					"source": map[string]interface{}{
 						// TODO: Don't assume image type
 						"type": string(rukpakv1alpha1.SourceTypeImage),
@@ -339,29 +354,21 @@ func (r *OperatorReconciler) existingBundleDeploymentUnstructured(ctx context.Co
 	return &unstructured.Unstructured{Object: unstrExistingBundleDeploymentObj}, nil
 }
 
-// verifyBDStatus reads the various possibilities of status in bundle deployment and translates
-// into corresponding operator condition status and message.
-func verifyBDStatus(dep *rukpakv1alpha1.BundleDeployment) (metav1.ConditionStatus, string) {
-	isValidBundleCond := apimeta.FindStatusCondition(dep.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
-	isInstalledCond := apimeta.FindStatusCondition(dep.Status.Conditions, rukpakv1alpha1.TypeInstalled)
-
-	if isValidBundleCond != nil && isValidBundleCond.Status == metav1.ConditionFalse {
-		return metav1.ConditionFalse, isValidBundleCond.Message
+// mapBundleMediaTypeToBundleProvisioner maps an olm.bundle.mediatype property to a
+// rukpak bundle provisioner class name that is capable of unpacking the bundle type
+func mapBundleMediaTypeToBundleProvisioner(mediaType string) (string, error) {
+	switch mediaType {
+	case entities.MediaTypePlain:
+		return "core-rukpak-io-plain", nil
+	// To ensure compatibility with bundles created with OLMv0 where the
+	// olm.bundle.mediatype property doesn't exist, we assume that if the
+	// property is empty (i.e doesn't exist) that the bundle is one created
+	// with OLMv0 and therefore should use the registry provisioner
+	case entities.MediaTypeRegistry, "":
+		return "core-rukpak-io-registry", nil
+	default:
+		return "", fmt.Errorf("unknown bundle mediatype: %s", mediaType)
 	}
-
-	if isInstalledCond != nil && isInstalledCond.Status == metav1.ConditionFalse {
-		return metav1.ConditionFalse, isInstalledCond.Message
-	}
-
-	if isInstalledCond != nil && isInstalledCond.Status == metav1.ConditionTrue {
-		return metav1.ConditionTrue, "install was successful"
-	}
-	return metav1.ConditionUnknown, fmt.Sprintf("could not determine the state of BundleDeployment %s", dep.Name)
-}
-
-// isBundleDepStale returns true if conditions are out of date.
-func isBundleDepStale(bd *rukpakv1alpha1.BundleDeployment) bool {
-	return bd != nil && bd.Status.ObservedGeneration != bd.GetGeneration()
 }
 
 // setResolvedStatusConditionSuccess sets the resolved status condition to success.

@@ -3,6 +3,7 @@ name: unit-test
 on:
   workflow_dispatch:
   pull_request:
+  merge_group:
   push:
     branches:
     - main
@@ -21,3 +22,9 @@ jobs:
     - name: Run basic unit tests
       run: |
         make test-unit
+
+    - uses: codecov/codecov-action@v3
+      with:
+        files: cover.out
+        flags: unit
+        functionalities: fixes
