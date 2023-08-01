@@ -137,6 +137,9 @@ kind-load-test-artifacts: $(KIND) ## Load the e2e testdata container images into
 	$(KIND) load docker-image localhost/testdata/bundles/plain-v0/plain:v0.1.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/catalogs/test-catalog:e2e --name $(KIND_CLUSTER_NAME)
 
+install-tools: $(BINGO) ## Installs all the tools
+	$(BINGO) get
+
 ##@ Build
 
 export VERSION           ?= $(shell git describe --tags --always --dirty)

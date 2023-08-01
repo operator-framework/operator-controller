@@ -24,6 +24,9 @@ jobs:
           go.sum
           .bingo/**.sum
 
+    - name: Install all tools
+      run: make install-tools
+
     - name: Run e2e tests
       run: |
         # By default make stops building on first non-zero exit code which

@@ -18,4 +18,9 @@ jobs:
           go.sum
           .bingo/**.sum
 
+    - name: Install all tools
+      run: make install-tools
+
     - uses: joelanford/go-apidiff@main
+      with:
+        skip-cache: true

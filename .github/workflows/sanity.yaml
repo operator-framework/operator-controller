@@ -21,6 +21,9 @@ jobs:
             go.sum
             .bingo/**.sum
 
+      - name: Install all tools
+        run: make install-tools
+
       - name: Run verification checks
         run: make verify
   lint:
@@ -34,6 +37,9 @@ jobs:
           cache-dependency-path: |
             go.sum
             .bingo/**.sum
+
+      - name: Install all tools
+        run: make install-tools
 
       - name: Run golangci linting checks
         run: make lint GOLANGCI_LINT_ARGS="--out-format github-actions"
