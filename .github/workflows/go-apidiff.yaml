@@ -14,5 +14,8 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version-file: go.mod
+        cache-dependency-path: |
+          go.sum
+          .bingo/**.sum
 
     - uses: joelanford/go-apidiff@main

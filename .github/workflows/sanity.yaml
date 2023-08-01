@@ -17,6 +17,10 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: "go.mod"
+          cache-dependency-path: |
+            go.sum
+            .bingo/**.sum
+
       - name: Run verification checks
         run: make verify
   lint:
@@ -27,6 +31,9 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version-file: "go.mod"
+          cache-dependency-path: |
+            go.sum
+            .bingo/**.sum
 
       - name: Run golangci linting checks
         run: make lint GOLANGCI_LINT_ARGS="--out-format github-actions"
