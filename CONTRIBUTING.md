@@ -2,6 +2,15 @@
 
 Operator Controller is an Apache 2.0 licensed project and accepts contributions via GitHub pull requests (PRs).
 
+## Certificate of Origin
+
+By contributing to this project you agree to the Developer Certificate of
+Origin (DCO). This document was created by the Linux Kernel community and is a
+simple statement that you, as a contributor, have the legal right to make the
+contribution. See the [DCO](DCO) file for details.
+
+## Overview
+
 Thank you for your interest in contributing to the Operator-Controller.
 
 As you may or may not know, the Operator-Controller project aims to deliver the user experience described in the [Operator Lifecycle Manager (OLM) V1 Product Requirements Document (PRD)](https://docs.google.com/document/d/1-vsZ2dAODNfoHb7Nf0fbYeKDF7DUqEzS9HqgeMCvbDs/edit). The design requirements captured in the OLM V1 PRD were born from customer and community feedback based on the experience they had with the released version of [OLM V0](github.com/operator-framework/operator-lifecycle-manager).
