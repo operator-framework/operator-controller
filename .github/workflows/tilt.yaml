@@ -1,0 +1,40 @@
+on:
+  pull_request:
+    paths:
+      - '.bingo/**'
+      - '.github/workflows/tilt.yaml'
+      - 'api/**'
+      - 'cmd/**'
+      - 'config/**'
+      - 'internal/**'
+      - 'pkg/**'
+      - 'Tiltfile'
+  merge_group:
+
+jobs:
+  tilt:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        repository: operator-framework/tilt-support
+        path: tilt-support
+    - uses: actions/checkout@v3
+      with:
+        path: catalogd
+    - name: Install Tilt
+      run: |
+        TILT_VERSION="0.33.3"
+        curl -fsSL https://github.com/tilt-dev/tilt/releases/download/v$TILT_VERSION/tilt.$TILT_VERSION.linux.x86_64.tar.gz | \
+          tar -xzv -C /usr/local/bin tilt
+    - name: Install ctlptl
+      run: |
+        CTLPTL_VERSION="0.8.20"
+        curl -fsSL https://github.com/tilt-dev/ctlptl/releases/download/v$CTLPTL_VERSION/ctlptl.$CTLPTL_VERSION.linux.x86_64.tar.gz | \
+          tar -xzv -C /usr/local/bin ctlptl
+    - name: Set up kind
+      run: ctlptl create cluster kind --registry=ctlptl-registry
+    - name: Test Tilt
+      run: |
+        cd catalogd
+        tilt ci
