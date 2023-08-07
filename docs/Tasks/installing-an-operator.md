@@ -1,10 +1,3 @@
----
-layout: default
-title: Installing an operator on cluster
-nav_order: 3
-parent: Tasks
----
-
 Creating an Operator CR installs the operator on cluster:  
 
 ```bash
