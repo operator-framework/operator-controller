@@ -71,10 +71,6 @@ func (es *CatalogdEntitySource) Iterate(ctx context.Context, fn input.IteratorFu
 	return nil
 }
 
-type replacesProperty struct {
-	Replaces string `json:"replaces"`
-}
-
 func getEntities(ctx context.Context, client client.Client) (input.EntityList, error) {
 	entityList := input.EntityList{}
 	bundleMetadatas, packageMetdatas, err := fetchMetadata(ctx, client)
@@ -110,9 +106,11 @@ func getEntities(ctx context.Context, client client.Client) (input.EntityList, e
 				if catalogScopedEntryName == bundle.Name {
 					channelValue, _ := json.Marshal(property.Channel{ChannelName: ch.Name, Priority: 0})
 					props[property.TypeChannel] = string(channelValue)
-					// TODO(jmprusi): Add the proper PropertyType for this
-					replacesValue, _ := json.Marshal(replacesProperty{Replaces: b.Replaces})
-					props["olm.replaces"] = string(replacesValue)
+					replacesValue, _ := json.Marshal(entities.ChannelEntry{
+						Name:     b.Name,
+						Replaces: b.Replaces,
+					})
+					props[entities.PropertyBundleChannelEntry] = string(replacesValue)
 					entity := input.Entity{
 						ID:         deppy.IdentifierFromString(fmt.Sprintf("%s%s%s", bundle.Name, bundle.Spec.Package, ch.Name)),
 						Properties: props,

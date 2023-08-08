@@ -265,24 +265,24 @@ var _ = Describe("BundleEntity", func() {
 		})
 	})
 
-	Describe("Replaces", func() {
-		It("should return the replaces property if present", func() {
+	Describe("ChannelEntry", func() {
+		It("should return the channel entry property if present", func() {
 			entity := input.NewEntity("test", map[string]string{
-				"olm.replaces": `{"replaces": "test.v0.2.0"}`,
+				"olm.bundle.channelEntry": `{"name":"test.v0.3.0","replaces": "test.v0.2.0"}`,
 			})
 			bundleEntity := olmentity.NewBundleEntity(entity)
-			replaces, err := bundleEntity.Replaces()
+			channelEntry, err := bundleEntity.BundleChannelEntry()
 			Expect(err).ToNot(HaveOccurred())
-			Expect(replaces).To(Equal("test.v0.2.0"))
+			Expect(channelEntry).To(Equal(&olmentity.ChannelEntry{Name: "test.v0.3.0", Replaces: "test.v0.2.0"}))
 		})
 		It("should not return an error if the property is not found", func() {
 			entity := input.NewEntity("test", map[string]string{
 				"olm.thingy": `{"whatever":"this"}`,
 			})
 			bundleEntity := olmentity.NewBundleEntity(entity)
-			replaces, err := bundleEntity.Replaces()
-			Expect(replaces).To(BeEmpty())
-			Expect(err).NotTo(HaveOccurred())
+			channelEntry, err := bundleEntity.BundleChannelEntry()
+			Expect(channelEntry).To(BeNil())
+			Expect(err).To(HaveOccurred())
 		})
 	})
 

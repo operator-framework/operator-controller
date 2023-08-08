@@ -50,12 +50,13 @@ func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context, entit
 	if err != nil {
 		return nil, err
 	}
-	version, err := installedBundle.Version()
+
+	channelEntry, err := installedBundle.BundleChannelEntry()
 	if err != nil {
 		return nil, err
 	}
-	bundleID := fmt.Sprintf("%s.v%s", packageName, version.String())
-	resultSet, err = entitySource.Filter(ctx, predicates.Replaces(bundleID))
+
+	resultSet, err = entitySource.Filter(ctx, predicates.Replaces(channelEntry.Name))
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +69,7 @@ func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context, entit
 	// you can always upgrade to yourself, i.e. not upgrade
 	upgradeEdges = append(upgradeEdges, installedBundle)
 	return []deppy.Variable{
-		variables.NewInstalledPackageVariable(bundleID, upgradeEdges),
+		variables.NewInstalledPackageVariable(packageName, upgradeEdges),
 	}, nil
 }
 

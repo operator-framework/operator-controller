@@ -49,23 +49,25 @@ func bundleDeployment(name, image string) *rukpakv1alpha1.BundleDeployment {
 
 var BundleDeploymentTestEntityCache = map[deppy.Identifier]input.Entity{
 	"operatorhub/prometheus/0.37.0": *input.NewEntity("operatorhub/prometheus/0.37.0", map[string]string{
-		"olm.bundle.path": `"quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"`,
-		"olm.channel":     "{\"channelName\":\"beta\",\"priority\":0,\"replaces\":\"prometheusoperator.0.32.0\"}",
-		"olm.gvk":         "[{\"group\":\"monitoring.coreos.com\",\"kind\":\"Alertmanager\",\"version\":\"v1\"}, {\"group\":\"monitoring.coreos.com\",\"kind\":\"Prometheus\",\"version\":\"v1\"}]",
-		"olm.package":     "{\"packageName\":\"prometheus\",\"version\":\"0.37.0\"}",
+		"olm.bundle.path":         `"quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"`,
+		"olm.bundle.channelEntry": "{\"name\":\"prometheus.0.37.0\"}",
+		"olm.channel":             "{\"channelName\":\"beta\",\"priority\":0,\"replaces\":\"prometheusoperator.0.32.0\"}",
+		"olm.gvk":                 "[{\"group\":\"monitoring.coreos.com\",\"kind\":\"Alertmanager\",\"version\":\"v1\"}, {\"group\":\"monitoring.coreos.com\",\"kind\":\"Prometheus\",\"version\":\"v1\"}]",
+		"olm.package":             "{\"packageName\":\"prometheus\",\"version\":\"0.37.0\"}",
 	}),
 	"operatorhub/prometheus/0.47.0": *input.NewEntity("operatorhub/prometheus/0.47.0", map[string]string{
-		"olm.bundle.path": `"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"`,
-		"olm.channel":     "{\"channelName\":\"beta\",\"priority\":0,\"replaces\":\"prometheusoperator.0.37.0\"}",
-		"olm.gvk":         "[{\"group\":\"monitoring.coreos.com\",\"kind\":\"Alertmanager\",\"version\":\"v1\"}, {\"group\":\"monitoring.coreos.com\",\"kind\":\"Prometheus\",\"version\":\"v1alpha1\"}]",
-		"olm.package":     "{\"packageName\":\"prometheus\",\"version\":\"0.47.0\"}",
-		"olm.replaces":    "{\"replaces\":\"prometheus.0.37.0\"}",
+		"olm.bundle.path":         `"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"`,
+		"olm.bundle.channelEntry": "{\"replaces\":\"prometheus.0.37.0\", \"name\":\"prometheus.0.47.0\"}",
+		"olm.channel":             "{\"channelName\":\"beta\",\"priority\":0,\"replaces\":\"prometheusoperator.0.37.0\"}",
+		"olm.gvk":                 "[{\"group\":\"monitoring.coreos.com\",\"kind\":\"Alertmanager\",\"version\":\"v1\"}, {\"group\":\"monitoring.coreos.com\",\"kind\":\"Prometheus\",\"version\":\"v1alpha1\"}]",
+		"olm.package":             "{\"packageName\":\"prometheus\",\"version\":\"0.47.0\"}",
 	}),
 	"operatorhub/packageA/2.0.0": *input.NewEntity("operatorhub/packageA/2.0.0", map[string]string{
-		"olm.bundle.path": `"foo.io/packageA/packageA:v2.0.0"`,
-		"olm.channel":     "{\"channelName\":\"stable\",\"priority\":0}",
-		"olm.gvk":         "[{\"group\":\"foo.io\",\"kind\":\"Foo\",\"version\":\"v1\"}]",
-		"olm.package":     "{\"packageName\":\"packageA\",\"version\":\"2.0.0\"}",
+		"olm.bundle.path":         `"foo.io/packageA/packageA:v2.0.0"`,
+		"olm.bundle.channelEntry": "{\"name\":\"packageA.2.0.0\"}",
+		"olm.channel":             "{\"channelName\":\"stable\",\"priority\":0}",
+		"olm.gvk":                 "[{\"group\":\"foo.io\",\"kind\":\"Foo\",\"version\":\"v1\"}]",
+		"olm.package":             "{\"packageName\":\"packageA\",\"version\":\"2.0.0\"}",
 	}),
 }
 
@@ -92,7 +94,9 @@ var _ = Describe("BundleDeploymentVariableSource", func() {
 			}
 			return out
 		}, Equal(map[deppy.Identifier]int{
-			deppy.IdentifierFromString("installed package prometheus.v0.37.0"): 1,
+			// Underlying `InstalledPackageVariableSource` returns current installed package
+			// as a possible upgrade edge
+			deppy.IdentifierFromString("installed package prometheus"): 2,
 		})))
 	})
 	It("should return an error if the bundleDeployment image doesn't match any operator resource", func() {
