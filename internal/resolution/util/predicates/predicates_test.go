@@ -107,7 +107,7 @@ var _ = Describe("Predicates", func() {
 	Describe("Replaces", func() {
 		It("should return true when the entity provides the replaces property", func() {
 			entity := input.NewEntity("test", map[string]string{
-				"olm.replaces": `{"replaces": "test.v0.2.0"}`,
+				"olm.bundle.channelEntry": `{"replaces": "test.v0.2.0"}`,
 			})
 			Expect(predicates.Replaces("test.v0.2.0")(entity)).To(BeTrue())
 			Expect(predicates.Replaces("test.v0.1.0")(entity)).To(BeFalse())
@@ -118,7 +118,7 @@ var _ = Describe("Predicates", func() {
 		})
 		It("should return false when the replace value is not a valid json", func() {
 			entity := input.NewEntity("test", map[string]string{
-				"olm.replaces": `{"replaces"}`,
+				"olm.bundle.channelEntry": `{"replaces"}`,
 			})
 			Expect(predicates.Replaces("test.v0.2.0")(entity)).To(BeFalse())
 		})

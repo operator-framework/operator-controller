@@ -10,6 +10,8 @@ import (
 	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
 )
 
+var _ deppy.Variable = &InstalledPackageVariable{}
+
 type InstalledPackageVariable struct {
 	*input.SimpleVariable
 	bundleEntities []*olmentity.BundleEntity
@@ -19,8 +21,8 @@ func (r *InstalledPackageVariable) BundleEntities() []*olmentity.BundleEntity {
 	return r.bundleEntities
 }
 
-func NewInstalledPackageVariable(bundleImage string, bundleEntities []*olmentity.BundleEntity) *InstalledPackageVariable {
-	id := deppy.IdentifierFromString(fmt.Sprintf("installed package %s", bundleImage))
+func NewInstalledPackageVariable(packageName string, bundleEntities []*olmentity.BundleEntity) *InstalledPackageVariable {
+	id := deppy.IdentifierFromString(fmt.Sprintf("installed package %s", packageName))
 	entityIDs := make([]deppy.Identifier, 0, len(bundleEntities))
 	for _, bundle := range bundleEntities {
 		entityIDs = append(entityIDs, bundle.ID)

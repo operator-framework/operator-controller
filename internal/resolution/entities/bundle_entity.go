@@ -11,9 +11,7 @@ import (
 )
 
 const PropertyBundlePath = "olm.bundle.path"
-
-// TODO: Is this the right place for these?
-// ----
+const PropertyBundleChannelEntry = "olm.bundle.channelEntry"
 const PropertyBundleMediaType = "olm.bundle.mediatype"
 
 type MediaType string
@@ -39,8 +37,10 @@ type PackageRequired struct {
 
 type GVK property.GVK
 
-type Replaces struct {
+type ChannelEntry struct {
+	Name     string `json:"name"`
 	Replaces string `json:"replaces"`
+	// Skips and skipRange will probably go here as well
 }
 
 func (g GVK) String() string {
@@ -66,7 +66,7 @@ type BundleEntity struct {
 	requiredGVKs     []GVKRequired
 	requiredPackages []PackageRequired
 	channel          *property.Channel
-	replaces         *Replaces
+	channelEntry     *ChannelEntry
 	semVersion       *semver.Version
 	bundlePath       string
 	mediaType        string
@@ -129,22 +129,22 @@ func (b *BundleEntity) Channel() (*property.Channel, error) {
 	return b.channel, nil
 }
 
-func (b *BundleEntity) Replaces() (string, error) {
-	if err := b.loadReplaces(); err != nil {
-		return "", err
+func (b *BundleEntity) BundleChannelEntry() (*ChannelEntry, error) {
+	if err := b.loadBundleChannelEntry(); err != nil {
+		return nil, err
 	}
-	return b.replaces.Replaces, nil
+	return b.channelEntry, nil
 }
 
-func (b *BundleEntity) loadReplaces() error {
+func (b *BundleEntity) loadBundleChannelEntry() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	if b.replaces == nil {
-		replaces, err := loadFromEntity[Replaces](b.Entity, "olm.replaces", optional)
-		if err != nil {
+	if b.channelEntry == nil {
+		channelEntry, err := loadFromEntity[*ChannelEntry](b.Entity, PropertyBundleChannelEntry, optional)
+		if err != nil || channelEntry == nil {
 			return fmt.Errorf("error determining replaces for entity '%s': %w", b.ID, err)
 		}
-		b.replaces = &replaces
+		b.channelEntry = channelEntry
 	}
 	return nil
 }

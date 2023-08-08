@@ -71,10 +71,10 @@ func WithBundleImage(bundleImage string) input.Predicate {
 func Replaces(bundleID string) input.Predicate {
 	return func(entity *input.Entity) bool {
 		bundleEntity := olmentity.NewBundleEntity(entity)
-		replaces, err := bundleEntity.Replaces()
+		replaces, err := bundleEntity.BundleChannelEntry()
 		if err != nil {
 			return false
 		}
-		return replaces == bundleID
+		return replaces.Replaces == bundleID
 	}
 }

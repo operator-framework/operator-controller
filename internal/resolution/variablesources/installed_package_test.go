@@ -29,33 +29,34 @@ var _ = Describe("InstalledPackageVariableSource", func() {
 
 		mockEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{
 			"test-package.v1.0.0": *input.NewEntity("test-package.v1.0.0test-packagestable", map[string]string{
-				property.TypePackage:         `{"packageName": "test-package", "version": "1.0.0"}`,
-				olmentity.PropertyBundlePath: `"registry.io/repo/test-package@v1.0.0"`,
-				property.TypeChannel:         `{"channelName":"stable","priority":0}`,
+				property.TypePackage:                 `{"packageName": "test-package", "version": "1.0.0"}`,
+				property.TypeChannel:                 `{"channelName":"stable","priority":0}`,
+				olmentity.PropertyBundlePath:         `"registry.io/repo/test-package@v1.0.0"`,
+				olmentity.PropertyBundleChannelEntry: `{"name": "test-package.v1.0.0"}`,
 			}),
 			"test-package.v3.0.0": *input.NewEntity("test-package.v3.0.0test-packagestable", map[string]string{
-				property.TypePackage:         `{"packageName": "test-package", "version": "3.0.0"}`,
-				property.TypeChannel:         `{"channelName":"stable","priority":0}`,
-				olmentity.PropertyBundlePath: `"registry.io/repo/test-package@v3.0.0"`,
-				"olm.replaces":               `{"replaces": "test-package.v2.0.0"}`,
+				property.TypePackage:                 `{"packageName": "test-package", "version": "3.0.0"}`,
+				property.TypeChannel:                 `{"channelName":"stable","priority":0}`,
+				olmentity.PropertyBundlePath:         `"registry.io/repo/test-package@v3.0.0"`,
+				olmentity.PropertyBundleChannelEntry: `{"name": "test-package.v3.0.0","replaces": "test-package.v2.0.0"}`,
 			}),
 			"test-package.v2.0.0": *input.NewEntity("test-package.v2.0.0test-packagestable", map[string]string{
-				property.TypePackage:         `{"packageName": "test-package", "version": "2.0.0"}`,
-				property.TypeChannel:         `{"channelName":"stable","priority":0}`,
-				olmentity.PropertyBundlePath: `"registry.io/repo/test-package@v2.0.0"`,
-				"olm.replaces":               `{"replaces": "test-package.v1.0.0"}`,
+				property.TypePackage:                 `{"packageName": "test-package", "version": "2.0.0"}`,
+				property.TypeChannel:                 `{"channelName":"stable","priority":0}`,
+				olmentity.PropertyBundlePath:         `"registry.io/repo/test-package@v2.0.0"`,
+				olmentity.PropertyBundleChannelEntry: `{"name": "test-package.v2.0.0","replaces": "test-package.v1.0.0"}`,
 			}),
 			"test-package.4.0.0": *input.NewEntity("test-package.v4.0.0test-packagestable", map[string]string{
-				property.TypePackage:         `{"packageName": "test-package", "version": "4.0.0"}`,
-				property.TypeChannel:         `{"channelName":"stable","priority":0}`,
-				olmentity.PropertyBundlePath: `"registry.io/repo/test-package@v4.0.0"`,
-				"olm.replaces":               `{"replaces": "test-package.v3.0.0"}`,
+				property.TypePackage:                 `{"packageName": "test-package", "version": "4.0.0"}`,
+				property.TypeChannel:                 `{"channelName":"stable","priority":0}`,
+				olmentity.PropertyBundlePath:         `"registry.io/repo/test-package@v4.0.0"`,
+				olmentity.PropertyBundleChannelEntry: `{"name": "test-package.v4.0.0","replaces": "test-package.v3.0.0"}`,
 			}),
 			"test-package.5.0.0": *input.NewEntity("test-package.v5.0.0test-packagestable", map[string]string{
-				property.TypePackage:         `{"packageName": "test-package", "version": "5-00"}`,
-				property.TypeChannel:         `{"channelName":"stable","priority":0}`,
-				olmentity.PropertyBundlePath: `"registry.io/repo/test-package@v5.0.0"`,
-				"olm.replaces":               `{"replaces": "test-package.v4.0.0"}`,
+				property.TypePackage:                 `{"packageName": "test-package", "version": "5-00"}`,
+				property.TypeChannel:                 `{"channelName":"stable","priority":0}`,
+				olmentity.PropertyBundlePath:         `"registry.io/repo/test-package@v5.0.0"`,
+				olmentity.PropertyBundleChannelEntry: `{"name": "test-package.v5.0.0","replaces": "test-package.v4.0.0"}`,
 			}),
 		})
 	})
@@ -66,7 +67,7 @@ var _ = Describe("InstalledPackageVariableSource", func() {
 		Expect(variables).To(HaveLen(1))
 		reqPackageVar, ok := variables[0].(*olmvariables.InstalledPackageVariable)
 		Expect(ok).To(BeTrue())
-		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString("installed package test-package.v2.0.0")))
+		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString("installed package test-package")))
 
 		// ensure bundle entities are in version order (high to low)
 		Expect(reqPackageVar.BundleEntities()[0].ID).To(Equal(deppy.IdentifierFromString("test-package.v3.0.0test-packagestable")))
