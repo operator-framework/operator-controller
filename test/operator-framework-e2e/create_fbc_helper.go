@@ -13,21 +13,18 @@ import (
 )
 
 const (
-	SchemaPackage         = "olm.package"
-	SchemaChannel         = "olm.channel"
-	SchemaBundle          = "olm.bundle"
 	SchemaBundleMediatype = "olm.bundle.mediatype"
 	BundleMediatype       = "plain+v0"
 )
 
 // Forms the FBC declartive config and creates the FBC by calling functions for forming the package, channel and bundles.
-func CreateFBC(operatorName, defaultChannel string, bundleRefsVersions map[string]string) *declcfg.DeclarativeConfig {
+func CreateFBC(operatorName, channelName string, bundleRefsVersions map[string]string) *declcfg.DeclarativeConfig {
 	dPackage := formPackage(operatorName)
 	bundleVersions := make([]string, 0)
 	for _, bundleVersion := range bundleRefsVersions {
 		bundleVersions = append(bundleVersions, bundleVersion)
 	}
-	dChannel := formChannel(operatorName, defaultChannel, bundleVersions)
+	dChannel := formChannel(operatorName, channelName, bundleVersions)
 
 	dBundle := formBundle(operatorName, bundleRefsVersions)
 
@@ -42,7 +39,7 @@ func CreateFBC(operatorName, defaultChannel string, bundleRefsVersions map[strin
 // Forms package schema for the FBC
 func formPackage(pkgName string) declcfg.Package {
 	packageFormed := declcfg.Package{
-		Schema: SchemaPackage,
+		Schema: declcfg.SchemaPackage,
 		Name:   pkgName,
 	}
 	return packageFormed
@@ -52,7 +49,7 @@ func formPackage(pkgName string) declcfg.Package {
 func formChannel(pkgName, channelName string, bundleVersions []string) declcfg.Channel {
 	channelEntries := formChannelEntries(pkgName, bundleVersions)
 	channelFormed := declcfg.Channel{
-		Schema:  SchemaChannel,
+		Schema:  declcfg.SchemaChannel,
 		Name:    channelName,
 		Package: pkgName,
 		Entries: channelEntries,
@@ -60,7 +57,8 @@ func formChannel(pkgName, channelName string, bundleVersions []string) declcfg.C
 	return channelFormed
 }
 
-// Forms the uprade graph for the FBC
+// Forms the uprade graph for the FBC. Only forms replaces edge. For forming replaces edge,
+// bundleVersions are assumed to be in increasing version number order.
 func formChannelEntries(pkgName string, bundleVersions []string) []declcfg.ChannelEntry {
 	channelEntries := make([]declcfg.ChannelEntry, 0, len(bundleVersions))
 	for i, version := range bundleVersions {
@@ -83,7 +81,7 @@ func formBundle(pkgName string, imgRefsVersions map[string]string) []declcfg.Bun
 	for imgRef, version := range imgRefsVersions {
 		var properties []property.Property
 		properties = append(properties, property.Property{
-			Type:  SchemaPackage,
+			Type:  declcfg.SchemaPackage,
 			Value: json.RawMessage(fmt.Sprintf(`{"packageName": "%s", "version": "%s"}`, pkgName, version)),
 		})
 		properties = append(properties, property.Property{
@@ -92,7 +90,7 @@ func formBundle(pkgName string, imgRefsVersions map[string]string) []declcfg.Bun
 		})
 
 		bundleFormed = append(bundleFormed, declcfg.Bundle{
-			Schema:     SchemaBundle,
+			Schema:     declcfg.SchemaBundle,
 			Name:       pkgName + ".v" + version,
 			Package:    pkgName,
 			Image:      imgRef,
@@ -102,7 +100,7 @@ func formBundle(pkgName string, imgRefsVersions map[string]string) []declcfg.Bun
 	return bundleFormed
 }
 
-// Writes the formed FBC into catalog.yaml file
+// Writes the formed FBC into catalog.yaml file in the path fbcFilePath
 func WriteFBC(fbc declcfg.DeclarativeConfig, fbcFilePath, fbcFileName string) error {
 	var buf bytes.Buffer
 	if err := declcfg.WriteYAML(fbc, &buf); err != nil {
@@ -125,8 +123,8 @@ func WriteFBC(fbc declcfg.DeclarativeConfig, fbcFilePath, fbcFileName string) er
 	return err
 }
 
-// Generates the semver using the bundle images passed
-func generateOLMSemverFile(semverFileName string, bundleImages []string) error {
+// Forms the semver template using the bundle images passed
+func formOLMSemverTemplateFile(semverFileName string, bundleImages []string) error {
 	images := make([]string, 0, len(bundleImages))
 	for _, bundleImage := range bundleImages {
 		images = append(images, fmt.Sprintf("  - image: %s", bundleImage))

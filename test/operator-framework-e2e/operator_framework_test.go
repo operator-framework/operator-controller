@@ -21,7 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -34,29 +33,30 @@ import (
 )
 
 var (
-	cfg *rest.Config
-	c   client.Client
-	ctx context.Context
+	cfg              *rest.Config
+	c                client.Client
+	ctx              context.Context
+	containerRuntime string
 )
 
 type BundleInfo struct {
-	baseFolderPath string          // Base path of the folder for the specific the bundle type input data
-	bundles        []BundleContent // Stores the data relevant to different versions of the bundle
+	baseFolderPath string          // root path of the folder where the specific bundle type input data is stored
+	bundles        []BundleContent // stores the data relevant to different versions of the bundle
 }
 
 type BundleContent struct {
-	bInputDir     string // The input directory containing the specific version of bundle data
+	bInputDir     string // The directory that stores the specific version of bundle data
 	bundleVersion string // The specific version of the bundle data
 	imageRef      string // Stores the bundle image reference
 }
 
 type CatalogDInfo struct {
-	baseFolderPath     string // Base path of the folder for the catalogs
-	catalogDir         string // The folder storing the FBC
+	baseFolderPath     string // root path to the folder storing the catalogs
+	catalogDir         string // The folder storing the FBC template
 	operatorName       string // Name of the operator to be installed from the bundles
 	desiredChannelName string // Desired channel name for the operator
-	imageRef           string // Stores the FBC image reference
-	fbcFileName        string // Name of the FBC file
+	imageRef           string // Stores the catalog image reference
+	fbcFileName        string // Name of the FBC template file
 }
 
 type OperatorActionInfo struct {
@@ -65,7 +65,7 @@ type OperatorActionInfo struct {
 }
 
 type SdkProjectInfo struct {
-	projectName string
+	projectName string // The operator-sdk project name
 	domainName  string
 	group       string
 	version     string
@@ -73,7 +73,7 @@ type SdkProjectInfo struct {
 }
 
 const (
-	remoteRegistryRepo     = "localhost:5000/"
+	remoteRegistryRepo     = "localhost:5001/"
 	kindServer             = "operator-controller-op-dev-e2e"
 	deployedNameSpace      = "rukpak-system"
 	operatorControllerHome = "../.."
@@ -105,142 +105,14 @@ var _ = BeforeSuite(func() {
 
 	ctx = context.Background()
 
+	containerRuntime = os.Getenv("CONTAINER_RUNTIME") // This environment variable is set in the Makefile
+	if containerRuntime == "" {
+		containerRuntime = "docker"
+	}
+
 })
 
-var _ = Describe("Operator Framework E2E for plain bundles", func() {
-	var (
-		bundleInfo      *BundleInfo
-		catalogDInfo    *CatalogDInfo
-		operatorAction  *OperatorActionInfo
-		operatorCatalog *catalogd.Catalog
-		operator        *operatorv1alpha1.Operator
-		err             error
-	)
-	BeforeEach(func() {
-		bundleInfo = &BundleInfo{
-			baseFolderPath: "../../testdata/bundles/plain-v0",
-			bundles: []BundleContent{
-				{
-					bInputDir:     "plain.v0.1.0",
-					bundleVersion: "0.1.0",
-				},
-				{
-					bInputDir:     "plain.v0.1.1",
-					bundleVersion: "0.1.1",
-				},
-			},
-		}
-		catalogDInfo = &CatalogDInfo{
-			baseFolderPath:     "../../testdata/catalogs",
-			fbcFileName:        "catalog.yaml",
-			operatorName:       "plain",
-			desiredChannelName: "beta",
-		}
-		operatorAction = &OperatorActionInfo{
-			installVersion: "0.1.0",
-			upgradeVersion: "0.1.1",
-		}
-		for i, b := range bundleInfo.bundles {
-			bundleInfo.bundles[i].imageRef = remoteRegistryRepo + catalogDInfo.operatorName + "-bundle:v" + b.bundleVersion
-		}
-		catalogDInfo.catalogDir = catalogDInfo.operatorName + "-catalog"
-		catalogDInfo.imageRef = remoteRegistryRepo + catalogDInfo.catalogDir + ":test"
-	})
-	When("Build and load plain+v0 bundle images into the test environment", func() {
-		It("Build the plain bundle images and load them", func() {
-			for _, b := range bundleInfo.bundles {
-				dockerContext := filepath.Join(bundleInfo.baseFolderPath, b.bInputDir)
-				dockerfilePath := filepath.Join(dockerContext, "Dockerfile")
-				err = buildPushLoadContainer(b.imageRef, dockerfilePath, dockerContext, kindServer, GinkgoWriter)
-				Expect(err).ToNot(HaveOccurred())
-			}
-		})
-	})
-	When("Create the FBC", func() {
-		It("Create a FBC", func() {
-			By("Creating FBC for plain bundle using custom routine")
-			imageRefsBundleVersions := make(map[string]string)
-			for _, b := range bundleInfo.bundles {
-				imageRefsBundleVersions[b.imageRef] = b.bundleVersion
-			}
-			fbc := CreateFBC(catalogDInfo.operatorName, catalogDInfo.desiredChannelName, imageRefsBundleVersions)
-			err = WriteFBC(*fbc, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir), catalogDInfo.fbcFileName)
-			Expect(err).ToNot(HaveOccurred())
-		})
-	})
-	When("Build and load the FBC image into the test environment", func() {
-		It("Generate the docker file, build and load FBC image", func() {
-			By("Calling generate dockerfile function written")
-			err = generateDockerFile(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir, catalogDInfo.catalogDir+".Dockerfile")
-			Expect(err).ToNot(HaveOccurred())
-
-			By("Building the catalog image and loading into the test environment")
-			dockerContext := catalogDInfo.baseFolderPath
-			dockerfilePath := filepath.Join(dockerContext, catalogDInfo.catalogDir) + ".Dockerfile"
-			err = buildPushLoadContainer(catalogDInfo.imageRef, dockerfilePath, dockerContext, kindServer, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-		})
-	})
-	When("Create a catalog object and check if the resources are created", func() {
-		It("Create catalog object for the FBC and check if catalog, packages and bundle metadatas are created", func() {
-			bundleVersions := make([]string, len(bundleInfo.bundles))
-			for i, bundle := range bundleInfo.bundles {
-				bundleVersions[i] = bundle.bundleVersion
-			}
-			operatorCatalog, err = createCatalogCheckResources(operatorCatalog, catalogDInfo, bundleVersions)
-			Expect(err).ToNot(HaveOccurred())
-		})
-	})
-	When("Install an operator and check if the operator operations succeed", func() {
-		It("Create an operator object and install it", func() {
-			By("Creating an operator object")
-			operator, err = createOperator(ctx, catalogDInfo.operatorName, operatorAction.installVersion)
-			Expect(err).ToNot(HaveOccurred())
-
-			By("Checking if the operator operations succeeded")
-			checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.installVersion, bundleInfo.baseFolderPath)
-		})
-	})
-	When("Upgrade an operator to higher version and check if the operator operations succeed", func() {
-		It("Upgrade to a higher version of the operator", func() {
-			By("Upgrading the operator")
-			operator, err = upgradeOperator(ctx, catalogDInfo.operatorName, operatorAction.upgradeVersion)
-			Expect(err).ToNot(HaveOccurred())
-
-			By("Checking if the operator operations succeeded")
-			checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.upgradeVersion, bundleInfo.baseFolderPath)
-		})
-	})
-	When("Delete an operator", func() {
-		It("Delete an operator", func() {
-			err = deleteOperator(ctx, catalogDInfo.operatorName)
-			Expect(err).ToNot(HaveOccurred())
-
-			By("Verifying the operator doesn't exist")
-			Eventually(func(g Gomega) {
-				err = validateOperatorDeletion(catalogDInfo.operatorName)
-				g.Expect(errors.IsNotFound(err)).To(BeTrue())
-			}).Should(Succeed())
-		})
-	})
-	When("Clearing up catalog object and other files formed for the test", func() {
-		It("Clearing up data generated for the test", func() {
-			//Deleting the catalog object and checking if the deletion was successful
-			Eventually(func(g Gomega) {
-				err = deleteAndValidateCatalogDeletion(operatorCatalog)
-				g.Expect(errors.IsNotFound(err)).To(BeTrue())
-			}).Should(Succeed())
-
-			var toDelete []string
-			toDelete = append(toDelete, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir))               // delete the FBC formed
-			toDelete = append(toDelete, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir+".Dockerfile")) // delete the catalog Dockerfile generated
-			err = deleteFolderFile(toDelete)
-			Expect(err).ToNot(HaveOccurred())
-		})
-	})
-})
-
-var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
+var _ = Describe("Operator Framework E2E for plain+v0 bundles", func() {
 	var (
 		sdkInfo         *SdkProjectInfo
 		bundleInfo      *BundleInfo
@@ -248,16 +120,154 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 		operatorAction  *OperatorActionInfo
 		operatorCatalog *catalogd.Catalog
 		operator        *operatorv1alpha1.Operator
-		semverFileName  string
 		err             error
 	)
 	BeforeEach(func() {
 		sdkInfo = &SdkProjectInfo{
-			projectName: "example-operator",
-			domainName:  "example.com",
+			projectName: "plain-example",
+			domainName:  "plain.com",
 			group:       "cache",
 			version:     "v1alpha1",
 			kind:        "Memcached1",
+		}
+		bundleInfo = &BundleInfo{
+			baseFolderPath: "../../testdata/bundles/plain-v0",
+			bundles: []BundleContent{
+				{
+					bundleVersion: "0.1.0",
+				},
+				{
+					bundleVersion: "0.2.0",
+				},
+			},
+		}
+		catalogDInfo = &CatalogDInfo{
+			baseFolderPath:     "../../testdata/catalogs",
+			fbcFileName:        "catalog.yaml",
+			operatorName:       "plain-operator",
+			desiredChannelName: "beta",
+		}
+		operatorAction = &OperatorActionInfo{
+			installVersion: "0.1.0",
+			upgradeVersion: "0.2.0",
+		}
+		for i, b := range bundleInfo.bundles {
+			bundleInfo.bundles[i].bInputDir = catalogDInfo.operatorName + ".v" + b.bundleVersion
+			bundleInfo.bundles[i].imageRef = remoteRegistryRepo + catalogDInfo.operatorName + "-bundle:v" + b.bundleVersion
+		}
+		catalogDInfo.catalogDir = catalogDInfo.operatorName + "-catalog"
+		catalogDInfo.imageRef = remoteRegistryRepo + catalogDInfo.catalogDir + ":test"
+	})
+	It("should succeed", func() {
+		By("creating a new operator-sdk project")
+		err = sdkInitialize(sdkInfo)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("creating a new api and controller")
+		err = sdkNewAPIAndController(sdkInfo)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("generating CRD manifests")
+		err = sdkGenerateManifests(sdkInfo)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("generating bundle directory using kustomize")
+		// Creates bundle structure for the given bundle versions
+		// Bundle content is same for the different versions of bundle now
+		for _, b := range bundleInfo.bundles {
+			err = kustomizeGenPlainBundleDirectory(sdkInfo, bundleInfo.baseFolderPath, b)
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		By("building/pushing/kind loading bundle images from bundle directories")
+		for _, b := range bundleInfo.bundles {
+			dockerContext := filepath.Join(bundleInfo.baseFolderPath, b.bInputDir)
+			dockerfilePath := filepath.Join(dockerContext, "plainbundle.Dockerfile")
+			err = buildPushLoadContainer(b.imageRef, dockerfilePath, dockerContext, kindServer, GinkgoWriter)
+			Expect(err).ToNot(HaveOccurred())
+		}
+
+		By("generating catalog directory by forming FBC and dockerfile using custom function")
+		imageRefsBundleVersions := make(map[string]string)
+		for _, b := range bundleInfo.bundles {
+			imageRefsBundleVersions[b.imageRef] = b.bundleVersion
+		}
+		err = genPlainCatalogDirectory(catalogDInfo, imageRefsBundleVersions) // the bundle image references and their respective versions are passed
+		Expect(err).ToNot(HaveOccurred())
+
+		By("building/pushing/kind loading the catalog images")
+		dockerContext := catalogDInfo.baseFolderPath
+		dockerfilePath := filepath.Join(dockerContext, fmt.Sprintf("%s.Dockerfile", catalogDInfo.catalogDir))
+		err = buildPushLoadContainer(catalogDInfo.imageRef, dockerfilePath, dockerContext, kindServer, GinkgoWriter)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("creating a Catalog CR and verifying the creation of respective packages and bundle metadata")
+		bundleVersions := make([]string, len(bundleInfo.bundles))
+		for i, bundle := range bundleInfo.bundles {
+			bundleVersions[i] = bundle.bundleVersion
+		}
+		operatorCatalog, err = createCatalogCheckResources(operatorCatalog, catalogDInfo, bundleVersions)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("creating an operator CR and verifying the operator operations")
+		namespace := fmt.Sprintf("%s-system", sdkInfo.projectName)
+		operator, err = createOperator(ctx, catalogDInfo.operatorName, operatorAction.installVersion)
+		Expect(err).ToNot(HaveOccurred())
+		checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.installVersion, bundleInfo.baseFolderPath, namespace)
+
+		By("upgrading an operator and verifying the operator operations")
+		operator, err = upgradeOperator(ctx, catalogDInfo.operatorName, operatorAction.upgradeVersion)
+		Expect(err).ToNot(HaveOccurred())
+		checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.upgradeVersion, bundleInfo.baseFolderPath, namespace)
+
+		By("deleting the operator CR and verifying the operator doesn't exist after deletion")
+		err = deleteOperator(ctx, catalogDInfo.operatorName)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			err = validateOperatorDeletion(catalogDInfo.operatorName)
+			g.Expect(errors.IsNotFound(err)).To(BeTrue())
+		}).Should(Succeed())
+
+		By("deleting the catalog CR and verifying the deletion")
+		err = deleteCatalog(operatorCatalog)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			err = validateCatalogDeletion(operatorCatalog)
+			g.Expect(errors.IsNotFound(err)).To(BeTrue())
+		}).Should(Succeed())
+	})
+	AfterEach(func() {
+		// Clearing up data generated for the test
+		var toDelete []string
+		for _, b := range bundleInfo.bundles {
+			toDelete = append(toDelete, filepath.Join(bundleInfo.baseFolderPath, b.bInputDir)) // delete the registry+v1 bundles formed
+		}
+		toDelete = append(toDelete, sdkInfo.projectName)                                                                               //delete the sdk project directory
+		toDelete = append(toDelete, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir))                               // delete the FBC formed
+		toDelete = append(toDelete, filepath.Join(catalogDInfo.baseFolderPath, fmt.Sprintf("%s.Dockerfile", catalogDInfo.catalogDir))) // delete the catalog Dockerfile generated
+		err = deleteFolderFile(toDelete)
+		Expect(err).ToNot(HaveOccurred())
+	})
+})
+
+var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
+	var (
+		sdkInfo                *SdkProjectInfo
+		bundleInfo             *BundleInfo
+		catalogDInfo           *CatalogDInfo
+		operatorAction         *OperatorActionInfo
+		operatorCatalog        *catalogd.Catalog
+		operator               *operatorv1alpha1.Operator
+		semverTemplateFileName string
+		err                    error
+	)
+	BeforeEach(func() {
+		sdkInfo = &SdkProjectInfo{
+			projectName: "registry-operator",
+			domainName:  "example2.com",
+			group:       "cache",
+			version:     "v1alpha1",
+			kind:        "Memcached2",
 		}
 		bundleInfo = &BundleInfo{
 			baseFolderPath: "../../testdata/bundles/registry-v1",
@@ -266,18 +276,18 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 					bundleVersion: "0.1.0",
 				},
 				{
-					bundleVersion: "0.1.1",
+					bundleVersion: "0.2.0",
 				},
 			},
 		}
 		catalogDInfo = &CatalogDInfo{
 			baseFolderPath: "../../testdata/catalogs",
 			fbcFileName:    "catalog.yaml",
-			operatorName:   "example-operator",
+			operatorName:   "registry-operator",
 		}
 		operatorAction = &OperatorActionInfo{
 			installVersion: "0.1.0",
-			upgradeVersion: "0.1.1",
+			upgradeVersion: "0.2.0",
 		}
 		for i, b := range bundleInfo.bundles {
 			bundleInfo.bundles[i].bInputDir = sdkInfo.projectName + ".v" + b.bundleVersion
@@ -286,152 +296,102 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 		catalogDInfo.catalogDir = catalogDInfo.operatorName + "-catalog"
 		catalogDInfo.imageRef = remoteRegistryRepo + catalogDInfo.catalogDir + ":test"
 
-		semverFileName = "registry-semver.yaml"
+		semverTemplateFileName = "registry-semver.yaml"
 	})
+	It("should succeed", func() {
+		By("creating a new operator-sdk project")
+		err = sdkInitialize(sdkInfo)
+		Expect(err).ToNot(HaveOccurred())
 
-	When("Build registry+v1 bundles with operator-sdk", func() {
-		It("Initialize new operator-sdk project and create new api and controller", func() {
-			err = sdkInitialize(sdkInfo)
+		By("creating new api and controller")
+		err = sdkNewAPIAndController(sdkInfo)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("generating CRD manifests")
+		err = sdkGenerateManifests(sdkInfo)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("generating the CSV")
+		err = sdkGenerateCSV(sdkInfo)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("generating bundle directory and building/pushing/kind loading bundle images from bundle directories")
+		// Creates bundle structure for the specified bundle versions
+		// Bundle content is same for the bundles now
+		for _, b := range bundleInfo.bundles {
+			err = sdkBundleComplete(sdkInfo, bundleInfo.baseFolderPath, b)
 			Expect(err).ToNot(HaveOccurred())
-		})
-		It("Generate manifests and CSV for the operator", func() {
-			err = sdkGenerateManifestsCSV(sdkInfo)
-			Expect(err).ToNot(HaveOccurred())
-		})
-		It("Generate and build registry+v1 bundle", func() {
-			// Creates bundle structure for the specified bundle versions
-			// Bundle content is same for the bundles now
-			for _, b := range bundleInfo.bundles {
-				err = sdkComplete(sdkInfo, bundleInfo.baseFolderPath, b)
-				Expect(err).ToNot(HaveOccurred())
-			}
-		})
+		}
+
+		By("generating catalog directory by forming FBC and dockerfile using opm tool, and validating the FBC formed")
+		bundleImageRefs := make([]string, len(bundleInfo.bundles))
+		for i, bundle := range bundleInfo.bundles {
+			bundleImageRefs[i] = bundle.imageRef
+		}
+		err = genRegistryCatalogDirectory(catalogDInfo, bundleImageRefs, semverTemplateFileName)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("building/pushing/kind loading the catalog images")
+		dockerContext := catalogDInfo.baseFolderPath
+		dockerFilePath := filepath.Join(dockerContext, fmt.Sprintf("%s.Dockerfile", catalogDInfo.catalogDir))
+		err = buildPushLoadContainer(catalogDInfo.imageRef, dockerFilePath, dockerContext, kindServer, GinkgoWriter)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("creating a Catalog CR and verifying the creation of respective packages and bundle metadata")
+		bundleVersions := make([]string, len(bundleInfo.bundles))
+		for i, bundle := range bundleInfo.bundles {
+			bundleVersions[i] = bundle.bundleVersion
+		}
+		operatorCatalog, err = createCatalogCheckResources(operatorCatalog, catalogDInfo, bundleVersions)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("creating an operator CR and verifying the operator operations")
+		operator, err = createOperator(ctx, catalogDInfo.operatorName, operatorAction.installVersion)
+		Expect(err).ToNot(HaveOccurred())
+		checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.installVersion, bundleInfo.baseFolderPath, deployedNameSpace)
+
+		By("upgrading an operator and verifying the operator operations")
+		operator, err = upgradeOperator(ctx, catalogDInfo.operatorName, operatorAction.upgradeVersion)
+		Expect(err).ToNot(HaveOccurred())
+		checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.upgradeVersion, bundleInfo.baseFolderPath, deployedNameSpace)
+
+		By("deleting the operator CR and verifying the operator doesn't exist")
+		err = deleteOperator(ctx, catalogDInfo.operatorName)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			err = validateOperatorDeletion(catalogDInfo.operatorName)
+			g.Expect(errors.IsNotFound(err)).To(BeTrue())
+		}).Should(Succeed())
+
+		By("deleting the catalog CR and verifying the deletion")
+		err = deleteCatalog(operatorCatalog)
+		Expect(err).ToNot(HaveOccurred())
+		Eventually(func(g Gomega) {
+			err = validateCatalogDeletion(operatorCatalog)
+			g.Expect(errors.IsNotFound(err)).To(BeTrue())
+		}).Should(Succeed())
 	})
-	When("Create FBC and validate FBC", func() {
-		It("Create a FBC", func() {
-			sdkCatalogFile := filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir, catalogDInfo.fbcFileName)
-			By("Forming the semver yaml file")
-			bundleImageRefs := make([]string, len(bundleInfo.bundles))
-			for i, bundle := range bundleInfo.bundles {
-				bundleImageRefs[i] = bundle.imageRef
-			}
-			err := generateOLMSemverFile(semverFileName, bundleImageRefs)
-			Expect(err).ToNot(HaveOccurred())
-
-			By("Forming the FBC using semver")
-			semverFileAbsPath, err := filepath.Abs(semverFileName)
-			Expect(err).ToNot(HaveOccurred())
-			opmArgs := "OPM_ARGS=alpha render-template semver " + semverFileAbsPath + " -o yaml --use-http"
-			cmd := exec.Command("make", "-s", "opm", opmArgs)
-			cmd.Dir = operatorControllerHome
-			output, err := cmd.Output()
-			Expect(err).ToNot(HaveOccurred())
-
-			By("Saving the output under catalogs in testdata")
-			err = os.MkdirAll(filepath.Dir(sdkCatalogFile), os.ModePerm)
-			Expect(err).ToNot(HaveOccurred())
-
-			file, err := os.Create(sdkCatalogFile)
-			Expect(err).ToNot(HaveOccurred())
-			defer file.Close()
-			_, err = file.Write(output)
-			Expect(err).ToNot(HaveOccurred())
-		})
-		It("Validate FBC", func() {
-			By("By validating the FBC using opm validate")
-			err = validateFBC(filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir))
-			Expect(err).ToNot(HaveOccurred())
-		})
-	})
-	When("Generate docker file and FBC image and load the FBC image into test environment", func() {
-		It("Create the docker file", func() {
-			By("By using opm generate tool")
-			dockerFolderAbsPath, err := filepath.Abs(filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir))
-			Expect(err).ToNot(HaveOccurred())
-			opmArgs := "OPM_ARGS=generate dockerfile " + dockerFolderAbsPath
-			cmd := exec.Command("make", "opm", opmArgs)
-			cmd.Dir = operatorControllerHome
-			err = cmd.Run()
-			Expect(err).ToNot(HaveOccurred())
-
-			By("Building the catalog image and loading into the test environment")
-			dockerContext := catalogDInfo.baseFolderPath
-			dockerFilePath := filepath.Join(dockerContext, catalogDInfo.catalogDir+".Dockerfile")
-			err = buildPushLoadContainer(catalogDInfo.imageRef, dockerFilePath, dockerContext, kindServer, GinkgoWriter)
-			Expect(err).ToNot(HaveOccurred())
-		})
-	})
-	When("Create a catalog object and check if the resources are created", func() {
-		It("Create catalog object for the FBC and check if catalog, packages and bundle metadatas are created", func() {
-			bundleVersions := make([]string, len(bundleInfo.bundles))
-			for i, bundle := range bundleInfo.bundles {
-				bundleVersions[i] = bundle.bundleVersion
-			}
-			operatorCatalog, err = createCatalogCheckResources(operatorCatalog, catalogDInfo, bundleVersions)
-			Expect(err).ToNot(HaveOccurred())
-		})
-	})
-	When("Install an operator and check if the operator operations succeed", func() {
-		It("Create an operator object and install it", func() {
-			By("Creating an operator object")
-			operator, err = createOperator(ctx, catalogDInfo.operatorName, operatorAction.installVersion)
-			Expect(err).ToNot(HaveOccurred())
-
-			By("Checking if the operator operations succeeded")
-			checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.installVersion, bundleInfo.baseFolderPath)
-		})
-	})
-	When("Upgrade an operator to higher version and check if the operator operations succeed", func() {
-		It("Upgrade to a higher version of the operator", func() {
-			By("Upgrading the operator")
-			operator, err = upgradeOperator(ctx, catalogDInfo.operatorName, operatorAction.upgradeVersion)
-			Expect(err).ToNot(HaveOccurred())
-
-			By("Checking if the operator operations succeeded")
-			checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.upgradeVersion, bundleInfo.baseFolderPath)
-		})
-	})
-	When("An operator is deleted", func() {
-		It("Delete and operator", func() {
-			err = deleteOperator(ctx, catalogDInfo.operatorName)
-			Expect(err).ToNot(HaveOccurred())
-
-			By("Eventually the operator should not exists")
-			Eventually(func(g Gomega) {
-				err = validateOperatorDeletion(catalogDInfo.operatorName)
-				g.Expect(errors.IsNotFound(err)).To(BeTrue())
-			}).Should(Succeed())
-		})
-	})
-	When("Clearing up catalog object and other files formed for the test", func() {
-		It("Clearing up data generated for the test", func() {
-			//Deleting the catalog object and checking if the deletion was successful
-			Eventually(func(g Gomega) {
-				err = deleteAndValidateCatalogDeletion(operatorCatalog)
-				g.Expect(errors.IsNotFound(err)).To(BeTrue())
-			}).Should(Succeed())
-
-			var toDelete []string
-			for _, b := range bundleInfo.bundles {
-				toDelete = append(toDelete, bundleInfo.baseFolderPath+"/"+b.bInputDir) // delete the registry+v1 bundles formed
-			}
-			toDelete = append(toDelete, sdkInfo.projectName)                                                               //delete the sdk project directory
-			toDelete = append(toDelete, semverFileName)                                                                    // delete the semver yaml formed
-			toDelete = append(toDelete, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir))               // delete the FBC formed
-			toDelete = append(toDelete, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir+".Dockerfile")) // delete the catalog Dockerfile generated
-			err = deleteFolderFile(toDelete)
-			Expect(err).ToNot(HaveOccurred())
-		})
+	AfterEach(func() {
+		var toDelete []string
+		for _, b := range bundleInfo.bundles {
+			toDelete = append(toDelete, filepath.Join(bundleInfo.baseFolderPath, b.bInputDir)) // delete the registry+v1 bundles formed
+		}
+		toDelete = append(toDelete, sdkInfo.projectName)                                                                               //delete the sdk project directory
+		toDelete = append(toDelete, semverTemplateFileName)                                                                            // delete the semver template formed
+		toDelete = append(toDelete, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir))                               // delete the FBC formed
+		toDelete = append(toDelete, filepath.Join(catalogDInfo.baseFolderPath, fmt.Sprintf("%s.Dockerfile", catalogDInfo.catalogDir))) // delete the catalog Dockerfile generated
+		err = deleteFolderFile(toDelete)
+		Expect(err).ToNot(HaveOccurred())
 	})
 })
 
+// Creates a new operator-sdk project with the name sdkInfo.projectName.
+// A project folder is created with the name sdkInfo.projectName and operator-sdk is initialized.
 func sdkInitialize(sdkInfo *SdkProjectInfo) error {
-	// Create new project for the operator
 	if err := os.Mkdir(sdkInfo.projectName, 0755); err != nil {
 		return fmt.Errorf("Error creating the sdk project %v:%v", sdkInfo.projectName, err)
 	}
 
-	// Initialize the operator-sdk project
 	operatorSdkProjectAbsPath, _ := filepath.Abs(sdkInfo.projectName)
 	operatorSdkProjectPath := "OPERATOR_SDK_PROJECT_PATH=" + operatorSdkProjectAbsPath
 	operatorSdkArgs := "OPERATOR_SDK_ARGS= init --domain=" + sdkInfo.domainName
@@ -442,28 +402,35 @@ func sdkInitialize(sdkInfo *SdkProjectInfo) error {
 		return fmt.Errorf("Error initializing the operator-sdk project %v: %v : %v", sdkInfo.projectName, string(output), err)
 	}
 
-	// Create new API and controller
-	operatorSdkProjectPath = "OPERATOR_SDK_PROJECT_PATH=" + operatorSdkProjectAbsPath
-	operatorSdkArgs = "OPERATOR_SDK_ARGS= create api --group=" + sdkInfo.group + " --version=" + sdkInfo.version + " --kind=" + sdkInfo.kind + " --resource --controller"
-	cmd = exec.Command("make", "operator-sdk", operatorSdkProjectPath, operatorSdkArgs)
+	return nil
+}
+
+// Creates new API and controller for the given project with the name sdkInfo.projectName
+func sdkNewAPIAndController(sdkInfo *SdkProjectInfo) error {
+	operatorSdkProjectAbsPath, _ := filepath.Abs(sdkInfo.projectName)
+	operatorSdkProjectPath := "OPERATOR_SDK_PROJECT_PATH=" + operatorSdkProjectAbsPath
+	operatorSdkArgs := "OPERATOR_SDK_ARGS= create api --group=" + sdkInfo.group + " --version=" + sdkInfo.version + " --kind=" + sdkInfo.kind + " --resource --controller"
+	cmd := exec.Command("make", "operator-sdk", operatorSdkProjectPath, operatorSdkArgs)
 	cmd.Dir = operatorControllerHome
-	output, err = cmd.CombinedOutput()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Error creating new API and controller for the operator-sdk project %v: %v : %v", sdkInfo.projectName, string(output), err)
 	}
 
 	// Checking if the API was created in the expected path
-	apiFilePath := filepath.Join(sdkInfo.projectName, "api", sdkInfo.version, strings.ToLower(sdkInfo.kind)+"_types.go")
+	apiFilePath := filepath.Join(sdkInfo.projectName, "api", sdkInfo.version, fmt.Sprintf("%s_types.go", strings.ToLower(sdkInfo.kind)))
 	Expect(apiFilePath).To(BeAnExistingFile())
 
 	// Checking if the controller was created in the expected path")
-	controllerFilePath := filepath.Join(sdkInfo.projectName, "controllers", strings.ToLower(sdkInfo.kind)+"_controller.go")
+	controllerFilePath := filepath.Join(sdkInfo.projectName, "controllers", fmt.Sprintf("%s_controller.go", strings.ToLower(sdkInfo.kind)))
 	Expect(controllerFilePath).To(BeAnExistingFile())
 
 	return nil
 }
 
-func sdkGenerateManifestsCSV(sdkInfo *SdkProjectInfo) error {
+// Updates the generated code if the API is changed.
+// Generates and updates the CRD manifests
+func sdkGenerateManifests(sdkInfo *SdkProjectInfo) error {
 	// Update the generated code for the resources
 	cmd := exec.Command("make", "generate")
 	cmd.Dir = sdkInfo.projectName
@@ -478,19 +445,23 @@ func sdkGenerateManifestsCSV(sdkInfo *SdkProjectInfo) error {
 		return fmt.Errorf("Error generating and updating crd manifests for the operator-sdk project %v:%v", sdkInfo.projectName, err)
 	}
 
-	// Checking if CRD manifests are generated
-	crdFilePath := filepath.Join(sdkInfo.projectName, "config", "crd", "bases", sdkInfo.group+"."+sdkInfo.domainName+"_"+strings.ToLower(sdkInfo.kind)+"s.yaml")
+	// Checking if CRD manifests are generated in the expected path
+	crdFilePath := filepath.Join(sdkInfo.projectName, "config", "crd", "bases", fmt.Sprintf("%s.%s_%ss.yaml", sdkInfo.group, sdkInfo.domainName, strings.ToLower(sdkInfo.kind)))
 	Expect(crdFilePath).To(BeAnExistingFile())
 
-	// Generate CSV for the bundle with default values
+	return nil
+}
+
+// Generates CSV for the bundle with default values
+func sdkGenerateCSV(sdkInfo *SdkProjectInfo) error {
 	operatorSdkProjectAbsPath, _ := filepath.Abs(sdkInfo.projectName)
 	operatorSdkProjectPath := "OPERATOR_SDK_PROJECT_PATH=" + operatorSdkProjectAbsPath
 	operatorSdkArgs := "OPERATOR_SDK_ARGS= generate kustomize manifests --interactive=false"
-	cmd = exec.Command("make", "operator-sdk", operatorSdkProjectPath, operatorSdkArgs)
+	cmd := exec.Command("make", "operator-sdk", operatorSdkProjectPath, operatorSdkArgs)
 	cmd.Dir = operatorControllerHome
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Error generating CSV for the operator-sdk project %v: %v: %v", sdkInfo.projectName, output, err)
+		return fmt.Errorf("Error generating CSV for the operator-sdk project %v: %v: %v", sdkInfo.projectName, string(output), err)
 	}
 
 	// Checking if CRD manifests are generated
@@ -500,8 +471,39 @@ func sdkGenerateManifestsCSV(sdkInfo *SdkProjectInfo) error {
 	return nil
 }
 
-func sdkComplete(sdkInfo *SdkProjectInfo, rootBundlePath string, bundleData BundleContent) error {
-	// Copy CRDs and other supported kinds, generate metadata, and in bundle format
+// generates the bundle directory content for plain bundle format. The yaml files are formed using the kustomize tool
+// and the bundle dockerfile is generated using a custom routine.
+func kustomizeGenPlainBundleDirectory(sdkInfo *SdkProjectInfo, rootBundlePath string, bundleData BundleContent) error {
+	// Create the bundle directory structure
+	if err := os.MkdirAll(filepath.Join(rootBundlePath, bundleData.bInputDir, "manifests"), os.ModePerm); err != nil {
+		return fmt.Errorf("Failed to create directory for bundle structure %s: %v", bundleData.bInputDir, err)
+	}
+
+	// Create the manifests for the plain+v0 bundle
+	operatorSdkProjectAbsPath, _ := filepath.Abs(sdkInfo.projectName)
+	operatorSdkProjectPath := "OPERATOR_SDK_PROJECT_PATH=" + operatorSdkProjectAbsPath
+	outputPlainBundlePath, _ := filepath.Abs(filepath.Join(rootBundlePath, bundleData.bInputDir, "manifests", "manifest.yaml"))
+	kustomizeArgs := "KUSTOMIZE_ARGS= build config/default > " + outputPlainBundlePath
+	cmd := exec.Command("make", "kustomize", operatorSdkProjectPath, kustomizeArgs)
+	cmd.Dir = operatorControllerHome
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Error generating plain bundle directory %v: %v", string(output), err)
+	}
+
+	// Creates bundle dockerfile
+	dockerFilePath := filepath.Join(rootBundlePath, bundleData.bInputDir, "plainbundle.Dockerfile")
+	if err = generateBundleDockerFile(dockerFilePath, bundleData.bInputDir); err != nil {
+		return fmt.Errorf("Error generating bundle dockerfile for the bundle %v: %v", bundleData.bInputDir, err)
+	}
+	return nil
+}
+
+// Copies the CRDs. Generates metadata and manifest in registry+v1 bundle format.
+// Build the bundle image and load into cluster.
+// Copies the bundle to appropriate bundle format.
+func sdkBundleComplete(sdkInfo *SdkProjectInfo, rootBundlePath string, bundleData BundleContent) error {
+	// Copy CRDs and other supported kinds and generate metadata and manifest in bundle format
 	bundleGenFlags := "BUNDLE_GEN_FLAGS=-q --overwrite=false --version " + bundleData.bundleVersion + " $(BUNDLE_METADATA_OPTS)"
 	cmd := exec.Command("make", "bundle", bundleGenFlags)
 	cmd.Dir = sdkInfo.projectName
@@ -561,18 +563,18 @@ func sdkComplete(sdkInfo *SdkProjectInfo, rootBundlePath string, bundleData Bund
 // `dockerContext`: context directory containing the files and resources referenced by the Dockerfile.
 // `w`: Writer to which the standard output and standard error will be redirected.
 func buildPushLoadContainer(tag, dockerfilePath, dockerContext, kindServer string, w io.Writer) error {
-	cmd := exec.Command("docker", "build", "-t", tag, "-f", dockerfilePath, dockerContext)
+	cmd := exec.Command(containerRuntime, "build", "-t", tag, "-f", dockerfilePath, dockerContext)
 	cmd.Stderr = w
 	cmd.Stdout = w
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("Error building Docker container image %s : %v", tag, err)
+		return fmt.Errorf("Error building Docker container image %s : %+v", tag, err)
 	}
 
-	cmd = exec.Command("docker", "push", tag)
+	cmd = exec.Command(containerRuntime, "push", tag)
 	cmd.Stderr = w
 	cmd.Stdout = w
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("Error pushing Docker container image: %s to the registry: %v", tag, err)
+		return fmt.Errorf("Error pushing Docker container image: %s to the registry: %+v", tag, err)
 	}
 
 	err := loadImages(w, kindServer, tag)
@@ -591,8 +593,80 @@ func loadImages(w io.Writer, kindServerName string, images ...string) error {
 		cmd.Stderr = w
 		cmd.Stdout = w
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("Error loading the container image %s into the cluster %s : %v", image, kindServerName, err)
+			return fmt.Errorf("Error loading the container image %s into the cluster %s : %+v", image, kindServerName, err)
 		}
+	}
+	return nil
+}
+
+// Generates catalog directory contents for the plain bundle format. The FBC template and the Dockerfile
+// is formed using custom routines
+func genPlainCatalogDirectory(catalogDInfo *CatalogDInfo, imageRefsBundleVersions map[string]string) error {
+	// forming the FBC using custom routine
+	fbc := CreateFBC(catalogDInfo.operatorName, catalogDInfo.desiredChannelName, imageRefsBundleVersions)
+	if err := WriteFBC(*fbc, filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir), catalogDInfo.fbcFileName); err != nil {
+		return fmt.Errorf("Error writing FBC content for the fbc %v : %v", catalogDInfo.fbcFileName, err)
+	}
+
+	// generating dockerfile for the catalog using custom routine
+	dockerFilePath := filepath.Join(catalogDInfo.baseFolderPath, fmt.Sprintf("%s.Dockerfile", catalogDInfo.catalogDir))
+	if err := generateCatalogDockerFile(dockerFilePath, catalogDInfo.catalogDir); err != nil {
+		return fmt.Errorf("Error generating catalog Dockerfile for the catalog directory %v : %v", catalogDInfo.catalogDir, err)
+	}
+	return nil
+}
+
+// Generates catalog contents for the registry bundle format. The FBC(yaml file) and the Dockerfile
+// is formed using opm tool.
+func genRegistryCatalogDirectory(catalogDInfo *CatalogDInfo, bundleImageRefs []string, semverTemplateFileName string) error {
+	// forming the semver template yaml file
+	sdkCatalogFile := filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir, catalogDInfo.fbcFileName)
+	if err := formOLMSemverTemplateFile(semverTemplateFileName, bundleImageRefs); err != nil {
+		return fmt.Errorf("Error forming the semver template yaml file %v : %v", semverTemplateFileName, err)
+	}
+
+	// generating the FBC using semver template")
+	semverTemplateFileAbsPath, err := filepath.Abs(semverTemplateFileName)
+	if err != nil {
+		return fmt.Errorf("Error forming the absolute path of the semver file %v : %v", semverTemplateFileName, err)
+	}
+	opmArgs := "OPM_ARGS=alpha render-template semver " + semverTemplateFileAbsPath + " -o yaml --use-http"
+	cmd := exec.Command("make", "-s", "opm", opmArgs)
+	cmd.Dir = operatorControllerHome
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("Error running opm command for FBC generation: %v", err)
+	}
+
+	// saving the output of semver template under catalogs in testdata
+	if err = os.MkdirAll(filepath.Dir(sdkCatalogFile), os.ModePerm); err != nil {
+		return fmt.Errorf("Error forming the catalog directory structure: %v", err)
+	}
+	file, err := os.Create(sdkCatalogFile)
+	if err != nil {
+		return fmt.Errorf("Error creating the file %v: %v", sdkCatalogFile, err)
+	}
+	defer file.Close()
+	if _, err = file.Write(output); err != nil {
+		return fmt.Errorf("Error writing to the file %v: %v", sdkCatalogFile, err)
+	}
+
+	// validating the FBC using opm validate
+	if err = validateFBC(filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir)); err != nil {
+		return fmt.Errorf("Error validating the FBC %v: %v", sdkCatalogFile, err)
+	}
+
+	// generating the dockerfile for catalog using opm generate tool
+	dockerFolderAbsPath, err := filepath.Abs(filepath.Join(catalogDInfo.baseFolderPath, catalogDInfo.catalogDir))
+	if err != nil {
+		return fmt.Errorf("Error forming the absolute path of the catalog dockerfile %v", err)
+	}
+	opmArgs = "OPM_ARGS=generate dockerfile " + dockerFolderAbsPath
+	cmd = exec.Command("make", "opm", opmArgs)
+	cmd.Dir = operatorControllerHome
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("Error generating catalog dockerfile : %v :%v", string(output), err)
 	}
 	return nil
 }
@@ -613,7 +687,7 @@ func validateFBC(fbcDirPath string) error {
 	return nil
 }
 
-// Creates catalog instance
+// Creates catalog CR
 func createTestCatalog(ctx context.Context, name, imageRef string) (*catalogd.Catalog, error) {
 	catalog := &catalogd.Catalog{
 		ObjectMeta: metav1.ObjectMeta{
@@ -633,7 +707,7 @@ func createTestCatalog(ctx context.Context, name, imageRef string) (*catalogd.Ca
 	return catalog, err
 }
 
-// Creates the operator opName for the version
+// Creates the operator for opName for the version
 func createOperator(ctx context.Context, opName, version string) (*operatorv1alpha1.Operator, error) {
 	operator := &operatorv1alpha1.Operator{
 		ObjectMeta: metav1.ObjectMeta{
@@ -647,6 +721,8 @@ func createOperator(ctx context.Context, opName, version string) (*operatorv1alp
 
 	err := c.Create(ctx, operator)
 	return operator, err
+
+	// err := checkOperatorOperationsSuccess(opName, catalogDInfo.operatorName, operatorAction.installVersion, bundleInfo.baseFolderPath, nameSpace)
 }
 
 // Upgrades the operator opName for the version
@@ -666,7 +742,7 @@ func upgradeOperator(ctx context.Context, opName, version string) (*operatorv1al
 	return operator, err
 }
 
-// Deletes the operator opName
+// Deletes the operator CR with the name opName
 func deleteOperator(ctx context.Context, opName string) error {
 	operator := &operatorv1alpha1.Operator{}
 	if err := c.Get(ctx, types.NamespacedName{Name: opName}, operator); err != nil {
@@ -674,6 +750,28 @@ func deleteOperator(ctx context.Context, opName string) error {
 	}
 
 	err := c.Delete(ctx, operator)
+	return err
+}
+
+// Checks if the operator was successfully deleted by trying to reteive the operator with the name opName.
+// Error in retrieving indicates a successful deletion.
+func validateOperatorDeletion(opName string) error {
+	err := c.Get(ctx, types.NamespacedName{Name: opName}, &operatorv1alpha1.Operator{})
+	return err
+}
+
+// Deletes the catalog CR.
+func deleteCatalog(catalog *catalogd.Catalog) error {
+	if err := c.Delete(ctx, catalog); err != nil {
+		return fmt.Errorf("Error deleting the catalog instance: %v", err)
+	}
+	return nil
+}
+
+// Checks if the catalog was successfully deleted by trying to reteive the catalog.
+// Error in retrieving indicates a successful deletion.
+func validateCatalogDeletion(catalog *catalogd.Catalog) error {
+	err := c.Get(ctx, types.NamespacedName{Name: catalog.Name}, &catalogd.Catalog{})
 	return err
 }
 
@@ -713,7 +811,7 @@ func validateCatalogUnpacking(operatorCatalog *catalogd.Catalog) error {
 	return nil
 }
 
-// Creates catalog instance and check if catalog unpackging is successul and if  the packages and bundle metadatas are formed
+// Creates catalog CR and checks if catalog unpackging is successful and if the packages and bundle metadatas are formed
 func createCatalogCheckResources(operatorCatalog *catalogd.Catalog, catalogDInfo *CatalogDInfo, bundleVersions []string) (*catalogd.Catalog, error) {
 	operatorCatalog, err := createTestCatalog(ctx, catalogDInfo.catalogDir, catalogDInfo.imageRef)
 	if err != nil {
@@ -742,7 +840,7 @@ func createCatalogCheckResources(operatorCatalog *catalogd.Catalog, catalogDInfo
 }
 
 // Checks if the operator operator succeeds following operator install or upgrade
-func checkOperatorOperationsSuccess(operator *operatorv1alpha1.Operator, pkgName, opVersion, bundlePath string) {
+func checkOperatorOperationsSuccess(operator *operatorv1alpha1.Operator, pkgName, opVersion, bundlePath, nameSpace string) {
 	// checking for a successful resolution and bundle path
 	Eventually(func(g Gomega) {
 		err := validateResolutionAndBundlePath(operator)
@@ -763,7 +861,7 @@ func checkOperatorOperationsSuccess(operator *operatorv1alpha1.Operator, pkgName
 
 	// verifying the presence of relevant manifest from the bundle on cluster
 	Eventually(func(g Gomega) {
-		err := checkManifestPresence(bundlePath, pkgName, opVersion)
+		err := checkManifestPresence(bundlePath, pkgName, opVersion, nameSpace)
 		g.Expect(err).ToNot(HaveOccurred())
 	}).Should(Succeed())
 }
@@ -900,43 +998,33 @@ func validatePackageInstallation(operator *operatorv1alpha1.Operator) error {
 }
 
 // Checks the presence of operator manifests for the operator
-func checkManifestPresence(bundlePath, operatorName, version string) error {
+func checkManifestPresence(bundlePath, operatorName, version, namespace string) error {
 	resources, err := collectKubernetesObjects(bundlePath, operatorName, version)
 	if err != nil {
 		return err
 	}
 	for _, resource := range resources {
-		if resource.Kind == "ClusterServiceVersion" {
+		if resource.GetObjectKind().GroupVersionKind().Kind == "ClusterServiceVersion" {
 			continue
 		}
-		gvk := schema.GroupVersionKind{
-			Group:   "",
-			Version: resource.APIVersion,
-			Kind:    resource.Kind,
-		}
-
+		gvk := resource.GetObjectKind().GroupVersionKind()
 		obj := &unstructured.Unstructured{}
 		obj.SetGroupVersionKind(gvk)
-		if err = c.Get(ctx, types.NamespacedName{Name: resource.Metadata.Name, Namespace: deployedNameSpace}, obj); err != nil {
-			return fmt.Errorf("Error retrieving the resources %v from the namespace %v: %v", resource.Metadata.Name, deployedNameSpace, err)
+
+		objMeta, ok := resource.(metav1.Object)
+		if !ok {
+			return fmt.Errorf("Failed to convert resource to metav1.Object")
+		}
+		objName := objMeta.GetName()
+		namespacedName := types.NamespacedName{
+			Name:      objName,
+			Namespace: namespace,
+		}
+		if err = c.Get(ctx, namespacedName, obj); err != nil {
+			return fmt.Errorf("Error retrieving the resources %v from the namespace %v: %v", namespacedName.Name, namespace, err)
 		}
 	}
 	return nil
-}
-
-// Checks if the operator was successfully deleted and returns error if not.
-func validateOperatorDeletion(opName string) error {
-	err := c.Get(ctx, types.NamespacedName{Name: opName}, &operatorv1alpha1.Operator{})
-	return err
-}
-
-// Deletes the catalog and checks if the deletion was successful. Returns error if not.
-func deleteAndValidateCatalogDeletion(catalog *catalogd.Catalog) error {
-	if err := c.Delete(ctx, catalog); err != nil {
-		return fmt.Errorf("Error deleting the catalog instance: %v", err)
-	}
-	err := c.Get(ctx, types.NamespacedName{Name: catalog.Name}, &catalogd.Catalog{})
-	return err
 }
 
 // Moves the content from currentPath to newPath

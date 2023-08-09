@@ -1,25 +1,34 @@
 package operatore2e
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"sigs.k8s.io/yaml"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 )
 
-type Object struct {
-	Kind       string `yaml:"kind"`
-	APIVersion string `yaml:"apiVersion"`
-	Metadata   struct {
-		Name string `yaml:"name"`
-	} `yaml:"metadata"`
+var (
+	scheme = runtime.NewScheme()
+
+	codecs = serializer.NewCodecFactory(scheme)
+)
+
+func init() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
+	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 }
 
 // / collectKubernetesObjects collects the Kubernetes objects present in the bundle manifest folder for a particular package and its version
-func collectKubernetesObjects(bundlePath, packageName, version string) ([]Object, error) {
-	objects := []Object{}
+func collectKubernetesObjects(bundlePath, packageName, version string) ([]runtime.Object, error) {
+	var objects []runtime.Object
 
 	bundleManifestPath := filepath.Join(bundlePath, packageName+".v"+version, "manifests")
 	err := filepath.Walk(bundleManifestPath, func(filePath string, fileInfo os.FileInfo, err error) error {
@@ -31,23 +40,20 @@ func collectKubernetesObjects(bundlePath, packageName, version string) ([]Object
 			return nil
 		}
 
-		content, err := os.ReadFile(filePath)
+		fileContent, err := os.ReadFile(filePath)
 		if err != nil {
 			return fmt.Errorf("error reading file %s: %v", filePath, err)
 		}
 
-		documents := strings.Split(string(content), "---")
-		for _, doc := range documents {
-			obj := Object{}
-			if err := yaml.Unmarshal([]byte(doc), &obj); err != nil {
-				return fmt.Errorf("error parsing YAML in file %s: %v", filePath, err)
+		decoder := codecs.UniversalDecoder(scheme.PrioritizedVersionsAllGroups()...)
+		yamlObjects := bytes.Split(fileContent, []byte("\n---\n"))
+		for _, yamlObject := range yamlObjects {
+			object, _, err := decoder.Decode(yamlObject, nil, nil)
+			if err != nil {
+				return fmt.Errorf("failed to decode file %s: %w", filePath, err)
 			}
-
-			if obj.Kind != "" && obj.APIVersion != "" && obj.Metadata.Name != "" {
-				objects = append(objects, obj)
-			}
+			objects = append(objects, object)
 		}
-
 		return nil
 	})
 

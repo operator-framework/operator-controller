@@ -2,18 +2,16 @@ package operatore2e
 
 import (
 	"os"
-	"path/filepath"
 	"text/template"
 )
 
-// generates Dockerfile and its contents for a given set of yaml files
-func generateDockerFile(dockerFilePath, yamlFolderName, dockerFileName string) error {
+// GenerateDockerFile generates Dockerfile and its contents for the data in yamlFolderName
+func generateDockerFile(dockerFilePath, yamlFolderName, dockerfileTmpl string) error {
 	t, err := template.New("dockerfile").Parse(dockerfileTmpl)
 	if err != nil {
 		panic(err)
 	}
 
-	dockerFilePath = filepath.Join(dockerFilePath, dockerFileName)
 	file, err := os.Create(dockerFilePath)
 	if err != nil {
 		return err
@@ -28,4 +26,16 @@ func generateDockerFile(dockerFilePath, yamlFolderName, dockerFileName string) e
 	return err
 }
 
-const dockerfileTmpl = "ADD {{.YamlDir}} /configs/{{.YamlDir}}\n"
+// GenerateCatalogDockerFile generates Dockerfile for the catalog content in catalogFolderName
+func generateCatalogDockerFile(dockerFilePath, catalogFolderName string) error {
+	return generateDockerFile(dockerFilePath, catalogFolderName, catalogDockerfileTmpl)
+}
+
+// GenerateBundleDockerFile generates Dockerfile for the bundle content in bundleFolderName
+func generateBundleDockerFile(dockerFilePath, bundleFolderName string) error {
+	return generateDockerFile(dockerFilePath, bundleFolderName, bundleDockerfileTmpl)
+}
+
+// Dockerfile templates
+const catalogDockerfileTmpl = "ADD {{.YamlDir}} /configs/{{.YamlDir}}\n"
+const bundleDockerfileTmpl = "ADD manifests /manifests\n"
