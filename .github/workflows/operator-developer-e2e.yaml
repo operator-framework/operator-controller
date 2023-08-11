@@ -1,0 +1,23 @@
+name: operator-developer-e2e
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+    - main
+
+jobs:
+  operator-developer-e2e:
+    runs-on: ubuntu-latest
+    steps:
+     
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-go@v4
+      with:
+        go-version-file: go.mod
+
+    - name: Run the operator framework e2e test 
+      run: |
+        make operator-developer-e2e
