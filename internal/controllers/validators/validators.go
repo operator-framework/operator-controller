@@ -27,7 +27,7 @@ func validateSemver(operator *operatorsv1alpha1.Operator) error {
 // ValidateOperatorSpec validates the operator spec, e.g. ensuring that .spec.version, if provided, is a valid SemVer
 func ValidateOperatorSpec(operator *operatorsv1alpha1.Operator) error {
 	validators := []operatorCRValidatorFunc{
-		validateSemver,
+		//∂validateSemver,
 	}
 
 	// TODO: currently we only have a single validator, but more will likely be added in the future

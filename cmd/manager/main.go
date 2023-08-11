@@ -20,23 +20,24 @@ import (
 	"flag"
 	"os"
 
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/discovery"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	"github.com/operator-framework/deppy/pkg/deppy/solver"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
-
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	"github.com/operator-framework/operator-controller/internal/resolution/entitysources"
+	"github.com/operator-framework/operator-controller/internal/resolution/v2/store"
+	"github.com/operator-framework/operator-controller/internal/resolution/v2/variablesources"
 	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
@@ -99,12 +100,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(mgr.GetConfig())
+	if err != nil {
+		setupLog.Error(err, "unable to create discovery client")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.OperatorReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 		Resolver: solver.NewDeppySolver(
-			entitysources.NewCatalogdEntitySource(mgr.GetClient()),
-			controllers.NewVariableSource(mgr.GetClient()),
+			nil,
+			variablesources.Operator{
+				Client: mgr.GetClient(),
+				Store: store.CatalogMetadataStore{
+					Client:                 mgr.GetClient(),
+					ServerVersionInterface: discoveryClient,
+				},
+			},
 		),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")

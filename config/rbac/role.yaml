@@ -5,9 +5,23 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - list
+  - watch
+- apiGroups:
   - catalogd.operatorframework.io
   resources:
   - bundlemetadata
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - catalogd.operatorframework.io
+  resources:
+  - catalogmetadata
   verbs:
   - list
   - watch

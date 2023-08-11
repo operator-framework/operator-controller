@@ -29,8 +29,10 @@ type OperatorSpec struct {
 	PackageName string `json:"packageName"`
 
 	//+kubebuilder:validation:MaxLength:=64
-	//+kubebuilder:validation:Pattern=^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+([0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?$
+	// TODO: add this pattern back in with masterminds range syntax support
+	//   => +kubebuilder:validation:Pattern=^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+([0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?$
 	//+kubebuilder:Optional
+
 	// Version is an optional semver constraint on the package version. If not specified, the latest version available of the package will be installed.
 	// If specified, the specific version of the package will be installed so long as it is available in any of the content sources available.
 	// Examples: 1.2.3, 1.0.0-alpha, 1.0.0-rc.1
@@ -40,8 +42,27 @@ type OperatorSpec struct {
 
 	//+kubebuilder:validation:MaxLength:=48
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
+
 	// Channel constraint definition
 	Channel string `json:"channel,omitempty"`
+
+	//+kubebuilder:validation:enum:=Enforce;Ignore
+	//+kubebuilder:default:=Enforce
+	//+kubebuilder:validation:Optional
+
+	// UpgradeEdgeConstraintPolicy defines the policy for how to handle upgrades. If set to Enforce, the operator will only upgrade
+	// if the new version satisfies the edge constraint set by the extension author. If set to Ignore, the operator can be upgraded
+	// or downgraded, regardless of edge constraint.
+	UpgradeEdgeConstraintPolicy string `json:"upgradeEdgeConstraintPolicy,omitempty"`
+
+	//+kubebuilder:validation:enum:=Enforce;Ignore
+	//+kubebuilder:default:=Enforce
+	//+kubebuilder:validation:Optional
+
+	// ClusterConstraintPolicy defines the policy for how to handle cluster constraints defined by the bundle. If set to Enforce,
+	// resolved bundles must satisfy all cluster constraints. If set to Ignore, resolved bundles can be installed regardless of
+	// their cluster constraints.
+	ClusterConstraintPolicy string `json:"clusterConstraintPolicy,omitempty"`
 }
 
 const (
@@ -57,6 +78,12 @@ const (
 	ReasonResolutionFailed          = "ResolutionFailed"
 	ReasonResolutionUnknown         = "ResolutionUnknown"
 	ReasonSuccess                   = "Success"
+
+	UpgradeEdgeConstraintPolicyEnforce = "Enforce"
+	UpgradeEdgeConstraintPolicyIgnore  = "Ignore"
+
+	ClusterConstraintPolicyEnforce = "Enforce"
+	ClusterConstraintPolicyIgnore  = "Ignore"
 )
 
 func init() {
