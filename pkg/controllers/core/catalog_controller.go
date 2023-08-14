@@ -18,14 +18,14 @@ package core
 
 import (
 	"context"
-	// #nosec
-	"crypto/sha1"
+	"crypto/sha1" // #nosec
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/fs"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/alpha/property"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -40,6 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/catalogd/internal/k8sutil"
 	"github.com/operator-framework/catalogd/internal/source"
 	"github.com/operator-framework/catalogd/pkg/features"
 )
@@ -223,7 +224,7 @@ func (r *CatalogReconciler) syncBundleMetadata(ctx context.Context, declCfg *dec
 	newBundles := map[string]*v1alpha1.BundleMetadata{}
 
 	for _, bundle := range declCfg.Bundles {
-		bundleName := fmt.Sprintf("%s-%s", catalog.Name, bundle.Name)
+		bundleName, _ := k8sutil.MetadataName(fmt.Sprintf("%s-%s", catalog.Name, bundle.Name))
 
 		bundleMeta := v1alpha1.BundleMetadata{
 			TypeMeta: metav1.TypeMeta{
@@ -303,7 +304,7 @@ func (r *CatalogReconciler) syncPackages(ctx context.Context, declCfg *declcfg.D
 	newPkgs := map[string]*v1alpha1.Package{}
 
 	for _, pkg := range declCfg.Packages {
-		name := fmt.Sprintf("%s-%s", catalog.Name, pkg.Name)
+		name, _ := k8sutil.MetadataName(fmt.Sprintf("%s-%s", catalog.Name, pkg.Name))
 		var icon *v1alpha1.Icon
 		if pkg.Icon != nil {
 			icon = &v1alpha1.Icon{
@@ -342,7 +343,7 @@ func (r *CatalogReconciler) syncPackages(ctx context.Context, declCfg *declcfg.D
 	}
 
 	for _, ch := range declCfg.Channels {
-		pkgName := fmt.Sprintf("%s-%s", catalog.Name, ch.Package)
+		pkgName, _ := k8sutil.MetadataName(fmt.Sprintf("%s-%s", catalog.Name, ch.Package))
 		pkg, ok := newPkgs[pkgName]
 		if !ok {
 			return fmt.Errorf("channel %q references package %q which does not exist", ch.Name, ch.Package)
@@ -404,6 +405,26 @@ func (r *CatalogReconciler) syncCatalogMetadata(ctx context.Context, fsys fs.FS,
 			return fmt.Errorf("error in generating catalog metadata name: %w", err)
 		}
 
+		blob := meta.Blob
+		if meta.Schema == declcfg.SchemaBundle {
+			var b declcfg.Bundle
+			if err := json.Unmarshal(blob, &b); err != nil {
+				return fmt.Errorf("error unmarshalling bundle: %w", err)
+			}
+			properties := b.Properties[:0]
+			for _, p := range b.Properties {
+				if p.Type == property.TypeBundleObject {
+					continue
+				}
+				properties = append(properties, p)
+			}
+			b.Properties = properties
+			blob, err = json.Marshal(b)
+			if err != nil {
+				return fmt.Errorf("error marshalling bundle: %w", err)
+			}
+		}
+
 		catalogMetadata := &v1alpha1.CatalogMetadata{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: v1alpha1.GroupVersion.String(),
@@ -432,7 +453,7 @@ func (r *CatalogReconciler) syncCatalogMetadata(ctx context.Context, fsys fs.FS,
 				Name:    meta.Name,
 				Schema:  meta.Schema,
 				Package: meta.Package,
-				Content: meta.Blob,
+				Content: blob,
 			},
 		}
 
@@ -474,6 +495,7 @@ func (r *CatalogReconciler) syncCatalogMetadata(ctx context.Context, fsys fs.FS,
 // In the place of the empty `meta.Name`, it computes a hash of `meta.Blob` to prevent multiple FBC blobs colliding on the the object name.
 // Possible outcomes are: "{catalogName}-{meta.Schema}-{meta.Name}", "{catalogName}-{meta.Schema}-{meta.Package}-{meta.Name}",
 // "{catalogName}-{meta.Schema}-{hash{meta.Blob}}", "{catalogName}-{meta.Schema}-{meta.Package}-{hash{meta.Blob}}".
+// Characters that would result in an invalid DNS name are replaced with dashes.
 func generateCatalogMetadataName(_ context.Context, catalogName string, meta *declcfg.Meta) (string, error) {
 	objName := fmt.Sprintf("%s-%s", catalogName, meta.Schema)
 	if meta.Package != "" {
@@ -491,5 +513,6 @@ func generateCatalogMetadataName(_ context.Context, catalogName string, meta *de
 		h.Write(metaJSON)
 		objName = fmt.Sprintf("%s-%s", objName, hex.EncodeToString(h.Sum(nil)))
 	}
+	objName, _ = k8sutil.MetadataName(objName)
 	return objName, nil
 }

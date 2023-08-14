@@ -9,6 +9,7 @@ require (
 	github.com/onsi/gomega v1.27.7
 	github.com/operator-framework/operator-registry v1.27.1
 	github.com/spf13/pflag v1.0.5
+	github.com/stretchr/testify v1.8.0
 	k8s.io/api v0.26.1
 	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.26.1
@@ -55,6 +56,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect

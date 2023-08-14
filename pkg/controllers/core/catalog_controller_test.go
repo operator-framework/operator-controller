@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/catalogd/internal/k8sutil"
 	"github.com/operator-framework/catalogd/internal/source"
 	"github.com/operator-framework/catalogd/pkg/controllers/core"
 	"github.com/operator-framework/catalogd/pkg/features"
@@ -222,14 +223,14 @@ var _ = Describe("Catalogd Controller Test", func() {
 
 			When("unpacker returns source.Result with state == 'Unpacked'", func() {
 				var (
-					testBundleName              = "webhook-operator.v0.0.1"
+					testBundleName              = "webhook_operator.v0.0.1"
 					testBundleImage             = "quay.io/olmtest/webhook-operator-bundle:0.0.3"
 					testBundleRelatedImageName  = "test"
 					testBundleRelatedImageImage = "testimage:latest"
 					testBundleObjectData        = "dW5pbXBvcnRhbnQK"
-					testPackageDefaultChannel   = "preview"
-					testPackageName             = "webhook-operator"
-					testChannelName             = "preview"
+					testPackageDefaultChannel   = "preview_test"
+					testPackageName             = "webhook_operator_test"
+					testChannelName             = "preview_test"
 					testPackage                 = fmt.Sprintf(testPackageTemplate, testPackageDefaultChannel, testPackageName)
 					testBundle                  = fmt.Sprintf(testBundleTemplate, testBundleImage, testBundleName, testPackageName, testBundleRelatedImageName, testBundleRelatedImageImage, testBundleObjectData)
 					testChannel                 = fmt.Sprintf(testChannelTemplate, testPackageName, testChannelName, testBundleName)
@@ -238,8 +239,8 @@ var _ = Describe("Catalogd Controller Test", func() {
 					testPackageMetaName string
 				)
 				BeforeEach(func() {
-					testBundleMetaName = fmt.Sprintf("%s-%s", catalog.Name, testBundleName)
-					testPackageMetaName = fmt.Sprintf("%s-%s", catalog.Name, testPackageName)
+					testBundleMetaName, _ = k8sutil.MetadataName(fmt.Sprintf("%s-%s", catalog.Name, testBundleName))
+					testPackageMetaName, _ = k8sutil.MetadataName(fmt.Sprintf("%s-%s", catalog.Name, testPackageName))
 
 					filesys := &fstest.MapFS{
 						"bundle.yaml":  &fstest.MapFile{Data: []byte(testBundle), Mode: os.ModePerm},
@@ -286,21 +287,9 @@ var _ = Describe("Catalogd Controller Test", func() {
 					})
 
 					AfterEach(func() {
-						// clean up package
-						pkg := &v1alpha1.Package{
-							ObjectMeta: metav1.ObjectMeta{
-								Name: testPackageMetaName,
-							},
-						}
-						Expect(cl.Delete(ctx, pkg)).To(Succeed())
+						Expect(cl.DeleteAllOf(ctx, &v1alpha1.Package{})).To(Succeed())
+						Expect(cl.DeleteAllOf(ctx, &v1alpha1.BundleMetadata{})).To(Succeed())
 
-						// clean up bundlemetadata
-						bm := &v1alpha1.BundleMetadata{
-							ObjectMeta: metav1.ObjectMeta{
-								Name: testBundleMetaName,
-							},
-						}
-						Expect(cl.Delete(ctx, bm)).To(Succeed())
 						Expect(features.CatalogdFeatureGate.SetFromMap(map[string]bool{
 							string(features.PackagesBundleMetadataAPIs): false,
 							string(features.CatalogMetadataAPI):         false,
@@ -358,8 +347,8 @@ var _ = Describe("Catalogd Controller Test", func() {
 								},
 							}
 
-							tempTestBundleMetaName = fmt.Sprintf("%s-%s", tempCatalog.Name, testBundleName)
-							tempTestPackageMetaName = fmt.Sprintf("%s-%s", tempCatalog.Name, testPackageName)
+							tempTestBundleMetaName, _ = k8sutil.MetadataName(fmt.Sprintf("%s-%s", tempCatalog.Name, testBundleName))
+							tempTestPackageMetaName, _ = k8sutil.MetadataName(fmt.Sprintf("%s-%s", tempCatalog.Name, testPackageName))
 
 							Expect(cl.Create(ctx, tempCatalog)).To(Succeed())
 							res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: "tempedout"}})
