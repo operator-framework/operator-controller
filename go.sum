@@ -756,8 +756,8 @@ github.com/opencontainers/selinux v1.8.2/go.mod h1:MUIHuUEvKB1wtJjQdOyYRgOnLD2xA
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
 github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42 h1:d/Pnr19TnmIq3zQ6ebewC+5jt5zqYbRkvYd37YZENQY=
 github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42/go.mod h1:l/cuwtPxkVUY7fzYgdust2m9tlmb8I4pOvbsUufRb24=
-github.com/operator-framework/catalogd v0.4.1 h1:fEshy6DpYHwYxg37KX1sdbGl2aaYuN1taoKTQfD6JnA=
-github.com/operator-framework/catalogd v0.4.1/go.mod h1:2RrJAnYicjjx9cLGNrRAknToTLv0GeHDaODi2/Iqp0I=
+github.com/operator-framework/catalogd v0.5.0 h1:azU5KCofUXVoakXCPRGjAjYyDtZzNSSiSBWuZJLOn74=
+github.com/operator-framework/catalogd v0.5.0/go.mod h1:1xksKKGHglY0i92h3/KDZURMSEhf3xtKRj2vCfJ57fk=
 github.com/operator-framework/deppy v0.0.0-20230629133131-bb7b6ae7b266 h1:SQEUaAoRWNhr2poLH6z/RsEWZG7PppDWHsr5vAvJkJc=
 github.com/operator-framework/deppy v0.0.0-20230629133131-bb7b6ae7b266/go.mod h1:6kgHMeS5vQt3gqWGgJIig1yT5uflBUsCc1orP+I3nbk=
 github.com/operator-framework/operator-registry v1.27.1 h1:yU4atKR69XKH/GHlhgTdKTOAv4qRZUIFVHgrJE4FyiE=
