@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -27,6 +26,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
 	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
@@ -833,8 +834,7 @@ func createCatalogCheckResources(operatorCatalog *catalogd.Catalog, catalogDInfo
 	// checking if the bundle metadatas are created
 	By("Eventually checking if bundle metadata is created")
 	Eventually(func(g Gomega) {
-		err = validateBundleMetadataCreation(operatorCatalog, catalogDInfo.operatorName, bundleVersions)
-		g.Expect(err).ToNot(HaveOccurred())
+		validateCatalogMetadataCreation(g, operatorCatalog, catalogDInfo.operatorName, bundleVersions)
 	}).Should(Succeed())
 	return operatorCatalog, nil
 }
@@ -886,39 +886,38 @@ func validatePackageCreation(operatorCatalog *catalogd.Catalog, pkgName string) 
 	return nil
 }
 
-// Checks if the bundle metadatas are created from the catalog and returns error if not.
+// Checks if the CatalogMetadata was created from the catalog and returns error if not.
 // The expected pkgNames and their versions are taken as input. This is then compared against the collected bundle versions.
 // The collected bundle versions are formed by reading the version from "olm.package" property type whose catalog name
 // matches the catalog name and pkgName matches the pkgName under consideration.
-func validateBundleMetadataCreation(operatorCatalog *catalogd.Catalog, pkgName string, versions []string) error {
-	type Package struct {
-		PackageName string `json:"packageName"`
-		Version     string `json:"version"`
-	}
-	var pkgValue Package
-	collectedBundleVersions := make([]string, 0)
-	bmList := &catalogd.BundleMetadataList{}
-	if err := c.List(ctx, bmList); err != nil {
-		return fmt.Errorf("Error retrieving the bundle metadata after %v catalog instance creation: %v", operatorCatalog.Name, err)
-	}
+func validateCatalogMetadataCreation(g Gomega, operatorCatalog *catalogd.Catalog, pkgName string, versions []string) {
+	cmList := catalogd.CatalogMetadataList{}
+	err := c.List(ctx, &cmList, client.MatchingLabels{
+		"schema":  declcfg.SchemaBundle,
+		"catalog": operatorCatalog.Name,
+		"package": pkgName,
+	})
+	g.Expect(err).ToNot(HaveOccurred())
 
-	for _, bm := range bmList.Items {
-		if bm.Spec.Catalog.Name == operatorCatalog.Name {
-			for _, prop := range bm.Spec.Properties {
-				if prop.Type == "olm.package" {
-					err := json.Unmarshal(prop.Value, &pkgValue)
-					if err == nil && pkgValue.PackageName == pkgName {
-						collectedBundleVersions = append(collectedBundleVersions, pkgValue.Version)
-					}
-				}
+	collectedBundleVersions := []string{}
+	for _, cm := range cmList.Items {
+		bundle := declcfg.Bundle{}
+
+		err := json.Unmarshal(cm.Spec.Content, &bundle)
+		g.Expect(err).ToNot(HaveOccurred())
+
+		for _, prop := range bundle.Properties {
+			if prop.Type == "olm.package" {
+				var pkgValue property.Package
+				err := json.Unmarshal(prop.Value, &pkgValue)
+				g.Expect(err).ToNot(HaveOccurred())
+
+				collectedBundleVersions = append(collectedBundleVersions, pkgValue.Version)
 			}
 		}
 	}
-	if !reflect.DeepEqual(collectedBundleVersions, versions) {
-		return fmt.Errorf("Package %v for the catalog %v is not created", pkgName, operatorCatalog.Name)
-	}
 
-	return nil
+	g.Expect(collectedBundleVersions).To(ConsistOf(versions))
 }
 
 // Checks for a successful resolution and bundle path for the operator and returns error if not.

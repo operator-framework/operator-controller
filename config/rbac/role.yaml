@@ -7,7 +7,7 @@ rules:
 - apiGroups:
   - catalogd.operatorframework.io
   resources:
-  - bundlemetadata
+  - catalogmetadata
   verbs:
   - list
   - watch

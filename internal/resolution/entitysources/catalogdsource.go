@@ -8,6 +8,7 @@ import (
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -71,70 +72,119 @@ func (es *CatalogdEntitySource) Iterate(ctx context.Context, fn input.IteratorFu
 	return nil
 }
 
-func getEntities(ctx context.Context, client client.Client) (input.EntityList, error) {
-	entityList := input.EntityList{}
-	bundleMetadatas, packageMetdatas, err := fetchMetadata(ctx, client)
-	if err != nil {
+func getEntities(ctx context.Context, cl client.Client) (input.EntityList, error) {
+	allEntitiesList := input.EntityList{}
+
+	var catalogList catalogd.CatalogList
+	if err := cl.List(ctx, &catalogList); err != nil {
 		return nil, err
 	}
-	for _, bundle := range bundleMetadatas.Items {
-		props := map[string]string{}
-
-		// TODO: We should make sure all properties are forwarded
-		// through and avoid a lossy translation from FBC --> entity
-		for _, prop := range bundle.Spec.Properties {
-			switch prop.Type {
-			case property.TypePackage:
-				// this is already a json marshalled object, so it doesn't need to be marshalled
-				// like the other ones
-				props[property.TypePackage] = string(prop.Value)
-			case entities.PropertyBundleMediaType:
-				props[entities.PropertyBundleMediaType] = string(prop.Value)
-			}
-		}
-
-		imgValue, err := json.Marshal(bundle.Spec.Image)
+	for _, catalog := range catalogList.Items {
+		channels, bundles, err := fetchCatalogMetadata(ctx, cl, catalog.Name)
 		if err != nil {
 			return nil, err
 		}
-		props[entities.PropertyBundlePath] = string(imgValue)
-		catalogScopedPkgName := fmt.Sprintf("%s-%s", bundle.Spec.Catalog.Name, bundle.Spec.Package)
-		bundlePkg := packageMetdatas[catalogScopedPkgName]
-		for _, ch := range bundlePkg.Spec.Channels {
-			for _, b := range ch.Entries {
-				catalogScopedEntryName := fmt.Sprintf("%s-%s", bundle.Spec.Catalog.Name, b.Name)
-				if catalogScopedEntryName == bundle.Name {
-					channelValue, _ := json.Marshal(property.Channel{ChannelName: ch.Name, Priority: 0})
-					props[property.TypeChannel] = string(channelValue)
-					replacesValue, _ := json.Marshal(entities.ChannelEntry{
-						Name:     b.Name,
-						Replaces: b.Replaces,
-					})
-					props[entities.PropertyBundleChannelEntry] = string(replacesValue)
-					entity := input.Entity{
-						ID:         deppy.IdentifierFromString(fmt.Sprintf("%s%s%s", bundle.Name, bundle.Spec.Package, ch.Name)),
-						Properties: props,
-					}
-					entityList = append(entityList, entity)
+
+		catalogEntitiesList, err := MetadataToEntities(catalog.Name, channels, bundles)
+		if err != nil {
+			return nil, err
+		}
+
+		allEntitiesList = append(allEntitiesList, catalogEntitiesList...)
+	}
+
+	return allEntitiesList, nil
+}
+
+func MetadataToEntities(catalogName string, channels []declcfg.Channel, bundles []declcfg.Bundle) (input.EntityList, error) {
+	entityList := input.EntityList{}
+
+	bundlesMap := map[string]*declcfg.Bundle{}
+	for i := range bundles {
+		bundleKey := fmt.Sprintf("%s-%s", bundles[i].Package, bundles[i].Name)
+		bundlesMap[bundleKey] = &bundles[i]
+	}
+
+	for _, ch := range channels {
+		for _, chEntry := range ch.Entries {
+			bundleKey := fmt.Sprintf("%s-%s", ch.Package, chEntry.Name)
+			bundle, ok := bundlesMap[bundleKey]
+			if !ok {
+				return nil, fmt.Errorf("bundle %q not found in catalog %q (package %q, channel %q)", chEntry.Name, catalogName, ch.Package, ch.Name)
+			}
+
+			props := map[string]string{}
+
+			for _, prop := range bundle.Properties {
+				switch prop.Type {
+				case property.TypePackage:
+					// this is already a json marshalled object, so it doesn't need to be marshalled
+					// like the other ones
+					props[property.TypePackage] = string(prop.Value)
+				case entities.PropertyBundleMediaType:
+					props[entities.PropertyBundleMediaType] = string(prop.Value)
 				}
 			}
+
+			imgValue, err := json.Marshal(bundle.Image)
+			if err != nil {
+				return nil, err
+			}
+			props[entities.PropertyBundlePath] = string(imgValue)
+
+			channelValue, _ := json.Marshal(property.Channel{ChannelName: ch.Name, Priority: 0})
+			props[property.TypeChannel] = string(channelValue)
+			replacesValue, _ := json.Marshal(entities.ChannelEntry{
+				Name:     bundle.Name,
+				Replaces: chEntry.Replaces,
+			})
+			props[entities.PropertyBundleChannelEntry] = string(replacesValue)
+
+			catalogScopedEntryName := fmt.Sprintf("%s-%s", catalogName, bundle.Name)
+			entity := input.Entity{
+				ID:         deppy.IdentifierFromString(fmt.Sprintf("%s%s%s", catalogScopedEntryName, bundle.Package, ch.Name)),
+				Properties: props,
+			}
+			entityList = append(entityList, entity)
 		}
 	}
+
 	return entityList, nil
 }
 
-func fetchMetadata(ctx context.Context, client client.Client) (catalogd.BundleMetadataList, map[string]catalogd.Package, error) {
-	packageMetdatas := catalogd.PackageList{}
-	if err := client.List(ctx, &packageMetdatas); err != nil {
-		return catalogd.BundleMetadataList{}, nil, err
+func fetchCatalogMetadata(ctx context.Context, cl client.Client, catalogName string) ([]declcfg.Channel, []declcfg.Bundle, error) {
+	channels, err := fetchCatalogMetadataByScheme[declcfg.Channel](ctx, cl, declcfg.SchemaChannel, catalogName)
+	if err != nil {
+		return nil, nil, err
 	}
-	bundleMetadatas := catalogd.BundleMetadataList{}
-	if err := client.List(ctx, &bundleMetadatas); err != nil {
-		return catalogd.BundleMetadataList{}, nil, err
+	bundles, err := fetchCatalogMetadataByScheme[declcfg.Bundle](ctx, cl, declcfg.SchemaBundle, catalogName)
+	if err != nil {
+		return nil, nil, err
 	}
-	packages := map[string]catalogd.Package{}
-	for _, pkg := range packageMetdatas.Items {
-		packages[pkg.Name] = pkg
+
+	return channels, bundles, nil
+}
+
+type declcfgSchema interface {
+	declcfg.Package | declcfg.Bundle | declcfg.Channel
+}
+
+// TODO: Cleanup once https://github.com/golang/go/issues/45380 implemented
+// We should be able to get rid of the schema arg and switch based on the type passed to this generic
+func fetchCatalogMetadataByScheme[T declcfgSchema](ctx context.Context, cl client.Client, schema, catalogName string) ([]T, error) {
+	cmList := catalogd.CatalogMetadataList{}
+	if err := cl.List(ctx, &cmList, client.MatchingLabels{"schema": schema, "catalog": catalogName}); err != nil {
+		return nil, err
 	}
-	return bundleMetadatas, packages, nil
+
+	contents := []T{}
+	for _, cm := range cmList.Items {
+		var content T
+		if err := json.Unmarshal(cm.Spec.Content, &content); err != nil {
+			return nil, err
+		}
+		contents = append(contents, content)
+	}
+
+	return contents, nil
 }

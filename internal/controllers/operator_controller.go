@@ -62,9 +62,9 @@ type OperatorReconciler struct {
 
 //+kubebuilder:rbac:groups=core.rukpak.io,resources=bundledeployments,verbs=get;list;watch;create;update;patch
 
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=bundlemetadata,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=packages,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs,verbs=list;watch
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
 
 func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("operator-controller")

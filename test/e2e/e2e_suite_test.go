@@ -95,8 +95,9 @@ var _ = AfterSuite(func() {
 	}).Should(Succeed())
 
 	// speed up delete without waiting for gc
-	Expect(c.DeleteAllOf(ctx, &catalogd.BundleMetadata{})).To(Succeed())
 	Expect(c.DeleteAllOf(ctx, &catalogd.Package{})).To(Succeed())
+	Expect(c.DeleteAllOf(ctx, &catalogd.BundleMetadata{})).To(Succeed())
+	Expect(c.DeleteAllOf(ctx, &catalogd.CatalogMetadata{})).To(Succeed())
 
 	Eventually(func(g Gomega) {
 		// ensure resource cleanup
@@ -106,6 +107,10 @@ var _ = AfterSuite(func() {
 
 		bmd := &catalogd.BundleMetadataList{}
 		g.Expect(c.List(ctx, bmd)).To(Succeed())
+		g.Expect(bmd.Items).To(BeEmpty())
+
+		cmd := &catalogd.CatalogMetadataList{}
+		g.Expect(c.List(ctx, cmd)).To(Succeed())
 		g.Expect(bmd.Items).To(BeEmpty())
 	}).Should(Succeed())
 })

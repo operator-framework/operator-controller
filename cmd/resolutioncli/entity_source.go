@@ -18,17 +18,12 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/action"
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
-	"github.com/operator-framework/operator-registry/alpha/model"
-	"github.com/operator-framework/operator-registry/alpha/property"
 
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
+	"github.com/operator-framework/operator-controller/internal/resolution/entitysources"
 )
 
 type indexRefEntitySource struct {
@@ -101,12 +96,8 @@ func (es *indexRefEntitySource) entities(ctx context.Context) (input.EntityList,
 			return nil, err
 		}
 
-		model, err := declcfg.ConvertToModel(*cfg)
-		if err != nil {
-			return nil, err
-		}
-
-		entities, err := modelToEntities(model)
+		// TODO: update empty catalog name string to be catalog name once we support multiple catalogs in CLI
+		entities, err := entitysources.MetadataToEntities("", cfg.Channels, cfg.Bundles)
 		if err != nil {
 			return nil, err
 		}
@@ -115,47 +106,4 @@ func (es *indexRefEntitySource) entities(ctx context.Context) (input.EntityList,
 	}
 
 	return es.entitiesCache, nil
-}
-
-// TODO: Reduce code duplication: share a function with catalogdEntitySource (see getEntities)
-// We don't want to maintain two functions performing conversion into input.EntityList.
-// For this we need some common format. So we need a package which will be able
-// to convert from declfcg structs into CRD structs directly or via model.Model.
-// One option would be to make this piece of code from catalogd reusable and exportable:
-// https://github.com/operator-framework/catalogd/blob/9fe45a628de2e74d9cd73c3650fa2582aaac5213/pkg/controllers/core/catalog_controller.go#L200-L360
-func modelToEntities(model model.Model) (input.EntityList, error) {
-	entities := input.EntityList{}
-
-	for _, pkg := range model {
-		for _, ch := range pkg.Channels {
-			for _, bundle := range ch.Bundles {
-				props := map[string]string{}
-
-				for _, prop := range bundle.Properties {
-					switch prop.Type {
-					case property.TypePackage:
-						// this is already a json marshalled object, so it doesn't need to be marshalled
-						// like the other ones
-						props[property.TypePackage] = string(prop.Value)
-					}
-				}
-
-				imgValue, err := json.Marshal(bundle.Image)
-				if err != nil {
-					return nil, err
-				}
-				props[olmentity.PropertyBundlePath] = string(imgValue)
-
-				channelValue, _ := json.Marshal(property.Channel{ChannelName: ch.Name, Priority: 0})
-				props[property.TypeChannel] = string(channelValue)
-				entity := input.Entity{
-					ID:         deppy.IdentifierFromString(fmt.Sprintf("%s%s%s", bundle.Name, bundle.Package.Name, ch.Name)),
-					Properties: props,
-				}
-				entities = append(entities, entity)
-			}
-		}
-	}
-
-	return entities, nil
 }
