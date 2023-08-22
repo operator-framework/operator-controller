@@ -18,10 +18,14 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/go-logr/logr"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -134,6 +138,21 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		op.Status.ResolvedBundleResource = ""
 		setResolvedStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
+	}
+
+	// TODO: Checking for unsat is awkward using the current version of deppy.
+	//    This awkwardness has been fixed in an unreleased version of deppy.
+	//    When there is a new minor release of deppy, we can revisit this and
+	//    simplify this to a normal error check.
+	//    See https://github.com/operator-framework/deppy/issues/139.
+	unsat := deppy.NotSatisfiable{}
+	if ok := errors.As(solution.Error(), &unsat); ok && len(unsat) > 0 {
+		op.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution is unsatisfiable", op.GetGeneration())
+		op.Status.ResolvedBundleResource = ""
+		msg := prettyUnsatMessage(unsat)
+		setResolvedStatusConditionFailed(&op.Status.Conditions, msg, op.GetGeneration())
+		return ctrl.Result{}, unsat
 	}
 
 	// lookup the bundle entity in the solution that corresponds to the
@@ -458,4 +477,24 @@ func operatorRequestsForCatalog(ctx context.Context, c client.Reader, logger log
 		}
 		return requests
 	}
+}
+
+// TODO: This can be removed when operator controller bumps to a
+//    version of deppy that contains a fix for this issue:
+//    https://github.com/operator-framework/deppy/issues/142
+
+// prettyUnsatMessage ensures that the unsat message is deterministic and
+// human-readable. It sorts the individual constraint strings lexicographically
+// and joins them with a semicolon (rather than a comma, which the unsat.Error()
+// function does). This function also has the side effect of sorting the items
+// in the unsat slice.
+func prettyUnsatMessage(unsat deppy.NotSatisfiable) string {
+	sort.Slice(unsat, func(i, j int) bool {
+		return unsat[i].String() < unsat[j].String()
+	})
+	msgs := make([]string, 0, len(unsat))
+	for _, c := range unsat {
+		msgs = append(msgs, c.String())
+	}
+	return fmt.Sprintf("constraints not satisfiable: %s", strings.Join(msgs, "; "))
 }
