@@ -1,11 +1,4 @@
----
-layout: default
-title: Deleting an operator from the cluster
-nav_order: 4
-parent: Tasks
----
-
-Deleting an operator is as simple as deleting an existing Operator CR: 
+Uninstalling an operator is as simple as deleting an existing Operator CR: 
 
 ```bash
 $ kubectl get operators 

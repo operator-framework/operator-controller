@@ -1,10 +1,3 @@
----
-layout: default
-title: Adding a catalog of operators to the cluster
-nav_order: 1
-parent: Tasks
----
-
 Operator authors have the mechanisms to offer their product as part of a curated catalog of operators, that they can push updates to over-the-air (eg publish new versions, publish patched versions with CVEs, etc). Cluster admins can sign up to receive these updates on clusters, by adding the catalog to the cluster. When a catalog is added to a cluster, the kubernetes extension packages (operators, or any other extension package) in that catalog become available on cluster for installation and receiving updates.  
 
 For example, the [k8s-operatorhub/community-operators](https://github.com/k8s-operatorhub/community-operators) is a catalog of curated operators that contains a list of operators being developed by the community. The list of operators can be viewed in [Operatorhub.io](https://operatorhub.io). This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://quay.io/repository/operatorhubio/catalog?tag=latest&tab=tags) for consumption on clusters. 

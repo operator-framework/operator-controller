@@ -1,10 +1,3 @@
----
-layout: default
-title: Exploring packages available for installation on cluster
-nav_order: 2
-parent: Tasks
----
-
 The packages available for installation/receiving updates on cluster can be explored by querying the `Package` and `BundleMetadata` CRs: 
 
 ```bash
