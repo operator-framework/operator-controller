@@ -19,7 +19,7 @@ const (
 
 // Forms the FBC declartive config and creates the FBC by calling functions for forming the package, channel and bundles.
 func CreateFBC(operatorName, channelName string, bundleRefsVersions map[string]string) *declcfg.DeclarativeConfig {
-	dPackage := formPackage(operatorName)
+	dPackage := formPackage(operatorName, channelName)
 	bundleVersions := make([]string, 0)
 	for _, bundleVersion := range bundleRefsVersions {
 		bundleVersions = append(bundleVersions, bundleVersion)
@@ -37,10 +37,11 @@ func CreateFBC(operatorName, channelName string, bundleRefsVersions map[string]s
 }
 
 // Forms package schema for the FBC
-func formPackage(pkgName string) declcfg.Package {
+func formPackage(pkgName, defaultChannelName string) declcfg.Package {
 	packageFormed := declcfg.Package{
-		Schema: declcfg.SchemaPackage,
-		Name:   pkgName,
+		Schema:         declcfg.SchemaPackage,
+		Name:           pkgName,
+		DefaultChannel: defaultChannelName,
 	}
 	return packageFormed
 }
