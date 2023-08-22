@@ -3,7 +3,7 @@ package predicates_test
 import (
 	"testing"
 
-	"github.com/blang/semver/v4"
+	bsemver "github.com/blang/semver/v4"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
@@ -38,14 +38,14 @@ var _ = Describe("Predicates", func() {
 			entity := input.NewEntity("test", map[string]string{
 				property.TypePackage: `{"packageName": "mypackage", "version": "1.0.0"}`,
 			})
-			inRange := semver.MustParseRange(">=1.0.0")
-			notInRange := semver.MustParseRange(">=2.0.0")
+			inRange := bsemver.MustParseRange(">=1.0.0")
+			notInRange := bsemver.MustParseRange(">=2.0.0")
 			Expect(predicates.InSemverRange(inRange)(entity)).To(BeTrue())
 			Expect(predicates.InSemverRange(notInRange)(entity)).To(BeFalse())
 		})
 		It("should return false when the entity does not have a version", func() {
 			entity := input.NewEntity("test", map[string]string{})
-			inRange := semver.MustParseRange(">=1.0.0")
+			inRange := bsemver.MustParseRange(">=1.0.0")
 			Expect(predicates.InSemverRange(inRange)(entity)).To(BeFalse())
 		})
 	})

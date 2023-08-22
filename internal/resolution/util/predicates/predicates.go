@@ -1,7 +1,7 @@
 package predicates
 
 import (
-	"github.com/blang/semver/v4"
+	bsemver "github.com/blang/semver/v4"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
 	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
@@ -18,7 +18,7 @@ func WithPackageName(packageName string) input.Predicate {
 	}
 }
 
-func InSemverRange(semverRange semver.Range) input.Predicate {
+func InSemverRange(semverRange bsemver.Range) input.Predicate {
 	return func(entity *input.Entity) bool {
 		bundleEntity := olmentity.NewBundleEntity(entity)
 		bundleVersion, err := bundleEntity.Version()

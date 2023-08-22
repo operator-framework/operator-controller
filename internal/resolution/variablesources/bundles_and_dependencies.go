@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/blang/semver/v4"
+	bsemver "github.com/blang/semver/v4"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
@@ -87,7 +87,7 @@ func (b *BundlesAndDepsVariableSource) getEntityDependencies(ctx context.Context
 	// todo(perdasilva): disambiguate between not found and actual errors
 	requiredPackages, _ := bundleEntity.RequiredPackages()
 	for _, requiredPackage := range requiredPackages {
-		semverRange, err := semver.ParseRange(requiredPackage.VersionRange)
+		semverRange, err := bsemver.ParseRange(requiredPackage.VersionRange)
 		if err != nil {
 			return nil, err
 		}

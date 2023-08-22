@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/blang/semver/v4"
+	bsemver "github.com/blang/semver/v4"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/property"
 )
@@ -32,7 +32,7 @@ const (
 
 type PackageRequired struct {
 	property.PackageRequired
-	SemverRange *semver.Range `json:"-"`
+	SemverRange *bsemver.Range `json:"-"`
 }
 
 type GVK property.GVK
@@ -67,7 +67,7 @@ type BundleEntity struct {
 	requiredPackages []PackageRequired
 	channel          *property.Channel
 	channelEntry     *ChannelEntry
-	semVersion       *semver.Version
+	semVersion       *bsemver.Version
 	bundlePath       string
 	mediaType        string
 	mu               sync.RWMutex
@@ -87,7 +87,7 @@ func (b *BundleEntity) PackageName() (string, error) {
 	return b.bundlePackage.PackageName, nil
 }
 
-func (b *BundleEntity) Version() (*semver.Version, error) {
+func (b *BundleEntity) Version() (*bsemver.Version, error) {
 	if err := b.loadPackage(); err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (b *BundleEntity) loadPackage() error {
 		}
 		b.bundlePackage = &bundlePackage
 		if b.semVersion == nil {
-			semVer, err := semver.Parse(b.bundlePackage.Version)
+			semVer, err := bsemver.Parse(b.bundlePackage.Version)
 			if err != nil {
 				return fmt.Errorf("could not parse semver (%s) for entity '%s': %w", b.bundlePackage.Version, b.ID, err)
 			}
@@ -232,7 +232,7 @@ func (b *BundleEntity) loadRequiredPackages() error {
 			return fmt.Errorf("error determining bundle required packages for entity '%s': %w", b.ID, err)
 		}
 		for _, requiredPackage := range requiredPackages {
-			semverRange, err := semver.ParseRange(requiredPackage.VersionRange)
+			semverRange, err := bsemver.ParseRange(requiredPackage.VersionRange)
 			if err != nil {
 				return fmt.Errorf("error determining bundle required package semver range for entity '%s': '%w'", b.ID, err)
 			}

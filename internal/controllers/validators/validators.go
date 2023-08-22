@@ -3,7 +3,7 @@ package validators
 import (
 	"fmt"
 
-	"github.com/blang/semver/v4"
+	bsemver "github.com/blang/semver/v4"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
@@ -18,7 +18,7 @@ func validateSemver(operator *operatorsv1alpha1.Operator) error {
 	if operator.Spec.Version == "" {
 		return nil
 	}
-	if _, err := semver.Parse(operator.Spec.Version); err != nil {
+	if _, err := bsemver.Parse(operator.Spec.Version); err != nil {
 		return fmt.Errorf("invalid .spec.version: %w", err)
 	}
 	return nil

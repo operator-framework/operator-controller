@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/blang/semver/v4"
+	bsemver "github.com/blang/semver/v4"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
@@ -55,7 +55,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			version, err := bundleEntity.Version()
 			Expect(err).ToNot(HaveOccurred())
-			Expect(*version).To(Equal(semver.MustParse("0.14.0")))
+			Expect(*version).To(Equal(bsemver.MustParse("0.14.0")))
 		})
 		It("should return an error if the property is not found", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{})
