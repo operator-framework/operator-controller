@@ -1,24 +1,46 @@
-name: Deploy Documentation site 
+name: Build/Deploy Documentation
 on:
+  # So we can trigger manually if needed
+  workflow_dispatch:
+
+  # To confirm any changes to docs build successfully, without deploying them
+  pull_request:
+    paths:
+    - "docs/**"
+    - ".github/workflows/pages.yaml"
+    - "mkdocs.yml"
+
+  # Pushes to branches do the full build + deployment
   push:
     branches:
       - main
+    paths:
+    - "docs/**"
+    - ".github/workflows/pages.yaml"
+    - "mkdocs.yml"
+
 permissions:
   contents: write
+
+# Don't allow multiple simultaneous instances because that would make deploying the docs nondeterministic
+concurrency:
+  group: ${{ github.workflow }}
+
 jobs:
-  deploy:
+  docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x
-      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV 
-      - uses: actions/cache@v3
-        with:
-          key: mkdocs-material-${{ env.cache_id }}
-          path: .cache
-          restore-keys: |
-            mkdocs-material-
-      - run: pip install mkdocs-material 
-      - run: mkdocs gh-deploy --force
+          cache: pip
+
+      # Deploy on merge
+      - run: make deploy-docs
+        if: github.event_name == 'push'
+
+      # Only build on everything else
+      - run: make build-docs
+        if: github.event_name != 'push'

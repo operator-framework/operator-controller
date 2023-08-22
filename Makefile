@@ -243,3 +243,26 @@ deploy: manifests $(KUSTOMIZE) ## Deploy controller to the K8s cluster specified
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
 	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+
+
+##@ Docs
+
+VENVDIR=$(abspath docs/.venv)
+REQUIREMENTS_TXT=docs/requirements.txt
+
+.PHONY: build-docs
+build-docs: venv
+	. $(VENV)/activate; \
+	mkdocs build
+
+.PHONY: serve-docs
+serve-docs: venv
+	. $(VENV)/activate; \
+	mkdocs serve
+
+.PHONY: deploy-docs
+deploy-docs: venv
+	. $(VENV)/activate; \
+	mkdocs gh-deploy --force
+
+include Makefile.venv
