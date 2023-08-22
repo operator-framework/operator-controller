@@ -6,11 +6,11 @@ theme:
 
 repo_url: https://github.com/operator-framework/operator-controller
 
-nav: 
+nav:
   - Home: 'index.md'
   - Components: 'components.md'
-  - Tasks: 
-    - Adding a catalog of operators: 'adding-a-catalog.md'
-    - Explore operators available for installation: 'explore-available-packages.md'
-    - Installing an operator: 'installing-an-operator.md'
-    - Deleting an operator: 'deleting-an-operator.md'
+  - Tasks:
+    - Adding a catalog of operators: 'Tasks/adding-a-catalog.md'
+    - Explore operators available for installation: 'Tasks/explore-available-packages.md'
+    - Installing an operator: 'Tasks/installing-an-operator.md'
+    - Deleting an operator: 'Tasks/uninstall-an-operator.md'
