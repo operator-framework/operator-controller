@@ -44,6 +44,8 @@ linters-settings:
       alias: ctrl
     - pkg: github.com/operator-framework/rukpak/api/v1alpha1
       alias: rukpakv1alpha1
+    - pkg: github.com/blang/semver/v4
+      alias: bsemver
   goimports:
     local-prefixes: github.com/operator-framework/operator-controller
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/blang/semver/v4"
+	bsemver "github.com/blang/semver/v4"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
@@ -21,7 +21,7 @@ type RequiredPackageVariableSourceOption func(*RequiredPackageVariableSource) er
 func InVersionRange(versionRange string) RequiredPackageVariableSourceOption {
 	return func(r *RequiredPackageVariableSource) error {
 		if versionRange != "" {
-			vr, err := semver.ParseRange(versionRange)
+			vr, err := bsemver.ParseRange(versionRange)
 			if err == nil {
 				r.versionRange = versionRange
 				r.predicates = append(r.predicates, predicates.InSemverRange(vr))
