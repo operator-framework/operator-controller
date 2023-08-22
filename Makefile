@@ -129,6 +129,7 @@ kind-load: $(KIND) ## Loads the currently constructed image onto the cluster
 
 .PHONY: kind-cluster
 kind-cluster: $(KIND) ## Standup a kind cluster
+	-$(KIND) delete cluster --name ${KIND_CLUSTER_NAME}
 	$(KIND) create cluster --name ${KIND_CLUSTER_NAME}
 	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
 
