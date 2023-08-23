@@ -6,15 +6,13 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
-
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
 	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
@@ -185,16 +183,16 @@ var _ = Describe("Operator Install", func() {
 				g.Expect(operator.Status.ResolvedBundleResource).ToNot(BeEmpty())
 			}).Should(Succeed())
 
-			By("updating the Operator resource to an invalid version")
-			operator.Spec.Version = "0.65.1" // the correct one should be 0.47.0
+			By("updating the Operator resource to a non-successor version")
+			operator.Spec.Version = "0.65.1" // current (0.37.0) and successor (0.47.0) are the only values that would be SAT.
 			Expect(c.Update(ctx, operator)).To(Succeed())
-			By("eventually reporting a failed resolution")
+			By("eventually reporting an unsatisfiable resolution")
 			Eventually(func(g Gomega) {
 				g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
 				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
 				g.Expect(cond).ToNot(BeNil())
 				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonResolutionFailed))
-				g.Expect(cond.Message).To(ContainSubstring("entity for package \"prometheus\" not found in solutio"))
+				g.Expect(cond.Message).To(MatchRegexp(`^constraints not satisfiable:.*; installed package prometheus requires at least one of.*0.47.0[^,]*,[^,]*0.37.0[^;]*;.*`))
 				g.Expect(operator.Status.ResolvedBundleResource).To(BeEmpty())
 			}).Should(Succeed())
 
