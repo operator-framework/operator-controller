@@ -61,6 +61,15 @@ var _ = Describe("Operator Spec Validations", func() {
 			"1.2.3-pre+bad_metadata",
 			"1.2.-3",
 			".1.2.3",
+			"<<1.2.3",
+			">>1.2.3",
+			">~1.2.3",
+			"==1.2.3",
+			"=!1.2.3",
+			"1.Y",
+			">1.2.3 && <2.3.4",
+			">1.2.3;<2.3.4",
+			"1.2.3 - 2.3.4",
 		}
 		for _, invalidSemver := range invalidSemvers {
 			err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
@@ -69,7 +78,54 @@ var _ = Describe("Operator Spec Validations", func() {
 			}))
 
 			Expect(err).To(HaveOccurred(), "expected error for invalid semver %q", invalidSemver)
-			Expect(err.Error()).To(ContainSubstring("spec.version in body should match '^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-(0|[1-9]\\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\\.(0|[1-9]\\d*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\\+([0-9a-zA-Z-]+(\\.[0-9a-zA-Z-]+)*))?$'"))
+			// Don't need to include the whole regex, this should be enough to match the MasterMinds regex
+			Expect(err.Error()).To(ContainSubstring("spec.version in body should match '^(\\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\\^)"))
+		}
+	})
+	It("should pass if a valid semver range given", func() {
+		validSemvers := []string{
+			">=1.2.3",
+			"=>1.2.3",
+			">= 1.2.3",
+			">=v1.2.3",
+			">= v1.2.3",
+			"<=1.2.3",
+			"=<1.2.3",
+			"=1.2.3",
+			"!=1.2.3",
+			"<1.2.3",
+			">1.2.3",
+			"~1.2.2",
+			"~>1.2.3",
+			"^1.2.3",
+			"1.2.3",
+			"v1.2.3",
+			"1.x",
+			"1.X",
+			"1.*",
+			"1.2.x",
+			"1.2.X",
+			"1.2.*",
+			">=1.2.3 <2.3.4",
+			">=1.2.3,<2.3.4",
+			">=1.2.3, <2.3.4",
+			"<1.2.3||>2.3.4",
+			"<1.2.3|| >2.3.4",
+			"<1.2.3 ||>2.3.4",
+			"<1.2.3 || >2.3.4",
+			">1.0.0,<1.2.3 || >2.1.0",
+			"<1.2.3-abc >2.3.4-def",
+			"<1.2.3-abc+def >2.3.4-ghi+jkl",
+		}
+		for _, validSemver := range validSemvers {
+			op := operator(operatorsv1alpha1.OperatorSpec{
+				PackageName: "package",
+				Version:     validSemver,
+			})
+			err := cl.Create(ctx, op)
+			Expect(err).NotTo(HaveOccurred(), "expected success for semver range '%q': %w", validSemver, err)
+			err = cl.Delete(ctx, op)
+			Expect(err).NotTo(HaveOccurred(), "unexpected error deleting valid semver '%q': %w", validSemver, err)
 		}
 	})
 	It("should fail if an invalid channel name is given", func() {
