@@ -1,5 +1,9 @@
 ## pprof
 
+> **Warning**
+> This pprof data is based on early versions of catalogd and has not been updated since. The data is likely not accurate anymore.
+> A decision about removing or updating this data will be made in the future. 
+
 This folder contains some profiles that can be read using [pprof](https://github.com/google/pprof) to show how the core kubernetes apiserver and the custom catalogd apiserver CPU & Memory utilization is affected by the creation and reconciliation of the sample `Catalog` CR found at `../config/samples/core_v1alpha1_catalog.yaml`.
 
 Instead of providing static screenshots and losing the interactivity associated with these `pprof` profiles, each of the files with the extension `.pb` can be used to view the profiles that were the result of running `pprof` against the live processes.

@@ -56,12 +56,6 @@ type CatalogReconciler struct {
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs/finalizers,verbs=update
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=bundlemetadata,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=bundlemetadata/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=bundlemetadata/finalizers,verbs=update
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=packages,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=packages/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=packages/finalizers,verbs=update
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=create;update;patch;delete;get;list;watch
 //+kubebuilder:rbac:groups=core,resources=pods/log,verbs=get;list;watch
@@ -143,22 +137,6 @@ func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.Cat
 		// TODO: We should check to see if the unpacked result has the same content
 		//   as the already unpacked content. If it does, we should skip this rest
 		//   of the unpacking steps.
-
-		fbc, err := declcfg.LoadFS(unpackResult.FS)
-		if err != nil {
-			return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("load FBC from filesystem: %v", err))
-		}
-
-		if features.CatalogdFeatureGate.Enabled(features.PackagesBundleMetadataAPIs) {
-			if err := r.syncPackages(ctx, fbc, catalog); err != nil {
-				return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("create package objects: %v", err))
-			}
-
-			if err := r.syncBundleMetadata(ctx, fbc, catalog); err != nil {
-				return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("create bundle metadata objects: %v", err))
-			}
-		}
-
 		if features.CatalogdFeatureGate.Enabled(features.CatalogMetadataAPI) {
 			if err = r.syncCatalogMetadata(ctx, unpackResult.FS, catalog); err != nil {
 				return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("create catalog metadata objects: %v", err))
@@ -215,173 +193,6 @@ func updateStatusUnpackFailing(status *v1alpha1.CatalogStatus, err error) error 
 		Message: err.Error(),
 	})
 	return err
-}
-
-// syncBundleMetadata will create a `BundleMetadata` resource for each
-// "olm.bundle" object that exists for the given catalog contents. Returns an
-// error if any are encountered.
-func (r *CatalogReconciler) syncBundleMetadata(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalog *v1alpha1.Catalog) error {
-	newBundles := map[string]*v1alpha1.BundleMetadata{}
-
-	for _, bundle := range declCfg.Bundles {
-		bundleName, _ := k8sutil.MetadataName(fmt.Sprintf("%s-%s", catalog.Name, bundle.Name))
-
-		bundleMeta := v1alpha1.BundleMetadata{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: v1alpha1.GroupVersion.String(),
-				Kind:       "BundleMetadata",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: bundleName,
-				Labels: map[string]string{
-					"catalog": catalog.Name,
-				},
-				OwnerReferences: []metav1.OwnerReference{{
-					APIVersion:         v1alpha1.GroupVersion.String(),
-					Kind:               "Catalog",
-					Name:               catalog.Name,
-					UID:                catalog.UID,
-					BlockOwnerDeletion: pointer.Bool(true),
-					Controller:         pointer.Bool(true),
-				}},
-			},
-			Spec: v1alpha1.BundleMetadataSpec{
-				Catalog: corev1.LocalObjectReference{Name: catalog.Name},
-				Package: bundle.Package,
-				Image:   bundle.Image,
-			},
-		}
-
-		for _, relatedImage := range bundle.RelatedImages {
-			bundleMeta.Spec.RelatedImages = append(bundleMeta.Spec.RelatedImages, v1alpha1.RelatedImage{
-				Name:  relatedImage.Name,
-				Image: relatedImage.Image,
-			})
-		}
-
-		for _, prop := range bundle.Properties {
-			// skip any properties that are of type `olm.bundle.object`
-			if prop.Type == "olm.bundle.object" {
-				continue
-			}
-
-			bundleMeta.Spec.Properties = append(bundleMeta.Spec.Properties, v1alpha1.Property{
-				Type:  prop.Type,
-				Value: prop.Value,
-			})
-		}
-		newBundles[bundleName] = &bundleMeta
-	}
-
-	var existingBundles v1alpha1.BundleMetadataList
-	if err := r.List(ctx, &existingBundles, &client.MatchingLabels{"catalog": catalog.Name}); err != nil {
-		return fmt.Errorf("list existing bundle metadatas: %v", err)
-	}
-	for i := range existingBundles.Items {
-		existingBundle := existingBundles.Items[i]
-		if _, ok := newBundles[existingBundle.Name]; !ok {
-			if err := r.Delete(ctx, &existingBundle); err != nil {
-				return fmt.Errorf("delete existing bundle metadata %q: %v", existingBundle.Name, err)
-			}
-		}
-	}
-
-	ordered := sets.List(sets.KeySet(newBundles))
-	for _, bundleName := range ordered {
-		newBundle := newBundles[bundleName]
-		if err := r.Client.Patch(ctx, newBundle, client.Apply, &client.PatchOptions{Force: pointer.Bool(true), FieldManager: "catalog-controller"}); err != nil {
-			return fmt.Errorf("applying bundle metadata %q: %w", newBundle.Name, err)
-		}
-	}
-	return nil
-}
-
-// syncPackages will create a `Package` resource for each
-// "olm.package" object that exists for the given catalog contents.
-// `Package.Spec.Channels` is populated by filtering all "olm.channel" objects
-// where the "packageName" == `Package.Name`. Returns an error if any are encountered.
-func (r *CatalogReconciler) syncPackages(ctx context.Context, declCfg *declcfg.DeclarativeConfig, catalog *v1alpha1.Catalog) error {
-	newPkgs := map[string]*v1alpha1.Package{}
-
-	for _, pkg := range declCfg.Packages {
-		name, _ := k8sutil.MetadataName(fmt.Sprintf("%s-%s", catalog.Name, pkg.Name))
-		var icon *v1alpha1.Icon
-		if pkg.Icon != nil {
-			icon = &v1alpha1.Icon{
-				Data:      pkg.Icon.Data,
-				MediaType: pkg.Icon.MediaType,
-			}
-		}
-		newPkgs[name] = &v1alpha1.Package{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: v1alpha1.GroupVersion.String(),
-				Kind:       "Package",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: name,
-				Labels: map[string]string{
-					"catalog": catalog.Name,
-				},
-				OwnerReferences: []metav1.OwnerReference{{
-					APIVersion:         v1alpha1.GroupVersion.String(),
-					Kind:               "Catalog",
-					Name:               catalog.Name,
-					UID:                catalog.UID,
-					BlockOwnerDeletion: pointer.Bool(true),
-					Controller:         pointer.Bool(true),
-				}},
-			},
-			Spec: v1alpha1.PackageSpec{
-				Catalog:        corev1.LocalObjectReference{Name: catalog.Name},
-				Name:           pkg.Name,
-				DefaultChannel: pkg.DefaultChannel,
-				Description:    pkg.Description,
-				Icon:           icon,
-				Channels:       []v1alpha1.PackageChannel{},
-			},
-		}
-	}
-
-	for _, ch := range declCfg.Channels {
-		pkgName, _ := k8sutil.MetadataName(fmt.Sprintf("%s-%s", catalog.Name, ch.Package))
-		pkg, ok := newPkgs[pkgName]
-		if !ok {
-			return fmt.Errorf("channel %q references package %q which does not exist", ch.Name, ch.Package)
-		}
-		pkgChannel := v1alpha1.PackageChannel{Name: ch.Name}
-		for _, entry := range ch.Entries {
-			pkgChannel.Entries = append(pkgChannel.Entries, v1alpha1.ChannelEntry{
-				Name:      entry.Name,
-				Replaces:  entry.Replaces,
-				Skips:     entry.Skips,
-				SkipRange: entry.SkipRange,
-			})
-		}
-		pkg.Spec.Channels = append(pkg.Spec.Channels, pkgChannel)
-	}
-
-	var existingPkgs v1alpha1.PackageList
-	if err := r.List(ctx, &existingPkgs, &client.MatchingLabels{"catalog": catalog.Name}); err != nil {
-		return fmt.Errorf("list existing packages: %v", err)
-	}
-	for i := range existingPkgs.Items {
-		existingPkg := existingPkgs.Items[i]
-		if _, ok := newPkgs[existingPkg.Name]; !ok {
-			// delete existing package
-			if err := r.Delete(ctx, &existingPkg); err != nil {
-				return fmt.Errorf("delete existing package %q: %v", existingPkg.Name, err)
-			}
-		}
-	}
-
-	ordered := sets.List(sets.KeySet(newPkgs))
-	for _, pkgName := range ordered {
-		newPkg := newPkgs[pkgName]
-		if err := r.Client.Patch(ctx, newPkg, client.Apply, &client.PatchOptions{Force: pointer.Bool(true), FieldManager: "catalog-controller"}); err != nil {
-			return fmt.Errorf("applying package %q: %w", newPkg.Name, err)
-		}
-	}
-	return nil
 }
 
 // syncCatalogMetadata will sync all of the catalog contents to `CatalogMetadata` objects

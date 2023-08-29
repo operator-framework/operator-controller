@@ -91,74 +91,80 @@ Catalogd helps customers discover installable content by hosting catalog metadat
     Events:                    <none>
     ```
 
-1. Run the following command to get a list of packages: `*`
+1. Run the following command to get a list of packages:
 
     ```sh
-    $ kubectl get packages
+    $ kubectl get catalogmetadata -l schema=olm.package
     ```
 
     *Example output*
     ```sh
-    NAME                                                     AGE
-    operatorhubio-ack-acm-controller                         69s
-    operatorhubio-ack-apigatewayv2-controller                69s
-    operatorhubio-ack-applicationautoscaling-controller      69s
-    operatorhubio-ack-cloudtrail-controller                  69s
-    operatorhubio-ack-dynamodb-controller                    69s
-    operatorhubio-ack-ec2-controller                         69s
-    operatorhubio-ack-ecr-controller                         69s
-    operatorhubio-ack-eks-controller                         69s
-    operatorhubio-ack-elasticache-controller                 69s
-    operatorhubio-ack-emrcontainers-controller               69s
-    operatorhubio-ack-eventbridge-controller                 69s
-    operatorhubio-ack-iam-controller                         69s
-    operatorhubio-ack-kinesis-controller                     69s
-    operatorhubio-ack-kms-controller                         69s
-    operatorhubio-ack-lambda-controller                      69s
-    operatorhubio-ack-memorydb-controller                    69s
-    operatorhubio-ack-mq-controller                          69s
+    NAME                                                                 AGE
+    operatorhubio-olm.package-ack-acm-controller                         18m
+    operatorhubio-olm.package-ack-apigatewayv2-controller                18m
+    operatorhubio-olm.package-ack-applicationautoscaling-controller      18m
+    operatorhubio-olm.package-ack-cloudtrail-controller                  18m
+    operatorhubio-olm.package-ack-cloudwatch-controller                  18m
+    operatorhubio-olm.package-ack-dynamodb-controller                    18m
+    operatorhubio-olm.package-ack-ec2-controller                         18m
+    operatorhubio-olm.package-ack-ecr-controller                         18m
+    operatorhubio-olm.package-ack-eks-controller                         18m
+    operatorhubio-olm.package-ack-elasticache-controller                 18m
+    operatorhubio-olm.package-ack-emrcontainers-controller               18m
+    operatorhubio-olm.package-ack-eventbridge-controller                 18m
+    operatorhubio-olm.package-ack-iam-controller                         18m
+    operatorhubio-olm.package-ack-kinesis-controller                     18m
     ...
     ```
-1. Run the following command to get a list of bundles: `*`
+1. Run the following command to get a list of channels:
 
     ```sh
-    $ kubectl get bundlemetadata
+    $ kubectl get catalogmetadata -l olm.channel
+    ```
+
+    *Example output*
+    ```sh
+    NAME                                                                         AGE
+    operatorhubio-olm.channel-ack-acm-controller-alpha                           21m
+    operatorhubio-olm.channel-ack-apigatewayv2-controller-alpha                  21m
+    operatorhubio-olm.channel-ack-applicationautoscaling-controller-alpha        21m
+    operatorhubio-olm.channel-ack-cloudtrail-controller-alpha                    21m
+    operatorhubio-olm.channel-ack-cloudwatch-controller-alpha                    21m
+    operatorhubio-olm.channel-ack-dynamodb-controller-alpha                      21m
+    operatorhubio-olm.channel-ack-ec2-controller-alpha                           21m
+    operatorhubio-olm.channel-ack-ecr-controller-alpha                           21m
+    operatorhubio-olm.channel-ack-eks-controller-alpha                           21m
+    operatorhubio-olm.channel-ack-elasticache-controller-alpha                   21m
+    operatorhubio-olm.channel-ack-emrcontainers-controller-alpha                 21m
+    operatorhubio-olm.channel-ack-eventbridge-controller-alpha                   21m
+    operatorhubio-olm.channel-ack-iam-controller-alpha                           21m
+    operatorhubio-olm.channel-ack-kinesis-controller-alpha                       21m
+    ...
+    ```
+
+1. Run the following command to get a list of bundles:
+
+    ```sh
+    $ kubectl get catalogmetadata -l olm.bundle
     ```
     
     *Example output*
     ```sh
-    NAME                                                            AGE
-    operatorhubio-ack-acm-controller.v0.0.1                         2m15s
-    operatorhubio-ack-acm-controller.v0.0.2                         2m15s
-    operatorhubio-ack-acm-controller.v0.0.4                         2m15s
-    operatorhubio-ack-acm-controller.v0.0.5                         2m15s
-    operatorhubio-ack-acm-controller.v0.0.6                         2m15s
-    operatorhubio-ack-acm-controller.v0.0.7                         2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.10               2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.11               2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.12               2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.13               2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.14               2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.15               2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.16               2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.17               2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.18               2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.19               2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.20               2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.21               2m15s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.22               2m14s
-    operatorhubio-ack-apigatewayv2-controller.v0.0.9                2m14s
-    operatorhubio-ack-apigatewayv2-controller.v0.1.0                2m14s
-    operatorhubio-ack-apigatewayv2-controller.v0.1.1                2m14s
-    operatorhubio-ack-apigatewayv2-controller.v0.1.2                2m14s
-    operatorhubio-ack-apigatewayv2-controller.v0.1.3                2m14s
-    operatorhubio-ack-apigatewayv2-controller.v0.1.4                2m14s
-    operatorhubio-ack-apigatewayv2-controller.v0.1.5                2m14s
-    operatorhubio-ack-apigatewayv2-controller.v0.1.6                2m14s
-    operatorhubio-ack-apigatewayv2-controller.v1.0.0                2m14s
-    operatorhubio-ack-apigatewayv2-controller.v1.0.2                2m14s
-    operatorhubio-ack-apigatewayv2-controller.v1.0.3                2m14s
-    operatorhubio-ack-apigatewayv2-controller.v1.0.4                2m14s
+    NAME                                                                                         AGE
+    operatorhubio-olm.bundle-ack-acm-controller-ack-acm-controller.v0.0.1                        19m
+    operatorhubio-olm.bundle-ack-acm-controller-ack-acm-controller.v0.0.2                        19m
+    operatorhubio-olm.bundle-ack-acm-controller-ack-acm-controller.v0.0.4                        19m
+    operatorhubio-olm.bundle-ack-acm-controller-ack-acm-controller.v0.0.5                        19m
+    operatorhubio-olm.bundle-ack-acm-controller-ack-acm-controller.v0.0.6                        19m
+    operatorhubio-olm.bundle-ack-acm-controller-ack-acm-controller.v0.0.7                        19m
+    operatorhubio-olm.bundle-ack-apigatewayv2-controller-ack-apigatewayv2-controller.v0.0.10     19m
+    operatorhubio-olm.bundle-ack-apigatewayv2-controller-ack-apigatewayv2-controller.v0.0.11     19m
+    operatorhubio-olm.bundle-ack-apigatewayv2-controller-ack-apigatewayv2-controller.v0.0.12     19m
+    operatorhubio-olm.bundle-ack-apigatewayv2-controller-ack-apigatewayv2-controller.v0.0.13     19m
+    operatorhubio-olm.bundle-ack-apigatewayv2-controller-ack-apigatewayv2-controller.v0.0.14     19m
+    operatorhubio-olm.bundle-ack-apigatewayv2-controller-ack-apigatewayv2-controller.v0.0.15     19m
+    operatorhubio-olm.bundle-ack-apigatewayv2-controller-ack-apigatewayv2-controller.v0.0.16     19m
+    operatorhubio-olm.bundle-ack-apigatewayv2-controller-ack-apigatewayv2-controller.v0.0.17     19m
     ...
     ```
 

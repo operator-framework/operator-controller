@@ -15,11 +15,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
-	"github.com/operator-framework/catalogd/internal/k8sutil"
 	"github.com/operator-framework/catalogd/internal/source"
 	"github.com/operator-framework/catalogd/pkg/controllers/core"
 	"github.com/operator-framework/catalogd/pkg/features"
@@ -234,13 +232,8 @@ var _ = Describe("Catalogd Controller Test", func() {
 					testPackage                 = fmt.Sprintf(testPackageTemplate, testPackageDefaultChannel, testPackageName)
 					testBundle                  = fmt.Sprintf(testBundleTemplate, testBundleImage, testBundleName, testPackageName, testBundleRelatedImageName, testBundleRelatedImageImage, testBundleObjectData)
 					testChannel                 = fmt.Sprintf(testChannelTemplate, testPackageName, testChannelName, testBundleName)
-
-					testBundleMetaName  string
-					testPackageMetaName string
 				)
 				BeforeEach(func() {
-					testBundleMetaName, _ = k8sutil.MetadataName(fmt.Sprintf("%s-%s", catalog.Name, testBundleName))
-					testPackageMetaName, _ = k8sutil.MetadataName(fmt.Sprintf("%s-%s", catalog.Name, testPackageName))
 
 					filesys := &fstest.MapFS{
 						"bundle.yaml":  &fstest.MapFile{Data: []byte(testBundle), Mode: os.ModePerm},
@@ -271,142 +264,6 @@ var _ = Describe("Catalogd Controller Test", func() {
 					Expect(cond).ToNot(BeNil())
 					Expect(cond.Reason).To(Equal(v1alpha1.ReasonUnpackSuccessful))
 					Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-				})
-
-				When("PackagesBundleMetadataAPIs feature gate is enabled", func() {
-					BeforeEach(func() {
-						Expect(features.CatalogdFeatureGate.SetFromMap(map[string]bool{
-							string(features.PackagesBundleMetadataAPIs): true,
-							string(features.CatalogMetadataAPI):         false,
-						})).NotTo(HaveOccurred())
-
-						// reconcile
-						res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
-						Expect(res).To(Equal(ctrl.Result{}))
-						Expect(err).ToNot(HaveOccurred())
-					})
-
-					AfterEach(func() {
-						Expect(cl.DeleteAllOf(ctx, &v1alpha1.Package{})).To(Succeed())
-						Expect(cl.DeleteAllOf(ctx, &v1alpha1.BundleMetadata{})).To(Succeed())
-
-						Expect(features.CatalogdFeatureGate.SetFromMap(map[string]bool{
-							string(features.PackagesBundleMetadataAPIs): false,
-							string(features.CatalogMetadataAPI):         false,
-						})).NotTo(HaveOccurred())
-					})
-
-					It("should create BundleMetadata resources", func() {
-						// validate bundlemetadata resources
-						bundlemetadatas := &v1alpha1.BundleMetadataList{}
-						Expect(cl.List(ctx, bundlemetadatas)).To(Succeed())
-						Expect(bundlemetadatas.Items).To(HaveLen(1))
-						bundlemetadata := bundlemetadatas.Items[0]
-						Expect(bundlemetadata.Name).To(Equal(testBundleMetaName))
-						Expect(bundlemetadata.Spec.Image).To(Equal(testBundleImage))
-						Expect(bundlemetadata.Spec.Catalog.Name).To(Equal(catalog.Name))
-						Expect(bundlemetadata.Spec.Package).To(Equal(testPackageName))
-						Expect(bundlemetadata.Spec.RelatedImages).To(HaveLen(1))
-						Expect(bundlemetadata.Spec.RelatedImages[0].Name).To(Equal(testBundleRelatedImageName))
-						Expect(bundlemetadata.Spec.RelatedImages[0].Image).To(Equal(testBundleRelatedImageImage))
-						Expect(bundlemetadata.Spec.Properties).To(HaveLen(1))
-					})
-
-					// TODO (rashmigottipati): Add testing of Package sync process.
-					It("should create Package resources", func() {
-						// validate package resources
-						packages := &v1alpha1.PackageList{}
-						Expect(cl.List(ctx, packages)).To(Succeed())
-						Expect(packages.Items).To(HaveLen(1))
-						pack := packages.Items[0]
-						Expect(pack.Name).To(Equal(testPackageMetaName))
-						Expect(pack.Spec.DefaultChannel).To(Equal(testPackageDefaultChannel))
-						Expect(pack.Spec.Catalog.Name).To(Equal(catalog.Name))
-						Expect(pack.Spec.Channels).To(HaveLen(1))
-						Expect(pack.Spec.Channels[0].Name).To(Equal(testChannelName))
-						Expect(pack.Spec.Channels[0].Entries).To(HaveLen(1))
-						Expect(pack.Spec.Channels[0].Entries[0].Name).To(Equal(testBundleName))
-					})
-
-					When("creating another Catalog", func() {
-						var (
-							tempCatalog             *v1alpha1.Catalog
-							tempTestBundleMetaName  string
-							tempTestPackageMetaName string
-						)
-						BeforeEach(func() {
-							tempCatalog = &v1alpha1.Catalog{
-								ObjectMeta: metav1.ObjectMeta{Name: "tempedout"},
-								Spec: v1alpha1.CatalogSpec{
-									Source: v1alpha1.CatalogSource{
-										Type: "image",
-										Image: &v1alpha1.ImageSource{
-											Ref: "somecatalog:latest",
-										},
-									},
-								},
-							}
-
-							tempTestBundleMetaName, _ = k8sutil.MetadataName(fmt.Sprintf("%s-%s", tempCatalog.Name, testBundleName))
-							tempTestPackageMetaName, _ = k8sutil.MetadataName(fmt.Sprintf("%s-%s", tempCatalog.Name, testPackageName))
-
-							Expect(cl.Create(ctx, tempCatalog)).To(Succeed())
-							res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: "tempedout"}})
-							Expect(res).To(Equal(ctrl.Result{}))
-							Expect(err).ToNot(HaveOccurred())
-						})
-
-						AfterEach(func() {
-							Expect(cl.Delete(ctx, tempCatalog)).NotTo(HaveOccurred())
-						})
-
-						It("should not delete BundleMetadata belonging to a different catalog", func() {
-							bundlemetadata := &v1alpha1.BundleMetadata{}
-							Expect(cl.Get(ctx, client.ObjectKey{Name: testBundleMetaName}, bundlemetadata)).To(Succeed())
-							Expect(bundlemetadata.Name).To(Equal(testBundleMetaName))
-							Expect(bundlemetadata.Spec.Image).To(Equal(testBundleImage))
-							Expect(bundlemetadata.Spec.Catalog.Name).To(Equal(catalog.Name))
-							Expect(bundlemetadata.Spec.Package).To(Equal(testPackageName))
-							Expect(bundlemetadata.Spec.RelatedImages).To(HaveLen(1))
-							Expect(bundlemetadata.Spec.RelatedImages[0].Name).To(Equal(testBundleRelatedImageName))
-							Expect(bundlemetadata.Spec.RelatedImages[0].Image).To(Equal(testBundleRelatedImageImage))
-							Expect(bundlemetadata.Spec.Properties).To(HaveLen(1))
-
-							bundlemetadata = &v1alpha1.BundleMetadata{}
-							Expect(cl.Get(ctx, client.ObjectKey{Name: tempTestBundleMetaName}, bundlemetadata)).To(Succeed())
-							Expect(bundlemetadata.Name).To(Equal(tempTestBundleMetaName))
-							Expect(bundlemetadata.Spec.Image).To(Equal(testBundleImage))
-							Expect(bundlemetadata.Spec.Catalog.Name).To(Equal(tempCatalog.Name))
-							Expect(bundlemetadata.Spec.Package).To(Equal(testPackageName))
-							Expect(bundlemetadata.Spec.RelatedImages).To(HaveLen(1))
-							Expect(bundlemetadata.Spec.RelatedImages[0].Name).To(Equal(testBundleRelatedImageName))
-							Expect(bundlemetadata.Spec.RelatedImages[0].Image).To(Equal(testBundleRelatedImageImage))
-							Expect(bundlemetadata.Spec.Properties).To(HaveLen(1))
-						})
-
-						It("should not delete Packages belonging to a different catalog", func() {
-							// validate package resources
-							pack := &v1alpha1.Package{}
-							Expect(cl.Get(ctx, client.ObjectKey{Name: testPackageMetaName}, pack)).To(Succeed())
-							Expect(pack.Name).To(Equal(testPackageMetaName))
-							Expect(pack.Spec.DefaultChannel).To(Equal(testPackageDefaultChannel))
-							Expect(pack.Spec.Catalog.Name).To(Equal(catalog.Name))
-							Expect(pack.Spec.Channels).To(HaveLen(1))
-							Expect(pack.Spec.Channels[0].Name).To(Equal(testChannelName))
-							Expect(pack.Spec.Channels[0].Entries).To(HaveLen(1))
-							Expect(pack.Spec.Channels[0].Entries[0].Name).To(Equal(testBundleName))
-
-							pack = &v1alpha1.Package{}
-							Expect(cl.Get(ctx, client.ObjectKey{Name: tempTestPackageMetaName}, pack)).To(Succeed())
-							Expect(pack.Name).To(Equal(tempTestPackageMetaName))
-							Expect(pack.Spec.DefaultChannel).To(Equal(testPackageDefaultChannel))
-							Expect(pack.Spec.Catalog.Name).To(Equal(tempCatalog.Name))
-							Expect(pack.Spec.Channels).To(HaveLen(1))
-							Expect(pack.Spec.Channels[0].Name).To(Equal(testChannelName))
-							Expect(pack.Spec.Channels[0].Entries).To(HaveLen(1))
-							Expect(pack.Spec.Channels[0].Entries[0].Name).To(Equal(testBundleName))
-						})
-					})
 				})
 
 				When("the CatalogMetadataAPI feature gate is enabled", func() {
@@ -505,8 +362,8 @@ var _ = Describe("Catalogd Controller Test", func() {
 // To learn more about File-Based Catalogs and the different objects, view the
 // documentation at https://olm.operatorframework.io/docs/reference/file-based-catalogs/.
 // The reasoning behind having these as a template is to parameterize different
-// fields to use custom values during testing and verifying to ensure that the BundleMetadata
-// and Package resources created by the Catalog controller have the appropriate values.
+// fields to use custom values during testing and verifying to ensure that the CatalogMetadata
+// resources created by the Catalog controller have the appropriate values.
 // Having the parameterized fields allows us to easily change the values that are used in
 // the tests by changing them in one place as opposed to manually changing many string literals
 // throughout the code.
