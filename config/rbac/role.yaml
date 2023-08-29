@@ -19,13 +19,6 @@ rules:
   - list
   - watch
 - apiGroups:
-  - catalogd.operatorframework.io
-  resources:
-  - packages
-  verbs:
-  - list
-  - watch
-- apiGroups:
   - core.rukpak.io
   resources:
   - bundledeployments

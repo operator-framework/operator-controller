@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -127,7 +128,7 @@ var _ = Describe("Operator Install", func() {
 
 			Eventually(func(g Gomega) {
 				// target package should not be present on cluster
-				err := c.Get(ctx, types.NamespacedName{Name: pkgName}, &catalogd.Package{})
+				err := c.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s-%s-%s", operatorCatalog.Name, declcfg.SchemaPackage, pkgName)}, &catalogd.CatalogMetadata{})
 				g.Expect(errors.IsNotFound(err)).To(BeTrue())
 			}).Should(Succeed())
 
