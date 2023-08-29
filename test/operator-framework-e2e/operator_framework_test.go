@@ -825,14 +825,8 @@ func createCatalogCheckResources(operatorCatalog *catalogd.Catalog, catalogDInfo
 		g.Expect(err).ToNot(HaveOccurred())
 	}, 2*time.Minute, 1).Should(Succeed())
 
-	// checking if the packages are created
-	Eventually(func(g Gomega) {
-		err = validatePackageCreation(operatorCatalog, catalogDInfo.operatorName)
-		g.Expect(err).ToNot(HaveOccurred())
-	}, 2*time.Minute, 1).Should(Succeed())
-
-	// checking if the bundle metadatas are created
-	By("Eventually checking if bundle metadata is created")
+	// checking if the catalog metadatas are created
+	By("Eventually checking if catalog metadata is created")
 	Eventually(func(g Gomega) {
 		validateCatalogMetadataCreation(g, operatorCatalog, catalogDInfo.operatorName, bundleVersions)
 	}).Should(Succeed())
@@ -864,26 +858,6 @@ func checkOperatorOperationsSuccess(operator *operatorv1alpha1.Operator, pkgName
 		err := checkManifestPresence(bundlePath, pkgName, opVersion, nameSpace)
 		g.Expect(err).ToNot(HaveOccurred())
 	}).Should(Succeed())
-}
-
-// Checks if the packages are created from the catalog and returns error if not.
-// The expected pkgName is taken as input and is compared against the packages collected whose catalog name
-// matches the catalog under consideration.
-func validatePackageCreation(operatorCatalog *catalogd.Catalog, pkgName string) error {
-	var pkgCollected string
-	pList := &catalogd.PackageList{}
-	if err := c.List(ctx, pList); err != nil {
-		return fmt.Errorf("Error retrieving the packages after %v catalog instance creation: %v", operatorCatalog.Name, err)
-	}
-	for _, pack := range pList.Items {
-		if pack.Spec.Catalog.Name == operatorCatalog.Name {
-			pkgCollected = pack.Spec.Name
-		}
-	}
-	if pkgCollected != pkgName {
-		return fmt.Errorf("Package %v for the catalog %v is not created", pkgName, operatorCatalog.Name)
-	}
-	return nil
 }
 
 // Checks if the CatalogMetadata was created from the catalog and returns error if not.

@@ -68,6 +68,8 @@ var _ = BeforeSuite(func() {
 	operatorCatalog, err = createTestCatalog(ctx, testCatalogName, getCatalogImageRef())
 	Expect(err).ToNot(HaveOccurred())
 
+	// TODO: REMOVE THIS. This should not be necessary if we have idiomatic APIs. Kubernetes is supposed
+	//   to be eventually consistent. Waits for preconditions like this hide bugs.
 	Eventually(func(g Gomega) {
 		err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, operatorCatalog)
 		g.Expect(err).ToNot(HaveOccurred())
@@ -75,13 +77,6 @@ var _ = BeforeSuite(func() {
 		g.Expect(cond).ToNot(BeNil())
 		g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 		g.Expect(cond.Reason).To(Equal(catalogd.ReasonUnpackSuccessful))
-
-		// Ensure some packages exist before continuing so the
-		// operators don't get stuck in a bad state
-		pList := &catalogd.PackageList{}
-		err = c.List(ctx, pList)
-		g.Expect(err).ToNot(HaveOccurred())
-		g.Expect(pList.Items).To(HaveLen(2))
 	}).Should(Succeed())
 })
 
@@ -95,23 +90,13 @@ var _ = AfterSuite(func() {
 	}).Should(Succeed())
 
 	// speed up delete without waiting for gc
-	Expect(c.DeleteAllOf(ctx, &catalogd.Package{})).To(Succeed())
-	Expect(c.DeleteAllOf(ctx, &catalogd.BundleMetadata{})).To(Succeed())
 	Expect(c.DeleteAllOf(ctx, &catalogd.CatalogMetadata{})).To(Succeed())
 
 	Eventually(func(g Gomega) {
 		// ensure resource cleanup
-		packages := &catalogd.PackageList{}
-		g.Expect(c.List(ctx, packages)).To(Succeed())
-		g.Expect(packages.Items).To(BeEmpty())
-
-		bmd := &catalogd.BundleMetadataList{}
-		g.Expect(c.List(ctx, bmd)).To(Succeed())
-		g.Expect(bmd.Items).To(BeEmpty())
-
 		cmd := &catalogd.CatalogMetadataList{}
 		g.Expect(c.List(ctx, cmd)).To(Succeed())
-		g.Expect(bmd.Items).To(BeEmpty())
+		g.Expect(cmd.Items).To(BeEmpty())
 	}).Should(Succeed())
 })
 
