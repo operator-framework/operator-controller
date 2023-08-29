@@ -91,7 +91,7 @@ func (b *BundlesAndDepsVariableSource) getEntityDependencies(ctx context.Context
 		if err != nil {
 			return nil, err
 		}
-		packageDependencyBundles, err := entitySource.Filter(ctx, input.And(predicates.WithPackageName(requiredPackage.PackageName), predicates.InSemverRange(semverRange)))
+		packageDependencyBundles, err := entitySource.Filter(ctx, input.And(predicates.WithPackageName(requiredPackage.PackageName), predicates.InBlangSemverRange(semverRange)))
 		if err != nil {
 			return nil, err
 		}

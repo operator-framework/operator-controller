@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	bsemver "github.com/blang/semver/v4"
+	mmsemver "github.com/Masterminds/semver/v3"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
@@ -21,14 +21,14 @@ type RequiredPackageVariableSourceOption func(*RequiredPackageVariableSource) er
 func InVersionRange(versionRange string) RequiredPackageVariableSourceOption {
 	return func(r *RequiredPackageVariableSource) error {
 		if versionRange != "" {
-			vr, err := bsemver.ParseRange(versionRange)
+			vr, err := mmsemver.NewConstraint(versionRange)
 			if err == nil {
 				r.versionRange = versionRange
-				r.predicates = append(r.predicates, predicates.InSemverRange(vr))
+				r.predicates = append(r.predicates, predicates.InMastermindsSemverRange(vr))
 				return nil
 			}
 
-			return fmt.Errorf("invalid version range '%s': %v", versionRange, err)
+			return fmt.Errorf("invalid version range '%s': %w", versionRange, err)
 		}
 		return nil
 	}

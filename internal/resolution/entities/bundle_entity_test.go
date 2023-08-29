@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -48,19 +49,28 @@ var _ = Describe("BundleEntity", func() {
 	})
 
 	Describe("Version", func() {
-		It("should return the bundle version if present", func() {
+		It("should return the bundle blang version if present", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
 				"olm.package": "{\"packageName\":\"prometheus\",\"version\":\"0.14.0\"}",
 			})
 			bundleEntity := olmentity.NewBundleEntity(entity)
-			version, err := bundleEntity.Version()
+			version, err := bundleEntity.VersionBlang()
 			Expect(err).ToNot(HaveOccurred())
 			Expect(*version).To(Equal(bsemver.MustParse("0.14.0")))
+		})
+		It("should return the bundle Masterminds version if present", func() {
+			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
+				"olm.package": "{\"packageName\":\"prometheus\",\"version\":\"0.14.0\"}",
+			})
+			bundleEntity := olmentity.NewBundleEntity(entity)
+			version, err := bundleEntity.VersionMasterminds()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(*version).To(Equal(*mmsemver.MustParse("0.14.0")))
 		})
 		It("should return an error if the property is not found", func() {
 			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{})
 			bundleEntity := olmentity.NewBundleEntity(entity)
-			version, err := bundleEntity.Version()
+			version, err := bundleEntity.VersionBlang()
 			Expect(version).To(BeNil())
 			Expect(err.Error()).To(Equal("error determining package for entity 'operatorhub/prometheus/0.14.0': required property 'olm.package' not found"))
 		})
@@ -69,7 +79,7 @@ var _ = Describe("BundleEntity", func() {
 				"olm.package": "badPackageStructure",
 			})
 			bundleEntity := olmentity.NewBundleEntity(entity)
-			version, err := bundleEntity.Version()
+			version, err := bundleEntity.VersionBlang()
 			Expect(version).To(BeNil())
 			Expect(err.Error()).To(Equal("error determining package for entity 'operatorhub/prometheus/0.14.0': property 'olm.package' ('badPackageStructure') could not be parsed: invalid character 'b' looking for beginning of value"))
 		})
@@ -78,8 +88,18 @@ var _ = Describe("BundleEntity", func() {
 				"olm.package": "{\"packageName\":\"prometheus\",\"version\":\"badversion\"}",
 			})
 			bundleEntity := olmentity.NewBundleEntity(entity)
-			version, err := bundleEntity.Version()
+			version, err := bundleEntity.VersionBlang()
 			Expect(version).To(BeNil())
+			Expect(err.Error()).To(Equal("could not parse semver (badversion) for entity 'operatorhub/prometheus/0.14.0': No Major.Minor.Patch elements found"))
+		})
+		It("should return error if the version is malformed", func() {
+			entity := input.NewEntity("operatorhub/prometheus/0.14.0", map[string]string{
+				"olm.package": "{\"packageName\":\"prometheus\",\"version\":\"badversion\"}",
+			})
+			bundleEntity := olmentity.NewBundleEntity(entity)
+			version, err := bundleEntity.VersionMasterminds()
+			Expect(version).To(BeNil())
+			// This is still a blang error, as it does not get to the Masterminds code
 			Expect(err.Error()).To(Equal("could not parse semver (badversion) for entity 'operatorhub/prometheus/0.14.0': No Major.Minor.Patch elements found"))
 		})
 	})

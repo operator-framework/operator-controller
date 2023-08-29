@@ -1,6 +1,7 @@
 package predicates
 
 import (
+	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
@@ -18,10 +19,21 @@ func WithPackageName(packageName string) input.Predicate {
 	}
 }
 
-func InSemverRange(semverRange bsemver.Range) input.Predicate {
+func InMastermindsSemverRange(semverRange *mmsemver.Constraints) input.Predicate {
 	return func(entity *input.Entity) bool {
 		bundleEntity := olmentity.NewBundleEntity(entity)
-		bundleVersion, err := bundleEntity.Version()
+		bundleVersion, err := bundleEntity.VersionMasterminds()
+		if err != nil {
+			return false
+		}
+		return semverRange.Check(bundleVersion)
+	}
+}
+
+func InBlangSemverRange(semverRange bsemver.Range) input.Predicate {
+	return func(entity *input.Entity) bool {
+		bundleEntity := olmentity.NewBundleEntity(entity)
+		bundleVersion, err := bundleEntity.VersionBlang()
 		if err != nil {
 			return false
 		}
