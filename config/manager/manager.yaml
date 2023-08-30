@@ -49,6 +49,9 @@ spec:
         - --leader-elect
         image: controller:latest
         name: manager
+        volumeMounts:
+            - name: catalog-cache
+              mountPath: /var/cache/catalogs
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -73,3 +76,6 @@ spec:
         imagePullPolicy: IfNotPresent
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
+      volumes:
+        - name: catalog-cache
+          emptyDir: {}

@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"testing/fstest"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
@@ -15,12 +18,14 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/catalogd/internal/source"
 	"github.com/operator-framework/catalogd/pkg/controllers/core"
 	"github.com/operator-framework/catalogd/pkg/features"
+	"github.com/operator-framework/catalogd/pkg/storage"
 )
 
 var _ source.Unpacker = &MockSource{}
@@ -42,16 +47,38 @@ func (ms *MockSource) Unpack(_ context.Context, _ *v1alpha1.Catalog) (*source.Re
 	return ms.result, nil
 }
 
+var _ storage.Instance = &MockStore{}
+
+type MockStore struct {
+	shouldError bool
+}
+
+func (m MockStore) Store(_ string, _ fs.FS) error {
+	if m.shouldError {
+		return errors.New("mockstore store error")
+	}
+	return nil
+}
+
+func (m MockStore) Delete(_ string) error {
+	if m.shouldError {
+		return errors.New("mockstore delete error")
+	}
+	return nil
+}
+
 var _ = Describe("Catalogd Controller Test", func() {
 	format.MaxLength = 0
 	var (
 		ctx        context.Context
 		reconciler *core.CatalogReconciler
 		mockSource *MockSource
+		mockStore  *MockStore
 	)
 	BeforeEach(func() {
 		ctx = context.Background()
 		mockSource = &MockSource{}
+		mockStore = &MockStore{}
 		reconciler = &core.CatalogReconciler{
 			Client: cl,
 			Unpacker: source.NewUnpacker(
@@ -59,9 +86,9 @@ var _ = Describe("Catalogd Controller Test", func() {
 					v1alpha1.SourceTypeImage: mockSource,
 				},
 			),
+			Storage: mockStore,
 		}
 	})
-
 	When("the catalog does not exist", func() {
 		It("returns no error", func() {
 			res, err := reconciler.Reconcile(context.Background(), ctrl.Request{NamespacedName: types.NamespacedName{Name: "non-existent"}})
@@ -147,7 +174,7 @@ var _ = Describe("Catalogd Controller Test", func() {
 
 			AfterEach(func() {
 				By("tearing down cluster state")
-				Expect(cl.Delete(ctx, catalog)).To(Succeed())
+				Expect(client.IgnoreNotFound(cl.Delete(ctx, catalog))).To(Succeed())
 			})
 
 			When("unpacker returns source.Result with state == 'Pending'", func() {
@@ -248,7 +275,6 @@ var _ = Describe("Catalogd Controller Test", func() {
 						FS:             filesys,
 					}
 				})
-
 				It("should set unpacking status to 'unpacked'", func() {
 					// reconcile
 					res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
@@ -266,10 +292,87 @@ var _ = Describe("Catalogd Controller Test", func() {
 					Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 				})
 
+				When("HTTPServer feature gate is enabled", func() {
+					BeforeEach(func() {
+						Expect(features.CatalogdFeatureGate.SetFromMap(map[string]bool{
+							string(features.CatalogMetadataAPI): false,
+							string(features.HTTPServer):         true,
+						})).NotTo(HaveOccurred())
+						// call reconciler so that initial finalizer setup is done here
+						res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
+						Expect(res).To(Equal(ctrl.Result{}))
+						Expect(err).ToNot(HaveOccurred())
+					})
+					When("there is no error in storing the fbc", func() {
+						BeforeEach(func() {
+							By("setting up mockStore to return no error", func() {
+								mockStore.shouldError = false
+							})
+							res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
+							Expect(res).To(Equal(ctrl.Result{}))
+							Expect(err).ToNot(HaveOccurred())
+						})
+						It("should reflect in the status condition", func() {
+							cat := &v1alpha1.Catalog{}
+							Expect(cl.Get(ctx, catalogKey, cat)).To(Succeed())
+							Expect(cat.Status.Phase).To(Equal(v1alpha1.PhaseUnpacked))
+							diff := cmp.Diff(meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeUnpacked), &metav1.Condition{
+								Reason: v1alpha1.ReasonUnpackSuccessful,
+								Status: metav1.ConditionTrue,
+							}, cmpopts.IgnoreFields(metav1.Condition{}, "Type", "ObservedGeneration", "LastTransitionTime", "Message"))
+							Expect(diff).To(Equal(""))
+						})
+
+						When("the catalog is deleted but there is an error deleting the stored FBC", func() {
+							BeforeEach(func() {
+								By("setting up mockStore to return an error", func() {
+									mockStore.shouldError = true
+								})
+								Expect(cl.Delete(ctx, catalog)).To(Succeed())
+								// call reconciler so that MockStore can send an error on deletion attempt
+								res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
+								Expect(res).To(Equal(ctrl.Result{}))
+								Expect(err).To(HaveOccurred())
+							})
+							It("should set status condition to reflect the error", func() {
+								// get the catalog and ensure status is set properly
+								cat := &v1alpha1.Catalog{}
+								Expect(cl.Get(ctx, catalogKey, cat)).To(Succeed())
+								cond := meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeDelete)
+								Expect(cond).To(Not(BeNil()))
+								Expect(cond.Reason).To(Equal(v1alpha1.ReasonStorageDeleteFailed))
+								Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+							})
+						})
+					})
+
+					When("there is an error storing the fbc", func() {
+						BeforeEach(func() {
+							By("setting up mockStore to return an error", func() {
+								mockStore.shouldError = true
+							})
+							res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
+							Expect(res).To(Equal(ctrl.Result{}))
+							Expect(err).To(HaveOccurred())
+						})
+						It("should set status condition to reflect that storage error", func() {
+							cat := &v1alpha1.Catalog{}
+							Expect(cl.Get(ctx, catalogKey, cat)).To(Succeed())
+							Expect(cat.Status.ResolvedSource).To(BeNil())
+							Expect(cat.Status.Phase).To(Equal(v1alpha1.PhaseFailing))
+							diff := cmp.Diff(meta.FindStatusCondition(cat.Status.Conditions, v1alpha1.TypeUnpacked), &metav1.Condition{
+								Reason: v1alpha1.ReasonStorageFailed,
+								Status: metav1.ConditionFalse,
+							}, cmpopts.IgnoreFields(metav1.Condition{}, "Type", "ObservedGeneration", "LastTransitionTime", "Message"))
+							Expect(diff).To(Equal(""))
+						})
+					})
+				})
 				When("the CatalogMetadataAPI feature gate is enabled", func() {
 					BeforeEach(func() {
 						Expect(features.CatalogdFeatureGate.SetFromMap(map[string]bool{
 							string(features.CatalogMetadataAPI): true,
+							string(features.HTTPServer):         false,
 						})).NotTo(HaveOccurred())
 
 						// reconcile

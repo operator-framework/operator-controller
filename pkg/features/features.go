@@ -10,6 +10,7 @@ const (
 	// Ex: SomeFeature featuregate.Feature = "SomeFeature"
 
 	CatalogMetadataAPI featuregate.Feature = "CatalogMetadataAPI"
+	HTTPServer         featuregate.Feature = "HTTPServer"
 )
 
 var catalogdFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -19,6 +20,7 @@ var catalogdFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	// Marking the CatalogMetadataAPI feature gate as Deprecated in the interest of introducing
 	// the HTTP Server functionality in the future and use it as a default method of serving the catalog contents.
 	CatalogMetadataAPI: {Default: false, PreRelease: featuregate.Deprecated},
+	HTTPServer:         {Default: false, PreRelease: featuregate.Alpha},
 }
 
 var CatalogdFeatureGate featuregate.MutableFeatureGate = featuregate.NewFeatureGate()

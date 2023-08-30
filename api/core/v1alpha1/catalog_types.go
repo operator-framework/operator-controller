@@ -29,11 +29,14 @@ const (
 	SourceTypeImage SourceType = "image"
 
 	TypeUnpacked = "Unpacked"
+	TypeDelete   = "Delete"
 
-	ReasonUnpackPending    = "UnpackPending"
-	ReasonUnpacking        = "Unpacking"
-	ReasonUnpackSuccessful = "UnpackSuccessful"
-	ReasonUnpackFailed     = "UnpackFailed"
+	ReasonUnpackPending       = "UnpackPending"
+	ReasonUnpacking           = "Unpacking"
+	ReasonUnpackSuccessful    = "UnpackSuccessful"
+	ReasonUnpackFailed        = "UnpackFailed"
+	ReasonStorageFailed       = "FailedToStore"
+	ReasonStorageDeleteFailed = "FailedToDelete"
 
 	PhasePending   = "Pending"
 	PhaseUnpacking = "Unpacking"

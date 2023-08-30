@@ -34,23 +34,24 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/catalogd/internal/k8sutil"
 	"github.com/operator-framework/catalogd/internal/source"
 	"github.com/operator-framework/catalogd/pkg/features"
+	"github.com/operator-framework/catalogd/pkg/storage"
 )
 
-// TODO (everettraven): Add unit tests for the CatalogReconciler
+const fbcDeletionFinalizer = "catalogd.operatorframework.io/delete-server-cache"
 
 // CatalogReconciler reconciles a Catalog object
 type CatalogReconciler struct {
 	client.Client
 	Unpacker source.Unpacker
+	Storage  storage.Instance
 }
 
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs,verbs=get;list;watch;create;update;patch;delete
@@ -73,7 +74,6 @@ func (r *CatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if err := r.Client.Get(ctx, req.NamespacedName, &existingCatsrc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
 	reconciledCatsrc := existingCatsrc.DeepCopy()
 	res, reconcileErr := r.reconcile(ctx, reconciledCatsrc)
 
@@ -100,14 +100,7 @@ func (r *CatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 // SetupWithManager sets up the controller with the Manager.
 func (r *CatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		// TODO: Due to us not having proper error handling,
-		// not having this results in the controller getting into
-		// an error state because once we update the status it requeues
-		// and then errors out when trying to create all the Packages again
-		// even though they already exist. This should be resolved by the fix
-		// for https://github.com/operator-framework/catalogd/issues/6. The fix for
-		// #6 should also remove the usage of `builder.WithPredicates(predicate.GenerationChangedPredicate{})`
-		For(&v1alpha1.Catalog{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		For(&v1alpha1.Catalog{}).
 		Owns(&corev1.Pod{}).
 		Complete(r)
 }
@@ -121,6 +114,17 @@ func (r *CatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // linting from the linter that was fussing about this.
 // nolint:unparam
 func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.Catalog) (ctrl.Result, error) {
+	if features.CatalogdFeatureGate.Enabled(features.HTTPServer) && catalog.DeletionTimestamp.IsZero() && !controllerutil.ContainsFinalizer(catalog, fbcDeletionFinalizer) {
+		controllerutil.AddFinalizer(catalog, fbcDeletionFinalizer)
+		return ctrl.Result{}, nil
+	}
+	if features.CatalogdFeatureGate.Enabled(features.HTTPServer) && !catalog.DeletionTimestamp.IsZero() {
+		if err := r.Storage.Delete(catalog.Name); err != nil {
+			return ctrl.Result{}, updateStatusStorageDeleteError(&catalog.Status, err)
+		}
+		controllerutil.RemoveFinalizer(catalog, fbcDeletionFinalizer)
+		return ctrl.Result{}, nil
+	}
 	unpackResult, err := r.Unpacker.Unpack(ctx, catalog)
 	if err != nil {
 		return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("source bundle content: %v", err))
@@ -137,6 +141,11 @@ func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.Cat
 		// TODO: We should check to see if the unpacked result has the same content
 		//   as the already unpacked content. If it does, we should skip this rest
 		//   of the unpacking steps.
+		if features.CatalogdFeatureGate.Enabled(features.HTTPServer) {
+			if err := r.Storage.Store(catalog.Name, unpackResult.FS); err != nil {
+				return ctrl.Result{}, updateStatusStorageError(&catalog.Status, fmt.Errorf("error storing fbc: %v", err))
+			}
+		}
 		if features.CatalogdFeatureGate.Enabled(features.CatalogMetadataAPI) {
 			if err = r.syncCatalogMetadata(ctx, unpackResult.FS, catalog); err != nil {
 				return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("create catalog metadata objects: %v", err))
@@ -191,6 +200,28 @@ func updateStatusUnpackFailing(status *v1alpha1.CatalogStatus, err error) error 
 		Status:  metav1.ConditionFalse,
 		Reason:  v1alpha1.ReasonUnpackFailed,
 		Message: err.Error(),
+	})
+	return err
+}
+
+func updateStatusStorageError(status *v1alpha1.CatalogStatus, err error) error {
+	status.ResolvedSource = nil
+	status.Phase = v1alpha1.PhaseFailing
+	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
+		Type:    v1alpha1.TypeUnpacked,
+		Status:  metav1.ConditionFalse,
+		Reason:  v1alpha1.ReasonStorageFailed,
+		Message: fmt.Sprintf("failed to store bundle: %s", err.Error()),
+	})
+	return err
+}
+
+func updateStatusStorageDeleteError(status *v1alpha1.CatalogStatus, err error) error {
+	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
+		Type:    v1alpha1.TypeDelete,
+		Status:  metav1.ConditionFalse,
+		Reason:  v1alpha1.ReasonStorageDeleteFailed,
+		Message: fmt.Sprintf("failed to delete storage: %s", err.Error()),
 	})
 	return err
 }
