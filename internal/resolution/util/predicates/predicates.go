@@ -1,6 +1,7 @@
 package predicates
 
 import (
+	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
@@ -18,7 +19,26 @@ func WithPackageName(packageName string) input.Predicate {
 	}
 }
 
-func InSemverRange(semverRange bsemver.Range) input.Predicate {
+func InMastermindsSemverRange(semverRange *mmsemver.Constraints) input.Predicate {
+	return func(entity *input.Entity) bool {
+		bundleEntity := olmentity.NewBundleEntity(entity)
+		bVersion, err := bundleEntity.Version()
+		if err != nil {
+			return false
+		}
+		// No error should occur here because the simple version was successfully parsed by blang
+		// We are unaware of any tests cases that would cause one to fail but not the other
+		// This will cause code coverage to drop for this line. We don't ignore the error because
+		// there might be that one extreme edge case that might cause one to fail but not the other
+		mVersion, err := mmsemver.NewVersion(bVersion.String())
+		if err != nil {
+			return false
+		}
+		return semverRange.Check(mVersion)
+	}
+}
+
+func InBlangSemverRange(semverRange bsemver.Range) input.Predicate {
 	return func(entity *input.Entity) bool {
 		bundleEntity := olmentity.NewBundleEntity(entity)
 		bundleVersion, err := bundleEntity.Version()

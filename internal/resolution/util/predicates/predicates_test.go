@@ -3,6 +3,7 @@ package predicates_test
 import (
 	"testing"
 
+	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -33,20 +34,40 @@ var _ = Describe("Predicates", func() {
 		})
 	})
 
-	Describe("InSemverRange", func() {
+	Describe("InMastermindsSemverRange", func() {
+		It("should return true when the entity has the has version in the right range", func() {
+			entity := input.NewEntity("test", map[string]string{
+				property.TypePackage: `{"packageName": "mypackage", "version": "1.0.0"}`,
+			})
+			inRange, err := mmsemver.NewConstraint(">=1.0.0")
+			Expect(err).NotTo(HaveOccurred())
+			notInRange, err := mmsemver.NewConstraint(">=2.0.0")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(predicates.InMastermindsSemverRange(inRange)(entity)).To(BeTrue())
+			Expect(predicates.InMastermindsSemverRange(notInRange)(entity)).To(BeFalse())
+		})
+		It("should return false when the entity does not have a version", func() {
+			entity := input.NewEntity("test", map[string]string{})
+			inRange, err := mmsemver.NewConstraint(">=1.0.0")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(predicates.InMastermindsSemverRange(inRange)(entity)).To(BeFalse())
+		})
+	})
+
+	Describe("InBlangSemverRange", func() {
 		It("should return true when the entity has the has version in the right range", func() {
 			entity := input.NewEntity("test", map[string]string{
 				property.TypePackage: `{"packageName": "mypackage", "version": "1.0.0"}`,
 			})
 			inRange := bsemver.MustParseRange(">=1.0.0")
 			notInRange := bsemver.MustParseRange(">=2.0.0")
-			Expect(predicates.InSemverRange(inRange)(entity)).To(BeTrue())
-			Expect(predicates.InSemverRange(notInRange)(entity)).To(BeFalse())
+			Expect(predicates.InBlangSemverRange(inRange)(entity)).To(BeTrue())
+			Expect(predicates.InBlangSemverRange(notInRange)(entity)).To(BeFalse())
 		})
 		It("should return false when the entity does not have a version", func() {
 			entity := input.NewEntity("test", map[string]string{})
 			inRange := bsemver.MustParseRange(">=1.0.0")
-			Expect(predicates.InSemverRange(inRange)(entity)).To(BeFalse())
+			Expect(predicates.InBlangSemverRange(inRange)(entity)).To(BeFalse())
 		})
 	})
 

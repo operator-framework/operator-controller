@@ -80,7 +80,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 	It("should filter by version range", func() {
 		// recreate source with version range option
 		var err error
-		rpvs, err = variablesources.NewRequiredPackageVariableSource(packageName, variablesources.InVersionRange(">=1.0.0 !2.0.0 <3.0.0"))
+		rpvs, err = variablesources.NewRequiredPackageVariableSource(packageName, variablesources.InVersionRange(">=1.0.0 !=2.0.0 <3.0.0"))
 		Expect(err).NotTo(HaveOccurred())
 
 		variables, err := rpvs.GetVariables(context.TODO(), mockEntitySource)
