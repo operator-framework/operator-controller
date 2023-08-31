@@ -68,8 +68,8 @@ func channelOrder(e1, e2 *entities.BundleEntity) int {
 }
 
 func versionOrder(e1, e2 *entities.BundleEntity) int {
-	ver1, err1 := e1.VersionBlang()
-	ver2, err2 := e2.VersionBlang()
+	ver1, err1 := e1.Version()
+	ver2, err2 := e2.Version()
 	errComp := compareErrors(err1, err2)
 	if errComp != 0 {
 		// the sign gets inverted because version is sorted

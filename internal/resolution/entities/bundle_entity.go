@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/property"
@@ -88,18 +87,11 @@ func (b *BundleEntity) PackageName() (string, error) {
 	return b.bundlePackage.PackageName, nil
 }
 
-func (b *BundleEntity) VersionBlang() (*bsemver.Version, error) {
+func (b *BundleEntity) Version() (*bsemver.Version, error) {
 	if err := b.loadPackage(); err != nil {
 		return nil, err
 	}
 	return b.semVersion, nil
-}
-
-func (b *BundleEntity) VersionMasterminds() (*mmsemver.Version, error) {
-	if err := b.loadPackage(); err != nil {
-		return nil, err
-	}
-	return mmsemver.NewVersion(b.bundlePackage.Version)
 }
 
 func (b *BundleEntity) ProvidedGVKs() ([]GVK, error) {
