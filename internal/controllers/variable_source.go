@@ -38,5 +38,8 @@ func NewVariableSource(cl client.Client) variablesources.NestedVariableSource {
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
 			return variablesources.NewCRDUniquenessConstraintsVariableSource(inputVariableSource), nil
 		},
+		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
+			return variablesources.NewCatalogdVariableSource(cl), nil
+		},
 	}
 }

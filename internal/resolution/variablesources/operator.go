@@ -24,7 +24,7 @@ func NewOperatorVariableSource(cl client.Client, inputVariableSource input.Varia
 	}
 }
 
-func (o *OperatorVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
+func (o *OperatorVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	variableSources := SliceVariableSource{}
 	if o.inputVariableSource != nil {
 		variableSources = append(variableSources, o.inputVariableSource)
@@ -48,5 +48,5 @@ func (o *OperatorVariableSource) GetVariables(ctx context.Context, entitySource 
 		variableSources = append(variableSources, rps)
 	}
 
-	return variableSources.GetVariables(ctx, entitySource)
+	return variableSources.GetVariables(ctx)
 }

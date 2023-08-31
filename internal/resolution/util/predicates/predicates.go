@@ -2,15 +2,16 @@ package predicates
 
 import (
 	bsemver "github.com/blang/semver/v4"
-	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
+	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
-func WithPackageName(packageName string) input.Predicate {
-	return func(entity *input.Entity) bool {
-		bundleEntity := olmentity.NewBundleEntity(entity)
-		name, err := bundleEntity.PackageName()
+type Predicate func(variable *olmvariables.BundleVariable) bool
+
+func WithPackageName(packageName string) Predicate {
+	return func(variable *olmvariables.BundleVariable) bool {
+		bundleVariable := olmvariables.NewBundleVariable(variable, make([]*olmvariables.BundleVariable, 0), variable.Properties)
+		name, err := bundleVariable.PackageName()
 		if err != nil {
 			return false
 		}
@@ -18,10 +19,10 @@ func WithPackageName(packageName string) input.Predicate {
 	}
 }
 
-func InSemverRange(semverRange bsemver.Range) input.Predicate {
-	return func(entity *input.Entity) bool {
-		bundleEntity := olmentity.NewBundleEntity(entity)
-		bundleVersion, err := bundleEntity.Version()
+func InSemverRange(semverRange bsemver.Range) Predicate {
+	return func(variable *olmvariables.BundleVariable) bool {
+		bundleVariable := olmvariables.NewBundleVariable(variable, make([]*olmvariables.BundleVariable, 0), variable.Properties)
+		bundleVersion, err := bundleVariable.Version()
 		if err != nil {
 			return false
 		}
@@ -29,10 +30,10 @@ func InSemverRange(semverRange bsemver.Range) input.Predicate {
 	}
 }
 
-func InChannel(channelName string) input.Predicate {
-	return func(entity *input.Entity) bool {
-		bundleEntity := olmentity.NewBundleEntity(entity)
-		bundleChannel, err := bundleEntity.ChannelName()
+func InChannel(channelName string) Predicate {
+	return func(variable *olmvariables.BundleVariable) bool {
+		bundleVariable := olmvariables.NewBundleVariable(variable, make([]*olmvariables.BundleVariable, 0), variable.Properties)
+		bundleChannel, err := bundleVariable.ChannelName()
 		if err != nil {
 			return false
 		}
@@ -40,10 +41,10 @@ func InChannel(channelName string) input.Predicate {
 	}
 }
 
-func ProvidesGVK(gvk *olmentity.GVK) input.Predicate {
-	return func(entity *input.Entity) bool {
-		bundleEntity := olmentity.NewBundleEntity(entity)
-		providedGVKs, err := bundleEntity.ProvidedGVKs()
+func ProvidesGVK(gvk *olmvariables.GVK) Predicate {
+	return func(variable *olmvariables.BundleVariable) bool {
+		bundleVariable := olmvariables.NewBundleVariable(variable, make([]*olmvariables.BundleVariable, 0), variable.Properties)
+		providedGVKs, err := bundleVariable.ProvidedGVKs()
 		if err != nil {
 			return false
 		}
@@ -57,10 +58,10 @@ func ProvidesGVK(gvk *olmentity.GVK) input.Predicate {
 	}
 }
 
-func WithBundleImage(bundleImage string) input.Predicate {
-	return func(entity *input.Entity) bool {
-		bundleEntity := olmentity.NewBundleEntity(entity)
-		bundlePath, err := bundleEntity.BundlePath()
+func WithBundleImage(bundleImage string) Predicate {
+	return func(variable *olmvariables.BundleVariable) bool {
+		bundleVariable := olmvariables.NewBundleVariable(variable, make([]*olmvariables.BundleVariable, 0), variable.Properties)
+		bundlePath, err := bundleVariable.BundlePath()
 		if err != nil {
 			return false
 		}
@@ -68,10 +69,10 @@ func WithBundleImage(bundleImage string) input.Predicate {
 	}
 }
 
-func Replaces(bundleID string) input.Predicate {
-	return func(entity *input.Entity) bool {
-		bundleEntity := olmentity.NewBundleEntity(entity)
-		replaces, err := bundleEntity.BundleChannelEntry()
+func Replaces(bundleID string) Predicate {
+	return func(variable *olmvariables.BundleVariable) bool {
+		bundleVariable := olmvariables.NewBundleVariable(variable, make([]*olmvariables.BundleVariable, 0), variable.Properties)
+		replaces, err := bundleVariable.BundleChannelEntry()
 		if err != nil {
 			return false
 		}

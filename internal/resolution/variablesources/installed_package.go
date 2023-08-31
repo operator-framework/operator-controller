@@ -7,10 +7,10 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
 	"github.com/operator-framework/operator-controller/internal/resolution/util/predicates"
 	"github.com/operator-framework/operator-controller/internal/resolution/util/sort"
 	"github.com/operator-framework/operator-controller/internal/resolution/variables"
+	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
 var _ input.VariableSource = &InstalledPackageVariableSource{}
@@ -19,7 +19,7 @@ type InstalledPackageVariableSource struct {
 	bundleImage string
 }
 
-func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
+func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	// find corresponding bundle entity for the installed content
 	resultSet, err := entitySource.Filter(ctx, predicates.WithBundleImage(r.bundleImage))
 	if err != nil {
@@ -41,7 +41,7 @@ func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context, entit
 	//       if so, we should take the value from spec of the operator CR in the owner ref of the bundle deployment.
 	//       If that channel is set, we need to update the filter above to filter by channel as well.
 	resultSet = resultSet.Sort(sort.ByChannelAndVersion)
-	installedBundle := olmentity.NewBundleEntity(&resultSet[0])
+	installedBundle := olmvariables.NewBundleVariable(&resultSet[0], make([]*olmvariables.BundleVariable, 0), resultSet[0].Properties)
 
 	// now find the bundles that replace the installed bundle
 	// TODO: this algorithm does not yet consider skips and skipRange
@@ -61,9 +61,9 @@ func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context, entit
 		return nil, err
 	}
 	resultSet = resultSet.Sort(sort.ByChannelAndVersion)
-	upgradeEdges := make([]*olmentity.BundleEntity, 0, len(resultSet))
+	upgradeEdges := make([]*olmvariables.BundleVariable, 0, len(resultSet))
 	for i := range resultSet {
-		upgradeEdges = append(upgradeEdges, olmentity.NewBundleEntity(&resultSet[i]))
+		upgradeEdges = append(upgradeEdges, olmvariables.NewBundleVariable(&resultSet[i], make([]*olmvariables.BundleVariable, 0), resultSet[i].Properties))
 	}
 
 	// you can always upgrade to yourself, i.e. not upgrade

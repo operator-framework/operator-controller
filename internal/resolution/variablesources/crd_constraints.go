@@ -7,7 +7,6 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
@@ -34,8 +33,8 @@ func NewCRDUniquenessConstraintsVariableSource(inputVariableSource input.Variabl
 	}
 }
 
-func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
-	variables, err := g.inputVariableSource.GetVariables(ctx, entitySource)
+func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
+	variables, err := g.inputVariableSource.GetVariables(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -48,9 +47,9 @@ func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Contex
 	for _, variable := range variables {
 		switch v := variable.(type) {
 		case *olmvariables.BundleVariable:
-			bundleEntities := []*olmentity.BundleEntity{v.BundleEntity()}
-			bundleEntities = append(bundleEntities, v.Dependencies()...)
-			for _, bundleEntity := range bundleEntities {
+			bundleVariables := []*olmvariables.BundleVariable{v}
+			bundleVariables = append(bundleVariables, v.Dependencies()...)
+			for _, bundleEntity := range bundleVariables {
 				// get bundleID package and update map
 				packageName, err := bundleEntity.PackageName()
 				if err != nil {

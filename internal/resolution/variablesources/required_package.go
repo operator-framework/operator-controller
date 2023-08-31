@@ -8,7 +8,6 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
 	"github.com/operator-framework/operator-controller/internal/resolution/util/predicates"
 	"github.com/operator-framework/operator-controller/internal/resolution/util/sort"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
@@ -67,7 +66,7 @@ func NewRequiredPackageVariableSource(packageName string, options ...RequiredPac
 	return r, nil
 }
 
-func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
+func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	resultSet, err := entitySource.Filter(ctx, input.And(r.predicates...))
 	if err != nil {
 		return nil, err
@@ -76,9 +75,9 @@ func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context, entity
 		return nil, r.notFoundError()
 	}
 	resultSet = resultSet.Sort(sort.ByChannelAndVersion)
-	var bundleEntities []*olmentity.BundleEntity
+	var bundleEntities []*olmvariables.BundleVariable
 	for i := 0; i < len(resultSet); i++ {
-		bundleEntities = append(bundleEntities, olmentity.NewBundleEntity(&resultSet[i]))
+		bundleEntities = append(bundleEntities, olmvariables.NewBundleVariable(&resultSet[i], make([]*olmvariables.BundleVariable, 0), resultSet[i].Properties))
 	}
 	return []deppy.Variable{
 		olmvariables.NewRequiredPackageVariable(r.packageName, bundleEntities),

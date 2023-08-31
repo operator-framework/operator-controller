@@ -1,4 +1,4 @@
-package entitysources
+package variablesources
 
 import (
 	"context"
@@ -12,26 +12,46 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/operator-framework/operator-controller/internal/resolution/entities"
+	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
-// CatalogdEntitySource is a source for(/collection of) deppy defined input.Entity, built from content
+// TODO update comment
+// CatalogdVariableSource is a source for(/collection of) deppy defined input.Entity, built from content
 // made accessible on-cluster by https://github.com/operator-framework/catalogd.
 // It is an implementation of deppy defined input.EntitySource
-type CatalogdEntitySource struct {
+type CatalogdVariableSource struct {
 	client client.Client
 }
 
-func NewCatalogdEntitySource(client client.Client) *CatalogdEntitySource {
-	return &CatalogdEntitySource{client: client}
+func NewCatalogdVariableSource(client client.Client) *CatalogdVariableSource {
+	return &CatalogdVariableSource{client: client}
 }
 
-func (es *CatalogdEntitySource) Get(_ context.Context, _ deppy.Identifier) (*input.Entity, error) {
-	panic("not implemented")
+func (vs *CatalogdVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
+	var variables []deppy.Variable
+	var catalogList catalogd.CatalogList
+	if err := vs.client.List(ctx, &catalogList); err != nil {
+		return nil, err
+	}
+	for _, catalog := range catalogList.Items {
+		channels, bundles, err := fetchCatalogMetadata(ctx, vs.client, catalog.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		catalogVariablesList, err := MetadataToVariables(catalog.Name, channels, bundles)
+		if err != nil {
+			return nil, err
+		}
+
+		variables = append(variables, catalogVariablesList...)
+	}
+
+	return variables, nil
 }
 
-func (es *CatalogdEntitySource) Filter(ctx context.Context, filter input.Predicate) (input.EntityList, error) {
-	resultSet := input.EntityList{}
+func (es *CatalogdVariableSource) Filter(ctx context.Context, filter input.Predicate) ([]deppy.Variable, error) {
+	resultSet := make([]deppy.Variable, 0)
 	entities, err := getEntities(ctx, es.client)
 	if err != nil {
 		return nil, err
@@ -44,12 +64,12 @@ func (es *CatalogdEntitySource) Filter(ctx context.Context, filter input.Predica
 	return resultSet, nil
 }
 
-func (es *CatalogdEntitySource) GroupBy(ctx context.Context, fn input.GroupByFunction) (input.EntityListMap, error) {
+func (es *CatalogdVariableSource) GroupBy(ctx context.Context, fn input.GroupByFunction) (map[string][]deppy.Variable, error) {
 	entities, err := getEntities(ctx, es.client)
 	if err != nil {
 		return nil, err
 	}
-	resultSet := input.EntityListMap{}
+	resultSet := map[string][]deppy.Variable{}
 	for i := range entities {
 		keys := fn(&entities[i])
 		for _, key := range keys {
@@ -59,7 +79,7 @@ func (es *CatalogdEntitySource) GroupBy(ctx context.Context, fn input.GroupByFun
 	return resultSet, nil
 }
 
-func (es *CatalogdEntitySource) Iterate(ctx context.Context, fn input.IteratorFunction) error {
+func (es *CatalogdVariableSource) Iterate(ctx context.Context, fn input.IteratorFunction) error {
 	entities, err := getEntities(ctx, es.client)
 	if err != nil {
 		return err
@@ -72,8 +92,8 @@ func (es *CatalogdEntitySource) Iterate(ctx context.Context, fn input.IteratorFu
 	return nil
 }
 
-func getEntities(ctx context.Context, cl client.Client) (input.EntityList, error) {
-	allEntitiesList := input.EntityList{}
+func getEntities(ctx context.Context, cl client.Client) ([]deppy.Variable, error) {
+	allEntitiesList := make([]deppy.Variable, 0)
 
 	var catalogList catalogd.CatalogList
 	if err := cl.List(ctx, &catalogList); err != nil {
@@ -85,7 +105,7 @@ func getEntities(ctx context.Context, cl client.Client) (input.EntityList, error
 			return nil, err
 		}
 
-		catalogEntitiesList, err := MetadataToEntities(catalog.Name, channels, bundles)
+		catalogEntitiesList, err := MetadataToVariables(catalog.Name, channels, bundles)
 		if err != nil {
 			return nil, err
 		}
@@ -96,8 +116,8 @@ func getEntities(ctx context.Context, cl client.Client) (input.EntityList, error
 	return allEntitiesList, nil
 }
 
-func MetadataToEntities(catalogName string, channels []declcfg.Channel, bundles []declcfg.Bundle) (input.EntityList, error) {
-	entityList := input.EntityList{}
+func MetadataToVariables(catalogName string, channels []declcfg.Channel, bundles []declcfg.Bundle) ([]deppy.Variable, error) {
+	var variables []deppy.Variable
 
 	bundlesMap := map[string]*declcfg.Bundle{}
 	for i := range bundles {
@@ -121,8 +141,8 @@ func MetadataToEntities(catalogName string, channels []declcfg.Channel, bundles 
 					// this is already a json marshalled object, so it doesn't need to be marshalled
 					// like the other ones
 					props[property.TypePackage] = string(prop.Value)
-				case entities.PropertyBundleMediaType:
-					props[entities.PropertyBundleMediaType] = string(prop.Value)
+				case olmvariables.PropertyBundleMediaType:
+					props[olmvariables.PropertyBundleMediaType] = string(prop.Value)
 				}
 			}
 
@@ -130,26 +150,26 @@ func MetadataToEntities(catalogName string, channels []declcfg.Channel, bundles 
 			if err != nil {
 				return nil, err
 			}
-			props[entities.PropertyBundlePath] = string(imgValue)
+			props[olmvariables.PropertyBundlePath] = string(imgValue)
 
 			channelValue, _ := json.Marshal(property.Channel{ChannelName: ch.Name, Priority: 0})
 			props[property.TypeChannel] = string(channelValue)
-			replacesValue, _ := json.Marshal(entities.ChannelEntry{
+			replacesValue, _ := json.Marshal(olmvariables.ChannelEntry{
 				Name:     bundle.Name,
 				Replaces: chEntry.Replaces,
 			})
-			props[entities.PropertyBundleChannelEntry] = string(replacesValue)
+			props[olmvariables.PropertyBundleChannelEntry] = string(replacesValue)
 
 			catalogScopedEntryName := fmt.Sprintf("%s-%s", catalogName, bundle.Name)
-			entity := input.Entity{
-				ID:         deppy.IdentifierFromString(fmt.Sprintf("%s%s%s", catalogScopedEntryName, bundle.Package, ch.Name)),
-				Properties: props,
-			}
-			entityList = append(entityList, entity)
+			variable := olmvariables.NewBundleVariable(
+				input.NewSimpleVariable(deppy.IdentifierFromString(fmt.Sprintf("%s%s%s", catalogScopedEntryName, bundle.Package, ch.Name))),
+				make([]*olmvariables.BundleVariable, 0),
+				props)
+			variables = append(variables, variable)
 		}
 	}
 
-	return entityList, nil
+	return variables, nil
 }
 
 func fetchCatalogMetadata(ctx context.Context, cl client.Client, catalogName string) ([]declcfg.Channel, []declcfg.Bundle, error) {

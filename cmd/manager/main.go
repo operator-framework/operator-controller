@@ -36,7 +36,6 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	"github.com/operator-framework/operator-controller/internal/resolution/entitysources"
 	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
@@ -103,7 +102,6 @@ func main() {
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 		Resolver: solver.NewDeppySolver(
-			entitysources.NewCatalogdEntitySource(mgr.GetClient()),
 			controllers.NewVariableSource(mgr.GetClient()),
 		),
 	}).SetupWithManager(mgr); err != nil {
