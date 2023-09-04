@@ -15,18 +15,18 @@ jobs:
   tilt:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         repository: operator-framework/tilt-support
         path: tilt-support
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         path: operator-controller
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         repository: operator-framework/rukpak
         path: rukpak
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         repository: operator-framework/catalogd
         path: catalogd
