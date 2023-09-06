@@ -35,13 +35,13 @@ type PackageRequired struct {
 	SemverRange *bsemver.Range `json:"-"`
 }
 
-type GVK property.GVK
-
 type ChannelEntry struct {
 	Name     string `json:"name"`
 	Replaces string `json:"replaces"`
 	// Skips and skipRange will probably go here as well
 }
+
+type GVK property.GVK
 
 func (g GVK) String() string {
 	return fmt.Sprintf(`group:"%s" version:"%s" kind:"%s"`, g.Group, g.Version, g.Kind)
