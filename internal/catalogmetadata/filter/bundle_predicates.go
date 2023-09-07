@@ -1,20 +1,20 @@
-package catalogmetadata
+package filter
 
 import (
 	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
+
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
 
-// TODO: Move somewhere nice. Probably into a ./predicates package
-
-func WithPackageName(packageName string) Predicate[Bundle] {
-	return func(bundle *Bundle) bool {
+func WithPackageName(packageName string) Predicate[catalogmetadata.Bundle] {
+	return func(bundle *catalogmetadata.Bundle) bool {
 		return bundle.Package == packageName
 	}
 }
 
-func InMastermindsSemverRange(semverRange *mmsemver.Constraints) Predicate[Bundle] {
-	return func(bundle *Bundle) bool {
+func InMastermindsSemverRange(semverRange *mmsemver.Constraints) Predicate[catalogmetadata.Bundle] {
+	return func(bundle *catalogmetadata.Bundle) bool {
 		bVersion, err := bundle.Version()
 		if err != nil {
 			return false
@@ -31,8 +31,8 @@ func InMastermindsSemverRange(semverRange *mmsemver.Constraints) Predicate[Bundl
 	}
 }
 
-func InBlangSemverRange(semverRange bsemver.Range) Predicate[Bundle] {
-	return func(bundle *Bundle) bool {
+func InBlangSemverRange(semverRange bsemver.Range) Predicate[catalogmetadata.Bundle] {
+	return func(bundle *catalogmetadata.Bundle) bool {
 		bundleVersion, err := bundle.Version()
 		if err != nil {
 			return false
@@ -41,8 +41,8 @@ func InBlangSemverRange(semverRange bsemver.Range) Predicate[Bundle] {
 	}
 }
 
-func InChannel(channelName string) Predicate[Bundle] {
-	return func(bundle *Bundle) bool {
+func InChannel(channelName string) Predicate[catalogmetadata.Bundle] {
+	return func(bundle *catalogmetadata.Bundle) bool {
 		for _, ch := range bundle.InChannels {
 			if ch.Name == channelName {
 				return true
@@ -52,8 +52,8 @@ func InChannel(channelName string) Predicate[Bundle] {
 	}
 }
 
-func ProvidesGVK(gvk *GVK) Predicate[Bundle] {
-	return func(bundle *Bundle) bool {
+func ProvidesGVK(gvk *catalogmetadata.GVK) Predicate[catalogmetadata.Bundle] {
+	return func(bundle *catalogmetadata.Bundle) bool {
 		providedGVKs, err := bundle.ProvidedGVKs()
 		if err != nil {
 			return false
@@ -68,14 +68,14 @@ func ProvidesGVK(gvk *GVK) Predicate[Bundle] {
 	}
 }
 
-func WithBundleImage(bundleImage string) Predicate[Bundle] {
-	return func(bundle *Bundle) bool {
+func WithBundleImage(bundleImage string) Predicate[catalogmetadata.Bundle] {
+	return func(bundle *catalogmetadata.Bundle) bool {
 		return bundle.Image == bundleImage
 	}
 }
 
-func Replaces(bundleName string) Predicate[Bundle] {
-	return func(bundle *Bundle) bool {
+func Replaces(bundleName string) Predicate[catalogmetadata.Bundle] {
+	return func(bundle *catalogmetadata.Bundle) bool {
 		for _, ch := range bundle.InChannels {
 			for _, chEntry := range ch.Entries {
 				if bundle.Name == chEntry.Name && chEntry.Replaces == bundleName {

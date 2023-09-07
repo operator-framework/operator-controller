@@ -1,4 +1,4 @@
-package catalogmetadata_test
+package filter_test
 
 import (
 	"encoding/json"
@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 )
 
 func TestWithPackageName(t *testing.T) {
@@ -18,7 +19,7 @@ func TestWithPackageName(t *testing.T) {
 	b2 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{Package: "package2"}}
 	b3 := &catalogmetadata.Bundle{}
 
-	f := catalogmetadata.WithPackageName("package1")
+	f := filter.WithPackageName("package1")
 
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))
@@ -54,7 +55,7 @@ func TestInMastermindsSemverRange(t *testing.T) {
 	vRange, err := mmsemver.NewConstraint(">=1.0.0")
 	assert.NoError(t, err)
 
-	f := catalogmetadata.InMastermindsSemverRange(vRange)
+	f := filter.InMastermindsSemverRange(vRange)
 
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))
@@ -89,7 +90,7 @@ func TestInBlangSemverRange(t *testing.T) {
 
 	vRange := bsemver.MustParseRange(">=1.0.0")
 
-	f := catalogmetadata.InBlangSemverRange(vRange)
+	f := filter.InBlangSemverRange(vRange)
 
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))
@@ -106,7 +107,7 @@ func TestInChannel(t *testing.T) {
 	}}
 	b3 := &catalogmetadata.Bundle{}
 
-	f := catalogmetadata.InChannel("stable")
+	f := filter.InChannel("stable")
 
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))
@@ -123,12 +124,12 @@ func TestProvidesGVK(t *testing.T) {
 		},
 	}}
 	b2 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{}}
-	f1 := catalogmetadata.ProvidesGVK(&catalogmetadata.GVK{
+	f1 := filter.ProvidesGVK(&catalogmetadata.GVK{
 		Group:   "foo.io",
 		Version: "v1",
 		Kind:    "Foo",
 	})
-	f2 := catalogmetadata.ProvidesGVK(&catalogmetadata.GVK{
+	f2 := filter.ProvidesGVK(&catalogmetadata.GVK{
 		Group:   "baz.io",
 		Version: "v1alpha1",
 		Kind:    "Baz",
@@ -146,7 +147,7 @@ func TestWithBundleImage(t *testing.T) {
 	b2 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{Image: "fake-image-uri-2"}}
 	b3 := &catalogmetadata.Bundle{}
 
-	f := catalogmetadata.WithBundleImage("fake-image-uri-1")
+	f := filter.WithBundleImage("fake-image-uri-1")
 
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))
@@ -179,7 +180,7 @@ func TestReplaces(t *testing.T) {
 	}
 	b3 := &catalogmetadata.Bundle{}
 
-	f := catalogmetadata.Replaces("package1.v0.0.1")
+	f := filter.Replaces("package1.v0.0.1")
 
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))

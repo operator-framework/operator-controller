@@ -1,4 +1,4 @@
-package catalogmetadata_test
+package filter_test
 
 import (
 	"testing"
@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 )
 
 func TestFilter(t *testing.T) {
@@ -18,7 +19,7 @@ func TestFilter(t *testing.T) {
 
 	for _, tt := range []struct {
 		name      string
-		predicate catalogmetadata.Predicate[catalogmetadata.Bundle]
+		predicate filter.Predicate[catalogmetadata.Bundle]
 		want      []*catalogmetadata.Bundle
 	}{
 		{
@@ -32,7 +33,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "filter with Not predicate",
-			predicate: catalogmetadata.Not(func(bundle *catalogmetadata.Bundle) bool {
+			predicate: filter.Not(func(bundle *catalogmetadata.Bundle) bool {
 				return bundle.Name == "operator1.v1"
 			}),
 			want: []*catalogmetadata.Bundle{
@@ -42,7 +43,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "filter with And predicate",
-			predicate: catalogmetadata.And(
+			predicate: filter.And(
 				func(bundle *catalogmetadata.Bundle) bool {
 					return bundle.Name == "operator1.v1"
 				},
@@ -56,7 +57,7 @@ func TestFilter(t *testing.T) {
 		},
 		{
 			name: "filter with Or predicate",
-			predicate: catalogmetadata.Or(
+			predicate: filter.Or(
 				func(bundle *catalogmetadata.Bundle) bool {
 					return bundle.Name == "operator1.v1"
 				},
@@ -71,7 +72,7 @@ func TestFilter(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := catalogmetadata.Filter(in, tt.predicate)
+			actual := filter.Filter(in, tt.predicate)
 			assert.Equal(t, tt.want, actual)
 		})
 	}

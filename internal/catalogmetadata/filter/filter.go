@@ -1,10 +1,14 @@
-package catalogmetadata
+package filter
+
+import (
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
+)
 
 // Predicate returns true if the object should be kept when filtering
-type Predicate[T Schemas] func(entity *T) bool
+type Predicate[T catalogmetadata.Schemas] func(entity *T) bool
 
 // Filter filters a slice accordingly to
-func Filter[T Schemas](in []*T, test Predicate[T]) []*T {
+func Filter[T catalogmetadata.Schemas](in []*T, test Predicate[T]) []*T {
 	out := []*T{}
 	for i := range in {
 		if test(in[i]) {
@@ -14,7 +18,7 @@ func Filter[T Schemas](in []*T, test Predicate[T]) []*T {
 	return out
 }
 
-func And[T Schemas](predicates ...Predicate[T]) Predicate[T] {
+func And[T catalogmetadata.Schemas](predicates ...Predicate[T]) Predicate[T] {
 	return func(obj *T) bool {
 		for _, predicate := range predicates {
 			if !predicate(obj) {
@@ -25,7 +29,7 @@ func And[T Schemas](predicates ...Predicate[T]) Predicate[T] {
 	}
 }
 
-func Or[T Schemas](predicates ...Predicate[T]) Predicate[T] {
+func Or[T catalogmetadata.Schemas](predicates ...Predicate[T]) Predicate[T] {
 	return func(obj *T) bool {
 		for _, predicate := range predicates {
 			if predicate(obj) {
@@ -36,7 +40,7 @@ func Or[T Schemas](predicates ...Predicate[T]) Predicate[T] {
 	}
 }
 
-func Not[T Schemas](predicate Predicate[T]) Predicate[T] {
+func Not[T catalogmetadata.Schemas](predicate Predicate[T]) Predicate[T] {
 	return func(obj *T) bool {
 		return !predicate(obj)
 	}
