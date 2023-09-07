@@ -8,39 +8,49 @@ import (
 	"io/fs"
 	"strconv"
 	"strings"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"testing"
 
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
+
+	"golang.org/x/exp/slices" // replace with "slices" in go 1.21
 )
 
-var _ = Describe("OperatorTypes", func() {
-	Describe("Condition Type and Reason constants", func() {
-		It("should register types in conditionsets.ConditionTypes", func() {
-			types, err := parseConstants("Type")
-			Expect(err).NotTo(HaveOccurred())
+func TestOperatorTypeRegistration(t *testing.T) {
+	types, err := parseConstants("Type")
+	if err != nil {
+		t.Fatalf("unable to parse Type constants %v", err)
+	}
 
-			for _, t := range types {
-				Expect(t).To(BeElementOf(conditionsets.ConditionTypes), "Append Type%s to conditionsets.ConditionTypes in this package's init function.", t)
-			}
-			for _, t := range conditionsets.ConditionTypes {
-				Expect(t).To(BeElementOf(types), "There must be a Type%[1]s string literal constant for type %[1]q (i.e. 'const Type%[1]s = %[1]q')", t)
-			}
-		})
-		It("should register reasons in conditionsets.ConditionReasons", func() {
-			reasons, err := parseConstants("Reason")
-			Expect(err).NotTo(HaveOccurred())
+	for _, tt := range types {
+		if !slices.Contains(conditionsets.ConditionTypes, tt) {
+			t.Errorf("append Type%s to conditionsets.ConditionTypes in this package's init function", tt)
+		}
+	}
 
-			for _, r := range reasons {
-				Expect(r).To(BeElementOf(conditionsets.ConditionReasons), "Append Reason%s to conditionsets.ConditionReasons in this package's init function.", r)
-			}
-			for _, r := range conditionsets.ConditionReasons {
-				Expect(r).To(BeElementOf(reasons), "There must be a Reason%[1]s string literal constant for reason %[1]q (i.e. 'const Reason%[1]s = %[1]q')", r)
-			}
-		})
-	})
-})
+	for _, tt := range conditionsets.ConditionTypes {
+		if !slices.Contains(types, tt) {
+			t.Errorf("there must be a Type%[1]s string literal constant for type %[1]q (i.e. 'const Type%[1]s = %[1]q')", tt)
+		}
+	}
+}
+
+func TestOperatorReasonRegistration(t *testing.T) {
+	reasons, err := parseConstants("Reason")
+	if err != nil {
+		t.Fatalf("unable to parse Reason constants %v", err)
+	}
+
+	for _, r := range reasons {
+		if !slices.Contains(conditionsets.ConditionReasons, r) {
+			t.Errorf("append Reason%s to conditionsets.ConditionReasons in this package's init function.", r)
+		}
+	}
+	for _, r := range conditionsets.ConditionReasons {
+		if !slices.Contains(reasons, r) {
+			t.Errorf("there must be a Reason%[1]s string literal constant for reason %[1]q (i.e. 'const Reason%[1]s = %[1]q')", r)
+		}
+	}
+}
 
 // parseConstants parses the values of the top-level constants in the current
 // directory whose names start with the given prefix. When running as part of a
