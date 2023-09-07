@@ -41,7 +41,8 @@ func (g GVKRequired) AsGVK() GVK {
 
 type Bundle struct {
 	declcfg.Bundle
-	InChannels []*Channel
+	CatalogName string
+	InChannels  []*Channel
 
 	mu sync.RWMutex
 	// these properties are lazy loaded as they are requested
