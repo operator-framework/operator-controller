@@ -6,33 +6,38 @@ on:
   merge_group:
   push:
     branches:
-    - main
+      - main
 
 jobs:
   e2e-kind:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
 
-    - uses: actions/setup-go@v4
-      with:
-        go-version-file: go.mod
+      - name: Run e2e tests
+        run: |
+          # By default make stops building on first non-zero exit code which
+          # in case of E2E tests will mean that code coverage will only be
+          # collected on successful runs. We want to collect coverage even
+          # after failing tests.
+          # With -k flag make will continue the build, but will return non-zero
+          # exit code in case of any errors.
+          ARTIFACT_PATH=/tmp/artifacts make -k test-e2e
 
-    - name: Run e2e tests
-      run: |
-        # By default make stops building on first non-zero exit code which
-        # in case of E2E tests will mean that code coverage will only be
-        # collected on successful runs. We want to collect coverage even
-        # after failing tests.
-        # With -k flag make will continue the build, but will return non-zero
-        # exit code in case of any errors.
-        make -k test-e2e
+      - uses: cytopia/upload-artifact-retry-action@v0.1.7
+        if: failure()
+        with:
+          name: e2e-artifacts
+          path: /tmp/artifacts/
 
-    - uses: codecov/codecov-action@v3
-      with:
-        files: e2e-cover.out
-        flags: e2e
-        functionalities: fixes
+      - uses: codecov/codecov-action@v3
+        with:
+          files: e2e-cover.out
+          flags: e2e
+          functionalities: fixes

@@ -19,6 +19,10 @@ export XDG_DATA_HOME ?= /tmp/.local/share
 # bingo manages consistent tooling versions for things like kind, kustomize, etc.
 include .bingo/Variables.mk
 
+# ARTIFACT_PATH is the absolute path to the directory where the operator-controller e2e tests will store the artifacts
+# for example: ARTIFACT_PATH=/tmp/artifacts make test 
+export ARTIFACT_PATH ?= 
+
 OPERATOR_CONTROLLER_NAMESPACE ?= operator-controller-system
 KIND_CLUSTER_NAME ?= operator-controller
 
