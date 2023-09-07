@@ -135,7 +135,7 @@ var _ = Describe("BundleEntity", func() {
 			bundleEntity := olmentity.NewBundleEntity(entity)
 			requiredGvks, err := bundleEntity.RequiredGVKs()
 			Expect(err).ToNot(HaveOccurred())
-			Expect(requiredGvks).To(Equal([]olmentity.GVKRequired{
+			Expect(requiredGvks).To(Equal([]olmentity.GVK{
 				{Group: "foo.io", Kind: "Foo", Version: "v1"},
 				{Group: "bar.io", Kind: "Bar", Version: "v1alpha1"},
 			}))
@@ -326,27 +326,6 @@ var _ = Describe("BundleEntity", func() {
 		})
 	})
 
-	// Increase test coverage
-	Describe("GVKRequired properties", func() {
-		It("should return the GVKRequired properties", func() {
-			gvk := olmentity.GVKRequired{
-				Group:   "foo.io",
-				Kind:    "Foo",
-				Version: "v1",
-			}
-			Expect(gvk.AsGVK().Version).To(Equal("v1"))
-			Expect(gvk.AsGVK().Group).To(Equal("foo.io"))
-			Expect(gvk.AsGVK().Kind).To(Equal("Foo"))
-		})
-		It("should return the GVKRequired properties as a string", func() {
-			gvk := olmentity.GVKRequired{
-				Group:   "foo.io",
-				Kind:    "Foo",
-				Version: "v1",
-			}
-			Expect(gvk.String()).To(Equal(`group:"foo.io" version:"v1" kind:"Foo"`))
-		})
-	})
 	Describe("GVK properties", func() {
 		It("should return the gvk properties", func() {
 			gvk := olmentity.GVK{

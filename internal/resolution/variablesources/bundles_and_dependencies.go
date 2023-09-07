@@ -111,7 +111,7 @@ func (b *BundlesAndDepsVariableSource) getEntityDependencies(ctx context.Context
 	// todo(perdasilva): disambiguate between not found and actual errors
 	gvkDependencies, _ := bundleEntity.RequiredGVKs()
 	for i := 0; i < len(gvkDependencies); i++ {
-		providedGvk := gvkDependencies[i].AsGVK()
+		providedGvk := gvkDependencies[i]
 		gvkDependencyBundles, err := entitySource.Filter(ctx, predicates.ProvidesGVK(&providedGvk))
 		if err != nil {
 			return nil, err
