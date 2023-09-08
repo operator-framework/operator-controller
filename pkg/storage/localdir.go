@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -44,4 +45,37 @@ func (s LocalDir) Store(catalog string, fsys fs.FS) error {
 
 func (s LocalDir) Delete(catalog string) error {
 	return os.RemoveAll(filepath.Join(s.RootDir, catalog))
+}
+
+func (s LocalDir) StorageServerHandler() http.Handler {
+	mux := http.NewServeMux()
+	mux.Handle("/catalogs/", http.StripPrefix("/catalogs/", http.FileServer(http.FS(&filesOnlyFilesystem{os.DirFS(s.RootDir)}))))
+	return mux
+}
+
+// filesOnlyFilesystem is a file system that can open only regular
+// files from the underlying filesystem. All other file types result
+// in os.ErrNotExists
+type filesOnlyFilesystem struct {
+	FS fs.FS
+}
+
+// Open opens a named file from the underlying filesystem. If the file
+// is not a regular file, it return os.ErrNotExists. Callers are resposible
+// for closing the file returned.
+func (f *filesOnlyFilesystem) Open(name string) (fs.File, error) {
+	file, err := f.FS.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	stat, err := file.Stat()
+	if err != nil {
+		_ = file.Close()
+		return nil, err
+	}
+	if !stat.Mode().IsRegular() {
+		_ = file.Close()
+		return nil, os.ErrNotExist
+	}
+	return file, nil
 }

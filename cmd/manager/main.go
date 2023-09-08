@@ -19,7 +19,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -35,6 +37,7 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/operator-framework/catalogd/internal/source"
+	"github.com/operator-framework/catalogd/internal/third_party/server"
 	"github.com/operator-framework/catalogd/internal/version"
 	corecontrollers "github.com/operator-framework/catalogd/pkg/controllers/core"
 	"github.com/operator-framework/catalogd/pkg/features"
@@ -67,6 +70,7 @@ func main() {
 		catalogdVersion      bool
 		systemNamespace      string
 		storageDir           string
+		catalogServerAddr    string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -77,6 +81,7 @@ func main() {
 	flag.StringVar(&unpackImage, "unpack-image", "quay.io/operator-framework/rukpak:v0.12.0", "The unpack image to use when unpacking catalog images")
 	flag.StringVar(&systemNamespace, "system-namespace", "", "The namespace catalogd uses for internal state, configuration, and workloads")
 	flag.StringVar(&storageDir, "catalogs-storage-dir", "/var/cache/catalogs", "The directory in the filesystem where unpacked catalog content will be stored and served from")
+	flag.StringVar(&catalogServerAddr, "catalogs-server-addr", ":8083", "The address where the unpacked catalogs' content will be accessible")
 	flag.BoolVar(&profiling, "profiling", false, "enable profiling endpoints to allow for using pprof")
 	flag.BoolVar(&catalogdVersion, "version", false, "print the catalogd version and exit")
 	opts := zap.Options{
@@ -122,10 +127,27 @@ func main() {
 	if err := os.MkdirAll(storageDir, 0700); err != nil {
 		setupLog.Error(err, "unable to create storage directory for catalogs")
 	}
+	localStorage := storage.LocalDir{RootDir: storageDir}
+	shutdownTimeout := 30 * time.Second
+	catalogServer := server.Server{
+		Kind: "catalogs",
+		Server: &http.Server{
+			Addr:         catalogServerAddr,
+			Handler:      localStorage.StorageServerHandler(),
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+		},
+		ShutdownTimeout: &shutdownTimeout,
+	}
+	if err := mgr.Add(&catalogServer); err != nil {
+		setupLog.Error(err, "unable to start catalog server")
+		os.Exit(1)
+	}
+
 	if err = (&corecontrollers.CatalogReconciler{
 		Client:   mgr.GetClient(),
 		Unpacker: unpacker,
-		Storage:  storage.LocalDir{RootDir: storageDir},
+		Storage:  localStorage,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Catalog")
 		os.Exit(1)

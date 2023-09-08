@@ -6,7 +6,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -15,8 +16,11 @@ import (
 )
 
 var (
-	cfg *rest.Config
-	c   client.Client
+	cfg                    *rest.Config
+	c                      client.Client
+	err                    error
+	defaultSystemNamespace = "catalogd-system"
+	kubeClient             kubernetes.Interface
 )
 
 func TestE2E(t *testing.T) {
@@ -29,9 +33,10 @@ func TestE2E(t *testing.T) {
 var _ = BeforeSuite(func() {
 	cfg = ctrl.GetConfigOrDie()
 
-	scheme := runtime.NewScheme()
-	err := catalogd.AddToScheme(scheme)
-	Expect(err).ToNot(HaveOccurred())
-	c, err = client.New(cfg, client.Options{Scheme: scheme})
+	sch := scheme.Scheme
+	Expect(catalogd.AddToScheme(sch)).To(Succeed())
+	c, err = client.New(cfg, client.Options{Scheme: sch})
 	Expect(err).To(Not(HaveOccurred()))
+	kubeClient, err = kubernetes.NewForConfig(cfg)
+	Expect(err).ToNot(HaveOccurred())
 })

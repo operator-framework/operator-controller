@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"testing/fstest"
 
@@ -65,6 +66,10 @@ func (m MockStore) Delete(_ string) error {
 		return errors.New("mockstore delete error")
 	}
 	return nil
+}
+
+func (m MockStore) StorageServerHandler() http.Handler {
+	panic("not needed")
 }
 
 var _ = Describe("Catalogd Controller Test", func() {
