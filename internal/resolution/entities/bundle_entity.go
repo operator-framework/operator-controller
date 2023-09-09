@@ -47,13 +47,23 @@ func (g GVK) String() string {
 	return fmt.Sprintf(`group:"%s" version:"%s" kind:"%s"`, g.Group, g.Version, g.Kind)
 }
 
+type GVKRequired property.GVKRequired
+
+func (g GVKRequired) String() string {
+	return fmt.Sprintf(`group:"%s" version:"%s" kind:"%s"`, g.Group, g.Version, g.Kind)
+}
+
+func (g GVKRequired) AsGVK() GVK {
+	return GVK(g)
+}
+
 type BundleEntity struct {
 	*input.Entity
 
 	// these properties are lazy loaded as they are requested
 	bundlePackage    *property.Package
 	providedGVKs     []GVK
-	requiredGVKs     []GVK
+	requiredGVKs     []GVKRequired
 	requiredPackages []PackageRequired
 	channel          *property.Channel
 	channelEntry     *ChannelEntry
@@ -91,7 +101,7 @@ func (b *BundleEntity) ProvidedGVKs() ([]GVK, error) {
 	return b.providedGVKs, nil
 }
 
-func (b *BundleEntity) RequiredGVKs() ([]GVK, error) {
+func (b *BundleEntity) RequiredGVKs() ([]GVKRequired, error) {
 	if err := b.loadRequiredGVKs(); err != nil {
 		return nil, err
 	}
@@ -204,7 +214,7 @@ func (b *BundleEntity) loadRequiredGVKs() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.requiredGVKs == nil {
-		requiredGVKs, err := loadFromEntity[[]GVK](b.Entity, property.TypeGVKRequired, optional)
+		requiredGVKs, err := loadFromEntity[[]GVKRequired](b.Entity, property.TypeGVKRequired, optional)
 		if err != nil {
 			return fmt.Errorf("error determining bundle required gvks for entity '%s': %w", b.ID, err)
 		}
