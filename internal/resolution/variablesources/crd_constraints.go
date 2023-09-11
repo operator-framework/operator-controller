@@ -7,7 +7,7 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
@@ -18,7 +18,7 @@ var _ input.VariableSource = &CRDUniquenessConstraintsVariableSource{}
 // 2. at most 1 bundle per gvk (provided by the bundle)
 // these variables guarantee that no two operators provide the same gvk and no two version of
 // the same operator are running at the same time.
-// This variable source does not itself reach out to its entitySource. It produces its variables
+// This variable source does not itself reach out to catalog metadata. It produces its variables
 // by searching for BundleVariables that are produced by its 'inputVariableSource' and working out
 // which bundles correspond to which package and which gvks are provided by which bundle
 type CRDUniquenessConstraintsVariableSource struct {
@@ -34,8 +34,8 @@ func NewCRDUniquenessConstraintsVariableSource(inputVariableSource input.Variabl
 	}
 }
 
-func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
-	variables, err := g.inputVariableSource.GetVariables(ctx, entitySource)
+func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Context, _ input.EntitySource) ([]deppy.Variable, error) {
+	variables, err := g.inputVariableSource.GetVariables(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -47,19 +47,18 @@ func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Contex
 	for _, variable := range variables {
 		switch v := variable.(type) {
 		case *olmvariables.BundleVariable:
-			bundleEntities := []*olmentity.BundleEntity{v.BundleEntity()}
-			bundleEntities = append(bundleEntities, v.Dependencies()...)
-			for _, bundleEntity := range bundleEntities {
-				// get bundleID package and update map
-				packageName, err := bundleEntity.PackageName()
-				if err != nil {
-					return nil, fmt.Errorf("error creating global constraints: %w", err)
-				}
+			bundles := []*catalogmetadata.Bundle{v.BundleEntity()}
+			bundles = append(bundles, v.Dependencies()...)
+			for _, bundle := range bundles {
+				for _, id := range olmvariables.BundleToBundleVariableIDs(bundle) {
+					// get bundleID package and update map
+					packageName := bundle.Package
 
-				if _, ok := pkgToBundleMap[packageName]; !ok {
-					pkgToBundleMap[packageName] = map[deppy.Identifier]struct{}{}
+					if _, ok := pkgToBundleMap[packageName]; !ok {
+						pkgToBundleMap[packageName] = map[deppy.Identifier]struct{}{}
+					}
+					pkgToBundleMap[packageName][id] = struct{}{}
 				}
-				pkgToBundleMap[packageName][bundleEntity.ID] = struct{}{}
 			}
 		}
 	}

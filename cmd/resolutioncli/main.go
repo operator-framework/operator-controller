@@ -34,8 +34,9 @@ import (
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
+	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
@@ -121,11 +122,14 @@ func run(ctx context.Context, packageName, packageVersion, packageChannel, catal
 	}
 
 	cl := clientBuilder.Build()
+	catalogClient := catalogclient.New(cl)
+
 	resolver := solver.NewDeppySolver(
-		newIndexRefEntitySourceEntitySource(catalogRef),
+		// TODO: Add a variable source to replace `indexRefEntitySource` which will read from catalogRef
+		nil,
 		append(
-			variablesources.NestedVariableSource{newPackageVariableSource(packageName, packageVersion, packageChannel)},
-			controllers.NewVariableSource(cl)...,
+			variablesources.NestedVariableSource{newPackageVariableSource(catalogClient, packageName, packageVersion, packageChannel)},
+			controllers.NewVariableSource(cl, catalogClient)...,
 		),
 	)
 
@@ -150,22 +154,14 @@ func resolve(ctx context.Context, resolver *solver.DeppySolver, packageName stri
 	}
 
 	// Get the bundle image reference for the bundle
-	bundleImage, err := bundleEntity.BundlePath()
-	if err != nil {
-		return "", err
-	}
-
-	return bundleImage, nil
+	return bundleEntity.Image, nil
 }
 
-func getBundleEntityFromSolution(solution *solver.Solution, packageName string) (*olmentity.BundleEntity, error) {
+func getBundleEntityFromSolution(solution *solver.Solution, packageName string) (*catalogmetadata.Bundle, error) {
 	for _, variable := range solution.SelectedVariables() {
 		switch v := variable.(type) {
 		case *olmvariables.BundleVariable:
-			entityPkgName, err := v.BundleEntity().PackageName()
-			if err != nil {
-				return nil, err
-			}
+			entityPkgName := v.BundleEntity().Package
 			if packageName == entityPkgName {
 				return v.BundleEntity(), nil
 			}

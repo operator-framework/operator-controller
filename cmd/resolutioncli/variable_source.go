@@ -19,12 +19,14 @@ package main
 import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
+	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
-func newPackageVariableSource(packageName, packageVersion, packageChannel string) func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
+func newPackageVariableSource(catalog *catalogclient.Client, packageName, packageVersion, packageChannel string) func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
 	return func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
 		pkgSource, err := variablesources.NewRequiredPackageVariableSource(
+			catalog,
 			packageName,
 			variablesources.InVersionRange(packageVersion),
 			variablesources.InChannel(packageChannel),
