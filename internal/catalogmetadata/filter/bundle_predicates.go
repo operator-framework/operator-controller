@@ -52,22 +52,6 @@ func InChannel(channelName string) Predicate[catalogmetadata.Bundle] {
 	}
 }
 
-func ProvidesGVK(gvk *catalogmetadata.GVK) Predicate[catalogmetadata.Bundle] {
-	return func(bundle *catalogmetadata.Bundle) bool {
-		providedGVKs, err := bundle.ProvidedGVKs()
-		if err != nil {
-			return false
-		}
-		for i := 0; i < len(providedGVKs); i++ {
-			providedGVK := &providedGVKs[i]
-			if providedGVK.String() == gvk.String() {
-				return true
-			}
-		}
-		return false
-	}
-}
-
 func WithBundleImage(bundleImage string) Predicate[catalogmetadata.Bundle] {
 	return func(bundle *catalogmetadata.Bundle) bool {
 		return bundle.Image == bundleImage

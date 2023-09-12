@@ -210,7 +210,9 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 		}
 		variables, err := crdConstraintVariableSource.GetVariables(ctx, entitySource)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(variables).To(HaveLen(26))
+		// Note: When accounting for GVK Uniqueness (which we are currently not doing), we
+		// would expect to have 26 variables from the 5 unique GVKs (Bar, Bit, Buz, Fiz, Foo).
+		Expect(variables).To(HaveLen(21))
 		var crdConstraintVariables []*olmvariables.BundleUniquenessVariable
 		for _, variable := range variables {
 			switch v := variable.(type) {
@@ -218,6 +220,8 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 				crdConstraintVariables = append(crdConstraintVariables, v)
 			}
 		}
+		// Note: As above, the 5 GVKs would appear here as GVK uniqueness constraints
+		// if GVK Uniqueness were being accounted for.
 		Expect(crdConstraintVariables).To(WithTransform(CollectGlobalConstraintVariableIDs, ConsistOf([]string{
 			"another-package package uniqueness",
 			"bar-package package uniqueness",
@@ -225,11 +229,6 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 			"test-package package uniqueness",
 			"some-package package uniqueness",
 			"some-other-package package uniqueness",
-			`group:"buz.io" version:"v1" kind:"Buz" gvk uniqueness`,
-			`group:"bit.io" version:"v1" kind:"Bit" gvk uniqueness`,
-			`group:"fiz.io" version:"v1" kind:"Fiz" gvk uniqueness`,
-			`group:"foo.io" version:"v1" kind:"Foo" gvk uniqueness`,
-			`group:"bar.io" version:"v1" kind:"Bar" gvk uniqueness`,
 		})))
 	})
 

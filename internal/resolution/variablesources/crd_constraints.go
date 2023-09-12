@@ -44,7 +44,6 @@ func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Contex
 	//                   not all packages will necessarily export a CRD
 
 	pkgToBundleMap := map[string]map[deppy.Identifier]struct{}{}
-	gvkToBundleMap := map[string]map[deppy.Identifier]struct{}{}
 	for _, variable := range variables {
 		switch v := variable.(type) {
 		case *olmvariables.BundleVariable:
@@ -61,19 +60,6 @@ func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Contex
 					pkgToBundleMap[packageName] = map[deppy.Identifier]struct{}{}
 				}
 				pkgToBundleMap[packageName][bundleEntity.ID] = struct{}{}
-
-				// get bundleID gvks and update map
-				exportedGVKs, err := bundleEntity.ProvidedGVKs()
-				if err != nil {
-					return nil, fmt.Errorf("error creating global constraints: %w", err)
-				}
-				for i := 0; i < len(exportedGVKs); i++ {
-					gvk := exportedGVKs[i].String()
-					if _, ok := gvkToBundleMap[gvk]; !ok {
-						gvkToBundleMap[gvk] = map[deppy.Identifier]struct{}{}
-					}
-					gvkToBundleMap[gvk][bundleEntity.ID] = struct{}{}
-				}
 			}
 		}
 	}
@@ -85,15 +71,6 @@ func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Contex
 			bundleIDs = append(bundleIDs, bundleID)
 		}
 		varID := deppy.IdentifierFromString(fmt.Sprintf("%s package uniqueness", packageName))
-		variables = append(variables, olmvariables.NewBundleUniquenessVariable(varID, bundleIDs...))
-	}
-
-	for gvk, bundleIDMap := range gvkToBundleMap {
-		var bundleIDs []deppy.Identifier
-		for bundleID := range bundleIDMap {
-			bundleIDs = append(bundleIDs, bundleID)
-		}
-		varID := deppy.IdentifierFromString(fmt.Sprintf("%s gvk uniqueness", gvk))
 		variables = append(variables, olmvariables.NewBundleUniquenessVariable(varID, bundleIDs...))
 	}
 
