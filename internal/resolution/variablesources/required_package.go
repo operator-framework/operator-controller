@@ -73,7 +73,7 @@ func NewRequiredPackageVariableSource(catalog *catalogclient.Client, packageName
 	return r, nil
 }
 
-func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context, _ input.EntitySource) ([]deppy.Variable, error) {
+func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	resultSet, err := r.catalog.Bundles(ctx)
 	if err != nil {
 		return nil, err

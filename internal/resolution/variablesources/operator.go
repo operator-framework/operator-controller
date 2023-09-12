@@ -27,7 +27,7 @@ func NewOperatorVariableSource(cl client.Client, catalog *catalogclient.Client, 
 	}
 }
 
-func (o *OperatorVariableSource) GetVariables(ctx context.Context, _ input.EntitySource) ([]deppy.Variable, error) {
+func (o *OperatorVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	variableSources := SliceVariableSource{}
 	if o.inputVariableSource != nil {
 		variableSources = append(variableSources, o.inputVariableSource)
@@ -52,5 +52,5 @@ func (o *OperatorVariableSource) GetVariables(ctx context.Context, _ input.Entit
 		variableSources = append(variableSources, rps)
 	}
 
-	return variableSources.GetVariables(ctx, nil)
+	return variableSources.GetVariables(ctx)
 }

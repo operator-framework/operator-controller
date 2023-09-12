@@ -29,7 +29,7 @@ var _ input.VariableSource = &NestedVariableSource{}
 
 type NestedVariableSource []func(inputVariableSource input.VariableSource) (input.VariableSource, error)
 
-func (s NestedVariableSource) GetVariables(ctx context.Context, _ input.EntitySource) ([]deppy.Variable, error) {
+func (s NestedVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	if len(s) == 0 {
 		return nil, errors.New("empty nested variable sources")
 	}
@@ -43,15 +43,15 @@ func (s NestedVariableSource) GetVariables(ctx context.Context, _ input.EntitySo
 		}
 	}
 
-	return variableSource.GetVariables(ctx, nil)
+	return variableSource.GetVariables(ctx)
 }
 
 type SliceVariableSource []input.VariableSource
 
-func (s SliceVariableSource) GetVariables(ctx context.Context, _ input.EntitySource) ([]deppy.Variable, error) {
+func (s SliceVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	var variables []deppy.Variable
 	for _, variableSource := range s {
-		inputVariables, err := variableSource.GetVariables(ctx, nil)
+		inputVariables, err := variableSource.GetVariables(ctx)
 		if err != nil {
 			return nil, err
 		}

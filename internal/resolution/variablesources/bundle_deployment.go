@@ -5,9 +5,10 @@ import (
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
-	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 )
 
 var _ input.VariableSource = &BundleDeploymentVariableSource{}
@@ -26,7 +27,7 @@ func NewBundleDeploymentVariableSource(cl client.Client, catalog *catalogclient.
 	}
 }
 
-func (o *BundleDeploymentVariableSource) GetVariables(ctx context.Context, _ input.EntitySource) ([]deppy.Variable, error) {
+func (o *BundleDeploymentVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	variableSources := SliceVariableSource{}
 	if o.inputVariableSource != nil {
 		variableSources = append(variableSources, o.inputVariableSource)
@@ -53,5 +54,5 @@ func (o *BundleDeploymentVariableSource) GetVariables(ctx context.Context, _ inp
 		}
 	}
 
-	return variableSources.GetVariables(ctx, nil)
+	return variableSources.GetVariables(ctx)
 }

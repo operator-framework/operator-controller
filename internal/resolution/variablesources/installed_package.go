@@ -21,7 +21,7 @@ type InstalledPackageVariableSource struct {
 	bundleImage string
 }
 
-func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context, _ input.EntitySource) ([]deppy.Variable, error) {
+func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	allBundles, err := r.catalog.Bundles(ctx)
 	if err != nil {
 		return nil, err

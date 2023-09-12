@@ -106,7 +106,6 @@ func main() {
 		Client: cl,
 		Scheme: mgr.GetScheme(),
 		Resolver: solver.NewDeppySolver(
-			nil,
 			controllers.NewVariableSource(cl, catalogClient),
 		),
 	}).SetupWithManager(mgr); err != nil {

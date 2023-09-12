@@ -124,7 +124,6 @@ func run(ctx context.Context, packageName, packageVersion, packageChannel, index
 	catalogClient := newIndexRefClient(indexRef)
 
 	resolver := solver.NewDeppySolver(
-		nil,
 		append(
 			variablesources.NestedVariableSource{newPackageVariableSource(catalogClient, packageName, packageVersion, packageChannel)},
 			controllers.NewVariableSource(cl, catalogClient)...,

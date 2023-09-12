@@ -34,8 +34,8 @@ func NewCRDUniquenessConstraintsVariableSource(inputVariableSource input.Variabl
 	}
 }
 
-func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Context, _ input.EntitySource) ([]deppy.Variable, error) {
-	variables, err := g.inputVariableSource.GetVariables(ctx, nil)
+func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
+	variables, err := g.inputVariableSource.GetVariables(ctx)
 	if err != nil {
 		return nil, err
 	}

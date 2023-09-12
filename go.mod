@@ -11,7 +11,7 @@ require (
 	github.com/onsi/gomega v1.27.10
 	github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42
 	github.com/operator-framework/catalogd v0.6.0
-	github.com/operator-framework/deppy v0.0.0-20230629133131-bb7b6ae7b266
+	github.com/operator-framework/deppy v0.0.1
 	github.com/operator-framework/operator-registry v1.28.0
 	github.com/operator-framework/rukpak v0.13.0
 	github.com/spf13/pflag v1.0.5
@@ -73,6 +73,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/cel-go v0.12.6 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1 // indirect
 	github.com/google/uuid v1.3.0 // indirect

@@ -29,12 +29,12 @@ func NewBundlesAndDepsVariableSource(catalog *catalogclient.Client, inputVariabl
 	}
 }
 
-func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context, _ input.EntitySource) ([]deppy.Variable, error) {
+func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	var variables []deppy.Variable
 
 	// extract required package variables
 	for _, variableSource := range b.variableSources {
-		inputVariables, err := variableSource.GetVariables(ctx, nil)
+		inputVariables, err := variableSource.GetVariables(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -83,7 +83,6 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context, _ input
 			// create variable
 			variables = append(variables, olmvariables.NewBundleVariable(id, head, dependencies))
 		}
-
 	}
 
 	return variables, nil
