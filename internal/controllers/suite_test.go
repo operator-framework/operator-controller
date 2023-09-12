@@ -17,20 +17,15 @@ limitations under the License.
 package controllers_test
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"testing"
-
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
@@ -42,21 +37,7 @@ var (
 	sch *runtime.Scheme
 )
 
-// Some of the tests use Ginkgo (BDD-style Go testing framework). Refer to
-// http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
-// We plan phase Ginkgo out for unit tests.
-// See: https://github.com/operator-framework/operator-controller/issues/189
-func TestAPIs(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Controller Suite")
-}
-
-// This setup allows for Ginkgo and standard Go tests to co-exist
-// and use the same setup and teardown.
 func TestMain(m *testing.M) {
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-
-	// bootstrapping test environment
 	testEnv := &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "config", "crd", "bases"),
@@ -65,9 +46,9 @@ func TestMain(m *testing.M) {
 	}
 
 	cfg, err := testEnv.Start()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	utilruntime.Must(err)
+	if cfg == nil {
+		log.Panic("expected cfg to not be nil")
 	}
 
 	sch = runtime.NewScheme()
@@ -75,19 +56,12 @@ func TestMain(m *testing.M) {
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(sch))
 
 	cl, err = client.New(cfg, client.Options{Scheme: sch})
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	utilruntime.Must(err)
+	if cl == nil {
+		log.Panic("expected cl (client.New) to not be nil")
 	}
 
 	code := m.Run()
-
-	// tearing down the test environment
-	err = testEnv.Stop()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
+	utilruntime.Must(testEnv.Stop())
 	os.Exit(code)
 }
