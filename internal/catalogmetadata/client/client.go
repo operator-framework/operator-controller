@@ -41,7 +41,7 @@ func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
 			return nil, err
 		}
 
-		bundles, err = populateExtraFields(catalog.Name, channels, bundles)
+		bundles, err = PopulateExtraFields(catalog.Name, channels, bundles)
 		if err != nil {
 			return nil, err
 		}
@@ -67,7 +67,7 @@ func fetchCatalogMetadata[T catalogmetadata.Schemas](ctx context.Context, cl cli
 	return content, nil
 }
 
-func populateExtraFields(catalogName string, channels []*catalogmetadata.Channel, bundles []*catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error) {
+func PopulateExtraFields(catalogName string, channels []*catalogmetadata.Channel, bundles []*catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error) {
 	bundlesMap := map[string]*catalogmetadata.Bundle{}
 	for i := range bundles {
 		bundleKey := fmt.Sprintf("%s-%s", bundles[i].Package, bundles[i].Name)

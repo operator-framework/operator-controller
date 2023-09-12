@@ -35,7 +35,6 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
-	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
@@ -109,7 +108,7 @@ func validateFlags(packageName, indexRef string) error {
 	return nil
 }
 
-func run(ctx context.Context, packageName, packageVersion, packageChannel, catalogRef, inputDir string) error {
+func run(ctx context.Context, packageName, packageVersion, packageChannel, indexRef, inputDir string) error {
 	clientBuilder := fake.NewClientBuilder().WithScheme(scheme)
 
 	if inputDir != "" {
@@ -122,10 +121,9 @@ func run(ctx context.Context, packageName, packageVersion, packageChannel, catal
 	}
 
 	cl := clientBuilder.Build()
-	catalogClient := catalogclient.New(cl)
+	catalogClient := newIndexRefClient(indexRef)
 
 	resolver := solver.NewDeppySolver(
-		// TODO: Add a variable source to replace `indexRefEntitySource` which will read from catalogRef
 		nil,
 		append(
 			variablesources.NestedVariableSource{newPackageVariableSource(catalogClient, packageName, packageVersion, packageChannel)},
