@@ -46,7 +46,6 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
-	"github.com/operator-framework/operator-controller/internal/resolution/entities"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
@@ -363,13 +362,13 @@ func (r *OperatorReconciler) existingBundleDeploymentUnstructured(ctx context.Co
 // rukpak bundle provisioner class name that is capable of unpacking the bundle type
 func mapBundleMediaTypeToBundleProvisioner(mediaType string) (string, error) {
 	switch mediaType {
-	case entities.MediaTypePlain:
+	case catalogmetadata.MediaTypePlain:
 		return "core-rukpak-io-plain", nil
 	// To ensure compatibility with bundles created with OLMv0 where the
 	// olm.bundle.mediatype property doesn't exist, we assume that if the
 	// property is empty (i.e doesn't exist) that the bundle is one created
 	// with OLMv0 and therefore should use the registry provisioner
-	case entities.MediaTypeRegistry, "":
+	case catalogmetadata.MediaTypeRegistry, "":
 		return "core-rukpak-io-registry", nil
 	default:
 		return "", fmt.Errorf("unknown bundle mediatype: %s", mediaType)

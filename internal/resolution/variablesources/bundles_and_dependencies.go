@@ -109,7 +109,6 @@ func (b *BundlesAndDepsVariableSource) filterBundleDependencies(allBundles []*ca
 					added[id] = struct{}{}
 				}
 			}
-
 		}
 	}
 
