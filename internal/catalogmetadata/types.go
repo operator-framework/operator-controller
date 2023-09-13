@@ -29,22 +29,6 @@ type Channel struct {
 	declcfg.Channel
 }
 
-type GVK property.GVK
-
-func (g GVK) String() string {
-	return fmt.Sprintf(`group:"%s" version:"%s" kind:"%s"`, g.Group, g.Version, g.Kind)
-}
-
-type GVKRequired property.GVKRequired
-
-func (g GVKRequired) String() string {
-	return fmt.Sprintf(`group:"%s" version:"%s" kind:"%s"`, g.Group, g.Version, g.Kind)
-}
-
-func (g GVKRequired) AsGVK() GVK {
-	return GVK(g)
-}
-
 type PackageRequired struct {
 	property.PackageRequired
 	SemverRange *bsemver.Range `json:"-"`
