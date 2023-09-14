@@ -45,7 +45,7 @@ type Bundle struct {
 	bundlePackage    *property.Package
 	semVersion       *bsemver.Version
 	requiredPackages []PackageRequired
-	mediaType        string
+	mediaType        *string
 }
 
 func (b *Bundle) Version() (*bsemver.Version, error) {
@@ -67,7 +67,7 @@ func (b *Bundle) MediaType() (string, error) {
 		return "", err
 	}
 
-	return b.mediaType, nil
+	return *b.mediaType, nil
 }
 
 func (b *Bundle) loadPackage() error {
@@ -118,12 +118,12 @@ func (b *Bundle) loadRequiredPackages() error {
 func (b *Bundle) loadMediaType() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	if b.mediaType == "" {
+	if b.mediaType == nil {
 		mediaType, err := loadFromProps[string](b, PropertyBundleMediaType, false)
 		if err != nil {
 			return fmt.Errorf("error determining bundle mediatype for bundle %q: %s", b.Name, err)
 		}
-		b.mediaType = mediaType
+		b.mediaType = &mediaType
 	}
 	return nil
 }
