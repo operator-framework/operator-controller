@@ -703,8 +703,8 @@ github.com/opencontainers/selinux v1.8.0/go.mod h1:RScLhm78qiWa2gbVCcGkC7tCGdgk3
 github.com/opencontainers/selinux v1.8.2/go.mod h1:MUIHuUEvKB1wtJjQdOyYRgOnLD2xAPP8dBsCoU0KuF8=
 github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42 h1:d/Pnr19TnmIq3zQ6ebewC+5jt5zqYbRkvYd37YZENQY=
 github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42/go.mod h1:l/cuwtPxkVUY7fzYgdust2m9tlmb8I4pOvbsUufRb24=
-github.com/operator-framework/catalogd v0.5.0 h1:azU5KCofUXVoakXCPRGjAjYyDtZzNSSiSBWuZJLOn74=
-github.com/operator-framework/catalogd v0.5.0/go.mod h1:1xksKKGHglY0i92h3/KDZURMSEhf3xtKRj2vCfJ57fk=
+github.com/operator-framework/catalogd v0.6.0 h1:dSZ54MVSHJ8hcoV7OCRxnk3x4O3ramlyPvvz0vsKYdk=
+github.com/operator-framework/catalogd v0.6.0/go.mod h1:I0n086a4a+nP1YZy742IrPaWvOlWu0Mj6qA6j4K96Vg=
 github.com/operator-framework/deppy v0.0.0-20230629133131-bb7b6ae7b266 h1:SQEUaAoRWNhr2poLH6z/RsEWZG7PppDWHsr5vAvJkJc=
 github.com/operator-framework/deppy v0.0.0-20230629133131-bb7b6ae7b266/go.mod h1:6kgHMeS5vQt3gqWGgJIig1yT5uflBUsCc1orP+I3nbk=
 github.com/operator-framework/operator-registry v1.28.0 h1:vtmd2WgJxkx7vuuOxW4k5Le/oo0SfonSeJVMU3rKIfk=
