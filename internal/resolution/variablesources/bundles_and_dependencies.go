@@ -107,27 +107,6 @@ func (b *BundlesAndDepsVariableSource) getEntityDependencies(ctx context.Context
 		}
 	}
 
-	// gather required gvk dependencies
-	// todo(perdasilva): disambiguate between not found and actual errors
-	gvkDependencies, _ := bundleEntity.RequiredGVKs()
-	for i := 0; i < len(gvkDependencies); i++ {
-		providedGvk := gvkDependencies[i].AsGVK()
-		gvkDependencyBundles, err := entitySource.Filter(ctx, predicates.ProvidesGVK(&providedGvk))
-		if err != nil {
-			return nil, err
-		}
-		if len(gvkDependencyBundles) == 0 {
-			return nil, fmt.Errorf("could not find gvk dependencies for bundle '%s'", bundleEntity.ID)
-		}
-		for i := 0; i < len(gvkDependencyBundles); i++ {
-			entity := gvkDependencyBundles[i]
-			if _, ok := added[entity.ID]; !ok {
-				dependencies = append(dependencies, olmentity.NewBundleEntity(&entity))
-				added[entity.ID] = struct{}{}
-			}
-		}
-	}
-
 	// sort bundles in version order
 	sort.SliceStable(dependencies, func(i, j int) bool {
 		return entitysort.ByChannelAndVersion(dependencies[i].Entity, dependencies[j].Entity)

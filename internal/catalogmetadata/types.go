@@ -11,6 +11,12 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 )
 
+const (
+	MediaTypePlain          = "plain+v0"
+	MediaTypeRegistry       = "registry+v1"
+	PropertyBundleMediaType = "olm.bundle.mediatype"
+)
+
 type Schemas interface {
 	Package | Bundle | Channel
 }
@@ -23,20 +29,9 @@ type Channel struct {
 	declcfg.Channel
 }
 
-type GVK property.GVK
-
-func (g GVK) String() string {
-	return fmt.Sprintf(`group:"%s" version:"%s" kind:"%s"`, g.Group, g.Version, g.Kind)
-}
-
-type GVKRequired property.GVKRequired
-
-func (g GVKRequired) String() string {
-	return fmt.Sprintf(`group:"%s" version:"%s" kind:"%s"`, g.Group, g.Version, g.Kind)
-}
-
-func (g GVKRequired) AsGVK() GVK {
-	return GVK(g)
+type PackageRequired struct {
+	property.PackageRequired
+	SemverRange *bsemver.Range `json:"-"`
 }
 
 type Bundle struct {
@@ -46,11 +41,11 @@ type Bundle struct {
 
 	mu sync.RWMutex
 	// these properties are lazy loaded as they are requested
-	propertiesMap map[string]property.Property
-	bundlePackage *property.Package
-	semVersion    *bsemver.Version
-	providedGVKs  []GVK
-	requiredGVKs  []GVKRequired
+	propertiesMap    map[string]property.Property
+	bundlePackage    *property.Package
+	semVersion       *bsemver.Version
+	requiredPackages []PackageRequired
+	mediaType        string
 }
 
 func (b *Bundle) Version() (*bsemver.Version, error) {
@@ -60,18 +55,19 @@ func (b *Bundle) Version() (*bsemver.Version, error) {
 	return b.semVersion, nil
 }
 
-func (b *Bundle) ProvidedGVKs() ([]GVK, error) {
-	if err := b.loadProvidedGVKs(); err != nil {
+func (b *Bundle) RequiredPackages() ([]PackageRequired, error) {
+	if err := b.loadRequiredPackages(); err != nil {
 		return nil, err
 	}
-	return b.providedGVKs, nil
+	return b.requiredPackages, nil
 }
 
-func (b *Bundle) RequiredGVKs() ([]GVKRequired, error) {
-	if err := b.loadRequiredGVKs(); err != nil {
-		return nil, err
+func (b *Bundle) MediaType() (string, error) {
+	if err := b.loadMediaType(); err != nil {
+		return "", err
 	}
-	return b.requiredGVKs, nil
+
+	return b.mediaType, nil
 }
 
 func (b *Bundle) loadPackage() error {
@@ -94,28 +90,40 @@ func (b *Bundle) loadPackage() error {
 	return nil
 }
 
-func (b *Bundle) loadProvidedGVKs() error {
+func (b *Bundle) loadRequiredPackages() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	if b.providedGVKs == nil {
-		providedGVKs, err := loadFromProps[[]GVK](b, property.TypeGVK, false)
+	if b.requiredPackages == nil {
+		requiredPackages, err := loadFromProps[[]PackageRequired](b, property.TypePackageRequired, false)
 		if err != nil {
-			return fmt.Errorf("error determining provided GVKs for bundle %q: %s", b.Name, err)
+			return fmt.Errorf("error determining bundle required packages for bundle %q: %s", b.Name, err)
 		}
-		b.providedGVKs = providedGVKs
+		for _, requiredPackage := range requiredPackages {
+			semverRange, err := bsemver.ParseRange(requiredPackage.VersionRange)
+			if err != nil {
+				return fmt.Errorf(
+					"error parsing bundle required package semver range for bundle %q (required package %q): %s",
+					b.Name,
+					requiredPackage.PackageName,
+					err,
+				)
+			}
+			requiredPackage.SemverRange = &semverRange
+		}
+		b.requiredPackages = requiredPackages
 	}
 	return nil
 }
 
-func (b *Bundle) loadRequiredGVKs() error {
+func (b *Bundle) loadMediaType() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	if b.requiredGVKs == nil {
-		requiredGVKs, err := loadFromProps[[]GVKRequired](b, property.TypeGVKRequired, false)
+	if b.mediaType == "" {
+		mediaType, err := loadFromProps[string](b, PropertyBundleMediaType, false)
 		if err != nil {
-			return fmt.Errorf("error determining required GVKs for bundle %q: %s", b.Name, err)
+			return fmt.Errorf("error determining bundle mediatype for bundle %q: %s", b.Name, err)
 		}
-		b.requiredGVKs = requiredGVKs
+		b.mediaType = mediaType
 	}
 	return nil
 }

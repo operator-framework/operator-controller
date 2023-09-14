@@ -114,34 +114,6 @@ func TestInChannel(t *testing.T) {
 	assert.False(t, f(b3))
 }
 
-func TestProvidesGVK(t *testing.T) {
-	b1 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-		Properties: []property.Property{
-			{
-				Type:  property.TypeGVK,
-				Value: json.RawMessage(`[{"group":"foo.io","kind":"Foo","version":"v1"},{"group":"bar.io","kind":"Bar","version":"v1"}]`),
-			},
-		},
-	}}
-	b2 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{}}
-	f1 := filter.ProvidesGVK(&catalogmetadata.GVK{
-		Group:   "foo.io",
-		Version: "v1",
-		Kind:    "Foo",
-	})
-	f2 := filter.ProvidesGVK(&catalogmetadata.GVK{
-		Group:   "baz.io",
-		Version: "v1alpha1",
-		Kind:    "Baz",
-	})
-	// Filter with Bundle which provides the GVK should return true
-	assert.True(t, f1(b1))
-	// Filter with Bundle which does not provide the GVK should return false
-	assert.False(t, f2(b1))
-	// Filter with Bundle with no GVK should return false
-	assert.False(t, f1(b2))
-}
-
 func TestWithBundleImage(t *testing.T) {
 	b1 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{Image: "fake-image-uri-1"}}
 	b2 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{Image: "fake-image-uri-2"}}

@@ -2,6 +2,7 @@ package catalogmetadata_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	bsemver "github.com/blang/semver/v4"
@@ -13,140 +14,176 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
 
-func TestGVK(t *testing.T) {
-	t.Run("String", func(t *testing.T) {
-		gvk := catalogmetadata.GVK{Group: "bar.io", Kind: "Bar", Version: "v1"}
-
-		assert.Equal(t, `group:"bar.io" version:"v1" kind:"Bar"`, gvk.String())
-	})
+func TestBundleVersion(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		bundle      *catalogmetadata.Bundle
+		wantVersion *bsemver.Version
+		wantErr     string
+	}{
+		{
+			name: "valid version",
+			bundle: &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+				Name: "fake-bundle.v1",
+				Properties: []property.Property{
+					{
+						Type:  property.TypePackage,
+						Value: json.RawMessage(`{"packageName": "package1", "version": "1.0.0"}`),
+					},
+				},
+			}},
+			wantVersion: &bsemver.Version{Major: 1},
+		},
+		{
+			name: "invalid version",
+			bundle: &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+				Name: "fake-bundle.invalidVersion",
+				Properties: []property.Property{
+					{
+						Type:  property.TypePackage,
+						Value: json.RawMessage(`{"packageName": "package1", "version": "broken"}`),
+					},
+				},
+			}},
+			wantVersion: nil,
+			wantErr:     `could not parse semver "broken" for bundle 'fake-bundle.invalidVersion': No Major.Minor.Patch elements found`,
+		},
+		{
+			name: "not found",
+			bundle: &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+				Name: "fake-bundle.noVersion",
+			}},
+			wantVersion: nil,
+			wantErr:     `bundle property with type "olm.package" not found`,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			version, err := tt.bundle.Version()
+			assert.Equal(t, tt.wantVersion, version)
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
-func TestGVKRequired(t *testing.T) {
-	t.Run("String", func(t *testing.T) {
-		gvk := catalogmetadata.GVKRequired{Group: "bar.io", Kind: "Bar", Version: "v1"}
-
-		assert.Equal(t, `group:"bar.io" version:"v1" kind:"Bar"`, gvk.String())
-	})
-
-	t.Run("AsGVK", func(t *testing.T) {
-		gvk := catalogmetadata.GVKRequired{Group: "bar.io", Kind: "Bar", Version: "v1"}
-
-		assert.Equal(t, catalogmetadata.GVK{Group: "bar.io", Kind: "Bar", Version: "v1"}, gvk.AsGVK())
-	})
+func TestBundleRequiredPackages(t *testing.T) {
+	for _, tt := range []struct {
+		name                 string
+		bundle               *catalogmetadata.Bundle
+		wantRequiredPackages []catalogmetadata.PackageRequired
+		wantErr              string
+	}{
+		{
+			name: "valid package requirements",
+			bundle: &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+				Name: "fake-bundle.v1",
+				Properties: []property.Property{
+					{
+						Type:  property.TypePackageRequired,
+						Value: json.RawMessage(`[{"packageName": "packageA", "versionRange": ">1.0.0"}, {"packageName": "packageB", "versionRange": ">0.5.0 <0.8.6"}]`),
+					},
+				},
+			}},
+			wantRequiredPackages: []catalogmetadata.PackageRequired{
+				{PackageRequired: property.PackageRequired{PackageName: "packageA", VersionRange: ">1.0.0"}},
+				{PackageRequired: property.PackageRequired{PackageName: "packageB", VersionRange: ">0.5.0 <0.8.6"}},
+			},
+		},
+		{
+			name: "bad package requirement",
+			bundle: &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+				Name: "fake-bundle.badPackageRequirement",
+				Properties: []property.Property{
+					{
+						Type:  property.TypePackageRequired,
+						Value: json.RawMessage(`badRequiredPackageStructure`),
+					},
+				},
+			}},
+			wantRequiredPackages: nil,
+			wantErr:              `error determining bundle required packages for bundle "fake-bundle.badPackageRequirement": property "olm.package.required" with value "badRequiredPackageStructure" could not be parsed: invalid character 'b' looking for beginning of value`,
+		},
+		{
+			name: "invalid version range",
+			bundle: &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+				Name: "fake-bundle.badVersionRange",
+				Properties: []property.Property{
+					{
+						Type:  property.TypePackageRequired,
+						Value: json.RawMessage(`[{"packageName": "packageA", "versionRange": "invalid"}]`),
+					},
+				},
+			}},
+			wantRequiredPackages: nil,
+			wantErr:              `error parsing bundle required package semver range for bundle "fake-bundle.badVersionRange" (required package "packageA"): Could not get version from string: "invalid"`,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			packages, err := tt.bundle.RequiredPackages()
+			assert.Equal(t, tt.wantRequiredPackages, packages)
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
-func TestBundle(t *testing.T) {
-	t.Run("Version", func(t *testing.T) {
-		validVersion := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-			Name: "fake-bundle.v1",
-			Properties: []property.Property{
-				{
-					Type:  property.TypePackage,
-					Value: json.RawMessage(`{"packageName": "package1", "version": "1.0.0"}`),
+func TestBundleMediaType(t *testing.T) {
+	for _, tt := range []struct {
+		name          string
+		bundle        *catalogmetadata.Bundle
+		wantMediaType string
+		wantErr       string
+	}{
+		{
+			name: "valid mediatype property",
+			bundle: &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+				Name: "fake-bundle.v1",
+				Properties: []property.Property{
+					{
+						Type:  catalogmetadata.PropertyBundleMediaType,
+						Value: json.RawMessage(fmt.Sprintf(`"%s"`, catalogmetadata.MediaTypePlain)),
+					},
 				},
-			},
-		}}
-		invalidVersion := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-			Name: "fake-bundle.invalid",
-			Properties: []property.Property{
-				{
-					Type:  property.TypePackage,
-					Value: json.RawMessage(`{"packageName": "package1", "version": "broken"}`),
+			}},
+			wantMediaType: catalogmetadata.MediaTypePlain,
+		},
+		{
+			name: "no media type provided",
+			bundle: &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+				Name:       "fake-bundle.noMediaType",
+				Properties: []property.Property{},
+			}},
+			wantMediaType: "",
+		},
+		{
+			name: "malformed media type",
+			bundle: &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+				Name: "fake-bundle.badMediaType",
+				Properties: []property.Property{
+					{
+						Type:  catalogmetadata.PropertyBundleMediaType,
+						Value: json.RawMessage("badtype"),
+					},
 				},
-			},
-		}}
-		noVersion := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-			Name: "fake-bundle.noVersion",
-		}}
-
-		ver, err := validVersion.Version()
-		assert.NoError(t, err)
-		assert.Equal(t, &bsemver.Version{Major: 1}, ver)
-
-		ver, err = invalidVersion.Version()
-		assert.EqualError(t, err, "could not parse semver \"broken\" for bundle 'fake-bundle.invalid': No Major.Minor.Patch elements found")
-		assert.Nil(t, ver)
-
-		ver, err = noVersion.Version()
-		assert.EqualError(t, err, "bundle property with type \"olm.package\" not found")
-		assert.Nil(t, ver)
-	})
-
-	t.Run("ProvidedGVKs", func(t *testing.T) {
-		validGVK := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-			Name: "fake-bundle.v1",
-			Properties: []property.Property{
-				{
-					Type:  property.TypeGVK,
-					Value: json.RawMessage(`[{"group":"foo.io","kind":"Foo","version":"v1"},{"group":"bar.io","kind":"Bar","version":"v1alpha1"}]`),
-				},
-			},
-		}}
-		invalidGVK := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-			Name: "fake-bundle.invalid",
-			Properties: []property.Property{
-				{
-					Type:  property.TypeGVK,
-					Value: json.RawMessage(`badGvkStructure`),
-				},
-			},
-		}}
-		noGVK := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-			Name: "fake-bundle.noGVK",
-		}}
-
-		gvk, err := validGVK.ProvidedGVKs()
-		assert.NoError(t, err)
-		assert.Equal(t, []catalogmetadata.GVK{
-			{Group: "foo.io", Kind: "Foo", Version: "v1"},
-			{Group: "bar.io", Kind: "Bar", Version: "v1alpha1"},
-		}, gvk)
-
-		gvk, err = invalidGVK.ProvidedGVKs()
-		assert.EqualError(t, err, "error determining provided GVKs for bundle \"fake-bundle.invalid\": property \"olm.gvk\" with value \"badGvkStructure\" could not be parsed: invalid character 'b' looking for beginning of value")
-		assert.Nil(t, gvk)
-
-		gvk, err = noGVK.ProvidedGVKs()
-		assert.NoError(t, err)
-		assert.Nil(t, gvk)
-	})
-
-	t.Run("RequiredGVKs", func(t *testing.T) {
-		validGVK := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-			Name: "fake-bundle.v1",
-			Properties: []property.Property{
-				{
-					Type:  property.TypeGVKRequired,
-					Value: json.RawMessage(`[{"group":"foo.io","kind":"Foo","version":"v1"},{"group":"bar.io","kind":"Bar","version":"v1alpha1"}]`),
-				},
-			},
-		}}
-		invalidGVK := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-			Name: "fake-bundle.invalid",
-			Properties: []property.Property{
-				{
-					Type:  property.TypeGVKRequired,
-					Value: json.RawMessage(`badGvkStructure`),
-				},
-			},
-		}}
-		noGVK := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-			Name: "fake-bundle.noGVK",
-		}}
-
-		gvk, err := validGVK.RequiredGVKs()
-		assert.NoError(t, err)
-		assert.Equal(t, []catalogmetadata.GVKRequired{
-			{Group: "foo.io", Kind: "Foo", Version: "v1"},
-			{Group: "bar.io", Kind: "Bar", Version: "v1alpha1"},
-		}, gvk)
-
-		gvk, err = invalidGVK.RequiredGVKs()
-		assert.EqualError(t, err, "error determining required GVKs for bundle \"fake-bundle.invalid\": property \"olm.gvk.required\" with value \"badGvkStructure\" could not be parsed: invalid character 'b' looking for beginning of value")
-		assert.Nil(t, gvk)
-
-		gvk, err = noGVK.RequiredGVKs()
-		assert.NoError(t, err)
-		assert.Nil(t, gvk)
-	})
+			}},
+			wantMediaType: "",
+			wantErr:       `error determining bundle mediatype for bundle "fake-bundle.badMediaType": property "olm.bundle.mediatype" with value "badtype" could not be parsed: invalid character 'b' looking for beginning of value`,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			mediaType, err := tt.bundle.MediaType()
+			assert.Equal(t, tt.wantMediaType, mediaType)
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }

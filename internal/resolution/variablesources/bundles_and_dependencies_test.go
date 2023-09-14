@@ -160,28 +160,16 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 				bundleVariables = append(bundleVariables, v)
 			}
 		}
-		Expect(bundleVariables).To(WithTransform(CollectBundleVariableIDs, Equal([]string{"bundle-2", "bundle-1", "bundle-15", "bundle-16", "bundle-17", "bundle-9", "bundle-8", "bundle-7", "bundle-5", "bundle-4", "bundle-11", "bundle-10"})))
+		// Note: When accounting for Required GVKs (currently not in use), we would expect additional
+		// dependencies (bundles 7, 8, 9, 10, 11) to appear here due to their GVKs being required by
+		// some of the packages.
+		Expect(bundleVariables).To(WithTransform(CollectBundleVariableIDs, Equal([]string{"bundle-2", "bundle-1", "bundle-15", "bundle-16", "bundle-17", "bundle-5", "bundle-4"})))
 
 		// check dependencies for one of the bundles
 		bundle2 := VariableWithID("bundle-2")(bundleVariables)
+		// Note: As above, bundle-2 has GVK requirements satisfied by bundles 7, 8, and 9, but they
+		// will not appear in this list as we are not currently taking Required GVKs into account
 		Expect(bundle2.Dependencies()).To(WithTransform(CollectDeppyEntities, Equal([]*input.Entity{
-			input.NewEntity("bundle-9", map[string]string{
-				property.TypePackage: `{"packageName": "another-package", "version": "1.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-				property.TypeGVK:     `[{"group":"foo.io","kind":"Foo","version":"v1"}]`,
-			}),
-			input.NewEntity("bundle-8", map[string]string{
-				property.TypePackage:         `{"packageName": "some-other-package", "version": "1.5.0"}`,
-				property.TypeChannel:         `{"channelName":"stable","priority":0}`,
-				property.TypeGVK:             `[{"group":"foo.io","kind":"Foo","version":"v1"}]`,
-				property.TypeGVKRequired:     `[{"group":"bar.io","kind":"Bar","version":"v1"}]`,
-				property.TypePackageRequired: `[{"packageName": "another-package", "versionRange": "< 2.0.0"}]`,
-			}),
-			input.NewEntity("bundle-7", map[string]string{
-				property.TypePackage: `{"packageName": "some-other-package", "version": "1.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-				property.TypeGVK:     `[{"group":"foo.io","kind":"Foo","version":"v1"}]`,
-			}),
 			input.NewEntity("bundle-5", map[string]string{
 				property.TypePackage: `{"packageName": "some-package", "version": "1.5.0"}`,
 				property.TypeChannel: `{"channelName":"stable","priority":0}`,
