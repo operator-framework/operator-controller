@@ -99,7 +99,7 @@ var _ = AfterSuite(func() {
 	Expect(c.Delete(ctx, operatorCatalog)).To(Succeed())
 	Eventually(func(g Gomega) {
 		err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, &catalogd.Catalog{})
-		Expect(errors.IsNotFound(err)).To(BeTrue())
+		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}).Should(Succeed())
 
 	// speed up delete without waiting for gc
