@@ -300,8 +300,7 @@ var _ = Describe("Catalogd Controller Test", func() {
 				When("HTTPServer feature gate is enabled", func() {
 					BeforeEach(func() {
 						Expect(features.CatalogdFeatureGate.SetFromMap(map[string]bool{
-							string(features.CatalogMetadataAPI): false,
-							string(features.HTTPServer):         true,
+							string(features.HTTPServer): true,
 						})).NotTo(HaveOccurred())
 						// call reconciler so that initial finalizer setup is done here
 						res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
@@ -373,92 +372,6 @@ var _ = Describe("Catalogd Controller Test", func() {
 						})
 					})
 				})
-				When("the CatalogMetadataAPI feature gate is enabled", func() {
-					BeforeEach(func() {
-						Expect(features.CatalogdFeatureGate.SetFromMap(map[string]bool{
-							string(features.CatalogMetadataAPI): true,
-							string(features.HTTPServer):         false,
-						})).NotTo(HaveOccurred())
-
-						// reconcile
-						res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: catalogKey})
-						Expect(res).To(Equal(ctrl.Result{}))
-						Expect(err).ToNot(HaveOccurred())
-					})
-
-					AfterEach(func() {
-						// clean up catalogmetadata
-						Expect(cl.DeleteAllOf(ctx, &v1alpha1.CatalogMetadata{})).To(Succeed())
-						Expect(features.CatalogdFeatureGate.SetFromMap(map[string]bool{
-							string(features.CatalogMetadataAPI): false,
-						})).NotTo(HaveOccurred())
-					})
-
-					// TODO (rashmigottipati): Add testing of CatalogMetadata sync process.
-					It("should create CatalogMetadata resources", func() {
-						catalogMetadatas := &v1alpha1.CatalogMetadataList{}
-						Expect(cl.List(ctx, catalogMetadatas)).To(Succeed())
-						Expect(catalogMetadatas.Items).To(HaveLen(3))
-						for _, catalogMetadata := range catalogMetadatas.Items {
-							Expect(catalogMetadata.Name).To(ContainSubstring(catalogKey.Name))
-							Expect(catalogMetadata.Kind).To(Equal("CatalogMetadata"))
-							Expect(catalogMetadata.OwnerReferences).To(HaveLen(1))
-							Expect(catalogMetadata.OwnerReferences[0].Name).To(Equal(catalogKey.Name))
-							Expect(catalogMetadata.Spec.Catalog.Name).To(Equal(catalogKey.Name))
-						}
-					})
-
-					When("creating another Catalog", func() {
-						var (
-							tempCatalog *v1alpha1.Catalog
-						)
-						BeforeEach(func() {
-							tempCatalog = &v1alpha1.Catalog{
-								ObjectMeta: metav1.ObjectMeta{Name: "tempedout"},
-								Spec: v1alpha1.CatalogSpec{
-									Source: v1alpha1.CatalogSource{
-										Type: "image",
-										Image: &v1alpha1.ImageSource{
-											Ref: "somecatalog:latest",
-										},
-									},
-								},
-							}
-
-							Expect(cl.Create(ctx, tempCatalog)).To(Succeed())
-							res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: "tempedout"}})
-							Expect(res).To(Equal(ctrl.Result{}))
-							Expect(err).ToNot(HaveOccurred())
-						})
-
-						AfterEach(func() {
-							Expect(cl.Delete(ctx, tempCatalog)).NotTo(HaveOccurred())
-						})
-
-						It("should not delete CatalogMetadata belonging to a different catalog", func() {
-							catalogMetadatas := &v1alpha1.CatalogMetadataList{}
-							Expect(cl.List(ctx, catalogMetadatas)).To(Succeed())
-							Expect(catalogMetadatas.Items).To(HaveLen(6))
-							for _, catalogMetadata := range catalogMetadatas.Items {
-								for _, or := range catalogMetadata.GetOwnerReferences() {
-									if or.Kind == "Catalog" {
-										if or.Name == catalogKey.Name {
-											Expect(catalogMetadata.Name).To(ContainSubstring(catalogKey.Name))
-											Expect(catalogMetadata.Kind).To(Equal("CatalogMetadata"))
-											Expect(catalogMetadata.Spec.Catalog.Name).To(Equal(catalogKey.Name))
-											break
-										} else if or.Name == tempCatalog.Name {
-											Expect(catalogMetadata.Name).To(ContainSubstring(tempCatalog.Name))
-											Expect(catalogMetadata.Kind).To(Equal("CatalogMetadata"))
-											Expect(catalogMetadata.Spec.Catalog.Name).To(Equal(tempCatalog.Name))
-											break
-										}
-									}
-								}
-							}
-						})
-					})
-				})
 			})
 		})
 	})
@@ -470,8 +383,8 @@ var _ = Describe("Catalogd Controller Test", func() {
 // To learn more about File-Based Catalogs and the different objects, view the
 // documentation at https://olm.operatorframework.io/docs/reference/file-based-catalogs/.
 // The reasoning behind having these as a template is to parameterize different
-// fields to use custom values during testing and verifying to ensure that the CatalogMetadata
-// resources created by the Catalog controller have the appropriate values.
+// fields to use custom values during testing and verifying to ensure that the catalog
+// metadata served after the Catalog resource has been reconciled have the appropriate values.
 // Having the parameterized fields allows us to easily change the values that are used in
 // the tests by changing them in one place as opposed to manually changing many string literals
 // throughout the code.

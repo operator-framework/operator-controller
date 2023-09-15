@@ -7,18 +7,6 @@ rules:
 - apiGroups:
   - catalogd.operatorframework.io
   resources:
-  - catalogmetadata
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - catalogd.operatorframework.io
-  resources:
   - catalogs
   verbs:
   - create

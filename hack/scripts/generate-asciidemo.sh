@@ -18,7 +18,7 @@ function run() {
     sleep 10
     typeline "make install"
     sleep 10
-    # inspect crds (catalog, catalogmetadata)
+    # inspect crds (catalog)
     typeline 'kubectl get crds -A'
 
     typeline -x "# create a catalog"
@@ -26,18 +26,20 @@ function run() {
     typeline "kubectl get catalog -A" # shows catalog-sample
     typeline -x "# waiting for catalog to report ready status"
     typeline "time kubectl wait --for=condition=Unpacked catalog/operatorhubio --timeout=1h"
-    # inspect packages, and then details on one package
-    typeline -x "# check what 'packages' are available in this catalog and then inspect the content of one of the packages"
-    typeline "kubectl get catalogmetadata -l schema=olm.package"
-    typeline "kubectl get catalogmetadata operatorhubio-olm.package-wavefront -o yaml"
-    # inspect channels, and then details on one channel
-    typeline -x "# check what channels are included in the wavefront package and then inspect the content of the alpha channel"
-    typeline "kubectl get catalogmetadata -l schema=olm.channel,package=wavefront"
-    typeline "kubectl get catalogmetadata operatorhubio-olm.channel-wavefront-alpha -o yaml"
-    # inspect bundles, and then details on one bundle
-    typeline -x "# check what bundles are included in the wavefront package and then inspect the content of the wavefront-operator.v0.1.0 bundle"
-    typeline "kubectl get catalogmetadata -l schema=olm.bundle,package=wavefront"
-    typeline "kubectl get catalogmetadata operatorhubio-olm.bundle-wavefront-wavefront-operator.v0.1.0 -o yaml"
+
+    # port forward the catalogd-catalogserver service
+    typeline -x "# port forward the catalogd-catalogserver service to interact with the HTTP server serving catalog contents"
+    typline "kubectl -n catalogd-system port-forward svc/catalogd-catalogserver 8080:80"
+
+    # inspect packages
+    typeline -x "# check what 'packages' are available in this catalog"
+    typeline "curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == \"olm.package\") | .name'"
+    # inspect channels
+    typeline -x "# check what channels are included in the wavefront package"
+    typeline "curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == \"olm.channel\") | select(.package == \"wavefront\") | .name'"
+    # inspect bundles
+    typeline -x "# check what bundles are included in the wavefront package"
+    typeline "curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == \"olm.bundle\") | select(.package == \"ack-acm-controller\") | .name'"
 }
 
 run
