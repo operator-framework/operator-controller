@@ -9,7 +9,6 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
-	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
@@ -18,13 +17,13 @@ import (
 var _ input.VariableSource = &BundlesAndDepsVariableSource{}
 
 type BundlesAndDepsVariableSource struct {
-	catalog         catalogclient.CatalogClient
+	catalogClient   BundleProvider
 	variableSources []input.VariableSource
 }
 
-func NewBundlesAndDepsVariableSource(catalog catalogclient.CatalogClient, inputVariableSources ...input.VariableSource) *BundlesAndDepsVariableSource {
+func NewBundlesAndDepsVariableSource(catalogClient BundleProvider, inputVariableSources ...input.VariableSource) *BundlesAndDepsVariableSource {
 	return &BundlesAndDepsVariableSource{
-		catalog:         catalog,
+		catalogClient:   catalogClient,
 		variableSources: inputVariableSources,
 	}
 }
@@ -46,13 +45,13 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context) ([]depp
 	for _, variable := range variables {
 		switch v := variable.(type) {
 		case *olmvariables.RequiredPackageVariable:
-			bundleQueue = append(bundleQueue, v.BundleEntities()...)
+			bundleQueue = append(bundleQueue, v.Bundles()...)
 		case *olmvariables.InstalledPackageVariable:
-			bundleQueue = append(bundleQueue, v.BundleEntities()...)
+			bundleQueue = append(bundleQueue, v.Bundles()...)
 		}
 	}
 
-	allBundles, err := b.catalog.Bundles(ctx)
+	allBundles, err := b.catalogClient.Bundles(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +73,7 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context) ([]depp
 			// get bundle dependencies
 			dependencies, err := b.filterBundleDependencies(allBundles, head)
 			if err != nil {
-				return nil, fmt.Errorf("could not determine dependencies for entity with id '%s': %w", id, err)
+				return nil, fmt.Errorf("could not determine dependencies for bundle with id '%s': %w", id, err)
 			}
 
 			// add bundle dependencies to queue for processing
@@ -96,7 +95,7 @@ func (b *BundlesAndDepsVariableSource) filterBundleDependencies(allBundles []*ca
 	// todo(perdasilva): disambiguate between not found and actual errors
 	requiredPackages, _ := bundle.RequiredPackages()
 	for _, requiredPackage := range requiredPackages {
-		packageDependencyBundles := catalogfilter.Filter(allBundles, catalogfilter.And(catalogfilter.WithPackageName(requiredPackage.PackageName), catalogfilter.InBlangSemverRange(*requiredPackage.SemverRange)))
+		packageDependencyBundles := catalogfilter.Filter(allBundles, catalogfilter.And(catalogfilter.WithPackageName(requiredPackage.PackageName), catalogfilter.InBlangSemverRange(requiredPackage.SemverRange)))
 		if len(packageDependencyBundles) == 0 {
 			return nil, fmt.Errorf("could not find package dependencies for bundle '%s'", bundle.Name)
 		}

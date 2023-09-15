@@ -10,7 +10,6 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
-	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
@@ -47,7 +46,7 @@ func InChannel(channelName string) RequiredPackageVariableSourceOption {
 }
 
 type RequiredPackageVariableSource struct {
-	catalog catalogclient.CatalogClient
+	catalogClient BundleProvider
 
 	packageName  string
 	versionRange string
@@ -55,12 +54,12 @@ type RequiredPackageVariableSource struct {
 	predicates   []catalogfilter.Predicate[catalogmetadata.Bundle]
 }
 
-func NewRequiredPackageVariableSource(catalog catalogclient.CatalogClient, packageName string, options ...RequiredPackageVariableSourceOption) (*RequiredPackageVariableSource, error) {
+func NewRequiredPackageVariableSource(catalogClient BundleProvider, packageName string, options ...RequiredPackageVariableSourceOption) (*RequiredPackageVariableSource, error) {
 	if packageName == "" {
 		return nil, fmt.Errorf("package name must not be empty")
 	}
 	r := &RequiredPackageVariableSource{
-		catalog: catalog,
+		catalogClient: catalogClient,
 
 		packageName: packageName,
 		predicates:  []catalogfilter.Predicate[catalogmetadata.Bundle]{catalogfilter.WithPackageName(packageName)},
@@ -74,7 +73,7 @@ func NewRequiredPackageVariableSource(catalog catalogclient.CatalogClient, packa
 }
 
 func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
-	resultSet, err := r.catalog.Bundles(ctx)
+	resultSet, err := r.catalogClient.Bundles(ctx)
 	if err != nil {
 		return nil, err
 	}

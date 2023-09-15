@@ -17,7 +17,7 @@ type RequiredPackageVariable struct {
 	bundles []*catalogmetadata.Bundle
 }
 
-func (r *RequiredPackageVariable) BundleEntities() []*catalogmetadata.Bundle {
+func (r *RequiredPackageVariable) Bundles() []*catalogmetadata.Bundle {
 	return r.bundles
 }
 

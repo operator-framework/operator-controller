@@ -7,22 +7,20 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 )
 
 var _ input.VariableSource = &BundleDeploymentVariableSource{}
 
 type BundleDeploymentVariableSource struct {
 	client              client.Client
-	catalog             catalogclient.CatalogClient
+	catalogClient       BundleProvider
 	inputVariableSource input.VariableSource
 }
 
-func NewBundleDeploymentVariableSource(cl client.Client, catalog catalogclient.CatalogClient, inputVariableSource input.VariableSource) *BundleDeploymentVariableSource {
+func NewBundleDeploymentVariableSource(cl client.Client, catalogClient BundleProvider, inputVariableSource input.VariableSource) *BundleDeploymentVariableSource {
 	return &BundleDeploymentVariableSource{
 		client:              cl,
-		catalog:             catalog,
+		catalogClient:       catalogClient,
 		inputVariableSource: inputVariableSource,
 	}
 }
@@ -46,7 +44,7 @@ func (o *BundleDeploymentVariableSource) GetVariables(ctx context.Context) ([]de
 				continue
 			}
 			processed[sourceImage.Ref] = struct{}{}
-			ips, err := NewInstalledPackageVariableSource(o.catalog, bundleDeployment.Spec.Template.Spec.Source.Image.Ref)
+			ips, err := NewInstalledPackageVariableSource(o.catalogClient, bundleDeployment.Spec.Template.Spec.Source.Image.Ref)
 			if err != nil {
 				return nil, err
 			}

@@ -47,7 +47,7 @@ func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Contex
 	for _, variable := range variables {
 		switch v := variable.(type) {
 		case *olmvariables.BundleVariable:
-			bundles := []*catalogmetadata.Bundle{v.BundleEntity()}
+			bundles := []*catalogmetadata.Bundle{v.Bundle()}
 			bundles = append(bundles, v.Dependencies()...)
 			for _, bundle := range bundles {
 				for _, id := range olmvariables.BundleToBundleVariableIDs(bundle) {

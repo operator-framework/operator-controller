@@ -154,9 +154,9 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		return ctrl.Result{}, unsat
 	}
 
-	// lookup the bundle entity in the solution that corresponds to the
+	// lookup the bundle in the solution that corresponds to the
 	// Operator's desired package name.
-	bundleEntity, err := r.getBundleEntityFromSolution(solution, op.Spec.PackageName)
+	bundle, err := r.bundleFromSolution(solution, op.Spec.PackageName)
 	if err != nil {
 		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
@@ -165,11 +165,11 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		return ctrl.Result{}, err
 	}
 
-	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundleEntity.Image value.
-	op.Status.ResolvedBundleResource = bundleEntity.Image
-	setResolvedStatusConditionSuccess(&op.Status.Conditions, fmt.Sprintf("resolved to %q", bundleEntity.Image), op.GetGeneration())
+	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundle.Image value.
+	op.Status.ResolvedBundleResource = bundle.Image
+	setResolvedStatusConditionSuccess(&op.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), op.GetGeneration())
 
-	mediaType, err := bundleEntity.MediaType()
+	mediaType, err := bundle.MediaType()
 	if err != nil {
 		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
@@ -181,7 +181,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	}
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
 	// image we just looked up in the solution.
-	dep := r.generateExpectedBundleDeployment(*op, bundleEntity.Image, bundleProvisioner)
+	dep := r.generateExpectedBundleDeployment(*op, bundle.Image, bundleProvisioner)
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
 		// originally Reason: operatorsv1alpha1.ReasonInstallationFailed
 		op.Status.InstalledBundleResource = ""
@@ -251,17 +251,17 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 	}
 }
 
-func (r *OperatorReconciler) getBundleEntityFromSolution(solution *solver.Solution, packageName string) (*catalogmetadata.Bundle, error) {
+func (r *OperatorReconciler) bundleFromSolution(solution *solver.Solution, packageName string) (*catalogmetadata.Bundle, error) {
 	for _, variable := range solution.SelectedVariables() {
 		switch v := variable.(type) {
 		case *olmvariables.BundleVariable:
-			entityPkgName := v.BundleEntity().Package
-			if packageName == entityPkgName {
-				return v.BundleEntity(), nil
+			bundlePkgName := v.Bundle().Package
+			if packageName == bundlePkgName {
+				return v.Bundle(), nil
 			}
 		}
 	}
-	return nil, fmt.Errorf("entity for package %q not found in solution", packageName)
+	return nil, fmt.Errorf("bundle for package %q not found in solution", packageName)
 }
 
 func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {

@@ -12,10 +12,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
 
-type CatalogClient interface {
-	Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
-}
-
 func New(cl client.Client) *Client {
 	return &Client{cl: cl}
 }

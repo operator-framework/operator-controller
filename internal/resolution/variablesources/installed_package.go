@@ -8,7 +8,6 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	"github.com/operator-framework/operator-controller/internal/resolution/variables"
@@ -17,17 +16,17 @@ import (
 var _ input.VariableSource = &InstalledPackageVariableSource{}
 
 type InstalledPackageVariableSource struct {
-	catalog     catalogclient.CatalogClient
-	bundleImage string
+	catalogClient BundleProvider
+	bundleImage   string
 }
 
 func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
-	allBundles, err := r.catalog.Bundles(ctx)
+	allBundles, err := r.catalogClient.Bundles(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// find corresponding bundle entity for the installed content
+	// find corresponding bundle for the installed content
 	resultSet := catalogfilter.Filter(allBundles, catalogfilter.WithBundleImage(r.bundleImage))
 	if len(resultSet) == 0 {
 		return nil, r.notFoundError()
@@ -60,9 +59,9 @@ func (r *InstalledPackageVariableSource) notFoundError() error {
 	return fmt.Errorf("bundleImage %q not found", r.bundleImage)
 }
 
-func NewInstalledPackageVariableSource(catalog catalogclient.CatalogClient, bundleImage string) (*InstalledPackageVariableSource, error) {
+func NewInstalledPackageVariableSource(catalogClient BundleProvider, bundleImage string) (*InstalledPackageVariableSource, error) {
 	return &InstalledPackageVariableSource{
-		catalog:     catalog,
-		bundleImage: bundleImage,
+		catalogClient: catalogClient,
+		bundleImage:   bundleImage,
 	}, nil
 }

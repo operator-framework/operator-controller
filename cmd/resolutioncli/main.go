@@ -145,24 +145,24 @@ func resolve(ctx context.Context, resolver *solver.DeppySolver, packageName stri
 		return "", err
 	}
 
-	bundleEntity, err := getBundleEntityFromSolution(solution, packageName)
+	bundle, err := bundleFromSolution(solution, packageName)
 	if err != nil {
 		return "", err
 	}
 
 	// Get the bundle image reference for the bundle
-	return bundleEntity.Image, nil
+	return bundle.Image, nil
 }
 
-func getBundleEntityFromSolution(solution *solver.Solution, packageName string) (*catalogmetadata.Bundle, error) {
+func bundleFromSolution(solution *solver.Solution, packageName string) (*catalogmetadata.Bundle, error) {
 	for _, variable := range solution.SelectedVariables() {
 		switch v := variable.(type) {
 		case *olmvariables.BundleVariable:
-			entityPkgName := v.BundleEntity().Package
-			if packageName == entityPkgName {
-				return v.BundleEntity(), nil
+			bundlePkgName := v.Bundle().Package
+			if packageName == bundlePkgName {
+				return v.Bundle(), nil
 			}
 		}
 	}
-	return nil, fmt.Errorf("entity for package %q not found in solution", packageName)
+	return nil, fmt.Errorf("bundle for package %q not found in solution", packageName)
 }

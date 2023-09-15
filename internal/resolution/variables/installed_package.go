@@ -17,7 +17,7 @@ type InstalledPackageVariable struct {
 	bundles []*catalogmetadata.Bundle
 }
 
-func (r *InstalledPackageVariable) BundleEntities() []*catalogmetadata.Bundle {
+func (r *InstalledPackageVariable) Bundles() []*catalogmetadata.Bundle {
 	return r.bundles
 }
 

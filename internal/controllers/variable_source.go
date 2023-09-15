@@ -21,20 +21,19 @@ import (
 
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
-func NewVariableSource(cl client.Client, catalog catalogclient.CatalogClient) variablesources.NestedVariableSource {
+func NewVariableSource(cl client.Client, catalogClient variablesources.BundleProvider) variablesources.NestedVariableSource {
 	return variablesources.NestedVariableSource{
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
-			return variablesources.NewOperatorVariableSource(cl, catalog, inputVariableSource), nil
+			return variablesources.NewOperatorVariableSource(cl, catalogClient, inputVariableSource), nil
 		},
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
-			return variablesources.NewBundleDeploymentVariableSource(cl, catalog, inputVariableSource), nil
+			return variablesources.NewBundleDeploymentVariableSource(cl, catalogClient, inputVariableSource), nil
 		},
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
-			return variablesources.NewBundlesAndDepsVariableSource(catalog, inputVariableSource), nil
+			return variablesources.NewBundlesAndDepsVariableSource(catalogClient, inputVariableSource), nil
 		},
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
 			return variablesources.NewCRDUniquenessConstraintsVariableSource(inputVariableSource), nil

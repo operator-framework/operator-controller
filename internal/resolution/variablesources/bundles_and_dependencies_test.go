@@ -2,155 +2,307 @@ package variablesources_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/operator-framework/deppy/pkg/deppy"
-	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
+	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
 var _ = Describe("BundlesAndDepsVariableSource", func() {
 	var (
-		bdvs             *variablesources.BundlesAndDepsVariableSource
-		mockEntitySource input.EntitySource
+		bdvs              *variablesources.BundlesAndDepsVariableSource
+		testBundleList    []*catalogmetadata.Bundle
+		fakeCatalogClient testutil.FakeCatalogClient
 	)
 
 	BeforeEach(func() {
+		channel := catalogmetadata.Channel{Channel: declcfg.Channel{Name: "stable"}}
+		testBundleList = []*catalogmetadata.Bundle{
+			// required package bundles
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-1",
+					Package: "test-package",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "1.0.0"}`)},
+						{Type: property.TypeGVKRequired, Value: json.RawMessage(`[{"group":"foo.io","kind":"Foo","version":"v1"}]`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-2",
+					Package: "test-package",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.0.0"}`)},
+						{Type: property.TypeGVKRequired, Value: json.RawMessage(`[{"group":"foo.io","kind":"Foo","version":"v1"}]`)},
+						{Type: property.TypePackageRequired, Value: json.RawMessage(`[{"packageName": "some-package", "versionRange": ">=1.0.0 <2.0.0"}]`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+
+			// dependencies
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-4",
+					Package: "some-package",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "some-package", "version": "1.0.0"}`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-5",
+					Package: "some-package",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "some-package", "version": "1.5.0"}`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-6",
+					Package: "some-package",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "some-package", "version": "2.0.0"}`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-7",
+					Package: "some-other-package",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "some-other-package", "version": "1.0.0"}`)},
+						{Type: property.TypeGVK, Value: json.RawMessage(`[{"group":"foo.io","kind":"Foo","version":"v1"}]`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-8",
+					Package: "some-other-package",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "some-other-package", "version": "1.5.0"}`)},
+						{Type: property.TypeGVK, Value: json.RawMessage(`[{"group":"foo.io","kind":"Foo","version":"v1"}]`)},
+						{Type: property.TypeGVKRequired, Value: json.RawMessage(`[{"group":"bar.io","kind":"Bar","version":"v1"}]`)},
+						{Type: property.TypePackageRequired, Value: json.RawMessage(`[{"packageName": "another-package", "versionRange": "< 2.0.0"}]`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+
+			// dependencies of dependencies
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name: "bundle-9", Package: "another-package", Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "another-package", "version": "1.0.0"}`)},
+						{Type: property.TypeGVK, Value: json.RawMessage(`[{"group":"foo.io","kind":"Foo","version":"v1"}]`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-10",
+					Package: "bar-package",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "bar-package", "version": "1.0.0"}`)},
+						{Type: property.TypeGVK, Value: json.RawMessage(`[{"group":"bar.io","kind":"Bar","version":"v1"}]`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-11",
+					Package: "bar-package",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "bar-package", "version": "2.0.0"}`)},
+						{Type: property.TypeGVK, Value: json.RawMessage(`[{"group":"bar.io","kind":"Bar","version":"v1"}]`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+
+			// test-package-2 required package - no dependencies
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-15",
+					Package: "test-package-2",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package-2", "version": "1.5.0"}`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-16",
+					Package: "test-package-2",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package-2", "version": "2.0.1"}`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-17",
+					Package: "test-package-2",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package-2", "version": "3.16.0"}`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+
+			// completely unrelated
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-12",
+					Package: "unrelated-package",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "unrelated-package", "version": "2.0.0"}`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-13",
+					Package: "unrelated-package-2",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "unrelated-package-2", "version": "2.0.0"}`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+			{
+				CatalogName: "fake-catalog",
+				Bundle: declcfg.Bundle{
+					Name:    "bundle-14",
+					Package: "unrelated-package-2",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "unrelated-package-2", "version": "3.0.0"}`)},
+					},
+				},
+				InChannels: []*catalogmetadata.Channel{&channel},
+			},
+		}
+		fakeCatalogClient = testutil.NewFakeCatalogClient(testBundleList)
 		bdvs = variablesources.NewBundlesAndDepsVariableSource(
+			&fakeCatalogClient,
 			&MockRequiredPackageSource{
 				ResultSet: []deppy.Variable{
-					// must match data in mockEntitySource
-					olmvariables.NewRequiredPackageVariable("test-package", []*olmentity.BundleEntity{
-						olmentity.NewBundleEntity(input.NewEntity("bundle-2", map[string]string{
-							property.TypePackage:         `{"packageName": "test-package", "version": "2.0.0"}`,
-							property.TypeChannel:         `{"channelName":"stable","priority":0}`,
-							property.TypeGVKRequired:     `[{"group":"foo.io","kind":"Foo","version":"v1"}]`,
-							property.TypePackageRequired: `[{"packageName": "some-package", "versionRange": ">=1.0.0 <2.0.0"}]`,
-						})),
-						olmentity.NewBundleEntity(input.NewEntity("bundle-1", map[string]string{
-							property.TypePackage:     `{"packageName": "test-package", "version": "1.0.0"}`,
-							property.TypeChannel:     `{"channelName":"stable","priority":0}`,
-							property.TypeGVKRequired: `[{"group":"foo.io","kind":"Foo","version":"v1"}]`,
-						})),
+					// must match data in fakeCatalogClient
+					olmvariables.NewRequiredPackageVariable("test-package", []*catalogmetadata.Bundle{
+						{
+							CatalogName: "fake-catalog",
+							Bundle: declcfg.Bundle{
+								Name:    "bundle-2",
+								Package: "test-package",
+								Properties: []property.Property{
+									{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.0.0"}`)},
+									{Type: property.TypeGVKRequired, Value: json.RawMessage(`[{"group":"foo.io","kind":"Foo","version":"v1"}]`)},
+									{Type: property.TypePackageRequired, Value: json.RawMessage(`[{"packageName": "some-package", "versionRange": ">=1.0.0 <2.0.0"}]`)},
+								},
+							},
+							InChannels: []*catalogmetadata.Channel{&channel},
+						},
+						{
+							CatalogName: "fake-catalog",
+							Bundle: declcfg.Bundle{
+								Name:    "bundle-1",
+								Package: "test-package",
+								Properties: []property.Property{
+									{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "1.0.0"}`)},
+									{Type: property.TypeGVKRequired, Value: json.RawMessage(`[{"group":"foo.io","kind":"Foo","version":"v1"}]`)},
+								},
+							},
+							InChannels: []*catalogmetadata.Channel{&channel},
+						},
 					}),
 				},
 			},
 			&MockRequiredPackageSource{
 				ResultSet: []deppy.Variable{
-					// must match data in mockEntitySource
-					olmvariables.NewRequiredPackageVariable("test-package-2", []*olmentity.BundleEntity{
+					// must match data in fakeCatalogClient
+					olmvariables.NewRequiredPackageVariable("test-package-2", []*catalogmetadata.Bundle{
 						// test-package-2 required package - no dependencies
-						olmentity.NewBundleEntity(input.NewEntity("bundle-15", map[string]string{
-							property.TypePackage: `{"packageName": "test-package-2", "version": "1.5.0"}`,
-							property.TypeChannel: `{"channelName":"stable","priority":0}`,
-						})),
-						olmentity.NewBundleEntity(input.NewEntity("bundle-16", map[string]string{
-							property.TypePackage: `{"packageName": "test-package-2", "version": "2.0.1"}`,
-							property.TypeChannel: `{"channelName":"stable","priority":0}`,
-						})),
-						olmentity.NewBundleEntity(input.NewEntity("bundle-17", map[string]string{
-							property.TypePackage: `{"packageName": "test-package-2", "version": "3.16.0"}`,
-							property.TypeChannel: `{"channelName":"stable","priority":0}`,
-						})),
+						{
+							CatalogName: "fake-catalog",
+							Bundle: declcfg.Bundle{
+								Name:    "bundle-15",
+								Package: "test-package-2",
+								Properties: []property.Property{
+									{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package-2", "version": "1.5.0"}`)},
+								},
+							},
+							InChannels: []*catalogmetadata.Channel{&channel},
+						},
+						{
+							CatalogName: "fake-catalog",
+							Bundle: declcfg.Bundle{
+								Name:    "bundle-16",
+								Package: "test-package-2",
+								Properties: []property.Property{
+									{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package-2", "version": "2.0.1"}`)},
+								},
+							},
+							InChannels: []*catalogmetadata.Channel{&channel},
+						},
+						{
+							CatalogName: "fake-catalog",
+							Bundle: declcfg.Bundle{
+								Name:    "bundle-17",
+								Package: "test-package-2",
+								Properties: []property.Property{
+									{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package-2", "version": "3.16.0"}`)},
+								},
+							},
+							InChannels: []*catalogmetadata.Channel{&channel},
+						},
 					}),
 				},
 			},
 		)
-		mockEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{
-			// required package bundles
-			"bundle-1": *input.NewEntity("bundle-1", map[string]string{
-				property.TypePackage:     `{"packageName": "test-package", "version": "1.0.0"}`,
-				property.TypeChannel:     `{"channelName":"stable","priority":0}`,
-				property.TypeGVKRequired: `[{"group":"foo.io","kind":"Foo","version":"v1"}]`,
-			}),
-			"bundle-2": *input.NewEntity("bundle-2", map[string]string{
-				property.TypePackage:         `{"packageName": "test-package", "version": "2.0.0"}`,
-				property.TypeChannel:         `{"channelName":"stable","priority":0}`,
-				property.TypeGVKRequired:     `[{"group":"foo.io","kind":"Foo","version":"v1"}]`,
-				property.TypePackageRequired: `[{"packageName": "some-package", "versionRange": ">=1.0.0 <2.0.0"}]`,
-			}),
-
-			// dependencies
-			"bundle-4": *input.NewEntity("bundle-4", map[string]string{
-				property.TypePackage: `{"packageName": "some-package", "version": "1.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-			"bundle-5": *input.NewEntity("bundle-5", map[string]string{
-				property.TypePackage: `{"packageName": "some-package", "version": "1.5.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-			"bundle-6": *input.NewEntity("bundle-6", map[string]string{
-				property.TypePackage: `{"packageName": "some-package", "version": "2.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-			"bundle-7": *input.NewEntity("bundle-7", map[string]string{
-				property.TypePackage: `{"packageName": "some-other-package", "version": "1.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-				property.TypeGVK:     `[{"group":"foo.io","kind":"Foo","version":"v1"}]`,
-			}),
-			"bundle-8": *input.NewEntity("bundle-8", map[string]string{
-				property.TypePackage:         `{"packageName": "some-other-package", "version": "1.5.0"}`,
-				property.TypeChannel:         `{"channelName":"stable","priority":0}`,
-				property.TypeGVK:             `[{"group":"foo.io","kind":"Foo","version":"v1"}]`,
-				property.TypeGVKRequired:     `[{"group":"bar.io","kind":"Bar","version":"v1"}]`,
-				property.TypePackageRequired: `[{"packageName": "another-package", "versionRange": "< 2.0.0"}]`,
-			}),
-
-			// dependencies of dependencies
-			"bundle-9": *input.NewEntity("bundle-9", map[string]string{
-				property.TypePackage: `{"packageName": "another-package", "version": "1.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-				property.TypeGVK:     `[{"group":"foo.io","kind":"Foo","version":"v1"}]`,
-			}),
-			"bundle-10": *input.NewEntity("bundle-10", map[string]string{
-				property.TypePackage: `{"packageName": "bar-package", "version": "1.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-				property.TypeGVK:     `[{"group":"bar.io","kind":"Bar","version":"v1"}]`,
-			}),
-			"bundle-11": *input.NewEntity("bundle-11", map[string]string{
-				property.TypePackage: `{"packageName": "bar-package", "version": "2.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-				property.TypeGVK:     `[{"group":"bar.io","kind":"Bar","version":"v1"}]`,
-			}),
-
-			// test-package-2 required package - no dependencies
-			"bundle-15": *input.NewEntity("bundle-15", map[string]string{
-				property.TypePackage: `{"packageName": "test-package-2", "version": "1.5.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-			"bundle-16": *input.NewEntity("bundle-16", map[string]string{
-				property.TypePackage: `{"packageName": "test-package-2", "version": "2.0.1"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-			"bundle-17": *input.NewEntity("bundle-17", map[string]string{
-				property.TypePackage: `{"packageName": "test-package-2", "version": "3.16.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-
-			// completely unrelated
-			"bundle-12": *input.NewEntity("bundle-12", map[string]string{
-				property.TypePackage: `{"packageName": "unrelated-package", "version": "2.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-			"bundle-13": *input.NewEntity("bundle-13", map[string]string{
-				property.TypePackage: `{"packageName": "unrelated-package-2", "version": "2.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-			"bundle-14": *input.NewEntity("bundle-14", map[string]string{
-				property.TypePackage: `{"packageName": "unrelated-package-2", "version": "3.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-		})
 	})
 
 	It("should return bundle variables with correct dependencies", func() {
-		variables, err := bdvs.GetVariables(context.TODO(), mockEntitySource)
+		variables, err := bdvs.GetVariables(context.TODO())
 		Expect(err).NotTo(HaveOccurred())
 
 		var bundleVariables []*olmvariables.BundleVariable
@@ -163,37 +315,74 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 		// Note: When accounting for Required GVKs (currently not in use), we would expect additional
 		// dependencies (bundles 7, 8, 9, 10, 11) to appear here due to their GVKs being required by
 		// some of the packages.
-		Expect(bundleVariables).To(WithTransform(CollectBundleVariableIDs, Equal([]string{"bundle-2", "bundle-1", "bundle-15", "bundle-16", "bundle-17", "bundle-5", "bundle-4"})))
+		Expect(bundleVariables).To(WithTransform(CollectBundleVariableIDs, Equal([]string{
+			"fake-catalog-test-package-stable-bundle-2",
+			"fake-catalog-test-package-stable-bundle-1",
+			"fake-catalog-test-package-2-stable-bundle-15",
+			"fake-catalog-test-package-2-stable-bundle-16",
+			"fake-catalog-test-package-2-stable-bundle-17",
+			"fake-catalog-some-package-stable-bundle-5",
+			"fake-catalog-some-package-stable-bundle-4",
+		})))
 
 		// check dependencies for one of the bundles
-		bundle2 := VariableWithID("bundle-2")(bundleVariables)
+		bundle2 := VariableWithName("bundle-2")(bundleVariables)
 		// Note: As above, bundle-2 has GVK requirements satisfied by bundles 7, 8, and 9, but they
 		// will not appear in this list as we are not currently taking Required GVKs into account
-		Expect(bundle2.Dependencies()).To(WithTransform(CollectDeppyEntities, Equal([]*input.Entity{
-			input.NewEntity("bundle-5", map[string]string{
-				property.TypePackage: `{"packageName": "some-package", "version": "1.5.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-			input.NewEntity("bundle-4", map[string]string{
-				property.TypePackage: `{"packageName": "some-package", "version": "1.0.0"}`,
-				property.TypeChannel: `{"channelName":"stable","priority":0}`,
-			}),
-		})))
+		Expect(bundle2.Dependencies()).To(HaveLen(2))
+		Expect(bundle2.Dependencies()[0].Name).To(Equal("bundle-5"))
+		Expect(bundle2.Dependencies()[1].Name).To(Equal("bundle-4"))
 	})
 
 	It("should return error if dependencies not found", func() {
-		mockEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{})
-		_, err := bdvs.GetVariables(context.TODO(), mockEntitySource)
+		emptyCatalogClient := testutil.NewFakeCatalogClient(make([]*catalogmetadata.Bundle, 0))
+
+		bdvs = variablesources.NewBundlesAndDepsVariableSource(
+			&emptyCatalogClient,
+			&MockRequiredPackageSource{
+				ResultSet: []deppy.Variable{
+					// must match data in fakeCatalogClient
+					olmvariables.NewRequiredPackageVariable("test-package", []*catalogmetadata.Bundle{
+						{
+							CatalogName: "fake-catalog",
+							Bundle: declcfg.Bundle{
+								Name:    "bundle-2",
+								Package: "test-package",
+								Properties: []property.Property{
+									{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.0.0"}`)},
+									{Type: property.TypeGVKRequired, Value: json.RawMessage(`[{"group":"foo.io","kind":"Foo","version":"v1"}]`)},
+									{Type: property.TypePackageRequired, Value: json.RawMessage(`[{"packageName": "some-package", "versionRange": ">=1.0.0 <2.0.0"}]`)},
+								},
+							},
+							InChannels: []*catalogmetadata.Channel{{Channel: declcfg.Channel{Name: "stable"}}},
+						},
+						{
+							CatalogName: "fake-catalog",
+							Bundle: declcfg.Bundle{
+								Name:    "bundle-1",
+								Package: "test-package",
+								Properties: []property.Property{
+									{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "1.0.0"}`)},
+									{Type: property.TypeGVKRequired, Value: json.RawMessage(`[{"group":"foo.io","kind":"Foo","version":"v1"}]`)},
+								},
+							},
+							InChannels: []*catalogmetadata.Channel{{Channel: declcfg.Channel{Name: "stable"}}},
+						},
+					}),
+				},
+			},
+		)
+		_, err := bdvs.GetVariables(context.TODO())
 		Expect(err).To(HaveOccurred())
-		Expect(err).To(MatchError("could not determine dependencies for entity with id 'bundle-2': could not find package dependencies for bundle 'bundle-2'"))
+		Expect(err.Error()).To(ContainSubstring("could not determine dependencies for bundle with id 'fake-catalog-test-package-stable-bundle-2': could not find package dependencies for bundle 'bundle-2'"))
 	})
 
 	It("should return error if an inner variable source returns an error", func() {
 		bdvs = variablesources.NewBundlesAndDepsVariableSource(
+			&fakeCatalogClient,
 			&MockRequiredPackageSource{Error: errors.New("fake error")},
 		)
-		mockEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{})
-		_, err := bdvs.GetVariables(context.TODO(), mockEntitySource)
+		_, err := bdvs.GetVariables(context.TODO())
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(MatchError("fake error"))
 	})
@@ -204,14 +393,14 @@ type MockRequiredPackageSource struct {
 	Error     error
 }
 
-func (m *MockRequiredPackageSource) GetVariables(_ context.Context, _ input.EntitySource) ([]deppy.Variable, error) {
+func (m *MockRequiredPackageSource) GetVariables(_ context.Context) ([]deppy.Variable, error) {
 	return m.ResultSet, m.Error
 }
 
-func VariableWithID(id deppy.Identifier) func(vars []*olmvariables.BundleVariable) *olmvariables.BundleVariable {
+func VariableWithName(name string) func(vars []*olmvariables.BundleVariable) *olmvariables.BundleVariable {
 	return func(vars []*olmvariables.BundleVariable) *olmvariables.BundleVariable {
 		for i := 0; i < len(vars); i++ {
-			if vars[i].Identifier() == id {
+			if vars[i].Bundle().Name == name {
 				return vars[i]
 			}
 		}
@@ -225,12 +414,4 @@ func CollectBundleVariableIDs(vars []*olmvariables.BundleVariable) []string {
 		ids = append(ids, v.Identifier().String())
 	}
 	return ids
-}
-
-func CollectDeppyEntities(vars []*olmentity.BundleEntity) []*input.Entity {
-	entities := make([]*input.Entity, 0, len(vars))
-	for _, v := range vars {
-		entities = append(entities, v.Entity)
-	}
-	return entities
 }

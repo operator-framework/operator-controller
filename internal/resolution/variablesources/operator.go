@@ -4,7 +4,6 @@ import (
 	"context"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
@@ -15,14 +14,14 @@ var _ input.VariableSource = &OperatorVariableSource{}
 
 type OperatorVariableSource struct {
 	client              client.Client
-	catalog             catalogclient.CatalogClient
+	catalogClient       BundleProvider
 	inputVariableSource input.VariableSource
 }
 
-func NewOperatorVariableSource(cl client.Client, catalog catalogclient.CatalogClient, inputVariableSource input.VariableSource) *OperatorVariableSource {
+func NewOperatorVariableSource(cl client.Client, catalogClient BundleProvider, inputVariableSource input.VariableSource) *OperatorVariableSource {
 	return &OperatorVariableSource{
 		client:              cl,
-		catalog:             catalog,
+		catalogClient:       catalogClient,
 		inputVariableSource: inputVariableSource,
 	}
 }
@@ -41,7 +40,7 @@ func (o *OperatorVariableSource) GetVariables(ctx context.Context) ([]deppy.Vari
 	// build required package variable sources
 	for _, operator := range operatorList.Items {
 		rps, err := NewRequiredPackageVariableSource(
-			o.catalog,
+			o.catalogClient,
 			operator.Spec.PackageName,
 			InVersionRange(operator.Spec.Version),
 			InChannel(operator.Spec.Channel),

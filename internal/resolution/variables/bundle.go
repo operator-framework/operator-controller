@@ -18,7 +18,7 @@ type BundleVariable struct {
 	dependencies []*catalogmetadata.Bundle
 }
 
-func (b *BundleVariable) BundleEntity() *catalogmetadata.Bundle {
+func (b *BundleVariable) Bundle() *catalogmetadata.Bundle {
 	return b.bundle
 }
 
