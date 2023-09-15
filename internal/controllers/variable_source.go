@@ -25,7 +25,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
-func NewVariableSource(cl client.Client, catalog *catalogclient.Client) variablesources.NestedVariableSource {
+func NewVariableSource(cl client.Client, catalog catalogclient.CatalogClient) variablesources.NestedVariableSource {
 	return variablesources.NestedVariableSource{
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
 			return variablesources.NewOperatorVariableSource(cl, catalog, inputVariableSource), nil

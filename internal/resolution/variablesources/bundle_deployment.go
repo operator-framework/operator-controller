@@ -15,11 +15,11 @@ var _ input.VariableSource = &BundleDeploymentVariableSource{}
 
 type BundleDeploymentVariableSource struct {
 	client              client.Client
-	catalog             *catalogclient.Client
+	catalog             catalogclient.CatalogClient
 	inputVariableSource input.VariableSource
 }
 
-func NewBundleDeploymentVariableSource(cl client.Client, catalog *catalogclient.Client, inputVariableSource input.VariableSource) *BundleDeploymentVariableSource {
+func NewBundleDeploymentVariableSource(cl client.Client, catalog catalogclient.CatalogClient, inputVariableSource input.VariableSource) *BundleDeploymentVariableSource {
 	return &BundleDeploymentVariableSource{
 		client:              cl,
 		catalog:             catalog,

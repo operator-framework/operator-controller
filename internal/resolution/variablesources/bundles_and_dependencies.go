@@ -18,11 +18,11 @@ import (
 var _ input.VariableSource = &BundlesAndDepsVariableSource{}
 
 type BundlesAndDepsVariableSource struct {
-	catalog         *catalogclient.Client
+	catalog         catalogclient.CatalogClient
 	variableSources []input.VariableSource
 }
 
-func NewBundlesAndDepsVariableSource(catalog *catalogclient.Client, inputVariableSources ...input.VariableSource) *BundlesAndDepsVariableSource {
+func NewBundlesAndDepsVariableSource(catalog catalogclient.CatalogClient, inputVariableSources ...input.VariableSource) *BundlesAndDepsVariableSource {
 	return &BundlesAndDepsVariableSource{
 		catalog:         catalog,
 		variableSources: inputVariableSources,
@@ -98,7 +98,7 @@ func (b *BundlesAndDepsVariableSource) filterBundleDependencies(allBundles []*ca
 	for _, requiredPackage := range requiredPackages {
 		packageDependencyBundles := catalogfilter.Filter(allBundles, catalogfilter.And(catalogfilter.WithPackageName(requiredPackage.PackageName), catalogfilter.InBlangSemverRange(*requiredPackage.SemverRange)))
 		if len(packageDependencyBundles) == 0 {
-			return nil, fmt.Errorf("could not find package dependencies for bundle %q", bundle.Name)
+			return nil, fmt.Errorf("could not find package dependencies for bundle '%s'", bundle.Name)
 		}
 		for i := 0; i < len(packageDependencyBundles); i++ {
 			bundle := packageDependencyBundles[i]

@@ -23,7 +23,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
-func newPackageVariableSource(catalog *catalogclient.Client, packageName, packageVersion, packageChannel string) func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
+func newPackageVariableSource(catalog catalogclient.CatalogClient, packageName, packageVersion, packageChannel string) func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
 	return func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
 		pkgSource, err := variablesources.NewRequiredPackageVariableSource(
 			catalog,

@@ -17,7 +17,7 @@ import (
 var _ input.VariableSource = &InstalledPackageVariableSource{}
 
 type InstalledPackageVariableSource struct {
-	catalog     *catalogclient.Client
+	catalog     catalogclient.CatalogClient
 	bundleImage string
 }
 
@@ -60,7 +60,7 @@ func (r *InstalledPackageVariableSource) notFoundError() error {
 	return fmt.Errorf("bundleImage %q not found", r.bundleImage)
 }
 
-func NewInstalledPackageVariableSource(catalog *catalogclient.Client, bundleImage string) (*InstalledPackageVariableSource, error) {
+func NewInstalledPackageVariableSource(catalog catalogclient.CatalogClient, bundleImage string) (*InstalledPackageVariableSource, error) {
 	return &InstalledPackageVariableSource{
 		catalog:     catalog,
 		bundleImage: bundleImage,

@@ -47,7 +47,7 @@ func InChannel(channelName string) RequiredPackageVariableSourceOption {
 }
 
 type RequiredPackageVariableSource struct {
-	catalog *catalogclient.Client
+	catalog catalogclient.CatalogClient
 
 	packageName  string
 	versionRange string
@@ -55,7 +55,7 @@ type RequiredPackageVariableSource struct {
 	predicates   []catalogfilter.Predicate[catalogmetadata.Bundle]
 }
 
-func NewRequiredPackageVariableSource(catalog *catalogclient.Client, packageName string, options ...RequiredPackageVariableSourceOption) (*RequiredPackageVariableSource, error) {
+func NewRequiredPackageVariableSource(catalog catalogclient.CatalogClient, packageName string, options ...RequiredPackageVariableSourceOption) (*RequiredPackageVariableSource, error) {
 	if packageName == "" {
 		return nil, fmt.Errorf("package name must not be empty")
 	}

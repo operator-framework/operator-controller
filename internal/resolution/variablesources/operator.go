@@ -15,11 +15,11 @@ var _ input.VariableSource = &OperatorVariableSource{}
 
 type OperatorVariableSource struct {
 	client              client.Client
-	catalog             *catalogclient.Client
+	catalog             catalogclient.CatalogClient
 	inputVariableSource input.VariableSource
 }
 
-func NewOperatorVariableSource(cl client.Client, catalog *catalogclient.Client, inputVariableSource input.VariableSource) *OperatorVariableSource {
+func NewOperatorVariableSource(cl client.Client, catalog catalogclient.CatalogClient, inputVariableSource input.VariableSource) *OperatorVariableSource {
 	return &OperatorVariableSource{
 		client:              cl,
 		catalog:             catalog,
