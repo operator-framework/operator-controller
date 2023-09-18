@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing/fstest"
@@ -16,11 +17,14 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
 
+const urlPrefix = "/catalogs/"
+
 var _ = Describe("LocalDir Storage Test", func() {
 	var (
 		catalog                     = "test-catalog"
 		store                       Instance
 		rootDir                     string
+		baseURL                     *url.URL
 		testBundleName              = "bundle.v0.0.1"
 		testBundleImage             = "quaydock.io/namespace/bundle:0.0.3"
 		testBundleRelatedImageName  = "test"
@@ -40,7 +44,8 @@ var _ = Describe("LocalDir Storage Test", func() {
 		Expect(err).ToNot(HaveOccurred())
 		rootDir = d
 
-		store = LocalDir{RootDir: rootDir}
+		baseURL = &url.URL{Scheme: "http", Host: "test-addr", Path: urlPrefix}
+		store = LocalDir{RootDir: rootDir, BaseURL: baseURL}
 		unpackResultFS = &fstest.MapFS{
 			"bundle.yaml":  &fstest.MapFile{Data: []byte(testBundle), Mode: os.ModePerm},
 			"package.yaml": &fstest.MapFile{Data: []byte(testPackage), Mode: os.ModePerm},
@@ -63,6 +68,9 @@ var _ = Describe("LocalDir Storage Test", func() {
 			Expect(err).To(Not(HaveOccurred()))
 			diff := cmp.Diff(gotConfig, storedConfig)
 			Expect(diff).To(Equal(""))
+		})
+		It("should form the content URL correctly", func() {
+			Expect(store.ContentURL(catalog)).To(Equal(fmt.Sprintf("%s%s/all.json", baseURL, catalog)))
 		})
 		When("The stored content is deleted", func() {
 			BeforeEach(func() {
@@ -88,7 +96,7 @@ var _ = Describe("LocalDir Server Handler tests", func() {
 		d, err := os.MkdirTemp(GinkgoT().TempDir(), "cache")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(os.Mkdir(filepath.Join(d, "test-catalog"), 0700)).To(Succeed())
-		store = LocalDir{RootDir: d}
+		store = LocalDir{RootDir: d, BaseURL: &url.URL{Path: urlPrefix}}
 		testServer = httptest.NewServer(store.StorageServerHandler())
 
 	})

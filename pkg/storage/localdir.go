@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -17,6 +18,7 @@ import (
 // atomic view of the content for a catalog.
 type LocalDir struct {
 	RootDir string
+	BaseURL *url.URL
 }
 
 func (s LocalDir) Store(catalog string, fsys fs.FS) error {
@@ -47,9 +49,13 @@ func (s LocalDir) Delete(catalog string) error {
 	return os.RemoveAll(filepath.Join(s.RootDir, catalog))
 }
 
+func (s LocalDir) ContentURL(catalog string) string {
+	return fmt.Sprintf("%s%s/all.json", s.BaseURL, catalog)
+}
+
 func (s LocalDir) StorageServerHandler() http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle("/catalogs/", http.StripPrefix("/catalogs/", http.FileServer(http.FS(&filesOnlyFilesystem{os.DirFS(s.RootDir)}))))
+	mux.Handle(s.BaseURL.Path, http.StripPrefix(s.BaseURL.Path, http.FileServer(http.FS(&filesOnlyFilesystem{os.DirFS(s.RootDir)}))))
 	return mux
 }
 

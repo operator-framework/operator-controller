@@ -135,6 +135,10 @@ spec:
                   - type
                   type: object
                 type: array
+              contentURL:
+                description: ContentURL is a cluster-internal address that on-cluster
+                  components can read the content of a catalog from
+                type: string
               phase:
                 type: string
               resolvedSource:

@@ -128,16 +128,19 @@ func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.Cat
 		updateStatusUnpacking(&catalog.Status, unpackResult)
 		return ctrl.Result{}, nil
 	case source.StateUnpacked:
+		contentURL := ""
 		// TODO: We should check to see if the unpacked result has the same content
 		//   as the already unpacked content. If it does, we should skip this rest
 		//   of the unpacking steps.
 		if features.CatalogdFeatureGate.Enabled(features.HTTPServer) {
-			if err := r.Storage.Store(catalog.Name, unpackResult.FS); err != nil {
+			err := r.Storage.Store(catalog.Name, unpackResult.FS)
+			if err != nil {
 				return ctrl.Result{}, updateStatusStorageError(&catalog.Status, fmt.Errorf("error storing fbc: %v", err))
 			}
+			contentURL = r.Storage.ContentURL(catalog.Name)
 		}
 
-		updateStatusUnpacked(&catalog.Status, unpackResult)
+		updateStatusUnpacked(&catalog.Status, unpackResult, contentURL)
 		return ctrl.Result{}, nil
 	default:
 		return ctrl.Result{}, updateStatusUnpackFailing(&catalog.Status, fmt.Errorf("unknown unpack state %q: %v", unpackResult.State, err))
@@ -166,8 +169,9 @@ func updateStatusUnpacking(status *v1alpha1.CatalogStatus, result *source.Result
 	})
 }
 
-func updateStatusUnpacked(status *v1alpha1.CatalogStatus, result *source.Result) {
+func updateStatusUnpacked(status *v1alpha1.CatalogStatus, result *source.Result, contentURL string) {
 	status.ResolvedSource = result.ResolvedSource
+	status.ContentURL = contentURL
 	status.Phase = v1alpha1.PhaseUnpacked
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:    v1alpha1.TypeUnpacked,

@@ -68,6 +68,10 @@ func (m MockStore) Delete(_ string) error {
 	return nil
 }
 
+func (m MockStore) ContentURL(_ string) string {
+	return "URL"
+}
+
 func (m MockStore) StorageServerHandler() http.Handler {
 	panic("not needed")
 }

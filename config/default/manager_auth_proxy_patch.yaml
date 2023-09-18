@@ -52,4 +52,5 @@ spec:
         - "--leader-elect"
         - "--catalogs-storage-dir=/var/cache/catalogs"
         - "--feature-gates=HTTPServer=true"
+        - "--http-external-address=http://catalogd-catalogserver.catalogd-system.svc"
 

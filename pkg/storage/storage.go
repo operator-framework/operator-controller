@@ -12,5 +12,6 @@ import (
 type Instance interface {
 	Store(catalog string, fsys fs.FS) error
 	Delete(catalog string) error
+	ContentURL(catalog string) string
 	StorageServerHandler() http.Handler
 }

@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 
@@ -81,8 +80,8 @@ var _ = Describe("Catalog Unpacking", func() {
 			}).Should(Succeed())
 
 			By("Making sure the catalog content is available via the http server")
-			// (TODO): Get the URL from the CR once https://github.com/operator-framework/catalogd/issues/119 is done
-			catalogURL := fmt.Sprintf("%s.%s.svc/catalogs/%s/all.json", "catalogd-catalogserver", defaultSystemNamespace, catalogName)
+			err = c.Get(ctx, types.NamespacedName{Name: catalog.Name}, catalog)
+			Expect(err).ToNot(HaveOccurred())
 			job = batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-svr-job",
@@ -95,7 +94,7 @@ var _ = Describe("Catalog Unpacking", func() {
 								{
 									Name:    "test-svr",
 									Image:   "curlimages/curl",
-									Command: []string{"sh", "-c", "curl --silent --show-error --location -o - " + catalogURL},
+									Command: []string{"sh", "-c", "curl --silent --show-error --location -o - " + catalog.Status.ContentURL},
 								},
 							},
 							RestartPolicy: "Never",

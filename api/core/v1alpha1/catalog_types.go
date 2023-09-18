@@ -81,6 +81,9 @@ type CatalogStatus struct {
 
 	ResolvedSource *CatalogSource `json:"resolvedSource,omitempty"`
 	Phase          string         `json:"phase,omitempty"`
+	// ContentURL is a cluster-internal address that on-cluster components
+	// can read the content of a catalog from
+	ContentURL string `json:"contentURL,omitempty"`
 }
 
 // CatalogSource contains the sourcing information for a Catalog
