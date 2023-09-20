@@ -123,6 +123,16 @@ func TestBundleRequiredPackages(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			packages, err := tt.bundle.RequiredPackages()
+			assert.Len(t, packages, len(tt.wantRequiredPackages))
+			for i := range packages {
+				// SemverRange is a function which is not comparable
+				// so we just make sure that it is set.
+				assert.NotNil(t, packages[i].SemverRange)
+
+				// And then we set it to nil for ease of further comparisons
+				packages[i].SemverRange = nil
+			}
+
 			assert.Equal(t, tt.wantRequiredPackages, packages)
 			if tt.wantErr != "" {
 				assert.EqualError(t, err, tt.wantErr)

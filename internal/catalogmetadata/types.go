@@ -31,7 +31,7 @@ type Channel struct {
 
 type PackageRequired struct {
 	property.PackageRequired
-	SemverRange *bsemver.Range `json:"-"`
+	SemverRange bsemver.Range `json:"-"`
 }
 
 type Bundle struct {
@@ -98,17 +98,17 @@ func (b *Bundle) loadRequiredPackages() error {
 		if err != nil {
 			return fmt.Errorf("error determining bundle required packages for bundle %q: %s", b.Name, err)
 		}
-		for _, requiredPackage := range requiredPackages {
-			semverRange, err := bsemver.ParseRange(requiredPackage.VersionRange)
+		for i := range requiredPackages {
+			semverRange, err := bsemver.ParseRange(requiredPackages[i].VersionRange)
 			if err != nil {
 				return fmt.Errorf(
 					"error parsing bundle required package semver range for bundle %q (required package %q): %s",
 					b.Name,
-					requiredPackage.PackageName,
+					requiredPackages[i].PackageName,
 					err,
 				)
 			}
-			requiredPackage.SemverRange = &semverRange
+			requiredPackages[i].SemverRange = semverRange
 		}
 		b.requiredPackages = requiredPackages
 	}
