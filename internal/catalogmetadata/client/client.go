@@ -12,7 +12,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
 
-func NewClient(cl client.Client) *Client {
+func New(cl client.Client) *Client {
 	return &Client{cl: cl}
 }
 
