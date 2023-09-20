@@ -56,7 +56,7 @@ entries:
 schema: olm.bundle
 name: plain.0.1.0
 package: plain
-image: localhost/testdata/bundles/plain-v0/plain:v0.1.0
+image: PLAIN_BUNDLE_IMAGE_URL
 properties:
   - type: olm.package
     value:
