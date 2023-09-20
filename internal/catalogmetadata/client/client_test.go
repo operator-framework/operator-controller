@@ -111,7 +111,7 @@ func TestClient(t *testing.T) {
 				ctx := context.Background()
 				objs, expectedBundles := tt.fakeCatalog()
 
-				fakeCatalogClient := catalogClient.NewClient(
+				fakeCatalogClient := catalogClient.New(
 					fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build(),
 				)
 
