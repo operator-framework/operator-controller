@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -18,6 +19,8 @@ import (
 )
 
 const urlPrefix = "/catalogs/"
+
+var ctx = context.Background()
 
 var _ = Describe("LocalDir Storage Test", func() {
 	var (
@@ -62,7 +65,7 @@ var _ = Describe("LocalDir Storage Test", func() {
 			_, err := os.Stat(fbcFile)
 			Expect(err).To(Not(HaveOccurred()))
 
-			gotConfig, err := declcfg.LoadFS(unpackResultFS)
+			gotConfig, err := declcfg.LoadFS(ctx, unpackResultFS)
 			Expect(err).To(Not(HaveOccurred()))
 			storedConfig, err := declcfg.LoadFile(os.DirFS(filepath.Join(rootDir, catalog)), "all.json")
 			Expect(err).To(Not(HaveOccurred()))
