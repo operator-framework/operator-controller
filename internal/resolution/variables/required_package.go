@@ -7,28 +7,28 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/constraint"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
 
 var _ deppy.Variable = &RequiredPackageVariable{}
 
 type RequiredPackageVariable struct {
 	*input.SimpleVariable
-	bundleEntities []*olmentity.BundleEntity
+	bundles []*catalogmetadata.Bundle
 }
 
-func (r *RequiredPackageVariable) BundleEntities() []*olmentity.BundleEntity {
-	return r.bundleEntities
+func (r *RequiredPackageVariable) Bundles() []*catalogmetadata.Bundle {
+	return r.bundles
 }
 
-func NewRequiredPackageVariable(packageName string, bundleEntities []*olmentity.BundleEntity) *RequiredPackageVariable {
+func NewRequiredPackageVariable(packageName string, bundles []*catalogmetadata.Bundle) *RequiredPackageVariable {
 	id := deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))
-	entityIDs := make([]deppy.Identifier, 0, len(bundleEntities))
-	for _, bundle := range bundleEntities {
-		entityIDs = append(entityIDs, bundle.ID)
+	var variableIDs []deppy.Identifier
+	for _, bundle := range bundles {
+		variableIDs = append(variableIDs, BundleToBundleVariableIDs(bundle)...)
 	}
 	return &RequiredPackageVariable{
-		SimpleVariable: input.NewSimpleVariable(id, constraint.Mandatory(), constraint.Dependency(entityIDs...)),
-		bundleEntities: bundleEntities,
+		SimpleVariable: input.NewSimpleVariable(id, constraint.Mandatory(), constraint.Dependency(variableIDs...)),
+		bundles:        bundles,
 	}
 }

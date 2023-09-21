@@ -14,17 +14,19 @@ var _ input.VariableSource = &OperatorVariableSource{}
 
 type OperatorVariableSource struct {
 	client              client.Client
+	catalogClient       BundleProvider
 	inputVariableSource input.VariableSource
 }
 
-func NewOperatorVariableSource(cl client.Client, inputVariableSource input.VariableSource) *OperatorVariableSource {
+func NewOperatorVariableSource(cl client.Client, catalogClient BundleProvider, inputVariableSource input.VariableSource) *OperatorVariableSource {
 	return &OperatorVariableSource{
 		client:              cl,
+		catalogClient:       catalogClient,
 		inputVariableSource: inputVariableSource,
 	}
 }
 
-func (o *OperatorVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
+func (o *OperatorVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	variableSources := SliceVariableSource{}
 	if o.inputVariableSource != nil {
 		variableSources = append(variableSources, o.inputVariableSource)
@@ -38,6 +40,7 @@ func (o *OperatorVariableSource) GetVariables(ctx context.Context, entitySource 
 	// build required package variable sources
 	for _, operator := range operatorList.Items {
 		rps, err := NewRequiredPackageVariableSource(
+			o.catalogClient,
 			operator.Spec.PackageName,
 			InVersionRange(operator.Spec.Version),
 			InChannel(operator.Spec.Channel),
@@ -48,5 +51,5 @@ func (o *OperatorVariableSource) GetVariables(ctx context.Context, entitySource 
 		variableSources = append(variableSources, rps)
 	}
 
-	return variableSources.GetVariables(ctx, entitySource)
+	return variableSources.GetVariables(ctx)
 }

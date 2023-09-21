@@ -2,13 +2,14 @@ package controllers_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/operator-framework/deppy/pkg/deppy"
-	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,21 +21,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
 var _ = Describe("Operator Controller Test", func() {
 	var (
-		ctx        context.Context
-		reconciler *controllers.OperatorReconciler
+		ctx               context.Context
+		fakeCatalogClient testutil.FakeCatalogClient
+		reconciler        *controllers.OperatorReconciler
 	)
 	BeforeEach(func() {
 		ctx = context.Background()
+		fakeCatalogClient = testutil.NewFakeCatalogClient(testBundleList)
 		reconciler = &controllers.OperatorReconciler{
 			Client:   cl,
 			Scheme:   sch,
-			Resolver: solver.NewDeppySolver(testEntitySource, controllers.NewVariableSource(cl)),
+			Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
 		}
 	})
 	When("the operator does not exist", func() {
@@ -575,43 +580,6 @@ var _ = Describe("Operator Controller Test", func() {
 				})
 			})
 		})
-		When("the selected bundle's image ref cannot be parsed", func() {
-			const pkgName = "badimage"
-			BeforeEach(func() {
-				By("initializing cluster state")
-				operator = &operatorsv1alpha1.Operator{
-					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
-					Spec:       operatorsv1alpha1.OperatorSpec{PackageName: pkgName},
-				}
-				err := cl.Create(ctx, operator)
-				Expect(err).NotTo(HaveOccurred())
-			})
-			It("sets resolution failure status and returns an error", func() {
-				By("running reconcile")
-				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
-				Expect(res).To(Equal(ctrl.Result{}))
-				Expect(err).To(MatchError(ContainSubstring(`error determining bundle path for entity`)))
-
-				By("fetching updated operator after reconcile")
-				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
-
-				By("Checking the status fields")
-				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
-				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
-
-				By("checking the expected conditions")
-				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
-				Expect(cond).NotTo(BeNil())
-				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
-				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
-				Expect(cond.Message).To(ContainSubstring(`error determining bundle path for entity`))
-				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
-				Expect(cond).NotTo(BeNil())
-				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
-				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationStatusUnknown))
-				Expect(cond.Message).To(Equal("installation has not been attempted as resolution failed"))
-			})
-		})
 		When("the operator specifies a duplicate package", func() {
 			const pkgName = "prometheus"
 			var dupOperator *operatorsv1alpha1.Operator
@@ -1080,41 +1048,62 @@ func verifyConditionsInvariants(op *operatorsv1alpha1.Operator) {
 	}
 }
 
-var testEntitySource = input.NewCacheQuerier(map[deppy.Identifier]input.Entity{
-	"operatorhub/prometheus/0.37.0": *input.NewEntity("operatorhub/prometheus/0.37.0", map[string]string{
-		"olm.bundle.path":         `"quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"`,
-		"olm.bundle.channelEntry": `{"name":"prometheus.0.37.0"}`,
-		"olm.channel":             `{"channelName":"beta","priority":0}`,
-		"olm.package":             `{"packageName":"prometheus","version":"0.37.0"}`,
-		"olm.gvk":                 `[]`,
-	}),
-	"operatorhub/prometheus/0.47.0": *input.NewEntity("operatorhub/prometheus/0.47.0", map[string]string{
-		"olm.bundle.path":         `"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"`,
-		"olm.bundle.channelEntry": `{"name":"prometheus.0.47.0"}`,
-		"olm.channel":             `{"channelName":"beta","priority":0,"replaces":"prometheusoperator.0.37.0"}`,
-		"olm.package":             `{"packageName":"prometheus","version":"0.47.0"}`,
-		"olm.gvk":                 `[]`,
-	}),
-	"operatorhub/badimage/0.1.0": *input.NewEntity("operatorhub/badimage/0.1.0", map[string]string{
-		"olm.bundle.path":         `{"name": "quay.io/operatorhubio/badimage:v0.1.0"}`,
-		"olm.bundle.channelEntry": `{"name":"badimage.0.1.0"}`,
-		"olm.package":             `{"packageName":"badimage","version":"0.1.0"}`,
-		"olm.gvk":                 `[]`,
-	}),
-	"operatorhub/plain/0.1.0": *input.NewEntity("operatorhub/plain/0.1.0", map[string]string{
-		"olm.bundle.path":         `"quay.io/operatorhub/plain@sha256:plain"`,
-		"olm.bundle.channelEntry": `{"name":"plain.0.1.0"}`,
-		"olm.channel":             `{"channelName":"beta","priority":0}`,
-		"olm.package":             `{"packageName":"plain","version":"0.1.0"}`,
-		"olm.gvk":                 `[]`,
-		"olm.bundle.mediatype":    `"plain+v0"`,
-	}),
-	"operatorhub/badmedia/0.1.0": *input.NewEntity("operatorhub/badmedia/0.1.0", map[string]string{
-		"olm.bundle.path":         `"quay.io/operatorhub/badmedia@sha256:badmedia"`,
-		"olm.bundle.channelEntry": `{"name":"badmedia.0.1.0"}`,
-		"olm.channel":             `{"channelName":"beta","priority":0}`,
-		"olm.package":             `{"packageName":"badmedia","version":"0.1.0"}`,
-		"olm.gvk":                 `[]`,
-		"olm.bundle.mediatype":    `"badmedia+v1"`,
-	}),
-})
+var betaChannel = catalogmetadata.Channel{Channel: declcfg.Channel{
+	Name: "beta",
+	Entries: []declcfg.ChannelEntry{
+		{
+			Name: "operatorhub/prometheus/0.37.0",
+		},
+		{
+			Name:     "operatorhub/prometheus/0.47.0",
+			Replaces: "operatorhub/prometheus/0.37.0",
+		},
+		{
+			Name: "operatorhub/plain/0.1.0",
+		},
+		{
+			Name: "operatorhub/badmedia/0.1.0",
+		},
+	},
+}}
+
+var testBundleList = []*catalogmetadata.Bundle{
+	{Bundle: declcfg.Bundle{
+		Name:    "operatorhub/prometheus/0.37.0",
+		Package: "prometheus",
+		Image:   "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35",
+		Properties: []property.Property{
+			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"0.37.0"}`)},
+			{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+		},
+	}, InChannels: []*catalogmetadata.Channel{&betaChannel}},
+	{Bundle: declcfg.Bundle{
+		Name:    "operatorhub/prometheus/0.47.0",
+		Package: "prometheus",
+		Image:   "quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed",
+		Properties: []property.Property{
+			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"0.47.0"}`)},
+			{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+		},
+	}, InChannels: []*catalogmetadata.Channel{&betaChannel}},
+	{Bundle: declcfg.Bundle{
+		Name:    "operatorhub/plain/0.1.0",
+		Package: "plain",
+		Image:   "quay.io/operatorhub/plain@sha256:plain",
+		Properties: []property.Property{
+			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"plain","version":"0.1.0"}`)},
+			{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+			{Type: "olm.bundle.mediatype", Value: json.RawMessage(`"plain+v0"`)},
+		},
+	}, InChannels: []*catalogmetadata.Channel{&betaChannel}},
+	{Bundle: declcfg.Bundle{
+		Name:    "operatorhub/badmedia/0.1.0",
+		Package: "badmedia",
+		Image:   "quay.io/operatorhub/badmedia@sha256:badmedia",
+		Properties: []property.Property{
+			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"badmedia","version":"0.1.0"}`)},
+			{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+			{Type: "olm.bundle.mediatype", Value: json.RawMessage(`"badmedia+v1"`)},
+		},
+	}, InChannels: []*catalogmetadata.Channel{&betaChannel}},
+}

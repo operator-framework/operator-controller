@@ -35,8 +35,8 @@ import (
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	"github.com/operator-framework/operator-controller/internal/resolution/entitysources"
 	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
@@ -99,12 +99,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	cl := mgr.GetClient()
+	catalogClient := catalogclient.New(cl)
+
 	if err = (&controllers.OperatorReconciler{
-		Client: mgr.GetClient(),
+		Client: cl,
 		Scheme: mgr.GetScheme(),
 		Resolver: solver.NewDeppySolver(
-			entitysources.NewCatalogdEntitySource(mgr.GetClient()),
-			controllers.NewVariableSource(mgr.GetClient()),
+			controllers.NewVariableSource(cl, catalogClient),
 		),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")

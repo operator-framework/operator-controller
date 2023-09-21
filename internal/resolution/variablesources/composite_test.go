@@ -52,7 +52,6 @@ func TestNestedVariableSource(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			mockEntitySource := input.NewCacheQuerier(map[deppy.Identifier]input.Entity{})
 
 			nestedSource := variablesources.NestedVariableSource{}
 			for i := range tt.varSources {
@@ -70,7 +69,7 @@ func TestNestedVariableSource(t *testing.T) {
 				})
 			}
 
-			variables, err := nestedSource.GetVariables(ctx, mockEntitySource)
+			variables, err := nestedSource.GetVariables(ctx)
 			if tt.wantErr != "" {
 				assert.EqualError(t, err, tt.wantErr)
 			} else {
@@ -82,7 +81,6 @@ func TestNestedVariableSource(t *testing.T) {
 
 	t.Run("error from a nested constructor", func(t *testing.T) {
 		ctx := context.Background()
-		mockEntitySource := input.NewCacheQuerier(map[deppy.Identifier]input.Entity{})
 
 		nestedSource := variablesources.NestedVariableSource{
 			func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
@@ -90,7 +88,7 @@ func TestNestedVariableSource(t *testing.T) {
 			},
 		}
 
-		variables, err := nestedSource.GetVariables(ctx, mockEntitySource)
+		variables, err := nestedSource.GetVariables(ctx)
 		assert.EqualError(t, err, "fake error from a constructor")
 		assert.Nil(t, variables)
 	})
@@ -123,10 +121,9 @@ func TestSliceVariableSource(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			mockEntitySource := input.NewCacheQuerier(map[deppy.Identifier]input.Entity{})
 
 			sliceSource := variablesources.SliceVariableSource(tt.varSources)
-			variables, err := sliceSource.GetVariables(ctx, mockEntitySource)
+			variables, err := sliceSource.GetVariables(ctx)
 			if tt.wantErr != "" {
 				assert.EqualError(t, err, tt.wantErr)
 			} else {
@@ -145,7 +142,7 @@ type mockVariableSource struct {
 	fakeError           error
 }
 
-func (m *mockVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
+func (m *mockVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	if m.fakeError != nil {
 		return nil, m.fakeError
 	}
@@ -154,7 +151,7 @@ func (m *mockVariableSource) GetVariables(ctx context.Context, entitySource inpu
 		return m.fakeVariables, nil
 	}
 
-	nestedVars, err := m.inputVariableSource.GetVariables(ctx, entitySource)
+	nestedVars, err := m.inputVariableSource.GetVariables(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -22,9 +22,10 @@ import (
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
-func newPackageVariableSource(packageName, packageVersion, packageChannel string) func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
+func newPackageVariableSource(catalogClient *indexRefClient, packageName, packageVersion, packageChannel string) func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
 	return func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
 		pkgSource, err := variablesources.NewRequiredPackageVariableSource(
+			catalogClient,
 			packageName,
 			variablesources.InVersionRange(packageVersion),
 			variablesources.InChannel(packageChannel),

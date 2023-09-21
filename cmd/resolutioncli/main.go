@@ -34,8 +34,8 @@ import (
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	olmentity "github.com/operator-framework/operator-controller/internal/resolution/entities"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
@@ -108,7 +108,7 @@ func validateFlags(packageName, indexRef string) error {
 	return nil
 }
 
-func run(ctx context.Context, packageName, packageVersion, packageChannel, catalogRef, inputDir string) error {
+func run(ctx context.Context, packageName, packageVersion, packageChannel, indexRef, inputDir string) error {
 	clientBuilder := fake.NewClientBuilder().WithScheme(scheme)
 
 	if inputDir != "" {
@@ -121,11 +121,12 @@ func run(ctx context.Context, packageName, packageVersion, packageChannel, catal
 	}
 
 	cl := clientBuilder.Build()
+	catalogClient := newIndexRefClient(indexRef)
+
 	resolver := solver.NewDeppySolver(
-		newIndexRefEntitySourceEntitySource(catalogRef),
 		append(
-			variablesources.NestedVariableSource{newPackageVariableSource(packageName, packageVersion, packageChannel)},
-			controllers.NewVariableSource(cl)...,
+			variablesources.NestedVariableSource{newPackageVariableSource(catalogClient, packageName, packageVersion, packageChannel)},
+			controllers.NewVariableSource(cl, catalogClient)...,
 		),
 	)
 
@@ -144,32 +145,24 @@ func resolve(ctx context.Context, resolver *solver.DeppySolver, packageName stri
 		return "", err
 	}
 
-	bundleEntity, err := getBundleEntityFromSolution(solution, packageName)
+	bundle, err := bundleFromSolution(solution, packageName)
 	if err != nil {
 		return "", err
 	}
 
 	// Get the bundle image reference for the bundle
-	bundleImage, err := bundleEntity.BundlePath()
-	if err != nil {
-		return "", err
-	}
-
-	return bundleImage, nil
+	return bundle.Image, nil
 }
 
-func getBundleEntityFromSolution(solution *solver.Solution, packageName string) (*olmentity.BundleEntity, error) {
+func bundleFromSolution(solution *solver.Solution, packageName string) (*catalogmetadata.Bundle, error) {
 	for _, variable := range solution.SelectedVariables() {
 		switch v := variable.(type) {
 		case *olmvariables.BundleVariable:
-			entityPkgName, err := v.BundleEntity().PackageName()
-			if err != nil {
-				return nil, err
-			}
-			if packageName == entityPkgName {
-				return v.BundleEntity(), nil
+			bundlePkgName := v.Bundle().Package
+			if packageName == bundlePkgName {
+				return v.Bundle(), nil
 			}
 		}
 	}
-	return nil, fmt.Errorf("entity for package %q not found in solution", packageName)
+	return nil, fmt.Errorf("bundle for package %q not found in solution", packageName)
 }

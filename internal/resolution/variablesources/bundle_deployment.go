@@ -13,17 +13,19 @@ var _ input.VariableSource = &BundleDeploymentVariableSource{}
 
 type BundleDeploymentVariableSource struct {
 	client              client.Client
+	catalogClient       BundleProvider
 	inputVariableSource input.VariableSource
 }
 
-func NewBundleDeploymentVariableSource(cl client.Client, inputVariableSource input.VariableSource) *BundleDeploymentVariableSource {
+func NewBundleDeploymentVariableSource(cl client.Client, catalogClient BundleProvider, inputVariableSource input.VariableSource) *BundleDeploymentVariableSource {
 	return &BundleDeploymentVariableSource{
 		client:              cl,
+		catalogClient:       catalogClient,
 		inputVariableSource: inputVariableSource,
 	}
 }
 
-func (o *BundleDeploymentVariableSource) GetVariables(ctx context.Context, entitySource input.EntitySource) ([]deppy.Variable, error) {
+func (o *BundleDeploymentVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
 	variableSources := SliceVariableSource{}
 	if o.inputVariableSource != nil {
 		variableSources = append(variableSources, o.inputVariableSource)
@@ -42,7 +44,7 @@ func (o *BundleDeploymentVariableSource) GetVariables(ctx context.Context, entit
 				continue
 			}
 			processed[sourceImage.Ref] = struct{}{}
-			ips, err := NewInstalledPackageVariableSource(bundleDeployment.Spec.Template.Spec.Source.Image.Ref)
+			ips, err := NewInstalledPackageVariableSource(o.catalogClient, bundleDeployment.Spec.Template.Spec.Source.Image.Ref)
 			if err != nil {
 				return nil, err
 			}
@@ -50,5 +52,5 @@ func (o *BundleDeploymentVariableSource) GetVariables(ctx context.Context, entit
 		}
 	}
 
-	return variableSources.GetVariables(ctx, entitySource)
+	return variableSources.GetVariables(ctx)
 }
