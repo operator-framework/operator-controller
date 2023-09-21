@@ -168,43 +168,10 @@ If you have any questions, feel free to reach out to us on the Kubernetes Slack 
 **Prerequisites**
 - [Install kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
 
-**Local (not on cluster)**
-> **Note**: This will work *only* for the controller
-- Create a cluster:
+**Test it out**
+
 ```sh
-kind create cluster
-```
-- Install CRDs and run the controller locally:
-```sh
-kubectl apply -f config/crd/bases/ && make run
+make run
 ```
 
-**On Cluster**
-- Build the images locally:
-```sh
-make docker-build-controller && make docker-build-server
-```
-- Create a cluster:
-```sh
-kind create cluster
-```
-- Load the images onto the cluster:
-```sh
-kind load docker-image quay.io/operator-framework/catalogd-controller:latest && kind load docker-image quay.io/operator-framework/catalogd-server:latest
-``` 
-- Install cert-manager:
-```sh
- make cert-manager
-```
-- Install the CRDs
-```sh
-kubectl apply -f config/crd/bases/
-```
-- Deploy the apiserver, etcd, and controller: 
-```sh
-kubectl apply -f config/
-```
-- Create the sample Catalog (this will trigger the reconciliation loop): 
-```sh
-kubectl apply -f config/samples/core_v1alpha1_catalog.yaml
-```
+This will build a local container image for the catalogd controller, create a new KIND cluster and then deploy onto that cluster.
