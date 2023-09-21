@@ -53,7 +53,6 @@ var _ = Describe("Operator Install", func() {
 			BeforeEach(func() {
 				operator.Spec = operatorv1alpha1.OperatorSpec{
 					PackageName: "prometheus",
-					Version:     "0.47.0",
 				}
 			})
 			It("resolves the specified package with correct bundle path", func() {
@@ -69,7 +68,7 @@ var _ = Describe("Operator Install", func() {
 					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
 					g.Expect(cond.Message).To(ContainSubstring("resolved to"))
-					g.Expect(operator.Status.ResolvedBundleResource).ToNot(BeEmpty())
+					g.Expect(operator.Status.ResolvedBundleResource).To(Equal("localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1"))
 				}).Should(Succeed())
 
 				By("eventually installing the package successfully")
