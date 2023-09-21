@@ -41,7 +41,7 @@ type Bundle struct {
 
 	mu sync.RWMutex
 	// these properties are lazy loaded as they are requested
-	propertiesMap    map[string]property.Property
+	propertiesMap    map[string][]*property.Property
 	bundlePackage    *property.Package
 	semVersion       *bsemver.Version
 	requiredPackages []PackageRequired
@@ -74,7 +74,7 @@ func (b *Bundle) loadPackage() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.bundlePackage == nil {
-		bundlePackage, err := loadFromProps[property.Package](b, property.TypePackage, true)
+		bundlePackage, err := loadOneFromProps[property.Package](b, property.TypePackage, true)
 		if err != nil {
 			return err
 		}
@@ -94,7 +94,7 @@ func (b *Bundle) loadRequiredPackages() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.requiredPackages == nil {
-		requiredPackages, err := loadFromProps[[]PackageRequired](b, property.TypePackageRequired, false)
+		requiredPackages, err := loadFromProps[PackageRequired](b, property.TypePackageRequired, false)
 		if err != nil {
 			return fmt.Errorf("error determining bundle required packages for bundle %q: %s", b.Name, err)
 		}
@@ -119,7 +119,7 @@ func (b *Bundle) loadMediaType() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if b.mediaType == nil {
-		mediaType, err := loadFromProps[string](b, PropertyBundleMediaType, false)
+		mediaType, err := loadOneFromProps[string](b, PropertyBundleMediaType, false)
 		if err != nil {
 			return fmt.Errorf("error determining bundle mediatype for bundle %q: %s", b.Name, err)
 		}
@@ -128,31 +128,48 @@ func (b *Bundle) loadMediaType() error {
 	return nil
 }
 
-func (b *Bundle) propertyByType(propType string) *property.Property {
+func (b *Bundle) propertiesByType(propType string) []*property.Property {
 	if b.propertiesMap == nil {
-		b.propertiesMap = make(map[string]property.Property)
-		for _, prop := range b.Properties {
-			b.propertiesMap[prop.Type] = prop
+		b.propertiesMap = make(map[string][]*property.Property)
+		for i := range b.Properties {
+			prop := b.Properties[i]
+			b.propertiesMap[prop.Type] = append(b.propertiesMap[prop.Type], &prop)
 		}
 	}
 
-	prop, ok := b.propertiesMap[propType]
-	if !ok {
-		return nil
-	}
-	return &prop
+	return b.propertiesMap[propType]
 }
 
-func loadFromProps[T any](bundle *Bundle, propType string, required bool) (T, error) {
-	parsedProp := *new(T)
-	prop := bundle.propertyByType(propType)
-	if prop != nil {
-		if err := json.Unmarshal(prop.Value, &parsedProp); err != nil {
-			return parsedProp, fmt.Errorf("property %q with value %q could not be parsed: %s", propType, prop.Value, err)
-		}
-	} else if required {
-		return parsedProp, fmt.Errorf("bundle property with type %q not found", propType)
+func loadOneFromProps[T any](bundle *Bundle, propType string, required bool) (T, error) {
+	r, err := loadFromProps[T](bundle, propType, required)
+	if err != nil {
+		return *new(T), err
+	}
+	if len(r) > 1 {
+		return *new(T), fmt.Errorf("expected 1 instance of property with type %q, got %d", propType, len(r))
+	}
+	if !required && len(r) == 0 {
+		return *new(T), nil
 	}
 
-	return parsedProp, nil
+	return r[0], nil
+}
+
+func loadFromProps[T any](bundle *Bundle, propType string, required bool) ([]T, error) {
+	props := bundle.propertiesByType(propType)
+	if len(props) != 0 {
+		result := []T{}
+		for i := range props {
+			parsedProp := *new(T)
+			if err := json.Unmarshal(props[i].Value, &parsedProp); err != nil {
+				return nil, fmt.Errorf("property %q with value %q could not be parsed: %s", propType, props[i].Value, err)
+			}
+			result = append(result, parsedProp)
+		}
+		return result, nil
+	} else if required {
+		return nil, fmt.Errorf("bundle property with type %q not found", propType)
+	}
+
+	return nil, nil
 }

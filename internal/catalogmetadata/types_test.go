@@ -83,7 +83,11 @@ func TestBundleRequiredPackages(t *testing.T) {
 				Properties: []property.Property{
 					{
 						Type:  property.TypePackageRequired,
-						Value: json.RawMessage(`[{"packageName": "packageA", "versionRange": ">1.0.0"}, {"packageName": "packageB", "versionRange": ">0.5.0 <0.8.6"}]`),
+						Value: json.RawMessage(`{"packageName": "packageA", "versionRange": ">1.0.0"}`),
+					},
+					{
+						Type:  property.TypePackageRequired,
+						Value: json.RawMessage(`{"packageName": "packageB", "versionRange": ">0.5.0 <0.8.6"}`),
 					},
 				},
 			}},
@@ -113,7 +117,7 @@ func TestBundleRequiredPackages(t *testing.T) {
 				Properties: []property.Property{
 					{
 						Type:  property.TypePackageRequired,
-						Value: json.RawMessage(`[{"packageName": "packageA", "versionRange": "invalid"}]`),
+						Value: json.RawMessage(`{"packageName": "packageA", "versionRange": "invalid"}`),
 					},
 				},
 			}},
