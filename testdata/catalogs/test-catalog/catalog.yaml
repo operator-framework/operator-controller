@@ -4,6 +4,12 @@ name: prometheus
 defaultChannel: beta
 ---
 schema: olm.channel
+name: alpha
+package: prometheus
+entries:
+  - name: prometheus-operator.0.47.0
+---
+schema: olm.channel
 name: beta
 package: prometheus
 entries:

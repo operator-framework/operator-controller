@@ -788,7 +788,7 @@ var _ = Describe("Operator Controller Test", func() {
 			BeforeEach(func() {
 				By("initializing cluster state")
 				pkgName = "prometheus"
-				pkgChan = "alpha"
+				pkgChan = "non-existent"
 				operator = &operatorsv1alpha1.Operator{
 					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
 					Spec: operatorsv1alpha1.OperatorSpec{
@@ -1048,28 +1048,27 @@ func verifyConditionsInvariants(op *operatorsv1alpha1.Operator) {
 	}
 }
 
-var betaChannel = catalogmetadata.Channel{Channel: declcfg.Channel{
-	Name: "beta",
-	Entries: []declcfg.ChannelEntry{
-		{
-			Name: "operatorhub/prometheus/0.37.0",
-		},
-		{
-			Name:     "operatorhub/prometheus/0.47.0",
-			Replaces: "operatorhub/prometheus/0.37.0",
-		},
-		{
-			Name: "operatorhub/plain/0.1.0",
-		},
-		{
-			Name: "operatorhub/badmedia/0.1.0",
-		},
-	},
-}}
+var (
+	alphaChannel = catalogmetadata.Channel{Channel: declcfg.Channel{
+		Name: "alpha",
+	}}
+	betaChannel = catalogmetadata.Channel{Channel: declcfg.Channel{
+		Name: "beta",
+	}}
+)
 
 var testBundleList = []*catalogmetadata.Bundle{
 	{Bundle: declcfg.Bundle{
-		Name:    "operatorhub/prometheus/0.37.0",
+		Name:    "operatorhub/prometheus/alpha/0.37.0",
+		Package: "prometheus",
+		Image:   "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35",
+		Properties: []property.Property{
+			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"0.37.0"}`)},
+			{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+		},
+	}, InChannels: []*catalogmetadata.Channel{&alphaChannel}},
+	{Bundle: declcfg.Bundle{
+		Name:    "operatorhub/prometheus/beta/0.37.0",
 		Package: "prometheus",
 		Image:   "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35",
 		Properties: []property.Property{
@@ -1078,7 +1077,7 @@ var testBundleList = []*catalogmetadata.Bundle{
 		},
 	}, InChannels: []*catalogmetadata.Channel{&betaChannel}},
 	{Bundle: declcfg.Bundle{
-		Name:    "operatorhub/prometheus/0.47.0",
+		Name:    "operatorhub/prometheus/beta/0.47.0",
 		Package: "prometheus",
 		Image:   "quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed",
 		Properties: []property.Property{
