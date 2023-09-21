@@ -2,8 +2,12 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
@@ -12,8 +16,21 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
 
-func New(cl client.Client) *Client {
-	return &Client{cl: cl}
+// Fetcher is an interface to facilitate fetching
+// catalog contents from catalogd.
+type Fetcher interface {
+	// FetchCatalogContents fetches contents from the catalogd HTTP
+	// server for the catalog provided. It returns an io.ReadCloser
+	// containing the FBC contents that the caller is expected to close.
+	// returns an error if any occur.
+	FetchCatalogContents(ctx context.Context, catalog *catalogd.Catalog) (io.ReadCloser, error)
+}
+
+func New(cl client.Client, fetcher Fetcher) *Client {
+	return &Client{
+		cl:      cl,
+		fetcher: fetcher,
+	}
 }
 
 // Client is reading catalog metadata
@@ -21,6 +38,9 @@ type Client struct {
 	// Note that eventually we will be reading from catalogd http API
 	// instead of kube API server. We will need to swap this implementation.
 	cl client.Client
+
+	// fetcher is the Fetcher to use for fetching catalog contents
+	fetcher Fetcher
 }
 
 func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error) {
@@ -31,14 +51,42 @@ func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
 		return nil, err
 	}
 	for _, catalog := range catalogList.Items {
-		channels, err := fetchCatalogMetadata[catalogmetadata.Channel](ctx, c.cl, catalog.Name, declcfg.SchemaChannel)
-		if err != nil {
-			return nil, err
+		// if the catalog has not been successfully unpacked, skip it
+		if !meta.IsStatusConditionPresentAndEqual(catalog.Status.Conditions, catalogd.TypeUnpacked, metav1.ConditionTrue) {
+			continue
 		}
+		channels := []*catalogmetadata.Channel{}
+		bundles := []*catalogmetadata.Bundle{}
 
-		bundles, err := fetchCatalogMetadata[catalogmetadata.Bundle](ctx, c.cl, catalog.Name, declcfg.SchemaBundle)
+		rc, err := c.fetcher.FetchCatalogContents(ctx, catalog.DeepCopy())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error fetching catalog contents: %s", err)
+		}
+		defer rc.Close()
+
+		err = declcfg.WalkMetasReader(rc, func(meta *declcfg.Meta, err error) error {
+			if err != nil {
+				return fmt.Errorf("error was provided to the WalkMetasReaderFunc: %s", err)
+			}
+			switch meta.Schema {
+			case declcfg.SchemaChannel:
+				var content catalogmetadata.Channel
+				if err := json.Unmarshal(meta.Blob, &content); err != nil {
+					return fmt.Errorf("error unmarshalling channel from catalog metadata: %s", err)
+				}
+				channels = append(channels, &content)
+			case declcfg.SchemaBundle:
+				var content catalogmetadata.Bundle
+				if err := json.Unmarshal(meta.Blob, &content); err != nil {
+					return fmt.Errorf("error unmarshalling bundle from catalog metadata: %s", err)
+				}
+				bundles = append(bundles, &content)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error processing response: %s", err)
 		}
 
 		bundles, err = PopulateExtraFields(catalog.Name, channels, bundles)
@@ -50,21 +98,6 @@ func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
 	}
 
 	return allBundles, nil
-}
-
-func fetchCatalogMetadata[T catalogmetadata.Schemas](ctx context.Context, cl client.Client, catalogName, schema string) ([]*T, error) {
-	var cmList catalogd.CatalogMetadataList
-	err := cl.List(ctx, &cmList, client.MatchingLabels{"catalog": catalogName, "schema": schema})
-	if err != nil {
-		return nil, err
-	}
-
-	content, err := catalogmetadata.Unmarshal[T](cmList.Items)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling catalog metadata: %s", err)
-	}
-
-	return content, nil
 }
 
 func PopulateExtraFields(catalogName string, channels []*catalogmetadata.Channel, bundles []*catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error) {

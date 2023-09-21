@@ -2,7 +2,6 @@ package operatore2e
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -26,8 +25,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
-	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
 	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
@@ -203,11 +200,7 @@ var _ = Describe("Operator Framework E2E for plain+v0 bundles", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		By("creating a Catalog CR and verifying the creation of respective packages and bundle metadata")
-		bundleVersions := make([]string, len(bundleInfo.bundles))
-		for i, bundle := range bundleInfo.bundles {
-			bundleVersions[i] = bundle.bundleVersion
-		}
-		operatorCatalog, err = createCatalogCheckResources(operatorCatalog, catalogDInfo, bundleVersions)
+		operatorCatalog, err = createCatalogCheckResources(operatorCatalog, catalogDInfo)
 		Expect(err).ToNot(HaveOccurred())
 
 		By("creating an operator CR and verifying the operator operations")
@@ -339,11 +332,7 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		By("creating a Catalog CR and verifying the creation of respective packages and bundle metadata")
-		bundleVersions := make([]string, len(bundleInfo.bundles))
-		for i, bundle := range bundleInfo.bundles {
-			bundleVersions[i] = bundle.bundleVersion
-		}
-		operatorCatalog, err = createCatalogCheckResources(operatorCatalog, catalogDInfo, bundleVersions)
+		operatorCatalog, err = createCatalogCheckResources(operatorCatalog, catalogDInfo)
 		Expect(err).ToNot(HaveOccurred())
 
 		By("creating an operator CR and verifying the operator operations")
@@ -813,7 +802,7 @@ func validateCatalogUnpacking(operatorCatalog *catalogd.Catalog) error {
 }
 
 // Creates catalog CR and checks if catalog unpackging is successful and if the packages and bundle metadatas are formed
-func createCatalogCheckResources(operatorCatalog *catalogd.Catalog, catalogDInfo *CatalogDInfo, bundleVersions []string) (*catalogd.Catalog, error) {
+func createCatalogCheckResources(operatorCatalog *catalogd.Catalog, catalogDInfo *CatalogDInfo) (*catalogd.Catalog, error) {
 	operatorCatalog, err := createTestCatalog(ctx, catalogDInfo.catalogDir, catalogDInfo.imageRef)
 	if err != nil {
 		return nil, fmt.Errorf("Error creating catalog %v : %v", catalogDInfo.catalogDir, err)
@@ -825,11 +814,6 @@ func createCatalogCheckResources(operatorCatalog *catalogd.Catalog, catalogDInfo
 		g.Expect(err).ToNot(HaveOccurred())
 	}, 2*time.Minute, 1).Should(Succeed())
 
-	// checking if the catalog metadatas are created
-	By("Eventually checking if catalog metadata is created")
-	Eventually(func(g Gomega) {
-		validateCatalogMetadataCreation(g, operatorCatalog, catalogDInfo.operatorName, bundleVersions)
-	}).Should(Succeed())
 	return operatorCatalog, nil
 }
 
@@ -858,40 +842,6 @@ func checkOperatorOperationsSuccess(operator *operatorv1alpha1.Operator, pkgName
 		err := checkManifestPresence(bundlePath, pkgName, opVersion, nameSpace)
 		g.Expect(err).ToNot(HaveOccurred())
 	}).Should(Succeed())
-}
-
-// Checks if the CatalogMetadata was created from the catalog and returns error if not.
-// The expected pkgNames and their versions are taken as input. This is then compared against the collected bundle versions.
-// The collected bundle versions are formed by reading the version from "olm.package" property type whose catalog name
-// matches the catalog name and pkgName matches the pkgName under consideration.
-func validateCatalogMetadataCreation(g Gomega, operatorCatalog *catalogd.Catalog, pkgName string, versions []string) {
-	cmList := catalogd.CatalogMetadataList{}
-	err := c.List(ctx, &cmList, client.MatchingLabels{
-		"schema":  declcfg.SchemaBundle,
-		"catalog": operatorCatalog.Name,
-		"package": pkgName,
-	})
-	g.Expect(err).ToNot(HaveOccurred())
-
-	collectedBundleVersions := []string{}
-	for _, cm := range cmList.Items {
-		bundle := declcfg.Bundle{}
-
-		err := json.Unmarshal(cm.Spec.Content, &bundle)
-		g.Expect(err).ToNot(HaveOccurred())
-
-		for _, prop := range bundle.Properties {
-			if prop.Type == "olm.package" {
-				var pkgValue property.Package
-				err := json.Unmarshal(prop.Value, &pkgValue)
-				g.Expect(err).ToNot(HaveOccurred())
-
-				collectedBundleVersions = append(collectedBundleVersions, pkgValue.Version)
-			}
-		}
-	}
-
-	g.Expect(collectedBundleVersions).To(ConsistOf(versions))
 }
 
 // Checks for a successful resolution and bundle path for the operator and returns error if not.

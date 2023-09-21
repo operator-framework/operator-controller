@@ -18,7 +18,9 @@ package main
 
 import (
 	"flag"
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
@@ -35,6 +37,7 @@ import (
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/pkg/features"
@@ -56,14 +59,18 @@ func init() {
 }
 
 func main() {
-	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
+	var (
+		metricsAddr          string
+		enableLeaderElection bool
+		probeAddr            string
+		cachePath            string
+	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -100,7 +107,7 @@ func main() {
 	}
 
 	cl := mgr.GetClient()
-	catalogClient := catalogclient.New(cl)
+	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, &http.Client{Timeout: 10 * time.Second}))
 
 	if err = (&controllers.OperatorReconciler{
 		Client: cl,

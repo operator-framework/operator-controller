@@ -101,16 +101,6 @@ var _ = AfterSuite(func() {
 		err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, &catalogd.Catalog{})
 		g.Expect(errors.IsNotFound(err)).To(BeTrue())
 	}).Should(Succeed())
-
-	// speed up delete without waiting for gc
-	Expect(c.DeleteAllOf(ctx, &catalogd.CatalogMetadata{})).To(Succeed())
-
-	Eventually(func(g Gomega) {
-		// ensure resource cleanup
-		cmd := &catalogd.CatalogMetadataList{}
-		g.Expect(c.List(ctx, cmd)).To(Succeed())
-		g.Expect(cmd.Items).To(BeEmpty())
-	}).Should(Succeed())
 })
 
 // createTestCatalog will create a new catalog on the test cluster, provided
