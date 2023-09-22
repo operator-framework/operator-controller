@@ -12,7 +12,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
@@ -139,12 +138,6 @@ var _ = Describe("Operator Install", func() {
 
 			// Delete the catalog first
 			Expect(c.Delete(ctx, operatorCatalog)).To(Succeed())
-
-			Eventually(func(g Gomega) {
-				// target package should not be present on cluster
-				err := c.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s-%s-%s", operatorCatalog.Name, declcfg.SchemaPackage, pkgName)}, &catalogd.CatalogMetadata{})
-				g.Expect(errors.IsNotFound(err)).To(BeTrue())
-			}).Should(Succeed())
 
 			By("creating the Operator resource")
 			Expect(c.Create(ctx, operator)).To(Succeed())

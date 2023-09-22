@@ -9,7 +9,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.12.1
 	github.com/onsi/gomega v1.27.10
 	github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42
-	github.com/operator-framework/catalogd v0.6.0
+	github.com/operator-framework/catalogd v0.7.0
 	github.com/operator-framework/deppy v0.0.1
 	github.com/operator-framework/operator-registry v1.28.0
 	github.com/operator-framework/rukpak v0.13.0

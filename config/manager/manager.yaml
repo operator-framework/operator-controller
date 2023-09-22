@@ -72,6 +72,9 @@ spec:
         image: controller:latest
         imagePullPolicy: IfNotPresent
         name: manager
+        volumeMounts:
+          - name: cache
+            mountPath: /var/cache
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -97,3 +100,6 @@ spec:
             memory: 64Mi
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
+      volumes:
+        - name: cache
+          emptyDir: {}

@@ -1,8 +1,12 @@
 package client_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,25 +37,27 @@ func TestClient(t *testing.T) {
 	t.Run("Bundles", func(t *testing.T) {
 		for _, tt := range []struct {
 			name        string
-			fakeCatalog func() ([]client.Object, []*catalogmetadata.Bundle)
+			fakeCatalog func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte)
 			wantErr     string
+			fetcher     *MockFetcher
 		}{
 			{
 				name:        "valid catalog",
 				fakeCatalog: defaultFakeCatalog,
+				fetcher:     &MockFetcher{},
+			},
+			{
+				name:        "cache error",
+				fakeCatalog: defaultFakeCatalog,
+				fetcher:     &MockFetcher{shouldError: true},
+				wantErr:     "error fetching catalog contents: mock cache error",
 			},
 			{
 				name: "channel has a ref to a missing bundle",
-				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle) {
-					objs, _ := defaultFakeCatalog()
+				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
+					objs, _, catalogContentMap := defaultFakeCatalog()
 
-					objs = append(objs, &catalogd.CatalogMetadata{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:   "catalog-1-fake1-channel-with-missing-bundle",
-							Labels: map[string]string{"schema": declcfg.SchemaChannel, "catalog": "catalog-1"},
-						},
-						Spec: catalogd.CatalogMetadataSpec{
-							Content: json.RawMessage(`{
+					catalogContentMap["catalog-1"] = append(catalogContentMap["catalog-1"], []byte(`{
 								"schema": "olm.channel",
 								"name": "channel-with-missing-bundle",
 								"package": "fake1",
@@ -60,76 +66,92 @@ func TestClient(t *testing.T) {
 										"name": "fake1.v9.9.9"
 									}
 								]
-							}`),
-						},
-					})
+							}`)...)
 
-					return objs, nil
+					return objs, nil, catalogContentMap
 				},
 				wantErr: `bundle "fake1.v9.9.9" not found in catalog "catalog-1" (package "fake1", channel "channel-with-missing-bundle")`,
+				fetcher: &MockFetcher{},
+			},
+			{
+				name: "invalid meta",
+				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
+					objs, _, catalogContentMap := defaultFakeCatalog()
+
+					catalogContentMap["catalog-1"] = append(catalogContentMap["catalog-1"], []byte(`{"schema": "olm.bundle", "name":123123123}`)...)
+
+					return objs, nil, catalogContentMap
+				},
+				wantErr: `error processing response: error was provided to the WalkMetasReaderFunc: expected value for key "name" to be a string, got %!t(float64=1.23123123e+08): 1.23123123e+08`,
+				fetcher: &MockFetcher{},
 			},
 			{
 				name: "invalid bundle",
-				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle) {
-					objs, _ := defaultFakeCatalog()
+				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
+					objs, _, catalogContentMap := defaultFakeCatalog()
 
-					objs = append(objs, &catalogd.CatalogMetadata{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:   "catalog-1-broken-bundle",
-							Labels: map[string]string{"schema": declcfg.SchemaBundle, "catalog": "catalog-1"},
-						},
-						Spec: catalogd.CatalogMetadataSpec{
-							Content: json.RawMessage(`{"name":123123123}`),
-						},
-					})
+					catalogContentMap["catalog-1"] = append(catalogContentMap["catalog-1"],
+						[]byte(`{"schema": "olm.bundle", "name":"foo", "package":"bar", "image":123123123}`)...)
 
-					return objs, nil
+					return objs, nil, catalogContentMap
 				},
-				wantErr: "error unmarshalling catalog metadata: json: cannot unmarshal number into Go struct field Bundle.name of type string",
+				wantErr: "error processing response: error unmarshalling bundle from catalog metadata: json: cannot unmarshal number into Go struct field Bundle.image of type string",
+				fetcher: &MockFetcher{},
 			},
 			{
 				name: "invalid channel",
-				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle) {
-					objs, _ := defaultFakeCatalog()
+				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
+					objs, _, catalogContentMap := defaultFakeCatalog()
 
-					objs = append(objs, &catalogd.CatalogMetadata{
+					catalogContentMap["catalog-1"] = append(catalogContentMap["catalog-1"],
+						[]byte(`{"schema": "olm.channel", "name":"foo", "package":"bar", "entries":[{"name":123123123}]}`)...)
+
+					return objs, nil, catalogContentMap
+				},
+				wantErr: "error processing response: error unmarshalling channel from catalog metadata: json: cannot unmarshal number into Go struct field ChannelEntry.entries.name of type string",
+				fetcher: &MockFetcher{},
+			},
+			{
+				name: "skip catalog missing Unpacked status condition",
+				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
+					objs, bundles, catalogContentMap := defaultFakeCatalog()
+					objs = append(objs, &catalogd.Catalog{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:   "catalog-1-fake1-broken-channel",
-							Labels: map[string]string{"schema": declcfg.SchemaChannel, "catalog": "catalog-1"},
-						},
-						Spec: catalogd.CatalogMetadataSpec{
-							Content: json.RawMessage(`{"name":123123123}`),
+							Name: "foobar",
 						},
 					})
+					catalogContentMap["foobar"] = catalogContentMap["catalog-1"]
 
-					return objs, nil
+					return objs, bundles, catalogContentMap
 				},
-				wantErr: "error unmarshalling catalog metadata: json: cannot unmarshal number into Go struct field Channel.name of type string",
+				fetcher: &MockFetcher{},
 			},
 		} {
 			t.Run(tt.name, func(t *testing.T) {
 				ctx := context.Background()
-				objs, expectedBundles := tt.fakeCatalog()
+				objs, expectedBundles, catalogContentMap := tt.fakeCatalog()
+				tt.fetcher.contentMap = catalogContentMap
 
 				fakeCatalogClient := catalogClient.New(
 					fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build(),
+					tt.fetcher,
 				)
 
 				bundles, err := fakeCatalogClient.Bundles(ctx)
 				if tt.wantErr == "" {
 					assert.NoError(t, err)
+					assert.Equal(t, expectedBundles, bundles)
 				} else {
 					assert.EqualError(t, err, tt.wantErr)
 				}
-				assert.Equal(t, expectedBundles, bundles)
 			})
 		}
 	})
 }
 
-func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle) {
+func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
 	package1 := `{
-		"schema": "olm.bundle",
+		"schema": "olm.package",
 		"name": "fake1"
 	}`
 
@@ -173,73 +195,28 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "catalog-1",
 			},
+			Status: catalogd.CatalogStatus{
+				Conditions: []metav1.Condition{
+					{
+						Type:   catalogd.TypeUnpacked,
+						Status: metav1.ConditionTrue,
+						Reason: catalogd.ReasonUnpackSuccessful,
+					},
+				},
+			},
 		},
 		&catalogd.Catalog{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "catalog-2",
 			},
-		},
-		&catalogd.CatalogMetadata{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   "catalog-1-fake1",
-				Labels: map[string]string{"schema": declcfg.SchemaPackage, "catalog": "catalog-1"},
-			},
-			Spec: catalogd.CatalogMetadataSpec{
-				Content: json.RawMessage(package1),
-			},
-		},
-		&catalogd.CatalogMetadata{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   "catalog-1-fake1-channel-stable",
-				Labels: map[string]string{"schema": declcfg.SchemaChannel, "catalog": "catalog-1"},
-			},
-			Spec: catalogd.CatalogMetadataSpec{
-				Content: json.RawMessage(stableChannel),
-			},
-		},
-		&catalogd.CatalogMetadata{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   "catalog-1-fake1-channel-beta",
-				Labels: map[string]string{"schema": declcfg.SchemaChannel, "catalog": "catalog-1"},
-			},
-			Spec: catalogd.CatalogMetadataSpec{
-				Content: json.RawMessage(betaChannel),
-			},
-		},
-		&catalogd.CatalogMetadata{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   "catalog-1-fake1-bundle-1",
-				Labels: map[string]string{"schema": declcfg.SchemaBundle, "catalog": "catalog-1"},
-			},
-			Spec: catalogd.CatalogMetadataSpec{
-				Content: json.RawMessage(bundle1),
-			},
-		},
-		&catalogd.CatalogMetadata{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   "catalog-2-fake1",
-				Labels: map[string]string{"schema": declcfg.SchemaPackage, "catalog": "catalog-2"},
-			},
-			Spec: catalogd.CatalogMetadataSpec{
-				Content: json.RawMessage(package1),
-			},
-		},
-		&catalogd.CatalogMetadata{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   "catalog-2-fake1-channel-stable",
-				Labels: map[string]string{"schema": declcfg.SchemaChannel, "catalog": "catalog-2"},
-			},
-			Spec: catalogd.CatalogMetadataSpec{
-				Content: json.RawMessage(stableChannel),
-			},
-		},
-		&catalogd.CatalogMetadata{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   "catalog-2-fake1-bundle-1",
-				Labels: map[string]string{"schema": declcfg.SchemaBundle, "catalog": "catalog-2"},
-			},
-			Spec: catalogd.CatalogMetadataSpec{
-				Content: json.RawMessage(bundle1),
+			Status: catalogd.CatalogStatus{
+				Conditions: []metav1.Condition{
+					{
+						Type:   catalogd.TypeUnpacked,
+						Status: metav1.ConditionTrue,
+						Reason: catalogd.ReasonUnpackSuccessful,
+					},
+				},
 			},
 		},
 	}
@@ -263,7 +240,7 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle) {
 				{
 					Channel: declcfg.Channel{
 						Schema:  declcfg.SchemaChannel,
-						Name:    "beta",
+						Name:    "stable",
 						Package: "fake1",
 						Entries: []declcfg.ChannelEntry{
 							{
@@ -275,7 +252,7 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle) {
 				{
 					Channel: declcfg.Channel{
 						Schema:  declcfg.SchemaChannel,
-						Name:    "stable",
+						Name:    "beta",
 						Package: "fake1",
 						Entries: []declcfg.ChannelEntry{
 							{
@@ -317,5 +294,26 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle) {
 		},
 	}
 
-	return objs, expectedBundles
+	catalogContents := map[string][]byte{
+		"catalog-1": []byte(strings.Join([]string{package1, bundle1, stableChannel, betaChannel}, "\n")),
+		"catalog-2": []byte(strings.Join([]string{package1, bundle1, stableChannel}, "\n")),
+	}
+
+	return objs, expectedBundles, catalogContents
+}
+
+var _ catalogClient.Fetcher = &MockFetcher{}
+
+type MockFetcher struct {
+	contentMap  map[string][]byte
+	shouldError bool
+}
+
+func (mc *MockFetcher) FetchCatalogContents(_ context.Context, catalog *catalogd.Catalog) (io.ReadCloser, error) {
+	if mc.shouldError {
+		return nil, errors.New("mock cache error")
+	}
+
+	data := mc.contentMap[catalog.Name]
+	return io.NopCloser(bytes.NewReader(data)), nil
 }
