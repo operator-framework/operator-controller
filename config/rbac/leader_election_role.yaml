@@ -3,12 +3,8 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   labels:
-    app.kubernetes.io/name: role
-    app.kubernetes.io/instance: leader-election-role
-    app.kubernetes.io/component: rbac
-    app.kubernetes.io/created-by: catalogd
-    app.kubernetes.io/part-of: catalogd
-    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/part-of: olm
+    app.kubernetes.io/name: catalogd
   name: leader-election-role
 rules:
 - apiGroups:
