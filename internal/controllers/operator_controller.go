@@ -26,6 +26,7 @@ import (
 	"github.com/go-logr/logr"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy"
+	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -45,6 +46,7 @@ import (
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
+	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
@@ -52,8 +54,9 @@ import (
 // OperatorReconciler reconciles a Operator object
 type OperatorReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Resolver *solver.DeppySolver
+	Scheme        *runtime.Scheme
+	CatalogClient *catalogclient.Client
+	NewSolver     func(variableSource input.VariableSource) *solver.DeppySolver
 }
 
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators,verbs=get;list;watch
@@ -130,7 +133,8 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		return ctrl.Result{}, nil
 	}
 	// run resolution
-	solution, err := r.Resolver.Solve(ctx)
+	variableSource := NewVariableSource(r.Client, catalogclient.NewSnapshotClient(r.CatalogClient))
+	solution, err := r.NewSolver(variableSource).Solve(ctx)
 	if err != nil {
 		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())

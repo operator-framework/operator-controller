@@ -100,6 +100,34 @@ func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
 	return allBundles, nil
 }
 
+func NewSnapshotClient(catalogClient *Client) *SnapshotClient {
+	return &SnapshotClient{
+		Client: catalogClient,
+	}
+}
+
+// SnapshotClient fetches data from catalogs and caches them for the lifetime of the
+// SnapshotClient instance. Meaning that any change to catalogs after the first call
+// of the client will not affect set of bundles returned by this instance.
+// This is convenient for bundle resolution process where we want all components
+// to have the same view of catalogs.
+type SnapshotClient struct {
+	*Client
+	bundlesSnapshot []*catalogmetadata.Bundle
+}
+
+func (c *SnapshotClient) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error) {
+	if c.bundlesSnapshot == nil {
+		allBundles, err := c.Client.Bundles(ctx)
+		if err != nil {
+			return nil, err
+		}
+		c.bundlesSnapshot = allBundles
+	}
+
+	return c.bundlesSnapshot, nil
+}
+
 func PopulateExtraFields(catalogName string, channels []*catalogmetadata.Channel, bundles []*catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error) {
 	bundlesMap := map[string]*catalogmetadata.Bundle{}
 	for i := range bundles {

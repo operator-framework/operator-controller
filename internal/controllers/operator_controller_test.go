@@ -7,6 +7,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
@@ -37,9 +38,13 @@ var _ = Describe("Operator Controller Test", func() {
 		ctx = context.Background()
 		fakeCatalogClient = testutil.NewFakeCatalogClient(testBundleList)
 		reconciler = &controllers.OperatorReconciler{
-			Client:   cl,
-			Scheme:   sch,
-			Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
+			Client: cl,
+			Scheme: sch,
+			NewSolver: func(variableSource input.VariableSource) *solver.DeppySolver {
+				return solver.NewDeppySolver(
+					controllers.NewVariableSource(cl, &fakeCatalogClient),
+				)
+			},
 		}
 	})
 	When("the operator does not exist", func() {

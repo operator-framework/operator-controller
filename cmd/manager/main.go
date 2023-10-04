@@ -110,11 +110,10 @@ func main() {
 	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, &http.Client{Timeout: 10 * time.Second}))
 
 	if err = (&controllers.OperatorReconciler{
-		Client: cl,
-		Scheme: mgr.GetScheme(),
-		Resolver: solver.NewDeppySolver(
-			controllers.NewVariableSource(cl, catalogClient),
-		),
+		Client:        cl,
+		Scheme:        mgr.GetScheme(),
+		CatalogClient: catalogClient,
+		NewSolver:     solver.NewDeppySolver,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)
