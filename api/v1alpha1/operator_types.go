@@ -22,6 +22,22 @@ import (
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 )
 
+type UpgradeConstraintPolicy string
+
+const (
+	// The operator will only upgrade if the new version satisfies
+	// the upgrade constraints set by the package author.
+	UpgradeConstraintPolicyEnforce UpgradeConstraintPolicy = "Enforce"
+
+	// Unsafe option which allows an operator to be
+	// upgraded or downgraded to any available version of the package and
+	// ignore the upgrade path designed by package authors.
+	// This assumes that users independently verify the outcome of the changes.
+	// Use with caution as this can lead to unknown and potentially
+	// disastrous results such as data loss.
+	UpgradeConstraintPolicyIgnore UpgradeConstraintPolicy = "Ignore"
+)
+
 // OperatorSpec defines the desired state of Operator
 type OperatorSpec struct {
 	//+kubebuilder:validation:MaxLength:=48
@@ -42,6 +58,13 @@ type OperatorSpec struct {
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
 	// Channel constraint definition
 	Channel string `json:"channel,omitempty"`
+
+	//+kubebuilder:validation:Enum:=Enforce;Ignore
+	//+kubebuilder:default:=Enforce
+	//+kubebuilder:Optional
+	//
+	// Defines the policy for how to handle upgrade constraints
+	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 }
 
 const (
