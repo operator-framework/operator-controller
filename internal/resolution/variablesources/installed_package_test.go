@@ -121,6 +121,27 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 	const bundleImage = "registry.io/repo/test-package@v2.0.0"
 	fakeCatalogClient := testutil.NewFakeCatalogClient(bundleList)
 
+	t.Run("with ForceSemverUpgradeConstraints feature gate enabled", func(t *testing.T) {
+		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
+
+		ipvs, err := variablesources.NewInstalledPackageVariableSource(&fakeCatalogClient, bundleImage)
+		require.NoError(t, err)
+
+		variables, err := ipvs.GetVariables(context.TODO())
+		require.NoError(t, err)
+		require.Len(t, variables, 1)
+		packageVariable, ok := variables[0].(*olmvariables.InstalledPackageVariable)
+		assert.True(t, ok)
+		assert.Equal(t, deppy.IdentifierFromString("installed package test-package"), packageVariable.Identifier())
+
+		// ensure bundles are in version order (high to low)
+		bundles := packageVariable.Bundles()
+		require.Len(t, bundles, 3)
+		assert.Equal(t, "test-package.v2.2.0", packageVariable.Bundles()[0].Name)
+		assert.Equal(t, "test-package.v2.1.0", packageVariable.Bundles()[1].Name)
+		assert.Equal(t, "test-package.v2.0.0", packageVariable.Bundles()[2].Name)
+	})
+
 	t.Run("with ForceSemverUpgradeConstraints feature gate disabled", func(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
 
