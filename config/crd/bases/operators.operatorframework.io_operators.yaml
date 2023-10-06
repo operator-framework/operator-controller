@@ -43,6 +43,13 @@ spec:
                 maxLength: 48
                 pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
                 type: string
+              upgradeConstraintPolicy:
+                default: Enforce
+                description: Defines the policy for how to handle upgrade constraints
+                enum:
+                - Enforce
+                - Ignore
+                type: string
               version:
                 description: "Version is an optional semver constraint on the package
                   version. If not specified, the latest version available of the package
