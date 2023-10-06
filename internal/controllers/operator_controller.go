@@ -47,6 +47,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
+	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
 // OperatorReconciler reconciles a Operator object
@@ -179,9 +180,15 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
 	}
+
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
 	// image we just looked up in the solution.
-	dep := r.generateExpectedBundleDeployment(*op, bundle.Image, bundleProvisioner)
+	dep, err := r.generateExpectedBundleDeployment(*op, bundle, bundleProvisioner)
+	if err != nil {
+		op.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		return ctrl.Result{}, err
+	}
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
 		// originally Reason: operatorsv1alpha1.ReasonInstallationFailed
 		op.Status.InstalledBundleResource = ""
@@ -264,18 +271,28 @@ func (r *OperatorReconciler) bundleFromSolution(solution *solver.Solution, packa
 	return nil, fmt.Errorf("bundle for package %q not found in solution", packageName)
 }
 
-func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {
+func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundle *catalogmetadata.Bundle, bundleProvisioner string) (*unstructured.Unstructured, error) {
 	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
 	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
 	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
 	// unstructured ensures that the patch contains only what is specified. Using unstructured like this is basically
 	// identical to "kubectl apply -f"
 
+	bundleVersion, err := bundle.Version()
+	if err != nil {
+		return nil, err
+	}
+
 	bd := &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": rukpakv1alpha1.GroupVersion.String(),
 		"kind":       rukpakv1alpha1.BundleDeploymentKind,
 		"metadata": map[string]interface{}{
 			"name": o.GetName(),
+			"labels": map[string]string{
+				variablesources.LabelPackageName:   bundle.Package,
+				variablesources.LabelBundleName:    bundle.Name,
+				variablesources.LabelBundleVersion: bundleVersion.String(),
+			},
 		},
 		"spec": map[string]interface{}{
 			// TODO: Don't assume plain provisioner
@@ -287,7 +304,7 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 						// TODO: Don't assume image type
 						"type": string(rukpakv1alpha1.SourceTypeImage),
 						"image": map[string]interface{}{
-							"ref": bundlePath,
+							"ref": bundle.Image,
 						},
 					},
 				},
@@ -304,7 +321,7 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 			BlockOwnerDeletion: pointer.Bool(true),
 		},
 	})
-	return bd
+	return bd, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -31,10 +31,15 @@ func BundleDeploymentFakeClient(objects ...client.Object) client.Client {
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objects...).Build()
 }
 
-func bundleDeployment(name, image string) *rukpakv1alpha1.BundleDeployment {
+func bundleDeployment(pkgName, bundleName, bundleVersion, image string) *rukpakv1alpha1.BundleDeployment {
 	return &rukpakv1alpha1.BundleDeployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name: pkgName,
+			Labels: map[string]string{
+				variablesources.LabelPackageName:   pkgName,
+				variablesources.LabelBundleName:    bundleName,
+				variablesources.LabelBundleVersion: bundleVersion,
+			},
 		},
 		Spec: rukpakv1alpha1.BundleDeploymentSpec{
 			ProvisionerClassName: "core-rukpak-io-plain",
@@ -115,10 +120,10 @@ var _ = Describe("BundleDeploymentVariableSource", func() {
 		fakeCatalogClient = testutil.NewFakeCatalogClient(testBundleList)
 	})
 
-	It("should produce RequiredPackage variables", func() {
-		cl := BundleDeploymentFakeClient(bundleDeployment("prometheus", "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"))
+	It("should produce InstalledPackage variables", func() {
+		cl := BundleDeploymentFakeClient(bundleDeployment("prometheus", "operatorhub/prometheus/0.37.0", "0.37.0", "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"))
 
-		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(cl, &fakeCatalogClient, &MockRequiredPackageSource{})
+		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(cl, &fakeCatalogClient, &MockVariableSource{})
 		variables, err := bdVariableSource.GetVariables(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
@@ -136,11 +141,21 @@ var _ = Describe("BundleDeploymentVariableSource", func() {
 			deppy.IdentifierFromString("installed package prometheus"): 2,
 		})))
 	})
-	It("should return an error if the bundleDeployment image doesn't match any operator resource", func() {
-		cl := BundleDeploymentFakeClient(bundleDeployment("prometheus", "quay.io/operatorhubio/prometheus@sha256:nonexistent"))
+	It("should not produce InstalledPackage variables when annotations on BundleDeployment are not set", func() {
+		cl := BundleDeploymentFakeClient(bundleDeployment("prometheus", "", "", "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"))
 
-		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(cl, &fakeCatalogClient, &MockRequiredPackageSource{})
+		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(cl, &fakeCatalogClient, &MockVariableSource{})
+		variables, err := bdVariableSource.GetVariables(context.Background())
+		Expect(err).ToNot(HaveOccurred())
+
+		installedPackageVariable := filterVariables[*olmvariables.InstalledPackageVariable](variables)
+		Expect(installedPackageVariable).To(BeEmpty())
+	})
+	It("should return an error if the bundleDeployment image doesn't match any operator resource", func() {
+		cl := BundleDeploymentFakeClient(bundleDeployment("prometheus", "operatorhub/prometheus/9.9.9", "9.9.9", "quay.io/operatorhubio/prometheus@sha256:nonexistent"))
+
+		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(cl, &fakeCatalogClient, &MockVariableSource{})
 		_, err := bdVariableSource.GetVariables(context.Background())
-		Expect(err.Error()).To(Equal("bundleImage \"quay.io/operatorhubio/prometheus@sha256:nonexistent\" not found"))
+		Expect(err).To(MatchError(`bundle for package "prometheus" with name "operatorhub/prometheus/9.9.9" at version "9.9.9" not found`))
 	})
 })

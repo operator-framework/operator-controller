@@ -9,6 +9,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	LabelPackageName   = "operators.operatorframework.io/package-name"
+	LabelBundleName    = "operators.operatorframework.io/bundle-name"
+	LabelBundleVersion = "operators.operatorframework.io/bundle-version"
+)
+
 var _ input.VariableSource = &BundleDeploymentVariableSource{}
 
 type BundleDeploymentVariableSource struct {
@@ -36,20 +42,15 @@ func (o *BundleDeploymentVariableSource) GetVariables(ctx context.Context) ([]de
 		return nil, err
 	}
 
-	processed := map[string]struct{}{}
 	for _, bundleDeployment := range bundleDeployments.Items {
-		sourceImage := bundleDeployment.Spec.Template.Spec.Source.Image
-		if sourceImage != nil && sourceImage.Ref != "" {
-			if _, ok := processed[sourceImage.Ref]; ok {
-				continue
-			}
-			processed[sourceImage.Ref] = struct{}{}
-			ips, err := NewInstalledPackageVariableSource(o.catalogClient, bundleDeployment.Spec.Template.Spec.Source.Image.Ref)
-			if err != nil {
-				return nil, err
-			}
-			variableSources = append(variableSources, ips)
+		pkgName := bundleDeployment.Labels[LabelPackageName]
+		bundleName := bundleDeployment.Labels[LabelBundleName]
+		bundleVersion := bundleDeployment.Labels[LabelBundleVersion]
+		if pkgName == "" || bundleName == "" || bundleVersion == "" {
+			continue
 		}
+		ips := NewInstalledPackageVariableSource(o.catalogClient, pkgName, bundleName, bundleVersion)
+		variableSources = append(variableSources, ips)
 	}
 
 	return variableSources.GetVariables(ctx)

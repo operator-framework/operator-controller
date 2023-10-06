@@ -118,14 +118,15 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 		},
 	}
 
-	const bundleImage = "registry.io/repo/test-package@v2.0.0"
 	fakeCatalogClient := testutil.NewFakeCatalogClient(bundleList)
 
 	t.Run("with ForceSemverUpgradeConstraints feature gate disabled", func(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
 
-		ipvs, err := variablesources.NewInstalledPackageVariableSource(&fakeCatalogClient, bundleImage)
-		require.NoError(t, err)
+		pkgName := "test-package"
+		bundleName := "test-package.v2.0.0"
+		bundleVersion := "2.0.0"
+		ipvs := variablesources.NewInstalledPackageVariableSource(&fakeCatalogClient, pkgName, bundleName, bundleVersion)
 
 		variables, err := ipvs.GetVariables(context.TODO())
 		require.NoError(t, err)

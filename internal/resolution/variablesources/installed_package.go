@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	mmsemver "github.com/Masterminds/semver/v3"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
@@ -19,7 +20,9 @@ var _ input.VariableSource = &InstalledPackageVariableSource{}
 type InstalledPackageVariableSource struct {
 	catalogClient BundleProvider
 	successors    successorsFunc
-	bundleImage   string
+	pkgName       string
+	bundleName    string
+	bundleVersion string
 }
 
 func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
@@ -28,18 +31,23 @@ func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context) ([]de
 		return nil, err
 	}
 
-	// find corresponding bundle for the installed content
-	resultSet := catalogfilter.Filter(allBundles, catalogfilter.WithBundleImage(r.bundleImage))
-	if len(resultSet) == 0 {
-		return nil, r.notFoundError()
+	vr, err := mmsemver.NewConstraint(r.bundleVersion)
+	if err != nil {
+		return nil, err
 	}
 
-	// TODO: fast follow - we should check whether we are already supporting the channel attribute in the operator spec.
-	//       if so, we should take the value from spec of the operator CR in the owner ref of the bundle deployment.
-	//       If that channel is set, we need to update the filter above to filter by channel as well.
-	sort.SliceStable(resultSet, func(i, j int) bool {
-		return catalogsort.ByVersion(resultSet[i], resultSet[j])
-	})
+	// find corresponding bundle for the installed content
+	resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(
+		catalogfilter.WithPackageName(r.pkgName),
+		catalogfilter.WithName(r.bundleName),
+		catalogfilter.InMastermindsSemverRange(vr),
+	))
+	if len(resultSet) == 0 {
+		return nil, fmt.Errorf("bundle for package %q with name %q at version %q not found", r.pkgName, r.bundleName, r.bundleVersion)
+	}
+	if len(resultSet) > 1 {
+		return nil, fmt.Errorf("more than one bundle for package %q with name %q at version %q found", r.pkgName, r.bundleName, r.bundleVersion)
+	}
 	installedBundle := resultSet[0]
 
 	upgradeEdges, err := r.successors(allBundles, installedBundle)
@@ -54,16 +62,14 @@ func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context) ([]de
 	}, nil
 }
 
-func (r *InstalledPackageVariableSource) notFoundError() error {
-	return fmt.Errorf("bundleImage %q not found", r.bundleImage)
-}
-
-func NewInstalledPackageVariableSource(catalogClient BundleProvider, bundleImage string) (*InstalledPackageVariableSource, error) {
+func NewInstalledPackageVariableSource(catalogClient BundleProvider, pkgName, bundleName, bundleVersion string) *InstalledPackageVariableSource {
 	return &InstalledPackageVariableSource{
 		catalogClient: catalogClient,
-		bundleImage:   bundleImage,
 		successors:    legacySemanticsSuccessors,
-	}, nil
+		pkgName:       pkgName,
+		bundleName:    bundleName,
+		bundleVersion: bundleVersion,
+	}
 }
 
 // successorsFunc must return successors of a currently installed bundle

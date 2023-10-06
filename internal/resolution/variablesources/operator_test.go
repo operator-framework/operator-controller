@@ -116,7 +116,7 @@ var _ = Describe("OperatorVariableSource", func() {
 	It("should produce RequiredPackage variables", func() {
 		cl := FakeClient(operator("prometheus"), operator("packageA"))
 		fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-		opVariableSource := variablesources.NewOperatorVariableSource(cl, &fakeCatalogClient, &MockRequiredPackageSource{})
+		opVariableSource := variablesources.NewOperatorVariableSource(cl, &fakeCatalogClient, &MockVariableSource{})
 		variables, err := opVariableSource.GetVariables(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 

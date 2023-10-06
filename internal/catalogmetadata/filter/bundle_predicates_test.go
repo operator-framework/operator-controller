@@ -26,6 +26,18 @@ func TestWithPackageName(t *testing.T) {
 	assert.False(t, f(b3))
 }
 
+func TestWithName(t *testing.T) {
+	b1 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{Name: "package1.v1"}}
+	b2 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{Name: "package2.v1"}}
+	b3 := &catalogmetadata.Bundle{}
+
+	f := filter.WithName("package1.v1")
+
+	assert.True(t, f(b1))
+	assert.False(t, f(b2))
+	assert.False(t, f(b3))
+}
+
 func TestInMastermindsSemverRange(t *testing.T) {
 	b1 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
 		Properties: []property.Property{
@@ -108,18 +120,6 @@ func TestInChannel(t *testing.T) {
 	b3 := &catalogmetadata.Bundle{}
 
 	f := filter.InChannel("stable")
-
-	assert.True(t, f(b1))
-	assert.False(t, f(b2))
-	assert.False(t, f(b3))
-}
-
-func TestWithBundleImage(t *testing.T) {
-	b1 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{Image: "fake-image-uri-1"}}
-	b2 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{Image: "fake-image-uri-2"}}
-	b3 := &catalogmetadata.Bundle{}
-
-	f := filter.WithBundleImage("fake-image-uri-1")
 
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))

@@ -13,6 +13,12 @@ func WithPackageName(packageName string) Predicate[catalogmetadata.Bundle] {
 	}
 }
 
+func WithName(bundleName string) Predicate[catalogmetadata.Bundle] {
+	return func(bundle *catalogmetadata.Bundle) bool {
+		return bundle.Name == bundleName
+	}
+}
+
 func InMastermindsSemverRange(semverRange *mmsemver.Constraints) Predicate[catalogmetadata.Bundle] {
 	return func(bundle *catalogmetadata.Bundle) bool {
 		bVersion, err := bundle.Version()
@@ -49,12 +55,6 @@ func InChannel(channelName string) Predicate[catalogmetadata.Bundle] {
 			}
 		}
 		return false
-	}
-}
-
-func WithBundleImage(bundleImage string) Predicate[catalogmetadata.Bundle] {
-	return func(bundle *catalogmetadata.Bundle) bool {
-		return bundle.Image == bundleImage
 	}
 }
 

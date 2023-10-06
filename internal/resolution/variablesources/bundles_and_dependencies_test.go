@@ -225,7 +225,7 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 		fakeCatalogClient = testutil.NewFakeCatalogClient(testBundleList)
 		bdvs = variablesources.NewBundlesAndDepsVariableSource(
 			&fakeCatalogClient,
-			&MockRequiredPackageSource{
+			&MockVariableSource{
 				ResultSet: []deppy.Variable{
 					// must match data in fakeCatalogClient
 					olmvariables.NewRequiredPackageVariable("test-package", []*catalogmetadata.Bundle{
@@ -257,7 +257,7 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 					}),
 				},
 			},
-			&MockRequiredPackageSource{
+			&MockVariableSource{
 				ResultSet: []deppy.Variable{
 					// must match data in fakeCatalogClient
 					olmvariables.NewRequiredPackageVariable("test-package-2", []*catalogmetadata.Bundle{
@@ -339,7 +339,7 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 
 		bdvs = variablesources.NewBundlesAndDepsVariableSource(
 			&emptyCatalogClient,
-			&MockRequiredPackageSource{
+			&MockVariableSource{
 				ResultSet: []deppy.Variable{
 					// must match data in fakeCatalogClient
 					olmvariables.NewRequiredPackageVariable("test-package", []*catalogmetadata.Bundle{
@@ -380,7 +380,7 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 	It("should return error if an inner variable source returns an error", func() {
 		bdvs = variablesources.NewBundlesAndDepsVariableSource(
 			&fakeCatalogClient,
-			&MockRequiredPackageSource{Error: errors.New("fake error")},
+			&MockVariableSource{Error: errors.New("fake error")},
 		)
 		_, err := bdvs.GetVariables(context.TODO())
 		Expect(err).To(HaveOccurred())
@@ -388,12 +388,12 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 	})
 })
 
-type MockRequiredPackageSource struct {
+type MockVariableSource struct {
 	ResultSet []deppy.Variable
 	Error     error
 }
 
-func (m *MockRequiredPackageSource) GetVariables(_ context.Context) ([]deppy.Variable, error) {
+func (m *MockVariableSource) GetVariables(_ context.Context) ([]deppy.Variable, error) {
 	return m.ResultSet, m.Error
 }
 
