@@ -20,8 +20,8 @@ export XDG_DATA_HOME ?= /tmp/.local/share
 include .bingo/Variables.mk
 
 # ARTIFACT_PATH is the absolute path to the directory where the operator-controller e2e tests will store the artifacts
-# for example: ARTIFACT_PATH=/tmp/artifacts make test 
-export ARTIFACT_PATH ?= 
+# for example: ARTIFACT_PATH=/tmp/artifacts make test
+export ARTIFACT_PATH ?=
 
 OPERATOR_CONTROLLER_NAMESPACE ?= operator-controller-system
 KIND_CLUSTER_NAME ?= operator-controller
@@ -156,11 +156,19 @@ kind-load-test-artifacts: $(KIND) #EXHELP Load the e2e testdata container images
 	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/registry-v1/prometheus-operator.v0.37.0 -t localhost/testdata/bundles/registry-v1/prometheus-operator:v0.37.0
 	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/registry-v1/prometheus-operator.v0.47.0 -t localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0
 	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/registry-v1/prometheus-operator.v0.65.1 -t localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1
+	$(CONTAINER_RUNTIME) tag localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1 localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0
+	$(CONTAINER_RUNTIME) tag localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1 localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.1
+	$(CONTAINER_RUNTIME) tag localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1 localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0
+	$(CONTAINER_RUNTIME) tag localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1 localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0
 	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/plain-v0/plain.v0.1.0 -t localhost/testdata/bundles/plain-v0/plain:v0.1.0
 	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/catalogs -f $(TESTDATA_DIR)/catalogs/test-catalog.Dockerfile -t localhost/testdata/catalogs/test-catalog:e2e
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v0.37.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1 --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0 --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.1 --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0 --name $(KIND_CLUSTER_NAME)
+	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/plain-v0/plain:v0.1.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/catalogs/test-catalog:e2e --name $(KIND_CLUSTER_NAME)
 
