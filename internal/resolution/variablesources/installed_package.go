@@ -8,6 +8,7 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	"github.com/operator-framework/operator-controller/internal/resolution/variables"
@@ -17,6 +18,7 @@ var _ input.VariableSource = &InstalledPackageVariableSource{}
 
 type InstalledPackageVariableSource struct {
 	catalogClient BundleProvider
+	successors    successorsFunc
 	bundleImage   string
 }
 
@@ -40,13 +42,10 @@ func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context) ([]de
 	})
 	installedBundle := resultSet[0]
 
-	// now find the bundles that replace the installed bundle
-	// TODO: this algorithm does not yet consider skips and skipRange
-	//       we simplify the process here by just searching for the bundle that replaces the installed bundle
-	upgradeEdges := catalogfilter.Filter(allBundles, catalogfilter.Replaces(installedBundle.Name))
-	sort.SliceStable(upgradeEdges, func(i, j int) bool {
-		return catalogsort.ByVersion(upgradeEdges[i], upgradeEdges[j])
-	})
+	upgradeEdges, err := r.successors(allBundles, installedBundle)
+	if err != nil {
+		return nil, err
+	}
 
 	// you can always upgrade to yourself, i.e. not upgrade
 	upgradeEdges = append(upgradeEdges, installedBundle)
@@ -63,5 +62,24 @@ func NewInstalledPackageVariableSource(catalogClient BundleProvider, bundleImage
 	return &InstalledPackageVariableSource{
 		catalogClient: catalogClient,
 		bundleImage:   bundleImage,
+		successors:    legacySemanticsSuccessors,
 	}, nil
+}
+
+// successorsFunc must return successors of a currently installed bundle
+// from a list of all bundles provided to the function.
+// Must not return installed bundle as a successor
+type successorsFunc func(allBundles []*catalogmetadata.Bundle, installedBundle *catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error)
+
+// legacySemanticsSuccessors returns successors based on legacy OLMv0 semantics
+// which rely on Replaces, Skips and skipRange.
+func legacySemanticsSuccessors(allBundles []*catalogmetadata.Bundle, installedBundle *catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error) {
+	// find the bundles that replace the bundle provided
+	// TODO: this algorithm does not yet consider skips and skipRange
+	upgradeEdges := catalogfilter.Filter(allBundles, catalogfilter.Replaces(installedBundle.Name))
+	sort.SliceStable(upgradeEdges, func(i, j int) bool {
+		return catalogsort.ByVersion(upgradeEdges[i], upgradeEdges[j])
+	})
+
+	return upgradeEdges, nil
 }
