@@ -73,16 +73,14 @@ spec:
         - ./manager
         args:
         - --leader-elect
-        - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
-        - --catalogs-storage-dir=/var/cache/catalogs
         - --feature-gates=HTTPServer=true
         - --http-external-address=http://catalogd-catalogserver.catalogd-system.svc
         image: controller:latest
         name: manager
         volumeMounts:
-            - name: catalog-cache
-              mountPath: /var/cache/catalogs
+            - name: cache
+              mountPath: /var/cache/
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -108,5 +106,5 @@ spec:
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
       volumes:
-        - name: catalog-cache
+        - name: cache
           emptyDir: {}

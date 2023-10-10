@@ -17,25 +17,31 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	"k8s.io/client-go/metadata"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/sets"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
+	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
 
 	"github.com/operator-framework/catalogd/internal/source"
@@ -56,6 +62,8 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+const storageDir = "catalogs"
+
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
@@ -68,25 +76,22 @@ func main() {
 		metricsAddr          string
 		enableLeaderElection bool
 		probeAddr            string
-		unpackImage          string
 		profiling            bool
 		catalogdVersion      bool
 		systemNamespace      string
-		storageDir           string
 		catalogServerAddr    string
 		httpExternalAddr     string
+		cacheDir             string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	// TODO: should we move the unpacker to some common place? Or... hear me out... should catalogd just be a rukpak provisioner?
-	flag.StringVar(&unpackImage, "unpack-image", "quay.io/operator-framework/rukpak:v0.12.0", "The unpack image to use when unpacking catalog images")
 	flag.StringVar(&systemNamespace, "system-namespace", "", "The namespace catalogd uses for internal state, configuration, and workloads")
-	flag.StringVar(&storageDir, "catalogs-storage-dir", "/var/cache/catalogs", "The directory in the filesystem where unpacked catalog content will be stored and served from")
 	flag.StringVar(&catalogServerAddr, "catalogs-server-addr", ":8083", "The address where the unpacked catalogs' content will be accessible")
 	flag.StringVar(&httpExternalAddr, "http-external-address", "http://catalogd-catalogserver.catalogd-system.svc", "The external address at which the http server is reachable.")
+	flag.StringVar(&cacheDir, "cache-dir", "/var/cache/", "The directory in the filesystem that catalogd will use for file based caching")
 	flag.BoolVar(&profiling, "profiling", false, "enable profiling endpoints to allow for using pprof")
 	flag.BoolVar(&catalogdVersion, "version", false, "print the catalogd version and exit")
 	opts := zap.Options{
@@ -105,8 +110,8 @@ func main() {
 	}
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	cfg := ctrl.GetConfigOrDie()
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
 		Port:                   9443,
@@ -123,7 +128,12 @@ func main() {
 		systemNamespace = podNamespace()
 	}
 
-	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, unpackImage)
+	if err := os.MkdirAll(cacheDir, 0700); err != nil {
+		setupLog.Error(err, "unable to create cache directory")
+		os.Exit(1)
+	}
+
+	unpacker, err := source.NewDefaultUnpacker(systemNamespace, cacheDir)
 	if err != nil {
 		setupLog.Error(err, "unable to create unpacker")
 		os.Exit(1)
@@ -133,7 +143,8 @@ func main() {
 	if features.CatalogdFeatureGate.Enabled(features.HTTPServer) {
 		metrics.Registry.MustRegister(catalogdmetrics.RequestDurationMetric)
 
-		if err := os.MkdirAll(storageDir, 0700); err != nil {
+		storeDir := filepath.Join(cacheDir, storageDir)
+		if err := os.MkdirAll(storeDir, 0700); err != nil {
 			setupLog.Error(err, "unable to create storage directory for catalogs")
 			os.Exit(1)
 		}
@@ -143,7 +154,8 @@ func main() {
 			setupLog.Error(err, "unable to create base storage URL")
 			os.Exit(1)
 		}
-		localStorage = storage.LocalDir{RootDir: storageDir, BaseURL: baseStorageURL}
+
+		localStorage = storage.LocalDir{RootDir: storeDir, BaseURL: baseStorageURL}
 		shutdownTimeout := 30 * time.Second
 		catalogServer := server.Server{
 			Kind: "catalogs",
@@ -189,8 +201,20 @@ func main() {
 		}
 	}
 
+	metaClient, err := metadata.NewForConfig(cfg)
+	if err != nil {
+		setupLog.Error(err, "unable to setup client for garbage collection")
+		os.Exit(1)
+	}
+
+	ctx := ctrl.SetupSignalHandler()
+	if err := unpackStartupGarbageCollection(ctx, filepath.Join(cacheDir, source.UnpackCacheDir), setupLog, metaClient); err != nil {
+		setupLog.Error(err, "running garbage collection")
+		os.Exit(1)
+	}
+
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
@@ -202,4 +226,33 @@ func podNamespace() string {
 		return "catalogd-system"
 	}
 	return string(namespace)
+}
+
+func unpackStartupGarbageCollection(ctx context.Context, cachePath string, log logr.Logger, metaClient metadata.Interface) error {
+	getter := metaClient.Resource(v1alpha1.GroupVersion.WithResource("catalogs"))
+	metaList, err := getter.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("error listing catalogs: %w", err)
+	}
+
+	expectedCatalogs := sets.New[string]()
+	for _, meta := range metaList.Items {
+		expectedCatalogs.Insert(meta.GetName())
+	}
+
+	cacheDirEntries, err := os.ReadDir(cachePath)
+	if err != nil {
+		return fmt.Errorf("error reading cache directory: %w", err)
+	}
+	for _, cacheDirEntry := range cacheDirEntries {
+		if cacheDirEntry.IsDir() && expectedCatalogs.Has(cacheDirEntry.Name()) {
+			continue
+		}
+		if err := os.RemoveAll(filepath.Join(cachePath, cacheDirEntry.Name())); err != nil {
+			return fmt.Errorf("error removing cache directory entry %q: %w  ", cacheDirEntry.Name(), err)
+		}
+
+		log.Info("deleted unexpected cache directory entry", "path", cacheDirEntry.Name(), "isDir", cacheDirEntry.IsDir())
+	}
+	return nil
 }

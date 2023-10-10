@@ -48,6 +48,14 @@ func (ms *MockSource) Unpack(_ context.Context, _ *v1alpha1.Catalog) (*source.Re
 	return ms.result, nil
 }
 
+func (ms *MockSource) Cleanup(_ context.Context, _ *v1alpha1.Catalog) error {
+	if ms.shouldError {
+		return errors.New("mocksource error")
+	}
+
+	return nil
+}
+
 var _ storage.Instance = &MockStore{}
 
 type MockStore struct {

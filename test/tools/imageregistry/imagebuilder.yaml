@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko
+  namespace: catalogd-e2e
+spec:
+  template:
+    spec:
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args: ["--dockerfile=/workspace/test-catalog.Dockerfile",
+                "--context=/workspace/",
+                "--destination=docker-registry.catalogd-e2e.svc:5000/test-catalog:e2e"]
+        volumeMounts:
+          - name: certs
+            mountPath: /etc/ssl/certs/
+            readOnly: true
+          - name: dockerfile
+            mountPath: /workspace/
+          - name: build-contents
+            mountPath: /workspace/test-catalog/
+      restartPolicy: Never
+      volumes:
+        - name: dockerfile
+          configMap:
+            name: catalogd-e2e.dockerfile
+            items:
+              - key: test-catalog.Dockerfile
+                path: test-catalog.Dockerfile
+        - name: build-contents
+          configMap:
+            name: catalogd-e2e.build-contents
+        - name: certs
+          configMap:
+            name: regcerts
+            defaultMode: 0644
+            optional: false
+            items:
+              - key: ca-certificates.crt
+                path: ca-certificates.crt

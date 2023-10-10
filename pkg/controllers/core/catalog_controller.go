@@ -18,6 +18,7 @@ package core
 
 import (
 	"context" // #nosec
+	"errors"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
@@ -32,6 +33,7 @@ import (
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/catalogd/internal/source"
+	catalogderrors "github.com/operator-framework/catalogd/pkg/errors"
 	"github.com/operator-framework/catalogd/pkg/features"
 	"github.com/operator-framework/catalogd/pkg/storage"
 )
@@ -50,6 +52,7 @@ type CatalogReconciler struct {
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=create;update;patch;delete;get;list;watch
 //+kubebuilder:rbac:groups=core,resources=pods/log,verbs=get;list;watch
+//+kubebuilder:rbac:groups=core,namespace=system,resources=secrets,verbs=get;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -66,6 +69,11 @@ func (r *CatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	reconciledCatsrc := existingCatsrc.DeepCopy()
 	res, reconcileErr := r.reconcile(ctx, reconciledCatsrc)
+
+	var unrecov *catalogderrors.Unrecoverable
+	if errors.As(reconcileErr, &unrecov) {
+		reconcileErr = nil
+	}
 
 	// Update the status subresource before updating the main object. This is
 	// necessary because, in many cases, the main object update will remove the
@@ -110,6 +118,9 @@ func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.Cat
 	}
 	if features.CatalogdFeatureGate.Enabled(features.HTTPServer) && !catalog.DeletionTimestamp.IsZero() {
 		if err := r.Storage.Delete(catalog.Name); err != nil {
+			return ctrl.Result{}, updateStatusStorageDeleteError(&catalog.Status, err)
+		}
+		if err := r.Unpacker.Cleanup(ctx, catalog); err != nil {
 			return ctrl.Result{}, updateStatusStorageDeleteError(&catalog.Status, err)
 		}
 		controllerutil.RemoveFinalizer(catalog, fbcDeletionFinalizer)

@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-
-	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/cluster"
+	"os"
+	"path"
 
 	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
 )
@@ -33,6 +32,7 @@ import (
 // file tree and delegate catalog format concerns to catalog parsers.
 type Unpacker interface {
 	Unpack(context.Context, *catalogdv1alpha1.Catalog) (*Result, error)
+	Cleanup(context.Context, *catalogdv1alpha1.Catalog) error
 }
 
 // Result conveys progress information about unpacking catalog content.
@@ -93,23 +93,33 @@ func (s *unpacker) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Catalog
 	return source.Unpack(ctx, catalog)
 }
 
+// TODO: Generalize the cleanup logic for the Unpacker so that cleanup
+// logic isn't specific to individual source types.
+func (s *unpacker) Cleanup(ctx context.Context, catalog *catalogdv1alpha1.Catalog) error {
+	source, ok := s.sources[catalog.Spec.Source.Type]
+	if !ok {
+		return fmt.Errorf("source type %q not supported", catalog.Spec.Source.Type)
+	}
+	return source.Cleanup(ctx, catalog)
+}
+
+const UnpackCacheDir = "unpack"
+
 // NewDefaultUnpacker returns a new composite Source that unpacks catalogs using
 // a default source mapping with built-in implementations of all of the supported
 // source types.
 //
 // TODO: refactor NewDefaultUnpacker due to growing parameter list
-func NewDefaultUnpacker(systemNsCluster cluster.Cluster, namespace, unpackImage string) (Unpacker, error) {
-	cfg := systemNsCluster.GetConfig()
-	kubeClient, err := kubernetes.NewForConfig(cfg)
-	if err != nil {
-		return nil, err
+func NewDefaultUnpacker(namespace, cacheDir string) (Unpacker, error) {
+	unpackPath := path.Join(cacheDir, UnpackCacheDir)
+	if err := os.MkdirAll(unpackPath, 0700); err != nil {
+		return nil, fmt.Errorf("creating unpack cache directory: %w", err)
 	}
+
 	return NewUnpacker(map[catalogdv1alpha1.SourceType]Unpacker{
-		catalogdv1alpha1.SourceTypeImage: &Image{
-			Client:       systemNsCluster.GetClient(),
-			KubeClient:   kubeClient,
-			PodNamespace: namespace,
-			UnpackImage:  unpackImage,
+		catalogdv1alpha1.SourceTypeImage: &ImageRegistry{
+			BaseCachePath: unpackPath,
+			AuthNamespace: namespace,
 		},
 	}), nil
 }

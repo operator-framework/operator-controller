@@ -20,7 +20,7 @@ CATALOGD_NAMESPACE      ?= catalogd-system
 
 # E2E configuration
 TESTDATA_DIR            ?= testdata
-CONTAINER_RUNTIME ?= docker
+
 
 ##@ General
 
@@ -67,7 +67,11 @@ test-e2e: $(GINKGO) ## Run the e2e tests
 	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/e2e
 
 e2e: KIND_CLUSTER_NAME=catalogd-e2e
-e2e: run kind-load-test-artifacts test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
+e2e: DEPLOY_TARGET=e2e
+e2e: kind-cluster image-registry install test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
+
+image-registry: ## Setup in-cluster image registry
+	./test/tools/imageregistry/registry.sh
 
 .PHONY: tidy
 tidy: ## Update dependencies
@@ -147,17 +151,14 @@ kind-load: $(KIND) ## Load the built images onto the local cluster
 	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image $(IMAGE) --name $(KIND_CLUSTER_NAME)
 
-kind-load-test-artifacts: $(KIND) ## Load the e2e testdata container images into a kind cluster
-	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/catalogs -f $(TESTDATA_DIR)/catalogs/test-catalog.Dockerfile -t localhost/testdata/catalogs/test-catalog:e2e
-	$(KIND) load docker-image localhost/testdata/catalogs/test-catalog:e2e --name $(KIND_CLUSTER_NAME)
-
 .PHONY: install
 install: build-container kind-load deploy wait ## Install local catalogd
 
+DEPLOY_TARGET           ?= default
 .PHONY: deploy
 deploy: $(KUSTOMIZE) ## Deploy Catalogd to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	$(KUSTOMIZE) build config/${DEPLOY_TARGET} | kubectl apply -f -
 
 .PHONY: undeploy
 undeploy: $(KUSTOMIZE) ## Undeploy Catalogd from the K8s cluster specified in ~/.kube/config.
