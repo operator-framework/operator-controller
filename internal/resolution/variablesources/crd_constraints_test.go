@@ -203,7 +203,7 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 				bundleSet["bundle-15"],
 				bundleSet["bundle-16"],
 			}),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-2"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-2"],
 				[]*catalogmetadata.Bundle{
 					bundleSet["bundle-3"],
@@ -213,7 +213,7 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 					bundleSet["bundle-7"],
 				},
 			),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-1"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-1"],
 				[]*catalogmetadata.Bundle{
 					bundleSet["bundle-6"],
@@ -221,23 +221,23 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 					bundleSet["bundle-8"],
 				},
 			),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-3"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-3"],
 				[]*catalogmetadata.Bundle{},
 			),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-4"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-4"],
 				[]*catalogmetadata.Bundle{},
 			),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-5"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-5"],
 				[]*catalogmetadata.Bundle{},
 			),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-6"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-6"],
 				[]*catalogmetadata.Bundle{},
 			),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-7"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-7"],
 				[]*catalogmetadata.Bundle{
 					bundleSet["bundle-8"],
@@ -245,27 +245,27 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 					bundleSet["bundle-10"],
 				},
 			),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-8"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-8"],
 				[]*catalogmetadata.Bundle{},
 			),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-9"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-9"],
 				[]*catalogmetadata.Bundle{},
 			),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-10"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-10"],
 				[]*catalogmetadata.Bundle{},
 			),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-14"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-14"],
 				[]*catalogmetadata.Bundle{},
 			),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-15"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-15"],
 				[]*catalogmetadata.Bundle{},
 			),
-			olmvariables.NewBundleVariable(olmvariables.BundleToBundleVariableIDs(bundleSet["bundle-16"])[0],
+			olmvariables.NewBundleVariable(
 				bundleSet["bundle-16"],
 				[]*catalogmetadata.Bundle{},
 			),

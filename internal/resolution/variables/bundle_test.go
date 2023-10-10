@@ -40,11 +40,7 @@ func TestBundleVariable(t *testing.T) {
 			}},
 		},
 	}
-	ids := olmvariables.BundleToBundleVariableIDs(bundle)
-	if len(ids) != len(bundle.InChannels) {
-		t.Fatalf("bundle should produce one variable ID per channel; received: %d", len(bundle.InChannels))
-	}
-	bv := olmvariables.NewBundleVariable(ids[0], bundle, dependencies)
+	bv := olmvariables.NewBundleVariable(bundle, dependencies)
 
 	if bv.Bundle() != bundle {
 		t.Errorf("bundle '%v' does not match expected '%v'", bv.Bundle(), bundle)

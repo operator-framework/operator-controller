@@ -23,9 +23,9 @@ func (r *InstalledPackageVariable) Bundles() []*catalogmetadata.Bundle {
 
 func NewInstalledPackageVariable(packageName string, bundles []*catalogmetadata.Bundle) *InstalledPackageVariable {
 	id := deppy.IdentifierFromString(fmt.Sprintf("installed package %s", packageName))
-	var variableIDs []deppy.Identifier
+	variableIDs := make([]deppy.Identifier, 0, len(bundles))
 	for _, bundle := range bundles {
-		variableIDs = append(variableIDs, BundleToBundleVariableIDs(bundle)...)
+		variableIDs = append(variableIDs, BundleVariableID(bundle))
 	}
 	return &InstalledPackageVariable{
 		SimpleVariable: input.NewSimpleVariable(id, constraint.Mandatory(), constraint.Dependency(variableIDs...)),

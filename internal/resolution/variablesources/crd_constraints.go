@@ -50,15 +50,14 @@ func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Contex
 			bundles := []*catalogmetadata.Bundle{v.Bundle()}
 			bundles = append(bundles, v.Dependencies()...)
 			for _, bundle := range bundles {
-				for _, id := range olmvariables.BundleToBundleVariableIDs(bundle) {
-					// get bundleID package and update map
-					packageName := bundle.Package
+				id := olmvariables.BundleVariableID(bundle)
+				// get bundleID package and update map
+				packageName := bundle.Package
 
-					if _, ok := pkgToBundleMap[packageName]; !ok {
-						pkgToBundleMap[packageName] = map[deppy.Identifier]struct{}{}
-					}
-					pkgToBundleMap[packageName][id] = struct{}{}
+				if _, ok := pkgToBundleMap[packageName]; !ok {
+					pkgToBundleMap[packageName] = map[deppy.Identifier]struct{}{}
 				}
+				pkgToBundleMap[packageName][id] = struct{}{}
 			}
 		}
 	}
