@@ -34,7 +34,6 @@ import (
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/catalogd/internal/source"
 	catalogderrors "github.com/operator-framework/catalogd/pkg/errors"
-	"github.com/operator-framework/catalogd/pkg/features"
 	"github.com/operator-framework/catalogd/pkg/storage"
 )
 
@@ -112,11 +111,11 @@ func (r *CatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // linting from the linter that was fussing about this.
 // nolint:unparam
 func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.Catalog) (ctrl.Result, error) {
-	if features.CatalogdFeatureGate.Enabled(features.HTTPServer) && catalog.DeletionTimestamp.IsZero() && !controllerutil.ContainsFinalizer(catalog, fbcDeletionFinalizer) {
+	if catalog.DeletionTimestamp.IsZero() && !controllerutil.ContainsFinalizer(catalog, fbcDeletionFinalizer) {
 		controllerutil.AddFinalizer(catalog, fbcDeletionFinalizer)
 		return ctrl.Result{}, nil
 	}
-	if features.CatalogdFeatureGate.Enabled(features.HTTPServer) && !catalog.DeletionTimestamp.IsZero() {
+	if !catalog.DeletionTimestamp.IsZero() {
 		if err := r.Storage.Delete(catalog.Name); err != nil {
 			return ctrl.Result{}, updateStatusStorageDeleteError(&catalog.Status, err)
 		}
@@ -143,13 +142,11 @@ func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.Cat
 		// TODO: We should check to see if the unpacked result has the same content
 		//   as the already unpacked content. If it does, we should skip this rest
 		//   of the unpacking steps.
-		if features.CatalogdFeatureGate.Enabled(features.HTTPServer) {
-			err := r.Storage.Store(catalog.Name, unpackResult.FS)
-			if err != nil {
-				return ctrl.Result{}, updateStatusStorageError(&catalog.Status, fmt.Errorf("error storing fbc: %v", err))
-			}
-			contentURL = r.Storage.ContentURL(catalog.Name)
+		err := r.Storage.Store(catalog.Name, unpackResult.FS)
+		if err != nil {
+			return ctrl.Result{}, updateStatusStorageError(&catalog.Status, fmt.Errorf("error storing fbc: %v", err))
 		}
+		contentURL = r.Storage.ContentURL(catalog.Name)
 
 		updateStatusUnpacked(&catalog.Status, unpackResult, contentURL)
 		return ctrl.Result{}, nil

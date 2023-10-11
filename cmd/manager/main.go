@@ -140,38 +140,36 @@ func main() {
 	}
 
 	var localStorage storage.Instance
-	if features.CatalogdFeatureGate.Enabled(features.HTTPServer) {
-		metrics.Registry.MustRegister(catalogdmetrics.RequestDurationMetric)
+	metrics.Registry.MustRegister(catalogdmetrics.RequestDurationMetric)
 
-		storeDir := filepath.Join(cacheDir, storageDir)
-		if err := os.MkdirAll(storeDir, 0700); err != nil {
-			setupLog.Error(err, "unable to create storage directory for catalogs")
-			os.Exit(1)
-		}
+	storeDir := filepath.Join(cacheDir, storageDir)
+	if err := os.MkdirAll(storeDir, 0700); err != nil {
+		setupLog.Error(err, "unable to create storage directory for catalogs")
+		os.Exit(1)
+	}
 
-		baseStorageURL, err := url.Parse(fmt.Sprintf("%s/catalogs/", httpExternalAddr))
-		if err != nil {
-			setupLog.Error(err, "unable to create base storage URL")
-			os.Exit(1)
-		}
+	baseStorageURL, err := url.Parse(fmt.Sprintf("%s/catalogs/", httpExternalAddr))
+	if err != nil {
+		setupLog.Error(err, "unable to create base storage URL")
+		os.Exit(1)
+	}
 
-		localStorage = storage.LocalDir{RootDir: storeDir, BaseURL: baseStorageURL}
-		shutdownTimeout := 30 * time.Second
-		catalogServer := server.Server{
-			Kind: "catalogs",
-			Server: &http.Server{
-				Addr:         catalogServerAddr,
-				Handler:      catalogdmetrics.AddMetricsToHandler(localStorage.StorageServerHandler()),
-				ReadTimeout:  5 * time.Second,
-				WriteTimeout: 10 * time.Second,
-			},
-			ShutdownTimeout: &shutdownTimeout,
-		}
+	localStorage = storage.LocalDir{RootDir: storeDir, BaseURL: baseStorageURL}
+	shutdownTimeout := 30 * time.Second
+	catalogServer := server.Server{
+		Kind: "catalogs",
+		Server: &http.Server{
+			Addr:         catalogServerAddr,
+			Handler:      catalogdmetrics.AddMetricsToHandler(localStorage.StorageServerHandler()),
+			ReadTimeout:  5 * time.Second,
+			WriteTimeout: 10 * time.Second,
+		},
+		ShutdownTimeout: &shutdownTimeout,
+	}
 
-		if err := mgr.Add(&catalogServer); err != nil {
-			setupLog.Error(err, "unable to start catalog server")
-			os.Exit(1)
-		}
+	if err := mgr.Add(&catalogServer); err != nil {
+		setupLog.Error(err, "unable to start catalog server")
+		os.Exit(1)
 	}
 
 	if err = (&corecontrollers.CatalogReconciler{

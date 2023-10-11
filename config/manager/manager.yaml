@@ -74,7 +74,6 @@ spec:
         args:
         - --leader-elect
         - --metrics-bind-address=127.0.0.1:8080
-        - --feature-gates=HTTPServer=true
         - --http-external-address=http://catalogd-catalogserver.catalogd-system.svc
         image: controller:latest
         name: manager
