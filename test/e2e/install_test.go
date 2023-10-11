@@ -82,9 +82,12 @@ var _ = Describe("Operator Install", func() {
 
 					bd := rukpakv1alpha1.BundleDeployment{}
 					g.Expect(c.Get(ctx, types.NamespacedName{Name: operatorName}, &bd)).To(Succeed())
-					g.Expect(bd.Status.Conditions).To(HaveLen(2))
-					g.Expect(bd.Status.Conditions[0].Reason).To(Equal("UnpackSuccessful"))
-					g.Expect(bd.Status.Conditions[1].Reason).To(Equal("InstallationSucceeded"))
+					hasValidBundle := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
+					g.Expect(hasValidBundle).ToNot(BeNil())
+					g.Expect(hasValidBundle.Reason).To(Equal(rukpakv1alpha1.ReasonUnpackSuccessful))
+					installed := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeInstalled)
+					g.Expect(installed).ToNot(BeNil())
+					g.Expect(installed.Reason).To(Equal(rukpakv1alpha1.ReasonInstallationSucceeded))
 				}).Should(Succeed())
 			})
 		})
@@ -123,9 +126,12 @@ var _ = Describe("Operator Install", func() {
 
 					bd := rukpakv1alpha1.BundleDeployment{}
 					g.Expect(c.Get(ctx, types.NamespacedName{Name: operatorName}, &bd)).To(Succeed())
-					g.Expect(bd.Status.Conditions).To(HaveLen(2))
-					g.Expect(bd.Status.Conditions[0].Reason).To(Equal("UnpackSuccessful"))
-					g.Expect(bd.Status.Conditions[1].Reason).To(Equal("InstallationSucceeded"))
+					hasValidBundle := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
+					g.Expect(hasValidBundle).ToNot(BeNil())
+					g.Expect(hasValidBundle.Reason).To(Equal(rukpakv1alpha1.ReasonUnpackSuccessful))
+					installed := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeInstalled)
+					g.Expect(installed).ToNot(BeNil())
+					g.Expect(installed.Reason).To(Equal(rukpakv1alpha1.ReasonInstallationSucceeded))
 				}).Should(Succeed())
 			})
 		})
