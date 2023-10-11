@@ -73,7 +73,7 @@ type SdkProjectInfo struct {
 const (
 	remoteRegistryRepo     = "localhost:5001/"
 	kindServer             = "operator-controller-op-dev-e2e"
-	deployedNameSpace      = "rukpak-system"
+	installNamespaceSuffix = "-system"
 	operatorControllerHome = "../.."
 )
 
@@ -338,12 +338,12 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 		By("creating an operator CR and verifying the operator operations")
 		operator, err = createOperator(ctx, catalogDInfo.operatorName, operatorAction.installVersion)
 		Expect(err).ToNot(HaveOccurred())
-		checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.installVersion, bundleInfo.baseFolderPath, deployedNameSpace)
+		checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.installVersion, bundleInfo.baseFolderPath, fmt.Sprintf("%s%s", catalogDInfo.operatorName, installNamespaceSuffix))
 
 		By("upgrading an operator and verifying the operator operations")
 		operator, err = upgradeOperator(ctx, catalogDInfo.operatorName, operatorAction.upgradeVersion)
 		Expect(err).ToNot(HaveOccurred())
-		checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.upgradeVersion, bundleInfo.baseFolderPath, deployedNameSpace)
+		checkOperatorOperationsSuccess(operator, catalogDInfo.operatorName, operatorAction.upgradeVersion, bundleInfo.baseFolderPath, fmt.Sprintf("%s%s", catalogDInfo.operatorName, installNamespaceSuffix))
 
 		By("deleting the operator CR and verifying the operator doesn't exist")
 		err = deleteOperator(ctx, catalogDInfo.operatorName)
