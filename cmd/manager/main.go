@@ -40,6 +40,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
@@ -113,7 +114,7 @@ func main() {
 		Client: cl,
 		Scheme: mgr.GetScheme(),
 		Resolver: solver.NewDeppySolver(
-			controllers.NewVariableSource(cl, catalogClient),
+			variablesources.NewOLMVariableSource(cl, catalogClient),
 		),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")

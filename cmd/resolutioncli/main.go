@@ -22,8 +22,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/operator-framework/deppy/pkg/deppy/solver"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -32,10 +31,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
-	"github.com/operator-framework/operator-controller/internal/controllers"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
@@ -71,12 +71,12 @@ func main() {
 	ctx := context.Background()
 
 	var packageName string
-	var packageVersion string
+	var packageVersionRange string
 	var packageChannel string
 	var indexRef string
 	var inputDir string
 	flag.StringVar(&packageName, flagNamePackageName, "", "Name of the package to resolve")
-	flag.StringVar(&packageVersion, flagNamePackageVersion, "", "Version of the package")
+	flag.StringVar(&packageVersionRange, flagNamePackageVersion, "", "Version or version range of the package")
 	flag.StringVar(&packageChannel, flagNamePackageChannel, "", "Channel of the package")
 	// TODO: Consider adding support of multiple refs
 	flag.StringVar(&indexRef, flagNameIndexRef, "", "Index reference (FBC image or dir)")
@@ -89,7 +89,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err := run(ctx, packageName, packageVersion, packageChannel, indexRef, inputDir)
+	err := run(ctx, packageName, packageChannel, packageVersionRange, indexRef, inputDir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -108,7 +108,19 @@ func validateFlags(packageName, indexRef string) error {
 	return nil
 }
 
-func run(ctx context.Context, packageName, packageVersion, packageChannel, indexRef, inputDir string) error {
+func run(ctx context.Context, packageName, packageChannel, packageVersionRange, indexRef, inputDir string) error {
+	// Using the fake Kubernetes client and creating objects
+	// in it from manifests & CLI flags is fine for PoC.
+	// But when/if we decide to proceed with CLI/offline resolution
+	// we will need to come up with a better way to create inputs
+	// for resolver when working with CLI.
+	//
+	// We will need to think about multiple types of inputs:
+	//   - How to read required package (what we want to install/update)
+	//   - How to read bundles from multiple catalogs
+	//   - How to take into account cluster information. Some package
+	//     will have constraints like "need Kubernetes version to be >= X"
+	//     or "need >= 3 worker nodes").
 	clientBuilder := fake.NewClientBuilder().WithScheme(scheme)
 
 	if inputDir != "" {
@@ -120,14 +132,22 @@ func run(ctx context.Context, packageName, packageVersion, packageChannel, index
 		clientBuilder.WithRuntimeObjects(objects...)
 	}
 
+	clientBuilder.WithRuntimeObjects(&operatorsv1alpha1.Operator{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "resolutioncli-input-operator",
+		},
+		Spec: operatorsv1alpha1.OperatorSpec{
+			PackageName: packageName,
+			Channel:     packageChannel,
+			Version:     packageVersionRange,
+		},
+	})
+
 	cl := clientBuilder.Build()
 	catalogClient := newIndexRefClient(indexRef)
 
 	resolver := solver.NewDeppySolver(
-		append(
-			variablesources.NestedVariableSource{newPackageVariableSource(catalogClient, packageName, packageVersion, packageChannel)},
-			controllers.NewVariableSource(cl, catalogClient)...,
-		),
+		variablesources.NewOLMVariableSource(cl, catalogClient),
 	)
 
 	bundleImage, err := resolve(ctx, resolver, packageName)

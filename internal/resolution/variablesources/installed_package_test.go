@@ -1,25 +1,26 @@
 package variablesources_test
 
 import (
-	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	featuregatetesting "k8s.io/component-base/featuregate/testing"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	featuregatetesting "k8s.io/component-base/featuregate/testing"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
-	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 	"github.com/operator-framework/operator-controller/pkg/features"
-	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
-func TestInstalledPackageVariableSource(t *testing.T) {
+func TestMakeInstalledPackageVariables(t *testing.T) {
 	someOtherPackageChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
 		Name:    "stable",
 		Package: "some-other-package",
@@ -82,7 +83,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 			},
 		},
 	}}
-	bundleList := []*catalogmetadata.Bundle{
+	allBundles := []*catalogmetadata.Bundle{
 		{Bundle: declcfg.Bundle{
 			Name:    "test-package.v0.0.1",
 			Package: "test-package",
@@ -202,21 +203,41 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 		},
 	}
 
-	fakeCatalogClient := testutil.NewFakeCatalogClient(bundleList)
+	fakeBundleDeployments := func(bundleImages ...string) []rukpakv1alpha1.BundleDeployment {
+		bundleDeployments := []rukpakv1alpha1.BundleDeployment{}
+		for idx, bundleImage := range bundleImages {
+			bd := rukpakv1alpha1.BundleDeployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: fmt.Sprintf("bd-%d", idx),
+				},
+				Spec: rukpakv1alpha1.BundleDeploymentSpec{
+					Template: &rukpakv1alpha1.BundleTemplate{
+						Spec: rukpakv1alpha1.BundleSpec{
+							Source: rukpakv1alpha1.BundleSource{
+								Image: &rukpakv1alpha1.ImageSource{
+									Ref: bundleImage,
+								},
+							},
+						},
+					},
+				},
+			}
+			bundleDeployments = append(bundleDeployments, bd)
+		}
+
+		return bundleDeployments
+	}
 
 	t.Run("with ForceSemverUpgradeConstraints feature gate enabled", func(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
 
 		t.Run("with non-zero major version", func(t *testing.T) {
 			const bundleImage = "registry.io/repo/test-package@v2.0.0"
-			ipvs, err := variablesources.NewInstalledPackageVariableSource(&fakeCatalogClient, bundleImage)
+			installedPackages, err := variablesources.MakeInstalledPackageVariables(allBundles, fakeBundleDeployments(bundleImage))
 			require.NoError(t, err)
 
-			variables, err := ipvs.GetVariables(context.TODO())
-			require.NoError(t, err)
-			require.Len(t, variables, 1)
-			packageVariable, ok := variables[0].(*olmvariables.InstalledPackageVariable)
-			assert.True(t, ok)
+			require.Len(t, installedPackages, 1)
+			packageVariable := installedPackages[0]
 			assert.Equal(t, deppy.IdentifierFromString("installed package test-package"), packageVariable.Identifier())
 
 			// ensure bundles are in version order (high to low)
@@ -230,14 +251,11 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 		t.Run("with zero major version", func(t *testing.T) {
 			t.Run("with zero minor version", func(t *testing.T) {
 				const bundleImage = "registry.io/repo/test-package@v0.0.1"
-				ipvs, err := variablesources.NewInstalledPackageVariableSource(&fakeCatalogClient, bundleImage)
+				installedPackages, err := variablesources.MakeInstalledPackageVariables(allBundles, fakeBundleDeployments(bundleImage))
 				require.NoError(t, err)
 
-				variables, err := ipvs.GetVariables(context.TODO())
-				require.NoError(t, err)
-				require.Len(t, variables, 1)
-				packageVariable, ok := variables[0].(*olmvariables.InstalledPackageVariable)
-				assert.True(t, ok)
+				require.Len(t, installedPackages, 1)
+				packageVariable := installedPackages[0]
 				assert.Equal(t, deppy.IdentifierFromString("installed package test-package"), packageVariable.Identifier())
 
 				// No upgrades are allowed in major version zero when minor version is also zero
@@ -248,14 +266,11 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 
 			t.Run("with non-zero minor version", func(t *testing.T) {
 				const bundleImage = "registry.io/repo/test-package@v0.1.0"
-				ipvs, err := variablesources.NewInstalledPackageVariableSource(&fakeCatalogClient, bundleImage)
+				installedPackages, err := variablesources.MakeInstalledPackageVariables(allBundles, fakeBundleDeployments(bundleImage))
 				require.NoError(t, err)
 
-				variables, err := ipvs.GetVariables(context.TODO())
-				require.NoError(t, err)
-				require.Len(t, variables, 1)
-				packageVariable, ok := variables[0].(*olmvariables.InstalledPackageVariable)
-				assert.True(t, ok)
+				require.Len(t, installedPackages, 1)
+				packageVariable := installedPackages[0]
 				assert.Equal(t, deppy.IdentifierFromString("installed package test-package"), packageVariable.Identifier())
 
 				// Patch version upgrades are allowed, but not minor upgrades
@@ -271,14 +286,11 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
 
 		const bundleImage = "registry.io/repo/test-package@v2.0.0"
-		ipvs, err := variablesources.NewInstalledPackageVariableSource(&fakeCatalogClient, bundleImage)
+		installedPackages, err := variablesources.MakeInstalledPackageVariables(allBundles, fakeBundleDeployments(bundleImage))
 		require.NoError(t, err)
 
-		variables, err := ipvs.GetVariables(context.TODO())
-		require.NoError(t, err)
-		require.Len(t, variables, 1)
-		packageVariable, ok := variables[0].(*olmvariables.InstalledPackageVariable)
-		assert.True(t, ok)
+		require.Len(t, installedPackages, 1)
+		packageVariable := installedPackages[0]
 		assert.Equal(t, deppy.IdentifierFromString("installed package test-package"), packageVariable.Identifier())
 
 		// ensure bundles are in version order (high to low)
@@ -286,5 +298,12 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 		require.Len(t, bundles, 2)
 		assert.Equal(t, "test-package.v2.1.0", packageVariable.Bundles()[0].Name)
 		assert.Equal(t, "test-package.v2.0.0", packageVariable.Bundles()[1].Name)
+	})
+
+	t.Run("installed bundle not found", func(t *testing.T) {
+		const bundleImage = "registry.io/repo/test-package@v9.0.0"
+		installedPackages, err := variablesources.MakeInstalledPackageVariables(allBundles, fakeBundleDeployments(bundleImage))
+		assert.Nil(t, installedPackages)
+		assert.ErrorContains(t, err, `bundleImage "registry.io/repo/test-package@v9.0.0" not found`)
 	})
 }

@@ -28,6 +28,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 	"github.com/operator-framework/operator-controller/pkg/features"
 	testutil "github.com/operator-framework/operator-controller/test/util"
 )
@@ -44,7 +45,7 @@ var _ = Describe("Operator Controller Test", func() {
 		reconciler = &controllers.OperatorReconciler{
 			Client:   cl,
 			Scheme:   sch,
-			Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
+			Resolver: solver.NewDeppySolver(variablesources.NewOLMVariableSource(cl, &fakeCatalogClient)),
 		}
 	})
 	When("the operator does not exist", func() {
@@ -1059,7 +1060,7 @@ func TestOperatorUpgrade(t *testing.T) {
 	reconciler := &controllers.OperatorReconciler{
 		Client:   cl,
 		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
+		Resolver: solver.NewDeppySolver(variablesources.NewOLMVariableSource(cl, &fakeCatalogClient)),
 	}
 
 	t.Run("semver upgrade constraints", func(t *testing.T) {
