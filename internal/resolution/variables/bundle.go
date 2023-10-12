@@ -28,8 +28,8 @@ func (b *BundleVariable) Dependencies() []*catalogmetadata.Bundle {
 
 func NewBundleVariable(bundle *catalogmetadata.Bundle, dependencies []*catalogmetadata.Bundle) *BundleVariable {
 	dependencyIDs := make([]deppy.Identifier, 0, len(dependencies))
-	for _, bundle := range dependencies {
-		dependencyIDs = append(dependencyIDs, BundleVariableID(bundle))
+	for _, dependency := range dependencies {
+		dependencyIDs = append(dependencyIDs, BundleVariableID(dependency))
 	}
 	var constraints []deppy.Constraint
 	if len(dependencyIDs) > 0 {
