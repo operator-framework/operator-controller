@@ -63,25 +63,25 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context) ([]depp
 		var head *catalogmetadata.Bundle
 		head, bundleQueue = bundleQueue[0], bundleQueue[1:]
 
-		for _, id := range olmvariables.BundleToBundleVariableIDs(head) {
-			// ignore bundles that have already been processed
-			if _, ok := visited[id]; ok {
-				continue
-			}
-			visited[id] = struct{}{}
+		id := olmvariables.BundleVariableID(head)
 
-			// get bundle dependencies
-			dependencies, err := b.filterBundleDependencies(allBundles, head)
-			if err != nil {
-				return nil, fmt.Errorf("could not determine dependencies for bundle with id '%s': %w", id, err)
-			}
-
-			// add bundle dependencies to queue for processing
-			bundleQueue = append(bundleQueue, dependencies...)
-
-			// create variable
-			variables = append(variables, olmvariables.NewBundleVariable(id, head, dependencies))
+		// ignore bundles that have already been processed
+		if _, ok := visited[id]; ok {
+			continue
 		}
+		visited[id] = struct{}{}
+
+		// get bundle dependencies
+		dependencies, err := b.filterBundleDependencies(allBundles, head)
+		if err != nil {
+			return nil, fmt.Errorf("could not determine dependencies for bundle with id '%s': %w", id, err)
+		}
+
+		// add bundle dependencies to queue for processing
+		bundleQueue = append(bundleQueue, dependencies...)
+
+		// create variable
+		variables = append(variables, olmvariables.NewBundleVariable(head, dependencies))
 	}
 
 	return variables, nil
@@ -101,11 +101,10 @@ func (b *BundlesAndDepsVariableSource) filterBundleDependencies(allBundles []*ca
 		}
 		for i := 0; i < len(packageDependencyBundles); i++ {
 			bundle := packageDependencyBundles[i]
-			for _, id := range olmvariables.BundleToBundleVariableIDs(bundle) {
-				if _, ok := added[id]; !ok {
-					dependencies = append(dependencies, bundle)
-					added[id] = struct{}{}
-				}
+			id := olmvariables.BundleVariableID(bundle)
+			if _, ok := added[id]; !ok {
+				dependencies = append(dependencies, bundle)
+				added[id] = struct{}{}
 			}
 		}
 	}

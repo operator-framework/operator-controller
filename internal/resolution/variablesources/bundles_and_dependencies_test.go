@@ -316,13 +316,13 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 		// dependencies (bundles 7, 8, 9, 10, 11) to appear here due to their GVKs being required by
 		// some of the packages.
 		Expect(bundleVariables).To(WithTransform(CollectBundleVariableIDs, Equal([]string{
-			"fake-catalog-test-package-stable-bundle-2",
-			"fake-catalog-test-package-stable-bundle-1",
-			"fake-catalog-test-package-2-stable-bundle-15",
-			"fake-catalog-test-package-2-stable-bundle-16",
-			"fake-catalog-test-package-2-stable-bundle-17",
-			"fake-catalog-some-package-stable-bundle-5",
-			"fake-catalog-some-package-stable-bundle-4",
+			"fake-catalog-test-package-bundle-2",
+			"fake-catalog-test-package-bundle-1",
+			"fake-catalog-test-package-2-bundle-15",
+			"fake-catalog-test-package-2-bundle-16",
+			"fake-catalog-test-package-2-bundle-17",
+			"fake-catalog-some-package-bundle-5",
+			"fake-catalog-some-package-bundle-4",
 		})))
 
 		// check dependencies for one of the bundles
@@ -374,7 +374,7 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 		)
 		_, err := bdvs.GetVariables(context.TODO())
 		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("could not determine dependencies for bundle with id 'fake-catalog-test-package-stable-bundle-2': could not find package dependencies for bundle 'bundle-2'"))
+		Expect(err.Error()).To(ContainSubstring("could not determine dependencies for bundle with id 'fake-catalog-test-package-bundle-2': could not find package dependencies for bundle 'bundle-2'"))
 	})
 
 	It("should return error if an inner variable source returns an error", func() {
