@@ -122,7 +122,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 		Expect(err).NotTo(HaveOccurred())
 		_, err = rpvs.GetVariables(context.TODO())
 		Expect(err).To(HaveOccurred())
-		Expect(err).To(MatchError("package 'test-package' not found"))
+		Expect(err).To(MatchError("no package 'test-package' found"))
 	})
 
 	It("should return an error if catalog client errors", func() {
