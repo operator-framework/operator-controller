@@ -7,6 +7,7 @@ import (
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
@@ -57,7 +58,7 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context) ([]depp
 	}
 
 	// build bundle and dependency variables
-	visited := map[deppy.Identifier]struct{}{}
+	visited := sets.Set[deppy.Identifier]{}
 	for len(bundleQueue) > 0 {
 		// pop head of queue
 		var head *catalogmetadata.Bundle
@@ -66,10 +67,10 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context) ([]depp
 		id := olmvariables.BundleVariableID(head)
 
 		// ignore bundles that have already been processed
-		if _, ok := visited[id]; ok {
+		if visited.Has(id) {
 			continue
 		}
-		visited[id] = struct{}{}
+		visited.Insert(id)
 
 		// get bundle dependencies
 		dependencies, err := b.filterBundleDependencies(allBundles, head)
@@ -89,7 +90,7 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context) ([]depp
 
 func (b *BundlesAndDepsVariableSource) filterBundleDependencies(allBundles []*catalogmetadata.Bundle, bundle *catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error) {
 	var dependencies []*catalogmetadata.Bundle
-	added := map[deppy.Identifier]struct{}{}
+	added := sets.Set[deppy.Identifier]{}
 
 	// gather required package dependencies
 	// todo(perdasilva): disambiguate between not found and actual errors
@@ -102,9 +103,9 @@ func (b *BundlesAndDepsVariableSource) filterBundleDependencies(allBundles []*ca
 		for i := 0; i < len(packageDependencyBundles); i++ {
 			bundle := packageDependencyBundles[i]
 			id := olmvariables.BundleVariableID(bundle)
-			if _, ok := added[id]; !ok {
+			if !added.Has(id) {
 				dependencies = append(dependencies, bundle)
-				added[id] = struct{}{}
+				added.Insert(id)
 			}
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -36,14 +37,14 @@ func (o *BundleDeploymentVariableSource) GetVariables(ctx context.Context) ([]de
 		return nil, err
 	}
 
-	processed := map[string]struct{}{}
+	processed := sets.Set[string]{}
 	for _, bundleDeployment := range bundleDeployments.Items {
 		sourceImage := bundleDeployment.Spec.Template.Spec.Source.Image
 		if sourceImage != nil && sourceImage.Ref != "" {
-			if _, ok := processed[sourceImage.Ref]; ok {
+			if processed.Has(sourceImage.Ref) {
 				continue
 			}
-			processed[sourceImage.Ref] = struct{}{}
+			processed.Insert(sourceImage.Ref)
 			ips, err := NewInstalledPackageVariableSource(o.catalogClient, bundleDeployment.Spec.Template.Spec.Source.Image.Ref)
 			if err != nil {
 				return nil, err
