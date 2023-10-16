@@ -6,6 +6,7 @@ import (
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
@@ -43,7 +44,9 @@ func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Contex
 	// todo(perdasilva): better handle cases where a provided gvk is not found
 	//                   not all packages will necessarily export a CRD
 
-	pkgToBundleMap := map[string]map[deppy.Identifier]struct{}{}
+	bundleIDs := sets.Set[deppy.Identifier]{}
+	packageOrder := []string{}
+	bundleOrder := map[string][]deppy.Identifier{}
 	for _, variable := range variables {
 		switch v := variable.(type) {
 		case *olmvariables.BundleVariable:
@@ -54,22 +57,22 @@ func (g *CRDUniquenessConstraintsVariableSource) GetVariables(ctx context.Contex
 				// get bundleID package and update map
 				packageName := bundle.Package
 
-				if _, ok := pkgToBundleMap[packageName]; !ok {
-					pkgToBundleMap[packageName] = map[deppy.Identifier]struct{}{}
+				if _, ok := bundleOrder[packageName]; !ok {
+					packageOrder = append(packageOrder, packageName)
 				}
-				pkgToBundleMap[packageName][id] = struct{}{}
+
+				if !bundleIDs.Has(id) {
+					bundleIDs.Insert(id)
+					bundleOrder[packageName] = append(bundleOrder[packageName], id)
+				}
 			}
 		}
 	}
 
 	// create global constraint variables
-	for packageName, bundleIDMap := range pkgToBundleMap {
-		var bundleIDs []deppy.Identifier
-		for bundleID := range bundleIDMap {
-			bundleIDs = append(bundleIDs, bundleID)
-		}
+	for _, packageName := range packageOrder {
 		varID := deppy.IdentifierFromString(fmt.Sprintf("%s package uniqueness", packageName))
-		variables = append(variables, olmvariables.NewBundleUniquenessVariable(varID, bundleIDs...))
+		variables = append(variables, olmvariables.NewBundleUniquenessVariable(varID, bundleOrder[packageName]...))
 	}
 
 	return variables, nil
