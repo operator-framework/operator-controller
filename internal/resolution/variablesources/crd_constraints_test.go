@@ -284,13 +284,13 @@ var _ = Describe("CRDUniquenessConstraintsVariableSource", func() {
 		}
 		// Note: As above, the 5 GVKs would appear here as GVK uniqueness constraints
 		// if GVK Uniqueness were being accounted for.
-		Expect(crdConstraintVariables).To(WithTransform(CollectGlobalConstraintVariableIDs, ConsistOf([]string{
-			"another-package package uniqueness",
-			"bar-package package uniqueness",
-			"test-package-2 package uniqueness",
+		Expect(crdConstraintVariables).To(WithTransform(CollectGlobalConstraintVariableIDs, Equal([]string{
 			"test-package package uniqueness",
 			"some-package package uniqueness",
 			"some-other-package package uniqueness",
+			"another-package package uniqueness",
+			"bar-package package uniqueness",
+			"test-package-2 package uniqueness",
 		})))
 	})
 
