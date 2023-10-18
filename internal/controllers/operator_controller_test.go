@@ -165,10 +165,10 @@ var _ = Describe("Operator Controller Test", func() {
 					Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-registry"))
 					Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
 					Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
-					Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+					Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 				})
 				It("sets the resolvedBundleResource status field", func() {
-					Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+					Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 				})
 				It("sets the InstalledBundleResource status field", func() {
 					Expect(operator.Status.InstalledBundleResource).To(Equal(""))
@@ -178,7 +178,7 @@ var _ = Describe("Operator Controller Test", func() {
 					Expect(cond).NotTo(BeNil())
 					Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 					Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
-					Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+					Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\""))
 					cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
 					Expect(cond).NotTo(BeNil())
 					Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
@@ -212,7 +212,7 @@ var _ = Describe("Operator Controller Test", func() {
 									Source: rukpakv1alpha1.BundleSource{
 										Type: rukpakv1alpha1.SourceTypeImage,
 										Image: &rukpakv1alpha1.ImageSource{
-											Ref: "quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed",
+											Ref: "quay.io/operatorhubio/prometheus@fake2.0.0",
 										},
 									},
 								},
@@ -245,10 +245,10 @@ var _ = Describe("Operator Controller Test", func() {
 						Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-registry"))
 						Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
 						Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
-						Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+						Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 
 						By("Checking the status fields")
-						Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+						Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 						Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 						By("checking the expected status conditions")
@@ -256,7 +256,7 @@ var _ = Describe("Operator Controller Test", func() {
 						Expect(cond).NotTo(BeNil())
 						Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 						Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
-						Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+						Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\""))
 						cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
 						Expect(cond).NotTo(BeNil())
 						Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
@@ -296,7 +296,7 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(err).NotTo(HaveOccurred())
 
 							By("Checking the status fields")
-							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 							Expect(op.Status.InstalledBundleResource).To(Equal(""))
 
 							By("checking the expected conditions")
@@ -304,7 +304,7 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(cond).NotTo(BeNil())
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
-							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\""))
 							cond = apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled)
 							Expect(cond).NotTo(BeNil())
 							Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
@@ -335,7 +335,7 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(err).NotTo(HaveOccurred())
 
 							By("Checking the status fields")
-							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 							Expect(op.Status.InstalledBundleResource).To(Equal(""))
 
 							By("checking the expected conditions")
@@ -343,7 +343,7 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(cond).NotTo(BeNil())
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
-							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\""))
 							cond = apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled)
 							Expect(cond).NotTo(BeNil())
 							Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
@@ -374,7 +374,7 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(err).NotTo(HaveOccurred())
 
 							By("Checking the status fields")
-							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 							Expect(op.Status.InstalledBundleResource).To(Equal(""))
 
 							By("checking the expected conditions")
@@ -382,7 +382,7 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(cond).NotTo(BeNil())
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
-							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\""))
 							cond = apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled)
 							Expect(cond).NotTo(BeNil())
 							Expect(cond.Status).To(Equal(metav1.ConditionFalse))
@@ -413,20 +413,20 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(err).NotTo(HaveOccurred())
 
 							By("Checking the status fields")
-							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
-							Expect(op.Status.InstalledBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
+							Expect(op.Status.InstalledBundleResource).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 
 							By("checking the expected conditions")
 							cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeResolved)
 							Expect(cond).NotTo(BeNil())
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
-							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\""))
 							cond = apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled)
 							Expect(cond).NotTo(BeNil())
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
-							Expect(cond.Message).To(Equal("installed from \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							Expect(cond.Message).To(Equal("installed from \"quay.io/operatorhubio/prometheus@fake2.0.0\""))
 						})
 
 						It("verify any other unknown status of bundledeployment", func() {
@@ -459,7 +459,7 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(err).NotTo(HaveOccurred())
 
 							By("Checking the status fields")
-							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 							Expect(op.Status.InstalledBundleResource).To(Equal(""))
 
 							By("checking the expected conditions")
@@ -467,7 +467,7 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(cond).NotTo(BeNil())
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
-							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\""))
 							cond = apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled)
 							Expect(cond).NotTo(BeNil())
 							Expect(cond.Status).To(Equal(metav1.ConditionFalse))
@@ -498,7 +498,7 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(err).NotTo(HaveOccurred())
 
 							By("Checking the status fields")
-							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+							Expect(op.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 							Expect(op.Status.InstalledBundleResource).To(Equal(""))
 
 							By("checking the expected conditions")
@@ -506,7 +506,7 @@ var _ = Describe("Operator Controller Test", func() {
 							Expect(cond).NotTo(BeNil())
 							Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 							Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
-							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+							Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\""))
 							cond = apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled)
 							Expect(cond).NotTo(BeNil())
 							Expect(cond.Status).To(Equal(metav1.ConditionFalse))
@@ -558,10 +558,10 @@ var _ = Describe("Operator Controller Test", func() {
 					Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-registry"))
 					Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
 					Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
-					Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+					Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 				})
 				It("sets the resolvedBundleResource status field", func() {
-					Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+					Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 				})
 				It("sets the InstalledBundleResource status field", func() {
 					Expect(operator.Status.InstalledBundleResource).To(Equal(""))
@@ -571,7 +571,7 @@ var _ = Describe("Operator Controller Test", func() {
 					Expect(cond).NotTo(BeNil())
 					Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 					Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
-					Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+					Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\""))
 					cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
 					Expect(cond).NotTo(BeNil())
 					Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
@@ -634,7 +634,7 @@ var _ = Describe("Operator Controller Test", func() {
 			BeforeEach(func() {
 				By("initializing cluster state")
 				pkgName = "prometheus"
-				pkgVer = "0.47.0"
+				pkgVer = "1.0.0"
 				pkgChan = "beta"
 				operator = &operatorsv1alpha1.Operator{
 					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
@@ -657,7 +657,7 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
 
 				By("Checking the status fields")
-				Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+				Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@fake1.0.0"))
 				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 				By("checking the expected conditions")
@@ -665,7 +665,7 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
-				Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+				Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\""))
 				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
@@ -679,7 +679,7 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-registry"))
 				Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
 				Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
-				Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+				Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@fake1.0.0"))
 			})
 		})
 		When("the operator specifies a package that exists within a channel but no version specified", func() {
@@ -711,7 +711,7 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cl.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
 
 				By("Checking the status fields")
-				Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+				Expect(operator.Status.ResolvedBundleResource).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 				Expect(operator.Status.InstalledBundleResource).To(Equal(""))
 
 				By("checking the expected conditions")
@@ -719,7 +719,7 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonSuccess))
-				Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed\""))
+				Expect(cond.Message).To(Equal("resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\""))
 				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
 				Expect(cond).NotTo(BeNil())
 				Expect(cond.Status).To(Equal(metav1.ConditionUnknown))
@@ -733,7 +733,7 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(bd.Spec.Template.Spec.ProvisionerClassName).To(Equal("core-rukpak-io-registry"))
 				Expect(bd.Spec.Template.Spec.Source.Type).To(Equal(rukpakv1alpha1.SourceTypeImage))
 				Expect(bd.Spec.Template.Spec.Source.Image).NotTo(BeNil())
-				Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed"))
+				Expect(bd.Spec.Template.Spec.Source.Image.Ref).To(Equal("quay.io/operatorhubio/prometheus@fake2.0.0"))
 			})
 		})
 		When("the operator specifies a package version in a channel that does not exist", func() {
@@ -1061,11 +1061,19 @@ var (
 			Package: "prometheus",
 			Entries: []declcfg.ChannelEntry{
 				{
-					Name: "operatorhub/prometheus/beta/0.37.0",
+					Name: "operatorhub/prometheus/beta/1.0.0",
 				},
 				{
-					Name:     "operatorhub/prometheus/beta/0.47.0",
-					Replaces: "operatorhub/prometheus/beta/0.37.0",
+					Name:     "operatorhub/prometheus/beta/1.0.1",
+					Replaces: "operatorhub/prometheus/beta/1.0.0",
+				},
+				{
+					Name:     "operatorhub/prometheus/beta/1.2.0",
+					Replaces: "operatorhub/prometheus/beta/1.0.1",
+				},
+				{
+					Name:     "operatorhub/prometheus/beta/2.0.0",
+					Replaces: "operatorhub/prometheus/beta/1.2.0",
 				},
 			},
 		},
@@ -1095,31 +1103,60 @@ var testBundleList = []*catalogmetadata.Bundle{
 				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 			},
 		},
-		InChannels: []*catalogmetadata.Channel{&prometheusAlphaChannel},
+		CatalogName: "fake-catalog",
+		InChannels:  []*catalogmetadata.Channel{&prometheusAlphaChannel},
 	},
 	{
 		Bundle: declcfg.Bundle{
-			Name:    "operatorhub/prometheus/beta/0.37.0",
+			Name:    "operatorhub/prometheus/beta/1.0.0",
 			Package: "prometheus",
-			Image:   "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35",
+			Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 			Properties: []property.Property{
-				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"0.37.0"}`)},
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
 				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 			},
 		},
-		InChannels: []*catalogmetadata.Channel{&prometheusBetaChannel},
+		CatalogName: "fake-catalog",
+		InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
 	},
 	{
 		Bundle: declcfg.Bundle{
-			Name:    "operatorhub/prometheus/beta/0.47.0",
+			Name:    "operatorhub/prometheus/beta/1.0.1",
 			Package: "prometheus",
-			Image:   "quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed",
+			Image:   "quay.io/operatorhubio/prometheus@fake1.0.1",
 			Properties: []property.Property{
-				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"0.47.0"}`)},
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.1"}`)},
 				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 			},
 		},
-		InChannels: []*catalogmetadata.Channel{&prometheusBetaChannel},
+		CatalogName: "fake-catalog",
+		InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+	},
+	{
+		Bundle: declcfg.Bundle{
+			Name:    "operatorhub/prometheus/beta/1.2.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@fake1.2.0",
+			Properties: []property.Property{
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.2.0"}`)},
+				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+			},
+		},
+		CatalogName: "fake-catalog",
+		InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+	},
+	{
+		Bundle: declcfg.Bundle{
+			Name:    "operatorhub/prometheus/beta/2.0.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@fake2.0.0",
+			Properties: []property.Property{
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"2.0.0"}`)},
+				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+			},
+		},
+		CatalogName: "fake-catalog",
+		InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
 	},
 	{
 		Bundle: declcfg.Bundle{
@@ -1132,7 +1169,8 @@ var testBundleList = []*catalogmetadata.Bundle{
 				{Type: "olm.bundle.mediatype", Value: json.RawMessage(`"plain+v0"`)},
 			},
 		},
-		InChannels: []*catalogmetadata.Channel{&plainBetaChannel},
+		CatalogName: "fake-catalog",
+		InChannels:  []*catalogmetadata.Channel{&plainBetaChannel},
 	},
 	{
 		Bundle: declcfg.Bundle{
@@ -1145,6 +1183,7 @@ var testBundleList = []*catalogmetadata.Bundle{
 				{Type: "olm.bundle.mediatype", Value: json.RawMessage(`"badmedia+v1"`)},
 			},
 		},
-		InChannels: []*catalogmetadata.Channel{&badmediaBetaChannel},
+		CatalogName: "fake-catalog",
+		InChannels:  []*catalogmetadata.Channel{&badmediaBetaChannel},
 	},
 }
