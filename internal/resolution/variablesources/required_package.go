@@ -91,18 +91,14 @@ func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context) ([]dep
 }
 
 func (r *RequiredPackageVariableSource) notFoundError() error {
-	// TODO: update this error message when/if we decide to support version ranges as opposed to fixing the version
-	//  context: we originally wanted to support version ranges and take the highest version that satisfies the range
-	//  during the upstream call on the 2023-04-11 we decided to pin the version instead. But, we'll keep version range
-	//  support under the covers in case we decide to pivot back.
 	if r.versionRange != "" && r.channelName != "" {
-		return fmt.Errorf("package '%s' at version '%s' in channel '%s' not found", r.packageName, r.versionRange, r.channelName)
+		return fmt.Errorf("no package '%s' matching version '%s' found in channel '%s'", r.packageName, r.versionRange, r.channelName)
 	}
 	if r.versionRange != "" {
-		return fmt.Errorf("package '%s' at version '%s' not found", r.packageName, r.versionRange)
+		return fmt.Errorf("no package '%s' matching version '%s' found", r.packageName, r.versionRange)
 	}
 	if r.channelName != "" {
-		return fmt.Errorf("package '%s' in channel '%s' not found", r.packageName, r.channelName)
+		return fmt.Errorf("no package '%s' found in channel '%s'", r.packageName, r.channelName)
 	}
-	return fmt.Errorf("package '%s' not found", r.packageName)
+	return fmt.Errorf("no package '%s' found", r.packageName)
 }
