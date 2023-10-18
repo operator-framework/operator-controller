@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -11,10 +12,13 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,6 +28,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/pkg/features"
 	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
@@ -1046,6 +1051,202 @@ func verifyConditionsInvariants(op *operatorsv1alpha1.Operator) {
 		Expect(cond.Reason).To(BeElementOf(conditionsets.ConditionReasons))
 		Expect(cond.ObservedGeneration).To(Equal(op.GetGeneration()))
 	}
+}
+
+func TestOperatorUpgrade(t *testing.T) {
+	ctx := context.Background()
+	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
+	reconciler := &controllers.OperatorReconciler{
+		Client:   cl,
+		Scheme:   sch,
+		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
+	}
+
+	t.Run("semver upgrade constraints", func(t *testing.T) {
+		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
+		defer func() {
+			require.NoError(t, cl.DeleteAllOf(ctx, &operatorsv1alpha1.Operator{}))
+			require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+		}()
+
+		pkgName := "prometheus"
+		pkgVer := "1.0.0"
+		pkgChan := "beta"
+		opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
+		operator := &operatorsv1alpha1.Operator{
+			ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+			Spec: operatorsv1alpha1.OperatorSpec{
+				PackageName: pkgName,
+				Version:     pkgVer,
+				Channel:     pkgChan,
+			},
+		}
+		// Create an operator
+		err := cl.Create(ctx, operator)
+		require.NoError(t, err)
+
+		// Run reconcile
+		res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, res)
+
+		// Refresh the operator after reconcile
+		err = cl.Get(ctx, opKey, operator)
+		require.NoError(t, err)
+
+		// Checking the status fields
+		assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", operator.Status.ResolvedBundleResource)
+
+		// checking the expected conditions
+		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+		require.NotNil(t, cond)
+		assert.Equal(t, metav1.ConditionTrue, cond.Status)
+		assert.Equal(t, operatorsv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@fake1.0.0"`, cond.Message)
+
+		// Invalid update: can not go to the next major version
+		operator.Spec.Version = "2.0.0"
+		err = cl.Update(ctx, operator)
+		require.NoError(t, err)
+
+		// Run reconcile again
+		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+		require.Error(t, err)
+		assert.Equal(t, ctrl.Result{}, res)
+
+		// Refresh the operator after reconcile
+		err = cl.Get(ctx, opKey, operator)
+		require.NoError(t, err)
+
+		// Checking the status fields
+		// TODO: https://github.com/operator-framework/operator-controller/issues/320
+		assert.Equal(t, "", operator.Status.ResolvedBundleResource)
+
+		// checking the expected conditions
+		cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+		require.NotNil(t, cond)
+		assert.Equal(t, metav1.ConditionFalse, cond.Status)
+		assert.Equal(t, operatorsv1alpha1.ReasonResolutionFailed, cond.Reason)
+		assert.Contains(t, cond.Message, "constraints not satisfiable")
+		assert.Contains(t, cond.Message, "installed package prometheus requires at least one of fake-catalog-prometheus-operatorhub/prometheus/beta/1.2.0, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.1, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.0;")
+
+		// Valid update skipping one version
+		operator.Spec.Version = "1.2.0"
+		err = cl.Update(ctx, operator)
+		require.NoError(t, err)
+
+		// Run reconcile again
+		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, res)
+
+		// Refresh the operator after reconcile
+		err = cl.Get(ctx, opKey, operator)
+		require.NoError(t, err)
+
+		// Checking the status fields
+		assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.2.0", operator.Status.ResolvedBundleResource)
+
+		// checking the expected conditions
+		cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+		require.NotNil(t, cond)
+		assert.Equal(t, metav1.ConditionTrue, cond.Status)
+		assert.Equal(t, operatorsv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@fake1.2.0"`, cond.Message)
+	})
+
+	t.Run("legacy semantics upgrade constraints", func(t *testing.T) {
+		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
+		defer func() {
+			require.NoError(t, cl.DeleteAllOf(ctx, &operatorsv1alpha1.Operator{}))
+			require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+		}()
+
+		pkgName := "prometheus"
+		pkgVer := "1.0.0"
+		pkgChan := "beta"
+		opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
+		operator := &operatorsv1alpha1.Operator{
+			ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+			Spec: operatorsv1alpha1.OperatorSpec{
+				PackageName: pkgName,
+				Version:     pkgVer,
+				Channel:     pkgChan,
+			},
+		}
+		// Create an operator
+		err := cl.Create(ctx, operator)
+		require.NoError(t, err)
+
+		// Run reconcile
+		res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, res)
+
+		// Refresh the operator after reconcile
+		err = cl.Get(ctx, opKey, operator)
+		require.NoError(t, err)
+
+		// Checking the status fields
+		assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", operator.Status.ResolvedBundleResource)
+
+		// checking the expected conditions
+		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+		require.NotNil(t, cond)
+		assert.Equal(t, metav1.ConditionTrue, cond.Status)
+		assert.Equal(t, operatorsv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@fake1.0.0"`, cond.Message)
+
+		// Invalid update: can not upgrade by skipping a version in the replaces chain
+		operator.Spec.Version = "1.2.0"
+		err = cl.Update(ctx, operator)
+		require.NoError(t, err)
+
+		// Run reconcile again
+		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+		require.Error(t, err)
+		assert.Equal(t, ctrl.Result{}, res)
+
+		// Refresh the operator after reconcile
+		err = cl.Get(ctx, opKey, operator)
+		require.NoError(t, err)
+
+		// Checking the status fields
+		// TODO: https://github.com/operator-framework/operator-controller/issues/320
+		assert.Equal(t, "", operator.Status.ResolvedBundleResource)
+
+		// checking the expected conditions
+		cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+		require.NotNil(t, cond)
+		assert.Equal(t, metav1.ConditionFalse, cond.Status)
+		assert.Equal(t, operatorsv1alpha1.ReasonResolutionFailed, cond.Reason)
+		assert.Contains(t, cond.Message, "constraints not satisfiable")
+		assert.Contains(t, cond.Message, "installed package prometheus requires at least one of fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.1, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.0;")
+
+		// Valid update skipping one version
+		operator.Spec.Version = "1.0.1"
+		err = cl.Update(ctx, operator)
+		require.NoError(t, err)
+
+		// Run reconcile again
+		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, res)
+
+		// Refresh the operator after reconcile
+		err = cl.Get(ctx, opKey, operator)
+		require.NoError(t, err)
+
+		// Checking the status fields
+		assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.1", operator.Status.ResolvedBundleResource)
+
+		// checking the expected conditions
+		cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+		require.NotNil(t, cond)
+		assert.Equal(t, metav1.ConditionTrue, cond.Status)
+		assert.Equal(t, operatorsv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@fake1.0.1"`, cond.Message)
+	})
 }
 
 var (
