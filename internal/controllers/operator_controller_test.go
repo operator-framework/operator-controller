@@ -1049,60 +1049,102 @@ func verifyConditionsInvariants(op *operatorsv1alpha1.Operator) {
 }
 
 var (
-	alphaChannel = catalogmetadata.Channel{Channel: declcfg.Channel{
-		Name: "alpha",
-	}}
-	betaChannel = catalogmetadata.Channel{Channel: declcfg.Channel{
-		Name: "beta",
-	}}
+	prometheusAlphaChannel = catalogmetadata.Channel{
+		Channel: declcfg.Channel{
+			Name:    "alpha",
+			Package: "prometheus",
+		},
+	}
+	prometheusBetaChannel = catalogmetadata.Channel{
+		Channel: declcfg.Channel{
+			Name:    "beta",
+			Package: "prometheus",
+			Entries: []declcfg.ChannelEntry{
+				{
+					Name: "operatorhub/prometheus/beta/0.37.0",
+				},
+				{
+					Name:     "operatorhub/prometheus/beta/0.47.0",
+					Replaces: "operatorhub/prometheus/beta/0.37.0",
+				},
+			},
+		},
+	}
+	plainBetaChannel = catalogmetadata.Channel{
+		Channel: declcfg.Channel{
+			Name:    "beta",
+			Package: "plain",
+		},
+	}
+	badmediaBetaChannel = catalogmetadata.Channel{
+		Channel: declcfg.Channel{
+			Name:    "beta",
+			Package: "badmedia",
+		},
+	}
 )
 
 var testBundleList = []*catalogmetadata.Bundle{
-	{Bundle: declcfg.Bundle{
-		Name:    "operatorhub/prometheus/alpha/0.37.0",
-		Package: "prometheus",
-		Image:   "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35",
-		Properties: []property.Property{
-			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"0.37.0"}`)},
-			{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+	{
+		Bundle: declcfg.Bundle{
+			Name:    "operatorhub/prometheus/alpha/0.37.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35",
+			Properties: []property.Property{
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"0.37.0"}`)},
+				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+			},
 		},
-	}, InChannels: []*catalogmetadata.Channel{&alphaChannel}},
-	{Bundle: declcfg.Bundle{
-		Name:    "operatorhub/prometheus/beta/0.37.0",
-		Package: "prometheus",
-		Image:   "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35",
-		Properties: []property.Property{
-			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"0.37.0"}`)},
-			{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+		InChannels: []*catalogmetadata.Channel{&prometheusAlphaChannel},
+	},
+	{
+		Bundle: declcfg.Bundle{
+			Name:    "operatorhub/prometheus/beta/0.37.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35",
+			Properties: []property.Property{
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"0.37.0"}`)},
+				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+			},
 		},
-	}, InChannels: []*catalogmetadata.Channel{&betaChannel}},
-	{Bundle: declcfg.Bundle{
-		Name:    "operatorhub/prometheus/beta/0.47.0",
-		Package: "prometheus",
-		Image:   "quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed",
-		Properties: []property.Property{
-			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"0.47.0"}`)},
-			{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+		InChannels: []*catalogmetadata.Channel{&prometheusBetaChannel},
+	},
+	{
+		Bundle: declcfg.Bundle{
+			Name:    "operatorhub/prometheus/beta/0.47.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@sha256:5b04c49d8d3eff6a338b56ec90bdf491d501fe301c9cdfb740e5bff6769a21ed",
+			Properties: []property.Property{
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"0.47.0"}`)},
+				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+			},
 		},
-	}, InChannels: []*catalogmetadata.Channel{&betaChannel}},
-	{Bundle: declcfg.Bundle{
-		Name:    "operatorhub/plain/0.1.0",
-		Package: "plain",
-		Image:   "quay.io/operatorhub/plain@sha256:plain",
-		Properties: []property.Property{
-			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"plain","version":"0.1.0"}`)},
-			{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-			{Type: "olm.bundle.mediatype", Value: json.RawMessage(`"plain+v0"`)},
+		InChannels: []*catalogmetadata.Channel{&prometheusBetaChannel},
+	},
+	{
+		Bundle: declcfg.Bundle{
+			Name:    "operatorhub/plain/0.1.0",
+			Package: "plain",
+			Image:   "quay.io/operatorhub/plain@sha256:plain",
+			Properties: []property.Property{
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"plain","version":"0.1.0"}`)},
+				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+				{Type: "olm.bundle.mediatype", Value: json.RawMessage(`"plain+v0"`)},
+			},
 		},
-	}, InChannels: []*catalogmetadata.Channel{&betaChannel}},
-	{Bundle: declcfg.Bundle{
-		Name:    "operatorhub/badmedia/0.1.0",
-		Package: "badmedia",
-		Image:   "quay.io/operatorhub/badmedia@sha256:badmedia",
-		Properties: []property.Property{
-			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"badmedia","version":"0.1.0"}`)},
-			{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-			{Type: "olm.bundle.mediatype", Value: json.RawMessage(`"badmedia+v1"`)},
+		InChannels: []*catalogmetadata.Channel{&plainBetaChannel},
+	},
+	{
+		Bundle: declcfg.Bundle{
+			Name:    "operatorhub/badmedia/0.1.0",
+			Package: "badmedia",
+			Image:   "quay.io/operatorhub/badmedia@sha256:badmedia",
+			Properties: []property.Property{
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"badmedia","version":"0.1.0"}`)},
+				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+				{Type: "olm.bundle.mediatype", Value: json.RawMessage(`"badmedia+v1"`)},
+			},
 		},
-	}, InChannels: []*catalogmetadata.Channel{&betaChannel}},
+		InChannels: []*catalogmetadata.Channel{&badmediaBetaChannel},
+	},
 }
