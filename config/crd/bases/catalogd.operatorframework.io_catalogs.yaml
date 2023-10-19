@@ -49,6 +49,13 @@ spec:
                     description: Image is the catalog image that backs the content
                       of this catalog.
                     properties:
+                      pollInterval:
+                        description: PollInterval indicates the interval at which
+                          the image source should be polled for new content, specified
+                          as a duration (e.g., "5m", "1h", "24h", "etc".). Note that
+                          PollInterval may not be specified for a catalog image referenced
+                          by a sha256 digest.
+                        type: string
                       pullSecret:
                         description: PullSecret contains the name of the image pull
                           secret in the namespace that catalogd is deployed.
@@ -69,6 +76,10 @@ spec:
             required:
             - source
             type: object
+            x-kubernetes-validations:
+            - message: cannot specify PollInterval while using digest-based image
+              rule: '!has(self.source.image.pollInterval) || (self.source.image.pollInterval
+                == "") || (self.source.image.ref.find(''@sha256:'') == "")'
           status:
             description: CatalogStatus defines the observed state of Catalog
             properties:
@@ -146,29 +157,47 @@ spec:
                 description: ContentURL is a cluster-internal address that on-cluster
                   components can read the content of a catalog from
                 type: string
+              observedGeneration:
+                description: observedGeneration is the most recent generation observed
+                  for this Catalog. It corresponds to the Catalog's generation, which
+                  is updated on mutation by the API Server.
+                format: int64
+                type: integer
               phase:
                 type: string
               resolvedSource:
-                description: CatalogSource contains the sourcing information for a
-                  Catalog
+                description: ResolvedSource contains information about the resolved
+                  source
                 properties:
                   image:
                     description: Image is the catalog image that backs the content
                       of this catalog.
                     properties:
+                      lastPollAttempt:
+                        description: LastPollAtempt is the time when the source resolved
+                          was last polled for new content.
+                        format: date-time
+                        type: string
                       pullSecret:
-                        description: PullSecret contains the name of the image pull
-                          secret in the namespace that catalogd is deployed.
+                        description: pullSecret exists to retain compatibility with
+                          the existing v1alpha1 APIs. It will be removed in v1alpha2.
                         type: string
                       ref:
                         description: Ref contains the reference to a container image
                           containing Catalog contents.
                         type: string
+                      resolvedRef:
+                        description: ResolvedRef contains the resolved sha256 image
+                          ref containing Catalog contents.
+                        type: string
                     required:
+                    - lastPollAttempt
                     - ref
+                    - resolvedRef
                     type: object
                   type:
-                    description: Type defines the kind of Catalog content being sourced.
+                    description: Type defines the kind of Catalog content that was
+                      sourced.
                     type: string
                 required:
                 - type

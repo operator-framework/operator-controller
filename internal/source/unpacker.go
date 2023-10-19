@@ -49,7 +49,7 @@ type Result struct {
 	// For example, resolved image sources should reference a container image
 	// digest rather than an image tag, and git sources should reference a
 	// commit hash rather than a branch or tag.
-	ResolvedSource *catalogdv1alpha1.CatalogSource
+	ResolvedSource *catalogdv1alpha1.ResolvedCatalogSource
 
 	// State is the current state of unpacking the catalog content.
 	State State

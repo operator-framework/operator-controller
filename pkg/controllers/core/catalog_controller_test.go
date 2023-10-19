@@ -539,9 +539,266 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			} else {
 				assert.Error(t, err)
 			}
-
 			diff := cmp.Diff(tt.expectedCatalog, tt.catalog, cmpopts.IgnoreFields(metav1.Condition{}, "Message", "LastTransitionTime"))
 			assert.Empty(t, diff, "comparing the expected Catalog")
+		})
+	}
+}
+
+func TestPollingRequeue(t *testing.T) {
+	for name, tc := range map[string]struct {
+		catalog              *catalogdv1alpha1.Catalog
+		expectedRequeueAfter time.Duration
+	}{
+		"Catalog with tag based image ref without any poll interval specified, requeueAfter set to 0, ie polling disabled": {
+			catalog: &catalogdv1alpha1.Catalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+				},
+				Spec: catalogdv1alpha1.CatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
+						Type: "image",
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref: "someimage:latest",
+						},
+					},
+				},
+			},
+			expectedRequeueAfter: time.Second * 0,
+		},
+		"Catalog with tag based image ref with poll interval specified, requeueAfter set to wait.jitter(pollInterval)": {
+			catalog: &catalogdv1alpha1.Catalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+				},
+				Spec: catalogdv1alpha1.CatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
+						Type: "image",
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref:          "someimage:latest",
+							PollInterval: &metav1.Duration{Duration: time.Minute * 5},
+						},
+					},
+				},
+			},
+			expectedRequeueAfter: time.Minute * 5,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			reconciler := &CatalogReconciler{
+				Client: nil,
+				Unpacker: source.NewUnpacker(
+					map[catalogdv1alpha1.SourceType]source.Unpacker{
+						catalogdv1alpha1.SourceTypeImage: &MockSource{result: &source.Result{
+							State: source.StateUnpacked,
+							FS:    &fstest.MapFS{},
+						}},
+					},
+				),
+				Storage: &MockStore{},
+			}
+			res, _ := reconciler.reconcile(context.Background(), tc.catalog)
+			assert.GreaterOrEqual(t, res.RequeueAfter, tc.expectedRequeueAfter)
+			// wait.Jitter used to calculate requeueAfter by the reconciler
+			// returns a time.Duration between pollDuration and pollDuration + maxFactor * pollDuration.
+			assert.LessOrEqual(t, float64(res.RequeueAfter), float64(tc.expectedRequeueAfter)+(float64(tc.expectedRequeueAfter)*requeueJitterMaxFactor))
+		})
+	}
+}
+
+func TestPollingReconcilerUnpack(t *testing.T) {
+	for name, tc := range map[string]struct {
+		catalog           *catalogdv1alpha1.Catalog
+		expectedUnpackRun bool
+	}{
+		"catalog being resolved the first time, unpack should run": {
+			catalog: &catalogdv1alpha1.Catalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+				},
+				Spec: catalogdv1alpha1.CatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
+						Type: "image",
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref:          "someimage:latest",
+							PollInterval: &metav1.Duration{Duration: time.Minute * 5},
+						},
+					},
+				},
+			},
+			expectedUnpackRun: true,
+		},
+		"catalog not being resolved the first time, no pollInterval mentioned, unpack should not run": {
+			catalog: &catalogdv1alpha1.Catalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+					Generation: 2,
+				},
+				Spec: catalogdv1alpha1.CatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
+						Type: "image",
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref: "someimage:latest",
+						},
+					},
+				},
+				Status: catalogdv1alpha1.CatalogStatus{
+					Phase:      catalogdv1alpha1.PhaseUnpacked,
+					ContentURL: "URL",
+					Conditions: []metav1.Condition{
+						{
+							Type:   catalogdv1alpha1.TypeUnpacked,
+							Status: metav1.ConditionTrue,
+							Reason: catalogdv1alpha1.ReasonUnpackSuccessful,
+						},
+					},
+					ObservedGeneration: 2,
+					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
+						Type: "image",
+						Image: &catalogdv1alpha1.ResolvedImageSource{
+							Ref:             "someimage:latest",
+							ResolvedRef:     "someimage@sha256:asdf123",
+							LastPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
+						},
+					},
+				},
+			},
+			expectedUnpackRun: false,
+		},
+		"catalog not being resolved the first time, pollInterval mentioned, \"now\" is before next expected poll time, unpack should not run": {
+			catalog: &catalogdv1alpha1.Catalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+					Generation: 2,
+				},
+				Spec: catalogdv1alpha1.CatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
+						Type: "image",
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref:          "someimage:latest",
+							PollInterval: &metav1.Duration{Duration: time.Minute * 7},
+						},
+					},
+				},
+				Status: catalogdv1alpha1.CatalogStatus{
+					Phase:      catalogdv1alpha1.PhaseUnpacked,
+					ContentURL: "URL",
+					Conditions: []metav1.Condition{
+						{
+							Type:   catalogdv1alpha1.TypeUnpacked,
+							Status: metav1.ConditionTrue,
+							Reason: catalogdv1alpha1.ReasonUnpackSuccessful,
+						},
+					},
+					ObservedGeneration: 2,
+					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
+						Type: "image",
+						Image: &catalogdv1alpha1.ResolvedImageSource{
+							Ref:             "someimage:latest",
+							ResolvedRef:     "someimage@sha256:asdf123",
+							LastPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
+						},
+					},
+				},
+			},
+			expectedUnpackRun: false,
+		},
+		"catalog not being resolved the first time, pollInterval mentioned, \"now\" is after next expected poll time, unpack should run": {
+			catalog: &catalogdv1alpha1.Catalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+					Generation: 2,
+				},
+				Spec: catalogdv1alpha1.CatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
+						Type: "image",
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref:          "someimage:latest",
+							PollInterval: &metav1.Duration{Duration: time.Minute * 3},
+						},
+					},
+				},
+				Status: catalogdv1alpha1.CatalogStatus{
+					Phase:      catalogdv1alpha1.PhaseUnpacked,
+					ContentURL: "URL",
+					Conditions: []metav1.Condition{
+						{
+							Type:   catalogdv1alpha1.TypeUnpacked,
+							Status: metav1.ConditionTrue,
+							Reason: catalogdv1alpha1.ReasonUnpackSuccessful,
+						},
+					},
+					ObservedGeneration: 2,
+					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
+						Type: "image",
+						Image: &catalogdv1alpha1.ResolvedImageSource{
+							Ref:             "someimage:latest",
+							ResolvedRef:     "someimage@sha256:asdf123",
+							LastPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
+						},
+					},
+				},
+			},
+			expectedUnpackRun: true,
+		},
+		"catalog not being resolved the first time, pollInterval mentioned, \"now\" is before next expected poll time, spec.image changed, unpack should run": {
+			catalog: &catalogdv1alpha1.Catalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+					Generation: 3,
+				},
+				Spec: catalogdv1alpha1.CatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
+						Type: "image",
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref:          "someotherimage:latest",
+							PollInterval: &metav1.Duration{Duration: time.Minute * 7},
+						},
+					},
+				},
+				Status: catalogdv1alpha1.CatalogStatus{
+					Phase:      catalogdv1alpha1.PhaseUnpacked,
+					ContentURL: "URL",
+					Conditions: []metav1.Condition{
+						{
+							Type:   catalogdv1alpha1.TypeUnpacked,
+							Status: metav1.ConditionTrue,
+							Reason: catalogdv1alpha1.ReasonUnpackSuccessful,
+						},
+					},
+					ObservedGeneration: 2,
+					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
+						Type: "image",
+						Image: &catalogdv1alpha1.ResolvedImageSource{
+							Ref:             "someimage:latest",
+							ResolvedRef:     "someimage@sha256:asdf123",
+							LastPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
+						},
+					},
+				},
+			},
+			expectedUnpackRun: true,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			reconciler := &CatalogReconciler{
+				Client:   nil,
+				Unpacker: &MockSource{shouldError: true},
+				Storage:  &MockStore{},
+			}
+			_, err := reconciler.reconcile(context.Background(), tc.catalog)
+			if tc.expectedUnpackRun {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }

@@ -9,12 +9,14 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/containerd/containerd/archive"
 	"github.com/google/go-containerregistry/pkg/authn/k8schain"
 	gcrkube "github.com/google/go-containerregistry/pkg/authn/kubernetes"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
@@ -116,11 +118,12 @@ func (i *ImageRegistry) Cleanup(_ context.Context, catalog *catalogdv1alpha1.Cat
 func unpackedResult(fsys fs.FS, catalog *catalogdv1alpha1.Catalog, ref string) *Result {
 	return &Result{
 		FS: fsys,
-		ResolvedSource: &catalogdv1alpha1.CatalogSource{
+		ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
 			Type: catalogdv1alpha1.SourceTypeImage,
-			Image: &catalogdv1alpha1.ImageSource{
-				Ref:        ref,
-				PullSecret: catalog.Spec.Source.Image.PullSecret,
+			Image: &catalogdv1alpha1.ResolvedImageSource{
+				Ref:             catalog.Spec.Source.Image.Ref,
+				ResolvedRef:     ref,
+				LastPollAttempt: metav1.Time{Time: time.Now()},
 			},
 		},
 		State: StateUnpacked,

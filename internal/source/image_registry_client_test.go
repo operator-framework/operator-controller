@@ -358,7 +358,7 @@ func TestImageRegistry(t *testing.T) {
 			rs, err := imgReg.Unpack(ctx, tt.catalog)
 			if !tt.wantErr {
 				assert.NoError(t, err)
-				assert.Equal(t, fmt.Sprintf("%s@sha256:%s", imgName.Context().Name(), digest.Hex), rs.ResolvedSource.Image.Ref)
+				assert.Equal(t, fmt.Sprintf("%s@sha256:%s", imgName.Context().Name(), digest.Hex), rs.ResolvedSource.Image.ResolvedRef)
 				assert.Equal(t, source.StateUnpacked, rs.State)
 				assert.DirExists(t, filepath.Join(testCache, tt.catalog.Name, digest.Hex))
 				entries, err := os.ReadDir(filepath.Join(testCache, tt.catalog.Name))

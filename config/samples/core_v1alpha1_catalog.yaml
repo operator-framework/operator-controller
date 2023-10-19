@@ -6,4 +6,5 @@ spec:
   source:
     type: image
     image:
+      pollInterval: 24h
       ref: quay.io/operatorhubio/catalog:latest
