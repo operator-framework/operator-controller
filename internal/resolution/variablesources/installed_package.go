@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	mmsemver "github.com/Masterminds/semver/v3"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 
@@ -12,6 +13,7 @@ import (
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	"github.com/operator-framework/operator-controller/internal/resolution/variables"
+	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
 var _ input.VariableSource = &InstalledPackageVariableSource{}
@@ -59,10 +61,15 @@ func (r *InstalledPackageVariableSource) notFoundError() error {
 }
 
 func NewInstalledPackageVariableSource(catalogClient BundleProvider, bundleImage string) (*InstalledPackageVariableSource, error) {
+	successors := legacySemanticsSuccessors
+	if features.OperatorControllerFeatureGate.Enabled(features.ForceSemverUpgradeConstraints) {
+		successors = semverSuccessors
+	}
+
 	return &InstalledPackageVariableSource{
 		catalogClient: catalogClient,
 		bundleImage:   bundleImage,
-		successors:    legacySemanticsSuccessors,
+		successors:    successors,
 	}, nil
 }
 
@@ -77,6 +84,31 @@ func legacySemanticsSuccessors(allBundles []*catalogmetadata.Bundle, installedBu
 	// find the bundles that replace the bundle provided
 	// TODO: this algorithm does not yet consider skips and skipRange
 	upgradeEdges := catalogfilter.Filter(allBundles, catalogfilter.Replaces(installedBundle.Name))
+	sort.SliceStable(upgradeEdges, func(i, j int) bool {
+		return catalogsort.ByVersion(upgradeEdges[i], upgradeEdges[j])
+	})
+
+	return upgradeEdges, nil
+}
+
+// semverSuccessors returns successors based on Semver.
+// Successors will not include versions outside the major version of the
+// installed bundle as major version is intended to indicate breaking changes.
+func semverSuccessors(allBundles []*catalogmetadata.Bundle, installedBundle *catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error) {
+	currentVersion, err := installedBundle.Version()
+	if err != nil {
+		return nil, err
+	}
+
+	// Based on current version create a caret range comparison constraint
+	// to allow only minor and patch version as successors and exclude current version.
+	constraintStr := fmt.Sprintf("^%s, != %s", currentVersion.String(), currentVersion.String())
+	wantedVersionRangeConstraint, err := mmsemver.NewConstraint(constraintStr)
+	if err != nil {
+		return nil, err
+	}
+
+	upgradeEdges := catalogfilter.Filter(allBundles, catalogfilter.InMastermindsSemverRange(wantedVersionRangeConstraint))
 	sort.SliceStable(upgradeEdges, func(i, j int) bool {
 		return catalogsort.ByVersion(upgradeEdges[i], upgradeEdges[j])
 	})

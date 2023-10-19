@@ -67,7 +67,7 @@ var _ = Describe("Operator Install", func() {
 					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
 					g.Expect(cond.Message).To(ContainSubstring("resolved to"))
-					g.Expect(operator.Status.ResolvedBundleResource).To(Equal("localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1"))
+					g.Expect(operator.Status.ResolvedBundleResource).To(Equal("localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0"))
 				}).Should(Succeed())
 
 				By("eventually installing the package successfully")
@@ -180,48 +180,57 @@ var _ = Describe("Operator Install", func() {
 			}).Should(Succeed())
 		})
 
-		It("handles upgrade edges correctly", func() {
-			By("creating a valid Operator resource")
-			operator.Spec = operatorv1alpha1.OperatorSpec{
-				PackageName: "prometheus",
-				Version:     "0.37.0",
-			}
-			Expect(c.Create(ctx, operator)).To(Succeed())
-			By("eventually reporting a successful resolution")
-			Eventually(func(g Gomega) {
-				g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-				g.Expect(cond).ToNot(BeNil())
-				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
-				g.Expect(cond.Message).To(ContainSubstring("resolved to"))
-				g.Expect(operator.Status.ResolvedBundleResource).ToNot(BeEmpty())
-			}).Should(Succeed())
+		When("resolving upgrade edges", func() {
+			BeforeEach(func() {
+				By("creating an Operator at a specified version")
+				operator.Spec = operatorv1alpha1.OperatorSpec{
+					PackageName: "prometheus",
+					Version:     "1.0.0",
+				}
+				Expect(c.Create(ctx, operator)).To(Succeed())
+				By("eventually reporting a successful resolution")
+				Eventually(func(g Gomega) {
+					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
+					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+					g.Expect(cond).ToNot(BeNil())
+					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
+					g.Expect(cond.Message).To(ContainSubstring("resolved to"))
+					g.Expect(operator.Status.ResolvedBundleResource).To(Equal("localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0"))
+				}).Should(Succeed())
+			})
 
-			By("updating the Operator resource to a non-successor version")
-			operator.Spec.Version = "0.65.1" // current (0.37.0) and successor (0.47.0) are the only values that would be SAT.
-			Expect(c.Update(ctx, operator)).To(Succeed())
-			By("eventually reporting an unsatisfiable resolution")
-			Eventually(func(g Gomega) {
-				g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-				g.Expect(cond).ToNot(BeNil())
-				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonResolutionFailed))
-				g.Expect(cond.Message).To(MatchRegexp(`^constraints not satisfiable:.*; installed package prometheus requires at least one of.*0.47.0[^,]*,[^,]*0.37.0[^;]*;.*`))
-				g.Expect(operator.Status.ResolvedBundleResource).To(BeEmpty())
-			}).Should(Succeed())
+			It("does not allow to upgrade the Operator to a non-successor version", func() {
+				By("updating the Operator resource to a non-successor version")
+				// Semver only allows upgrades within major version at the moment.
+				operator.Spec.Version = "2.0.0"
+				Expect(c.Update(ctx, operator)).To(Succeed())
+				By("eventually reporting an unsatisfiable resolution")
+				Eventually(func(g Gomega) {
+					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
+					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+					g.Expect(cond).ToNot(BeNil())
+					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonResolutionFailed))
+					g.Expect(cond.Message).To(ContainSubstring("constraints not satisfiable"))
+					g.Expect(cond.Message).To(ContainSubstring("installed package prometheus requires at least one of test-catalog-prometheus-prometheus-operator.1.2.0, test-catalog-prometheus-prometheus-operator.1.0.1, test-catalog-prometheus-prometheus-operator.1.0.0;"))
+					g.Expect(operator.Status.ResolvedBundleResource).To(BeEmpty())
+				}).Should(Succeed())
+			})
 
-			By("updating the Operator resource to a valid upgrade edge")
-			operator.Spec.Version = "0.47.0"
-			Expect(c.Update(ctx, operator)).To(Succeed())
-			By("eventually reporting a successful resolution and bundle path")
-			Eventually(func(g Gomega) {
-				g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-				g.Expect(cond).ToNot(BeNil())
-				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
-				g.Expect(cond.Message).To(ContainSubstring("resolved to"))
-				g.Expect(operator.Status.ResolvedBundleResource).ToNot(BeEmpty())
-			}).Should(Succeed())
+			It("does allow to upgrade the Operator to any of the successor versions within non-zero major version", func() {
+				By("updating the Operator resource by skipping versions")
+				// Test catalog has versions between the initial version and new version
+				operator.Spec.Version = "1.2.0"
+				Expect(c.Update(ctx, operator)).To(Succeed())
+				By("eventually reporting a successful resolution and bundle path")
+				Eventually(func(g Gomega) {
+					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
+					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+					g.Expect(cond).ToNot(BeNil())
+					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
+					g.Expect(cond.Message).To(ContainSubstring("resolved to"))
+					g.Expect(operator.Status.ResolvedBundleResource).To(Equal("localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0"))
+				}).Should(Succeed())
+			})
 		})
 
 		AfterEach(func() {
