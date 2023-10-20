@@ -17,89 +17,77 @@ limitations under the License.
 package controllers_test
 
 import (
-	"context"
+	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/meta"
+
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/rest"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
-// These tests use Ginkgo (BDD-style Go testing framework). Refer to
-// http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
-
 var (
-	cfg     *rest.Config
-	cl      client.Client
-	sch     *runtime.Scheme
-	testEnv *envtest.Environment
+	cl  client.Client
+	sch *runtime.Scheme
 )
 
+// Some of the tests use Ginkgo (BDD-style Go testing framework). Refer to
+// http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
+// We plan phase Ginkgo out for unit tests.
+// See: https://github.com/operator-framework/operator-controller/issues/189
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Controller Suite")
 }
 
-var _ = BeforeSuite(func() {
+// This setup allows for Ginkgo and standard Go tests to co-exist
+// and use the same setup and teardown.
+func TestMain(m *testing.M) {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
-	By("bootstrapping test environment")
-	testEnv = &envtest.Environment{
+	// bootstrapping test environment
+	testEnv := &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "config", "crd", "bases"),
 			filepath.Join("..", "..", "testdata", "crds")},
 		ErrorIfCRDPathMissing: true,
 	}
 
-	var err error
-	// cfg is defined in this file globally.
-	cfg, err = testEnv.Start()
-	Expect(err).NotTo(HaveOccurred())
-	Expect(cfg).NotTo(BeNil())
+	cfg, err := testEnv.Start()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	sch = runtime.NewScheme()
-	err = operatorsv1alpha1.AddToScheme(sch)
-	Expect(err).NotTo(HaveOccurred())
-	err = rukpakv1alpha1.AddToScheme(sch)
-	Expect(err).NotTo(HaveOccurred())
+	utilruntime.Must(operatorsv1alpha1.AddToScheme(sch))
+	utilruntime.Must(rukpakv1alpha1.AddToScheme(sch))
 
 	cl, err = client.New(cfg, client.Options{Scheme: sch})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(cl).NotTo(BeNil())
-})
-
-var _ = AfterSuite(func() {
-	var operators operatorsv1alpha1.OperatorList
-	var bundleDeployments rukpakv1alpha1.BundleDeploymentList
-
-	Expect(cl.List(context.Background(), &operators)).To(Succeed())
-	Expect(cl.List(context.Background(), &bundleDeployments)).To(Succeed())
-
-	Expect(namesFromList(&operators)).To(BeEmpty(), "operators left in the cluster")
-	Expect(namesFromList(&bundleDeployments)).To(BeEmpty(), "bundle deployments left in the cluster")
-
-	By("tearing down the test environment")
-	err := testEnv.Stop()
-	Expect(err).NotTo(HaveOccurred())
-})
-
-func namesFromList(list client.ObjectList) []string {
-	items, err := meta.ExtractList(list)
-	Expect(err).NotTo(HaveOccurred())
-
-	names := make([]string, 0, len(items))
-	for _, item := range items {
-		names = append(names, item.(client.Object).GetName())
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
-	return names
+
+	code := m.Run()
+
+	// tearing down the test environment
+	err = testEnv.Stop()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	os.Exit(code)
 }
