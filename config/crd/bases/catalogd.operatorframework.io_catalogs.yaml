@@ -164,6 +164,9 @@ spec:
                 format: int64
                 type: integer
               phase:
+                description: Phase represents a human-readable status of resolution
+                  of the content source. It is not appropriate to use for business
+                  logic determination.
                 type: string
               resolvedSource:
                 description: ResolvedSource contains information about the resolved

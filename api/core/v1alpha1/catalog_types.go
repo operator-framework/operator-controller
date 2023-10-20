@@ -84,7 +84,9 @@ type CatalogStatus struct {
 
 	// ResolvedSource contains information about the resolved source
 	ResolvedSource *ResolvedCatalogSource `json:"resolvedSource,omitempty"`
-	Phase          string                 `json:"phase,omitempty"`
+	// Phase represents a human-readable status of resolution of the content source.
+	// It is not appropriate to use for business logic determination.
+	Phase string `json:"phase,omitempty"`
 	// ContentURL is a cluster-internal address that on-cluster components
 	// can read the content of a catalog from
 	ContentURL string `json:"contentURL,omitempty"`
