@@ -996,7 +996,7 @@ var _ = Describe("Operator Controller Test", func() {
 				}
 
 				// this bypasses client/server-side CR validation and allows us to test the reconciler's validation
-				fakeClient = fake.NewClientBuilder().WithScheme(sch).WithObjects(operator).Build()
+				fakeClient = fake.NewClientBuilder().WithScheme(sch).WithObjects(operator).WithStatusSubresource(operator).Build()
 
 				By("changing the reconciler client to the fake client")
 				reconciler.Client = fakeClient

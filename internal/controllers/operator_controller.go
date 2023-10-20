@@ -41,7 +41,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
@@ -311,7 +310,7 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&operatorsv1alpha1.Operator{}).
-		Watches(source.NewKindWithCache(&catalogd.Catalog{}, mgr.GetCache()),
+		Watches(&catalogd.Catalog{},
 			handler.EnqueueRequestsFromMapFunc(operatorRequestsForCatalog(context.TODO(), mgr.GetClient(), mgr.GetLogger()))).
 		Owns(&rukpakv1alpha1.BundleDeployment{}).
 		Complete(r)
@@ -443,7 +442,7 @@ func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message 
 
 // Generate reconcile requests for all operators affected by a catalog change
 func operatorRequestsForCatalog(ctx context.Context, c client.Reader, logger logr.Logger) handler.MapFunc {
-	return func(object client.Object) []reconcile.Request {
+	return func(_ context.Context, _ client.Object) []reconcile.Request {
 		// no way of associating an operator to a catalog so create reconcile requests for everything
 		operators := operatorsv1alpha1.OperatorList{}
 		err := c.List(ctx, &operators)

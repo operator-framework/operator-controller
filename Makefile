@@ -122,11 +122,14 @@ UNIT_TEST_DIRS=$(shell go list ./... | grep -v /test/)
 test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
 	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
 
+image-registry: ## Setup in-cluster image registry
+	./test/tools/imageregistry/registry.sh
+
 .PHONY: test-e2e
 test-e2e: KIND_CLUSTER_NAME=operator-controller-e2e
 test-e2e: KUSTOMIZE_BUILD_DIR=config/e2e
 test-e2e: GO_BUILD_FLAGS=-cover
-test-e2e: run kind-load-test-artifacts e2e e2e-coverage undeploy kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: run image-registry kind-load-test-artifacts e2e e2e-coverage undeploy kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: operator-developer-e2e
 operator-developer-e2e: KIND_CLUSTER_NAME=operator-controller-op-dev-e2e  #EXHELP Run operator-developer e2e on local kind cluster
@@ -165,7 +168,6 @@ kind-load-test-artifacts: $(KIND) #EXHELP Load the e2e testdata container images
 	$(CONTAINER_RUNTIME) tag localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1 localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0
 	$(CONTAINER_RUNTIME) tag localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1 localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0
 	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/bundles/plain-v0/plain.v0.1.0 -t localhost/testdata/bundles/plain-v0/plain:v0.1.0
-	$(CONTAINER_RUNTIME) build $(TESTDATA_DIR)/catalogs -f $(TESTDATA_DIR)/catalogs/test-catalog.Dockerfile -t localhost/testdata/catalogs/test-catalog:e2e
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v0.37.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v0.47.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v0.65.1 --name $(KIND_CLUSTER_NAME)
@@ -174,7 +176,6 @@ kind-load-test-artifacts: $(KIND) #EXHELP Load the e2e testdata container images
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/plain-v0/plain:v0.1.0 --name $(KIND_CLUSTER_NAME)
-	$(KIND) load docker-image localhost/testdata/catalogs/test-catalog:e2e --name $(KIND_CLUSTER_NAME)
 
 
 #SECTION Build

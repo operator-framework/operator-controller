@@ -69,9 +69,9 @@ func TestCache(t *testing.T) {
 						Name: "test-catalog",
 					},
 					Status: catalogd.CatalogStatus{
-						ResolvedSource: &catalogd.CatalogSource{
+						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
-							Image: &catalogd.ImageSource{
+							Image: &catalogd.ResolvedImageSource{
 								Ref: "fake/catalog@sha256:fakesha",
 							},
 						},
@@ -87,9 +87,9 @@ func TestCache(t *testing.T) {
 						Name: "test-catalog",
 					},
 					Status: catalogd.CatalogStatus{
-						ResolvedSource: &catalogd.CatalogSource{
+						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
-							Image: &catalogd.ImageSource{
+							Image: &catalogd.ResolvedImageSource{
 								Ref: "fake/catalog@sha256:fakesha",
 							},
 						},
@@ -107,9 +107,9 @@ func TestCache(t *testing.T) {
 						Name: "test-catalog",
 					},
 					Status: catalogd.CatalogStatus{
-						ResolvedSource: &catalogd.CatalogSource{
+						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
-							Image: &catalogd.ImageSource{
+							Image: &catalogd.ResolvedImageSource{
 								Ref: "fake/catalog@sha256:fakesha",
 							},
 						},
@@ -127,9 +127,9 @@ func TestCache(t *testing.T) {
 						Name: "test-catalog",
 					},
 					Status: catalogd.CatalogStatus{
-						ResolvedSource: &catalogd.CatalogSource{
+						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
-							Image: &catalogd.ImageSource{
+							Image: &catalogd.ResolvedImageSource{
 								Ref: "fake/catalog@sha256:fakesha",
 							},
 						},
@@ -146,9 +146,9 @@ func TestCache(t *testing.T) {
 						Name: "test-catalog",
 					},
 					Status: catalogd.CatalogStatus{
-						ResolvedSource: &catalogd.CatalogSource{
+						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
-							Image: &catalogd.ImageSource{
+							Image: &catalogd.ResolvedImageSource{
 								Ref: "fake/catalog@sha256:fakesha",
 							},
 						},
@@ -186,7 +186,7 @@ func TestCache(t *testing.T) {
 						Name: "test-catalog",
 					},
 					Status: catalogd.CatalogStatus{
-						ResolvedSource: &catalogd.CatalogSource{
+						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Image: nil,
 						},
 					},

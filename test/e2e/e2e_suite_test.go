@@ -13,7 +13,6 @@ import (
 	"k8s.io/utils/env"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -35,11 +34,11 @@ var (
 
 const (
 	testCatalogRefEnvVar  = "TEST_CATALOG_IMAGE"
-	testCatalogRefDefault = "localhost/testdata/catalogs/test-catalog:e2e"
+	testCatalogRefDefault = "docker-registry.operator-controller-e2e.svc:5000/test-catalog:e2e"
 	testCatalogName       = "test-catalog"
 )
 
-// returns the image reference for the test, checking for environment variable substitution, with a default of localhost/testdata/catalogs/test-catalog:e2e
+// returns the image reference for the test, checking for environment variable substitution, with a default of docker-registry.operator-controller-e2e.svc:5000/test-catalog:e2e
 func getCatalogImageRef() string {
 	if s := os.Getenv(testCatalogRefEnvVar); s != "" {
 		return s
@@ -78,16 +77,6 @@ var _ = BeforeSuite(func() {
 	operatorCatalog, err = createTestCatalog(ctx, testCatalogName, getCatalogImageRef())
 	Expect(err).ToNot(HaveOccurred())
 
-	// TODO: REMOVE THIS. This should not be necessary if we have idiomatic APIs. Kubernetes is supposed
-	//   to be eventually consistent. Waits for preconditions like this hide bugs.
-	Eventually(func(g Gomega) {
-		err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, operatorCatalog)
-		g.Expect(err).ToNot(HaveOccurred())
-		cond := apimeta.FindStatusCondition(operatorCatalog.Status.Conditions, catalogd.TypeUnpacked)
-		g.Expect(cond).ToNot(BeNil())
-		g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-		g.Expect(cond.Reason).To(Equal(catalogd.ReasonUnpackSuccessful))
-	}).Should(Succeed())
 })
 
 var _ = AfterSuite(func() {
@@ -115,7 +104,8 @@ func createTestCatalog(ctx context.Context, name string, imageRef string) (*cata
 			Source: catalogd.CatalogSource{
 				Type: catalogd.SourceTypeImage,
 				Image: &catalogd.ImageSource{
-					Ref: imageRef,
+					Ref:                   imageRef,
+					InsecureSkipTLSVerify: true,
 				},
 			},
 		},
