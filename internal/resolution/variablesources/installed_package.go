@@ -83,7 +83,10 @@ type successorsFunc func(allBundles []*catalogmetadata.Bundle, installedBundle *
 func legacySemanticsSuccessors(allBundles []*catalogmetadata.Bundle, installedBundle *catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error) {
 	// find the bundles that replace the bundle provided
 	// TODO: this algorithm does not yet consider skips and skipRange
-	upgradeEdges := catalogfilter.Filter(allBundles, catalogfilter.Replaces(installedBundle.Name))
+	upgradeEdges := catalogfilter.Filter(allBundles, catalogfilter.And(
+		catalogfilter.WithPackageName(installedBundle.Package),
+		catalogfilter.Replaces(installedBundle.Name),
+	))
 	sort.SliceStable(upgradeEdges, func(i, j int) bool {
 		return catalogsort.ByVersion(upgradeEdges[i], upgradeEdges[j])
 	})
@@ -108,7 +111,10 @@ func semverSuccessors(allBundles []*catalogmetadata.Bundle, installedBundle *cat
 		return nil, err
 	}
 
-	upgradeEdges := catalogfilter.Filter(allBundles, catalogfilter.InMastermindsSemverRange(wantedVersionRangeConstraint))
+	upgradeEdges := catalogfilter.Filter(allBundles, catalogfilter.And(
+		catalogfilter.WithPackageName(installedBundle.Package),
+		catalogfilter.InMastermindsSemverRange(wantedVersionRangeConstraint),
+	))
 	sort.SliceStable(upgradeEdges, func(i, j int) bool {
 		return catalogsort.ByVersion(upgradeEdges[i], upgradeEdges[j])
 	})

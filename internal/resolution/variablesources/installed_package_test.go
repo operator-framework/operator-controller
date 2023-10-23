@@ -20,8 +20,18 @@ import (
 )
 
 func TestInstalledPackageVariableSource(t *testing.T) {
-	channel := catalogmetadata.Channel{Channel: declcfg.Channel{
-		Name: "stable",
+	someOtherPackageChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
+		Name:    "stable",
+		Package: "some-other-package",
+		Entries: []declcfg.ChannelEntry{
+			{
+				Name: "some-other-package.v2.3.0",
+			},
+		},
+	}}
+	testPackageChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
+		Name:    "stable",
+		Package: "test-package",
 		Entries: []declcfg.ChannelEntry{
 			{
 				Name: "test-package.v0.0.1",
@@ -80,7 +90,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 			Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "0.0.1"}`)},
 			}},
-			InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		{Bundle: declcfg.Bundle{
 			Name:    "test-package.v0.0.2",
@@ -89,7 +99,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 			Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "0.0.2"}`)},
 			}},
-			InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		{Bundle: declcfg.Bundle{
 			Name:    "test-package.v0.1.0",
@@ -98,7 +108,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 			Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "0.1.0"}`)},
 			}},
-			InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		{Bundle: declcfg.Bundle{
 			Name:    "test-package.v0.1.1",
@@ -107,7 +117,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 			Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "0.1.1"}`)},
 			}},
-			InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		{Bundle: declcfg.Bundle{
 			Name:    "test-package.v0.2.0",
@@ -116,7 +126,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 			Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "0.2.0"}`)},
 			}},
-			InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		{Bundle: declcfg.Bundle{
 			Name:    "test-package.v1.0.0",
@@ -125,7 +135,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 			Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "1.0.0"}`)},
 			}},
-			InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		{Bundle: declcfg.Bundle{
 			Name:    "test-package.v3.0.0",
@@ -134,7 +144,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 			Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "3.0.0"}`)},
 			}},
-			InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		{Bundle: declcfg.Bundle{
 			Name:    "test-package.v2.0.0",
@@ -143,7 +153,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 			Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.0.0"}`)},
 			}},
-			InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		{Bundle: declcfg.Bundle{
 			Name:    "test-package.v2.1.0",
@@ -152,7 +162,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 			Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.1.0"}`)},
 			}},
-			InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		{Bundle: declcfg.Bundle{
 			Name:    "test-package.v2.2.0",
@@ -161,7 +171,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 			Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.2.0"}`)},
 			}},
-			InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		{Bundle: declcfg.Bundle{
 			Name:    "test-package.v4.0.0",
@@ -170,16 +180,25 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 			Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "4.0.0"}`)},
 			}},
-			InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		{Bundle: declcfg.Bundle{
 			Name:    "test-package.v5.0.0",
 			Package: "test-package",
 			Image:   "registry.io/repo/test-package@v5.0.0",
 			Properties: []property.Property{
-				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "5-0.0"}`)},
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "5.0.0"}`)},
 			}},
-			InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
+		},
+		{Bundle: declcfg.Bundle{
+			Name:    "some-other-package.v2.3.0",
+			Package: "some-other-package",
+			Image:   "registry.io/repo/some-other-package@v2.3.0",
+			Properties: []property.Property{
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "some-other-package", "version": "2.3.0"}`)},
+			}},
+			InChannels: []*catalogmetadata.Channel{&someOtherPackageChannel},
 		},
 	}
 
