@@ -132,10 +132,10 @@ var _ = Describe("Operator Framework E2E for plain+v0 bundles", func() {
 			baseFolderPath: "../../testdata/bundles/plain-v0",
 			bundles: []BundleContent{
 				{
-					bundleVersion: "0.1.0",
+					bundleVersion: "1.1.0",
 				},
 				{
-					bundleVersion: "0.2.0",
+					bundleVersion: "1.2.0",
 				},
 			},
 		}
@@ -146,8 +146,8 @@ var _ = Describe("Operator Framework E2E for plain+v0 bundles", func() {
 			desiredChannelName: "beta",
 		}
 		operatorAction = &OperatorActionInfo{
-			installVersion: "0.1.0",
-			upgradeVersion: "0.2.0",
+			installVersion: "1.1.0",
+			upgradeVersion: "1.2.0",
 		}
 		for i, b := range bundleInfo.bundles {
 			bundleInfo.bundles[i].bInputDir = catalogDInfo.operatorName + ".v" + b.bundleVersion
@@ -267,10 +267,10 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 			baseFolderPath: "../../testdata/bundles/registry-v1",
 			bundles: []BundleContent{
 				{
-					bundleVersion: "0.1.0",
+					bundleVersion: "1.1.0",
 				},
 				{
-					bundleVersion: "0.2.0",
+					bundleVersion: "1.2.0",
 				},
 			},
 		}
@@ -280,8 +280,8 @@ var _ = Describe("Operator Framework E2E for registry+v1 bundles", func() {
 			operatorName:   "registry-operator",
 		}
 		operatorAction = &OperatorActionInfo{
-			installVersion: "0.1.0",
-			upgradeVersion: "0.2.0",
+			installVersion: "1.1.0",
+			upgradeVersion: "1.2.0",
 		}
 		for i, b := range bundleInfo.bundles {
 			bundleInfo.bundles[i].bInputDir = sdkInfo.projectName + ".v" + b.bundleVersion
