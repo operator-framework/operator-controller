@@ -134,6 +134,12 @@ type ImageSource struct {
 	// specified as a duration (e.g., "5m", "1h", "24h", "etc".). Note that PollInterval may not be
 	// specified for a catalog image referenced by a sha256 digest.
 	PollInterval *metav1.Duration `json:"pollInterval,omitempty"`
+	// InsecureSkipTLSVerify indicates that TLS certificate validation should be skipped.
+	// If this option is specified, the HTTPS protocol will still be used to
+	// fetch the specified image reference.
+	// This should not be used in a production environment.
+	// +optional
+	InsecureSkipTLSVerify bool `json:"insecureSkipTLSVerify,omitempty"`
 }
 
 func init() {

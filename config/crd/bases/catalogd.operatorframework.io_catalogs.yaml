@@ -49,6 +49,13 @@ spec:
                     description: Image is the catalog image that backs the content
                       of this catalog.
                     properties:
+                      insecureSkipTLSVerify:
+                        description: InsecureSkipTLSVerify indicates that TLS certificate
+                          validation should be skipped. If this option is specified,
+                          the HTTPS protocol will still be used to fetch the specified
+                          image reference. This should not be used in a production
+                          environment.
+                        type: boolean
                       pollInterval:
                         description: PollInterval indicates the interval at which
                           the image source should be polled for new content, specified

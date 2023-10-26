@@ -11,11 +11,9 @@ spec:
         image: gcr.io/kaniko-project/executor:latest
         args: ["--dockerfile=/workspace/test-catalog.Dockerfile",
                 "--context=/workspace/",
-                "--destination=docker-registry.catalogd-e2e.svc:5000/test-catalog:e2e"]
+                "--destination=docker-registry.catalogd-e2e.svc:5000/test-catalog:e2e",
+                "--skip-tls-verify"]
         volumeMounts:
-          - name: certs
-            mountPath: /etc/ssl/certs/
-            readOnly: true
           - name: dockerfile
             mountPath: /workspace/
           - name: build-contents
@@ -31,11 +29,3 @@ spec:
         - name: build-contents
           configMap:
             name: catalogd-e2e.build-contents
-        - name: certs
-          configMap:
-            name: regcerts
-            defaultMode: 0644
-            optional: false
-            items:
-              - key: ca-certificates.crt
-                path: ca-certificates.crt

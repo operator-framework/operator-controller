@@ -3,9 +3,11 @@ package source
 import (
 	"archive/tar"
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -63,6 +65,15 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Ca
 		}
 
 		remoteOpts = append(remoteOpts, remote.WithAuthFromKeychain(authChain))
+	}
+
+	if catalog.Spec.Source.Image.InsecureSkipTLSVerify {
+		insecureTransport := remote.DefaultTransport.(*http.Transport).Clone()
+		if insecureTransport.TLSClientConfig == nil {
+			insecureTransport.TLSClientConfig = &tls.Config{} // nolint:gosec
+		}
+		insecureTransport.TLSClientConfig.InsecureSkipVerify = true // nolint:gosec
+		remoteOpts = append(remoteOpts, remote.WithTransport(insecureTransport))
 	}
 
 	digest, isDigest := imgRef.(name.Digest)

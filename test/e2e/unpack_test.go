@@ -58,7 +58,8 @@ var _ = Describe("Catalog Unpacking", func() {
 					Source: catalogd.CatalogSource{
 						Type: catalogd.SourceTypeImage,
 						Image: &catalogd.ImageSource{
-							Ref: catalogImageRef(),
+							Ref:                   catalogImageRef(),
+							InsecureSkipTLSVerify: true,
 						},
 					},
 				},

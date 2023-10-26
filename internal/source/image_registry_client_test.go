@@ -299,6 +299,40 @@ func TestImageRegistry(t *testing.T) {
 				return img
 			}(),
 		},
+		{
+			name: "digest ref, insecure specified, happy path",
+			catalog: &v1alpha1.Catalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+				Spec: v1alpha1.CatalogSpec{
+					Source: v1alpha1.CatalogSource{
+						Type: v1alpha1.SourceTypeImage,
+						Image: &v1alpha1.ImageSource{
+							Ref:                   "",
+							InsecureSkipTLSVerify: true,
+						},
+					},
+				},
+			},
+			wantErr: false,
+			refType: "digest",
+			image: func() v1.Image {
+				img, err := random.Image(20, 3)
+				if err != nil {
+					panic(err)
+				}
+				img, err = mutate.Config(img, v1.Config{
+					Labels: map[string]string{
+						source.ConfigDirLabel: "/configs",
+					},
+				})
+				if err != nil {
+					panic(err)
+				}
+				return img
+			}(),
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create context, temporary cache directory,
