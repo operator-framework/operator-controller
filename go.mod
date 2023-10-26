@@ -7,7 +7,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/go-logr/logr v1.2.4
 	github.com/onsi/ginkgo/v2 v2.13.0
-	github.com/onsi/gomega v1.28.1
+	github.com/onsi/gomega v1.29.0
 	github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42
 	github.com/operator-framework/catalogd v0.7.0
 	github.com/operator-framework/deppy v0.0.1
