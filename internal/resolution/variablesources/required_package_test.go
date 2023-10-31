@@ -1,123 +1,194 @@
 package variablesources_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
+	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	"github.com/operator-framework/deppy/pkg/deppy"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/operator-framework/deppy/pkg/deppy/constraint"
+	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
-var _ = Describe("RequiredPackageVariableSource", func() {
-	var (
-		rpvs        *variablesources.RequiredPackageVariableSource
-		bundleList  []*catalogmetadata.Bundle
-		packageName string
-	)
-
-	BeforeEach(func() {
-		var err error
-		packageName = "test-package"
-		channel := catalogmetadata.Channel{Channel: declcfg.Channel{
-			Name: "stable",
-		}}
-		bundleList = []*catalogmetadata.Bundle{
-			{Bundle: declcfg.Bundle{
+func TestMakeRequiredPackageVariables(t *testing.T) {
+	stableChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
+		Name: "stable",
+	}}
+	betaChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
+		Name: "beta",
+	}}
+	bundleSet := map[string]*catalogmetadata.Bundle{
+		// Bundles which belong to test-package we will be using
+		// to assert wether the testable function filters out the data
+		// correctly.
+		"test-package.v1.0.0": {
+			Bundle: declcfg.Bundle{
 				Name:    "test-package.v1.0.0",
 				Package: "test-package",
 				Properties: []property.Property{
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "1.0.0"}`)},
-				}},
-				InChannels: []*catalogmetadata.Channel{&channel},
+				},
 			},
-			{Bundle: declcfg.Bundle{
+			InChannels: []*catalogmetadata.Channel{&stableChannel},
+		},
+		"test-package.v3.0.0": {
+			Bundle: declcfg.Bundle{
 				Name:    "test-package.v3.0.0",
 				Package: "test-package",
 				Properties: []property.Property{
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "3.0.0"}`)},
-				}},
-				InChannels: []*catalogmetadata.Channel{&channel},
+				},
 			},
-			{Bundle: declcfg.Bundle{
+			InChannels: []*catalogmetadata.Channel{&stableChannel, &betaChannel},
+		},
+		"test-package.v2.0.0": {
+			Bundle: declcfg.Bundle{
 				Name:    "test-package.v2.0.0",
 				Package: "test-package",
 				Properties: []property.Property{
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.0.0"}`)},
-				}},
-				InChannels: []*catalogmetadata.Channel{&channel},
+				},
 			},
-			// add some bundles from a different package
-			{Bundle: declcfg.Bundle{
+			InChannels: []*catalogmetadata.Channel{&stableChannel},
+		},
+
+		// We need at least one bundle from different package
+		// to make sure that we are filtering it out.
+		"test-package-2.v1.0.0": {
+			Bundle: declcfg.Bundle{
 				Name:    "test-package-2.v1.0.0",
 				Package: "test-package-2",
 				Properties: []property.Property{
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package-2", "version": "1.0.0"}`)},
-				}},
-				InChannels: []*catalogmetadata.Channel{&channel},
+				},
 			},
-			{Bundle: declcfg.Bundle{
-				Name:    "test-package-2.v2.0.0",
-				Package: "test-package-2",
-				Properties: []property.Property{
-					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package-2", "version": "2.0.0"}`)},
-				}},
-				InChannels: []*catalogmetadata.Channel{&channel},
+			InChannels: []*catalogmetadata.Channel{&stableChannel},
+		},
+	}
+	allBundles := make([]*catalogmetadata.Bundle, 0, len(bundleSet))
+	for _, bundle := range bundleSet {
+		allBundles = append(allBundles, bundle)
+	}
+
+	fakeOperator := func(packageName, channelName, versionRange string) operatorsv1alpha1.Operator {
+		return operatorsv1alpha1.Operator{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprintf("op-%s-%s-%s", packageName, channelName, versionRange),
+			},
+			Spec: operatorsv1alpha1.OperatorSpec{
+				PackageName: packageName,
+				Version:     versionRange,
+				Channel:     channelName,
 			},
 		}
-		rpvs, err = variablesources.NewRequiredPackageVariableSource(bundleList, packageName)
-		Expect(err).NotTo(HaveOccurred())
-	})
+	}
 
-	It("should return the correct package variable", func() {
-		variables, err := rpvs.GetVariables(context.TODO())
-		Expect(err).NotTo(HaveOccurred())
-		Expect(variables).To(HaveLen(1))
-		reqPackageVar, ok := variables[0].(*olmvariables.RequiredPackageVariable)
-		Expect(ok).To(BeTrue())
-		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))))
-		Expect(reqPackageVar.Bundles()).To(HaveLen(3))
-		// ensure bundles are in version order (high to low)
-		Expect(reqPackageVar.Bundles()[0].Name).To(Equal("test-package.v3.0.0"))
-		Expect(reqPackageVar.Bundles()[1].Name).To(Equal("test-package.v2.0.0"))
-		Expect(reqPackageVar.Bundles()[2].Name).To(Equal("test-package.v1.0.0"))
-	})
+	for _, tt := range []struct {
+		name           string
+		operators      []operatorsv1alpha1.Operator
+		expectedResult []*olmvariables.RequiredPackageVariable
+		expectedError  string
+	}{
+		{
+			name: "package name only",
+			operators: []operatorsv1alpha1.Operator{
+				fakeOperator("test-package", "", ""),
+			},
+			expectedResult: []*olmvariables.RequiredPackageVariable{
+				olmvariables.NewRequiredPackageVariable("test-package", []*catalogmetadata.Bundle{
+					bundleSet["test-package.v3.0.0"],
+					bundleSet["test-package.v2.0.0"],
+					bundleSet["test-package.v1.0.0"],
+				}),
+			},
+		},
+		{
+			name: "package name and channel",
+			operators: []operatorsv1alpha1.Operator{
+				fakeOperator("test-package", "beta", ""),
+			},
+			expectedResult: []*olmvariables.RequiredPackageVariable{
+				olmvariables.NewRequiredPackageVariable("test-package", []*catalogmetadata.Bundle{
+					bundleSet["test-package.v3.0.0"],
+				}),
+			},
+		},
+		{
+			name: "package name and version range",
+			operators: []operatorsv1alpha1.Operator{
+				fakeOperator("test-package", "", ">=1.0.0 !=2.0.0 <3.0.0"),
+			},
+			expectedResult: []*olmvariables.RequiredPackageVariable{
+				olmvariables.NewRequiredPackageVariable("test-package", []*catalogmetadata.Bundle{
+					bundleSet["test-package.v1.0.0"],
+				}),
+			},
+		},
+		{
+			name: "package name and invalid version range",
+			operators: []operatorsv1alpha1.Operator{
+				fakeOperator("test-package", "", "not a valid semver"),
+			},
+			expectedError: `invalid version range "not a valid semver"`,
+		},
+		{
+			name: "not found: package name only",
+			operators: []operatorsv1alpha1.Operator{
+				fakeOperator("non-existent-test-package", "", ""),
+			},
+			expectedError: `no package "non-existent-test-package" found`,
+		},
+		{
+			name: "not found: package name and channel",
+			operators: []operatorsv1alpha1.Operator{
+				fakeOperator("non-existent-test-package", "stable", ""),
+			},
+			expectedError: `no package "non-existent-test-package" found in channel "stable"`,
+		},
+		{
+			name: "not found: package name and version range",
+			operators: []operatorsv1alpha1.Operator{
+				fakeOperator("non-existent-test-package", "", "1.0.0"),
+			},
+			expectedError: `no package "non-existent-test-package" matching version "1.0.0" found`,
+		},
+		{
+			name: "not found: package name with channel and version range",
+			operators: []operatorsv1alpha1.Operator{
+				fakeOperator("non-existent-test-package", "stable", "1.0.0"),
+			},
+			expectedError: `no package "non-existent-test-package" matching version "1.0.0" found in channel "stable"`,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			vars, err := variablesources.MakeRequiredPackageVariables(allBundles, tt.operators)
+			if tt.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorContains(t, err, tt.expectedError)
+			}
 
-	It("should filter by version range", func() {
-		// recreate source with version range option
-		var err error
-		rpvs, err = variablesources.NewRequiredPackageVariableSource(bundleList, packageName, variablesources.InVersionRange(">=1.0.0 !=2.0.0 <3.0.0"))
-		Expect(err).NotTo(HaveOccurred())
-
-		variables, err := rpvs.GetVariables(context.TODO())
-		Expect(err).NotTo(HaveOccurred())
-		Expect(variables).To(HaveLen(1))
-		reqPackageVar, ok := variables[0].(*olmvariables.RequiredPackageVariable)
-		Expect(ok).To(BeTrue())
-		Expect(reqPackageVar.Identifier()).To(Equal(deppy.IdentifierFromString(fmt.Sprintf("required package %s", packageName))))
-
-		Expect(reqPackageVar.Bundles()).To(HaveLen(1))
-		// test-package.v1.0.0 is the only package that matches the provided filter
-		Expect(reqPackageVar.Bundles()[0].Name).To(Equal("test-package.v1.0.0"))
-	})
-
-	It("should fail with bad semver range", func() {
-		_, err := variablesources.NewRequiredPackageVariableSource(bundleList, packageName, variablesources.InVersionRange("not a valid semver"))
-		Expect(err).To(HaveOccurred())
-	})
-
-	It("should return an error if package not found", func() {
-		rpvs, err := variablesources.NewRequiredPackageVariableSource([]*catalogmetadata.Bundle{}, packageName)
-		Expect(err).NotTo(HaveOccurred())
-		_, err = rpvs.GetVariables(context.TODO())
-		Expect(err).To(HaveOccurred())
-		Expect(err).To(MatchError("no package 'test-package' found"))
-	})
-})
+			gocmpopts := []cmp.Option{
+				cmpopts.IgnoreUnexported(catalogmetadata.Bundle{}),
+				cmp.AllowUnexported(
+					olmvariables.RequiredPackageVariable{},
+					input.SimpleVariable{},
+					constraint.DependencyConstraint{},
+				),
+			}
+			require.Empty(t, cmp.Diff(vars, tt.expectedResult, gocmpopts...))
+		})
+	}
+}
