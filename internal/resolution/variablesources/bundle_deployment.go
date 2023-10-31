@@ -3,8 +3,6 @@ package variablesources
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/util/sets"
-
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
@@ -34,21 +32,18 @@ func (o *BundleDeploymentVariableSource) GetVariables(ctx context.Context) ([]de
 		variableSources = append(variableSources, o.inputVariableSource)
 	}
 
-	processed := sets.Set[string]{}
-	for _, bundleDeployment := range o.bundleDeployments {
-		sourceImage := bundleDeployment.Spec.Template.Spec.Source.Image
-		if sourceImage != nil && sourceImage.Ref != "" {
-			if processed.Has(sourceImage.Ref) {
-				continue
-			}
-			processed.Insert(sourceImage.Ref)
-			ips, err := NewInstalledPackageVariableSource(o.allBundles, bundleDeployment.Spec.Template.Spec.Source.Image.Ref)
-			if err != nil {
-				return nil, err
-			}
-			variableSources = append(variableSources, ips)
-		}
+	variables, err := variableSources.GetVariables(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	return variableSources.GetVariables(ctx)
+	installedPackages, err := MakeInstalledPackageVariables(o.allBundles, o.bundleDeployments)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range installedPackages {
+		variables = append(variables, v)
+	}
+	return variables, nil
 }
