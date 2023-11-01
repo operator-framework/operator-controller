@@ -34,13 +34,11 @@ func TestOperatorFramework(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-
-	var err error
 	cfg = ctrl.GetConfigOrDie()
-
 	scheme := runtime.NewScheme()
+	ctx = context.Background()
 
-	err = catalogd.AddToScheme(scheme)
+	err := catalogd.AddToScheme(scheme)
 	Expect(err).ToNot(HaveOccurred())
 
 	err = operatorv1alpha1.AddToScheme(scheme)
@@ -48,19 +46,7 @@ var _ = BeforeSuite(func() {
 
 	c, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).ToNot(HaveOccurred())
-
-	ctx = context.Background()
 })
-
-// Since the CATALOG_IMG environment variable is used to configure the
-// tag of the catalog image that is built see if it is specified and use
-// it if it is. Otherwise use the default that is used in setup.sh
-func getCatalogRef() string {
-	if val, exist := os.LookupEnv("CATALOG_IMG"); exist {
-		return val
-	}
-	return "oc-opdev-e2e.operatorframework.io/catalog:e2e"
-}
 
 var _ = Describe("Operator Framework E2E", func() {
 	var catalog *catalogd.Catalog
@@ -73,7 +59,7 @@ var _ = Describe("Operator Framework E2E", func() {
 				Source: catalogd.CatalogSource{
 					Type: catalogd.SourceTypeImage,
 					Image: &catalogd.ImageSource{
-						Ref: getCatalogRef(),
+						Ref: os.Getenv("CATALOG_IMG"),
 					},
 				},
 			},
@@ -88,7 +74,7 @@ var _ = Describe("Operator Framework E2E", func() {
 					Name: "plainv0",
 				},
 				Spec: operatorv1alpha1.OperatorSpec{
-					PackageName: "plain-operator",
+					PackageName: os.Getenv("PLAIN_PKG_NAME"),
 				},
 			}
 
@@ -116,7 +102,7 @@ var _ = Describe("Operator Framework E2E", func() {
 					Name: "registryv1",
 				},
 				Spec: operatorv1alpha1.OperatorSpec{
-					PackageName: "registry-operator",
+					PackageName: os.Getenv("REG_PKG_NAME"),
 				},
 			}
 

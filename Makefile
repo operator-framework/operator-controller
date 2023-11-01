@@ -108,10 +108,8 @@ E2E_FLAGS ?= ""
 e2e: $(GINKGO) #EXHELP Run the e2e tests.
 	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/e2e
 
-export REGISTRY_CTRL_IMG=localhost/registry:v0.0.1
-export REGISTRY_BUNDLE_IMG=localhost/registry-bundle:v0.0.1
-export PLAIN_CTRL_IMG=localhost/plain:v0.0.1
-export PLAIN_BUNDLE_IMG=localhost/plain-bundle:v0.0.1
+export REG_PKG_NAME=registry-operator
+export PLAIN_PKG_NAME=plain-operator
 export CATALOG_IMG=localhost/catalog:e2e
 .PHONY: test-op-dev-e2e
 test-op-dev-e2e: $(GINKGO) $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run operator create, upgrade and delete tests.
