@@ -108,9 +108,13 @@ E2E_FLAGS ?= ""
 e2e: $(GINKGO) #EXHELP Run the e2e tests.
 	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/e2e
 
+export REG_PKG_NAME=registry-operator
+export PLAIN_PKG_NAME=plain-operator
+export CATALOG_IMG=localhost/catalog:e2e
 .PHONY: test-op-dev-e2e
-test-op-dev-e2e: $(GINKGO) #HELP Run operator create, upgrade and delete tests.
-	CONTAINER_RUNTIME=$(CONTAINER_RUNTIME) $(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/operator-framework-e2e
+test-op-dev-e2e: $(GINKGO) $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run operator create, upgrade and delete tests.
+	test/operator-framework-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME)
+	$(GINKGO) --tags $(GO_BUILD_TAGS) -trace -progress $(FOCUS) test/operator-framework-e2e
 
 .PHONY: test-unit
 ENVTEST_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
@@ -126,7 +130,7 @@ test-e2e: run kind-load-test-artifacts e2e e2e-coverage undeploy kind-clean #HEL
 
 .PHONY: operator-developer-e2e
 operator-developer-e2e: KIND_CLUSTER_NAME=operator-controller-op-dev-e2e  #EXHELP Run operator-developer e2e on local kind cluster
-operator-developer-e2e: run $(OPM) $(OPERATOR_SDK) $(KUSTOMIZE) deploy-local-registry test-op-dev-e2e cleanup-local-registry kind-clean
+operator-developer-e2e: run test-op-dev-e2e kind-clean
 
 .PHONY: e2e-coverage
 e2e-coverage:
@@ -172,23 +176,6 @@ kind-load-test-artifacts: $(KIND) #EXHELP Load the e2e testdata container images
 	$(KIND) load docker-image localhost/testdata/bundles/plain-v0/plain:v0.1.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/catalogs/test-catalog:e2e --name $(KIND_CLUSTER_NAME)
 
-.PHONY: deploy-local-registry
-deploy-local-registry: #EXHELP Deploy local registry.
-	$(CONTAINER_RUNTIME) run -d -p 5001:5000 --restart=always --name local-registry registry:2
-
-.PHONY: cleanup-local-registry
-cleanup-local-registry: #EXHELP Stop and remove local registry.
-	$(CONTAINER_RUNTIME) container stop local-registry
-	$(CONTAINER_RUNTIME) container rm -v local-registry
-
-opm: $(OPM)
-	$(OPM) $(OPM_ARGS)
-
-operator-sdk: $(OPERATOR_SDK)
-	(cd $(OPERATOR_SDK_PROJECT_PATH) && $(OPERATOR_SDK) $(OPERATOR_SDK_ARGS))
-
-kustomize: $(KUSTOMIZE)
-	(cd $(OPERATOR_SDK_PROJECT_PATH) && $(KUSTOMIZE) $(KUSTOMIZE_ARGS))
 
 #SECTION Build
 
