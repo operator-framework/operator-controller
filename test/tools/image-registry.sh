@@ -1,26 +1,52 @@
+#! /bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+help="
+image-registry.sh is a script to stand up an image registry within a cluster.
+Usage:
+  image-registry.sh [NAMESPACE] [NAME]
+
+Argument Descriptions:
+  - NAMESPACE is the namespace that should be created and is the namespace in which the image registry will be created
+  - NAME is the name that should be used for the image registry Deployment and Service
+"
+
+if [[ "$#" -ne 2 ]]; then
+  echo "Illegal number of arguments passed"
+  echo "${help}"
+  exit 1
+fi
+
+namespace=$1
+name=$2
+
+kubectl apply -f - << EOF
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: operator-controller-e2e
+  name: ${namespace}
 ---
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: selfsigned-issuer
-  namespace: operator-controller-e2e
+  namespace: ${namespace}
 spec:
   selfSigned: {}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: operator-controller-e2e-registry
-  namespace: operator-controller-e2e
+  name: ${namespace}-registry
+  namespace: ${namespace}
 spec:
-  secretName: operator-controller-e2e-registry
+  secretName: ${namespace}-registry
   isCA: true
   dnsNames:
-    - docker-registry.operator-controller-e2e.svc
+    - ${name}.${namespace}.svc
   privateKey:
     algorithm: ECDSA
     size: 256
@@ -32,8 +58,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: docker-registry
-  namespace: operator-controller-e2e
+  name: ${name}
+  namespace: ${namespace}
   labels:
     app: registry
 spec:
@@ -60,16 +86,19 @@ spec:
       volumes:
         - name: certs-vol
           secret:
-            secretName: operator-controller-e2e-registry
+            secretName: ${namespace}-registry
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: docker-registry
-  namespace: operator-controller-e2e
+  name: ${name}
+  namespace: ${namespace}
 spec:
   selector:
     app: registry
   ports:
   - port: 5000
     targetPort: 5000
+EOF
+
+kubectl wait --for=condition=Available -n "${namespace}" "deploy/${name}" --timeout=60s

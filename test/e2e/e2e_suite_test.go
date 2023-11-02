@@ -33,18 +33,9 @@ var (
 )
 
 const (
-	testCatalogRefEnvVar  = "TEST_CATALOG_IMAGE"
-	testCatalogRefDefault = "docker-registry.operator-controller-e2e.svc:5000/test-catalog:e2e"
-	testCatalogName       = "test-catalog"
+	testCatalogRefEnvVar = "CATALOG_IMG"
+	testCatalogName      = "test-catalog"
 )
-
-// returns the image reference for the test, checking for environment variable substitution, with a default of docker-registry.operator-controller-e2e.svc:5000/test-catalog:e2e
-func getCatalogImageRef() string {
-	if s := os.Getenv(testCatalogRefEnvVar); s != "" {
-		return s
-	}
-	return testCatalogRefDefault
-}
 
 func TestE2E(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -74,7 +65,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).To(Not(HaveOccurred()))
 
 	ctx := context.Background()
-	operatorCatalog, err = createTestCatalog(ctx, testCatalogName, getCatalogImageRef())
+	operatorCatalog, err = createTestCatalog(ctx, testCatalogName, os.Getenv(testCatalogRefEnvVar))
 	Expect(err).ToNot(HaveOccurred())
 
 })
