@@ -92,23 +92,19 @@ func TestMakeBundleUniquenessVariables(t *testing.T) {
 	// of the involved bundles to be allowed in the solution
 	expectedVariables := []*olmvariables.BundleUniquenessVariable{
 		{
-			SimpleVariable: input.NewSimpleVariable(
-				"test-package package uniqueness",
-				constraint.AtMost(
-					1,
-					deppy.Identifier("fake-catalog-test-package-test-package.v1.0.0"),
-					deppy.Identifier("fake-catalog-test-package-test-package.v1.0.1"),
-				),
-			),
+			ID: "test-package package uniqueness",
+			UniquenessConstraints: []deppy.Constraint{constraint.AtMost(
+				1,
+				deppy.Identifier("fake-catalog-test-package-test-package.v1.0.0"),
+				deppy.Identifier("fake-catalog-test-package-test-package.v1.0.1"),
+			)},
 		},
 		{
-			SimpleVariable: input.NewSimpleVariable(
-				"some-package package uniqueness",
-				constraint.AtMost(
-					1,
-					deppy.Identifier("fake-catalog-some-package-some-package.v1.0.0"),
-				),
-			),
+			ID: "some-package package uniqueness",
+			UniquenessConstraints: []deppy.Constraint{constraint.AtMost(
+				1,
+				deppy.Identifier("fake-catalog-some-package-some-package.v1.0.0"),
+			)},
 		},
 	}
 	require.Empty(t, cmp.Diff(variables, expectedVariables, cmp.AllowUnexported(input.SimpleVariable{}, constraint.AtMostConstraint{})))
