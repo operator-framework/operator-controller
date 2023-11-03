@@ -11,7 +11,7 @@ require (
 	github.com/onsi/gomega v1.29.0
 	github.com/operator-framework/catalogd v0.9.0
 	github.com/operator-framework/deppy v0.0.1
-	github.com/operator-framework/operator-registry v1.29.0
+	github.com/operator-framework/operator-registry v1.30.1
 	github.com/operator-framework/rukpak v0.15.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
@@ -97,7 +97,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b // indirect
-	github.com/operator-framework/api v0.17.7 // indirect
+	github.com/operator-framework/api v0.18.0 // indirect
 	github.com/otiai10/copy v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -136,8 +136,8 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.27.2 // indirect
-	k8s.io/apiserver v0.27.2 // indirect
+	k8s.io/apiextensions-apiserver v0.27.7 // indirect
+	k8s.io/apiserver v0.27.7 // indirect
 	k8s.io/klog/v2 v2.90.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.2 // indirect
