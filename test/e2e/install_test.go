@@ -160,7 +160,7 @@ var _ = Describe("Operator Install", func() {
 
 			By("creating an Operator catalog with the desired package")
 			var err error
-			operatorCatalog, err = createTestCatalog(ctx, testCatalogName, getCatalogImageRef())
+			operatorCatalog, err = createTestCatalog(ctx, testCatalogName, os.Getenv(testCatalogRefEnvVar))
 			Expect(err).ToNot(HaveOccurred())
 			Eventually(func(g Gomega) {
 				g.Expect(c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, operatorCatalog)).To(Succeed())

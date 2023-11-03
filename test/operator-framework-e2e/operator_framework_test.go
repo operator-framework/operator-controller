@@ -59,7 +59,8 @@ var _ = Describe("Operator Framework E2E", func() {
 				Source: catalogd.CatalogSource{
 					Type: catalogd.SourceTypeImage,
 					Image: &catalogd.ImageSource{
-						Ref: os.Getenv("CATALOG_IMG"),
+						Ref:                   os.Getenv("CATALOG_IMG"),
+						InsecureSkipTLSVerify: true,
 					},
 				},
 			},
