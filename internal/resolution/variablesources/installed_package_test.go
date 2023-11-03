@@ -16,7 +16,6 @@ import (
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 	"github.com/operator-framework/operator-controller/pkg/features"
-	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
 func TestInstalledPackageVariableSource(t *testing.T) {
@@ -202,14 +201,12 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 		},
 	}
 
-	fakeCatalogClient := testutil.NewFakeCatalogClient(bundleList)
-
 	t.Run("with ForceSemverUpgradeConstraints feature gate enabled", func(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
 
 		t.Run("with non-zero major version", func(t *testing.T) {
 			const bundleImage = "registry.io/repo/test-package@v2.0.0"
-			ipvs, err := variablesources.NewInstalledPackageVariableSource(&fakeCatalogClient, bundleImage)
+			ipvs, err := variablesources.NewInstalledPackageVariableSource(bundleList, bundleImage)
 			require.NoError(t, err)
 
 			variables, err := ipvs.GetVariables(context.TODO())
@@ -230,7 +227,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 		t.Run("with zero major version", func(t *testing.T) {
 			t.Run("with zero minor version", func(t *testing.T) {
 				const bundleImage = "registry.io/repo/test-package@v0.0.1"
-				ipvs, err := variablesources.NewInstalledPackageVariableSource(&fakeCatalogClient, bundleImage)
+				ipvs, err := variablesources.NewInstalledPackageVariableSource(bundleList, bundleImage)
 				require.NoError(t, err)
 
 				variables, err := ipvs.GetVariables(context.TODO())
@@ -248,7 +245,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 
 			t.Run("with non-zero minor version", func(t *testing.T) {
 				const bundleImage = "registry.io/repo/test-package@v0.1.0"
-				ipvs, err := variablesources.NewInstalledPackageVariableSource(&fakeCatalogClient, bundleImage)
+				ipvs, err := variablesources.NewInstalledPackageVariableSource(bundleList, bundleImage)
 				require.NoError(t, err)
 
 				variables, err := ipvs.GetVariables(context.TODO())
@@ -271,7 +268,7 @@ func TestInstalledPackageVariableSource(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
 
 		const bundleImage = "registry.io/repo/test-package@v2.0.0"
-		ipvs, err := variablesources.NewInstalledPackageVariableSource(&fakeCatalogClient, bundleImage)
+		ipvs, err := variablesources.NewInstalledPackageVariableSource(bundleList, bundleImage)
 		require.NoError(t, err)
 
 		variables, err := ipvs.GetVariables(context.TODO())

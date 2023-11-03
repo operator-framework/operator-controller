@@ -3,7 +3,6 @@ package variablesources_test
 import (
 	"context"
 	"encoding/json"
-	"errors"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
@@ -21,7 +20,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	testutil "github.com/operator-framework/operator-controller/test/util"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
@@ -34,8 +32,8 @@ func FakeClient(objects ...client.Object) client.Client {
 	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objects...).Build()
 }
 
-func operator(name string) *operatorsv1alpha1.Operator {
-	return &operatorsv1alpha1.Operator{
+func operator(name string) operatorsv1alpha1.Operator {
+	return operatorsv1alpha1.Operator{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
@@ -114,9 +112,11 @@ var _ = Describe("OperatorVariableSource", func() {
 	})
 
 	It("should produce RequiredPackage variables", func() {
-		cl := FakeClient(operator("prometheus"), operator("packageA"))
-		fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-		opVariableSource := variablesources.NewOperatorVariableSource(cl, &fakeCatalogClient, &MockRequiredPackageSource{})
+		operators := []operatorsv1alpha1.Operator{
+			operator("prometheus"),
+			operator("packageA"),
+		}
+		opVariableSource := variablesources.NewOperatorVariableSource(operators, testBundleList, &MockRequiredPackageSource{})
 		variables, err := opVariableSource.GetVariables(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
@@ -132,15 +132,6 @@ var _ = Describe("OperatorVariableSource", func() {
 			deppy.IdentifierFromString("required package prometheus"): 2,
 			deppy.IdentifierFromString("required package packageA"):   1,
 		})))
-	})
-
-	It("should return an errors when they occur", func() {
-		cl := FakeClient(operator("prometheus"), operator("packageA"))
-		fakeCatalogClient := testutil.NewFakeCatalogClientWithError(errors.New("something bad happened"))
-
-		opVariableSource := variablesources.NewOperatorVariableSource(cl, &fakeCatalogClient, nil)
-		_, err := opVariableSource.GetVariables(context.Background())
-		Expect(err).To(HaveOccurred())
 	})
 })
 

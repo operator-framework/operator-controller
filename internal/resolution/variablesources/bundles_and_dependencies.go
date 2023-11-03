@@ -18,13 +18,13 @@ import (
 var _ input.VariableSource = &BundlesAndDepsVariableSource{}
 
 type BundlesAndDepsVariableSource struct {
-	catalogClient   BundleProvider
+	allBundles      []*catalogmetadata.Bundle
 	variableSources []input.VariableSource
 }
 
-func NewBundlesAndDepsVariableSource(catalogClient BundleProvider, inputVariableSources ...input.VariableSource) *BundlesAndDepsVariableSource {
+func NewBundlesAndDepsVariableSource(allBundles []*catalogmetadata.Bundle, inputVariableSources ...input.VariableSource) *BundlesAndDepsVariableSource {
 	return &BundlesAndDepsVariableSource{
-		catalogClient:   catalogClient,
+		allBundles:      allBundles,
 		variableSources: inputVariableSources,
 	}
 }
@@ -52,11 +52,6 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context) ([]depp
 		}
 	}
 
-	allBundles, err := b.catalogClient.Bundles(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	// build bundle and dependency variables
 	visited := sets.Set[deppy.Identifier]{}
 	for len(bundleQueue) > 0 {
@@ -73,7 +68,7 @@ func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context) ([]depp
 		visited.Insert(id)
 
 		// get bundle dependencies
-		dependencies, err := b.filterBundleDependencies(allBundles, head)
+		dependencies, err := b.filterBundleDependencies(b.allBundles, head)
 		if err != nil {
 			return nil, fmt.Errorf("could not determine dependencies for bundle with id '%s': %w", id, err)
 		}

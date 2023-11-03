@@ -13,26 +13,15 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
-	testutil "github.com/operator-framework/operator-controller/test/util"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 )
 
-func BundleDeploymentFakeClient(objects ...client.Object) client.Client {
-	scheme := runtime.NewScheme()
-	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
-	return fake.NewClientBuilder().WithScheme(scheme).WithObjects(objects...).Build()
-}
-
-func bundleDeployment(name, image string) *rukpakv1alpha1.BundleDeployment {
-	return &rukpakv1alpha1.BundleDeployment{
+func bundleDeployment(name, image string) rukpakv1alpha1.BundleDeployment {
+	return rukpakv1alpha1.BundleDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
@@ -53,7 +42,6 @@ func bundleDeployment(name, image string) *rukpakv1alpha1.BundleDeployment {
 }
 
 var _ = Describe("BundleDeploymentVariableSource", func() {
-	var fakeCatalogClient testutil.FakeCatalogClient
 	var betaChannel catalogmetadata.Channel
 	var stableChannel catalogmetadata.Channel
 	var testBundleList []*catalogmetadata.Bundle
@@ -111,14 +99,14 @@ var _ = Describe("BundleDeploymentVariableSource", func() {
 				},
 			}, InChannels: []*catalogmetadata.Channel{&stableChannel}},
 		}
-
-		fakeCatalogClient = testutil.NewFakeCatalogClient(testBundleList)
 	})
 
 	It("should produce RequiredPackage variables", func() {
-		cl := BundleDeploymentFakeClient(bundleDeployment("prometheus", "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"))
+		bundleDeployments := []rukpakv1alpha1.BundleDeployment{
+			bundleDeployment("prometheus", "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"),
+		}
 
-		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(cl, &fakeCatalogClient, &MockRequiredPackageSource{})
+		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(bundleDeployments, testBundleList, &MockRequiredPackageSource{})
 		variables, err := bdVariableSource.GetVariables(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
@@ -137,9 +125,11 @@ var _ = Describe("BundleDeploymentVariableSource", func() {
 		})))
 	})
 	It("should return an error if the bundleDeployment image doesn't match any operator resource", func() {
-		cl := BundleDeploymentFakeClient(bundleDeployment("prometheus", "quay.io/operatorhubio/prometheus@sha256:nonexistent"))
+		bundleDeployments := []rukpakv1alpha1.BundleDeployment{
+			bundleDeployment("prometheus", "quay.io/operatorhubio/prometheus@sha256:nonexistent"),
+		}
 
-		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(cl, &fakeCatalogClient, &MockRequiredPackageSource{})
+		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(bundleDeployments, testBundleList, &MockRequiredPackageSource{})
 		_, err := bdVariableSource.GetVariables(context.Background())
 		Expect(err.Error()).To(Equal("bundleImage \"quay.io/operatorhubio/prometheus@sha256:nonexistent\" not found"))
 	})

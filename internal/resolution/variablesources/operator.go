@@ -4,24 +4,24 @@ import (
 	"context"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ input.VariableSource = &OperatorVariableSource{}
 
 type OperatorVariableSource struct {
-	client              client.Client
-	catalogClient       BundleProvider
+	operators           []operatorsv1alpha1.Operator
+	allBundles          []*catalogmetadata.Bundle
 	inputVariableSource input.VariableSource
 }
 
-func NewOperatorVariableSource(cl client.Client, catalogClient BundleProvider, inputVariableSource input.VariableSource) *OperatorVariableSource {
+func NewOperatorVariableSource(operators []operatorsv1alpha1.Operator, allBundles []*catalogmetadata.Bundle, inputVariableSource input.VariableSource) *OperatorVariableSource {
 	return &OperatorVariableSource{
-		client:              cl,
-		catalogClient:       catalogClient,
+		operators:           operators,
+		allBundles:          allBundles,
 		inputVariableSource: inputVariableSource,
 	}
 }
@@ -32,15 +32,10 @@ func (o *OperatorVariableSource) GetVariables(ctx context.Context) ([]deppy.Vari
 		variableSources = append(variableSources, o.inputVariableSource)
 	}
 
-	operatorList := operatorsv1alpha1.OperatorList{}
-	if err := o.client.List(ctx, &operatorList); err != nil {
-		return nil, err
-	}
-
 	// build required package variable sources
-	for _, operator := range operatorList.Items {
+	for _, operator := range o.operators {
 		rps, err := NewRequiredPackageVariableSource(
-			o.catalogClient,
+			o.allBundles,
 			operator.Spec.PackageName,
 			InVersionRange(operator.Spec.Version),
 			InChannel(operator.Spec.Channel),

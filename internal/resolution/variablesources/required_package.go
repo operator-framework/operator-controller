@@ -46,7 +46,7 @@ func InChannel(channelName string) RequiredPackageVariableSourceOption {
 }
 
 type RequiredPackageVariableSource struct {
-	catalogClient BundleProvider
+	allBundles []*catalogmetadata.Bundle
 
 	packageName  string
 	versionRange string
@@ -54,12 +54,12 @@ type RequiredPackageVariableSource struct {
 	predicates   []catalogfilter.Predicate[catalogmetadata.Bundle]
 }
 
-func NewRequiredPackageVariableSource(catalogClient BundleProvider, packageName string, options ...RequiredPackageVariableSourceOption) (*RequiredPackageVariableSource, error) {
+func NewRequiredPackageVariableSource(allBundles []*catalogmetadata.Bundle, packageName string, options ...RequiredPackageVariableSourceOption) (*RequiredPackageVariableSource, error) {
 	if packageName == "" {
 		return nil, fmt.Errorf("package name must not be empty")
 	}
 	r := &RequiredPackageVariableSource{
-		catalogClient: catalogClient,
+		allBundles: allBundles,
 
 		packageName: packageName,
 		predicates:  []catalogfilter.Predicate[catalogmetadata.Bundle]{catalogfilter.WithPackageName(packageName)},
@@ -72,13 +72,8 @@ func NewRequiredPackageVariableSource(catalogClient BundleProvider, packageName 
 	return r, nil
 }
 
-func (r *RequiredPackageVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
-	resultSet, err := r.catalogClient.Bundles(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	resultSet = catalogfilter.Filter(resultSet, catalogfilter.And(r.predicates...))
+func (r *RequiredPackageVariableSource) GetVariables(_ context.Context) ([]deppy.Variable, error) {
+	resultSet := catalogfilter.Filter(r.allBundles, catalogfilter.And(r.predicates...))
 	if len(resultSet) == 0 {
 		return nil, r.notFoundError()
 	}
