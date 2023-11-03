@@ -3,7 +3,6 @@ package variablesources_test
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -15,14 +14,13 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
-	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
 var _ = Describe("RequiredPackageVariableSource", func() {
 	var (
-		rpvs              *variablesources.RequiredPackageVariableSource
-		fakeCatalogClient testutil.FakeCatalogClient
-		packageName       string
+		rpvs        *variablesources.RequiredPackageVariableSource
+		bundleList  []*catalogmetadata.Bundle
+		packageName string
 	)
 
 	BeforeEach(func() {
@@ -31,7 +29,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 		channel := catalogmetadata.Channel{Channel: declcfg.Channel{
 			Name: "stable",
 		}}
-		bundleList := []*catalogmetadata.Bundle{
+		bundleList = []*catalogmetadata.Bundle{
 			{Bundle: declcfg.Bundle{
 				Name:    "test-package.v1.0.0",
 				Package: "test-package",
@@ -74,8 +72,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 				InChannels: []*catalogmetadata.Channel{&channel},
 			},
 		}
-		fakeCatalogClient = testutil.NewFakeCatalogClient(bundleList)
-		rpvs, err = variablesources.NewRequiredPackageVariableSource(&fakeCatalogClient, packageName)
+		rpvs, err = variablesources.NewRequiredPackageVariableSource(bundleList, packageName)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -96,7 +93,7 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 	It("should filter by version range", func() {
 		// recreate source with version range option
 		var err error
-		rpvs, err = variablesources.NewRequiredPackageVariableSource(&fakeCatalogClient, packageName, variablesources.InVersionRange(">=1.0.0 !=2.0.0 <3.0.0"))
+		rpvs, err = variablesources.NewRequiredPackageVariableSource(bundleList, packageName, variablesources.InVersionRange(">=1.0.0 !=2.0.0 <3.0.0"))
 		Expect(err).NotTo(HaveOccurred())
 
 		variables, err := rpvs.GetVariables(context.TODO())
@@ -112,26 +109,15 @@ var _ = Describe("RequiredPackageVariableSource", func() {
 	})
 
 	It("should fail with bad semver range", func() {
-		_, err := variablesources.NewRequiredPackageVariableSource(&fakeCatalogClient, packageName, variablesources.InVersionRange("not a valid semver"))
+		_, err := variablesources.NewRequiredPackageVariableSource(bundleList, packageName, variablesources.InVersionRange("not a valid semver"))
 		Expect(err).To(HaveOccurred())
 	})
 
 	It("should return an error if package not found", func() {
-		emptyCatalogClient := testutil.NewFakeCatalogClient([]*catalogmetadata.Bundle{})
-		rpvs, err := variablesources.NewRequiredPackageVariableSource(&emptyCatalogClient, packageName)
+		rpvs, err := variablesources.NewRequiredPackageVariableSource([]*catalogmetadata.Bundle{}, packageName)
 		Expect(err).NotTo(HaveOccurred())
 		_, err = rpvs.GetVariables(context.TODO())
 		Expect(err).To(HaveOccurred())
 		Expect(err).To(MatchError("no package 'test-package' found"))
-	})
-
-	It("should return an error if catalog client errors", func() {
-		testError := errors.New("something bad happened")
-		emptyCatalogClient := testutil.NewFakeCatalogClientWithError(testError)
-		rpvs, err := variablesources.NewRequiredPackageVariableSource(&emptyCatalogClient, packageName, variablesources.InVersionRange(">=1.0.0 !=2.0.0 <3.0.0"))
-		Expect(err).NotTo(HaveOccurred())
-		_, err = rpvs.GetVariables(context.TODO())
-		Expect(err).To(HaveOccurred())
-		Expect(err).To(MatchError(testError))
 	})
 })

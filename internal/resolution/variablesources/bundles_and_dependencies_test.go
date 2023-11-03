@@ -14,14 +14,12 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
-	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
 var _ = Describe("BundlesAndDepsVariableSource", func() {
 	var (
-		bdvs              *variablesources.BundlesAndDepsVariableSource
-		testBundleList    []*catalogmetadata.Bundle
-		fakeCatalogClient testutil.FakeCatalogClient
+		bdvs           *variablesources.BundlesAndDepsVariableSource
+		testBundleList []*catalogmetadata.Bundle
 	)
 
 	BeforeEach(func() {
@@ -222,12 +220,11 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 				InChannels: []*catalogmetadata.Channel{&channel},
 			},
 		}
-		fakeCatalogClient = testutil.NewFakeCatalogClient(testBundleList)
 		bdvs = variablesources.NewBundlesAndDepsVariableSource(
-			&fakeCatalogClient,
+			testBundleList,
 			&MockRequiredPackageSource{
 				ResultSet: []deppy.Variable{
-					// must match data in fakeCatalogClient
+					// must match data in testBundleList
 					olmvariables.NewRequiredPackageVariable("test-package", []*catalogmetadata.Bundle{
 						{
 							CatalogName: "fake-catalog",
@@ -259,7 +256,7 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 			},
 			&MockRequiredPackageSource{
 				ResultSet: []deppy.Variable{
-					// must match data in fakeCatalogClient
+					// must match data in testBundleList
 					olmvariables.NewRequiredPackageVariable("test-package-2", []*catalogmetadata.Bundle{
 						// test-package-2 required package - no dependencies
 						{
@@ -335,13 +332,10 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 	})
 
 	It("should return error if dependencies not found", func() {
-		emptyCatalogClient := testutil.NewFakeCatalogClient(make([]*catalogmetadata.Bundle, 0))
-
 		bdvs = variablesources.NewBundlesAndDepsVariableSource(
-			&emptyCatalogClient,
+			[]*catalogmetadata.Bundle{},
 			&MockRequiredPackageSource{
 				ResultSet: []deppy.Variable{
-					// must match data in fakeCatalogClient
 					olmvariables.NewRequiredPackageVariable("test-package", []*catalogmetadata.Bundle{
 						{
 							CatalogName: "fake-catalog",
@@ -379,7 +373,7 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 
 	It("should return error if an inner variable source returns an error", func() {
 		bdvs = variablesources.NewBundlesAndDepsVariableSource(
-			&fakeCatalogClient,
+			testBundleList,
 			&MockRequiredPackageSource{Error: errors.New("fake error")},
 		)
 		_, err := bdvs.GetVariables(context.TODO())

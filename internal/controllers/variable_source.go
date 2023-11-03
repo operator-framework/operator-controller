@@ -17,26 +17,68 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
-func NewVariableSource(cl client.Client, catalogClient variablesources.BundleProvider) variablesources.NestedVariableSource {
-	return variablesources.NestedVariableSource{
+// BundleProvider provides the way to retrieve a list of Bundles from a source,
+// generally from a catalog client of some kind.
+type BundleProvider interface {
+	Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
+}
+
+type VariableSource struct {
+	client        client.Client
+	catalogClient BundleProvider
+}
+
+func NewVariableSource(cl client.Client, catalogClient BundleProvider) *VariableSource {
+	return &VariableSource{
+		client:        cl,
+		catalogClient: catalogClient,
+	}
+}
+
+func (v *VariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
+	operatorList := operatorsv1alpha1.OperatorList{}
+	if err := v.client.List(ctx, &operatorList); err != nil {
+		return nil, err
+	}
+
+	bundleDeploymentList := rukpakv1alpha1.BundleDeploymentList{}
+	if err := v.client.List(ctx, &bundleDeploymentList); err != nil {
+		return nil, err
+	}
+
+	allBundles, err := v.catalogClient.Bundles(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// We are in process of getting rid of extra variable sources.
+	// See this for progress: https://github.com/operator-framework/operator-controller/issues/437
+	vs := variablesources.NestedVariableSource{
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
-			return variablesources.NewOperatorVariableSource(cl, catalogClient, inputVariableSource), nil
+			return variablesources.NewOperatorVariableSource(operatorList.Items, allBundles, inputVariableSource), nil
 		},
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
-			return variablesources.NewBundleDeploymentVariableSource(cl, catalogClient, inputVariableSource), nil
+			return variablesources.NewBundleDeploymentVariableSource(bundleDeploymentList.Items, allBundles, inputVariableSource), nil
 		},
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
-			return variablesources.NewBundlesAndDepsVariableSource(catalogClient, inputVariableSource), nil
+			return variablesources.NewBundlesAndDepsVariableSource(allBundles, inputVariableSource), nil
 		},
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
 			return variablesources.NewCRDUniquenessConstraintsVariableSource(inputVariableSource), nil
 		},
 	}
+	return vs.GetVariables(ctx)
 }

@@ -19,19 +19,14 @@ import (
 var _ input.VariableSource = &InstalledPackageVariableSource{}
 
 type InstalledPackageVariableSource struct {
-	catalogClient BundleProvider
-	successors    successorsFunc
-	bundleImage   string
+	allBundles  []*catalogmetadata.Bundle
+	successors  successorsFunc
+	bundleImage string
 }
 
-func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
-	allBundles, err := r.catalogClient.Bundles(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (r *InstalledPackageVariableSource) GetVariables(_ context.Context) ([]deppy.Variable, error) {
 	// find corresponding bundle for the installed content
-	resultSet := catalogfilter.Filter(allBundles, catalogfilter.WithBundleImage(r.bundleImage))
+	resultSet := catalogfilter.Filter(r.allBundles, catalogfilter.WithBundleImage(r.bundleImage))
 	if len(resultSet) == 0 {
 		return nil, r.notFoundError()
 	}
@@ -44,7 +39,7 @@ func (r *InstalledPackageVariableSource) GetVariables(ctx context.Context) ([]de
 	})
 	installedBundle := resultSet[0]
 
-	upgradeEdges, err := r.successors(allBundles, installedBundle)
+	upgradeEdges, err := r.successors(r.allBundles, installedBundle)
 	if err != nil {
 		return nil, err
 	}
@@ -60,16 +55,16 @@ func (r *InstalledPackageVariableSource) notFoundError() error {
 	return fmt.Errorf("bundleImage %q not found", r.bundleImage)
 }
 
-func NewInstalledPackageVariableSource(catalogClient BundleProvider, bundleImage string) (*InstalledPackageVariableSource, error) {
+func NewInstalledPackageVariableSource(allBundles []*catalogmetadata.Bundle, bundleImage string) (*InstalledPackageVariableSource, error) {
 	successors := legacySemanticsSuccessors
 	if features.OperatorControllerFeatureGate.Enabled(features.ForceSemverUpgradeConstraints) {
 		successors = semverSuccessors
 	}
 
 	return &InstalledPackageVariableSource{
-		catalogClient: catalogClient,
-		bundleImage:   bundleImage,
-		successors:    successors,
+		allBundles:  allBundles,
+		bundleImage: bundleImage,
+		successors:  successors,
 	}, nil
 }
 
