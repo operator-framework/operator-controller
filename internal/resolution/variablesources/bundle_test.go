@@ -194,7 +194,7 @@ func TestMakeBundleVariables_NonExistentDepedencies(t *testing.T) {
 	installedPackages := []*olmvariables.InstalledPackageVariable{}
 
 	bundles, err := variablesources.MakeBundleVariables(allBundles, requiredPackages, installedPackages)
-	assert.ErrorContains(t, err, `could not determine dependencies for bundle with id "fake-catalog-test-package-test-package.v1.0.0"`)
+	assert.ErrorContains(t, err, `could not determine dependencies for bundle "test-package.v1.0.0" from package "test-package" in catalog "fake-catalog"`)
 	assert.Nil(t, bundles)
 }
 
@@ -550,7 +550,7 @@ var _ = Describe("BundlesAndDepsVariableSource", func() {
 		)
 		_, err := bdvs.GetVariables(context.TODO())
 		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring(`could not determine dependencies for bundle with id "fake-catalog-test-package-bundle-2": could not find package dependencies for bundle "bundle-2"`))
+		Expect(err.Error()).To(ContainSubstring(`could not determine dependencies for bundle "bundle-2" from package "test-package" in catalog "fake-catalog": no bundles found matching required package "some-package" in range ">=1.0.0 <2.0.0"`))
 	})
 
 	It("should return error if an inner variable source returns an error", func() {
