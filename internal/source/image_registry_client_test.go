@@ -337,7 +337,8 @@ func TestImageRegistry(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create context, temporary cache directory,
 			// and image registry source
-			ctx := context.Background()
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(cancel)
 			testCache := t.TempDir()
 			imgReg := &source.ImageRegistry{
 				BaseCachePath: testCache,
@@ -405,5 +406,57 @@ func TestImageRegistry(t *testing.T) {
 				assert.Equal(t, tt.unrecoverable, isUnrecov, "expected unrecoverable %v, got %v", tt.unrecoverable, isUnrecov)
 			}
 		})
+	}
+}
+
+// TestImageRegistryMissingLabelConsistentFailure is a test
+// case that specifically tests that multiple calls to the
+// ImageRegistry.Unpack() method return an error and is meant
+// to ensure coverage of the bug reported in
+// https://github.com/operator-framework/catalogd/issues/206
+func TestImageRegistryMissingLabelConsistentFailure(t *testing.T) {
+	// Create context, temporary cache directory,
+	// and image registry source
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	testCache := t.TempDir()
+	imgReg := &source.ImageRegistry{
+		BaseCachePath: testCache,
+	}
+
+	// Start a new server running an image registry
+	srv := httptest.NewServer(registry.New())
+	defer srv.Close()
+
+	// parse the server url so we can grab just the host
+	url, err := url.Parse(srv.URL)
+	require.NoError(t, err)
+
+	imgName, err := name.ParseReference(fmt.Sprintf("%s/%s", url.Host, "test-image:test"))
+	require.NoError(t, err)
+
+	image, err := random.Image(20, 20)
+	require.NoError(t, err)
+
+	err = remote.Write(imgName, image)
+	require.NoError(t, err)
+
+	catalog := &v1alpha1.Catalog{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test",
+		},
+		Spec: v1alpha1.CatalogSpec{
+			Source: v1alpha1.CatalogSource{
+				Type: v1alpha1.SourceTypeImage,
+				Image: &v1alpha1.ImageSource{
+					Ref: imgName.Name(),
+				},
+			},
+		},
+	}
+
+	for i := 0; i < 3; i++ {
+		_, err = imgReg.Unpack(ctx, catalog)
+		require.Error(t, err, "unpack run ", i)
 	}
 }

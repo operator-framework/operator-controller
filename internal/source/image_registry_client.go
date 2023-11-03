@@ -19,6 +19,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apimacherrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
@@ -94,7 +95,7 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Ca
 	l.V(1).Info("resolved image descriptor", "digest", imgDesc.Digest.String())
 
 	unpackPath := filepath.Join(i.BaseCachePath, catalog.Name, imgDesc.Digest.Hex)
-	if _, err = os.Stat(unpackPath); errors.Is(err, os.ErrNotExist) {
+	if _, err = os.Stat(unpackPath); errors.Is(err, os.ErrNotExist) { //nolint: nestif
 		// Ensure any previous unpacked catalog is cleaned up before unpacking the new catalog.
 		if err := i.Cleanup(ctx, catalog); err != nil {
 			return nil, fmt.Errorf("error cleaning up catalog cache: %w", err)
@@ -105,6 +106,15 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Ca
 		}
 
 		if err = unpackImage(ctx, imgRef, unpackPath, remoteOpts...); err != nil {
+			cleanupErr := os.RemoveAll(unpackPath)
+			if cleanupErr != nil {
+				err = apimacherrors.NewAggregate(
+					[]error{
+						err,
+						fmt.Errorf("error cleaning up unpack path after unpack failed: %w", cleanupErr),
+					},
+				)
+			}
 			return nil, wrapUnrecoverable(fmt.Errorf("error unpacking image: %w", err), isDigest)
 		}
 	} else if err != nil {
