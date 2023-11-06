@@ -311,7 +311,7 @@ func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&operatorsv1alpha1.Operator{}).
 		Watches(&catalogd.Catalog{},
-			handler.EnqueueRequestsFromMapFunc(operatorRequestsForCatalog(context.TODO(), mgr.GetClient(), mgr.GetLogger()))).
+			handler.EnqueueRequestsFromMapFunc(operatorRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
 		Owns(&rukpakv1alpha1.BundleDeployment{}).
 		Complete(r)
 
@@ -441,8 +441,8 @@ func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message 
 }
 
 // Generate reconcile requests for all operators affected by a catalog change
-func operatorRequestsForCatalog(ctx context.Context, c client.Reader, logger logr.Logger) handler.MapFunc {
-	return func(_ context.Context, _ client.Object) []reconcile.Request {
+func operatorRequestsForCatalog(c client.Reader, logger logr.Logger) handler.MapFunc {
+	return func(ctx context.Context, _ client.Object) []reconcile.Request {
 		// no way of associating an operator to a catalog so create reconcile requests for everything
 		operators := operatorsv1alpha1.OperatorList{}
 		err := c.List(ctx, &operators)
