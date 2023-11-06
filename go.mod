@@ -11,7 +11,7 @@ require (
 	github.com/onsi/gomega v1.29.0
 	github.com/operator-framework/catalogd v0.9.0
 	github.com/operator-framework/deppy v0.0.1
-	github.com/operator-framework/operator-registry v1.30.1
+	github.com/operator-framework/operator-registry v1.31.0
 	github.com/operator-framework/rukpak v0.15.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
@@ -97,7 +97,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b // indirect
-	github.com/operator-framework/api v0.18.0 // indirect
+	github.com/operator-framework/api v0.19.0 // indirect
 	github.com/otiai10/copy v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
