@@ -10,18 +10,32 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 )
 
-func bundleDeployment(name, image string) rukpakv1alpha1.BundleDeployment {
-	return rukpakv1alpha1.BundleDeployment{
+func fakeOperator(name, packageName string, upgradeConstraintPolicy operatorsv1alpha1.UpgradeConstraintPolicy) operatorsv1alpha1.Operator {
+	return operatorsv1alpha1.Operator{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: operatorsv1alpha1.OperatorSpec{
+			PackageName:             packageName,
+			UpgradeConstraintPolicy: upgradeConstraintPolicy,
+		},
+	}
+}
+
+func bundleDeployment(name, image string, owner *operatorsv1alpha1.Operator) rukpakv1alpha1.BundleDeployment {
+	bd := rukpakv1alpha1.BundleDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
@@ -39,6 +53,21 @@ func bundleDeployment(name, image string) rukpakv1alpha1.BundleDeployment {
 			},
 		},
 	}
+
+	if owner != nil {
+		bd.SetOwnerReferences([]metav1.OwnerReference{
+			{
+				APIVersion:         operatorsv1alpha1.GroupVersion.String(),
+				Kind:               "Operator",
+				Name:               owner.Name,
+				UID:                owner.UID,
+				Controller:         pointer.Bool(true),
+				BlockOwnerDeletion: pointer.Bool(true),
+			},
+		})
+	}
+
+	return bd
 }
 
 var _ = Describe("BundleDeploymentVariableSource", func() {
@@ -102,11 +131,13 @@ var _ = Describe("BundleDeploymentVariableSource", func() {
 	})
 
 	It("should produce RequiredPackage variables", func() {
+		fakeOperator := fakeOperator("test-operator", "test-prometheus", operatorsv1alpha1.UpgradeConstraintPolicyEnforce)
+		operators := []operatorsv1alpha1.Operator{fakeOperator}
 		bundleDeployments := []rukpakv1alpha1.BundleDeployment{
-			bundleDeployment("prometheus", "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"),
+			bundleDeployment("prometheus", "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35", &fakeOperator),
 		}
 
-		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(bundleDeployments, testBundleList, &MockRequiredPackageSource{})
+		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(operators, bundleDeployments, testBundleList, &MockRequiredPackageSource{})
 		variables, err := bdVariableSource.GetVariables(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 
@@ -125,11 +156,13 @@ var _ = Describe("BundleDeploymentVariableSource", func() {
 		})))
 	})
 	It("should return an error if the bundleDeployment image doesn't match any operator resource", func() {
+		fakeOperator := fakeOperator("test-operator", "test-prometheus", operatorsv1alpha1.UpgradeConstraintPolicyEnforce)
+		operators := []operatorsv1alpha1.Operator{fakeOperator}
 		bundleDeployments := []rukpakv1alpha1.BundleDeployment{
-			bundleDeployment("prometheus", "quay.io/operatorhubio/prometheus@sha256:nonexistent"),
+			bundleDeployment("prometheus", "quay.io/operatorhubio/prometheus@sha256:nonexistent", &fakeOperator),
 		}
 
-		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(bundleDeployments, testBundleList, &MockRequiredPackageSource{})
+		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(operators, bundleDeployments, testBundleList, &MockRequiredPackageSource{})
 		_, err := bdVariableSource.GetVariables(context.Background())
 		Expect(err.Error()).To(Equal("bundleImage \"quay.io/operatorhubio/prometheus@sha256:nonexistent\" not found"))
 	})

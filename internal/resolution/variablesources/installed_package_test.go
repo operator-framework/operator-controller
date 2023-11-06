@@ -12,7 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
+	"k8s.io/utils/pointer"
 
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 	"github.com/operator-framework/operator-controller/pkg/features"
@@ -201,8 +203,20 @@ func TestMakeInstalledPackageVariables(t *testing.T) {
 		},
 	}
 
-	fakeBundleDeployment := func(name, bundleImage string) rukpakv1alpha1.BundleDeployment {
-		return rukpakv1alpha1.BundleDeployment{
+	fakeOperator := func(name, packageName string, upgradeConstraintPolicy operatorsv1alpha1.UpgradeConstraintPolicy) operatorsv1alpha1.Operator {
+		return operatorsv1alpha1.Operator{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name,
+			},
+			Spec: operatorsv1alpha1.OperatorSpec{
+				PackageName:             packageName,
+				UpgradeConstraintPolicy: upgradeConstraintPolicy,
+			},
+		}
+	}
+
+	fakeBundleDeployment := func(name, bundleImage string, owner *operatorsv1alpha1.Operator) rukpakv1alpha1.BundleDeployment {
+		bd := rukpakv1alpha1.BundleDeployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name,
 			},
@@ -218,6 +232,21 @@ func TestMakeInstalledPackageVariables(t *testing.T) {
 				},
 			},
 		}
+
+		if owner != nil {
+			bd.SetOwnerReferences([]metav1.OwnerReference{
+				{
+					APIVersion:         operatorsv1alpha1.GroupVersion.String(),
+					Kind:               "Operator",
+					Name:               owner.Name,
+					UID:                owner.UID,
+					Controller:         pointer.Bool(true),
+					BlockOwnerDeletion: pointer.Bool(true),
+				},
+			})
+		}
+
+		return bd
 	}
 
 	t.Run("with ForceSemverUpgradeConstraints feature gate enabled", func(t *testing.T) {
@@ -225,10 +254,12 @@ func TestMakeInstalledPackageVariables(t *testing.T) {
 
 		t.Run("with non-zero major version", func(t *testing.T) {
 			const bundleImage = "registry.io/repo/test-package@v2.0.0"
+			fakeOperator := fakeOperator("test-operator", "test-package", operatorsv1alpha1.UpgradeConstraintPolicyEnforce)
 			installedPackages, err := variablesources.MakeInstalledPackageVariables(
 				allBundles,
+				[]operatorsv1alpha1.Operator{fakeOperator},
 				[]rukpakv1alpha1.BundleDeployment{
-					fakeBundleDeployment("test-bd", bundleImage),
+					fakeBundleDeployment("test-package-bd", bundleImage, &fakeOperator),
 				},
 			)
 			require.NoError(t, err)
@@ -248,10 +279,12 @@ func TestMakeInstalledPackageVariables(t *testing.T) {
 		t.Run("with zero major version", func(t *testing.T) {
 			t.Run("with zero minor version", func(t *testing.T) {
 				const bundleImage = "registry.io/repo/test-package@v0.0.1"
+				fakeOperator := fakeOperator("test-operator", "test-package", operatorsv1alpha1.UpgradeConstraintPolicyEnforce)
 				installedPackages, err := variablesources.MakeInstalledPackageVariables(
 					allBundles,
+					[]operatorsv1alpha1.Operator{fakeOperator},
 					[]rukpakv1alpha1.BundleDeployment{
-						fakeBundleDeployment("test-bd", bundleImage),
+						fakeBundleDeployment("test-package-bd", bundleImage, &fakeOperator),
 					},
 				)
 				require.NoError(t, err)
@@ -268,10 +301,12 @@ func TestMakeInstalledPackageVariables(t *testing.T) {
 
 			t.Run("with non-zero minor version", func(t *testing.T) {
 				const bundleImage = "registry.io/repo/test-package@v0.1.0"
+				fakeOperator := fakeOperator("test-operator", "test-package", operatorsv1alpha1.UpgradeConstraintPolicyEnforce)
 				installedPackages, err := variablesources.MakeInstalledPackageVariables(
 					allBundles,
+					[]operatorsv1alpha1.Operator{fakeOperator},
 					[]rukpakv1alpha1.BundleDeployment{
-						fakeBundleDeployment("test-bd", bundleImage),
+						fakeBundleDeployment("test-package-bd", bundleImage, &fakeOperator),
 					},
 				)
 				require.NoError(t, err)
@@ -293,10 +328,12 @@ func TestMakeInstalledPackageVariables(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
 
 		const bundleImage = "registry.io/repo/test-package@v2.0.0"
+		fakeOperator := fakeOperator("test-operator", "test-package", operatorsv1alpha1.UpgradeConstraintPolicyEnforce)
 		installedPackages, err := variablesources.MakeInstalledPackageVariables(
 			allBundles,
+			[]operatorsv1alpha1.Operator{fakeOperator},
 			[]rukpakv1alpha1.BundleDeployment{
-				fakeBundleDeployment("test-bd", bundleImage),
+				fakeBundleDeployment("test-package-bd", bundleImage, &fakeOperator),
 			},
 		)
 		require.NoError(t, err)
@@ -312,12 +349,39 @@ func TestMakeInstalledPackageVariables(t *testing.T) {
 		assert.Equal(t, "test-package.v2.0.0", packageVariable.Bundles()[1].Name)
 	})
 
-	t.Run("installed bundle not found", func(t *testing.T) {
-		const bundleImage = "registry.io/repo/test-package@v9.0.0"
+	t.Run("UpgradeConstraintPolicy is set to Ignore", func(t *testing.T) {
+		const bundleImage = "registry.io/repo/test-package@v2.0.0"
+		fakeOperator := fakeOperator("test-operator", "test-package", operatorsv1alpha1.UpgradeConstraintPolicyIgnore)
 		installedPackages, err := variablesources.MakeInstalledPackageVariables(
 			allBundles,
+			[]operatorsv1alpha1.Operator{fakeOperator},
 			[]rukpakv1alpha1.BundleDeployment{
-				fakeBundleDeployment("test-bd", bundleImage),
+				fakeBundleDeployment("test-package-bd", bundleImage, &fakeOperator),
+			},
+		)
+		assert.NoError(t, err)
+		assert.Empty(t, installedPackages)
+	})
+
+	t.Run("no BundleDeployment for an Operator", func(t *testing.T) {
+		fakeOperator := fakeOperator("test-operator", "test-package", operatorsv1alpha1.UpgradeConstraintPolicyEnforce)
+		installedPackages, err := variablesources.MakeInstalledPackageVariables(
+			allBundles,
+			[]operatorsv1alpha1.Operator{fakeOperator},
+			[]rukpakv1alpha1.BundleDeployment{},
+		)
+		assert.NoError(t, err)
+		assert.Empty(t, installedPackages)
+	})
+
+	t.Run("installed bundle not found", func(t *testing.T) {
+		const bundleImage = "registry.io/repo/test-package@v9.0.0"
+		fakeOperator := fakeOperator("test-operator", "test-package", operatorsv1alpha1.UpgradeConstraintPolicyEnforce)
+		installedPackages, err := variablesources.MakeInstalledPackageVariables(
+			allBundles,
+			[]operatorsv1alpha1.Operator{fakeOperator},
+			[]rukpakv1alpha1.BundleDeployment{
+				fakeBundleDeployment("test-package-bd", bundleImage, &fakeOperator),
 			},
 		)
 		assert.Nil(t, installedPackages)
