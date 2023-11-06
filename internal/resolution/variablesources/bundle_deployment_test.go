@@ -164,6 +164,6 @@ var _ = Describe("BundleDeploymentVariableSource", func() {
 
 		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(operators, bundleDeployments, testBundleList, &MockRequiredPackageSource{})
 		_, err := bdVariableSource.GetVariables(context.Background())
-		Expect(err.Error()).To(Equal("bundleImage \"quay.io/operatorhubio/prometheus@sha256:nonexistent\" not found"))
+		Expect(err.Error()).To(Equal(`bundle with image "quay.io/operatorhubio/prometheus@sha256:nonexistent" not found in available catalogs but is currently installed via BundleDeployment "prometheus"`))
 	})
 })
