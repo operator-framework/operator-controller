@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    commit-message:
+      prefix: ":seedling:"
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
