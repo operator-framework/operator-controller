@@ -94,7 +94,7 @@ func MakeBundleVariables(
 		// get bundle dependencies
 		dependencies, err := filterBundleDependencies(allBundles, head)
 		if err != nil {
-			return nil, fmt.Errorf("could not determine dependencies for bundle with id %q: %w", id, err)
+			return nil, fmt.Errorf("could not determine dependencies for bundle %q from package %q in catalog %q: %s", head.Name, head.Package, head.CatalogName, err)
 		}
 
 		// add bundle dependencies to queue for processing
@@ -119,7 +119,7 @@ func filterBundleDependencies(allBundles []*catalogmetadata.Bundle, bundle *cata
 			catalogfilter.InBlangSemverRange(requiredPackage.SemverRange),
 		))
 		if len(packageDependencyBundles) == 0 {
-			return nil, fmt.Errorf("could not find package dependencies for bundle %q", bundle.Name)
+			return nil, fmt.Errorf("no bundles found matching required package %q in range %q", requiredPackage.PackageName, requiredPackage.VersionRange)
 		}
 		for i := 0; i < len(packageDependencyBundles); i++ {
 			bundle := packageDependencyBundles[i]
