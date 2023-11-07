@@ -5,10 +5,12 @@ import (
 	"sort"
 
 	mmsemver "github.com/Masterminds/semver/v3"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
@@ -22,6 +24,7 @@ import (
 // has own variable.
 func MakeInstalledPackageVariables(
 	allBundles []*catalogmetadata.Bundle,
+	operators []operatorsv1alpha1.Operator,
 	bundleDeployments []rukpakv1alpha1.BundleDeployment,
 ) ([]*olmvariables.InstalledPackageVariable, error) {
 	var successors successorsFunc = legacySemanticsSuccessors
@@ -29,9 +32,22 @@ func MakeInstalledPackageVariables(
 		successors = semverSuccessors
 	}
 
-	result := make([]*olmvariables.InstalledPackageVariable, 0, len(bundleDeployments))
+	ownerIDToBundleDeployment := mapOwnerIDToBundleDeployment(bundleDeployments)
+
+	result := make([]*olmvariables.InstalledPackageVariable, 0, len(operators))
 	processed := sets.Set[string]{}
-	for _, bundleDeployment := range bundleDeployments {
+	for _, operator := range operators {
+		if operator.Spec.UpgradeConstraintPolicy == operatorsv1alpha1.UpgradeConstraintPolicyIgnore {
+			continue
+		}
+
+		bundleDeployment, ok := ownerIDToBundleDeployment[operator.UID]
+		if !ok {
+			// This can happen when an Operator is requested,
+			// but not yet installed (e.g. no BundleDeployment created for it)
+			continue
+		}
+
 		if bundleDeployment.Spec.Template == nil {
 			continue
 		}
@@ -118,4 +134,16 @@ func semverSuccessors(allBundles []*catalogmetadata.Bundle, installedBundle *cat
 	})
 
 	return upgradeEdges, nil
+}
+
+func mapOwnerIDToBundleDeployment(bundleDeployments []rukpakv1alpha1.BundleDeployment) map[types.UID]*rukpakv1alpha1.BundleDeployment {
+	result := map[types.UID]*rukpakv1alpha1.BundleDeployment{}
+
+	for idx := range bundleDeployments {
+		for _, ref := range bundleDeployments[idx].OwnerReferences {
+			result[ref.UID] = &bundleDeployments[idx]
+		}
+	}
+
+	return result
 }

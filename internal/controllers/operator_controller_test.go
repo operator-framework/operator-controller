@@ -1062,7 +1062,7 @@ func TestOperatorUpgrade(t *testing.T) {
 		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
 	}
 
-	t.Run("semver upgrade constraints", func(t *testing.T) {
+	t.Run("semver upgrade constraints enforcement of upgrades within major version", func(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
 		defer func() {
 			require.NoError(t, cl.DeleteAllOf(ctx, &operatorsv1alpha1.Operator{}))
@@ -1155,7 +1155,7 @@ func TestOperatorUpgrade(t *testing.T) {
 		assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@fake1.2.0"`, cond.Message)
 	})
 
-	t.Run("legacy semantics upgrade constraints", func(t *testing.T) {
+	t.Run("legacy semantics upgrade constraints enforcement", func(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
 		defer func() {
 			require.NoError(t, cl.DeleteAllOf(ctx, &operatorsv1alpha1.Operator{}))
@@ -1246,6 +1246,262 @@ func TestOperatorUpgrade(t *testing.T) {
 		assert.Equal(t, metav1.ConditionTrue, cond.Status)
 		assert.Equal(t, operatorsv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@fake1.0.1"`, cond.Message)
+	})
+
+	t.Run("ignore upgrade constraints", func(t *testing.T) {
+		for _, tt := range []struct {
+			name      string
+			flagState bool
+		}{
+			{
+				name:      "ForceSemverUpgradeConstraints feature gate enabled",
+				flagState: true,
+			},
+			{
+				name:      "ForceSemverUpgradeConstraints feature gate disabled",
+				flagState: false,
+			},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, tt.flagState)()
+				defer func() {
+					require.NoError(t, cl.DeleteAllOf(ctx, &operatorsv1alpha1.Operator{}))
+					require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+				}()
+
+				opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
+				operator := &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName:             "prometheus",
+						Version:                 "1.0.0",
+						Channel:                 "beta",
+						UpgradeConstraintPolicy: operatorsv1alpha1.UpgradeConstraintPolicyIgnore,
+					},
+				}
+				// Create an operator
+				err := cl.Create(ctx, operator)
+				require.NoError(t, err)
+
+				// Run reconcile
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				require.NoError(t, err)
+				assert.Equal(t, ctrl.Result{}, res)
+
+				// Refresh the operator after reconcile
+				err = cl.Get(ctx, opKey, operator)
+				require.NoError(t, err)
+
+				// Checking the status fields
+				assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", operator.Status.ResolvedBundleResource)
+
+				// checking the expected conditions
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+				require.NotNil(t, cond)
+				assert.Equal(t, metav1.ConditionTrue, cond.Status)
+				assert.Equal(t, operatorsv1alpha1.ReasonSuccess, cond.Reason)
+				assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@fake1.0.0"`, cond.Message)
+
+				// We can go to the next major version when using semver
+				// as well as to the version which is not next in the channel
+				// when using legacy constraints
+				operator.Spec.Version = "2.0.0"
+				err = cl.Update(ctx, operator)
+				require.NoError(t, err)
+
+				// Run reconcile again
+				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				require.NoError(t, err)
+				assert.Equal(t, ctrl.Result{}, res)
+
+				// Refresh the operator after reconcile
+				err = cl.Get(ctx, opKey, operator)
+				require.NoError(t, err)
+
+				// Checking the status fields
+				assert.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", operator.Status.ResolvedBundleResource)
+
+				// checking the expected conditions
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+				require.NotNil(t, cond)
+				assert.Equal(t, metav1.ConditionTrue, cond.Status)
+				assert.Equal(t, operatorsv1alpha1.ReasonSuccess, cond.Reason)
+				assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@fake2.0.0"`, cond.Message)
+			})
+		}
+	})
+}
+
+func TestOperatorDowngrade(t *testing.T) {
+	ctx := context.Background()
+	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
+	reconciler := &controllers.OperatorReconciler{
+		Client:   cl,
+		Scheme:   sch,
+		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
+	}
+
+	t.Run("enforce upgrade constraints", func(t *testing.T) {
+		for _, tt := range []struct {
+			name      string
+			flagState bool
+		}{
+			{
+				name:      "ForceSemverUpgradeConstraints feature gate enabled",
+				flagState: true,
+			},
+			{
+				name:      "ForceSemverUpgradeConstraints feature gate disabled",
+				flagState: false,
+			},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, tt.flagState)()
+				defer func() {
+					require.NoError(t, cl.DeleteAllOf(ctx, &operatorsv1alpha1.Operator{}))
+					require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+				}()
+
+				opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
+				operator := &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: "prometheus",
+						Version:     "1.0.1",
+						Channel:     "beta",
+					},
+				}
+				// Create an operator
+				err := cl.Create(ctx, operator)
+				require.NoError(t, err)
+
+				// Run reconcile
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				require.NoError(t, err)
+				assert.Equal(t, ctrl.Result{}, res)
+
+				// Refresh the operator after reconcile
+				err = cl.Get(ctx, opKey, operator)
+				require.NoError(t, err)
+
+				// Checking the status fields
+				assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.1", operator.Status.ResolvedBundleResource)
+
+				// checking the expected conditions
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+				require.NotNil(t, cond)
+				assert.Equal(t, metav1.ConditionTrue, cond.Status)
+				assert.Equal(t, operatorsv1alpha1.ReasonSuccess, cond.Reason)
+				assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@fake1.0.1"`, cond.Message)
+
+				// Invalid operation: can not downgrade
+				operator.Spec.Version = "1.0.0"
+				err = cl.Update(ctx, operator)
+				require.NoError(t, err)
+
+				// Run reconcile again
+				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				require.Error(t, err)
+				assert.Equal(t, ctrl.Result{}, res)
+
+				// Refresh the operator after reconcile
+				err = cl.Get(ctx, opKey, operator)
+				require.NoError(t, err)
+
+				// Checking the status fields
+				// TODO: https://github.com/operator-framework/operator-controller/issues/320
+				assert.Equal(t, "", operator.Status.ResolvedBundleResource)
+
+				// checking the expected conditions
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+				require.NotNil(t, cond)
+				assert.Equal(t, metav1.ConditionFalse, cond.Status)
+				assert.Equal(t, operatorsv1alpha1.ReasonResolutionFailed, cond.Reason)
+				assert.Contains(t, cond.Message, "constraints not satisfiable")
+				assert.Contains(t, cond.Message, "installed package prometheus requires at least one of fake-catalog-prometheus-operatorhub/prometheus/beta/1.2.0, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.1;")
+			})
+		}
+	})
+
+	t.Run("ignore upgrade constraints", func(t *testing.T) {
+		for _, tt := range []struct {
+			name      string
+			flagState bool
+		}{
+			{
+				name:      "ForceSemverUpgradeConstraints feature gate enabled",
+				flagState: true,
+			},
+			{
+				name:      "ForceSemverUpgradeConstraints feature gate disabled",
+				flagState: false,
+			},
+		} {
+			t.Run(tt.name, func(t *testing.T) {
+				defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, tt.flagState)()
+				defer func() {
+					require.NoError(t, cl.DeleteAllOf(ctx, &operatorsv1alpha1.Operator{}))
+					require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+				}()
+
+				opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
+				operator := &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName:             "prometheus",
+						Version:                 "2.0.0",
+						Channel:                 "beta",
+						UpgradeConstraintPolicy: operatorsv1alpha1.UpgradeConstraintPolicyIgnore,
+					},
+				}
+				// Create an operator
+				err := cl.Create(ctx, operator)
+				require.NoError(t, err)
+
+				// Run reconcile
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				require.NoError(t, err)
+				assert.Equal(t, ctrl.Result{}, res)
+
+				// Refresh the operator after reconcile
+				err = cl.Get(ctx, opKey, operator)
+				require.NoError(t, err)
+
+				// Checking the status fields
+				assert.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", operator.Status.ResolvedBundleResource)
+
+				// checking the expected conditions
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+				require.NotNil(t, cond)
+				assert.Equal(t, metav1.ConditionTrue, cond.Status)
+				assert.Equal(t, operatorsv1alpha1.ReasonSuccess, cond.Reason)
+				assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@fake2.0.0"`, cond.Message)
+
+				// We downgrade
+				operator.Spec.Version = "1.0.0"
+				err = cl.Update(ctx, operator)
+				require.NoError(t, err)
+
+				// Run reconcile again
+				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				require.NoError(t, err)
+				assert.Equal(t, ctrl.Result{}, res)
+
+				// Refresh the operator after reconcile
+				err = cl.Get(ctx, opKey, operator)
+				require.NoError(t, err)
+
+				// Checking the status fields
+				assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", operator.Status.ResolvedBundleResource)
+
+				// checking the expected conditions
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+				require.NotNil(t, cond)
+				assert.Equal(t, metav1.ConditionTrue, cond.Status)
+				assert.Equal(t, operatorsv1alpha1.ReasonSuccess, cond.Reason)
+				assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@fake1.0.0"`, cond.Message)
+			})
+		}
 	})
 }
 

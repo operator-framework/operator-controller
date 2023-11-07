@@ -71,7 +71,7 @@ func (v *VariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, er
 			return variablesources.NewOperatorVariableSource(operatorList.Items, allBundles, inputVariableSource), nil
 		},
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
-			return variablesources.NewBundleDeploymentVariableSource(bundleDeploymentList.Items, allBundles, inputVariableSource), nil
+			return variablesources.NewBundleDeploymentVariableSource(operatorList.Items, bundleDeploymentList.Items, allBundles, inputVariableSource), nil
 		},
 		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
 			return variablesources.NewBundlesAndDepsVariableSource(allBundles, inputVariableSource), nil

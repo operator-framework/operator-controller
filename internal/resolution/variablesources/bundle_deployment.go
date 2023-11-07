@@ -7,19 +7,22 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
 
 var _ input.VariableSource = &BundleDeploymentVariableSource{}
 
 type BundleDeploymentVariableSource struct {
+	operators           []operatorsv1alpha1.Operator
 	bundleDeployments   []rukpakv1alpha1.BundleDeployment
 	allBundles          []*catalogmetadata.Bundle
 	inputVariableSource input.VariableSource
 }
 
-func NewBundleDeploymentVariableSource(bundleDeployments []rukpakv1alpha1.BundleDeployment, allBundles []*catalogmetadata.Bundle, inputVariableSource input.VariableSource) *BundleDeploymentVariableSource {
+func NewBundleDeploymentVariableSource(operators []operatorsv1alpha1.Operator, bundleDeployments []rukpakv1alpha1.BundleDeployment, allBundles []*catalogmetadata.Bundle, inputVariableSource input.VariableSource) *BundleDeploymentVariableSource {
 	return &BundleDeploymentVariableSource{
+		operators:           operators,
 		bundleDeployments:   bundleDeployments,
 		allBundles:          allBundles,
 		inputVariableSource: inputVariableSource,
@@ -37,7 +40,7 @@ func (o *BundleDeploymentVariableSource) GetVariables(ctx context.Context) ([]de
 		return nil, err
 	}
 
-	installedPackages, err := MakeInstalledPackageVariables(o.allBundles, o.bundleDeployments)
+	installedPackages, err := MakeInstalledPackageVariables(o.allBundles, o.operators, o.bundleDeployments)
 	if err != nil {
 		return nil, err
 	}
