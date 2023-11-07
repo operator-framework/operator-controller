@@ -191,7 +191,7 @@ metadata:
     support: Red Hat, Inc.
     operators.operatorframework.io/builder: operator-sdk-v1.28.0
     operators.operatorframework.io/project_layout: unknown
-  name: prometheusoperator.v0.65.1
+  name: prometheusoperator.v1.0.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -232,30 +232,30 @@ spec:
         kind: PodMonitor
         name: podmonitors.monitoring.coreos.com
         resources:
-          - kind: Pod
-            version: v1
+        - kind: Pod
+          version: v1
         specDescriptors:
-          - description: The label to use to retrieve the job name from
-            displayName: Job Label
-            path: jobLabel
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:label
-          - description: A list of endpoints allowed as part of this PodMonitor
-            displayName: Pod Metrics Endpoints
-            path: podMetricsEndpoints
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:endpointList
+        - description: The label to use to retrieve the job name from
+          displayName: Job Label
+          path: jobLabel
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:label
+        - description: A list of endpoints allowed as part of this PodMonitor
+          displayName: Pod Metrics Endpoints
+          path: podMetricsEndpoints
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:endpointList
         version: v1
       - description: Defines how groups of ingresses and static targets should be monitored.
         displayName: Probe
         kind: Probe
         name: probes.monitoring.coreos.com
         specDescriptors:
-          - description: Service that monitors the target and provides metrics for Prometheus to scrape
-            displayName: Prober URL
-            path: prober.url
-            x-descriptors:
-              - "urn:alm:descriptor:com.tectonic.ui:text"
+        - description: Service that monitors the target and provides metrics for Prometheus to scrape
+          displayName: Prober URL
+          path: prober.url
+          x-descriptors:
+            - 'urn:alm:descriptor:com.tectonic.ui:text'
         version: v1
       - description: Defines a Prometheus deployment running in Agent mode.
         kind: PrometheusAgent
@@ -267,52 +267,51 @@ spec:
         kind: Prometheus
         name: prometheuses.monitoring.coreos.com
         resources:
-          - kind: StatefulSet
-            version: v1beta2
-          - kind: Pod
-            version: v1
-          - kind: ConfigMap
-            version: v1
-          - kind: Service
-            version: v1
+        - kind: StatefulSet
+          version: v1beta2
+        - kind: Pod
+          version: v1
+        - kind: ConfigMap
+          version: v1
+        - kind: Service
+          version: v1
         specDescriptors:
-          - description: Desired number of Pods for the cluster
-            displayName: Size
-            path: replicas
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:podCount
-          - description: A selector for the ConfigMaps from which to load rule files
-            displayName: Rule Config Map Selector
-            path: ruleSelector
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:selector:core:v1:ConfigMap
-          - description: ServiceMonitors to be selected for target discovery
-            displayName: Service Monitor Selector
-            path: serviceMonitorSelector
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:selector:monitoring.coreos.com:v1:ServiceMonitor
-          - description: PodMonitors to be selected for target discovery
-            displayName: Pod Monitor Selector
-            path: podMonitorSelector
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:selector:monitoring.coreos.com:v1:PodMonitor
-          - description: Probes to be selected for target discovery
-            displayName: Pod Monitor Selector
-            path: probeSelector
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:selector:monitoring.coreos.com:v1:Probes
-          - description: The ServiceAccount to use to run the Prometheus pods
-            displayName: Service Account
-            path: serviceAccountName
-            x-descriptors:
-              - urn:alm:descriptor:io.kubernetes:ServiceAccount
-          - description:
-              Limits describes the minimum/maximum amount of compute resources
-              required/allowed
-            displayName: Resource Requirements
-            path: resources
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
+        - description: Desired number of Pods for the cluster
+          displayName: Size
+          path: replicas
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:podCount
+        - description: A selector for the ConfigMaps from which to load rule files
+          displayName: Rule Config Map Selector
+          path: ruleSelector
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:selector:core:v1:ConfigMap
+        - description: ServiceMonitors to be selected for target discovery
+          displayName: Service Monitor Selector
+          path: serviceMonitorSelector
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:selector:monitoring.coreos.com:v1:ServiceMonitor
+        - description: PodMonitors to be selected for target discovery
+          displayName: Pod Monitor Selector
+          path: podMonitorSelector
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:selector:monitoring.coreos.com:v1:PodMonitor
+        - description: Probes to be selected for target discovery
+          displayName: Pod Monitor Selector
+          path: probeSelector
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:selector:monitoring.coreos.com:v1:Probes
+        - description: The ServiceAccount to use to run the Prometheus pods
+          displayName: Service Account
+          path: serviceAccountName
+          x-descriptors:
+          - urn:alm:descriptor:io.kubernetes:ServiceAccount
+        - description: Limits describes the minimum/maximum amount of compute resources
+            required/allowed
+          displayName: Resource Requirements
+          path: resources
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:resourceRequirements
         version: v1
       - description: A Prometheus Rule configures groups of sequentially evaluated recording and alerting rules.
         displayName: Prometheus Rule
@@ -329,33 +328,33 @@ spec:
         kind: ServiceMonitor
         name: servicemonitors.monitoring.coreos.com
         resources:
-          - kind: Pod
-            version: v1
+        - kind: Pod
+          version: v1
         specDescriptors:
-          - description: The label to use to retrieve the job name from
-            displayName: Job Label
-            path: jobLabel
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:label
-          - description: A list of endpoints allowed as part of this ServiceMonitor
-            displayName: Endpoints
-            path: endpoints
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:endpointList
+        - description: The label to use to retrieve the job name from
+          displayName: Job Label
+          path: jobLabel
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:label
+        - description: A list of endpoints allowed as part of this ServiceMonitor
+          displayName: Endpoints
+          path: endpoints
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:endpointList
         version: v1
       - description: Allows recording and alerting rules to be processed across multiple Prometheus instances.
         displayName: ThanosRuler
         kind: ThanosRuler
         name: thanosrulers.monitoring.coreos.com
         resources:
-          - kind: Pod
-            version: v1
+        - kind: Pod
+          version: v1
         specDescriptors:
-          - description: Location of Thanos Queriers or Prometheus instances
-            displayName: Query Endpoints
-            path: queryEndpoints
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:endpointList
+        - description: Location of Thanos Queriers or Prometheus instances
+          displayName: Query Endpoints
+          path: queryEndpoints
+          x-descriptors:
+          - urn:alm:descriptor:com.tectonic.ui:endpointList
         version: v1
   description: |
     The Prometheus Operator for Kubernetes provides easy monitoring definitions for Kubernetes services and deployment and management of Prometheus instances.
@@ -469,7 +468,7 @@ spec:
         - label:
             app.kubernetes.io/component: controller
             app.kubernetes.io/name: prometheus-operator
-            app.kubernetes.io/version: 0.65.1
+            app.kubernetes.io/version: 1.0.0
           name: prometheus-operator
           spec:
             replicas: 1
@@ -485,7 +484,7 @@ spec:
                 labels:
                   app.kubernetes.io/component: controller
                   app.kubernetes.io/name: prometheus-operator
-                  app.kubernetes.io/version: 0.65.1
+                  app.kubernetes.io/version: 1.0.0
               spec:
                 automountServiceAccountToken: true
                 containers:
@@ -536,7 +535,7 @@ spec:
     - observability
   labels:
     alm-owner-prometheus: prometheusoperator
-    alm-status-descriptors: prometheusoperator.0.65.1
+    alm-status-descriptors: prometheusoperator.1.0.0
   links:
     - name: Prometheus
       url: https://www.prometheus.io/
@@ -555,4 +554,4 @@ spec:
   selector:
     matchLabels:
       alm-owner-prometheus: prometheusoperator
-  version: 0.65.1
+  version: 1.0.0
