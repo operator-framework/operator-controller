@@ -66,7 +66,7 @@ func MakeInstalledPackageVariables(
 		// find corresponding bundle for the installed content
 		resultSet := catalogfilter.Filter(allBundles, catalogfilter.WithBundleImage(bundleImage))
 		if len(resultSet) == 0 {
-			return nil, fmt.Errorf("bundleImage %q not found", bundleImage)
+			return nil, fmt.Errorf("bundle with image %q not found in available catalogs but is currently installed via BundleDeployment %q", bundleImage, bundleDeployment.Name)
 		}
 
 		sort.SliceStable(resultSet, func(i, j int) bool {
