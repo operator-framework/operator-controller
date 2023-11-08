@@ -16,11 +16,10 @@ import (
 )
 
 var (
-	cfg                    *rest.Config
-	c                      client.Client
-	err                    error
-	defaultSystemNamespace = "catalogd-system"
-	kubeClient             kubernetes.Interface
+	cfg        *rest.Config
+	c          client.Client
+	err        error
+	kubeClient kubernetes.Interface
 )
 
 func TestE2E(t *testing.T) {
