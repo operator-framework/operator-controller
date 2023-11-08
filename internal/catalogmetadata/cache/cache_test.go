@@ -72,7 +72,7 @@ func TestCache(t *testing.T) {
 						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
 							Image: &catalogd.ResolvedImageSource{
-								Ref: "fake/catalog@sha256:fakesha",
+								ResolvedRef: "fake/catalog@sha256:fakesha",
 							},
 						},
 					},
@@ -90,7 +90,7 @@ func TestCache(t *testing.T) {
 						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
 							Image: &catalogd.ResolvedImageSource{
-								Ref: "fake/catalog@sha256:fakesha",
+								ResolvedRef: "fake/catalog@sha256:fakesha",
 							},
 						},
 					},
@@ -110,7 +110,7 @@ func TestCache(t *testing.T) {
 						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
 							Image: &catalogd.ResolvedImageSource{
-								Ref: "fake/catalog@sha256:fakesha",
+								ResolvedRef: "fake/catalog@sha256:fakesha",
 							},
 						},
 					},
@@ -130,7 +130,7 @@ func TestCache(t *testing.T) {
 						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
 							Image: &catalogd.ResolvedImageSource{
-								Ref: "fake/catalog@sha256:fakesha",
+								ResolvedRef: "fake/catalog@sha256:fakesha",
 							},
 						},
 					},
@@ -149,7 +149,7 @@ func TestCache(t *testing.T) {
 						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
 							Image: &catalogd.ResolvedImageSource{
-								Ref: "fake/catalog@sha256:fakesha",
+								ResolvedRef: "fake/catalog@sha256:fakesha",
 							},
 						},
 					},
