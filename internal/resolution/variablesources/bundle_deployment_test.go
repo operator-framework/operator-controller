@@ -16,6 +16,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/utils/pointer"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
@@ -26,6 +27,10 @@ func fakeOperator(name, packageName string, upgradeConstraintPolicy operatorsv1a
 	return operatorsv1alpha1.Operator{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
+			// We manually set a fake UID here because the code we test
+			// uses UID to determine Operator CR which
+			// owns `BundleDeployment`
+			UID: uuid.NewUUID(),
 		},
 		Spec: operatorsv1alpha1.OperatorSpec{
 			PackageName:             packageName,
