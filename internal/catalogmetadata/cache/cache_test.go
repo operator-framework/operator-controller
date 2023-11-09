@@ -223,7 +223,7 @@ func TestCache(t *testing.T) {
 
 				if tt.testCaching {
 					if !tt.shouldHitCache {
-						tt.catalog.Status.ResolvedSource.Image.Ref = "fake/catalog@sha256:shafake"
+						tt.catalog.Status.ResolvedSource.Image.ResolvedRef = "fake/catalog@sha256:shafake"
 					}
 					tt.tripper.content = append(tt.tripper.content, []byte(`{"schema": "olm.package", "name": "foobar"}`)...)
 					rc, err := c.FetchCatalogContents(ctx, tt.catalog)
