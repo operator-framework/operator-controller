@@ -84,7 +84,7 @@ func (fsc *filesystemCache) FetchCatalogContents(ctx context.Context, catalog *c
 
 	fsc.mutex.RLock()
 	if data, ok := fsc.cacheDataByCatalogName[catalog.Name]; ok {
-		if catalog.Status.ResolvedSource.Image.Ref == data.ResolvedRef {
+		if catalog.Status.ResolvedSource.Image.ResolvedRef == data.ResolvedRef {
 			fsc.mutex.RUnlock()
 			return os.Open(cacheFilePath)
 		}
@@ -143,7 +143,7 @@ func (fsc *filesystemCache) FetchCatalogContents(ctx context.Context, catalog *c
 	}
 
 	fsc.cacheDataByCatalogName[catalog.Name] = cacheData{
-		ResolvedRef: catalog.Status.ResolvedSource.Image.Ref,
+		ResolvedRef: catalog.Status.ResolvedSource.Image.ResolvedRef,
 	}
 
 	return file, nil
