@@ -120,8 +120,9 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	if err := validators.ValidateOperatorSpec(op); err != nil {
 		// Set the TypeInstalled condition to Unknown to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
-		op.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as spec is invalid", op.GetGeneration())
+		if cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled); cond == nil {
+			setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as spec is invalid", op.GetGeneration())
+		}
 		// Set the TypeResolved condition to Unknown to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
 		op.Status.ResolvedBundleResource = ""
@@ -131,8 +132,9 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	// run resolution
 	solution, err := r.Resolver.Solve(ctx)
 	if err != nil {
-		op.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
+		if cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled); cond == nil {
+			setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
+		}
 		op.Status.ResolvedBundleResource = ""
 		setResolvedStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
@@ -145,8 +147,9 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	//    See https://github.com/operator-framework/deppy/issues/139.
 	unsat := deppy.NotSatisfiable{}
 	if ok := errors.As(solution.Error(), &unsat); ok && len(unsat) > 0 {
-		op.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution is unsatisfiable", op.GetGeneration())
+		if cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled); cond == nil {
+			setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution is unsatisfiable", op.GetGeneration())
+		}
 		op.Status.ResolvedBundleResource = ""
 		msg := prettyUnsatMessage(unsat)
 		setResolvedStatusConditionFailed(&op.Status.Conditions, msg, op.GetGeneration())
@@ -157,8 +160,9 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	// Operator's desired package name.
 	bundle, err := r.bundleFromSolution(solution, op.Spec.PackageName)
 	if err != nil {
-		op.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
+		if cond := apimeta.FindStatusCondition(op.Status.Conditions, operatorsv1alpha1.TypeInstalled); cond == nil {
+			setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
+		}
 		op.Status.ResolvedBundleResource = ""
 		setResolvedStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
@@ -182,8 +186,6 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	// image we just looked up in the solution.
 	dep := r.generateExpectedBundleDeployment(*op, bundle.Image, bundleProvisioner)
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
-		// originally Reason: operatorsv1alpha1.ReasonInstallationFailed
-		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
 	}
@@ -191,8 +193,6 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	// convert existing unstructured object into bundleDeployment for easier mapping of status.
 	existingTypedBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(dep.UnstructuredContent(), existingTypedBundleDeployment); err != nil {
-		// originally Reason: operatorsv1alpha1.ReasonInstallationStatusUnknown
-		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
 	}
@@ -208,13 +208,11 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha1.BundleDeployment, op *operatorsv1alpha1.Operator) {
 	bundleDeploymentReady := apimeta.FindStatusCondition(existingTypedBundleDeployment.Status.Conditions, rukpakv1alpha1.TypeInstalled)
 	if bundleDeploymentReady == nil {
-		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&op.Status.Conditions, "bundledeployment status is unknown", op.GetGeneration())
 		return
 	}
 
 	if bundleDeploymentReady.Status != metav1.ConditionTrue {
-		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionFailed(
 			&op.Status.Conditions,
 			fmt.Sprintf("bundledeployment not ready: %s", bundleDeploymentReady.Message),

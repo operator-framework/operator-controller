@@ -1028,6 +1028,76 @@ var _ = Describe("Operator Controller Test", func() {
 				Expect(cond.Message).To(Equal("installation has not been attempted as spec is invalid"))
 			})
 		})
+
+		When("resolution fails for an operator which already has installed bundle", func() {
+			var (
+				pkgName    string
+				fakeClient client.Client
+			)
+			BeforeEach(func() {
+				opKey = types.NamespacedName{Name: fmt.Sprintf("operator-validation-test-%s", rand.String(8))}
+
+				By("injecting creating a client with the bad operator CR")
+				pkgName = fmt.Sprintf("exists-%s", rand.String(6))
+				operator = &operatorsv1alpha1.Operator{
+					ObjectMeta: metav1.ObjectMeta{Name: opKey.Name},
+					Spec: operatorsv1alpha1.OperatorSpec{
+						PackageName: pkgName,
+						Version:     "1.2.3",
+					},
+					Status: operatorsv1alpha1.OperatorStatus{
+						ResolvedBundleResource:  "fake-resolved-and-installed-bundle-image",
+						InstalledBundleResource: "fake-resolved-and-installed-bundle-image",
+						Conditions: []metav1.Condition{
+							{
+								Type:    rukpakv1alpha1.TypeInstalled,
+								Status:  metav1.ConditionTrue,
+								Message: `installed from "fake-resolved-and-installed-bundle-image"`,
+								Reason:  rukpakv1alpha1.ReasonInstallationSucceeded,
+							},
+							{
+								Type:    operatorsv1alpha1.TypeResolved,
+								Status:  metav1.ConditionTrue,
+								Reason:  operatorsv1alpha1.ReasonSuccess,
+								Message: `resolved to "fake-resolved-and-installed-bundle-image"`,
+							},
+						},
+					},
+				}
+
+				// this bypasses client/server-side CR validation and allows us to test the reconciler's validation
+				fakeClient = fake.NewClientBuilder().WithScheme(sch).WithObjects(operator).WithStatusSubresource(operator).Build()
+
+				By("changing the reconciler client to the fake client")
+				reconciler.Client = fakeClient
+			})
+
+			It("should update installed and resolved conditions but keep .status.installedBundleResource", func() {
+				By("running reconcile")
+				res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: opKey})
+				Expect(res).To(Equal(ctrl.Result{}))
+				Expect(err).To(HaveOccurred())
+
+				By("fetching updated operator after reconcile")
+				Expect(fakeClient.Get(ctx, opKey, operator)).NotTo(HaveOccurred())
+
+				By("Checking the status fields")
+				Expect(operator.Status.ResolvedBundleResource).To(Equal(""))
+				Expect(operator.Status.InstalledBundleResource).To(Equal("fake-resolved-and-installed-bundle-image"))
+
+				By("checking the expected conditions")
+				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeResolved)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonResolutionFailed))
+				Expect(cond.Message).To(Equal(fmt.Sprintf("bundle for package %q not found in solution", pkgName)))
+				cond = apimeta.FindStatusCondition(operator.Status.Conditions, operatorsv1alpha1.TypeInstalled)
+				Expect(cond).NotTo(BeNil())
+				Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+				Expect(cond.Reason).To(Equal(operatorsv1alpha1.ReasonInstallationSucceeded))
+				Expect(cond.Message).To(Equal(`installed from "fake-resolved-and-installed-bundle-image"`))
+			})
+		})
 	})
 })
 
