@@ -390,6 +390,6 @@ func TestMakeInstalledPackageVariables(t *testing.T) {
 			},
 		)
 		assert.Nil(t, installedPackages)
-		assert.ErrorContains(t, err, `bundle with image "registry.io/repo/test-package@v9.0.0" not found in available catalogs but is currently installed via BundleDeployment "test-package-bd"`)
+		assert.ErrorContains(t, err, `bundle with image "registry.io/repo/test-package@v9.0.0" for package "test-package" not found in available catalogs but is currently installed via BundleDeployment "test-package-bd"`)
 	})
 }

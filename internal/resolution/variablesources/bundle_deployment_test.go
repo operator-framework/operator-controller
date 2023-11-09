@@ -136,7 +136,7 @@ var _ = Describe("BundleDeploymentVariableSource", func() {
 	})
 
 	It("should produce RequiredPackage variables", func() {
-		fakeOperator := fakeOperator("test-operator", "test-prometheus", operatorsv1alpha1.UpgradeConstraintPolicyEnforce)
+		fakeOperator := fakeOperator("test-operator", "prometheus", operatorsv1alpha1.UpgradeConstraintPolicyEnforce)
 		operators := []operatorsv1alpha1.Operator{fakeOperator}
 		bundleDeployments := []rukpakv1alpha1.BundleDeployment{
 			bundleDeployment("prometheus", "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35", &fakeOperator),
@@ -161,7 +161,7 @@ var _ = Describe("BundleDeploymentVariableSource", func() {
 		})))
 	})
 	It("should return an error if the bundleDeployment image doesn't match any operator resource", func() {
-		fakeOperator := fakeOperator("test-operator", "test-prometheus", operatorsv1alpha1.UpgradeConstraintPolicyEnforce)
+		fakeOperator := fakeOperator("test-operator", "prometheus", operatorsv1alpha1.UpgradeConstraintPolicyEnforce)
 		operators := []operatorsv1alpha1.Operator{fakeOperator}
 		bundleDeployments := []rukpakv1alpha1.BundleDeployment{
 			bundleDeployment("prometheus", "quay.io/operatorhubio/prometheus@sha256:nonexistent", &fakeOperator),
@@ -169,6 +169,6 @@ var _ = Describe("BundleDeploymentVariableSource", func() {
 
 		bdVariableSource := variablesources.NewBundleDeploymentVariableSource(operators, bundleDeployments, testBundleList, &MockRequiredPackageSource{})
 		_, err := bdVariableSource.GetVariables(context.Background())
-		Expect(err.Error()).To(Equal(`bundle with image "quay.io/operatorhubio/prometheus@sha256:nonexistent" not found in available catalogs but is currently installed via BundleDeployment "prometheus"`))
+		Expect(err.Error()).To(Equal(`bundle with image "quay.io/operatorhubio/prometheus@sha256:nonexistent" for package "prometheus" not found in available catalogs but is currently installed via BundleDeployment "prometheus"`))
 	})
 })
