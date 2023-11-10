@@ -8,7 +8,7 @@ require (
 	github.com/go-logr/logr v1.3.0
 	github.com/google/go-cmp v0.6.0
 	github.com/onsi/ginkgo/v2 v2.13.0
-	github.com/onsi/gomega v1.29.0
+	github.com/onsi/gomega v1.30.0
 	github.com/operator-framework/catalogd v0.9.0
 	github.com/operator-framework/deppy v0.0.1
 	github.com/operator-framework/operator-registry v1.31.0
