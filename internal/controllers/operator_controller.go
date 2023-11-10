@@ -138,19 +138,13 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		return ctrl.Result{}, err
 	}
 
-	// TODO: Checking for unsat is awkward using the current version of deppy.
-	//    This awkwardness has been fixed in an unreleased version of deppy.
-	//    When there is a new minor release of deppy, we can revisit this and
-	//    simplify this to a normal error check.
-	//    See https://github.com/operator-framework/deppy/issues/139.
-	unsat := deppy.NotSatisfiable{}
-	if ok := errors.As(solution.Error(), &unsat); ok && len(unsat) > 0 {
+	if err := solution.Error(); err != nil {
 		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution is unsatisfiable", op.GetGeneration())
 		op.Status.ResolvedBundleResource = ""
-		msg := prettyUnsatMessage(unsat)
+		msg := prettyUnsatMessage(err)
 		setResolvedStatusConditionFailed(&op.Status.Conditions, msg, op.GetGeneration())
-		return ctrl.Result{}, unsat
+		return ctrl.Result{}, err
 	}
 
 	// lookup the bundle in the solution that corresponds to the
@@ -472,7 +466,14 @@ func operatorRequestsForCatalog(c client.Reader, logger logr.Logger) handler.Map
 // and joins them with a semicolon (rather than a comma, which the unsat.Error()
 // function does). This function also has the side effect of sorting the items
 // in the unsat slice.
-func prettyUnsatMessage(unsat deppy.NotSatisfiable) string {
+func prettyUnsatMessage(err error) string {
+	unsat := deppy.NotSatisfiable{}
+	if !errors.As(err, &unsat) {
+		// This function is specifically for formatting deppy.NotSatisfiable.
+		// Just return default format if the error is something else.
+		return err.Error()
+	}
+
 	sort.Slice(unsat, func(i, j int) bool {
 		return unsat[i].String() < unsat[j].String()
 	})
