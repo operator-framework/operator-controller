@@ -22,7 +22,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
-	"github.com/operator-framework/deppy/pkg/deppy/input"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
@@ -64,21 +63,35 @@ func (v *VariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, er
 		return nil, err
 	}
 
-	// We are in process of getting rid of extra variable sources.
-	// See this for progress: https://github.com/operator-framework/operator-controller/issues/437
-	vs := variablesources.NestedVariableSource{
-		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
-			return variablesources.NewOperatorVariableSource(operatorList.Items, allBundles, inputVariableSource), nil
-		},
-		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
-			return variablesources.NewBundleDeploymentVariableSource(operatorList.Items, bundleDeploymentList.Items, allBundles, inputVariableSource), nil
-		},
-		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
-			return variablesources.NewBundlesAndDepsVariableSource(allBundles, inputVariableSource), nil
-		},
-		func(inputVariableSource input.VariableSource) (input.VariableSource, error) {
-			return variablesources.NewCRDUniquenessConstraintsVariableSource(inputVariableSource), nil
-		},
+	requiredPackages, err := variablesources.MakeRequiredPackageVariables(allBundles, operatorList.Items)
+	if err != nil {
+		return nil, err
 	}
-	return vs.GetVariables(ctx)
+
+	installedPackages, err := variablesources.MakeInstalledPackageVariables(allBundles, operatorList.Items, bundleDeploymentList.Items)
+	if err != nil {
+		return nil, err
+	}
+
+	bundles, err := variablesources.MakeBundleVariables(allBundles, requiredPackages, installedPackages)
+	if err != nil {
+		return nil, err
+	}
+
+	bundleUniqueness := variablesources.MakeBundleUniquenessVariables(bundles)
+
+	result := []deppy.Variable{}
+	for _, v := range requiredPackages {
+		result = append(result, v)
+	}
+	for _, v := range installedPackages {
+		result = append(result, v)
+	}
+	for _, v := range bundles {
+		result = append(result, v)
+	}
+	for _, v := range bundleUniqueness {
+		result = append(result, v)
+	}
+	return result, nil
 }

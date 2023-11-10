@@ -1,12 +1,10 @@
 package variablesources
 
 import (
-	"context"
 	"fmt"
 	"sort"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
-	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
@@ -14,53 +12,6 @@ import (
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
-
-var _ input.VariableSource = &BundlesAndDepsVariableSource{}
-
-type BundlesAndDepsVariableSource struct {
-	allBundles      []*catalogmetadata.Bundle
-	variableSources []input.VariableSource
-}
-
-func NewBundlesAndDepsVariableSource(allBundles []*catalogmetadata.Bundle, inputVariableSources ...input.VariableSource) *BundlesAndDepsVariableSource {
-	return &BundlesAndDepsVariableSource{
-		allBundles:      allBundles,
-		variableSources: inputVariableSources,
-	}
-}
-
-func (b *BundlesAndDepsVariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
-	variables := []deppy.Variable{}
-
-	for _, variableSource := range b.variableSources {
-		inputVariables, err := variableSource.GetVariables(ctx)
-		if err != nil {
-			return nil, err
-		}
-		variables = append(variables, inputVariables...)
-	}
-
-	requiredPackages := []*olmvariables.RequiredPackageVariable{}
-	installedPackages := []*olmvariables.InstalledPackageVariable{}
-	for _, variable := range variables {
-		switch v := variable.(type) {
-		case *olmvariables.RequiredPackageVariable:
-			requiredPackages = append(requiredPackages, v)
-		case *olmvariables.InstalledPackageVariable:
-			installedPackages = append(installedPackages, v)
-		}
-	}
-
-	bundles, err := MakeBundleVariables(b.allBundles, requiredPackages, installedPackages)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, v := range bundles {
-		variables = append(variables, v)
-	}
-	return variables, nil
-}
 
 func MakeBundleVariables(
 	allBundles []*catalogmetadata.Bundle,
