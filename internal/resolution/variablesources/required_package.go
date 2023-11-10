@@ -1,99 +1,64 @@
 package variablesources
 
 import (
-	"context"
 	"fmt"
 	"sort"
 
 	mmsemver "github.com/Masterminds/semver/v3"
-	"github.com/operator-framework/deppy/pkg/deppy"
-	"github.com/operator-framework/deppy/pkg/deppy/input"
 
+	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
-var _ input.VariableSource = &RequiredPackageVariableSource{}
+// MakeRequiredPackageVariables returns a variable which represent
+// explicit requirement for a package from an user.
+// This is when an user explicitly asks "install this" via Operator API.
+func MakeRequiredPackageVariables(allBundles []*catalogmetadata.Bundle, operators []operatorsv1alpha1.Operator) ([]*olmvariables.RequiredPackageVariable, error) {
+	result := make([]*olmvariables.RequiredPackageVariable, 0, len(operators))
 
-type RequiredPackageVariableSourceOption func(*RequiredPackageVariableSource) error
+	for _, operator := range operators {
+		packageName := operator.Spec.PackageName
+		channelName := operator.Spec.Channel
+		versionRange := operator.Spec.Version
 
-func InVersionRange(versionRange string) RequiredPackageVariableSourceOption {
-	return func(r *RequiredPackageVariableSource) error {
+		predicates := []catalogfilter.Predicate[catalogmetadata.Bundle]{
+			catalogfilter.WithPackageName(packageName),
+		}
+
+		if channelName != "" {
+			predicates = append(predicates, catalogfilter.InChannel(channelName))
+		}
+
 		if versionRange != "" {
 			vr, err := mmsemver.NewConstraint(versionRange)
-			if err == nil {
-				r.versionRange = versionRange
-				r.predicates = append(r.predicates, catalogfilter.InMastermindsSemverRange(vr))
-				return nil
+			if err != nil {
+				return nil, fmt.Errorf("invalid version range %q: %w", versionRange, err)
 			}
-
-			return fmt.Errorf("invalid version range '%s': %w", versionRange, err)
+			predicates = append(predicates, catalogfilter.InMastermindsSemverRange(vr))
 		}
-		return nil
-	}
-}
 
-func InChannel(channelName string) RequiredPackageVariableSourceOption {
-	return func(r *RequiredPackageVariableSource) error {
-		if channelName != "" {
-			r.channelName = channelName
-			r.predicates = append(r.predicates, catalogfilter.InChannel(channelName))
+		resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(predicates...))
+		if len(resultSet) == 0 {
+			if versionRange != "" && channelName != "" {
+				return nil, fmt.Errorf("no package %q matching version %q found in channel %q", packageName, versionRange, channelName)
+			}
+			if versionRange != "" {
+				return nil, fmt.Errorf("no package %q matching version %q found", packageName, versionRange)
+			}
+			if channelName != "" {
+				return nil, fmt.Errorf("no package %q found in channel %q", packageName, channelName)
+			}
+			return nil, fmt.Errorf("no package %q found", packageName)
 		}
-		return nil
-	}
-}
+		sort.SliceStable(resultSet, func(i, j int) bool {
+			return catalogsort.ByVersion(resultSet[i], resultSet[j])
+		})
 
-type RequiredPackageVariableSource struct {
-	allBundles []*catalogmetadata.Bundle
+		result = append(result, olmvariables.NewRequiredPackageVariable(packageName, resultSet))
+	}
 
-	packageName  string
-	versionRange string
-	channelName  string
-	predicates   []catalogfilter.Predicate[catalogmetadata.Bundle]
-}
-
-func NewRequiredPackageVariableSource(allBundles []*catalogmetadata.Bundle, packageName string, options ...RequiredPackageVariableSourceOption) (*RequiredPackageVariableSource, error) {
-	if packageName == "" {
-		return nil, fmt.Errorf("package name must not be empty")
-	}
-	r := &RequiredPackageVariableSource{
-		allBundles: allBundles,
-
-		packageName: packageName,
-		predicates:  []catalogfilter.Predicate[catalogmetadata.Bundle]{catalogfilter.WithPackageName(packageName)},
-	}
-	for _, option := range options {
-		if err := option(r); err != nil {
-			return nil, err
-		}
-	}
-	return r, nil
-}
-
-func (r *RequiredPackageVariableSource) GetVariables(_ context.Context) ([]deppy.Variable, error) {
-	resultSet := catalogfilter.Filter(r.allBundles, catalogfilter.And(r.predicates...))
-	if len(resultSet) == 0 {
-		return nil, r.notFoundError()
-	}
-	sort.SliceStable(resultSet, func(i, j int) bool {
-		return catalogsort.ByVersion(resultSet[i], resultSet[j])
-	})
-	return []deppy.Variable{
-		olmvariables.NewRequiredPackageVariable(r.packageName, resultSet),
-	}, nil
-}
-
-func (r *RequiredPackageVariableSource) notFoundError() error {
-	if r.versionRange != "" && r.channelName != "" {
-		return fmt.Errorf("no package '%s' matching version '%s' found in channel '%s'", r.packageName, r.versionRange, r.channelName)
-	}
-	if r.versionRange != "" {
-		return fmt.Errorf("no package '%s' matching version '%s' found", r.packageName, r.versionRange)
-	}
-	if r.channelName != "" {
-		return fmt.Errorf("no package '%s' found in channel '%s'", r.packageName, r.channelName)
-	}
-	return fmt.Errorf("no package '%s' found", r.packageName)
+	return result, nil
 }

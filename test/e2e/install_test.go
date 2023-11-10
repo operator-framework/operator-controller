@@ -167,7 +167,7 @@ var _ = Describe("Operator Install", func() {
 				g.Expect(cond).ToNot(BeNil())
 				g.Expect(cond.Status).To(Equal(metav1.ConditionFalse))
 				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonResolutionFailed))
-				g.Expect(cond.Message).To(Equal(fmt.Sprintf("no package '%s' found", pkgName)))
+				g.Expect(cond.Message).To(Equal(fmt.Sprintf("no package %q found", pkgName)))
 			}).Should(Succeed())
 
 			By("creating an Operator catalog with the desired package")

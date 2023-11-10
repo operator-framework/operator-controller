@@ -32,19 +32,18 @@ func (o *OperatorVariableSource) GetVariables(ctx context.Context) ([]deppy.Vari
 		variableSources = append(variableSources, o.inputVariableSource)
 	}
 
-	// build required package variable sources
-	for _, operator := range o.operators {
-		rps, err := NewRequiredPackageVariableSource(
-			o.allBundles,
-			operator.Spec.PackageName,
-			InVersionRange(operator.Spec.Version),
-			InChannel(operator.Spec.Channel),
-		)
-		if err != nil {
-			return nil, err
-		}
-		variableSources = append(variableSources, rps)
+	requiredPackages, err := MakeRequiredPackageVariables(o.allBundles, o.operators)
+	if err != nil {
+		return nil, err
 	}
 
-	return variableSources.GetVariables(ctx)
+	variables, err := variableSources.GetVariables(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, v := range requiredPackages {
+		variables = append(variables, v)
+	}
+	return variables, nil
 }
