@@ -34,19 +34,31 @@ const (
 
 var _ = Describe("Operator Install", func() {
 	var (
-		ctx          context.Context
-		operatorName string
-		operator     *operatorv1alpha1.Operator
+		ctx             context.Context
+		operatorCatalog *catalogd.Catalog
+		operatorName    string
+		operator        *operatorv1alpha1.Operator
 	)
 	When("An operator is installed from an operator catalog", func() {
 		BeforeEach(func() {
 			ctx = context.Background()
+			var err error
+			operatorCatalog, err = createTestCatalog(ctx, testCatalogName, os.Getenv(testCatalogRefEnvVar))
+			Expect(err).ToNot(HaveOccurred())
+
 			operatorName = fmt.Sprintf("operator-%s", rand.String(8))
 			operator = &operatorv1alpha1.Operator{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: operatorName,
 				},
 			}
+		})
+		AfterEach(func() {
+			Expect(c.Delete(ctx, operatorCatalog)).To(Succeed())
+			Eventually(func(g Gomega) {
+				err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, &catalogd.Catalog{})
+				g.Expect(errors.IsNotFound(err)).To(BeTrue())
+			}).Should(Succeed())
 		})
 		When("the operator bundle format is registry+v1", func() {
 			BeforeEach(func() {

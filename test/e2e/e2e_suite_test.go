@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -12,10 +11,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/env"
 
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -27,9 +24,8 @@ import (
 )
 
 var (
-	cfg             *rest.Config
-	c               client.Client
-	operatorCatalog *catalogd.Catalog
+	cfg *rest.Config
+	c   client.Client
 )
 
 const (
@@ -63,11 +59,6 @@ var _ = BeforeSuite(func() {
 
 	c, err = client.New(cfg, client.Options{Scheme: scheme})
 	Expect(err).To(Not(HaveOccurred()))
-
-	ctx := context.Background()
-	operatorCatalog, err = createTestCatalog(ctx, testCatalogName, os.Getenv(testCatalogRefEnvVar))
-	Expect(err).ToNot(HaveOccurred())
-
 })
 
 var _ = AfterSuite(func() {
@@ -76,11 +67,6 @@ var _ = AfterSuite(func() {
 		// get all the artifacts from the test run and save them to the artifact path
 		getArtifactsOutput(ctx, basePath)
 	}
-	Expect(c.Delete(ctx, operatorCatalog)).To(Succeed())
-	Eventually(func(g Gomega) {
-		err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, &catalogd.Catalog{})
-		g.Expect(errors.IsNotFound(err)).To(BeTrue())
-	}).Should(Succeed())
 })
 
 // createTestCatalog will create a new catalog on the test cluster, provided
