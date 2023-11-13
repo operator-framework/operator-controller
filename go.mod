@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/onsi/ginkgo/v2 v2.13.0
 	github.com/onsi/gomega v1.30.0
-	github.com/operator-framework/catalogd v0.9.0
+	github.com/operator-framework/catalogd v0.10.0
 	github.com/operator-framework/deppy v0.0.1
 	github.com/operator-framework/operator-registry v1.31.0
 	github.com/operator-framework/rukpak v0.15.0
@@ -22,8 +22,8 @@ require (
 	k8s.io/apimachinery v0.27.7
 	k8s.io/client-go v0.27.7
 	k8s.io/component-base v0.27.7
-	k8s.io/utils v0.0.0-20230308161112-d77c459e9343
-	sigs.k8s.io/controller-runtime v0.15.0
+	k8s.io/utils v0.0.0-20230505201702-9f6742963106
+	sigs.k8s.io/controller-runtime v0.15.3
 )
 
 require (
@@ -42,7 +42,7 @@ require (
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/containerd/ttrpc v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/docker/cli v23.0.1+incompatible // indirect
+	github.com/docker/cli v24.0.0+incompatible // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v24.0.7+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
@@ -83,11 +83,10 @@ require (
 	github.com/joelanford/ignore v0.0.0-20210607151042-0d25dc18b62d // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.16.0 // indirect
+	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-sqlite3 v1.14.16 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
-	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/sys/mountinfo v0.6.2 // indirect
 	github.com/moby/term v0.5.0 // indirect
@@ -96,7 +95,7 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b // indirect
+	github.com/opencontainers/image-spec v1.1.0-rc3 // indirect
 	github.com/operator-framework/api v0.19.0 // indirect
 	github.com/otiai10/copy v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -121,7 +120,7 @@ require (
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/oauth2 v0.7.0 // indirect
+	golang.org/x/oauth2 v0.8.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/term v0.13.0 // indirect
@@ -138,8 +137,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.27.7 // indirect
 	k8s.io/apiserver v0.27.7 // indirect
-	k8s.io/klog/v2 v2.90.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
+	k8s.io/klog/v2 v2.100.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20230515203736-54b630e78af5 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
