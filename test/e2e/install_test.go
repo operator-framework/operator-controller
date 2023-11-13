@@ -154,8 +154,12 @@ var _ = Describe("Operator Install", func() {
 				PackageName: pkgName,
 			}
 
-			// Delete the catalog first
+			By("deleting the catalog first")
 			Expect(c.Delete(ctx, operatorCatalog)).To(Succeed())
+			Eventually(func(g Gomega) {
+				err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, &catalogd.Catalog{})
+				g.Expect(errors.IsNotFound(err)).To(BeTrue())
+			}).Should(Succeed())
 
 			By("creating the Operator resource")
 			Expect(c.Create(ctx, operator)).To(Succeed())
