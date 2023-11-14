@@ -19,13 +19,11 @@ func operator(spec operatorsv1alpha1.OperatorSpec) *operatorsv1alpha1.Operator {
 	}
 }
 
-type testData struct {
+var operatorData = []struct {
 	spec    *operatorsv1alpha1.Operator
 	comment string
 	errMsg  string
-}
-
-var operatorData = []testData{
+}{
 	{
 		operator(operatorsv1alpha1.OperatorSpec{}),
 		"operator spec is empty",
@@ -57,23 +55,29 @@ var operatorData = []testData{
 }
 
 func TestOperatorSpecs(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	t.Cleanup(cancel)
 
-	for _, d := range operatorData {
-		t.Logf("Running %s", d.comment)
-		cl, err := newClient()
-		require.NoError(t, err)
-		require.NotNil(t, cl)
-		err = cl.Create(ctx, d.spec)
-		require.Error(t, err)
-		require.ErrorContains(t, err, d.errMsg)
+	for _, od := range operatorData {
+		d := od
+		t.Run(d.comment, func(t *testing.T) {
+			t.Parallel()
+			t.Logf("Running %s", d.comment)
+			cl, err := newClient()
+			require.NoError(t, err)
+			require.NotNil(t, cl)
+			err = cl.Create(ctx, d.spec)
+			require.Error(t, err)
+			require.ErrorContains(t, err, d.errMsg)
+		})
 	}
 }
 
 func TestOperatorInvalidSemver(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	t.Cleanup(cancel)
 
 	invalidSemvers := []string{
 		"1.2.3.4",
@@ -96,23 +100,28 @@ func TestOperatorInvalidSemver(t *testing.T) {
 		">1.2.3;<2.3.4",
 		"1.2.3 - 2.3.4",
 	}
-	for _, invalidSemver := range invalidSemvers {
-		cl, err := newClient()
-		require.NoError(t, err)
-		require.NotNil(t, cl)
-		err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
-			PackageName: "package",
-			Version:     invalidSemver,
-		}))
-		require.Errorf(t, err, "expected error for invalid semver %q", invalidSemver)
-		// Don't need to include the whole regex, this should be enough to match the MasterMinds regex
-		require.ErrorContains(t, err, "spec.version in body should match '^(\\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\\^)")
+	for _, sm := range invalidSemvers {
+		d := sm
+		t.Run(d, func(t *testing.T) {
+			t.Parallel()
+			cl, err := newClient()
+			require.NoError(t, err)
+			require.NotNil(t, cl)
+			err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+				PackageName: "package",
+				Version:     d,
+			}))
+			require.Errorf(t, err, "expected error for invalid semver %q", d)
+			// Don't need to include the whole regex, this should be enough to match the MasterMinds regex
+			require.ErrorContains(t, err, "spec.version in body should match '^(\\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\\^)")
+		})
 	}
 }
 
 func TestOperatorValidSemver(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	t.Cleanup(cancel)
 
 	validSemvers := []string{
 		">=1.2.3",
@@ -148,22 +157,27 @@ func TestOperatorValidSemver(t *testing.T) {
 		"<1.2.3-abc >2.3.4-def",
 		"<1.2.3-abc+def >2.3.4-ghi+jkl",
 	}
-	for _, validSemver := range validSemvers {
-		op := operator(operatorsv1alpha1.OperatorSpec{
-			PackageName: "package",
-			Version:     validSemver,
+	for _, smx := range validSemvers {
+		d := smx
+		t.Run(d, func(t *testing.T) {
+			t.Parallel()
+			op := operator(operatorsv1alpha1.OperatorSpec{
+				PackageName: "package",
+				Version:     d,
+			})
+			cl, err := newClient()
+			require.NoError(t, err)
+			require.NotNil(t, cl)
+			err = cl.Create(ctx, op)
+			require.NoErrorf(t, err, "unexpected error for semver range %q: %w", d, err)
 		})
-		cl, err := newClient()
-		require.NoError(t, err)
-		require.NotNil(t, cl)
-		err = cl.Create(ctx, op)
-		require.NoErrorf(t, err, "unexpected error for semver range '%q': %w", validSemver, err)
 	}
 }
 
 func TestOperatorInvalidChannel(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	t.Cleanup(cancel)
 
 	invalidChannels := []string{
 		"spaces spaces",
@@ -175,37 +189,46 @@ func TestOperatorInvalidChannel(t *testing.T) {
 		".start-with-period",
 		"end-with-period.",
 	}
-	for _, invalidChannel := range invalidChannels {
-		cl, err := newClient()
-		require.NoError(t, err)
-		require.NotNil(t, cl)
-		err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
-			PackageName: "package",
-			Channel:     invalidChannel,
-		}))
-		require.Errorf(t, err, "expected error for invalid channel '%q'", invalidChannel)
-		require.ErrorContains(t, err, "spec.channel in body should match '^[a-z0-9]+([\\.-][a-z0-9]+)*$'")
+	for _, ch := range invalidChannels {
+		d := ch
+		t.Run(d, func(t *testing.T) {
+			t.Parallel()
+			cl, err := newClient()
+			require.NoError(t, err)
+			require.NotNil(t, cl)
+			err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+				PackageName: "package",
+				Channel:     d,
+			}))
+			require.Errorf(t, err, "expected error for invalid channel %q", d)
+			require.ErrorContains(t, err, "spec.channel in body should match '^[a-z0-9]+([\\.-][a-z0-9]+)*$'")
+		})
 	}
 }
 
 func TestOperatorValidChannel(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	t.Cleanup(cancel)
 
 	validChannels := []string{
 		"hyphenated-name",
 		"dotted.name",
 		"channel-has-version-1.0.1",
 	}
-	for _, validChannel := range validChannels {
-		op := operator(operatorsv1alpha1.OperatorSpec{
-			PackageName: "package",
-			Channel:     validChannel,
+	for _, ch := range validChannels {
+		d := ch
+		t.Run(d, func(t *testing.T) {
+			t.Parallel()
+			op := operator(operatorsv1alpha1.OperatorSpec{
+				PackageName: "package",
+				Channel:     d,
+			})
+			cl, err := newClient()
+			require.NoError(t, err)
+			require.NotNil(t, cl)
+			err = cl.Create(ctx, op)
+			require.NoErrorf(t, err, "unexpected error creating valid channel %q: %w", d, err)
 		})
-		cl, err := newClient()
-		require.NoError(t, err)
-		require.NotNil(t, cl)
-		err = cl.Create(ctx, op)
-		require.NoErrorf(t, err, "unexpected error creating valid channel '%q': %w", validChannel, err)
 	}
 }
