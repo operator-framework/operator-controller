@@ -13,7 +13,7 @@ import (
 func operator(spec operatorsv1alpha1.OperatorSpec) *operatorsv1alpha1.Operator {
 	return &operatorsv1alpha1.Operator{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-operator",
+			GenerateName: "test-operator",
 		},
 		Spec: spec,
 	}
@@ -158,8 +158,6 @@ func TestOperatorValidSemver(t *testing.T) {
 		require.NotNil(t, cl)
 		err = cl.Create(ctx, op)
 		require.NoErrorf(t, err, "unexpected error for semver range '%q': %w", validSemver, err)
-		err = cl.Delete(ctx, op)
-		require.NoErrorf(t, err, "unexpected error deleting valid semver '%q': %w", validSemver, err)
 	}
 }
 
@@ -209,7 +207,5 @@ func TestOperatorValidChannel(t *testing.T) {
 		require.NotNil(t, cl)
 		err = cl.Create(ctx, op)
 		require.NoErrorf(t, err, "unexpected error creating valid channel '%q': %w", validChannel, err)
-		err = cl.Delete(ctx, op)
-		require.NoErrorf(t, err, "unexpected error deleting valid channel '%q': %w", validChannel, err)
 	}
 }
