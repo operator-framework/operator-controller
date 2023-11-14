@@ -24,6 +24,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
@@ -33,9 +34,13 @@ import (
 )
 
 var (
-	cl  client.Client
 	sch *runtime.Scheme
+	cfg *rest.Config
 )
+
+func newClient() (client.Client, error) {
+	return client.New(cfg, client.Options{Scheme: sch})
+}
 
 func TestMain(m *testing.M) {
 	testEnv := &envtest.Environment{
@@ -45,7 +50,8 @@ func TestMain(m *testing.M) {
 		ErrorIfCRDPathMissing: true,
 	}
 
-	cfg, err := testEnv.Start()
+	var err error
+	cfg, err = testEnv.Start()
 	utilruntime.Must(err)
 	if cfg == nil {
 		log.Panic("expected cfg to not be nil")
@@ -54,12 +60,6 @@ func TestMain(m *testing.M) {
 	sch = runtime.NewScheme()
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(sch))
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(sch))
-
-	cl, err = client.New(cfg, client.Options{Scheme: sch})
-	utilruntime.Must(err)
-	if cl == nil {
-		log.Panic("expected cl (client.New) to not be nil")
-	}
 
 	code := m.Run()
 	utilruntime.Must(testEnv.Stop())

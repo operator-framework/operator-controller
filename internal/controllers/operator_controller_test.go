@@ -32,6 +32,10 @@ import (
 
 // Describe: Operator Controller Test
 func TestOperatorDoesNotExist(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
+
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
 		Client:   cl,
@@ -46,6 +50,9 @@ func TestOperatorDoesNotExist(t *testing.T) {
 }
 
 func TestOperatorNonExistantPackage(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -90,6 +97,9 @@ func TestOperatorNonExistantPackage(t *testing.T) {
 }
 
 func TestOperatorNonExistantVersion(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -142,6 +152,9 @@ func TestOperatorNonExistantVersion(t *testing.T) {
 }
 
 func TestOperatorBundleDeploymentDoesNotExist(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -203,6 +216,9 @@ func TestOperatorBundleDeploymentDoesNotExist(t *testing.T) {
 }
 
 func TestOperatorBundleDeploymentOutOfDate(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -299,6 +315,9 @@ func TestOperatorBundleDeploymentOutOfDate(t *testing.T) {
 }
 
 func TestOperatorBundleDeploymentUpToDate(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -579,6 +598,9 @@ func TestOperatorBundleDeploymentUpToDate(t *testing.T) {
 }
 
 func TestOperatorExpectedBundleDeployment(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -659,6 +681,9 @@ func TestOperatorExpectedBundleDeployment(t *testing.T) {
 }
 
 func TestOperatorDuplicatePackage(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -715,6 +740,9 @@ func TestOperatorDuplicatePackage(t *testing.T) {
 }
 
 func TestOperatorChannelVersionExists(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -737,7 +765,7 @@ func TestOperatorChannelVersionExists(t *testing.T) {
 			Channel:     pkgChan,
 		},
 	}
-	err := cl.Create(ctx, operator)
+	err = cl.Create(ctx, operator)
 	require.NoError(t, err)
 
 	t.Log("It sets resolution success status")
@@ -780,6 +808,9 @@ func TestOperatorChannelVersionExists(t *testing.T) {
 }
 
 func TestOperatorChannelExistsNoVersion(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -843,6 +874,9 @@ func TestOperatorChannelExistsNoVersion(t *testing.T) {
 }
 
 func TestOperatorVersionNoChannel(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -899,6 +933,9 @@ func TestOperatorVersionNoChannel(t *testing.T) {
 }
 
 func TestOperatorNoChannel(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -952,6 +989,9 @@ func TestOperatorNoChannel(t *testing.T) {
 }
 
 func TestOperatorNoVersion(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -1007,6 +1047,9 @@ func TestOperatorNoVersion(t *testing.T) {
 }
 
 func TestOperatorPlainV0Bundle(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -1070,6 +1113,9 @@ func TestOperatorPlainV0Bundle(t *testing.T) {
 }
 
 func TestOperatorBadBundleMediaType(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -1126,6 +1172,9 @@ func TestOperatorBadBundleMediaType(t *testing.T) {
 }
 
 func TestOperatorInvalidSemverPastRegex(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -1206,6 +1255,9 @@ func verifyConditionsInvariants(t *testing.T, op *operatorsv1alpha1.Operator) {
 }
 
 func TestOperatorUpgrade(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
@@ -1485,6 +1537,9 @@ func TestOperatorUpgrade(t *testing.T) {
 }
 
 func TestOperatorDowngrade(t *testing.T) {
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
 	ctx := context.Background()
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{

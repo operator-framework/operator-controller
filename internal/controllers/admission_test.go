@@ -23,7 +23,10 @@ func TestOperatorSpecIsEmpty(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{}))
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
+	err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{}))
 	require.Error(t, err)
 	require.ErrorContains(t, err, "spec.packageName in body should match '^[a-z0-9]+(-[a-z0-9]+)*$'")
 }
@@ -32,7 +35,10 @@ func TestOperatorLongPackageName(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
+	err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
 		PackageName: "this-is-a-really-long-package-name-that-is-greater-than-48-characters",
 	}))
 	require.Error(t, err)
@@ -43,7 +49,10 @@ func TestOperatorLongValidSemver(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
+	err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
 		PackageName: "package",
 		Version:     "1234567890.1234567890.12345678901234567890123456789012345678901234",
 	}))
@@ -77,7 +86,10 @@ func TestOperatorInvalidSemver(t *testing.T) {
 		"1.2.3 - 2.3.4",
 	}
 	for _, invalidSemver := range invalidSemvers {
-		err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+		cl, err := newClient()
+		require.NoError(t, err)
+		require.NotNil(t, cl)
+		err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
 			PackageName: "package",
 			Version:     invalidSemver,
 		}))
@@ -130,7 +142,10 @@ func TestOperatorValidSemver(t *testing.T) {
 			PackageName: "package",
 			Version:     validSemver,
 		})
-		err := cl.Create(ctx, op)
+		cl, err := newClient()
+		require.NoError(t, err)
+		require.NotNil(t, cl)
+		err = cl.Create(ctx, op)
 		require.NoErrorf(t, err, "unexpected error for semver range '%q': %w", validSemver, err)
 		err = cl.Delete(ctx, op)
 		require.NoErrorf(t, err, "unexpected error deleting valid semver '%q': %w", validSemver, err)
@@ -152,7 +167,10 @@ func TestOperatorInvalidChannel(t *testing.T) {
 		"end-with-period.",
 	}
 	for _, invalidChannel := range invalidChannels {
-		err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+		cl, err := newClient()
+		require.NoError(t, err)
+		require.NotNil(t, cl)
+		err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
 			PackageName: "package",
 			Channel:     invalidChannel,
 		}))
@@ -175,7 +193,10 @@ func TestOperatorValidChannel(t *testing.T) {
 			PackageName: "package",
 			Channel:     validChannel,
 		})
-		err := cl.Create(ctx, op)
+		cl, err := newClient()
+		require.NoError(t, err)
+		require.NotNil(t, cl)
+		err = cl.Create(ctx, op)
 		require.NoErrorf(t, err, "unexpected error creating valid channel '%q': %w", validChannel, err)
 		err = cl.Delete(ctx, op)
 		require.NoErrorf(t, err, "unexpected error deleting valid channel '%q': %w", validChannel, err)
@@ -186,7 +207,10 @@ func TestOperatorLongValidChannel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+	cl, err := newClient()
+	require.NoError(t, err)
+	require.NotNil(t, cl)
+	err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
 		PackageName: "package",
 		Channel:     "longname01234567890123456789012345678901234567890",
 	}))
