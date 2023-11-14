@@ -19,45 +19,56 @@ func operator(spec operatorsv1alpha1.OperatorSpec) *operatorsv1alpha1.Operator {
 	}
 }
 
-func TestOperatorSpecIsEmpty(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
-	err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{}))
-	require.Error(t, err)
-	require.ErrorContains(t, err, "spec.packageName in body should match '^[a-z0-9]+(-[a-z0-9]+)*$'")
+type testData struct {
+	spec    *operatorsv1alpha1.Operator
+	comment string
+	errMsg  string
 }
 
-func TestOperatorLongPackageName(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
-	err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
-		PackageName: "this-is-a-really-long-package-name-that-is-greater-than-48-characters",
-	}))
-	require.Error(t, err)
-	require.ErrorContains(t, err, "Too long: may not be longer than 48")
+var operatorData = []testData{
+	{
+		operator(operatorsv1alpha1.OperatorSpec{}),
+		"operator spec is empty",
+		"spec.packageName in body should match '^[a-z0-9]+(-[a-z0-9]+)*$'",
+	},
+	{
+		operator(operatorsv1alpha1.OperatorSpec{
+			PackageName: "this-is-a-really-long-package-name-that-is-greater-than-48-characters",
+		}),
+		"long package name",
+		"spec.packageName: Too long: may not be longer than 48",
+	},
+	{
+		operator(operatorsv1alpha1.OperatorSpec{
+			PackageName: "package",
+			Version:     "1234567890.1234567890.12345678901234567890123456789012345678901234",
+		}),
+		"long valid semver",
+		"spec.version: Too long: may not be longer than 64",
+	},
+	{
+		operator(operatorsv1alpha1.OperatorSpec{
+			PackageName: "package",
+			Channel:     "longname01234567890123456789012345678901234567890",
+		}),
+		"long channel name",
+		"spec.channel: Too long: may not be longer than 48",
+	},
 }
 
-func TestOperatorLongValidSemver(t *testing.T) {
+func TestOperatorSpecs(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
-	err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
-		PackageName: "package",
-		Version:     "1234567890.1234567890.12345678901234567890123456789012345678901234",
-	}))
-	require.Error(t, err)
-	require.ErrorContains(t, err, "Too long: may not be longer than 64")
+	for _, d := range operatorData {
+		t.Logf("Running %s", d.comment)
+		cl, err := newClient()
+		require.NoError(t, err)
+		require.NotNil(t, cl)
+		err = cl.Create(ctx, d.spec)
+		require.Error(t, err)
+		require.ErrorContains(t, err, d.errMsg)
+	}
 }
 
 func TestOperatorInvalidSemver(t *testing.T) {
@@ -201,20 +212,4 @@ func TestOperatorValidChannel(t *testing.T) {
 		err = cl.Delete(ctx, op)
 		require.NoErrorf(t, err, "unexpected error deleting valid channel '%q': %w", validChannel, err)
 	}
-}
-
-func TestOperatorLongValidChannel(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
-	err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
-		PackageName: "package",
-		Channel:     "longname01234567890123456789012345678901234567890",
-	}))
-
-	require.Error(t, err)
-	require.ErrorContains(t, err, "spec.channel: Too long: may not be longer than 48")
 }
