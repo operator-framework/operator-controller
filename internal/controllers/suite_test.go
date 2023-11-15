@@ -28,19 +28,37 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
+	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	"github.com/stretchr/testify/require"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/controllers"
+	testutil "github.com/operator-framework/operator-controller/test/util"
 )
+
+func newClient(t *testing.T) client.Client {
+	cl, err := client.New(cfg, client.Options{Scheme: sch})
+	require.NoError(t, err)
+	require.NotNil(t, cl)
+	return cl
+}
+
+func newClientAndReconciler(t *testing.T) (client.Client, *controllers.OperatorReconciler) {
+	cl := newClient(t)
+	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
+	reconciler := &controllers.OperatorReconciler{
+		Client:   cl,
+		Scheme:   sch,
+		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
+	}
+	return cl, reconciler
+}
 
 var (
 	sch *runtime.Scheme
 	cfg *rest.Config
 )
-
-func newClient() (client.Client, error) {
-	return client.New(cfg, client.Options{Scheme: sch})
-}
 
 func TestMain(m *testing.M) {
 	testEnv := &envtest.Environment{

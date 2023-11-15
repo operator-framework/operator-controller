@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
@@ -25,23 +24,13 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
-	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/pkg/features"
-	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
 // Describe: Operator Controller Test
 func TestOperatorDoesNotExist(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	_, reconciler := newClientAndReconciler(t)
 
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	t.Log("When the operator does not exist")
 	t.Log("It returns no error")
 	res, err := reconciler.Reconcile(context.Background(), ctrl.Request{NamespacedName: types.NamespacedName{Name: "non-existent"}})
@@ -50,16 +39,8 @@ func TestOperatorDoesNotExist(t *testing.T) {
 }
 
 func TestOperatorNonExistantPackage(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 
 	t.Log("When the operator specifies a non-existent package")
@@ -97,16 +78,8 @@ func TestOperatorNonExistantPackage(t *testing.T) {
 }
 
 func TestOperatorNonExistantVersion(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 
 	t.Log("When the operator specifies a version that does not exist")
@@ -152,16 +125,8 @@ func TestOperatorNonExistantVersion(t *testing.T) {
 }
 
 func TestOperatorBundleDeploymentDoesNotExist(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 	const pkgName = "prometheus"
 
@@ -216,16 +181,8 @@ func TestOperatorBundleDeploymentDoesNotExist(t *testing.T) {
 }
 
 func TestOperatorBundleDeploymentOutOfDate(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 	const pkgName = "prometheus"
 
@@ -315,16 +272,8 @@ func TestOperatorBundleDeploymentOutOfDate(t *testing.T) {
 }
 
 func TestOperatorBundleDeploymentUpToDate(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 	const pkgName = "prometheus"
 
@@ -598,16 +547,8 @@ func TestOperatorBundleDeploymentUpToDate(t *testing.T) {
 }
 
 func TestOperatorExpectedBundleDeployment(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 	const pkgName = "prometheus"
 
@@ -681,16 +622,8 @@ func TestOperatorExpectedBundleDeployment(t *testing.T) {
 }
 
 func TestOperatorDuplicatePackage(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 	const pkgName = "prometheus"
 
@@ -740,16 +673,8 @@ func TestOperatorDuplicatePackage(t *testing.T) {
 }
 
 func TestOperatorChannelVersionExists(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 
 	t.Log("When the operator specifies a channel with version that exist")
@@ -765,7 +690,7 @@ func TestOperatorChannelVersionExists(t *testing.T) {
 			Channel:     pkgChan,
 		},
 	}
-	err = cl.Create(ctx, operator)
+	err := cl.Create(ctx, operator)
 	require.NoError(t, err)
 
 	t.Log("It sets resolution success status")
@@ -808,16 +733,8 @@ func TestOperatorChannelVersionExists(t *testing.T) {
 }
 
 func TestOperatorChannelExistsNoVersion(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 
 	t.Log("When the operator specifies a package that exists within a channel but no version specified")
@@ -874,16 +791,8 @@ func TestOperatorChannelExistsNoVersion(t *testing.T) {
 }
 
 func TestOperatorVersionNoChannel(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 
 	t.Log("When the operator specifies a package version in a channel that does not exist")
@@ -933,16 +842,8 @@ func TestOperatorVersionNoChannel(t *testing.T) {
 }
 
 func TestOperatorNoChannel(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 
 	t.Log("When the operator specifies a package in a channel that does not exist")
@@ -989,16 +890,8 @@ func TestOperatorNoChannel(t *testing.T) {
 }
 
 func TestOperatorNoVersion(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 
 	t.Log("When the operator specifies a package version that does not exist in the channel")
@@ -1047,16 +940,8 @@ func TestOperatorNoVersion(t *testing.T) {
 }
 
 func TestOperatorPlainV0Bundle(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 
 	t.Log("When the operator specifies a package with a plain+v0 bundle")
@@ -1113,16 +998,8 @@ func TestOperatorPlainV0Bundle(t *testing.T) {
 }
 
 func TestOperatorBadBundleMediaType(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-test-%s", rand.String(8))}
 
 	t.Log("When the operator specifies a package with a bad bundle mediatype")
@@ -1172,17 +1049,8 @@ func TestOperatorBadBundleMediaType(t *testing.T) {
 }
 
 func TestOperatorInvalidSemverPastRegex(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
-
 	t.Log("When an invalid semver is provided that bypasses the regex validation")
 	opKey := types.NamespacedName{Name: fmt.Sprintf("operator-validation-test-%s", rand.String(8))}
 
@@ -1255,16 +1123,8 @@ func verifyConditionsInvariants(t *testing.T, op *operatorsv1alpha1.Operator) {
 }
 
 func TestOperatorUpgrade(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 
 	t.Run("semver upgrade constraints enforcement of upgrades within major version", func(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
@@ -1537,16 +1397,8 @@ func TestOperatorUpgrade(t *testing.T) {
 }
 
 func TestOperatorDowngrade(t *testing.T) {
-	cl, err := newClient()
-	require.NoError(t, err)
-	require.NotNil(t, cl)
+	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
-	}
 
 	t.Run("enforce upgrade constraints", func(t *testing.T) {
 		for _, tt := range []struct {

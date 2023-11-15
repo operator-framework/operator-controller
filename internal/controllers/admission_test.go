@@ -63,11 +63,8 @@ func TestOperatorSpecs(t *testing.T) {
 		d := od
 		t.Run(d.comment, func(t *testing.T) {
 			t.Parallel()
-			t.Logf("Running %s", d.comment)
-			cl, err := newClient()
-			require.NoError(t, err)
-			require.NotNil(t, cl)
-			err = cl.Create(ctx, d.spec)
+			cl := newClient(t)
+			err := cl.Create(ctx, d.spec)
 			require.Error(t, err)
 			require.ErrorContains(t, err, d.errMsg)
 		})
@@ -104,10 +101,8 @@ func TestOperatorInvalidSemver(t *testing.T) {
 		d := sm
 		t.Run(d, func(t *testing.T) {
 			t.Parallel()
-			cl, err := newClient()
-			require.NoError(t, err)
-			require.NotNil(t, cl)
-			err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+			cl := newClient(t)
+			err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
 				PackageName: "package",
 				Version:     d,
 			}))
@@ -161,14 +156,12 @@ func TestOperatorValidSemver(t *testing.T) {
 		d := smx
 		t.Run(d, func(t *testing.T) {
 			t.Parallel()
+			cl := newClient(t)
 			op := operator(operatorsv1alpha1.OperatorSpec{
 				PackageName: "package",
 				Version:     d,
 			})
-			cl, err := newClient()
-			require.NoError(t, err)
-			require.NotNil(t, cl)
-			err = cl.Create(ctx, op)
+			err := cl.Create(ctx, op)
 			require.NoErrorf(t, err, "unexpected error for semver range %q: %w", d, err)
 		})
 	}
@@ -193,10 +186,8 @@ func TestOperatorInvalidChannel(t *testing.T) {
 		d := ch
 		t.Run(d, func(t *testing.T) {
 			t.Parallel()
-			cl, err := newClient()
-			require.NoError(t, err)
-			require.NotNil(t, cl)
-			err = cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+			cl := newClient(t)
+			err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
 				PackageName: "package",
 				Channel:     d,
 			}))
@@ -220,14 +211,12 @@ func TestOperatorValidChannel(t *testing.T) {
 		d := ch
 		t.Run(d, func(t *testing.T) {
 			t.Parallel()
+			cl := newClient(t)
 			op := operator(operatorsv1alpha1.OperatorSpec{
 				PackageName: "package",
 				Channel:     d,
 			})
-			cl, err := newClient()
-			require.NoError(t, err)
-			require.NotNil(t, cl)
-			err = cl.Create(ctx, op)
+			err := cl.Create(ctx, op)
 			require.NoErrorf(t, err, "unexpected error creating valid channel %q: %w", d, err)
 		})
 	}
