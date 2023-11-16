@@ -7,12 +7,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -23,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 	kubeclient "k8s.io/client-go/kubernetes"
 	"k8s.io/utils/env"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
@@ -32,237 +34,296 @@ const (
 	artifactName = "operator-controller-e2e"
 )
 
-var _ = Describe("Operator Install", func() {
-	var (
-		ctx             context.Context
-		operatorCatalog *catalogd.Catalog
-		operatorName    string
-		operator        *operatorv1alpha1.Operator
-	)
-	When("An operator is installed from an operator catalog", func() {
-		BeforeEach(func() {
-			ctx = context.Background()
-			var err error
-			operatorCatalog, err = createTestCatalog(ctx, testCatalogName, os.Getenv(testCatalogRefEnvVar))
-			Expect(err).ToNot(HaveOccurred())
+var pollDuration = time.Minute
+var pollInterval = time.Second
 
-			operatorName = fmt.Sprintf("operator-%s", rand.String(8))
-			operator = &operatorv1alpha1.Operator{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: operatorName,
-				},
-			}
-		})
-		AfterEach(func() {
-			Expect(c.Delete(ctx, operatorCatalog)).To(Succeed())
-			Eventually(func(g Gomega) {
-				err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, &catalogd.Catalog{})
-				g.Expect(errors.IsNotFound(err)).To(BeTrue())
-			}).Should(Succeed())
-		})
-		When("the operator bundle format is registry+v1", func() {
-			BeforeEach(func() {
-				operator.Spec = operatorv1alpha1.OperatorSpec{
-					PackageName: "prometheus",
-				}
-			})
-			It("resolves the specified package with correct bundle path", func() {
-				By("creating the Operator resource")
-				Expect(c.Create(ctx, operator)).To(Succeed())
+func testInit(t *testing.T) (*operatorv1alpha1.Operator, string, *catalogd.Catalog) {
+	var err error
+	operatorCatalog, err := createTestCatalog(context.Background(), testCatalogName, os.Getenv(testCatalogRefEnvVar))
+	require.NoError(t, err)
 
-				By("eventually reporting a successful resolution and bundle path")
-				Eventually(func(g Gomega) {
-					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-					g.Expect(operator.Status.Conditions).To(HaveLen(2))
-					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-					g.Expect(cond).ToNot(BeNil())
-					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
-					g.Expect(cond.Message).To(ContainSubstring("resolved to"))
-					g.Expect(operator.Status.ResolvedBundleResource).To(Equal("localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0"))
-				}).Should(Succeed())
+	operatorName := fmt.Sprintf("operator-%s", rand.String(8))
+	operator := &operatorv1alpha1.Operator{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: operatorName,
+		},
+	}
+	return operator, operatorName, operatorCatalog
+}
 
-				By("eventually installing the package successfully")
-				Eventually(func(g Gomega) {
-					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeInstalled)
-					g.Expect(cond).ToNot(BeNil())
-					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
-					g.Expect(cond.Message).To(ContainSubstring("installed from"))
-					g.Expect(operator.Status.InstalledBundleResource).ToNot(BeEmpty())
+func testCleanup(t *testing.T, cat *catalogd.Catalog, operator *operatorv1alpha1.Operator) {
+	require.NoError(t, c.Delete(context.Background(), cat))
+	require.Eventually(t, func() bool {
+		err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &catalogd.Catalog{})
+		return errors.IsNotFound(err)
+	}, pollDuration, pollInterval)
+	require.NoError(t, c.Delete(context.Background(), operator))
+	require.Eventually(t, func() bool {
+		err := c.Get(context.Background(), types.NamespacedName{Name: operator.Name}, &operatorv1alpha1.Operator{})
+		return errors.IsNotFound(err)
+	}, pollDuration, pollInterval)
+}
 
-					bd := rukpakv1alpha1.BundleDeployment{}
-					g.Expect(c.Get(ctx, types.NamespacedName{Name: operatorName}, &bd)).To(Succeed())
-					hasValidBundle := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
-					g.Expect(hasValidBundle).ToNot(BeNil())
-					g.Expect(hasValidBundle.Reason).To(Equal(rukpakv1alpha1.ReasonUnpackSuccessful))
-					installed := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeInstalled)
-					g.Expect(installed).ToNot(BeNil())
-					g.Expect(installed.Reason).To(Equal(rukpakv1alpha1.ReasonInstallationSucceeded))
-				}).Should(Succeed())
-			})
-		})
+func TestOperatorInstallRegistry(t *testing.T) {
+	t.Log("When an operator is installed from an operator catalog")
+	t.Log("When the operator bundle format is registry+v1")
 
-		When("the operator bundle format is plain+v0", func() {
-			BeforeEach(func() {
-				operator.Spec = operatorv1alpha1.OperatorSpec{
-					PackageName: "plain",
-				}
-			})
-			It("resolves the specified package with correct bundle path", func() {
-				By("creating the Operator resource")
-				Expect(c.Create(ctx, operator)).To(Succeed())
+	operator, operatorName, operatorCatalog := testInit(t)
+	defer testCleanup(t, operatorCatalog, operator)
+	defer getArtifactsOutput(t)
 
-				By("eventually reporting a successful resolution and bundle path")
-				Eventually(func(g Gomega) {
-					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-					g.Expect(operator.Status.Conditions).To(HaveLen(2))
-					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-					g.Expect(cond).ToNot(BeNil())
-					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
-					g.Expect(cond.Message).To(ContainSubstring("resolved to"))
-					g.Expect(operator.Status.ResolvedBundleResource).ToNot(BeEmpty())
-				}).Should(Succeed())
+	operator.Spec = operatorv1alpha1.OperatorSpec{
+		PackageName: "prometheus",
+	}
+	t.Log("It resolves the specified package with correct bundle path")
+	t.Log("By creating the Operator resource")
+	require.NoError(t, c.Create(context.Background(), operator))
 
-				By("eventually installing the package successfully")
-				Eventually(func(g Gomega) {
-					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeInstalled)
-					g.Expect(cond).ToNot(BeNil())
-					g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
-					g.Expect(cond.Message).To(ContainSubstring("installed from"))
-					g.Expect(operator.Status.InstalledBundleResource).ToNot(BeEmpty())
+	t.Log("By eventually reporting a successful resolution and bundle path")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operator.Name}, operator))
+		assert.Len(ct, operator.Status.Conditions, 2)
+		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, operatorv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "resolved to")
+		assert.Equal(ct, "localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0", operator.Status.ResolvedBundleResource)
+	}, pollDuration, pollInterval)
 
-					bd := rukpakv1alpha1.BundleDeployment{}
-					g.Expect(c.Get(ctx, types.NamespacedName{Name: operatorName}, &bd)).To(Succeed())
-					hasValidBundle := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
-					g.Expect(hasValidBundle).ToNot(BeNil())
-					g.Expect(hasValidBundle.Reason).To(Equal(rukpakv1alpha1.ReasonUnpackSuccessful))
-					installed := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeInstalled)
-					g.Expect(installed).ToNot(BeNil())
-					g.Expect(installed.Reason).To(Equal(rukpakv1alpha1.ReasonInstallationSucceeded))
-				}).Should(Succeed())
-			})
-		})
+	t.Log("By eventually installing the package successfully")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operator.Name}, operator))
+		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeInstalled)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, operatorv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "installed from")
+		assert.NotEmpty(ct, operator.Status.InstalledBundleResource)
 
-		It("resolves again when a new catalog is available", func() {
-			pkgName := "prometheus"
-			operator.Spec = operatorv1alpha1.OperatorSpec{
-				PackageName: pkgName,
-			}
+		bd := rukpakv1alpha1.BundleDeployment{}
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operatorName}, &bd))
+		hasValidBundle := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
+		if !assert.NotNil(ct, hasValidBundle) {
+			return
+		}
+		assert.Equal(ct, rukpakv1alpha1.ReasonUnpackSuccessful, hasValidBundle.Reason)
+		installed := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeInstalled)
+		if !assert.NotNil(ct, installed) {
+			return
+		}
+		assert.Equal(ct, rukpakv1alpha1.ReasonInstallationSucceeded, installed.Reason)
+	}, pollDuration, pollInterval)
+}
 
-			By("deleting the catalog first")
-			Expect(c.Delete(ctx, operatorCatalog)).To(Succeed())
-			Eventually(func(g Gomega) {
-				err := c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, &catalogd.Catalog{})
-				g.Expect(errors.IsNotFound(err)).To(BeTrue())
-			}).Should(Succeed())
+func TestOperatorInstallPlain(t *testing.T) {
+	t.Log("When an operator is installed from an operator catalog")
+	t.Log("When the operator bundle format is plain+v0")
 
-			By("creating the Operator resource")
-			Expect(c.Create(ctx, operator)).To(Succeed())
+	operator, operatorName, operatorCatalog := testInit(t)
+	defer testCleanup(t, operatorCatalog, operator)
+	defer getArtifactsOutput(t)
 
-			By("failing to find Operator during resolution")
-			Eventually(func(g Gomega) {
-				g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-				g.Expect(cond).ToNot(BeNil())
-				g.Expect(cond.Status).To(Equal(metav1.ConditionFalse))
-				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonResolutionFailed))
-				g.Expect(cond.Message).To(Equal(fmt.Sprintf("no package %q found", pkgName)))
-			}).Should(Succeed())
+	operator.Spec = operatorv1alpha1.OperatorSpec{
+		PackageName: "plain",
+	}
+	t.Log("It resolves the specified package with correct bundle path")
+	t.Log("By creating the Operator resource")
+	require.NoError(t, c.Create(context.Background(), operator))
 
-			By("creating an Operator catalog with the desired package")
-			var err error
-			operatorCatalog, err = createTestCatalog(ctx, testCatalogName, os.Getenv(testCatalogRefEnvVar))
-			Expect(err).ToNot(HaveOccurred())
-			Eventually(func(g Gomega) {
-				g.Expect(c.Get(ctx, types.NamespacedName{Name: operatorCatalog.Name}, operatorCatalog)).To(Succeed())
-				cond := apimeta.FindStatusCondition(operatorCatalog.Status.Conditions, catalogd.TypeUnpacked)
-				g.Expect(cond).ToNot(BeNil())
-				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-				g.Expect(cond.Reason).To(Equal(catalogd.ReasonUnpackSuccessful))
-			}).Should(Succeed())
+	t.Log("By eventually reporting a successful resolution and bundle path")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operator.Name}, operator))
+		assert.Len(ct, operator.Status.Conditions, 2)
+		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, operatorv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "resolved to")
+		assert.NotEmpty(ct, operator.Status.ResolvedBundleResource)
+	}, pollDuration, pollInterval)
 
-			By("eventually resolving the package successfully")
-			Eventually(func(g Gomega) {
-				g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-				cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-				g.Expect(cond).ToNot(BeNil())
-				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-				g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
-			}).Should(Succeed())
-		})
+	t.Log("By eventually installing the package successfully")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operator.Name}, operator))
+		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeInstalled)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, operatorv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "installed from")
+		assert.NotEmpty(ct, operator.Status.InstalledBundleResource)
 
-		When("resolving upgrade edges", func() {
-			BeforeEach(func() {
-				By("creating an Operator at a specified version")
-				operator.Spec = operatorv1alpha1.OperatorSpec{
-					PackageName: "prometheus",
-					Version:     "1.0.0",
-				}
-				Expect(c.Create(ctx, operator)).To(Succeed())
-				By("eventually reporting a successful resolution")
-				Eventually(func(g Gomega) {
-					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-					g.Expect(cond).ToNot(BeNil())
-					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
-					g.Expect(cond.Message).To(ContainSubstring("resolved to"))
-					g.Expect(operator.Status.ResolvedBundleResource).To(Equal("localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0"))
-				}).Should(Succeed())
-			})
+		bd := rukpakv1alpha1.BundleDeployment{}
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operatorName}, &bd))
+		hasValidBundle := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
+		if !assert.NotNil(ct, hasValidBundle) {
+			return
+		}
+		assert.Equal(ct, rukpakv1alpha1.ReasonUnpackSuccessful, hasValidBundle.Reason)
+		installed := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeInstalled)
+		if !assert.NotNil(ct, installed) {
+			return
+		}
+		assert.Equal(ct, rukpakv1alpha1.ReasonInstallationSucceeded, installed.Reason)
+	}, pollDuration, pollInterval)
+}
 
-			It("does not allow to upgrade the Operator to a non-successor version", func() {
-				By("updating the Operator resource to a non-successor version")
-				// Semver only allows upgrades within major version at the moment.
-				operator.Spec.Version = "2.0.0"
-				Expect(c.Update(ctx, operator)).To(Succeed())
-				By("eventually reporting an unsatisfiable resolution")
-				Eventually(func(g Gomega) {
-					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-					g.Expect(cond).ToNot(BeNil())
-					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonResolutionFailed))
-					g.Expect(cond.Message).To(ContainSubstring("constraints not satisfiable"))
-					g.Expect(cond.Message).To(MatchRegexp("installed package prometheus requires at least one of test-catalog-prometheus-prometheus-operator.1.2.0, test-catalog-prometheus-prometheus-operator.1.0.1, test-catalog-prometheus-prometheus-operator.1.0.0$"))
-					g.Expect(operator.Status.ResolvedBundleResource).To(BeEmpty())
-				}).Should(Succeed())
-			})
+func TestOperatorInstallReResolvesWhenNewCatalog(t *testing.T) {
+	t.Log("When an operator is installed from an operator catalog")
+	t.Log("It resolves again when a new catalog is available")
 
-			It("does allow to upgrade the Operator to any of the successor versions within non-zero major version", func() {
-				By("updating the Operator resource by skipping versions")
-				// Test catalog has versions between the initial version and new version
-				operator.Spec.Version = "1.2.0"
-				Expect(c.Update(ctx, operator)).To(Succeed())
-				By("eventually reporting a successful resolution and bundle path")
-				Eventually(func(g Gomega) {
-					g.Expect(c.Get(ctx, types.NamespacedName{Name: operator.Name}, operator)).To(Succeed())
-					cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
-					g.Expect(cond).ToNot(BeNil())
-					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonSuccess))
-					g.Expect(cond.Message).To(ContainSubstring("resolved to"))
-					g.Expect(operator.Status.ResolvedBundleResource).To(Equal("localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0"))
-				}).Should(Succeed())
-			})
-		})
+	operator, _, operatorCatalog := testInit(t)
+	defer testCleanup(t, operatorCatalog, operator)
+	defer getArtifactsOutput(t)
 
-		AfterEach(func() {
-			if basePath := env.GetString("ARTIFACT_PATH", ""); basePath != "" {
-				// get all the artifacts from the test run and save them to the artifact path
-				getArtifactsOutput(ctx, basePath)
-			}
-			Expect(c.Delete(ctx, operator)).To(Succeed())
-			Eventually(func(g Gomega) {
-				err := c.Get(ctx, types.NamespacedName{Name: operator.Name}, &operatorv1alpha1.Operator{})
-				g.Expect(errors.IsNotFound(err)).To(BeTrue())
-			}).Should(Succeed())
-		})
+	pkgName := "prometheus"
+	operator.Spec = operatorv1alpha1.OperatorSpec{
+		PackageName: pkgName,
+	}
 
-	})
-})
+	t.Log("By deleting the catalog first")
+	require.NoError(t, c.Delete(context.Background(), operatorCatalog))
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		err := c.Get(context.Background(), types.NamespacedName{Name: operatorCatalog.Name}, &catalogd.Catalog{})
+		assert.True(ct, errors.IsNotFound(err))
+	}, pollDuration, pollInterval)
+
+	t.Log("By creating the Operator resource")
+	require.NoError(t, c.Create(context.Background(), operator))
+
+	t.Log("By failing to find Operator during resolution")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operator.Name}, operator))
+		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+		assert.Equal(ct, operatorv1alpha1.ReasonResolutionFailed, cond.Reason)
+		assert.Equal(ct, fmt.Sprintf("no package %q found", pkgName), cond.Message)
+	}, pollDuration, pollInterval)
+
+	t.Log("By creating an Operator catalog with the desired package")
+	var err error
+	operatorCatalog, err = createTestCatalog(context.Background(), testCatalogName, os.Getenv(testCatalogRefEnvVar))
+	require.NoError(t, err)
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operatorCatalog.Name}, operatorCatalog))
+		cond := apimeta.FindStatusCondition(operatorCatalog.Status.Conditions, catalogd.TypeUnpacked)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, catalogd.ReasonUnpackSuccessful, cond.Reason)
+	}, pollDuration, pollInterval)
+
+	t.Log("By eventually resolving the package successfully")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operator.Name}, operator))
+		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, operatorv1alpha1.ReasonSuccess, cond.Reason)
+	}, pollDuration, pollInterval)
+}
+
+func TestOperatorInstallNonSuccessorVersion(t *testing.T) {
+	t.Log("When an operator is installed from an operator catalog")
+	t.Log("When resolving upgrade edges")
+
+	operator, _, operatorCatalog := testInit(t)
+	defer testCleanup(t, operatorCatalog, operator)
+	defer getArtifactsOutput(t)
+
+	t.Log("By creating an Operator at a specified version")
+	operator.Spec = operatorv1alpha1.OperatorSpec{
+		PackageName: "prometheus",
+		Version:     "1.0.0",
+	}
+	require.NoError(t, c.Create(context.Background(), operator))
+	t.Log("By eventually reporting a successful resolution")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operator.Name}, operator))
+		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, operatorv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "resolved to")
+		assert.Equal(ct, "localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0", operator.Status.ResolvedBundleResource)
+	}, pollDuration, pollInterval)
+
+	t.Log("It does not allow to upgrade the Operator to a non-successor version")
+	t.Log("By updating the Operator resource to a non-successor version")
+	// Semver only allows upgrades within major version at the moment.
+	operator.Spec.Version = "2.0.0"
+	require.NoError(t, c.Update(context.Background(), operator))
+	t.Log("By eventually reporting an unsatisfiable resolution")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operator.Name}, operator))
+		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, operatorv1alpha1.ReasonResolutionFailed, cond.Reason)
+		assert.Contains(ct, cond.Message, "constraints not satisfiable")
+		assert.Contains(ct, cond.Message, "installed package prometheus requires at least one of test-catalog-prometheus-prometheus-operator.1.2.0, test-catalog-prometheus-prometheus-operator.1.0.1, test-catalog-prometheus-prometheus-operator.1.0.0")
+		assert.Empty(ct, operator.Status.ResolvedBundleResource)
+	}, pollDuration, pollInterval)
+}
+
+func TestOperatorInstallSuccessorVersion(t *testing.T) {
+	t.Log("When an operator is installed from an operator catalog")
+	t.Log("When resolving upgrade edges")
+	operator, _, operatorCatalog := testInit(t)
+	defer testCleanup(t, operatorCatalog, operator)
+	defer getArtifactsOutput(t)
+
+	t.Log("By creating an Operator at a specified version")
+	operator.Spec = operatorv1alpha1.OperatorSpec{
+		PackageName: "prometheus",
+		Version:     "1.0.0",
+	}
+	require.NoError(t, c.Create(context.Background(), operator))
+	t.Log("By eventually reporting a successful resolution")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operator.Name}, operator))
+		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, operatorv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "resolved to")
+		assert.Equal(ct, "localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0", operator.Status.ResolvedBundleResource)
+	}, pollDuration, pollInterval)
+
+	t.Log("It does allow to upgrade the Operator to any of the successor versions within non-zero major version")
+	t.Log("By updating the Operator resource by skipping versions")
+	// Test catalog has versions between the initial version and new version
+	operator.Spec.Version = "1.2.0"
+	require.NoError(t, c.Update(context.Background(), operator))
+	t.Log("By eventually reporting a successful resolution and bundle path")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: operator.Name}, operator))
+		cond := apimeta.FindStatusCondition(operator.Status.Conditions, operatorv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, operatorv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "resolved to")
+		assert.Equal(ct, "localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0", operator.Status.ResolvedBundleResource)
+	}, pollDuration, pollInterval)
+}
 
 // getArtifactsOutput gets all the artifacts from the test run and saves them to the artifact path.
 // Currently it saves:
@@ -272,90 +333,95 @@ var _ = Describe("Operator Install", func() {
 // - bundle
 // - bundledeployments
 // - catalogsources
-func getArtifactsOutput(ctx context.Context, basePath string) {
+func getArtifactsOutput(t *testing.T) {
+	basePath := env.GetString("ARTIFACT_PATH", "")
+	if basePath == "" {
+		return
+	}
+
 	kubeClient, err := kubeclient.NewForConfig(cfg)
-	Expect(err).To(Not(HaveOccurred()))
+	require.NoError(t, err)
 
 	// sanitize the artifact name for use as a directory name
-	testName := strings.ReplaceAll(strings.ToLower(CurrentSpecReport().LeafNodeText), " ", "-")
+	testName := strings.ReplaceAll(strings.ToLower(t.Name()), " ", "-")
 	// Get the test description and sanitize it for use as a directory name
 	artifactPath := filepath.Join(basePath, artifactName, fmt.Sprint(time.Now().UnixNano()), testName)
 
 	// Create the full artifact path
 	err = os.MkdirAll(artifactPath, 0755)
-	Expect(err).To(Not(HaveOccurred()))
+	require.NoError(t, err)
 
 	// Get all namespaces
 	namespaces := corev1.NamespaceList{}
-	if err := c.List(ctx, &namespaces); err != nil {
-		GinkgoWriter.Printf("Failed to list namespaces %w", err)
+	if err := c.List(context.Background(), &namespaces); err != nil {
+		fmt.Printf("Failed to list namespaces %v", err)
 	}
 
 	// get all operators save them to the artifact path.
 	operators := operatorv1alpha1.OperatorList{}
-	if err := c.List(ctx, &operators, client.InNamespace("")); err != nil {
-		GinkgoWriter.Printf("Failed to list operators %w", err)
+	if err := c.List(context.Background(), &operators, client.InNamespace("")); err != nil {
+		fmt.Printf("Failed to list operators %v", err)
 	}
 	for _, operator := range operators.Items {
 		// Save operator to artifact path
 		operatorYaml, err := yaml.Marshal(operator)
 		if err != nil {
-			GinkgoWriter.Printf("Failed to marshal operator %w", err)
+			fmt.Printf("Failed to marshal operator %v", err)
 			continue
 		}
 		if err := os.WriteFile(filepath.Join(artifactPath, operator.Name+"-operator.yaml"), operatorYaml, 0600); err != nil {
-			GinkgoWriter.Printf("Failed to write operator to file %w", err)
+			fmt.Printf("Failed to write operator to file %v", err)
 		}
 	}
 
 	// get all catalogsources save them to the artifact path.
 	catalogsources := catalogd.CatalogList{}
-	if err := c.List(ctx, &catalogsources, client.InNamespace("")); err != nil {
-		GinkgoWriter.Printf("Failed to list catalogsources %w", err)
+	if err := c.List(context.Background(), &catalogsources, client.InNamespace("")); err != nil {
+		fmt.Printf("Failed to list catalogsources %v", err)
 	}
 	for _, catalogsource := range catalogsources.Items {
 		// Save catalogsource to artifact path
 		catalogsourceYaml, err := yaml.Marshal(catalogsource)
 		if err != nil {
-			GinkgoWriter.Printf("Failed to marshal catalogsource %w", err)
+			fmt.Printf("Failed to marshal catalogsource %v", err)
 			continue
 		}
 		if err := os.WriteFile(filepath.Join(artifactPath, catalogsource.Name+"-catalogsource.yaml"), catalogsourceYaml, 0600); err != nil {
-			GinkgoWriter.Printf("Failed to write catalogsource to file %w", err)
+			fmt.Printf("Failed to write catalogsource to file %v", err)
 		}
 	}
 
 	// Get all Bundles in the namespace and save them to the artifact path.
 	bundles := rukpakv1alpha1.BundleList{}
-	if err := c.List(ctx, &bundles, client.InNamespace("")); err != nil {
-		GinkgoWriter.Printf("Failed to list bundles %w", err)
+	if err := c.List(context.Background(), &bundles, client.InNamespace("")); err != nil {
+		fmt.Printf("Failed to list bundles %v", err)
 	}
 	for _, bundle := range bundles.Items {
 		// Save bundle to artifact path
 		bundleYaml, err := yaml.Marshal(bundle)
 		if err != nil {
-			GinkgoWriter.Printf("Failed to marshal bundle %w", err)
+			fmt.Printf("Failed to marshal bundle %v", err)
 			continue
 		}
 		if err := os.WriteFile(filepath.Join(artifactPath, bundle.Name+"-bundle.yaml"), bundleYaml, 0600); err != nil {
-			GinkgoWriter.Printf("Failed to write bundle to file %w", err)
+			fmt.Printf("Failed to write bundle to file %v", err)
 		}
 	}
 
 	// Get all BundleDeployments in the namespace and save them to the artifact path.
 	bundleDeployments := rukpakv1alpha1.BundleDeploymentList{}
-	if err := c.List(ctx, &bundleDeployments, client.InNamespace("")); err != nil {
-		GinkgoWriter.Printf("Failed to list bundleDeployments %w", err)
+	if err := c.List(context.Background(), &bundleDeployments, client.InNamespace("")); err != nil {
+		fmt.Printf("Failed to list bundleDeployments %v", err)
 	}
 	for _, bundleDeployment := range bundleDeployments.Items {
 		// Save bundleDeployment to artifact path
 		bundleDeploymentYaml, err := yaml.Marshal(bundleDeployment)
 		if err != nil {
-			GinkgoWriter.Printf("Failed to marshal bundleDeployment %w", err)
+			fmt.Printf("Failed to marshal bundleDeployment %v", err)
 			continue
 		}
 		if err := os.WriteFile(filepath.Join(artifactPath, bundleDeployment.Name+"-bundleDeployment.yaml"), bundleDeploymentYaml, 0600); err != nil {
-			GinkgoWriter.Printf("Failed to write bundleDeployment to file %w", err)
+			fmt.Printf("Failed to write bundleDeployment to file %v", err)
 		}
 	}
 
@@ -367,14 +433,14 @@ func getArtifactsOutput(ctx context.Context, basePath string) {
 
 		namespacedArtifactPath := filepath.Join(artifactPath, namespace.Name)
 		if err := os.Mkdir(namespacedArtifactPath, 0755); err != nil {
-			GinkgoWriter.Printf("Failed to create namespaced artifact path %w", err)
+			fmt.Printf("Failed to create namespaced artifact path %v", err)
 			continue
 		}
 
 		// get all deployments in the namespace and save them to the artifact path.
 		deployments := appsv1.DeploymentList{}
-		if err := c.List(ctx, &deployments, client.InNamespace(namespace.Name)); err != nil {
-			GinkgoWriter.Printf("Failed to list deployments %w in namespace: %q", err, namespace.Name)
+		if err := c.List(context.Background(), &deployments, client.InNamespace(namespace.Name)); err != nil {
+			fmt.Printf("Failed to list deployments %v in namespace: %q", err, namespace.Name)
 			continue
 		}
 
@@ -382,40 +448,40 @@ func getArtifactsOutput(ctx context.Context, basePath string) {
 			// Save deployment to artifact path
 			deploymentYaml, err := yaml.Marshal(deployment)
 			if err != nil {
-				GinkgoWriter.Printf("Failed to marshal deployment %w", err)
+				fmt.Printf("Failed to marshal deployment %v", err)
 				continue
 			}
 			if err := os.WriteFile(filepath.Join(namespacedArtifactPath, deployment.Name+"-deployment.yaml"), deploymentYaml, 0600); err != nil {
-				GinkgoWriter.Printf("Failed to write deployment to file %w", err)
+				fmt.Printf("Failed to write deployment to file %v", err)
 			}
 		}
 
 		// Get logs from all pods in all namespaces
 		pods := corev1.PodList{}
-		if err := c.List(ctx, &pods, client.InNamespace(namespace.Name)); err != nil {
-			GinkgoWriter.Printf("Failed to list pods %w in namespace: %q", err, namespace.Name)
+		if err := c.List(context.Background(), &pods, client.InNamespace(namespace.Name)); err != nil {
+			fmt.Printf("Failed to list pods %v in namespace: %q", err, namespace.Name)
 		}
 		for _, pod := range pods.Items {
 			if pod.Status.Phase != corev1.PodRunning && pod.Status.Phase != corev1.PodSucceeded && pod.Status.Phase != corev1.PodFailed {
 				continue
 			}
 			for _, container := range pod.Spec.Containers {
-				logs, err := kubeClient.CoreV1().Pods(namespace.Name).GetLogs(pod.Name, &corev1.PodLogOptions{Container: container.Name}).Stream(ctx)
+				logs, err := kubeClient.CoreV1().Pods(namespace.Name).GetLogs(pod.Name, &corev1.PodLogOptions{Container: container.Name}).Stream(context.Background())
 				if err != nil {
-					GinkgoWriter.Printf("Failed to get logs for pod %q in namespace %q: %w", pod.Name, namespace.Name, err)
+					fmt.Printf("Failed to get logs for pod %q in namespace %q: %v", pod.Name, namespace.Name, err)
 					continue
 				}
 				defer logs.Close()
 
 				outFile, err := os.Create(filepath.Join(namespacedArtifactPath, pod.Name+"-"+container.Name+"-logs.txt"))
 				if err != nil {
-					GinkgoWriter.Printf("Failed to create file for pod %q in namespace %q: %w", pod.Name, namespace.Name, err)
+					fmt.Printf("Failed to create file for pod %q in namespace %q: %v", pod.Name, namespace.Name, err)
 					continue
 				}
 				defer outFile.Close()
 
 				if _, err := io.Copy(outFile, logs); err != nil {
-					GinkgoWriter.Printf("Failed to copy logs for pod %q in namespace %q: %w", pod.Name, namespace.Name, err)
+					fmt.Printf("Failed to copy logs for pod %q in namespace %q: %v", pod.Name, namespace.Name, err)
 					continue
 				}
 			}

@@ -2,17 +2,15 @@ package e2e
 
 import (
 	"context"
+	"os"
 	"testing"
-	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/utils/env"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,41 +31,23 @@ const (
 	testCatalogName      = "test-catalog"
 )
 
-func TestE2E(t *testing.T) {
-	RegisterFailHandler(Fail)
-	SetDefaultEventuallyTimeout(1 * time.Minute)
-	SetDefaultEventuallyPollingInterval(1 * time.Second)
-	RunSpecs(t, "E2E Suite")
-}
-
-var _ = BeforeSuite(func() {
+func TestMain(m *testing.M) {
 	cfg = ctrl.GetConfigOrDie()
 
 	scheme := runtime.NewScheme()
 
-	Expect(operatorv1alpha1.AddToScheme(scheme)).To(Succeed())
-	Expect(rukpakv1alpha1.AddToScheme(scheme)).To(Succeed())
-	Expect(catalogd.AddToScheme(scheme)).To(Succeed())
+	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(catalogd.AddToScheme(scheme))
+	utilruntime.Must(appsv1.AddToScheme(scheme))
+	utilruntime.Must(corev1.AddToScheme(scheme))
 
 	var err error
-
-	err = appsv1.AddToScheme(scheme)
-	Expect(err).ToNot(HaveOccurred())
-
-	err = corev1.AddToScheme(scheme)
-	Expect(err).ToNot(HaveOccurred())
-
 	c, err = client.New(cfg, client.Options{Scheme: scheme})
-	Expect(err).To(Not(HaveOccurred()))
-})
+	utilruntime.Must(err)
 
-var _ = AfterSuite(func() {
-	ctx := context.Background()
-	if basePath := env.GetString("ARTIFACT_PATH", ""); basePath != "" {
-		// get all the artifacts from the test run and save them to the artifact path
-		getArtifactsOutput(ctx, basePath)
-	}
-})
+	os.Exit(m.Run())
+}
 
 // createTestCatalog will create a new catalog on the test cluster, provided
 // the context, catalog name, and the image reference. It returns the created catalog
