@@ -18,14 +18,10 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"sort"
-	"strings"
 
 	"github.com/go-logr/logr"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -142,8 +138,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution is unsatisfiable", op.GetGeneration())
 		op.Status.ResolvedBundleResource = ""
-		msg := prettyUnsatMessage(err)
-		setResolvedStatusConditionFailed(&op.Status.Conditions, msg, op.GetGeneration())
+		setResolvedStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -455,31 +450,4 @@ func operatorRequestsForCatalog(c client.Reader, logger logr.Logger) handler.Map
 		}
 		return requests
 	}
-}
-
-// TODO: This can be removed when operator controller bumps to a
-//    version of deppy that contains a fix for this issue:
-//    https://github.com/operator-framework/deppy/issues/142
-
-// prettyUnsatMessage ensures that the unsat message is deterministic and
-// human-readable. It sorts the individual constraint strings lexicographically
-// and joins them with a semicolon (rather than a comma, which the unsat.Error()
-// function does). This function also has the side effect of sorting the items
-// in the unsat slice.
-func prettyUnsatMessage(err error) string {
-	unsat := deppy.NotSatisfiable{}
-	if !errors.As(err, &unsat) {
-		// This function is specifically for formatting deppy.NotSatisfiable.
-		// Just return default format if the error is something else.
-		return err.Error()
-	}
-
-	sort.Slice(unsat, func(i, j int) bool {
-		return unsat[i].String() < unsat[j].String()
-	})
-	msgs := make([]string, 0, len(unsat))
-	for _, c := range unsat {
-		msgs = append(msgs, c.String())
-	}
-	return fmt.Sprintf("constraints not satisfiable: %s", strings.Join(msgs, "; "))
 }

@@ -1128,7 +1128,7 @@ func TestOperatorUpgrade(t *testing.T) {
 		assert.Equal(t, metav1.ConditionFalse, cond.Status)
 		assert.Equal(t, operatorsv1alpha1.ReasonResolutionFailed, cond.Reason)
 		assert.Contains(t, cond.Message, "constraints not satisfiable")
-		assert.Contains(t, cond.Message, "installed package prometheus requires at least one of fake-catalog-prometheus-operatorhub/prometheus/beta/1.2.0, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.1, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.0;")
+		assert.Regexp(t, "installed package prometheus requires at least one of fake-catalog-prometheus-operatorhub/prometheus/beta/1.2.0, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.1, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.0$", cond.Message)
 
 		// Valid update skipping one version
 		operator.Spec.Version = "1.2.0"
@@ -1221,7 +1221,7 @@ func TestOperatorUpgrade(t *testing.T) {
 		assert.Equal(t, metav1.ConditionFalse, cond.Status)
 		assert.Equal(t, operatorsv1alpha1.ReasonResolutionFailed, cond.Reason)
 		assert.Contains(t, cond.Message, "constraints not satisfiable")
-		assert.Contains(t, cond.Message, "installed package prometheus requires at least one of fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.1, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.0;")
+		assert.Contains(t, cond.Message, "installed package prometheus requires at least one of fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.1, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.0\n")
 
 		// Valid update skipping one version
 		operator.Spec.Version = "1.0.1"
@@ -1418,7 +1418,7 @@ func TestOperatorDowngrade(t *testing.T) {
 				assert.Equal(t, metav1.ConditionFalse, cond.Status)
 				assert.Equal(t, operatorsv1alpha1.ReasonResolutionFailed, cond.Reason)
 				assert.Contains(t, cond.Message, "constraints not satisfiable")
-				assert.Contains(t, cond.Message, "installed package prometheus requires at least one of fake-catalog-prometheus-operatorhub/prometheus/beta/1.2.0, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.1;")
+				assert.Contains(t, cond.Message, "installed package prometheus requires at least one of fake-catalog-prometheus-operatorhub/prometheus/beta/1.2.0, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.1\n")
 			})
 		}
 	})
