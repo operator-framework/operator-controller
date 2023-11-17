@@ -10,7 +10,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.13.1
 	github.com/onsi/gomega v1.30.0
 	github.com/operator-framework/catalogd v0.10.0
-	github.com/operator-framework/deppy v0.0.1
+	github.com/operator-framework/deppy v0.1.0
 	github.com/operator-framework/operator-registry v1.31.0
 	github.com/operator-framework/rukpak v0.15.0
 	github.com/spf13/pflag v1.0.5
