@@ -227,7 +227,7 @@ var _ = Describe("Operator Install", func() {
 					g.Expect(cond).ToNot(BeNil())
 					g.Expect(cond.Reason).To(Equal(operatorv1alpha1.ReasonResolutionFailed))
 					g.Expect(cond.Message).To(ContainSubstring("constraints not satisfiable"))
-					g.Expect(cond.Message).To(ContainSubstring("installed package prometheus requires at least one of test-catalog-prometheus-prometheus-operator.1.2.0, test-catalog-prometheus-prometheus-operator.1.0.1, test-catalog-prometheus-prometheus-operator.1.0.0;"))
+					g.Expect(cond.Message).To(MatchRegexp("installed package prometheus requires at least one of test-catalog-prometheus-prometheus-operator.1.2.0, test-catalog-prometheus-prometheus-operator.1.0.1, test-catalog-prometheus-prometheus-operator.1.0.0$"))
 					g.Expect(operator.Status.ResolvedBundleResource).To(BeEmpty())
 				}).Should(Succeed())
 			})
