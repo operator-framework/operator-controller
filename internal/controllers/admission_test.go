@@ -2,9 +2,9 @@ package controllers_test
 
 import (
 	"context"
+	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
@@ -13,165 +13,211 @@ import (
 func operator(spec operatorsv1alpha1.OperatorSpec) *operatorsv1alpha1.Operator {
 	return &operatorsv1alpha1.Operator{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-operator",
+			GenerateName: "test-operator",
 		},
 		Spec: spec,
 	}
 }
 
-var _ = Describe("Operator Spec Validations", func() {
-	var (
-		ctx    context.Context
-		cancel context.CancelFunc
-	)
-	BeforeEach(func() {
-		ctx, cancel = context.WithCancel(context.Background())
-	})
-	AfterEach(func() {
-		cancel()
-	})
-	It("should fail if the spec is empty", func() {
-		err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{}))
-		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("spec.packageName in body should match '^[a-z0-9]+(-[a-z0-9]+)*$'"))
-	})
-	It("should fail if package name length is greater than 48 characters", func() {
-		err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+var operatorData = []struct {
+	spec    *operatorsv1alpha1.Operator
+	comment string
+	errMsg  string
+}{
+	{
+		operator(operatorsv1alpha1.OperatorSpec{}),
+		"operator spec is empty",
+		"spec.packageName in body should match '^[a-z0-9]+(-[a-z0-9]+)*$'",
+	},
+	{
+		operator(operatorsv1alpha1.OperatorSpec{
 			PackageName: "this-is-a-really-long-package-name-that-is-greater-than-48-characters",
-		}))
-		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("Too long: may not be longer than 48"))
-	})
-	It("should fail if version is valid semver but length is greater than 64 characters", func() {
-		err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+		}),
+		"long package name",
+		"spec.packageName: Too long: may not be longer than 48",
+	},
+	{
+		operator(operatorsv1alpha1.OperatorSpec{
 			PackageName: "package",
 			Version:     "1234567890.1234567890.12345678901234567890123456789012345678901234",
-		}))
-		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("Too long: may not be longer than 64"))
-	})
-	It("should fail if an invalid semver is given", func() {
-		invalidSemvers := []string{
-			"1.2.3.4",
-			"1.02.3",
-			"1.2.03",
-			"1.2.3-beta!",
-			"1.2.3.alpha",
-			"1..2.3",
-			"1.2.3-pre+bad_metadata",
-			"1.2.-3",
-			".1.2.3",
-			"<<1.2.3",
-			">>1.2.3",
-			">~1.2.3",
-			"==1.2.3",
-			"=!1.2.3",
-			"!1.2.3",
-			"1.Y",
-			">1.2.3 && <2.3.4",
-			">1.2.3;<2.3.4",
-			"1.2.3 - 2.3.4",
-		}
-		for _, invalidSemver := range invalidSemvers {
-			err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
-				PackageName: "package",
-				Version:     invalidSemver,
-			}))
-
-			Expect(err).To(HaveOccurred(), "expected error for invalid semver %q", invalidSemver)
-			// Don't need to include the whole regex, this should be enough to match the MasterMinds regex
-			Expect(err.Error()).To(ContainSubstring("spec.version in body should match '^(\\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\\^)"))
-		}
-	})
-	It("should pass if a valid semver range given", func() {
-		validSemvers := []string{
-			">=1.2.3",
-			"=>1.2.3",
-			">= 1.2.3",
-			">=v1.2.3",
-			">= v1.2.3",
-			"<=1.2.3",
-			"=<1.2.3",
-			"=1.2.3",
-			"!=1.2.3",
-			"<1.2.3",
-			">1.2.3",
-			"~1.2.2",
-			"~>1.2.3",
-			"^1.2.3",
-			"1.2.3",
-			"v1.2.3",
-			"1.x",
-			"1.X",
-			"1.*",
-			"1.2.x",
-			"1.2.X",
-			"1.2.*",
-			">=1.2.3 <2.3.4",
-			">=1.2.3,<2.3.4",
-			">=1.2.3, <2.3.4",
-			"<1.2.3||>2.3.4",
-			"<1.2.3|| >2.3.4",
-			"<1.2.3 ||>2.3.4",
-			"<1.2.3 || >2.3.4",
-			">1.0.0,<1.2.3 || >2.1.0",
-			"<1.2.3-abc >2.3.4-def",
-			"<1.2.3-abc+def >2.3.4-ghi+jkl",
-		}
-		for _, validSemver := range validSemvers {
-			op := operator(operatorsv1alpha1.OperatorSpec{
-				PackageName: "package",
-				Version:     validSemver,
-			})
-			err := cl.Create(ctx, op)
-			Expect(err).NotTo(HaveOccurred(), "expected success for semver range '%q': %w", validSemver, err)
-			err = cl.Delete(ctx, op)
-			Expect(err).NotTo(HaveOccurred(), "unexpected error deleting valid semver '%q': %w", validSemver, err)
-		}
-	})
-	It("should fail if an invalid channel name is given", func() {
-		invalidChannels := []string{
-			"spaces spaces",
-			"Capitalized",
-			"camelCase",
-			"many/invalid$characters+in_name",
-			"-start-with-hyphen",
-			"end-with-hyphen-",
-			".start-with-period",
-			"end-with-period.",
-		}
-		for _, invalidChannel := range invalidChannels {
-			err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
-				PackageName: "package",
-				Channel:     invalidChannel,
-			}))
-			Expect(err).To(HaveOccurred(), "expected error for invalid channel '%q'", invalidChannel)
-			Expect(err.Error()).To(ContainSubstring("spec.channel in body should match '^[a-z0-9]+([\\.-][a-z0-9]+)*$'"))
-		}
-	})
-	It("should pass if a valid channel name is given", func() {
-		validChannels := []string{
-			"hyphenated-name",
-			"dotted.name",
-			"channel-has-version-1.0.1",
-		}
-		for _, validChannel := range validChannels {
-			op := operator(operatorsv1alpha1.OperatorSpec{
-				PackageName: "package",
-				Channel:     validChannel,
-			})
-			err := cl.Create(ctx, op)
-			Expect(err).NotTo(HaveOccurred(), "unexpected error creating valid channel '%q': %w", validChannel, err)
-			err = cl.Delete(ctx, op)
-			Expect(err).NotTo(HaveOccurred(), "unexpected error deleting valid channel '%q': %w", validChannel, err)
-		}
-	})
-	It("should fail if an invalid channel name length", func() {
-		err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+		}),
+		"long valid semver",
+		"spec.version: Too long: may not be longer than 64",
+	},
+	{
+		operator(operatorsv1alpha1.OperatorSpec{
 			PackageName: "package",
 			Channel:     "longname01234567890123456789012345678901234567890",
-		}))
-		Expect(err).To(HaveOccurred(), "expected error for invalid channel length")
-		Expect(err.Error()).To(ContainSubstring("spec.channel: Too long: may not be longer than 48"))
-	})
-})
+		}),
+		"long channel name",
+		"spec.channel: Too long: may not be longer than 48",
+	},
+}
+
+func TestOperatorSpecs(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	for _, od := range operatorData {
+		d := od
+		t.Run(d.comment, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			err := cl.Create(ctx, d.spec)
+			require.Error(t, err)
+			require.ErrorContains(t, err, d.errMsg)
+		})
+	}
+}
+
+func TestOperatorInvalidSemver(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	invalidSemvers := []string{
+		"1.2.3.4",
+		"1.02.3",
+		"1.2.03",
+		"1.2.3-beta!",
+		"1.2.3.alpha",
+		"1..2.3",
+		"1.2.3-pre+bad_metadata",
+		"1.2.-3",
+		".1.2.3",
+		"<<1.2.3",
+		">>1.2.3",
+		">~1.2.3",
+		"==1.2.3",
+		"=!1.2.3",
+		"!1.2.3",
+		"1.Y",
+		">1.2.3 && <2.3.4",
+		">1.2.3;<2.3.4",
+		"1.2.3 - 2.3.4",
+	}
+	for _, sm := range invalidSemvers {
+		d := sm
+		t.Run(d, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+				PackageName: "package",
+				Version:     d,
+			}))
+			require.Errorf(t, err, "expected error for invalid semver %q", d)
+			// Don't need to include the whole regex, this should be enough to match the MasterMinds regex
+			require.ErrorContains(t, err, "spec.version in body should match '^(\\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\\^)")
+		})
+	}
+}
+
+func TestOperatorValidSemver(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	validSemvers := []string{
+		">=1.2.3",
+		"=>1.2.3",
+		">= 1.2.3",
+		">=v1.2.3",
+		">= v1.2.3",
+		"<=1.2.3",
+		"=<1.2.3",
+		"=1.2.3",
+		"!=1.2.3",
+		"<1.2.3",
+		">1.2.3",
+		"~1.2.2",
+		"~>1.2.3",
+		"^1.2.3",
+		"1.2.3",
+		"v1.2.3",
+		"1.x",
+		"1.X",
+		"1.*",
+		"1.2.x",
+		"1.2.X",
+		"1.2.*",
+		">=1.2.3 <2.3.4",
+		">=1.2.3,<2.3.4",
+		">=1.2.3, <2.3.4",
+		"<1.2.3||>2.3.4",
+		"<1.2.3|| >2.3.4",
+		"<1.2.3 ||>2.3.4",
+		"<1.2.3 || >2.3.4",
+		">1.0.0,<1.2.3 || >2.1.0",
+		"<1.2.3-abc >2.3.4-def",
+		"<1.2.3-abc+def >2.3.4-ghi+jkl",
+	}
+	for _, smx := range validSemvers {
+		d := smx
+		t.Run(d, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			op := operator(operatorsv1alpha1.OperatorSpec{
+				PackageName: "package",
+				Version:     d,
+			})
+			err := cl.Create(ctx, op)
+			require.NoErrorf(t, err, "unexpected error for semver range %q: %w", d, err)
+		})
+	}
+}
+
+func TestOperatorInvalidChannel(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	invalidChannels := []string{
+		"spaces spaces",
+		"Capitalized",
+		"camelCase",
+		"many/invalid$characters+in_name",
+		"-start-with-hyphen",
+		"end-with-hyphen-",
+		".start-with-period",
+		"end-with-period.",
+	}
+	for _, ch := range invalidChannels {
+		d := ch
+		t.Run(d, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+				PackageName: "package",
+				Channel:     d,
+			}))
+			require.Errorf(t, err, "expected error for invalid channel %q", d)
+			require.ErrorContains(t, err, "spec.channel in body should match '^[a-z0-9]+([\\.-][a-z0-9]+)*$'")
+		})
+	}
+}
+
+func TestOperatorValidChannel(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	validChannels := []string{
+		"hyphenated-name",
+		"dotted.name",
+		"channel-has-version-1.0.1",
+	}
+	for _, ch := range validChannels {
+		d := ch
+		t.Run(d, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			op := operator(operatorsv1alpha1.OperatorSpec{
+				PackageName: "package",
+				Channel:     d,
+			})
+			err := cl.Create(ctx, op)
+			require.NoErrorf(t, err, "unexpected error creating valid channel %q: %w", d, err)
+		})
+	}
+}
