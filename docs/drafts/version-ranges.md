@@ -2,48 +2,92 @@
 
 This document explains how to specify a version range to install or update an Operator with OLM 1.0.
 
-You define an Operator's target version in its custom resource (CR) file.
-The following list describes how OLM resolves an Operator's target version, and the resulting actions:
+You define a version range in an Operator's custom resource (CR) file.
 
-Not specifying a version in the CR
-: Installs or updates the latest version of the Operator.
-Updates are applied automatically when they are published to the catalog.
+## Specifying a version range in the CR
 
-Specifying a version in the CR
-: Installs or updates the specified version.
-Updates are not applied automatically.
-If you want to update the Operator, you must manually edit the CR and apply the changes to the cluster.
+If you specify a version range in the Operator's CR, OLM 1.0 installs or updates the latest version of the Operator that can be resolved within the version range.
+The resolved version is the latest version of the Operator that satisfies the dependencies and constraints of the Operator and the environment.
+Operator updates within the specified range are automatically installed if they can be resolved successfully.
+Updates are not installed if they are outside of the specified range or if they cannot be resolved successfully.
 
-Specifying a channel
-: Installs or updates the latest version of the Operator in the channel.
-Updates are applied automatically when they are published to the specified channel.
+For more information about dependency and constraint resolution in OLM 1.0, see the [Deppy introduction](https://github.com/operator-framework/deppy#introductionhttps://github.com/operator-framework/deppy#introductionhttps://github.com/operator-framework/deppy#introduction)
 
-Specifying a version range in the CR
-: Installs or updates the latest version of the Operator within the version range.
-Updates that are within the specified range are automatically installed.
-Updates that are outside of the specified range are not installed.
+### Comparisons
 
-The `spec.version` field uses the Masterminds `semver` package to enable the version range functionality.
+You define a version range by adding a comparison string to the `spec.version` field. A comparison string is composed of a list of comma or space separated values and one or more comparison operators. You can add an additional comparison string by including an OR (`||`) operator between the strings.
 
-OLM 1.0 does not support following methods for specifying a version range:
+#### Basic comparisons
 
-* Using tags and labels are not supported.
-You must use semantic versioning to define a version range.
-* Using [hypen range comparisons](https://github.com/Masterminds/semver#hyphen-range-comparisons) are not supported.
+| Operator | Definition                        |
+|----------|-----------------------------------|
+| `=`      | equal (not aliased to an operator |
+| `!=`     | not equal                         |
+| `>`      | greater than                      |
+| `<`      | less than                         |
+| `>=`     | greater than or equal to          |
+| `<=`     | less than or equal to             |
+
+#### Range comparisons
+
+OLM 1.0 does not support hypen range comparisons.
 For example, the following range option is not supported:
 
   ```yaml
   version: 3.0 - 3.6
   ```
 
-  To specify a range option, use a method similar to the following example:
+To specify a version range, use a method similar to the following example:
 
-  ```yaml
-  version: >=3.0 <3.6
-  ```
+```yaml
+version: >=3.0, <3.6
+```
+
+#### Wildcards in comparisons
 
 You can use the `x`, `X`, and `*` characters as wildcard characters in all comparison operations.
+If you use a wildcard character with the `=` operator, you define a patch level comparision.
+This is equivalent to making a tilde range comparison.
 
-For more information about parsing, sorting, checking, and comparing version constraints, see the [Masterminds SemVer README](https://github.com/Masterminds/semver#semver).
+*Example comparisons with wildcard characters*
+| Comparison | Equivalent          |
+|------------|---------------------|
+| `1.2.x`    | `>= 1.2.0, < 1.3.0` |
+| `>= 1.2.x` | `>= 1.2.0`          |
+| `<= 2.x`   | `< 3`               |
+| `*`        | `>= 0.0.0`          |
 
-## Example CRs that specify a version range
+
+#### Patch release or tilde (`~`) range comparison
+
+You can use the tilde (`~`) operator to make patch release comparisons.
+This is useful when you want to specify a minor version up to the next major version.
+
+*Example patch release comparisons*
+| Comparison | Equivalent          |
+|------------|---------------------|
+| `~1.2.3`   | `>= 1.2.3, < 1.3.0` |
+| `~1`       | `>= 1, <2`          |
+| `~2.3`     | `>= 2.3, < 2.4`     |
+| `~1.2.x`   | `>= 1.2.0, < 1.3.0` |
+| `~1.x`     | `>= 1, < 2`         |
+
+
+#### Major release or caret (`^`) range comparisons
+
+You can use the caret (`^`) operator to make major release comparisons after a stable, `1.0.0`, version is published.
+If you make a major release comparison before a stable version is published, minor versions define the API stability level.
+
+*Example major release comparisons*
+
+| Comparison | Equivalent                             |
+|------------|----------------------------------------|
+| `^1.2.3`   | `>= 1.2.3, < 2.0.0``>= 1.2.3, < 2.0.0` |
+| `^1.2.x`   | `>= 1.2.0, < 2.0.0`                    |
+| `^2.3`     | `>= 2.3, < 3`                          |
+| `^2.x`     | `>= 2.0.0, < 3`                        |
+| `^0.2.3`   | `>=0.2.3 <0.3.0`                       |
+| `^0.2`     | `>=0.2.0 <0.3.0`                       |
+| `^0.0.3`   | `>=0.0.3 <0.0.4`                       |
+| `^0.0`     | `>=0.0.0 <0.1.0`                       |
+| `^0`       | `>=0.0.0 <1.0.0`                       |
