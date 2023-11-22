@@ -66,7 +66,6 @@ release:
   header: |
     ## Installation
     ```bash
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/{{ .Env.CERT_MGR_VERSION }}/cert-manager.yaml
-    kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
     kubectl apply -f https://github.com/operator-framework/catalogd/releases/download/{{ .Tag }}/catalogd.yaml
+    kubectl wait --for=condition=Available --namespace=catalogd-system deployment/catalogd-controller-manager --timeout=60s
     ```
