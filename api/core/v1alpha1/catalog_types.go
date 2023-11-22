@@ -99,6 +99,7 @@ type CatalogStatus struct {
 // CatalogSource contains the sourcing information for a Catalog
 type CatalogSource struct {
 	// Type defines the kind of Catalog content being sourced.
+	// +kubebuilder:validation:Enum=image
 	Type SourceType `json:"type"`
 	// Image is the catalog image that backs the content of this catalog.
 	Image *ImageSource `json:"image,omitempty"`

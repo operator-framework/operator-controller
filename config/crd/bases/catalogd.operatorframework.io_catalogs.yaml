@@ -76,6 +76,8 @@ spec:
                     type: object
                   type:
                     description: Type defines the kind of Catalog content being sourced.
+                    enum:
+                    - image
                     type: string
                 required:
                 - type
