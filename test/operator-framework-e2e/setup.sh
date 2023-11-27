@@ -56,7 +56,7 @@ fi
 # We're going to do file manipulation, so let's work in a temp dir
 TMP_ROOT="$(mktemp -d ./tmp.XXXXXX)"
 # Make sure to delete the temp dir when we exit
-trap 'rm -rf ${TMP_ROOT}' EXIT
+trap 'chmod -R +w ${TMP_ROOT} && rm -rf ${TMP_ROOT}' EXIT
 
 DOMAIN=oc-opdev-e2e.operatorframework.io
 REG_DIR="${TMP_ROOT}/registry"
