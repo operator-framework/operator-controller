@@ -19,25 +19,18 @@ You define a version range by adding a comparison string to the `spec.version` f
 
 #### Basic comparisons
 
-| Operator | Definition                        |
-|----------|-----------------------------------|
-| `=`      | equal (not aliased to an operator |
-| `!=`     | not equal                         |
-| `>`      | greater than                      |
-| `<`      | less than                         |
-| `>=`     | greater than or equal to          |
-| `<=`     | less than or equal to             |
+| Operator | Definition                         |
+|----------|------------------------------------|
+| `=`      | equal (not aliased to an operator) |
+| `!=`     | not equal                          |
+| `>`      | greater than                       |
+| `<`      | less than                          |
+| `>=`     | greater than or equal to           |
+| `<=`     | less than or equal to              |
 
 #### Range comparisons
 
-OLM 1.0 does not support hypen range comparisons.
-For example, the following range option is not supported:
-
-  ```yaml
-  version: 3.0 - 3.6
-  ```
-
-To specify a version range, use a method similar to the following example:
+To specify a version range, use a range comparison similar to the following example:
 
 ```yaml
 version: >=3.0, <3.6
