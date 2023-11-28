@@ -1,7 +1,6 @@
 package controllers_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -14,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/utils/pointer"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/constraint"
@@ -27,7 +25,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
-	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
 func TestVariableSource(t *testing.T) {
@@ -64,7 +61,7 @@ func TestVariableSource(t *testing.T) {
 
 	pkgName := "packageA"
 	opName := fmt.Sprintf("operator-test-%s", rand.String(8))
-	operator := &operatorsv1alpha1.Operator{
+	operator := operatorsv1alpha1.Operator{
 		ObjectMeta: metav1.ObjectMeta{Name: opName},
 		Spec: operatorsv1alpha1.OperatorSpec{
 			PackageName: pkgName,
@@ -73,7 +70,7 @@ func TestVariableSource(t *testing.T) {
 		},
 	}
 
-	bd := &rukpakv1alpha1.BundleDeployment{
+	bd := rukpakv1alpha1.BundleDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: opName,
 			OwnerReferences: []metav1.OwnerReference{
@@ -102,12 +99,8 @@ func TestVariableSource(t *testing.T) {
 			},
 		},
 	}
-	fakeClient := fake.NewClientBuilder().WithScheme(sch).WithObjects(operator, bd).Build()
-	fakeCatalogClient := testutil.NewFakeCatalogClient(allBundles)
 
-	vs := controllers.NewVariableSource(fakeClient, &fakeCatalogClient)
-
-	vars, err := vs.GetVariables(context.Background())
+	vars, err := controllers.GenerateVariables(allBundles, []operatorsv1alpha1.Operator{operator}, []rukpakv1alpha1.BundleDeployment{bd})
 	require.NoError(t, err)
 
 	expectedVars := []deppy.Variable{
