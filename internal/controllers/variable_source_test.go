@@ -89,7 +89,7 @@ func TestVariableSource(t *testing.T) {
 		},
 		Spec: rukpakv1alpha1.BundleDeploymentSpec{
 			ProvisionerClassName: "core-rukpak-io-plain",
-			Template: &rukpakv1alpha1.BundleTemplate{
+			Template: rukpakv1alpha1.BundleTemplate{
 				Spec: rukpakv1alpha1.BundleSpec{
 					ProvisionerClassName: "core-rukpak-io-registry",
 					Source: rukpakv1alpha1.BundleSource{

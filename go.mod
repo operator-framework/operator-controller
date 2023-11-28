@@ -10,7 +10,7 @@ require (
 	github.com/operator-framework/catalogd v0.10.0
 	github.com/operator-framework/deppy v0.1.0
 	github.com/operator-framework/operator-registry v1.32.0
-	github.com/operator-framework/rukpak v0.15.0
+	github.com/operator-framework/rukpak v0.16.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.26.0
