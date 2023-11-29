@@ -690,8 +690,8 @@ github.com/operator-framework/api v0.19.0 h1:QU1CTJU+CufoeneA5rsNlP/uP96s8vDHWUY
 github.com/operator-framework/api v0.19.0/go.mod h1:SCCslqke6AVOJ5JM+NqNE1CHuAgJLScsL66pnPaSMXs=
 github.com/operator-framework/catalogd v0.10.0 h1:T207IQfQCcd3f31bDPCgfJcwEvmaPGV8BotqIzIvnRo=
 github.com/operator-framework/catalogd v0.10.0/go.mod h1:xIeR5f/Spr5rHnLp0yOi0AYetWcHvBAx9n+K3S/va2A=
-github.com/operator-framework/deppy v0.1.0 h1:Kj6SgSSMsPTbiWObYe7P1JPsW6CWkuVc+38RnPcZxGQ=
-github.com/operator-framework/deppy v0.1.0/go.mod h1:3blHej0Hj0M17Ru2q3QrhN9OwB5/MMmFkWUmiInqs6A=
+github.com/operator-framework/deppy v0.2.0 h1:BYdCAKli+ofFdnHPkpUKI9DygHL2A32CaDbEJk4jz6U=
+github.com/operator-framework/deppy v0.2.0/go.mod h1:3blHej0Hj0M17Ru2q3QrhN9OwB5/MMmFkWUmiInqs6A=
 github.com/operator-framework/operator-registry v1.32.0 h1:RNazXYt3vBf5FZ+JrNNjq4bNh3tDwlkwZJnC+kmCeKk=
 github.com/operator-framework/operator-registry v1.32.0/go.mod h1:89VshAf6+n0V12vdh43+WOi8i1+XpY+kg6Ao4JO0y6k=
 github.com/operator-framework/rukpak v0.15.0 h1:NRByKr3NgtuehLbw1TLEygszSQhruVUcg9/vgFou6hM=
