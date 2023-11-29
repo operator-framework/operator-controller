@@ -17,8 +17,8 @@ This document will go through an example that highlights each of these new featu
 - `kubectl` installed
     - Installation instructions can be found at https://kubernetes.io/docs/tasks/tools/
 - A container runtime of your choice, in this demo we will be using `docker`
-- Install `operator-controller` vX.Y.Z 
-    - Installation instructions can be found at https://github.com/operator-framework/operator-controller/releases/tag/vX.Y.Z
+- Install `operator-controller` v0.8.0 
+    - Installation instructions can be found at https://github.com/operator-framework/operator-controller/releases/tag/v0.8.0
 - `kustomize` installed
     - Installation instructions can be found at https://kubectl.docs.kubernetes.io/installation/kustomize/
 - `yq` installed
