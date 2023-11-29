@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -v
-
 trap cleanup SIGINT SIGTERM EXIT
 
 SCRIPTPATH="$( cd -- "$(dirname "$0")" > /dev/null 2>&1 ; pwd -P )"
@@ -22,6 +20,21 @@ function cleanup() {
     fi
 }
 
+function usage() {
+    echo "$0 [options]"
+    echo "where options is"
+    echo " h  help (this message)"
+    exit 1
+}
+
+set +u
+while getopts 'h' flag; do
+    case "${flag}" in
+        h) usage ;;
+    esac
+    shift
+done
+set -u
 
 WKDIR=$(mktemp -td generate-asciidemo.XXXXX)
 if [ ! -d ${WKDIR} ]
