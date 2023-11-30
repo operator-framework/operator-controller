@@ -33,7 +33,7 @@ func fakeBundleDeployment(name, bundleImage string, owner *operatorsv1alpha1.Ope
 		},
 		Spec: rukpakv1alpha1.BundleDeploymentSpec{
 			ProvisionerClassName: "core-rukpak-io-plain",
-			Template: &rukpakv1alpha1.BundleTemplate{
+			Template: rukpakv1alpha1.BundleTemplate{
 				Spec: rukpakv1alpha1.BundleSpec{
 					ProvisionerClassName: "core-rukpak-io-plain",
 					Source: rukpakv1alpha1.BundleSource{

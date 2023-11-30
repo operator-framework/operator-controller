@@ -48,9 +48,6 @@ func MakeInstalledPackageVariables(
 			continue
 		}
 
-		if bundleDeployment.Spec.Template == nil {
-			continue
-		}
 		sourceImage := bundleDeployment.Spec.Template.Spec.Source.Image
 		if sourceImage == nil || sourceImage.Ref == "" {
 			continue
