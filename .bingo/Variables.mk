@@ -29,12 +29,6 @@ $(CONTROLLER_GEN): $(BINGO_DIR)/controller-gen.mod
 	@echo "(re)installing $(GOBIN)/controller-gen-v0.12.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=controller-gen.mod -o=$(GOBIN)/controller-gen-v0.12.0 "sigs.k8s.io/controller-tools/cmd/controller-gen"
 
-GINKGO := $(GOBIN)/ginkgo-v2.1.4
-$(GINKGO): $(BINGO_DIR)/ginkgo.mod
-	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/ginkgo-v2.1.4"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=ginkgo.mod -o=$(GOBIN)/ginkgo-v2.1.4 "github.com/onsi/ginkgo/v2/ginkgo"
-
 GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.53.3
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
@@ -76,4 +70,3 @@ $(SETUP_ENVTEST): $(BINGO_DIR)/setup-envtest.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
 	@echo "(re)installing $(GOBIN)/setup-envtest-v0.0.0-20230606045100-e54088c8c7da"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=setup-envtest.mod -o=$(GOBIN)/setup-envtest-v0.0.0-20230606045100-e54088c8c7da "sigs.k8s.io/controller-runtime/tools/setup-envtest"
-
