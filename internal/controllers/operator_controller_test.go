@@ -117,7 +117,7 @@ func TestOperatorNonExistantVersion(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionUnknown, cond.Status)
 	require.Equal(t, operatorsv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "installation has not been attempted as resolution failed", cond.Message)
+	require.Equal(t, "installation has not been attempted due to failure to gather data for resolution", cond.Message)
 
 	verifyInvariants(ctx, t, reconciler.Client, operator)
 	require.NoError(t, cl.DeleteAllOf(ctx, &operatorsv1alpha1.Operator{}))
@@ -834,7 +834,7 @@ func TestOperatorVersionNoChannel(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionUnknown, cond.Status)
 	require.Equal(t, operatorsv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "installation has not been attempted as resolution failed", cond.Message)
+	require.Equal(t, "installation has not been attempted due to failure to gather data for resolution", cond.Message)
 
 	verifyInvariants(ctx, t, reconciler.Client, operator)
 	require.NoError(t, cl.DeleteAllOf(ctx, &operatorsv1alpha1.Operator{}))
@@ -882,7 +882,7 @@ func TestOperatorNoChannel(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionUnknown, cond.Status)
 	require.Equal(t, operatorsv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "installation has not been attempted as resolution failed", cond.Message)
+	require.Equal(t, "installation has not been attempted due to failure to gather data for resolution", cond.Message)
 
 	verifyInvariants(ctx, t, reconciler.Client, operator)
 	require.NoError(t, cl.DeleteAllOf(ctx, &operatorsv1alpha1.Operator{}))
@@ -932,7 +932,7 @@ func TestOperatorNoVersion(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionUnknown, cond.Status)
 	require.Equal(t, operatorsv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "installation has not been attempted as resolution failed", cond.Message)
+	require.Equal(t, "installation has not been attempted due to failure to gather data for resolution", cond.Message)
 
 	verifyInvariants(ctx, t, reconciler.Client, operator)
 	require.NoError(t, cl.DeleteAllOf(ctx, &operatorsv1alpha1.Operator{}))

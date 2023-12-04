@@ -17,10 +17,6 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/operator-framework/deppy/pkg/deppy"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
@@ -29,46 +25,13 @@ import (
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
-// BundleProvider provides the way to retrieve a list of Bundles from a source,
-// generally from a catalog client of some kind.
-type BundleProvider interface {
-	Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
-}
-
-type VariableSource struct {
-	client        client.Client
-	catalogClient BundleProvider
-}
-
-func NewVariableSource(cl client.Client, catalogClient BundleProvider) *VariableSource {
-	return &VariableSource{
-		client:        cl,
-		catalogClient: catalogClient,
-	}
-}
-
-func (v *VariableSource) GetVariables(ctx context.Context) ([]deppy.Variable, error) {
-	operatorList := operatorsv1alpha1.OperatorList{}
-	if err := v.client.List(ctx, &operatorList); err != nil {
-		return nil, err
-	}
-
-	bundleDeploymentList := rukpakv1alpha1.BundleDeploymentList{}
-	if err := v.client.List(ctx, &bundleDeploymentList); err != nil {
-		return nil, err
-	}
-
-	allBundles, err := v.catalogClient.Bundles(ctx)
+func GenerateVariables(allBundles []*catalogmetadata.Bundle, operators []operatorsv1alpha1.Operator, bundleDeployments []rukpakv1alpha1.BundleDeployment) ([]deppy.Variable, error) {
+	requiredPackages, err := variablesources.MakeRequiredPackageVariables(allBundles, operators)
 	if err != nil {
 		return nil, err
 	}
 
-	requiredPackages, err := variablesources.MakeRequiredPackageVariables(allBundles, operatorList.Items)
-	if err != nil {
-		return nil, err
-	}
-
-	installedPackages, err := variablesources.MakeInstalledPackageVariables(allBundles, operatorList.Items, bundleDeploymentList.Items)
+	installedPackages, err := variablesources.MakeInstalledPackageVariables(allBundles, operators, bundleDeployments)
 	if err != nil {
 		return nil, err
 	}

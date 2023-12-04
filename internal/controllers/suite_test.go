@@ -48,9 +48,10 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.OperatorR
 	cl := newClient(t)
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
-		Client:   cl,
-		Scheme:   sch,
-		Resolver: solver.NewDeppySolver(controllers.NewVariableSource(cl, &fakeCatalogClient)),
+		Client:         cl,
+		BundleProvider: &fakeCatalogClient,
+		Scheme:         sch,
+		Resolver:       solver.NewDeppySolver(),
 	}
 	return cl, reconciler
 }

@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
@@ -143,14 +144,28 @@ func run(ctx context.Context, packageName, packageChannel, packageVersionRange, 
 		},
 	})
 
+	resolver := solver.NewDeppySolver()
+
 	cl := clientBuilder.Build()
 	catalogClient := newIndexRefClient(indexRef)
+	allBundles, err := catalogClient.Bundles(ctx)
+	if err != nil {
+		return err
+	}
+	operatorList := operatorsv1alpha1.OperatorList{}
+	if err := cl.List(ctx, &operatorList); err != nil {
+		return err
+	}
+	bundleDeploymentList := rukpakv1alpha1.BundleDeploymentList{}
+	if err := cl.List(ctx, &bundleDeploymentList); err != nil {
+		return err
+	}
+	variables, err := controllers.GenerateVariables(allBundles, operatorList.Items, bundleDeploymentList.Items)
+	if err != nil {
+		return err
+	}
 
-	resolver := solver.NewDeppySolver(
-		controllers.NewVariableSource(cl, catalogClient),
-	)
-
-	bundleImage, err := resolve(ctx, resolver, packageName)
+	bundleImage, err := resolve(resolver, variables, packageName)
 	if err != nil {
 		return err
 	}
@@ -159,8 +174,8 @@ func run(ctx context.Context, packageName, packageChannel, packageVersionRange, 
 	return nil
 }
 
-func resolve(ctx context.Context, resolver *solver.DeppySolver, packageName string) (string, error) {
-	solution, err := resolver.Solve(ctx)
+func resolve(resolver *solver.DeppySolver, variables []deppy.Variable, packageName string) (string, error) {
+	solution, err := resolver.Solve(variables)
 	if err != nil {
 		return "", err
 	}

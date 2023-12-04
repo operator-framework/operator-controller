@@ -22,6 +22,7 @@ import (
 
 	"github.com/go-logr/logr"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -44,11 +45,18 @@ import (
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
+// BundleProvider provides the way to retrieve a list of Bundles from a source,
+// generally from a catalog client of some kind.
+type BundleProvider interface {
+	Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
+}
+
 // OperatorReconciler reconciles a Operator object
 type OperatorReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Resolver *solver.DeppySolver
+	BundleProvider BundleProvider
+	Scheme         *runtime.Scheme
+	Resolver       *solver.DeppySolver
 }
 
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators,verbs=get;list;watch
@@ -124,8 +132,19 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		setResolvedStatusConditionUnknown(&op.Status.Conditions, "validation has not been attempted as spec is invalid", op.GetGeneration())
 		return ctrl.Result{}, nil
 	}
+
+	// gather vars for resolution
+	vars, err := r.variables(ctx)
+	if err != nil {
+		op.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted due to failure to gather data for resolution", op.GetGeneration())
+		op.Status.ResolvedBundleResource = ""
+		setResolvedStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		return ctrl.Result{}, err
+	}
+
 	// run resolution
-	solution, err := r.Resolver.Solve(ctx)
+	solution, err := r.Resolver.Solve(vars)
 	if err != nil {
 		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
@@ -192,6 +211,23 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 
 	// set the status of the operator based on the respective bundle deployment status conditions.
 	return ctrl.Result{}, nil
+}
+
+func (r *OperatorReconciler) variables(ctx context.Context) ([]deppy.Variable, error) {
+	allBundles, err := r.BundleProvider.Bundles(ctx)
+	if err != nil {
+		return nil, err
+	}
+	operatorList := operatorsv1alpha1.OperatorList{}
+	if err := r.Client.List(ctx, &operatorList); err != nil {
+		return nil, err
+	}
+	bundleDeploymentList := rukpakv1alpha1.BundleDeploymentList{}
+	if err := r.Client.List(ctx, &bundleDeploymentList); err != nil {
+		return nil, err
+	}
+
+	return GenerateVariables(allBundles, operatorList.Items, bundleDeploymentList.Items)
 }
 
 func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha1.BundleDeployment, op *operatorsv1alpha1.Operator) {
