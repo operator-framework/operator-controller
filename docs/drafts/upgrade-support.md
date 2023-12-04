@@ -33,7 +33,8 @@ In a future release, it is planned to remove the `ForceSemverUpgradeConstraints`
 
 OLM supports Semver to provide a simplified way for package authors to define compatible upgrades. According to the Semver standard, releases within a major version (e.g. `>=1.0.0 <2.0.0`) must be compatible. As a result, package authors can publish a new package version following the Semver specification, and OLM assumes compatibility. Package authors do not have to explicitly define upgrade edges in the catalog.
 
-**Note:** Currently, OLM 1.0 does not support automatic upgrades to the next major version. You must manually verify and perform major version upgrades. For more information about major version upgrades, see [Manually verified upgrades and downgrades](#manually-verified-upgrades-and-downgrades).
+> [!NOTE]
+> Currently, OLM 1.0 does not support automatic upgrades to the next major version. You must manually verify and perform major version upgrades. For more information about major version upgrades, see [Manually verified upgrades and downgrades](#manually-verified-upgrades-and-downgrades).
 
 ### Upgrades within the major version zero
 
