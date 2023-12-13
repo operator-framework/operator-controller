@@ -56,7 +56,7 @@ type OperatorReconciler struct {
 	client.Client
 	BundleProvider BundleProvider
 	Scheme         *runtime.Scheme
-	Resolver       *solver.DeppySolver
+	Resolver       *solver.Solver
 }
 
 //+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators,verbs=get;list;watch
@@ -144,7 +144,7 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 	}
 
 	// run resolution
-	solution, err := r.Resolver.Solve(vars)
+	selection, err := r.Resolver.Solve(vars)
 	if err != nil {
 		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
@@ -153,17 +153,9 @@ func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha
 		return ctrl.Result{}, err
 	}
 
-	if err := solution.Error(); err != nil {
-		op.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution is unsatisfiable", op.GetGeneration())
-		op.Status.ResolvedBundleResource = ""
-		setResolvedStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
-		return ctrl.Result{}, err
-	}
-
 	// lookup the bundle in the solution that corresponds to the
 	// Operator's desired package name.
-	bundle, err := r.bundleFromSolution(solution, op.Spec.PackageName)
+	bundle, err := r.bundleFromSolution(selection, op.Spec.PackageName)
 	if err != nil {
 		op.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
@@ -275,8 +267,8 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 	}
 }
 
-func (r *OperatorReconciler) bundleFromSolution(solution *solver.Solution, packageName string) (*catalogmetadata.Bundle, error) {
-	for _, variable := range solution.SelectedVariables() {
+func (r *OperatorReconciler) bundleFromSolution(selection []deppy.Variable, packageName string) (*catalogmetadata.Bundle, error) {
+	for _, variable := range selection {
 		switch v := variable.(type) {
 		case *olmvariables.BundleVariable:
 			bundlePkgName := v.Bundle().Package

@@ -144,7 +144,10 @@ func run(ctx context.Context, packageName, packageChannel, packageVersionRange, 
 		},
 	})
 
-	resolver := solver.NewDeppySolver()
+	resolver, err := solver.New()
+	if err != nil {
+		return err
+	}
 
 	cl := clientBuilder.Build()
 	catalogClient := newIndexRefClient(indexRef)
@@ -174,7 +177,7 @@ func run(ctx context.Context, packageName, packageChannel, packageVersionRange, 
 	return nil
 }
 
-func resolve(resolver *solver.DeppySolver, variables []deppy.Variable, packageName string) (string, error) {
+func resolve(resolver *solver.Solver, variables []deppy.Variable, packageName string) (string, error) {
 	solution, err := resolver.Solve(variables)
 	if err != nil {
 		return "", err
@@ -189,8 +192,8 @@ func resolve(resolver *solver.DeppySolver, variables []deppy.Variable, packageNa
 	return bundle.Image, nil
 }
 
-func bundleFromSolution(solution *solver.Solution, packageName string) (*catalogmetadata.Bundle, error) {
-	for _, variable := range solution.SelectedVariables() {
+func bundleFromSolution(selection []deppy.Variable, packageName string) (*catalogmetadata.Bundle, error) {
+	for _, variable := range selection {
 		switch v := variable.(type) {
 		case *olmvariables.BundleVariable:
 			bundlePkgName := v.Bundle().Package

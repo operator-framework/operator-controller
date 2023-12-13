@@ -109,11 +109,17 @@ func main() {
 	cl := mgr.GetClient()
 	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, &http.Client{Timeout: 10 * time.Second}))
 
+	resolver, err := solver.New()
+	if err != nil {
+		setupLog.Error(err, "unable to create a solver")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.OperatorReconciler{
 		Client:         cl,
 		BundleProvider: catalogClient,
 		Scheme:         mgr.GetScheme(),
-		Resolver:       solver.NewDeppySolver(),
+		Resolver:       resolver,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Operator")
 		os.Exit(1)

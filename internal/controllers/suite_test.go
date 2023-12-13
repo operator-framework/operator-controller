@@ -45,13 +45,16 @@ func newClient(t *testing.T) client.Client {
 }
 
 func newClientAndReconciler(t *testing.T) (client.Client, *controllers.OperatorReconciler) {
+	resolver, err := solver.New()
+	require.NoError(t, err)
+
 	cl := newClient(t)
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.OperatorReconciler{
 		Client:         cl,
 		BundleProvider: &fakeCatalogClient,
 		Scheme:         sch,
-		Resolver:       solver.NewDeppySolver(),
+		Resolver:       resolver,
 	}
 	return cl, reconciler
 }
