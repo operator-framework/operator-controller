@@ -1,5 +1,5 @@
 # operator-controller
-The operator-controller is the central component of Operator Lifecycle Manager (OLM) v1. It extends Kubernetes with an API through which users can install Operators.
+The operator-controller is the central component of Operator Lifecycle Manager (OLM) v1. It extends Kubernetes with an API through which users can install extensions.
 
 ## Description
 OLM v1 is the follow-up to OLM v0, located [here](https://github.com/operator-framework/operator-lifecycle-manager). It consists of four different components, including this one, which are as follows:
@@ -90,4 +90,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-

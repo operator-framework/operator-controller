@@ -8,7 +8,7 @@ It also introduces an API to enable independently verified upgrades and downgrad
 
 ## Upgrade constraint semantics
 
-As of Operator Controller release 0.8.0, OLM 1.0 supports the following upgrade constraint semantics:
+As of operator-controller release 0.8.0, OLM 1.0 supports the following upgrade constraint semantics:
 
 * [Semantic Versioning](https://semver.org/) (Semver)
 * The `replaces` directive from the [legacy OLM 0 semantics](https://olm.operatorframework.io/docs/concepts/olm-architecture/operator-catalog/creating-an-update-graph/#methods-for-specifying-updates)
@@ -49,17 +49,17 @@ You must verify and perform upgrades manually in cases where automatic upgrades 
 
 **Warning:** If you want to force an upgrade manually, you must thoroughly verify the outcome before applying any changes to production workloads. Failure to test and verify the upgrade might lead to catastrophic consequences such as data loss.
 
-As a package admin, if you must upgrade or downgrade to version that might be incompatible with the currently installed version, you can set the `.spec.upgradeConstraintPolicy` field to `Ignore` on the relevant `Operator` resource.
+As a package admin, if you must upgrade or downgrade to version that might be incompatible with the currently installed version, you can set the `.spec.upgradeConstraintPolicy` field to `Ignore` on the relevant `ClusterExtension` resource.
 
 If you set the field to `Ignore`, no upgrade constraints are set on the package. As a result, you can change the version to any version available in the catalogs for a given package.
 
-Example `Operator` with `.spec.upgradeConstraintPolicy` field set to `Ignore`:
+Example `ClusterExtension` with `.spec.upgradeConstraintPolicy` field set to `Ignore`:
 
 ```yaml
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
-  name: operator-sample
+  name: extension-sample
 spec:
   packageName: argocd-operator
   version: 0.6.0

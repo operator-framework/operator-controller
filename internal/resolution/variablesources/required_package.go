@@ -6,7 +6,7 @@ import (
 
 	mmsemver "github.com/Masterminds/semver/v3"
 
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
@@ -15,14 +15,14 @@ import (
 
 // MakeRequiredPackageVariables returns a variable which represent
 // explicit requirement for a package from an user.
-// This is when an user explicitly asks "install this" via Operator API.
-func MakeRequiredPackageVariables(allBundles []*catalogmetadata.Bundle, operators []operatorsv1alpha1.Operator) ([]*olmvariables.RequiredPackageVariable, error) {
-	result := make([]*olmvariables.RequiredPackageVariable, 0, len(operators))
+// This is when a user explicitly asks "install this" via ClusterExtension API.
+func MakeRequiredPackageVariables(allBundles []*catalogmetadata.Bundle, clusterExtensions []ocv1alpha1.ClusterExtension) ([]*olmvariables.RequiredPackageVariable, error) {
+	result := make([]*olmvariables.RequiredPackageVariable, 0, len(clusterExtensions))
 
-	for _, operator := range operators {
-		packageName := operator.Spec.PackageName
-		channelName := operator.Spec.Channel
-		versionRange := operator.Spec.Version
+	for _, clusterExtension := range clusterExtensions {
+		packageName := clusterExtension.Spec.PackageName
+		channelName := clusterExtension.Spec.Channel
+		versionRange := clusterExtension.Spec.Version
 
 		predicates := []catalogfilter.Predicate[catalogmetadata.Bundle]{
 			catalogfilter.WithPackageName(packageName),

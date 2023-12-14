@@ -1,4 +1,4 @@
-Creating an Operator CR installs the operator on cluster:  
+Creating a ClusterExtension CR installs the extension on cluster:  
 
 ```bash
 $ kubectl get packages | grep argocd 
@@ -6,25 +6,25 @@ operatorhubio-argocd-operator                            5m19s
 operatorhubio-argocd-operator-helm                       5m19s
 
 $ kubectl apply -f - <<EOF
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   name: argocd-operator
 spec:
   packageName: operatorhubio-argocd-operator
 EOF
 
-$ kubectl get operators 
+$ kubectl get clusterextensions
 NAME                          AGE
 operatorhubio-argocd-operator   53s
 
-$  kubectl get operator argocd-operator -o yaml 
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+$  kubectl get clusterextension argocd-operator -o yaml 
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"operators.operatorframework.io/v1alpha1","kind":"Operator","metadata":{"annotations":{},"name":"argocd-operator"},"spec":{"packageName":"argocd-operator"}}
+      {"apiVersion":"olm.operatorframework.io/v1alpha1","kind":"ClusterExtension","metadata":{"annotations":{},"name":"argocd-operator"},"spec":{"packageName":"argocd-operator"}}
   creationTimestamp: "2023-06-21T14:57:50Z"
   generation: 1
   name: argocd-operator
@@ -50,7 +50,7 @@ status:
   resolvedBundleResource: quay.io/operatorhubio/argocd-operator@sha256:1a9b3c8072f2d7f4d6528fa32905634d97b7b4c239ef9887e3fb821ff033fef6
 ```
 
-The status condition type `Installed`:`true` indicates that the operator was installed successfully. We can confirm this by looking at the workloads that were created as a result of this operator installation: 
+The status condition type `Installed`:`true` indicates that the extension was installed successfully. We can confirm this by looking at the workloads that were created as a result of this extension installation: 
 
 ```bash 
 $ kubectl get namespaces | grep argocd 

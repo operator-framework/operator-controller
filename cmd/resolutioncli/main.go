@@ -22,6 +22,10 @@ import (
 	"fmt"
 	"os"
 
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/deppy/pkg/deppy"
+	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -30,12 +34,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	"github.com/operator-framework/deppy/pkg/deppy"
-	"github.com/operator-framework/deppy/pkg/deppy/solver"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
-
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
@@ -61,7 +60,7 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(ocv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(catalogd.AddToScheme(scheme))
 }
@@ -81,7 +80,7 @@ func main() {
 	flag.StringVar(&packageChannel, flagNamePackageChannel, "", "Channel of the package")
 	// TODO: Consider adding support of multiple refs
 	flag.StringVar(&indexRef, flagNameIndexRef, "", "Index reference (FBC image or dir)")
-	flag.StringVar(&inputDir, flagNameInputDir, "", "Directory containing Kubernetes manifests (such as Operator) to be used as an input for resolution")
+	flag.StringVar(&inputDir, flagNameInputDir, "", "Directory containing Kubernetes manifests (such as ClusterExtension) to be used as an input for resolution")
 	flag.Parse()
 
 	if err := validateFlags(packageName, indexRef); err != nil {
@@ -133,11 +132,11 @@ func run(ctx context.Context, packageName, packageChannel, packageVersionRange, 
 		clientBuilder.WithRuntimeObjects(objects...)
 	}
 
-	clientBuilder.WithRuntimeObjects(&operatorsv1alpha1.Operator{
+	clientBuilder.WithRuntimeObjects(&ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "resolutioncli-input-operator",
+			Name: "resolutioncli-input",
 		},
-		Spec: operatorsv1alpha1.OperatorSpec{
+		Spec: ocv1alpha1.ClusterExtensionSpec{
 			PackageName: packageName,
 			Channel:     packageChannel,
 			Version:     packageVersionRange,
@@ -155,15 +154,15 @@ func run(ctx context.Context, packageName, packageChannel, packageVersionRange, 
 	if err != nil {
 		return err
 	}
-	operatorList := operatorsv1alpha1.OperatorList{}
-	if err := cl.List(ctx, &operatorList); err != nil {
+	clusterExtensionList := ocv1alpha1.ClusterExtensionList{}
+	if err := cl.List(ctx, &clusterExtensionList); err != nil {
 		return err
 	}
 	bundleDeploymentList := rukpakv1alpha1.BundleDeploymentList{}
 	if err := cl.List(ctx, &bundleDeploymentList); err != nil {
 		return err
 	}
-	variables, err := controllers.GenerateVariables(allBundles, operatorList.Items, bundleDeploymentList.Items)
+	variables, err := controllers.GenerateVariables(allBundles, clusterExtensionList.Items, bundleDeploymentList.Items)
 	if err != nil {
 		return err
 	}

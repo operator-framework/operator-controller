@@ -1,6 +1,6 @@
-Operator authors have the mechanisms to offer their product as part of a curated catalog of operators, that they can push updates to over-the-air (eg publish new versions, publish patched versions with CVEs, etc). Cluster admins can sign up to receive these updates on clusters, by adding the catalog to the cluster. When a catalog is added to a cluster, the kubernetes extension packages (operators, or any other extension package) in that catalog become available on cluster for installation and receiving updates.  
+Extension authors have the mechanisms to offer their product as part of a curated catalog of extensions, that they can push updates to over-the-air (eg publish new versions, publish patched versions with CVEs, etc). Cluster admins can sign up to receive these updates on clusters, by adding the catalog to the cluster. When a catalog is added to a cluster, the kubernetes extension packages in that catalog become available on cluster for installation and receiving updates.  
 
-For example, the [k8s-operatorhub/community-operators](https://github.com/k8s-operatorhub/community-operators) is a catalog of curated operators that contains a list of operators being developed by the community. The list of operators can be viewed in [Operatorhub.io](https://operatorhub.io). This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://quay.io/repository/operatorhubio/catalog?tag=latest&tab=tags) for consumption on clusters. 
+For example, the [k8s-operatorhub/community-operators](https://github.com/k8s-operatorhub/community-operators) is a catalog of curated extensions that contains a list of extensions being developed by the community. The list of extensions can be viewed in [Operatorhub.io](https://operatorhub.io). This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://quay.io/repository/operatorhubio/catalog?tag=latest&tab=tags) for consumption on clusters. 
 
 To consume this catalog on cluster, create a `Catalog` Custom Resource(CR) with the image specified in the `spec.source.image` field: 
 
@@ -74,5 +74,3 @@ operatorhubio-ack-apigatewayv2-controller.v0.1.3                3m58s
 .
 .
 ```
-
-

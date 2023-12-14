@@ -15,7 +15,7 @@ import (
 	"golang.org/x/exp/slices" // replace with "slices" in go 1.21
 )
 
-func TestOperatorTypeRegistration(t *testing.T) {
+func TestClusterExtensionTypeRegistration(t *testing.T) {
 	types, err := parseConstants("Type")
 	if err != nil {
 		t.Fatalf("unable to parse Type constants %v", err)
@@ -34,7 +34,7 @@ func TestOperatorTypeRegistration(t *testing.T) {
 	}
 }
 
-func TestOperatorReasonRegistration(t *testing.T) {
+func TestClusterExtensionReasonRegistration(t *testing.T) {
 	reasons, err := parseConstants("Reason")
 	if err != nil {
 		t.Fatalf("unable to parse Reason constants %v", err)

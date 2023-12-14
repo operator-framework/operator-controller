@@ -7,6 +7,12 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/operator-framework/deppy/pkg/deppy"
+	"github.com/operator-framework/deppy/pkg/deppy/constraint"
+	"github.com/operator-framework/deppy/pkg/deppy/input"
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/alpha/property"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,14 +20,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/utils/pointer"
 
-	"github.com/operator-framework/deppy/pkg/deppy"
-	"github.com/operator-framework/deppy/pkg/deppy/constraint"
-	"github.com/operator-framework/deppy/pkg/deppy/input"
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
-	"github.com/operator-framework/operator-registry/alpha/property"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
-
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
@@ -29,7 +28,7 @@ import (
 
 func TestVariableSource(t *testing.T) {
 	sch := runtime.NewScheme()
-	utilruntime.Must(operatorsv1alpha1.AddToScheme(sch))
+	utilruntime.Must(ocv1alpha1.AddToScheme(sch))
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(sch))
 
 	stableChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
@@ -60,10 +59,10 @@ func TestVariableSource(t *testing.T) {
 	}
 
 	pkgName := "packageA"
-	opName := fmt.Sprintf("operator-test-%s", rand.String(8))
-	operator := operatorsv1alpha1.Operator{
-		ObjectMeta: metav1.ObjectMeta{Name: opName},
-		Spec: operatorsv1alpha1.OperatorSpec{
+	clusterExtensionName := fmt.Sprintf("clusterextension-test-%s", rand.String(8))
+	clusterExtension := ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: clusterExtensionName},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
 			PackageName: pkgName,
 			Channel:     "stable",
 			Version:     "2.0.0",
@@ -72,13 +71,13 @@ func TestVariableSource(t *testing.T) {
 
 	bd := rukpakv1alpha1.BundleDeployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: opName,
+			Name: clusterExtensionName,
 			OwnerReferences: []metav1.OwnerReference{
 				{
-					APIVersion:         operatorsv1alpha1.GroupVersion.String(),
-					Kind:               "Operator",
-					Name:               operator.Name,
-					UID:                operator.UID,
+					APIVersion:         ocv1alpha1.GroupVersion.String(),
+					Kind:               "ClusterExtension",
+					Name:               clusterExtension.Name,
+					UID:                clusterExtension.UID,
 					Controller:         pointer.Bool(true),
 					BlockOwnerDeletion: pointer.Bool(true),
 				},
@@ -100,7 +99,7 @@ func TestVariableSource(t *testing.T) {
 		},
 	}
 
-	vars, err := controllers.GenerateVariables(allBundles, []operatorsv1alpha1.Operator{operator}, []rukpakv1alpha1.BundleDeployment{bd})
+	vars, err := controllers.GenerateVariables(allBundles, []ocv1alpha1.ClusterExtension{clusterExtension}, []rukpakv1alpha1.BundleDeployment{bd})
 	require.NoError(t, err)
 
 	expectedVars := []deppy.Variable{

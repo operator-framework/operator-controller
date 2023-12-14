@@ -52,7 +52,7 @@ type BundleUniquenessVariable struct {
 // from the input 'atMostID'. Examples:
 // 1. restrict the solution to at most a single bundle per package
 // 2. restrict the solution to at most a single bundler per provided gvk
-// this guarantees that no two operators provide the same gvk and no two version of the same operator are running at the same time
+// this guarantees that no two extensions provide the same gvk and no two version of the same extension are running at the same time
 func NewBundleUniquenessVariable(id deppy.Identifier, atMostIDs ...deppy.Identifier) *BundleUniquenessVariable {
 	return &BundleUniquenessVariable{
 		SimpleVariable: input.NewSimpleVariable(id, constraint.AtMost(1, atMostIDs...)),

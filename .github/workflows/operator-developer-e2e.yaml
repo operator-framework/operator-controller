@@ -1,4 +1,4 @@
-name: operator-developer-e2e
+name: extension-developer-e2e
 
 on:
   workflow_dispatch:
@@ -18,6 +18,6 @@ jobs:
       with:
         go-version-file: go.mod
 
-    - name: Run the operator framework e2e test 
+    - name: Run the extension developer e2e test 
       run: |
-        make operator-developer-e2e
+        make extension-developer-e2e

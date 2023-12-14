@@ -9,8 +9,8 @@ resources:
     namespaced: true
   controller: true
   domain: operatorframework.io
-  group: operators
-  kind: Operator
+  group: olm
+  kind: ClusterExtension
   path: github.com/operator-framework/operator-controller/api/v1alpha1
   version: v1alpha1
 version: "3"

@@ -4,7 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-help="setup.sh is used to build operators using the operator-sdk and
+help="setup.sh is used to build extensions using the operator-sdk and
 build the image + bundle image, and create a FBC image for the
 following bundle formats:
 - registry+v1
@@ -12,10 +12,10 @@ following bundle formats:
 This script will ensure that all images built are loaded onto
 a KinD cluster with the name specified in the arguments.
 The following environment variables are required for configuring this script:
-- \$CATALOG_IMG - the tag for the catalog image that contains the plain+v0 and registry+v1 operator bundle.
-- \$REG_PKG_NAME - the name of the package for the operator that uses the registry+v1 bundle format.
-- \$PLAIN_PKG_NAME - the name of the package for the operator that uses the plain+v0 bundle format.
-setup.sh also takes 5 arguments. 
+- \$CATALOG_IMG - the tag for the catalog image that contains the plain+v0 and registry+v1 bundle.
+- \$REG_PKG_NAME - the name of the package for the extension that uses the registry+v1 bundle format.
+- \$PLAIN_PKG_NAME - the name of the package for the extension that uses the plain+v0 bundle format.
+setup.sh also takes 5 arguments.
 
 Usage:
   setup.sh [OPERATOR_SDK] [CONTAINER_RUNTIME] [KUSTOMIZE] [KIND] [KIND_CLUSTER_NAME] [NAMESPACE]
@@ -31,19 +31,19 @@ if [[ "$#" -ne 6 ]]; then
   exit 1
 fi
 
-if [[ -z "${CATALOG_IMG}" ]]; then 
+if [[ -z "${CATALOG_IMG}" ]]; then
   echo "\$CATALOG_IMG is required to be set"
   echo "${help}"
   exit 1
 fi
 
-if [[ -z "${REG_PKG_NAME}" ]]; then 
+if [[ -z "${REG_PKG_NAME}" ]]; then
   echo "\$REG_PKG_NAME is required to be set"
   echo "${help}"
   exit 1
 fi
 
-if [[ -z "${PLAIN_PKG_NAME}" ]]; then 
+if [[ -z "${PLAIN_PKG_NAME}" ]]; then
   echo "\$PLAIN_PKG_NAME is required to be set"
   echo "${help}"
   exit 1
@@ -82,7 +82,7 @@ reg_pkg_name="${REG_PKG_NAME}"
 plain_pkg_name="${PLAIN_PKG_NAME}"
 
 ########################################
-# Create the registry+v1 based operator
+# Create the registry+v1 based extension
 # and build + load images
 ########################################
 
@@ -105,7 +105,7 @@ $kind load docker-image "${reg_img}" --name "${kcluster_name}"
 $kind load docker-image "${reg_bundle_img}" --name "${kcluster_name}"
 
 #####################################
-# Create the plain+v0 based operator
+# Create the plain+v0 based extension
 # and build + load images
 #####################################
 
@@ -134,8 +134,8 @@ $kind load docker-image "${plain_img}" --name "${kcluster_name}"
 $kind load docker-image "${plain_bundle_img}" --name "${kcluster_name}"
 
 #####################################
-# Create the FBC that contains both 
-# the plain+v0 and registry+v1 operators
+# Create the FBC that contains both
+# the plain+v0 and registry+v1 extensions
 #####################################
 
 cat << EOF > "${TMP_ROOT}"/catalog.Dockerfile
@@ -217,8 +217,8 @@ cat <<EOF > "${TMP_ROOT}"/catalog/.indexignore
 ..*
 EOF
 
-kubectl create configmap -n "${namespace}" --from-file="${TMP_ROOT}"/catalog.Dockerfile operator-dev-e2e.dockerfile
-kubectl create configmap -n "${namespace}" --from-file="${TMP_ROOT}"/catalog operator-dev-e2e.build-contents
+kubectl create configmap -n "${namespace}" --from-file="${TMP_ROOT}"/catalog.Dockerfile extension-dev-e2e.dockerfile
+kubectl create configmap -n "${namespace}" --from-file="${TMP_ROOT}"/catalog extension-dev-e2e.build-contents
 
 kubectl apply -f - << EOF
 apiVersion: batch/v1
@@ -245,13 +245,13 @@ spec:
       volumes:
         - name: dockerfile
           configMap:
-            name: operator-dev-e2e.dockerfile
+            name: extension-dev-e2e.dockerfile
             items:
               - key: catalog.Dockerfile
                 path: catalog.Dockerfile
         - name: build-contents
           configMap:
-            name: operator-dev-e2e.build-contents
+            name: extension-dev-e2e.build-contents
 EOF
 
 kubectl wait --for=condition=Complete -n "${namespace}" jobs/kaniko --timeout=60s

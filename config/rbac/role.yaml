@@ -30,23 +30,23 @@ rules:
   - update
   - watch
 - apiGroups:
-  - operators.operatorframework.io
+  - olm.operatorframework.io
   resources:
-  - operators
+  - clusterextensions
   verbs:
   - get
   - list
   - watch
 - apiGroups:
-  - operators.operatorframework.io
+  - olm.operatorframework.io
   resources:
-  - operators/finalizers
+  - clusterextensions/finalizers
   verbs:
   - update
 - apiGroups:
-  - operators.operatorframework.io
+  - olm.operatorframework.io
   resources:
-  - operators/status
+  - clusterextensions/status
   verbs:
   - get
   - patch

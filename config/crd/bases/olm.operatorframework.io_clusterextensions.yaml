@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.12.0
-  name: operators.operators.operatorframework.io
+  name: clusterextensions.olm.operatorframework.io
 spec:
-  group: operators.operatorframework.io
+  group: olm.operatorframework.io
   names:
-    kind: Operator
-    listKind: OperatorList
-    plural: operators
-    singular: operator
+    kind: ClusterExtension
+    listKind: ClusterExtensionList
+    plural: clusterextensions
+    singular: clusterextension
   scope: Cluster
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Operator is the Schema for the operators API
+        description: ClusterExtension is the Schema for the clusterextensions API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -32,7 +32,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: OperatorSpec defines the desired state of Operator
+            description: ClusterExtensionSpec defines the desired state of ClusterExtension
             properties:
               channel:
                 description: Channel constraint definition
@@ -64,7 +64,7 @@ spec:
             - packageName
             type: object
           status:
-            description: OperatorStatus defines the observed state of Operator
+            description: ClusterExtensionStatus defines the observed state of ClusterExtension
             properties:
               conditions:
                 items:

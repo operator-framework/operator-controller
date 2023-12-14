@@ -1,14 +1,14 @@
-# Operator version ranges
+# Extension version ranges
 
-This document explains how to specify a version range to install or update an Operator with OLM 1.0.
+This document explains how to specify a version range to install or update an extension with OLM 1.0.
 
-You define a version range in an Operator's custom resource (CR) file.
+You define a version range in a ClusterExtension's custom resource (CR) file.
 
 ## Specifying a version range in the CR
 
-If you specify a version range in the Operator's CR, OLM 1.0 installs or updates the latest version of the Operator that can be resolved within the version range.
-The resolved version is the latest version of the Operator that satisfies the dependencies and constraints of the Operator and the environment.
-Operator updates within the specified range are automatically installed if they can be resolved successfully.
+If you specify a version range in the ClusterExtension's CR, OLM 1.0 installs or updates the latest version of the extension that can be resolved within the version range.
+The resolved version is the latest version of the extension that satisfies the dependencies and constraints of the extension and the environment.
+Extension updates within the specified range are automatically installed if they can be resolved successfully.
 Updates are not installed if they are outside of the specified range or if they cannot be resolved successfully.
 
 For more information about dependency and constraint resolution in OLM 1.0, see the [Deppy introduction](https://github.com/operator-framework/deppy#introductionhttps://github.com/operator-framework/deppy#introductionhttps://github.com/operator-framework/deppy#introduction)
