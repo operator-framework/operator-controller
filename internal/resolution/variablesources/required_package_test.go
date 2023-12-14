@@ -16,7 +16,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
@@ -82,12 +82,12 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 		allBundles = append(allBundles, bundle)
 	}
 
-	fakeOperator := func(packageName, channelName, versionRange string) operatorsv1alpha1.Operator {
-		return operatorsv1alpha1.Operator{
+	fakeClusterExtension := func(packageName, channelName, versionRange string) ocv1alpha1.ClusterExtension {
+		return ocv1alpha1.ClusterExtension{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fmt.Sprintf("op-%s-%s-%s", packageName, channelName, versionRange),
 			},
-			Spec: operatorsv1alpha1.OperatorSpec{
+			Spec: ocv1alpha1.ClusterExtensionSpec{
 				PackageName: packageName,
 				Version:     versionRange,
 				Channel:     channelName,
@@ -96,15 +96,15 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 	}
 
 	for _, tt := range []struct {
-		name           string
-		operators      []operatorsv1alpha1.Operator
-		expectedResult []*olmvariables.RequiredPackageVariable
-		expectedError  string
+		name              string
+		clusterExtensions []ocv1alpha1.ClusterExtension
+		expectedResult    []*olmvariables.RequiredPackageVariable
+		expectedError     string
 	}{
 		{
 			name: "package name only",
-			operators: []operatorsv1alpha1.Operator{
-				fakeOperator("test-package", "", ""),
+			clusterExtensions: []ocv1alpha1.ClusterExtension{
+				fakeClusterExtension("test-package", "", ""),
 			},
 			expectedResult: []*olmvariables.RequiredPackageVariable{
 				olmvariables.NewRequiredPackageVariable("test-package", []*catalogmetadata.Bundle{
@@ -116,8 +116,8 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 		},
 		{
 			name: "package name and channel",
-			operators: []operatorsv1alpha1.Operator{
-				fakeOperator("test-package", "beta", ""),
+			clusterExtensions: []ocv1alpha1.ClusterExtension{
+				fakeClusterExtension("test-package", "beta", ""),
 			},
 			expectedResult: []*olmvariables.RequiredPackageVariable{
 				olmvariables.NewRequiredPackageVariable("test-package", []*catalogmetadata.Bundle{
@@ -127,8 +127,8 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 		},
 		{
 			name: "package name and version range",
-			operators: []operatorsv1alpha1.Operator{
-				fakeOperator("test-package", "", ">=1.0.0 !=2.0.0 <3.0.0"),
+			clusterExtensions: []ocv1alpha1.ClusterExtension{
+				fakeClusterExtension("test-package", "", ">=1.0.0 !=2.0.0 <3.0.0"),
 			},
 			expectedResult: []*olmvariables.RequiredPackageVariable{
 				olmvariables.NewRequiredPackageVariable("test-package", []*catalogmetadata.Bundle{
@@ -138,42 +138,42 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 		},
 		{
 			name: "package name and invalid version range",
-			operators: []operatorsv1alpha1.Operator{
-				fakeOperator("test-package", "", "not a valid semver"),
+			clusterExtensions: []ocv1alpha1.ClusterExtension{
+				fakeClusterExtension("test-package", "", "not a valid semver"),
 			},
 			expectedError: `invalid version range "not a valid semver"`,
 		},
 		{
 			name: "not found: package name only",
-			operators: []operatorsv1alpha1.Operator{
-				fakeOperator("non-existent-test-package", "", ""),
+			clusterExtensions: []ocv1alpha1.ClusterExtension{
+				fakeClusterExtension("non-existent-test-package", "", ""),
 			},
 			expectedError: `no package "non-existent-test-package" found`,
 		},
 		{
 			name: "not found: package name and channel",
-			operators: []operatorsv1alpha1.Operator{
-				fakeOperator("non-existent-test-package", "stable", ""),
+			clusterExtensions: []ocv1alpha1.ClusterExtension{
+				fakeClusterExtension("non-existent-test-package", "stable", ""),
 			},
 			expectedError: `no package "non-existent-test-package" found in channel "stable"`,
 		},
 		{
 			name: "not found: package name and version range",
-			operators: []operatorsv1alpha1.Operator{
-				fakeOperator("non-existent-test-package", "", "1.0.0"),
+			clusterExtensions: []ocv1alpha1.ClusterExtension{
+				fakeClusterExtension("non-existent-test-package", "", "1.0.0"),
 			},
 			expectedError: `no package "non-existent-test-package" matching version "1.0.0" found`,
 		},
 		{
 			name: "not found: package name with channel and version range",
-			operators: []operatorsv1alpha1.Operator{
-				fakeOperator("non-existent-test-package", "stable", "1.0.0"),
+			clusterExtensions: []ocv1alpha1.ClusterExtension{
+				fakeClusterExtension("non-existent-test-package", "stable", "1.0.0"),
 			},
 			expectedError: `no package "non-existent-test-package" matching version "1.0.0" found in channel "stable"`,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			vars, err := variablesources.MakeRequiredPackageVariables(allBundles, tt.operators)
+			vars, err := variablesources.MakeRequiredPackageVariables(allBundles, tt.clusterExtensions)
 			if tt.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

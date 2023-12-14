@@ -22,8 +22,8 @@ jobs:
       run: |
         make kind-cluster
         make deploy
-        kubectl get crds operators.operators.operatorframework.io
+        kubectl get crds clusterextensions.olm.operatorframework.io
         kubectl get ns operator-controller-system
         make undeploy
         ! kubectl get ns operator-controller-system
-        ! kubectl get crds operators.operators.operatorframework.io
+        ! kubectl get crds clusterextensions.olm.operatorframework.io

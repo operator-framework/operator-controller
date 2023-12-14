@@ -74,21 +74,21 @@ var semVers = []struct {
 	{"1.2.3 - 2.3.4", "unsupported hyphen (range) operator - FALSE POSITIVE", true},
 }
 
-func TestValidateOperatorSpecSemVer(t *testing.T) {
+func TestValidateClusterExtensionSpecSemVer(t *testing.T) {
 	t.Parallel()
 	for _, s := range semVers {
 		d := s
 		t.Run(d.comment, func(t *testing.T) {
 			t.Parallel()
-			operator := &v1alpha1.Operator{
-				Spec: v1alpha1.OperatorSpec{
+			clusterExtension := &v1alpha1.ClusterExtension{
+				Spec: v1alpha1.ClusterExtensionSpec{
 					Version: d.data,
 				},
 			}
 			if d.result {
-				require.NoError(t, validators.ValidateOperatorSpec(operator))
+				require.NoError(t, validators.ValidateClusterExtensionSpec(clusterExtension))
 			} else {
-				require.Error(t, validators.ValidateOperatorSpec(operator))
+				require.Error(t, validators.ValidateClusterExtensionSpec(clusterExtension))
 			}
 		})
 	}

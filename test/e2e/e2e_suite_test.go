@@ -5,9 +5,10 @@ import (
 	"os"
 	"testing"
 
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -15,10 +16,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
-
-	operatorv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 var (
@@ -36,7 +34,7 @@ func TestMain(m *testing.M) {
 
 	scheme := runtime.NewScheme()
 
-	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(ocv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(catalogd.AddToScheme(scheme))
 	utilruntime.Must(appsv1.AddToScheme(scheme))

@@ -14,7 +14,7 @@ OLM has been helping to define lifecycles for these extensions in which the exte
 
 In the dependency model, extensions can rely on each other for required services that are out of scope of the primary purpose of an extension, allowing each extension to focus on a specific purpose. 
 
-OLM also prevents conflicting extensions from running on the cluster, either with conflicting dependency constraints or conflicts in ownership of services provided via APIs. Since cluster extensions need to be supported with an enterprise-grade product lifecycle, there has been a growing need for allowing operator authors to limit installation and upgrade of their extension by specifing addtional environmental constraints as dependencies, primarily to align with what was tested by the operator author's QE processes. In other words, there is an evergrowing ask for OLM to allow the author to enforce these support limitations in the form of additional constraints specified by operator authors in their packaging for OLM.
+OLM also prevents conflicting extensions from running on the cluster, either with conflicting dependency constraints or conflicts in ownership of services provided via APIs. Since cluster extensions need to be supported with an enterprise-grade product lifecycle, there has been a growing need for allowing extension authors to limit installation and upgrade of their extension by specifying additional environmental constraints as dependencies, primarily to align with what was tested by the extension author's QE processes. In other words, there is an evergrowing ask for OLM to allow the author to enforce these support limitations in the form of additional constraints specified by extension authors in their packaging for OLM.
 
 During their lifecycle on the cluster, OLM also manages the permissions and capabilities extensions have on the cluster as well as the permission and access tenants on the cluster have to the extensions. This is done using the Kubernetes RBAC system, in combination with tenant isolation using Kubernetes namespaces. While the interaction surface of the extensions is solely composed of Kubernetes APIs the extensions define, there is an acute need to rethink the way tenant(i.e consumers of extensions) isolation is achieved. The ask from OLM, is to provide tenant isolation in a more intuitive way than [is implemented in OLM v0](https://olm.operatorframework.io/docs/advanced-tasks/operator-scoping-with-operatorgroups/#docs)
 
@@ -31,5 +31,3 @@ You can reach out to the OLM community for feedbacks/discussions/contributions i
 
   * Kubernetes slack channel: [#olm-dev](https://kubernetes.slack.com/messages/olm-dev)
   * [Operator Framework on Google Groups](https://groups.google.com/forum/#!forum/operator-framework)
- 
-

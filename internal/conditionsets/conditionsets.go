@@ -16,9 +16,9 @@ limitations under the License.
 
 package conditionsets
 
-// ConditionTypes is the full set of Operator condition Types.
-// ConditionReasons is the full set of Operator condition Reasons.
+// ConditionTypes is the full set of ClusterExtension condition Types.
+// ConditionReasons is the full set of ClusterExtension condition Reasons.
 //
-// NOTE: These are populated by init() in api/v1alpha1/operator_types.go
+// NOTE: These are populated by init() in api/v1alpha1/clusterextension_types.go
 var ConditionTypes []string
 var ConditionReasons []string

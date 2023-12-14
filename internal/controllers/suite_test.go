@@ -32,7 +32,7 @@ import (
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"github.com/stretchr/testify/require"
 
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	testutil "github.com/operator-framework/operator-controller/test/util"
 )
@@ -44,13 +44,13 @@ func newClient(t *testing.T) client.Client {
 	return cl
 }
 
-func newClientAndReconciler(t *testing.T) (client.Client, *controllers.OperatorReconciler) {
+func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterExtensionReconciler) {
 	resolver, err := solver.New()
 	require.NoError(t, err)
 
 	cl := newClient(t)
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.OperatorReconciler{
+	reconciler := &controllers.ClusterExtensionReconciler{
 		Client:         cl,
 		BundleProvider: &fakeCatalogClient,
 		Scheme:         sch,
@@ -80,7 +80,7 @@ func TestMain(m *testing.M) {
 	}
 
 	sch = runtime.NewScheme()
-	utilruntime.Must(operatorsv1alpha1.AddToScheme(sch))
+	utilruntime.Must(ocv1alpha1.AddToScheme(sch))
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(sch))
 
 	code := m.Run()

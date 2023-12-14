@@ -4,7 +4,7 @@ This coast-to-coast demo highlights some of the new features introduced to OLMv1
 
 New Features:
 - `Catalog` polling
-- Version range support on the `spec.version` field for `Operator` resources
+- Version range support on the `spec.version` field for `ClusterExtension` resources
 - Semver upgrade constraint policy
 - `BundleDeployment` health status
 
@@ -26,13 +26,13 @@ This document will go through an example that highlights each of these new featu
 ## Prepare for takeoff
 
 Before we can start exploring the new features we need to do some preparation by creating a new
-Operator and building a few different versions.
+extension and building a few different versions.
 
-### Create an Operator
+### Create an extension
 >[!NOTE]
->In this demo, we aren't going to make the Operator do anything.
+>In this demo, we aren't going to make the extension do anything.
 
-We will create a new Operator using the `operator-sdk`.
+We will create a new extension using the `operator-sdk`.
 
 - Create a new directory for the project and `cd` into it:
 ```sh
@@ -53,8 +53,8 @@ operator-sdk create api \
     --resource --controller
 ```
 
-### Build the Operator and Bundle Images
-For this demo we are going to build a several different versions of this Operator:
+### Build the extension and bundle images
+For this demo we are going to build a several different versions of this extension:
 - `v1.0.0-alpha1`
 - `v1.0.0`
 - `v1.0.1`
@@ -201,15 +201,15 @@ EOF
 ```
 
 ## Only install/upgrade to `v1.0.z` releases
-In this section we are going to create an `Operator` resource that attempts to install our Operator
+In this section we are going to create a `ClusterExtension` resource that attempts to install our extension
 with a version range of `1.0.x`. This version range ensures we only install z-stream releases for `v1.0`
 excluding pre-release versions.
 
-- Create the `Operator` resource:
+- Create the `ClusterExtension` resource:
 ```sh
 kubectl apply -f - <<EOF
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   name: coastal
 spec:
@@ -218,21 +218,21 @@ spec:
 EOF
 ```
 
-We should see the `Operator` resource eventually has a failed resolution status. Verify this with:
+We should see the `ClusterExtension` resource eventually has a failed resolution status. Verify this with:
 ```sh
-kubectl get operator/coastal -o yaml -w
+kubectl get clusterextension/coastal -o yaml -w
 ```
 
 <details>
 <summary>Example</summary>
 
 ```yaml
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"operators.operatorframework.io/v1alpha1","kind":"Operator","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","version":"1.0.x"}}
+      {"apiVersion":"olm.operatorframework.io/v1alpha1","kind":"ClusterExtension","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","version":"1.0.x"}}
   creationTimestamp: "2023-11-27T20:29:18Z"
   generation: 1
   name: coastal
@@ -261,12 +261,12 @@ status:
 </details>
 
 >[!NOTE]
->The above command establishes a watch on the `Operator` resource and blocks. Once you are done verifying
+>The above command establishes a watch on the `ClusterExtension` resource and blocks. Once you are done verifying
 >the resolution status you can exit the command with `ctrl+c`
 
 ### Update the FBC Image to contain a bundle for `v1.0.0`
 To highlight both the polling functionality and the version range constraints, let's add the `v1.0.0` bundle
-of our Operator to the catalog image we created in the preparation steps and push the changes.
+of our extension to the catalog image we created in the preparation steps and push the changes.
 
 - Add the new bundle to the catalog YAML file
 ```sh
@@ -297,23 +297,23 @@ docker build -t quay.io/operator-framework/coastal-catalog:latest -f catalog.Doc
 docker push quay.io/operator-framework/coastal-catalog:latest
 ```
 
-Shortly, we should see that the `Catalog` resource updates to have a new resolved reference and the `Operator` resource we created previously is successfully installed. 
+Shortly, we should see that the `Catalog` resource updates to have a new resolved reference and the `ClusterExtension` resource we created previously is successfully installed. 
 
-Verify this for the `Operator` with:
+Verify this for the `ClusterExtension` with:
 ```sh
-kubectl get operator/coastal -o yaml -w
+kubectl get clusterextension/coastal -o yaml -w
 ```
 
 <details>
 <summary>Example</summary>
 
 ```yaml
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"operators.operatorframework.io/v1alpha1","kind":"Operator","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","version":"1.0.x"}}
+      {"apiVersion":"olm.operatorframework.io/v1alpha1","kind":"ClusterExtension","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","version":"1.0.x"}}
   creationTimestamp: "2023-11-27T20:29:18Z"
   generation: 1
   name: coastal
@@ -391,7 +391,7 @@ status:
 
 </details>
 
-Once the `Operator` has been successfully installed we can verify that all the resources created are healthy by checking the `BundleDeployment` resource owned by the `Operator` we created. Verify the `BundleDeployment` has a status condition showing whether or not it is healthy with:
+Once the `ClusterExtension` has been successfully installed we can verify that all the resources created are healthy by checking the `BundleDeployment` resource owned by the `ClusterExtension` we created. Verify the `BundleDeployment` has a status condition showing whether or not it is healthy with:
 ```sh
 kubectl get bundledeployment/coastal -o yaml -w
 ```
@@ -407,10 +407,10 @@ metadata:
   generation: 2
   name: coastal
   ownerReferences:
-  - apiVersion: operators.operatorframework.io/v1alpha1
+  - apiVersion: olm.operatorframework.io/v1alpha1
     blockOwnerDeletion: true
     controller: true
-    kind: Operator
+    kind: ClusterExtension
     name: coastal
     uid: 48d16240-edae-4904-bad8-58137bebcf8a
   resourceVersion: "3935"
@@ -481,7 +481,7 @@ docker push quay.io/operator-framework/coastal-catalog:latest
 ```
 
 Similar to the previous procedure, the `Catalog` updates its resolved reference,
-but the `Operator` resource remains the same and does not 
+but the `ClusterExtension` resource remains the same and does not 
 automatically upgrade to `v1.1.0`
 
 ### Update the FBC Image to contain a bundle for `v1.0.1`
@@ -517,7 +517,7 @@ docker build -t quay.io/operator-framework/coastal-catalog:latest -f catalog.Doc
 docker push quay.io/operator-framework/coastal-catalog:latest
 ```
 
-Once again, we should see the `Catalog` update its resolved reference. This time, we expect that the `Operator` resource is automatically upgraded to the new `v1.0.1` bundle we added.
+Once again, we should see the `Catalog` update its resolved reference. This time, we expect that the `ClusterExtension` resource is automatically upgraded to the new `v1.0.1` bundle we added.
 
 <details>
 <summary>Example Catalog</summary>
@@ -563,15 +563,15 @@ status:
 </details>
 
 <details>
-<summary>Example Operator</summary>
+<summary>Example ClusterExtension</summary>
 
 ```yaml
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"operators.operatorframework.io/v1alpha1","kind":"Operator","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","version":"1.0.x"}}
+      {"apiVersion":"olm.operatorframework.io/v1alpha1","kind":"ClusterExtension","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","version":"1.0.x"}}
   creationTimestamp: "2023-11-27T20:29:18Z"
   generation: 1
   name: coastal
@@ -602,13 +602,13 @@ status:
 </details>
 
 ## Change version range to pin installs/upgrades to `v1.1.z` releases
-Making changes to the `Operator` resource should result in a re-reconciliation of the resource
+Making changes to the `ClusterExtension` resource should result in a re-reconciliation of the resource
 which should result in another resolution loop. To see this, let's update the version range
-on our `Operator` resource to `1.1.x` with:
+on our `ClusterExtension` resource to `1.1.x` with:
 ```sh
 kubectl apply -f - <<EOF
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   name: coastal
 spec:
@@ -617,24 +617,24 @@ spec:
 EOF
 ```
 
-After this change has been applied, the `Operator` resource is updated
+After this change has been applied, the `ClusterExtension` resource is updated
 and says that we have installed the `v1.1.0` bundle.
 
 You can watch this change happen with:
 ```sh
-kubectl get operator/coastal -o yaml -w
+kubectl get clusterextension/coastal -o yaml -w
 ```
 
 <details>
 <summary>Example</summary>
 
 ```yaml
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"operators.operatorframework.io/v1alpha1","kind":"Operator","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","version":"1.1.x"}}
+      {"apiVersion":"olm.operatorframework.io/v1alpha1","kind":"ClusterExtension","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","version":"1.1.x"}}
   creationTimestamp: "2023-11-27T20:29:18Z"
   generation: 2
   name: coastal
@@ -665,9 +665,9 @@ status:
 </details>
 
 ## Attempting a major version upgrade by changing the version range
-The Operator Controller follows semver and prevents automatic upgrades to new major versions when an `Operator`'s `spec.upgradeConstraintPolicy` is set to `Enforce`. New major versions might
+The operator-controller follows semver and prevents automatic upgrades to new major versions when a `ClusterExtension`'s `spec.upgradeConstraintPolicy` is set to `Enforce`. New major versions might
 have breaking changes and could cause problems for users. Let's add a new major 
-version of our bundle to the catalog image and update the version range on the `Operator`.
+version of our bundle to the catalog image and update the version range on the `ClusterExtension`.
 
 ### Update the FBC Image to contain a bundle for `v2.0.0`
 - Add the new bundle to the catalog YAML file
@@ -699,14 +699,14 @@ docker build -t quay.io/operator-framework/coastal-catalog:latest -f catalog.Doc
 docker push quay.io/operator-framework/coastal-catalog:latest
 ```
 
-The `Catalog` updates its resolved reference and no changes are applied to the `Operator` resource.
+The `Catalog` updates its resolved reference and no changes are applied to the `ClusterExtension` resource.
 
-Updating the `Operator` resource's version range will still result in a resolution failure since the version installed
+Updating the `ClusterExtension` resource's version range will still result in a resolution failure since the version installed
 is a lower major version than specified by the version range. Try it by running:
 ```sh
 kubectl apply -f - <<EOF
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   name: coastal
 spec:
@@ -717,19 +717,19 @@ EOF
 
 Watch for a resolution failure with:
 ```sh
-kubectl get operator/coastal -o yaml -w
+kubectl get clusterextension/coastal -o yaml -w
 ```
 
 <details>
 <summary>Example</summary>
 
 ```yaml
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"operators.operatorframework.io/v1alpha1","kind":"Operator","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","version":"2.0.x"}}
+      {"apiVersion":"olm.operatorframework.io/v1alpha1","kind":"ClusterExtension","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","version":"2.0.x"}}
   creationTimestamp: "2023-11-27T20:29:18Z"
   generation: 3
   name: coastal
@@ -765,11 +765,11 @@ status:
 
 ## To the escape hatch!
 To tell operator-controller to ignore the semver policies and allow upgrades across major versions,
-set the `Operator`'s `spec.upgradeConstraintPolicy` to `Ignore` with:
+set the `ClusterExtension`'s `spec.upgradeConstraintPolicy` to `Ignore` with:
 ```sh
 kubectl apply -f - <<EOF
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   name: coastal
 spec:
@@ -779,22 +779,22 @@ spec:
 EOF
 ```
 
-We should see that eventually the `Operator` will resolve and install the `v2.0.0` bundle we added to the
+We should see that eventually the `ClusterExtension` will resolve and install the `v2.0.0` bundle we added to the
 catalog image in the previous step. Watch this happen with:
 ```sh
-kubectl get operator/coastal -o yaml -w
+kubectl get clusterextension/coastal -o yaml -w
 ```
 
 <details>
 <summary>Example</summary>
 
 ```yaml
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"operators.operatorframework.io/v1alpha1","kind":"Operator","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","upgradeConstraintPolicy":"Ignore","version":"2.0.x"}}
+      {"apiVersion":"olm.operatorframework.io/v1alpha1","kind":"ClusterExtension","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","upgradeConstraintPolicy":"Ignore","version":"2.0.x"}}
   creationTimestamp: "2023-11-27T20:29:18Z"
   generation: 4
   name: coastal
@@ -825,12 +825,12 @@ status:
 </details>
 
 ## Attempting to downgrade by changing the version range
-We can disable downgrades by setting the `Operator` resource's `spec.UpgradeConstraintPolicy` field to `Enforce`.
+We can disable downgrades by setting the `ClusterExtension` resource's `spec.UpgradeConstraintPolicy` field to `Enforce`.
 To see this, run:
 ```sh
 kubectl apply -f - <<EOF
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   name: coastal
 spec:
@@ -842,19 +842,19 @@ EOF
 
 We should see resolution fail since it is attempting to downgrade. Watch this happen with:
 ```sh
-kubectl get operator/coastal -o yaml -w
+kubectl get clusterextension/coastal -o yaml -w
 ```
 
 <details>
 <summary>Example</summary>
 
 ```yaml
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"operators.operatorframework.io/v1alpha1","kind":"Operator","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","upgradeConstraintPolicy":"Enforce","version":"1.1.x"}}
+      {"apiVersion":"olm.operatorframework.io/v1alpha1","kind":"ClusterExtension","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","upgradeConstraintPolicy":"Enforce","version":"1.1.x"}}
   creationTimestamp: "2023-11-27T20:29:18Z"
   generation: 5
   name: coastal
@@ -889,12 +889,12 @@ status:
 </details>
 
 ## Back to the escape hatch!
-To tell operator-controller to ignore the safety mechanisms and downgrade the `Operator` version,
-set the `Operator`'s `spec.upgradeConstraintPolicy` to `Ignore` with:
+To tell operator-controller to ignore the safety mechanisms and downgrade the `ClusterExtension` version,
+set the `ClusterExtension`'s `spec.upgradeConstraintPolicy` to `Ignore` with:
 ```sh
 kubectl apply -f - <<EOF
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   name: coastal
 spec:
@@ -904,22 +904,22 @@ spec:
 EOF
 ```
 
-We should see that eventually the `Operator` will resolve and install the `v1.1.0` bundle we added to the
+We should see that eventually the `ClusterExtension` will resolve and install the `v1.1.0` bundle we added to the
 catalog image in a previous step.  Watch this happen with:
 ```sh
-kubectl get operator/coastal -o yaml -w
+kubectl get clusterextension/coastal -o yaml -w
 ```
 
 <details>
 <summary>Example</summary>
 
 ```yaml
-apiVersion: operators.operatorframework.io/v1alpha1
-kind: Operator
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"operators.operatorframework.io/v1alpha1","kind":"Operator","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","upgradeConstraintPolicy":"Ignore","version":"1.1.x"}}
+      {"apiVersion":"olm.operatorframework.io/v1alpha1","kind":"ClusterExtension","metadata":{"annotations":{},"name":"coastal"},"spec":{"packageName":"coastal","upgradeConstraintPolicy":"Ignore","version":"1.1.x"}}
   creationTimestamp: "2023-11-27T20:29:18Z"
   generation: 6
   name: coastal

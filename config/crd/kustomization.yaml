@@ -2,7 +2,7 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/operators.operatorframework.io_operators.yaml
+- bases/olm.operatorframework.io_clusterextensions.yaml
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.
 configurations:

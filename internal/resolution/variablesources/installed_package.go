@@ -5,12 +5,11 @@ import (
 	"sort"
 
 	mmsemver "github.com/Masterminds/semver/v3"
+	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
-
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
@@ -24,7 +23,7 @@ import (
 // has own variable.
 func MakeInstalledPackageVariables(
 	allBundles []*catalogmetadata.Bundle,
-	operators []operatorsv1alpha1.Operator,
+	clusterExtensions []ocv1alpha1.ClusterExtension,
 	bundleDeployments []rukpakv1alpha1.BundleDeployment,
 ) ([]*olmvariables.InstalledPackageVariable, error) {
 	var successors successorsFunc = legacySemanticsSuccessors
@@ -34,16 +33,16 @@ func MakeInstalledPackageVariables(
 
 	ownerIDToBundleDeployment := mapOwnerIDToBundleDeployment(bundleDeployments)
 
-	result := make([]*olmvariables.InstalledPackageVariable, 0, len(operators))
+	result := make([]*olmvariables.InstalledPackageVariable, 0, len(clusterExtensions))
 	processed := sets.Set[string]{}
-	for _, operator := range operators {
-		if operator.Spec.UpgradeConstraintPolicy == operatorsv1alpha1.UpgradeConstraintPolicyIgnore {
+	for _, clusterExtension := range clusterExtensions {
+		if clusterExtension.Spec.UpgradeConstraintPolicy == ocv1alpha1.UpgradeConstraintPolicyIgnore {
 			continue
 		}
 
-		bundleDeployment, ok := ownerIDToBundleDeployment[operator.UID]
+		bundleDeployment, ok := ownerIDToBundleDeployment[clusterExtension.UID]
 		if !ok {
-			// This can happen when an Operator is requested,
+			// This can happen when an ClusterExtension is requested,
 			// but not yet installed (e.g. no BundleDeployment created for it)
 			continue
 		}
@@ -62,11 +61,11 @@ func MakeInstalledPackageVariables(
 
 		// find corresponding bundle for the installed content
 		resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(
-			catalogfilter.WithPackageName(operator.Spec.PackageName),
+			catalogfilter.WithPackageName(clusterExtension.Spec.PackageName),
 			catalogfilter.WithBundleImage(bundleImage),
 		))
 		if len(resultSet) == 0 {
-			return nil, fmt.Errorf("bundle with image %q for package %q not found in available catalogs but is currently installed via BundleDeployment %q", bundleImage, operator.Spec.PackageName, bundleDeployment.Name)
+			return nil, fmt.Errorf("bundle with image %q for package %q not found in available catalogs but is currently installed via BundleDeployment %q", bundleImage, clusterExtension.Spec.PackageName, bundleDeployment.Name)
 		}
 
 		sort.SliceStable(resultSet, func(i, j int) bool {

@@ -25,11 +25,11 @@ import (
 type UpgradeConstraintPolicy string
 
 const (
-	// The operator will only upgrade if the new version satisfies
+	// The extension will only upgrade if the new version satisfies
 	// the upgrade constraints set by the package author.
 	UpgradeConstraintPolicyEnforce UpgradeConstraintPolicy = "Enforce"
 
-	// Unsafe option which allows an operator to be
+	// Unsafe option which allows an extension to be
 	// upgraded or downgraded to any available version of the package and
 	// ignore the upgrade path designed by package authors.
 	// This assumes that users independently verify the outcome of the changes.
@@ -38,8 +38,8 @@ const (
 	UpgradeConstraintPolicyIgnore UpgradeConstraintPolicy = "Ignore"
 )
 
-// OperatorSpec defines the desired state of Operator
-type OperatorSpec struct {
+// ClusterExtensionSpec defines the desired state of ClusterExtension
+type ClusterExtensionSpec struct {
 	//+kubebuilder:validation:MaxLength:=48
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+(-[a-z0-9]+)*$
 	PackageName string `json:"packageName"`
@@ -101,8 +101,8 @@ func init() {
 	)
 }
 
-// OperatorStatus defines the observed state of Operator
-type OperatorStatus struct {
+// ClusterExtensionStatus defines the observed state of ClusterExtension
+type ClusterExtensionStatus struct {
 	// +optional
 	InstalledBundleResource string `json:"installedBundleResource,omitempty"`
 	// +optional
@@ -119,24 +119,24 @@ type OperatorStatus struct {
 //+kubebuilder:resource:scope=Cluster
 //+kubebuilder:subresource:status
 
-// Operator is the Schema for the operators API
-type Operator struct {
+// ClusterExtension is the Schema for the clusterextensions API
+type ClusterExtension struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   OperatorSpec   `json:"spec,omitempty"`
-	Status OperatorStatus `json:"status,omitempty"`
+	Spec   ClusterExtensionSpec   `json:"spec,omitempty"`
+	Status ClusterExtensionStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// OperatorList contains a list of Operator
-type OperatorList struct {
+// ClusterExtensionList contains a list of ClusterExtension
+type ClusterExtensionList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Operator `json:"items"`
+	Items           []ClusterExtension `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Operator{}, &OperatorList{})
+	SchemeBuilder.Register(&ClusterExtension{}, &ClusterExtensionList{})
 }

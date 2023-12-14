@@ -20,18 +20,18 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
-func GenerateVariables(allBundles []*catalogmetadata.Bundle, operators []operatorsv1alpha1.Operator, bundleDeployments []rukpakv1alpha1.BundleDeployment) ([]deppy.Variable, error) {
-	requiredPackages, err := variablesources.MakeRequiredPackageVariables(allBundles, operators)
+func GenerateVariables(allBundles []*catalogmetadata.Bundle, clusterExtensions []ocv1alpha1.ClusterExtension, bundleDeployments []rukpakv1alpha1.BundleDeployment) ([]deppy.Variable, error) {
+	requiredPackages, err := variablesources.MakeRequiredPackageVariables(allBundles, clusterExtensions)
 	if err != nil {
 		return nil, err
 	}
 
-	installedPackages, err := variablesources.MakeInstalledPackageVariables(allBundles, operators, bundleDeployments)
+	installedPackages, err := variablesources.MakeInstalledPackageVariables(allBundles, clusterExtensions, bundleDeployments)
 	if err != nil {
 		return nil, err
 	}

@@ -39,7 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
@@ -51,43 +51,43 @@ type BundleProvider interface {
 	Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
 }
 
-// OperatorReconciler reconciles a Operator object
-type OperatorReconciler struct {
+// ClusterExtensionReconciler reconciles a ClusterExtension object
+type ClusterExtensionReconciler struct {
 	client.Client
 	BundleProvider BundleProvider
 	Scheme         *runtime.Scheme
 	Resolver       *solver.Solver
 }
 
-//+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators,verbs=get;list;watch
-//+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=operators.operatorframework.io,resources=operators/finalizers,verbs=update
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/finalizers,verbs=update
 
 //+kubebuilder:rbac:groups=core.rukpak.io,resources=bundledeployments,verbs=get;list;watch;create;update;patch
 
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
 
-func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("operator-controller")
 	l.V(1).Info("starting")
 	defer l.V(1).Info("ending")
 
-	var existingOp = &operatorsv1alpha1.Operator{}
-	if err := r.Get(ctx, req.NamespacedName, existingOp); err != nil {
+	var existingExt = &ocv1alpha1.ClusterExtension{}
+	if err := r.Get(ctx, req.NamespacedName, existingExt); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	reconciledOp := existingOp.DeepCopy()
-	res, reconcileErr := r.reconcile(ctx, reconciledOp)
+	reconciledExt := existingExt.DeepCopy()
+	res, reconcileErr := r.reconcile(ctx, reconciledExt)
 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
-	updateStatus := !equality.Semantic.DeepEqual(existingOp.Status, reconciledOp.Status)
-	updateFinalizers := !equality.Semantic.DeepEqual(existingOp.Finalizers, reconciledOp.Finalizers)
-	unexpectedFieldsChanged := checkForUnexpectedFieldChange(*existingOp, *reconciledOp)
+	updateStatus := !equality.Semantic.DeepEqual(existingExt.Status, reconciledExt.Status)
+	updateFinalizers := !equality.Semantic.DeepEqual(existingExt.Finalizers, reconciledExt.Finalizers)
+	unexpectedFieldsChanged := checkForUnexpectedFieldChange(*existingExt, *reconciledExt)
 
 	if updateStatus {
-		if updateErr := r.Status().Update(ctx, reconciledOp); updateErr != nil {
+		if updateErr := r.Status().Update(ctx, reconciledExt); updateErr != nil {
 			return res, utilerrors.NewAggregate([]error{reconcileErr, updateErr})
 		}
 	}
@@ -97,7 +97,7 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	if updateFinalizers {
-		if updateErr := r.Update(ctx, reconciledOp); updateErr != nil {
+		if updateErr := r.Update(ctx, reconciledExt); updateErr != nil {
 			return res, utilerrors.NewAggregate([]error{reconcileErr, updateErr})
 		}
 	}
@@ -106,8 +106,8 @@ func (r *OperatorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 }
 
 // Compare resources - ignoring status & metadata.finalizers
-func checkForUnexpectedFieldChange(a, b operatorsv1alpha1.Operator) bool {
-	a.Status, b.Status = operatorsv1alpha1.OperatorStatus{}, operatorsv1alpha1.OperatorStatus{}
+func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
+	a.Status, b.Status = ocv1alpha1.ClusterExtensionStatus{}, ocv1alpha1.ClusterExtensionStatus{}
 	a.Finalizers, b.Finalizers = []string{}, []string{}
 	return !equality.Semantic.DeepEqual(a, b)
 }
@@ -119,99 +119,99 @@ func checkForUnexpectedFieldChange(a, b operatorsv1alpha1.Operator) bool {
 // to return different results (e.g. requeue).
 //
 //nolint:unparam
-func (r *OperatorReconciler) reconcile(ctx context.Context, op *operatorsv1alpha1.Operator) (ctrl.Result, error) {
+func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
 	// validate spec
-	if err := validators.ValidateOperatorSpec(op); err != nil {
+	if err := validators.ValidateClusterExtensionSpec(ext); err != nil {
 		// Set the TypeInstalled condition to Unknown to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
-		op.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as spec is invalid", op.GetGeneration())
+		ext.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as spec is invalid", ext.GetGeneration())
 		// Set the TypeResolved condition to Unknown to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
-		op.Status.ResolvedBundleResource = ""
-		setResolvedStatusConditionUnknown(&op.Status.Conditions, "validation has not been attempted as spec is invalid", op.GetGeneration())
+		ext.Status.ResolvedBundleResource = ""
+		setResolvedStatusConditionUnknown(&ext.Status.Conditions, "validation has not been attempted as spec is invalid", ext.GetGeneration())
 		return ctrl.Result{}, nil
 	}
 
 	// gather vars for resolution
 	vars, err := r.variables(ctx)
 	if err != nil {
-		op.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted due to failure to gather data for resolution", op.GetGeneration())
-		op.Status.ResolvedBundleResource = ""
-		setResolvedStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		ext.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted due to failure to gather data for resolution", ext.GetGeneration())
+		ext.Status.ResolvedBundleResource = ""
+		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
 	// run resolution
 	selection, err := r.Resolver.Solve(vars)
 	if err != nil {
-		op.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
-		op.Status.ResolvedBundleResource = ""
-		setResolvedStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		ext.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as resolution failed", ext.GetGeneration())
+		ext.Status.ResolvedBundleResource = ""
+		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
 	// lookup the bundle in the solution that corresponds to the
-	// Operator's desired package name.
-	bundle, err := r.bundleFromSolution(selection, op.Spec.PackageName)
+	// ClusterExtension's desired package name.
+	bundle, err := r.bundleFromSolution(selection, ext.Spec.PackageName)
 	if err != nil {
-		op.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&op.Status.Conditions, "installation has not been attempted as resolution failed", op.GetGeneration())
-		op.Status.ResolvedBundleResource = ""
-		setResolvedStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		ext.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as resolution failed", ext.GetGeneration())
+		ext.Status.ResolvedBundleResource = ""
+		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
 	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundle.Image value.
-	op.Status.ResolvedBundleResource = bundle.Image
-	setResolvedStatusConditionSuccess(&op.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), op.GetGeneration())
+	ext.Status.ResolvedBundleResource = bundle.Image
+	setResolvedStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), ext.GetGeneration())
 
 	mediaType, err := bundle.MediaType()
 	if err != nil {
-		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 	bundleProvisioner, err := mapBundleMediaTypeToBundleProvisioner(mediaType)
 	if err != nil {
-		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
 	// image we just looked up in the solution.
-	dep := r.generateExpectedBundleDeployment(*op, bundle.Image, bundleProvisioner)
+	dep := r.generateExpectedBundleDeployment(*ext, bundle.Image, bundleProvisioner)
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
-		// originally Reason: operatorsv1alpha1.ReasonInstallationFailed
-		op.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionFailed(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		// originally Reason: ocv1alpha1.ReasonInstallationFailed
+		ext.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
 	// convert existing unstructured object into bundleDeployment for easier mapping of status.
 	existingTypedBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(dep.UnstructuredContent(), existingTypedBundleDeployment); err != nil {
-		// originally Reason: operatorsv1alpha1.ReasonInstallationStatusUnknown
-		op.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&op.Status.Conditions, err.Error(), op.GetGeneration())
+		// originally Reason: ocv1alpha1.ReasonInstallationStatusUnknown
+		ext.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
 	// Let's set the proper Installed condition and InstalledBundleResource field based on the
 	// existing BundleDeployment object status.
-	mapBDStatusToInstalledCondition(existingTypedBundleDeployment, op)
+	mapBDStatusToInstalledCondition(existingTypedBundleDeployment, ext)
 
-	// set the status of the operator based on the respective bundle deployment status conditions.
+	// set the status of the cluster extension based on the respective bundle deployment status conditions.
 	return ctrl.Result{}, nil
 }
 
-func (r *OperatorReconciler) variables(ctx context.Context) ([]deppy.Variable, error) {
+func (r *ClusterExtensionReconciler) variables(ctx context.Context) ([]deppy.Variable, error) {
 	allBundles, err := r.BundleProvider.Bundles(ctx)
 	if err != nil {
 		return nil, err
 	}
-	operatorList := operatorsv1alpha1.OperatorList{}
-	if err := r.Client.List(ctx, &operatorList); err != nil {
+	clusterExtensionList := ocv1alpha1.ClusterExtensionList{}
+	if err := r.Client.List(ctx, &clusterExtensionList); err != nil {
 		return nil, err
 	}
 	bundleDeploymentList := rukpakv1alpha1.BundleDeploymentList{}
@@ -219,23 +219,23 @@ func (r *OperatorReconciler) variables(ctx context.Context) ([]deppy.Variable, e
 		return nil, err
 	}
 
-	return GenerateVariables(allBundles, operatorList.Items, bundleDeploymentList.Items)
+	return GenerateVariables(allBundles, clusterExtensionList.Items, bundleDeploymentList.Items)
 }
 
-func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha1.BundleDeployment, op *operatorsv1alpha1.Operator) {
+func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha1.BundleDeployment, ext *ocv1alpha1.ClusterExtension) {
 	bundleDeploymentReady := apimeta.FindStatusCondition(existingTypedBundleDeployment.Status.Conditions, rukpakv1alpha1.TypeInstalled)
 	if bundleDeploymentReady == nil {
-		op.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&op.Status.Conditions, "bundledeployment status is unknown", op.GetGeneration())
+		ext.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "bundledeployment status is unknown", ext.GetGeneration())
 		return
 	}
 
 	if bundleDeploymentReady.Status != metav1.ConditionTrue {
-		op.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionFailed(
-			&op.Status.Conditions,
+			&ext.Status.Conditions,
 			fmt.Sprintf("bundledeployment not ready: %s", bundleDeploymentReady.Message),
-			op.GetGeneration(),
+			ext.GetGeneration(),
 		)
 		return
 	}
@@ -243,31 +243,31 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 	bundleDeploymentSource := existingTypedBundleDeployment.Spec.Template.Spec.Source
 	switch bundleDeploymentSource.Type {
 	case rukpakv1alpha1.SourceTypeImage:
-		op.Status.InstalledBundleResource = bundleDeploymentSource.Image.Ref
+		ext.Status.InstalledBundleResource = bundleDeploymentSource.Image.Ref
 		setInstalledStatusConditionSuccess(
-			&op.Status.Conditions,
+			&ext.Status.Conditions,
 			fmt.Sprintf("installed from %q", bundleDeploymentSource.Image.Ref),
-			op.GetGeneration(),
+			ext.GetGeneration(),
 		)
 	case rukpakv1alpha1.SourceTypeGit:
 		resource := bundleDeploymentSource.Git.Repository + "@" + bundleDeploymentSource.Git.Ref.Commit
-		op.Status.InstalledBundleResource = resource
+		ext.Status.InstalledBundleResource = resource
 		setInstalledStatusConditionSuccess(
-			&op.Status.Conditions,
+			&ext.Status.Conditions,
 			fmt.Sprintf("installed from %q", resource),
-			op.GetGeneration(),
+			ext.GetGeneration(),
 		)
 	default:
-		op.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(
-			&op.Status.Conditions,
+			&ext.Status.Conditions,
 			fmt.Sprintf("unknown bundledeployment source type %q", bundleDeploymentSource.Type),
-			op.GetGeneration(),
+			ext.GetGeneration(),
 		)
 	}
 }
 
-func (r *OperatorReconciler) bundleFromSolution(selection []deppy.Variable, packageName string) (*catalogmetadata.Bundle, error) {
+func (r *ClusterExtensionReconciler) bundleFromSolution(selection []deppy.Variable, packageName string) (*catalogmetadata.Bundle, error) {
 	for _, variable := range selection {
 		switch v := variable.(type) {
 		case *olmvariables.BundleVariable:
@@ -280,7 +280,7 @@ func (r *OperatorReconciler) bundleFromSolution(selection []deppy.Variable, pack
 	return nil, fmt.Errorf("bundle for package %q not found in solution", packageName)
 }
 
-func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha1.Operator, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {
+func (r *ClusterExtensionReconciler) generateExpectedBundleDeployment(o ocv1alpha1.ClusterExtension, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {
 	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
 	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
 	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
@@ -312,8 +312,8 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 	}}
 	bd.SetOwnerReferences([]metav1.OwnerReference{
 		{
-			APIVersion:         operatorsv1alpha1.GroupVersion.String(),
-			Kind:               "Operator",
+			APIVersion:         ocv1alpha1.GroupVersion.String(),
+			Kind:               "ClusterExtension",
 			Name:               o.Name,
 			UID:                o.UID,
 			Controller:         pointer.Bool(true),
@@ -324,11 +324,11 @@ func (r *OperatorReconciler) generateExpectedBundleDeployment(o operatorsv1alpha
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
-		For(&operatorsv1alpha1.Operator{}).
+		For(&ocv1alpha1.ClusterExtension{}).
 		Watches(&catalogd.Catalog{},
-			handler.EnqueueRequestsFromMapFunc(operatorRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
+			handler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
 		Owns(&rukpakv1alpha1.BundleDeployment{}).
 		Complete(r)
 
@@ -338,12 +338,12 @@ func (r *OperatorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return nil
 }
 
-func (r *OperatorReconciler) ensureBundleDeployment(ctx context.Context, desiredBundleDeployment *unstructured.Unstructured) error {
-	// TODO: what if there happens to be an unrelated BD with the same name as the Operator?
+func (r *ClusterExtensionReconciler) ensureBundleDeployment(ctx context.Context, desiredBundleDeployment *unstructured.Unstructured) error {
+	// TODO: what if there happens to be an unrelated BD with the same name as the ClusterExtension?
 	//   we should probably also check to see if there's an owner reference and/or a label set
-	//   that we expect only to ever be used by the operator controller. That way, we don't
+	//   that we expect only to ever be used by the operator-controller. That way, we don't
 	//   automatically and silently adopt and change a BD that the user doens't intend to be
-	//   owned by the Operator.
+	//   owned by the ClusterExtension.
 	existingBundleDeployment, err := r.existingBundleDeploymentUnstructured(ctx, desiredBundleDeployment.GetName())
 	if client.IgnoreNotFound(err) != nil {
 		return err
@@ -359,7 +359,7 @@ func (r *OperatorReconciler) ensureBundleDeployment(ctx context.Context, desired
 	return r.Client.Patch(ctx, desiredBundleDeployment, client.Apply, client.ForceOwnership, client.FieldOwner("operator-controller"))
 }
 
-func (r *OperatorReconciler) existingBundleDeploymentUnstructured(ctx context.Context, name string) (*unstructured.Unstructured, error) {
+func (r *ClusterExtensionReconciler) existingBundleDeploymentUnstructured(ctx context.Context, name string) (*unstructured.Unstructured, error) {
 	existingBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
 	err := r.Client.Get(ctx, types.NamespacedName{Name: name}, existingBundleDeployment)
 	if err != nil {
@@ -394,9 +394,9 @@ func mapBundleMediaTypeToBundleProvisioner(mediaType string) (string, error) {
 // setResolvedStatusConditionSuccess sets the resolved status condition to success.
 func setResolvedStatusConditionSuccess(conditions *[]metav1.Condition, message string, generation int64) {
 	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               operatorsv1alpha1.TypeResolved,
+		Type:               ocv1alpha1.TypeResolved,
 		Status:             metav1.ConditionTrue,
-		Reason:             operatorsv1alpha1.ReasonSuccess,
+		Reason:             ocv1alpha1.ReasonSuccess,
 		Message:            message,
 		ObservedGeneration: generation,
 	})
@@ -405,9 +405,9 @@ func setResolvedStatusConditionSuccess(conditions *[]metav1.Condition, message s
 // setResolvedStatusConditionFailed sets the resolved status condition to failed.
 func setResolvedStatusConditionFailed(conditions *[]metav1.Condition, message string, generation int64) {
 	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               operatorsv1alpha1.TypeResolved,
+		Type:               ocv1alpha1.TypeResolved,
 		Status:             metav1.ConditionFalse,
-		Reason:             operatorsv1alpha1.ReasonResolutionFailed,
+		Reason:             ocv1alpha1.ReasonResolutionFailed,
 		Message:            message,
 		ObservedGeneration: generation,
 	})
@@ -416,9 +416,9 @@ func setResolvedStatusConditionFailed(conditions *[]metav1.Condition, message st
 // setResolvedStatusConditionUnknown sets the resolved status condition to unknown.
 func setResolvedStatusConditionUnknown(conditions *[]metav1.Condition, message string, generation int64) {
 	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               operatorsv1alpha1.TypeResolved,
+		Type:               ocv1alpha1.TypeResolved,
 		Status:             metav1.ConditionUnknown,
-		Reason:             operatorsv1alpha1.ReasonResolutionUnknown,
+		Reason:             ocv1alpha1.ReasonResolutionUnknown,
 		Message:            message,
 		ObservedGeneration: generation,
 	})
@@ -427,9 +427,9 @@ func setResolvedStatusConditionUnknown(conditions *[]metav1.Condition, message s
 // setInstalledStatusConditionSuccess sets the installed status condition to success.
 func setInstalledStatusConditionSuccess(conditions *[]metav1.Condition, message string, generation int64) {
 	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               operatorsv1alpha1.TypeInstalled,
+		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionTrue,
-		Reason:             operatorsv1alpha1.ReasonSuccess,
+		Reason:             ocv1alpha1.ReasonSuccess,
 		Message:            message,
 		ObservedGeneration: generation,
 	})
@@ -438,9 +438,9 @@ func setInstalledStatusConditionSuccess(conditions *[]metav1.Condition, message 
 // setInstalledStatusConditionFailed sets the installed status condition to failed.
 func setInstalledStatusConditionFailed(conditions *[]metav1.Condition, message string, generation int64) {
 	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               operatorsv1alpha1.TypeInstalled,
+		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionFalse,
-		Reason:             operatorsv1alpha1.ReasonInstallationFailed,
+		Reason:             ocv1alpha1.ReasonInstallationFailed,
 		Message:            message,
 		ObservedGeneration: generation,
 	})
@@ -449,30 +449,30 @@ func setInstalledStatusConditionFailed(conditions *[]metav1.Condition, message s
 // setInstalledStatusConditionUnknown sets the installed status condition to unknown.
 func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message string, generation int64) {
 	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               operatorsv1alpha1.TypeInstalled,
+		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionUnknown,
-		Reason:             operatorsv1alpha1.ReasonInstallationStatusUnknown,
+		Reason:             ocv1alpha1.ReasonInstallationStatusUnknown,
 		Message:            message,
 		ObservedGeneration: generation,
 	})
 }
 
-// Generate reconcile requests for all operators affected by a catalog change
-func operatorRequestsForCatalog(c client.Reader, logger logr.Logger) handler.MapFunc {
+// Generate reconcile requests for all cluster extensions affected by a catalog change
+func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) handler.MapFunc {
 	return func(ctx context.Context, _ client.Object) []reconcile.Request {
-		// no way of associating an operator to a catalog so create reconcile requests for everything
-		operators := operatorsv1alpha1.OperatorList{}
-		err := c.List(ctx, &operators)
+		// no way of associating an extension to a catalog so create reconcile requests for everything
+		clusterExtensions := ocv1alpha1.ClusterExtensionList{}
+		err := c.List(ctx, &clusterExtensions)
 		if err != nil {
-			logger.Error(err, "unable to enqueue operators for catalog reconcile")
+			logger.Error(err, "unable to enqueue cluster extensions for catalog reconcile")
 			return nil
 		}
 		var requests []reconcile.Request
-		for _, op := range operators.Items {
+		for _, ext := range clusterExtensions.Items {
 			requests = append(requests, reconcile.Request{
 				NamespacedName: types.NamespacedName{
-					Namespace: op.GetNamespace(),
-					Name:      op.GetName(),
+					Namespace: ext.GetNamespace(),
+					Name:      ext.GetName(),
 				},
 			})
 		}

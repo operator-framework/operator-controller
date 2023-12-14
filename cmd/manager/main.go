@@ -36,7 +36,7 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
@@ -51,7 +51,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(ocv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(catalogd.AddToScheme(scheme))
 
@@ -115,13 +115,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.OperatorReconciler{
+	if err = (&controllers.ClusterExtensionReconciler{
 		Client:         cl,
 		BundleProvider: catalogClient,
 		Scheme:         mgr.GetScheme(),
 		Resolver:       resolver,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Operator")
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

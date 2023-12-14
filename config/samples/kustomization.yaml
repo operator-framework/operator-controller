@@ -1,4 +1,4 @@
 ## Append samples of your project ##
 resources:
-- operators_v1alpha1_operator.yaml
+- olm_v1alpha1_clusterextension.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

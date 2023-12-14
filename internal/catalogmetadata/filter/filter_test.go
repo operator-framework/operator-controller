@@ -12,9 +12,9 @@ import (
 
 func TestFilter(t *testing.T) {
 	in := []*catalogmetadata.Bundle{
-		{Bundle: declcfg.Bundle{Name: "operator1.v1", Package: "operator1", Image: "fake1"}},
-		{Bundle: declcfg.Bundle{Name: "operator1.v2", Package: "operator1", Image: "fake2"}},
-		{Bundle: declcfg.Bundle{Name: "operator2.v1", Package: "operator2", Image: "fake1"}},
+		{Bundle: declcfg.Bundle{Name: "extension1.v1", Package: "extension1", Image: "fake1"}},
+		{Bundle: declcfg.Bundle{Name: "extension1.v2", Package: "extension1", Image: "fake2"}},
+		{Bundle: declcfg.Bundle{Name: "extension2.v1", Package: "extension2", Image: "fake1"}},
 	}
 
 	for _, tt := range []struct {
@@ -25,49 +25,49 @@ func TestFilter(t *testing.T) {
 		{
 			name: "simple filter with one predicate",
 			predicate: func(bundle *catalogmetadata.Bundle) bool {
-				return bundle.Name == "operator1.v1"
+				return bundle.Name == "extension1.v1"
 			},
 			want: []*catalogmetadata.Bundle{
-				{Bundle: declcfg.Bundle{Name: "operator1.v1", Package: "operator1", Image: "fake1"}},
+				{Bundle: declcfg.Bundle{Name: "extension1.v1", Package: "extension1", Image: "fake1"}},
 			},
 		},
 		{
 			name: "filter with Not predicate",
 			predicate: filter.Not(func(bundle *catalogmetadata.Bundle) bool {
-				return bundle.Name == "operator1.v1"
+				return bundle.Name == "extension1.v1"
 			}),
 			want: []*catalogmetadata.Bundle{
-				{Bundle: declcfg.Bundle{Name: "operator1.v2", Package: "operator1", Image: "fake2"}},
-				{Bundle: declcfg.Bundle{Name: "operator2.v1", Package: "operator2", Image: "fake1"}},
+				{Bundle: declcfg.Bundle{Name: "extension1.v2", Package: "extension1", Image: "fake2"}},
+				{Bundle: declcfg.Bundle{Name: "extension2.v1", Package: "extension2", Image: "fake1"}},
 			},
 		},
 		{
 			name: "filter with And predicate",
 			predicate: filter.And(
 				func(bundle *catalogmetadata.Bundle) bool {
-					return bundle.Name == "operator1.v1"
+					return bundle.Name == "extension1.v1"
 				},
 				func(bundle *catalogmetadata.Bundle) bool {
 					return bundle.Image == "fake1"
 				},
 			),
 			want: []*catalogmetadata.Bundle{
-				{Bundle: declcfg.Bundle{Name: "operator1.v1", Package: "operator1", Image: "fake1"}},
+				{Bundle: declcfg.Bundle{Name: "extension1.v1", Package: "extension1", Image: "fake1"}},
 			},
 		},
 		{
 			name: "filter with Or predicate",
 			predicate: filter.Or(
 				func(bundle *catalogmetadata.Bundle) bool {
-					return bundle.Name == "operator1.v1"
+					return bundle.Name == "extension1.v1"
 				},
 				func(bundle *catalogmetadata.Bundle) bool {
 					return bundle.Image == "fake1"
 				},
 			),
 			want: []*catalogmetadata.Bundle{
-				{Bundle: declcfg.Bundle{Name: "operator1.v1", Package: "operator1", Image: "fake1"}},
-				{Bundle: declcfg.Bundle{Name: "operator2.v1", Package: "operator2", Image: "fake1"}},
+				{Bundle: declcfg.Bundle{Name: "extension1.v1", Package: "extension1", Image: "fake1"}},
+				{Bundle: declcfg.Bundle{Name: "extension2.v1", Package: "extension2", Image: "fake1"}},
 			},
 		},
 	} {

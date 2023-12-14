@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
@@ -173,14 +173,14 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 
 	for _, tt := range []struct {
 		name                    string
-		upgradeConstraintPolicy operatorsv1alpha1.UpgradeConstraintPolicy
+		upgradeConstraintPolicy ocv1alpha1.UpgradeConstraintPolicy
 		installedBundle         *catalogmetadata.Bundle
 		expectedResult          []*olmvariables.InstalledPackageVariable
 		expectedError           string
 	}{
 		{
 			name:                    "with non-zero major version",
-			upgradeConstraintPolicy: operatorsv1alpha1.UpgradeConstraintPolicyEnforce,
+			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
 			installedBundle:         bundleSet["test-package.v2.0.0"],
 			expectedResult: []*olmvariables.InstalledPackageVariable{
 				olmvariables.NewInstalledPackageVariable(testPackageName, []*catalogmetadata.Bundle{
@@ -195,7 +195,7 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 		},
 		{
 			name:                    "with zero major and zero minor version",
-			upgradeConstraintPolicy: operatorsv1alpha1.UpgradeConstraintPolicyEnforce,
+			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
 			installedBundle:         bundleSet["test-package.v0.0.1"],
 			expectedResult: []*olmvariables.InstalledPackageVariable{
 				olmvariables.NewInstalledPackageVariable(testPackageName, []*catalogmetadata.Bundle{
@@ -206,7 +206,7 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 		},
 		{
 			name:                    "with zero major and non-zero minor version",
-			upgradeConstraintPolicy: operatorsv1alpha1.UpgradeConstraintPolicyEnforce,
+			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
 			installedBundle:         bundleSet["test-package.v0.1.0"],
 			expectedResult: []*olmvariables.InstalledPackageVariable{
 				olmvariables.NewInstalledPackageVariable(testPackageName, []*catalogmetadata.Bundle{
@@ -221,18 +221,18 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 		},
 		{
 			name:                    "UpgradeConstraintPolicy is set to Ignore",
-			upgradeConstraintPolicy: operatorsv1alpha1.UpgradeConstraintPolicyIgnore,
+			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyIgnore,
 			installedBundle:         bundleSet["test-package.v2.0.0"],
 			expectedResult:          []*olmvariables.InstalledPackageVariable{},
 		},
 		{
-			name:                    "no BundleDeployment for an Operator",
-			upgradeConstraintPolicy: operatorsv1alpha1.UpgradeConstraintPolicyEnforce,
+			name:                    "no BundleDeployment for an ClusterExtension",
+			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
 			expectedResult:          []*olmvariables.InstalledPackageVariable{},
 		},
 		{
 			name:                    "installed bundle not found",
-			upgradeConstraintPolicy: operatorsv1alpha1.UpgradeConstraintPolicyEnforce,
+			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
 			installedBundle: &catalogmetadata.Bundle{
 				Bundle: declcfg.Bundle{
 					Name:    "test-package.v9.0.0",
@@ -248,15 +248,15 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			fakeOwnerOperator := fakeOperator("test-operator-semver", testPackageName, tt.upgradeConstraintPolicy)
+			fakeOwnerClusterExtension := fakeClusterExtension("test-extension-semver", testPackageName, tt.upgradeConstraintPolicy)
 			bundleDeployments := []rukpakv1alpha1.BundleDeployment{}
 			if tt.installedBundle != nil {
-				bundleDeployments = append(bundleDeployments, fakeBundleDeployment("test-package-bd", tt.installedBundle.Image, &fakeOwnerOperator))
+				bundleDeployments = append(bundleDeployments, fakeBundleDeployment("test-package-bd", tt.installedBundle.Image, &fakeOwnerClusterExtension))
 			}
 
 			installedPackages, err := variablesources.MakeInstalledPackageVariables(
 				allBundles,
-				[]operatorsv1alpha1.Operator{fakeOwnerOperator},
+				[]ocv1alpha1.ClusterExtension{fakeOwnerClusterExtension},
 				bundleDeployments,
 			)
 			if tt.expectedError == "" {
@@ -363,14 +363,14 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 
 	for _, tt := range []struct {
 		name                    string
-		upgradeConstraintPolicy operatorsv1alpha1.UpgradeConstraintPolicy
+		upgradeConstraintPolicy ocv1alpha1.UpgradeConstraintPolicy
 		installedBundle         *catalogmetadata.Bundle
 		expectedResult          []*olmvariables.InstalledPackageVariable
 		expectedError           string
 	}{
 		{
 			name:                    "respect replaces directive from catalog",
-			upgradeConstraintPolicy: operatorsv1alpha1.UpgradeConstraintPolicyEnforce,
+			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
 			installedBundle:         bundleSet["test-package.v2.0.0"],
 			expectedResult: []*olmvariables.InstalledPackageVariable{
 				olmvariables.NewInstalledPackageVariable(testPackageName, []*catalogmetadata.Bundle{
@@ -384,18 +384,18 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 		},
 		{
 			name:                    "UpgradeConstraintPolicy is set to Ignore",
-			upgradeConstraintPolicy: operatorsv1alpha1.UpgradeConstraintPolicyIgnore,
+			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyIgnore,
 			installedBundle:         bundleSet["test-package.v2.0.0"],
 			expectedResult:          []*olmvariables.InstalledPackageVariable{},
 		},
 		{
-			name:                    "no BundleDeployment for an Operator",
-			upgradeConstraintPolicy: operatorsv1alpha1.UpgradeConstraintPolicyEnforce,
+			name:                    "no BundleDeployment for an ClusterExtension",
+			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
 			expectedResult:          []*olmvariables.InstalledPackageVariable{},
 		},
 		{
 			name:                    "installed bundle not found",
-			upgradeConstraintPolicy: operatorsv1alpha1.UpgradeConstraintPolicyEnforce,
+			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
 			installedBundle: &catalogmetadata.Bundle{
 				Bundle: declcfg.Bundle{
 					Name:    "test-package.v9.0.0",
@@ -411,15 +411,15 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			fakeOwnerOperator := fakeOperator("test-operator-legacy", testPackageName, tt.upgradeConstraintPolicy)
+			fakeOwnerClusterExtension := fakeClusterExtension("test-extension-legacy", testPackageName, tt.upgradeConstraintPolicy)
 			bundleDeployments := []rukpakv1alpha1.BundleDeployment{}
 			if tt.installedBundle != nil {
-				bundleDeployments = append(bundleDeployments, fakeBundleDeployment("test-package-bd", tt.installedBundle.Image, &fakeOwnerOperator))
+				bundleDeployments = append(bundleDeployments, fakeBundleDeployment("test-package-bd", tt.installedBundle.Image, &fakeOwnerClusterExtension))
 			}
 
 			installedPackages, err := variablesources.MakeInstalledPackageVariables(
 				allBundles,
-				[]operatorsv1alpha1.Operator{fakeOwnerOperator},
+				[]ocv1alpha1.ClusterExtension{fakeOwnerClusterExtension},
 				bundleDeployments,
 			)
 			if tt.expectedError == "" {

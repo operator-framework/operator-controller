@@ -7,37 +7,37 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	operatorsv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
-func operator(spec operatorsv1alpha1.OperatorSpec) *operatorsv1alpha1.Operator {
-	return &operatorsv1alpha1.Operator{
+func buildClusterExtension(spec ocv1alpha1.ClusterExtensionSpec) *ocv1alpha1.ClusterExtension {
+	return &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "test-operator",
+			GenerateName: "test-extension",
 		},
 		Spec: spec,
 	}
 }
 
-var operatorData = []struct {
-	spec    *operatorsv1alpha1.Operator
+var clusterExtensionData = []struct {
+	spec    *ocv1alpha1.ClusterExtension
 	comment string
 	errMsg  string
 }{
 	{
-		operator(operatorsv1alpha1.OperatorSpec{}),
-		"operator spec is empty",
+		buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{}),
+		"spec is empty",
 		"spec.packageName in body should match '^[a-z0-9]+(-[a-z0-9]+)*$'",
 	},
 	{
-		operator(operatorsv1alpha1.OperatorSpec{
+		buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
 			PackageName: "this-is-a-really-long-package-name-that-is-greater-than-48-characters",
 		}),
 		"long package name",
 		"spec.packageName: Too long: may not be longer than 48",
 	},
 	{
-		operator(operatorsv1alpha1.OperatorSpec{
+		buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
 			PackageName: "package",
 			Version:     "1234567890.1234567890.12345678901234567890123456789012345678901234",
 		}),
@@ -45,7 +45,7 @@ var operatorData = []struct {
 		"spec.version: Too long: may not be longer than 64",
 	},
 	{
-		operator(operatorsv1alpha1.OperatorSpec{
+		buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
 			PackageName: "package",
 			Channel:     "longname01234567890123456789012345678901234567890",
 		}),
@@ -54,13 +54,13 @@ var operatorData = []struct {
 	},
 }
 
-func TestOperatorSpecs(t *testing.T) {
+func TestClusterExtensionSpecs(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	for _, od := range operatorData {
-		d := od
+	for _, ed := range clusterExtensionData {
+		d := ed
 		t.Run(d.comment, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
@@ -71,7 +71,7 @@ func TestOperatorSpecs(t *testing.T) {
 	}
 }
 
-func TestOperatorInvalidSemver(t *testing.T) {
+func TestClusterExtensionInvalidSemver(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -102,7 +102,7 @@ func TestOperatorInvalidSemver(t *testing.T) {
 		t.Run(d, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+			err := cl.Create(ctx, buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
 				PackageName: "package",
 				Version:     d,
 			}))
@@ -113,7 +113,7 @@ func TestOperatorInvalidSemver(t *testing.T) {
 	}
 }
 
-func TestOperatorValidSemver(t *testing.T) {
+func TestClusterExtensionValidSemver(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -157,7 +157,7 @@ func TestOperatorValidSemver(t *testing.T) {
 		t.Run(d, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			op := operator(operatorsv1alpha1.OperatorSpec{
+			op := buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
 				PackageName: "package",
 				Version:     d,
 			})
@@ -167,7 +167,7 @@ func TestOperatorValidSemver(t *testing.T) {
 	}
 }
 
-func TestOperatorInvalidChannel(t *testing.T) {
+func TestClusterExtensionInvalidChannel(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -187,7 +187,7 @@ func TestOperatorInvalidChannel(t *testing.T) {
 		t.Run(d, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(ctx, operator(operatorsv1alpha1.OperatorSpec{
+			err := cl.Create(ctx, buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
 				PackageName: "package",
 				Channel:     d,
 			}))
@@ -197,7 +197,7 @@ func TestOperatorInvalidChannel(t *testing.T) {
 	}
 }
 
-func TestOperatorValidChannel(t *testing.T) {
+func TestClusterExtensionValidChannel(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -212,11 +212,11 @@ func TestOperatorValidChannel(t *testing.T) {
 		t.Run(d, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			op := operator(operatorsv1alpha1.OperatorSpec{
+			ext := buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
 				PackageName: "package",
 				Channel:     d,
 			})
-			err := cl.Create(ctx, op)
+			err := cl.Create(ctx, ext)
 			require.NoErrorf(t, err, "unexpected error creating valid channel %q: %w", d, err)
 		})
 	}
