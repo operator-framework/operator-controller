@@ -159,10 +159,12 @@ func main() {
 	catalogServer := server.Server{
 		Kind: "catalogs",
 		Server: &http.Server{
-			Addr:         catalogServerAddr,
-			Handler:      catalogdmetrics.AddMetricsToHandler(localStorage.StorageServerHandler()),
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 10 * time.Second,
+			Addr:        catalogServerAddr,
+			Handler:     catalogdmetrics.AddMetricsToHandler(localStorage.StorageServerHandler()),
+			ReadTimeout: 5 * time.Second,
+			// TODO: Revert this to 10 seconds if/when the API
+			// evolves to have significantly smaller responses
+			WriteTimeout: 5 * time.Minute,
 		},
 		ShutdownTimeout: &shutdownTimeout,
 	}
