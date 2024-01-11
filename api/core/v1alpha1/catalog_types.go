@@ -70,7 +70,7 @@ type CatalogList struct {
 }
 
 // CatalogSpec defines the desired state of Catalog
-// +kubebuilder:validation:XValidation:rule="!has(self.source.image.pollInterval) || (self.source.image.pollInterval == \"\") || (self.source.image.ref.find('@sha256:') == \"\")",message="cannot specify PollInterval while using digest-based image"
+// +kubebuilder:validation:XValidation:rule="!has(self.source.image.pollInterval) || (self.source.image.ref.find('@sha256:') == \"\")",message="cannot specify PollInterval while using digest-based image"
 type CatalogSpec struct {
 	// Source is the source of a Catalog that contains Operators' metadata in the FBC format
 	// https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
@@ -134,6 +134,7 @@ type ImageSource struct {
 	// PollInterval indicates the interval at which the image source should be polled for new content,
 	// specified as a duration (e.g., "5m", "1h", "24h", "etc".). Note that PollInterval may not be
 	// specified for a catalog image referenced by a sha256 digest.
+	// +kubebuilder:validation:Format:=duration
 	PollInterval *metav1.Duration `json:"pollInterval,omitempty"`
 	// InsecureSkipTLSVerify indicates that TLS certificate validation should be skipped.
 	// If this option is specified, the HTTPS protocol will still be used to

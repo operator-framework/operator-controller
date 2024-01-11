@@ -62,6 +62,7 @@ spec:
                           as a duration (e.g., "5m", "1h", "24h", "etc".). Note that
                           PollInterval may not be specified for a catalog image referenced
                           by a sha256 digest.
+                        format: duration
                         type: string
                       pullSecret:
                         description: PullSecret contains the name of the image pull
@@ -87,8 +88,8 @@ spec:
             type: object
             x-kubernetes-validations:
             - message: cannot specify PollInterval while using digest-based image
-              rule: '!has(self.source.image.pollInterval) || (self.source.image.pollInterval
-                == "") || (self.source.image.ref.find(''@sha256:'') == "")'
+              rule: '!has(self.source.image.pollInterval) || (self.source.image.ref.find(''@sha256:'')
+                == "")'
           status:
             description: CatalogStatus defines the observed state of Catalog
             properties:
