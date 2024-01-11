@@ -17,6 +17,7 @@ ENVTEST_SERVER_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | s
 # Cluster configuration
 KIND_CLUSTER_NAME       ?= catalogd
 CATALOGD_NAMESPACE      ?= catalogd-system
+KIND_CLUSTER_IMAGE      ?= kindest/node:v1.28.0@sha256:b7a4cad12c197af3ba43202d3efe03246b3f0793f162afb40a33c923952d5b31
 
 # E2E configuration
 TESTDATA_DIR            ?= testdata
@@ -64,7 +65,7 @@ test-unit: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 E2E_FLAGS ?= ""
 test-e2e: $(GINKGO) ## Run the e2e tests
-	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -progress $(FOCUS) test/e2e
+	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -vv $(FOCUS) test/e2e
 
 e2e: KIND_CLUSTER_NAME=catalogd-e2e
 e2e: run image-registry test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
@@ -138,7 +139,7 @@ build-container: build-linux ## Build docker image for catalogd.
 
 .PHONY: kind-cluster
 kind-cluster: $(KIND) kind-cluster-cleanup ## Standup a kind cluster
-	$(KIND) create cluster --name $(KIND_CLUSTER_NAME)
+	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --image $(KIND_CLUSTER_IMAGE)
 	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-cluster-cleanup

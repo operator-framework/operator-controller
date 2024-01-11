@@ -40,6 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
@@ -50,7 +51,6 @@ import (
 	corecontrollers "github.com/operator-framework/catalogd/pkg/controllers/core"
 	"github.com/operator-framework/catalogd/pkg/features"
 	catalogdmetrics "github.com/operator-framework/catalogd/pkg/metrics"
-	"github.com/operator-framework/catalogd/pkg/profile"
 	"github.com/operator-framework/catalogd/pkg/storage"
 
 	//+kubebuilder:scaffold:imports
@@ -76,7 +76,7 @@ func main() {
 		metricsAddr          string
 		enableLeaderElection bool
 		probeAddr            string
-		profiling            bool
+		pprofAddr            string
 		catalogdVersion      bool
 		systemNamespace      string
 		catalogServerAddr    string
@@ -85,6 +85,7 @@ func main() {
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&pprofAddr, "pprof-bind-address", "0", "The address the pprof endpoint binds to. an empty string or 0 disables pprof")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -92,7 +93,6 @@ func main() {
 	flag.StringVar(&catalogServerAddr, "catalogs-server-addr", ":8083", "The address where the unpacked catalogs' content will be accessible")
 	flag.StringVar(&httpExternalAddr, "http-external-address", "http://catalogd-catalogserver.catalogd-system.svc", "The external address at which the http server is reachable.")
 	flag.StringVar(&cacheDir, "cache-dir", "/var/cache/", "The directory in the filesystem that catalogd will use for file based caching")
-	flag.BoolVar(&profiling, "profiling", false, "enable profiling endpoints to allow for using pprof")
 	flag.BoolVar(&catalogdVersion, "version", false, "print the catalogd version and exit")
 	opts := zap.Options{
 		Development: true,
@@ -112,9 +112,11 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 	cfg := ctrl.GetConfigOrDie()
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress: metricsAddr,
+		},
+		PprofBindAddress:       pprofAddr,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "catalogd-operator-lock",
@@ -191,14 +193,6 @@ func main() {
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
-	}
-
-	if profiling {
-		pprofer := profile.NewPprofer()
-		if err := pprofer.ConfigureControllerManager(mgr); err != nil {
-			setupLog.Error(err, "unable to setup pprof configuration")
-			os.Exit(1)
-		}
 	}
 
 	metaClient, err := metadata.NewForConfig(cfg)
