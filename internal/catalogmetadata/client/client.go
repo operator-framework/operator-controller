@@ -57,6 +57,7 @@ func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
 		}
 		channels := []*catalogmetadata.Channel{}
 		bundles := []*catalogmetadata.Bundle{}
+		deprecations := []*catalogmetadata.Deprecation{}
 
 		rc, err := c.fetcher.FetchCatalogContents(ctx, catalog.DeepCopy())
 		if err != nil {
@@ -81,6 +82,12 @@ func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
 					return fmt.Errorf("error unmarshalling bundle from catalog metadata: %s", err)
 				}
 				bundles = append(bundles, &content)
+			case declcfg.SchemaDeprecation:
+				var content catalogmetadata.Deprecation
+				if err := json.Unmarshal(meta.Blob, &content); err != nil {
+					return fmt.Errorf("error unmarshalling deprecation from catalog metadata: %s", err)
+				}
+				deprecations = append(deprecations, &content)
 			}
 
 			return nil
@@ -89,7 +96,7 @@ func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
 			return nil, fmt.Errorf("error processing response: %s", err)
 		}
 
-		bundles, err = PopulateExtraFields(catalog.Name, channels, bundles)
+		bundles, err = PopulateExtraFields(catalog.Name, channels, bundles, deprecations)
 		if err != nil {
 			return nil, err
 		}
@@ -100,7 +107,7 @@ func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
 	return allBundles, nil
 }
 
-func PopulateExtraFields(catalogName string, channels []*catalogmetadata.Channel, bundles []*catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error) {
+func PopulateExtraFields(catalogName string, channels []*catalogmetadata.Channel, bundles []*catalogmetadata.Bundle, deprecations []*catalogmetadata.Deprecation) ([]*catalogmetadata.Bundle, error) {
 	bundlesMap := map[string]*catalogmetadata.Bundle{}
 	for i := range bundles {
 		bundleKey := fmt.Sprintf("%s-%s", bundles[i].Package, bundles[i].Name)
@@ -118,6 +125,36 @@ func PopulateExtraFields(catalogName string, channels []*catalogmetadata.Channel
 			}
 
 			bundle.InChannels = append(bundle.InChannels, ch)
+		}
+	}
+
+	// According to https://docs.google.com/document/d/1EzefSzoGZL2ipBt-eCQwqqNwlpOIt7wuwjG6_8ZCi5s/edit?usp=sharing
+	// the olm.deprecations FBC object is only valid when either 0 or 1 instances exist
+	// for any given package
+	deprecationMap := make(map[string]*catalogmetadata.Deprecation, len(deprecations))
+	for _, deprecation := range deprecations {
+		deprecationMap[deprecation.Package] = deprecation
+	}
+
+	for i := range bundles {
+		if dep, ok := deprecationMap[bundles[i].Package]; ok {
+			for _, entry := range dep.Entries {
+				switch entry.Reference.Schema {
+				case declcfg.SchemaPackage:
+					bundles[i].Deprecations = append(bundles[i].Deprecations, entry)
+				case declcfg.SchemaChannel:
+					for _, ch := range bundles[i].InChannels {
+						if ch.Name == entry.Reference.Name {
+							bundles[i].Deprecations = append(bundles[i].Deprecations, entry)
+							break
+						}
+					}
+				case declcfg.SchemaBundle:
+					if bundles[i].Name == entry.Reference.Name {
+						bundles[i].Deprecations = append(bundles[i].Deprecations, entry)
+					}
+				}
+			}
 		}
 	}
 

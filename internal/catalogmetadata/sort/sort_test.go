@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
@@ -80,4 +81,54 @@ func TestByVersion(t *testing.T) {
 		assert.Equal(t, b4noVersion, toSort[3])
 		assert.Equal(t, b5empty, toSort[4])
 	})
+}
+
+func TestByDeprecated(t *testing.T) {
+	b1 := &catalogmetadata.Bundle{
+		CatalogName: "foo",
+		Bundle: declcfg.Bundle{
+			Name: "bar",
+		},
+	}
+
+	b2 := &catalogmetadata.Bundle{
+		CatalogName: "foo",
+		Bundle: declcfg.Bundle{
+			Name: "baz",
+		},
+		Deprecations: []declcfg.DeprecationEntry{
+			{
+				Reference: declcfg.PackageScopedReference{
+					Schema: "olm.bundle",
+					Name:   "baz",
+				},
+			},
+		},
+	}
+
+	toSort := []*catalogmetadata.Bundle{b2, b1}
+	sort.SliceStable(toSort, func(i, j int) bool {
+		return catalogsort.ByDeprecated(toSort[i], toSort[j])
+	})
+
+	require.Len(t, toSort, 2)
+	assert.Equal(t, b1, toSort[0])
+	assert.Equal(t, b2, toSort[1])
+
+	// Channel deprecation association != bundle deprecated
+	b2.Deprecations[0] = declcfg.DeprecationEntry{
+		Reference: declcfg.PackageScopedReference{
+			Schema: "olm.channel",
+			Name:   "badchannel",
+		},
+	}
+
+	toSort = []*catalogmetadata.Bundle{b2, b1}
+	sort.SliceStable(toSort, func(i, j int) bool {
+		return catalogsort.ByDeprecated(toSort[i], toSort[j])
+	})
+	// No bundles are deprecated so ordering should remain the same
+	require.Len(t, toSort, 2)
+	assert.Equal(t, b2, toSort[0])
+	assert.Equal(t, b1, toSort[1])
 }

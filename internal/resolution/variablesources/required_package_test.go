@@ -63,6 +63,63 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 			},
 			InChannels: []*catalogmetadata.Channel{&stableChannel},
 		},
+		"test-package.v4.0.0": {
+			Bundle: declcfg.Bundle{
+				Name:    "test-package.v4.0.0",
+				Package: "test-package",
+				Properties: []property.Property{
+					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "4.0.0"}`)},
+				},
+			},
+			InChannels: []*catalogmetadata.Channel{&stableChannel},
+			Deprecations: []declcfg.DeprecationEntry{
+				{
+					Reference: declcfg.PackageScopedReference{
+						Schema: declcfg.SchemaBundle,
+						Name:   "test-package.v4.0.0",
+					},
+					Message: "test-package.v4.0.0 has been deprecated",
+				},
+			},
+		},
+		"test-package.v4.1.0": {
+			Bundle: declcfg.Bundle{
+				Name:    "test-package.v4.1.0",
+				Package: "test-package",
+				Properties: []property.Property{
+					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "4.1.0"}`)},
+				},
+			},
+			InChannels: []*catalogmetadata.Channel{&stableChannel},
+			Deprecations: []declcfg.DeprecationEntry{
+				{
+					Reference: declcfg.PackageScopedReference{
+						Schema: declcfg.SchemaBundle,
+						Name:   "test-package.v4.1.0",
+					},
+					Message: "test-package.v4.1.0 has been deprecated",
+				},
+			},
+		},
+		"test-package.v5.0.0": {
+			Bundle: declcfg.Bundle{
+				Name:    "test-package.v5.0.0",
+				Package: "test-package",
+				Properties: []property.Property{
+					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "5.0.0"}`)},
+				},
+			},
+			InChannels: []*catalogmetadata.Channel{&stableChannel},
+			Deprecations: []declcfg.DeprecationEntry{
+				{
+					Reference: declcfg.PackageScopedReference{
+						Schema: declcfg.SchemaBundle,
+						Name:   "test-package.v5.0.0",
+					},
+					Message: "test-package.v5.0.0 has been deprecated",
+				},
+			},
+		},
 
 		// We need at least one bundle from different package
 		// to make sure that we are filtering it out.
@@ -111,6 +168,9 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 					bundleSet["test-package.v3.0.0"],
 					bundleSet["test-package.v2.0.0"],
 					bundleSet["test-package.v1.0.0"],
+					bundleSet["test-package.v5.0.0"],
+					bundleSet["test-package.v4.1.0"],
+					bundleSet["test-package.v4.0.0"],
 				}),
 			},
 		},

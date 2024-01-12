@@ -126,6 +126,45 @@ func TestClient(t *testing.T) {
 				},
 				fetcher: &MockFetcher{},
 			},
+			{
+				name: "deprecated at the package, channel, and bundle level",
+				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
+					objs, bundles, catalogContentMap := defaultFakeCatalog()
+
+					catalogContentMap["catalog-1"] = append(catalogContentMap["catalog-1"],
+						[]byte(`{"schema": "olm.deprecations", "package":"fake1", "entries":[{"message": "fake1 is deprecated", "reference": {"schema": "olm.package"}}, {"message":"channel stable is deprecated", "reference": {"schema": "olm.channel", "name": "stable"}}, {"message": "bundle fake1.v1.0.0 is deprecated", "reference":{"schema":"olm.bundle", "name":"fake1.v1.0.0"}}]}`)...)
+
+					for i := range bundles {
+						if bundles[i].Package == "fake1" && bundles[i].CatalogName == "catalog-1" && bundles[i].Name == "fake1.v1.0.0" {
+							bundles[i].Deprecations = append(bundles[i].Deprecations, declcfg.DeprecationEntry{
+								Reference: declcfg.PackageScopedReference{
+									Schema: "olm.package",
+								},
+								Message: "fake1 is deprecated",
+							})
+
+							bundles[i].Deprecations = append(bundles[i].Deprecations, declcfg.DeprecationEntry{
+								Reference: declcfg.PackageScopedReference{
+									Schema: "olm.channel",
+									Name:   "stable",
+								},
+								Message: "channel stable is deprecated",
+							})
+
+							bundles[i].Deprecations = append(bundles[i].Deprecations, declcfg.DeprecationEntry{
+								Reference: declcfg.PackageScopedReference{
+									Schema: "olm.bundle",
+									Name:   "fake1.v1.0.0",
+								},
+								Message: "bundle fake1.v1.0.0 is deprecated",
+							})
+						}
+					}
+
+					return objs, bundles, catalogContentMap
+				},
+				fetcher: &MockFetcher{},
+			},
 		} {
 			t.Run(tt.name, func(t *testing.T) {
 				ctx := context.Background()

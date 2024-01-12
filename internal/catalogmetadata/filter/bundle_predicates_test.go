@@ -158,3 +158,19 @@ func TestReplaces(t *testing.T) {
 	assert.False(t, f(b2))
 	assert.False(t, f(b3))
 }
+
+func TestWithDeprecation(t *testing.T) {
+	b1 := &catalogmetadata.Bundle{
+		Deprecations: []declcfg.DeprecationEntry{
+			{
+				Reference: declcfg.PackageScopedReference{},
+			},
+		},
+	}
+
+	b2 := &catalogmetadata.Bundle{}
+
+	f := filter.WithDeprecation(true)
+	assert.True(t, f(b1))
+	assert.False(t, f(b2))
+}
