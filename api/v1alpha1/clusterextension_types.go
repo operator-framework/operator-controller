@@ -71,6 +71,12 @@ const (
 	// TODO(user): add more Types, here and into init()
 	TypeInstalled = "Installed"
 	TypeResolved  = "Resolved"
+	// TypeDeprecated is a rollup condition that is present when
+	// any of the deprecated conditions are present.
+	TypeDeprecated        = "Deprecated"
+	TypePackageDeprecated = "PackageDeprecated"
+	TypeChannelDeprecated = "ChannelDeprecated"
+	TypeBundleDeprecated  = "BundleDeprecated"
 
 	ReasonBundleLookupFailed        = "BundleLookupFailed"
 	ReasonInstallationFailed        = "InstallationFailed"
@@ -80,6 +86,7 @@ const (
 	ReasonResolutionFailed          = "ResolutionFailed"
 	ReasonResolutionUnknown         = "ResolutionUnknown"
 	ReasonSuccess                   = "Success"
+	ReasonDeprecated                = "Deprecated"
 )
 
 func init() {
@@ -87,6 +94,10 @@ func init() {
 	conditionsets.ConditionTypes = append(conditionsets.ConditionTypes,
 		TypeInstalled,
 		TypeResolved,
+		TypeDeprecated,
+		TypePackageDeprecated,
+		TypeChannelDeprecated,
+		TypeBundleDeprecated,
 	)
 	// TODO(user): add Reasons from above
 	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
@@ -98,6 +109,7 @@ func init() {
 		ReasonInstallationStatusUnknown,
 		ReasonInvalidSpec,
 		ReasonSuccess,
+		ReasonDeprecated,
 	)
 }
 

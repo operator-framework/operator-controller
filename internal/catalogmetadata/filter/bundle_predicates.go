@@ -70,3 +70,9 @@ func Replaces(bundleName string) Predicate[catalogmetadata.Bundle] {
 		return false
 	}
 }
+
+func WithDeprecation(deprecated bool) Predicate[catalogmetadata.Bundle] {
+	return func(bundle *catalogmetadata.Bundle) bool {
+		return bundle.HasDeprecation() == deprecated
+	}
+}

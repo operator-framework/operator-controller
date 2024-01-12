@@ -201,3 +201,31 @@ func TestBundleMediaType(t *testing.T) {
 		})
 	}
 }
+
+func TestBundleHasDeprecation(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		bundle     *catalogmetadata.Bundle
+		deprecated bool
+	}{
+		{
+			name: "has deprecation entries",
+			bundle: &catalogmetadata.Bundle{
+				Deprecations: []declcfg.DeprecationEntry{
+					{
+						Reference: declcfg.PackageScopedReference{},
+					},
+				},
+			},
+			deprecated: true,
+		},
+		{
+			name:   "has no deprecation entries",
+			bundle: &catalogmetadata.Bundle{},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.deprecated, tt.bundle.HasDeprecation())
+		})
+	}
+}

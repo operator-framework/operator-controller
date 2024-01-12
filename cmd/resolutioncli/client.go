@@ -47,8 +47,9 @@ func (c *indexRefClient) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle
 		}
 
 		var (
-			channels []*catalogmetadata.Channel
-			bundles  []*catalogmetadata.Bundle
+			channels     []*catalogmetadata.Channel
+			bundles      []*catalogmetadata.Bundle
+			deprecations []*catalogmetadata.Deprecation
 		)
 
 		for i := range cfg.Channels {
@@ -63,10 +64,16 @@ func (c *indexRefClient) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle
 			})
 		}
 
+		for i := range cfg.Deprecations {
+			deprecations = append(deprecations, &catalogmetadata.Deprecation{
+				Deprecation: cfg.Deprecations[i],
+			})
+		}
+
 		// TODO: update fake catalog name string to be catalog name once we support multiple catalogs in CLI
 		catalogName := "offline-catalog"
 
-		bundles, err = client.PopulateExtraFields(catalogName, channels, bundles)
+		bundles, err = client.PopulateExtraFields(catalogName, channels, bundles, deprecations)
 		if err != nil {
 			return nil, err
 		}

@@ -56,6 +56,9 @@ func MakeRequiredPackageVariables(allBundles []*catalogmetadata.Bundle, clusterE
 		sort.SliceStable(resultSet, func(i, j int) bool {
 			return catalogsort.ByVersion(resultSet[i], resultSet[j])
 		})
+		sort.SliceStable(resultSet, func(i, j int) bool {
+			return catalogsort.ByDeprecated(resultSet[i], resultSet[j])
+		})
 
 		result = append(result, olmvariables.NewRequiredPackageVariable(packageName, resultSet))
 	}

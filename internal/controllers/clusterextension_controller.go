@@ -19,11 +19,13 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -130,6 +132,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		// hasn't been attempted yet, due to the spec being invalid.
 		ext.Status.ResolvedBundleResource = ""
 		setResolvedStatusConditionUnknown(&ext.Status.Conditions, "validation has not been attempted as spec is invalid", ext.GetGeneration())
+
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as spec is invalid", ext.GetGeneration())
 		return ctrl.Result{}, nil
 	}
 
@@ -140,6 +144,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted due to failure to gather data for resolution", ext.GetGeneration())
 		ext.Status.ResolvedBundleResource = ""
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted due to failure to gather data for resolution", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -150,6 +156,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as resolution failed", ext.GetGeneration())
 		ext.Status.ResolvedBundleResource = ""
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as resolution failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -161,6 +169,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as resolution failed", ext.GetGeneration())
 		ext.Status.ResolvedBundleResource = ""
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as resolution failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -168,14 +178,18 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	ext.Status.ResolvedBundleResource = bundle.Image
 	setResolvedStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), ext.GetGeneration())
 
+	// TODO: Question - Should we set the deprecation statuses after we have successfully resolved instead of after a successful installation?
+
 	mediaType, err := bundle.MediaType()
 	if err != nil {
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 	bundleProvisioner, err := mapBundleMediaTypeToBundleProvisioner(mediaType)
 	if err != nil {
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
@@ -185,6 +199,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		// originally Reason: ocv1alpha1.ReasonInstallationFailed
 		ext.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -194,12 +209,15 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		// originally Reason: ocv1alpha1.ReasonInstallationStatusUnknown
 		ext.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
 	// Let's set the proper Installed condition and InstalledBundleResource field based on the
 	// existing BundleDeployment object status.
 	mapBDStatusToInstalledCondition(existingTypedBundleDeployment, ext)
+
+	SetDeprecationStatus(ext, bundle)
 
 	// set the status of the cluster extension based on the respective bundle deployment status conditions.
 	return ctrl.Result{}, nil
@@ -264,6 +282,88 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 			fmt.Sprintf("unknown bundledeployment source type %q", bundleDeploymentSource.Type),
 			ext.GetGeneration(),
 		)
+	}
+}
+
+// setDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
+// based on the provided bundle
+func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetadata.Bundle) {
+	// reset conditions to false
+	conditionTypes := []string{
+		ocv1alpha1.TypeDeprecated,
+		ocv1alpha1.TypePackageDeprecated,
+		ocv1alpha1.TypeChannelDeprecated,
+		ocv1alpha1.TypeBundleDeprecated,
+	}
+
+	for _, conditionType := range conditionTypes {
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+			Type:               conditionType,
+			Reason:             ocv1alpha1.ReasonDeprecated,
+			Status:             metav1.ConditionFalse,
+			Message:            "",
+			ObservedGeneration: ext.Generation,
+		})
+	}
+
+	// There are two early return scenarios here:
+	// 1) The bundle is not deprecated (i.e no package or bundle deprecations)
+	// AND there are no other deprecations associated with the bundle
+	// 2) The bundle is not deprecated, there are deprecations associated
+	// with the bundle (i.e at least one channel the bundle is present in is deprecated),
+	// and the ClusterExtension does not specify a channel. This is because the channel deprecations
+	// are a loose deprecation coupling on the bundle. A ClusterExtension installation is only
+	// considered deprecated by a channel deprecation when a deprecated channel is specified via
+	// the spec.channel field.
+	if (!bundle.IsDeprecated() && !bundle.HasDeprecation()) || (!bundle.IsDeprecated() && ext.Spec.Channel == "") {
+		return
+	}
+
+	deprecationMessages := []string{}
+
+	for _, deprecation := range bundle.Deprecations {
+		switch deprecation.Reference.Schema {
+		case declcfg.SchemaPackage:
+			apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+				Type:               ocv1alpha1.TypePackageDeprecated,
+				Reason:             ocv1alpha1.ReasonDeprecated,
+				Status:             metav1.ConditionTrue,
+				Message:            deprecation.Message,
+				ObservedGeneration: ext.Generation,
+			})
+		case declcfg.SchemaChannel:
+			if ext.Spec.Channel != deprecation.Reference.Name {
+				continue
+			}
+
+			apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+				Type:               ocv1alpha1.TypeChannelDeprecated,
+				Reason:             ocv1alpha1.ReasonDeprecated,
+				Status:             metav1.ConditionTrue,
+				Message:            deprecation.Message,
+				ObservedGeneration: ext.Generation,
+			})
+		case declcfg.SchemaBundle:
+			apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+				Type:               ocv1alpha1.TypeBundleDeprecated,
+				Reason:             ocv1alpha1.ReasonDeprecated,
+				Status:             metav1.ConditionTrue,
+				Message:            deprecation.Message,
+				ObservedGeneration: ext.Generation,
+			})
+		}
+
+		deprecationMessages = append(deprecationMessages, deprecation.Message)
+	}
+
+	if len(deprecationMessages) > 0 {
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+			Type:               ocv1alpha1.TypeDeprecated,
+			Reason:             ocv1alpha1.ReasonDeprecated,
+			Status:             metav1.ConditionTrue,
+			Message:            strings.Join(deprecationMessages, ";"),
+			ObservedGeneration: ext.Generation,
+		})
 	}
 }
 
@@ -455,6 +555,25 @@ func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message 
 		Message:            message,
 		ObservedGeneration: generation,
 	})
+}
+
+func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message string, generation int64) {
+	conditionTypes := []string{
+		ocv1alpha1.TypeDeprecated,
+		ocv1alpha1.TypePackageDeprecated,
+		ocv1alpha1.TypeChannelDeprecated,
+		ocv1alpha1.TypeBundleDeprecated,
+	}
+
+	for _, conditionType := range conditionTypes {
+		apimeta.SetStatusCondition(conditions, metav1.Condition{
+			Type:               conditionType,
+			Reason:             ocv1alpha1.ReasonDeprecated,
+			Status:             metav1.ConditionUnknown,
+			Message:            message,
+			ObservedGeneration: generation,
+		})
+	}
 }
 
 // Generate reconcile requests for all cluster extensions affected by a catalog change

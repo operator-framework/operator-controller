@@ -18,7 +18,7 @@ const (
 )
 
 type Schemas interface {
-	Package | Bundle | Channel
+	Package | Bundle | Channel | Deprecation
 }
 
 type Package struct {
@@ -29,6 +29,10 @@ type Channel struct {
 	declcfg.Channel
 }
 
+type Deprecation struct {
+	declcfg.Deprecation
+}
+
 type PackageRequired struct {
 	property.PackageRequired
 	SemverRange bsemver.Range `json:"-"`
@@ -36,8 +40,9 @@ type PackageRequired struct {
 
 type Bundle struct {
 	declcfg.Bundle
-	CatalogName string
-	InChannels  []*Channel
+	CatalogName  string
+	InChannels   []*Channel
+	Deprecations []declcfg.DeprecationEntry
 
 	mu sync.RWMutex
 	// these properties are lazy loaded as they are requested
@@ -138,6 +143,39 @@ func (b *Bundle) propertiesByType(propType string) []*property.Property {
 	}
 
 	return b.propertiesMap[propType]
+}
+
+// HasDeprecation returns true if the bundle
+// has any deprecations associated with it.
+// This may return true even in cases where the bundle
+// may be associated with an olm.channel deprecation
+// but the bundle is not considered "deprecated" because
+// the bundle is selected via a non-deprecated channel.
+func (b *Bundle) HasDeprecation() bool {
+	return len(b.Deprecations) > 0
+}
+
+// IsDeprecated returns true if the bundle
+// has been explicitly deprecated. This can occur
+// in one of two ways:
+// - the olm.package the bundle belongs to has been deprecated
+// - the bundle itself has been deprecated
+// this function does not take into consideration
+// olm.channel deprecations associated with the bundle
+// as a bundle can be present in multiple channels with
+// some channels being deprecated and some not.
+func (b *Bundle) IsDeprecated() bool {
+	for _, dep := range b.Deprecations {
+		if dep.Reference.Schema == declcfg.SchemaPackage && dep.Reference.Name == b.Package {
+			return true
+		}
+
+		if dep.Reference.Schema == declcfg.SchemaBundle && dep.Reference.Name == b.Name {
+			return true
+		}
+	}
+
+	return false
 }
 
 func loadOneFromProps[T any](bundle *Bundle, propType string, required bool) (T, error) {

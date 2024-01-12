@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
@@ -24,6 +26,7 @@ import (
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
+	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
@@ -1562,6 +1565,450 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestSetDeprecationStatus(t *testing.T) {
+	for _, tc := range []struct {
+		name                     string
+		clusterExtension         *ocv1alpha1.ClusterExtension
+		expectedClusterExtension *ocv1alpha1.ClusterExtension
+		bundle                   *catalogmetadata.Bundle
+	}{
+		{
+			name: "non-deprecated bundle, no deprecations associated with bundle, all deprecation statuses set to False",
+			clusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               ocv1alpha1.TypeDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypePackageDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeChannelDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeBundleDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+					},
+				},
+			},
+			bundle: &catalogmetadata.Bundle{},
+		},
+		{
+			name: "non-deprecated bundle, olm.channel deprecations associated with bundle, no channel specified, all deprecation statuses set to False",
+			clusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               ocv1alpha1.TypeDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypePackageDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeChannelDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeBundleDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+					},
+				},
+			},
+			bundle: &catalogmetadata.Bundle{
+				Deprecations: []declcfg.DeprecationEntry{
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaChannel,
+							Name:   "badchannel",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "non-deprecated bundle, olm.channel deprecations associated with bundle, non-deprecated channel specified, all deprecation statuses set to False",
+			clusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Channel: "nondeprecated",
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Channel: "nondeprecated",
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               ocv1alpha1.TypeDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypePackageDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeChannelDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeBundleDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+					},
+				},
+			},
+			bundle: &catalogmetadata.Bundle{
+				Deprecations: []declcfg.DeprecationEntry{
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaChannel,
+							Name:   "badchannel",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "non-deprecated bundle, olm.channel deprecations associated with bundle, deprecated channel specified, ChannelDeprecated and Deprecated status set to true",
+			clusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Channel: "badchannel",
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Channel: "badchannel",
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               ocv1alpha1.TypeDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypePackageDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeChannelDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeBundleDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+					},
+				},
+			},
+			bundle: &catalogmetadata.Bundle{
+				Deprecations: []declcfg.DeprecationEntry{
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaChannel,
+							Name:   "badchannel",
+						},
+						Message: "bad channel!",
+					},
+				},
+			},
+		},
+		{
+			name: "deprecated package + bundle, olm.channel deprecations associated with bundle, deprecated channel specified, all deprecation statuses set to true",
+			clusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Channel: "badchannel",
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Channel: "badchannel",
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               ocv1alpha1.TypeDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypePackageDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeChannelDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeBundleDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+					},
+				},
+			},
+			bundle: &catalogmetadata.Bundle{
+				Deprecations: []declcfg.DeprecationEntry{
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaChannel,
+							Name:   "badchannel",
+						},
+						Message: "bad channel!",
+					},
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaPackage,
+						},
+						Message: "bad package!",
+					},
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaBundle,
+							Name:   "badbundle",
+						},
+						Message: "bad bundle!",
+					},
+				},
+			},
+		},
+		{
+			name: "deprecated bundle, olm.channel deprecations associated with bundle, deprecated channel specified, all deprecation statuses set to true except PackageDeprecated",
+			clusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Channel: "badchannel",
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Channel: "badchannel",
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               ocv1alpha1.TypeDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypePackageDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeChannelDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeBundleDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+					},
+				},
+			},
+			bundle: &catalogmetadata.Bundle{
+				Deprecations: []declcfg.DeprecationEntry{
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaChannel,
+							Name:   "badchannel",
+						},
+						Message: "bad channel!",
+					},
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaBundle,
+							Name:   "badbundle",
+						},
+						Message: "bad bundle!",
+					},
+				},
+			},
+		},
+		{
+			name: "deprecated package, olm.channel deprecations associated with bundle, deprecated channel specified, all deprecation statuses set to true except BundleDeprecated",
+			clusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Channel: "badchannel",
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Channel: "badchannel",
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               ocv1alpha1.TypeDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypePackageDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeChannelDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeBundleDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+					},
+				},
+			},
+			bundle: &catalogmetadata.Bundle{
+				Deprecations: []declcfg.DeprecationEntry{
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaChannel,
+							Name:   "badchannel",
+						},
+						Message: "bad channel!",
+					},
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaPackage,
+						},
+						Message: "bad package!",
+					},
+				},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			controllers.SetDeprecationStatus(tc.clusterExtension, tc.bundle)
+			assert.Equal(t, "", cmp.Diff(tc.expectedClusterExtension, tc.clusterExtension, cmpopts.IgnoreFields(metav1.Condition{}, "Message", "LastTransitionTime")))
+		})
+	}
 }
 
 var (
