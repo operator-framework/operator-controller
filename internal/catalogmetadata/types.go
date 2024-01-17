@@ -157,19 +157,15 @@ func (b *Bundle) HasDeprecation() bool {
 
 // IsDeprecated returns true if the bundle
 // has been explicitly deprecated. This can occur
-// in one of two ways:
-// - the olm.package the bundle belongs to has been deprecated
-// - the bundle itself has been deprecated
+// if the bundle itself has been deprecated.
 // this function does not take into consideration
-// olm.channel deprecations associated with the bundle
-// as a bundle can be present in multiple channels with
-// some channels being deprecated and some not.
+// olm.channel or olm.package deprecations associated
+// with the bundle as a bundle can be present in multiple
+// channels with some channels being deprecated and some not
+// Similarly if the package is deprecated then all the bundles
+// are deprecated and there should be no special treatment
 func (b *Bundle) IsDeprecated() bool {
 	for _, dep := range b.Deprecations {
-		if dep.Reference.Schema == declcfg.SchemaPackage && dep.Reference.Name == b.Package {
-			return true
-		}
-
 		if dep.Reference.Schema == declcfg.SchemaBundle && dep.Reference.Name == b.Name {
 			return true
 		}
