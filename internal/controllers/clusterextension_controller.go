@@ -307,10 +307,10 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetad
 	}
 
 	// There are two early return scenarios here:
-	// 1) The bundle is not deprecated (i.e no package or bundle deprecations)
+	// 1) The bundle is not deprecated (i.e bundle deprecations)
 	// AND there are no other deprecations associated with the bundle
 	// 2) The bundle is not deprecated, there are deprecations associated
-	// with the bundle (i.e at least one channel the bundle is present in is deprecated),
+	// with the bundle (i.e at least one channel the bundle is present in is deprecated OR whole package is deprecated),
 	// and the ClusterExtension does not specify a channel. This is because the channel deprecations
 	// are a loose deprecation coupling on the bundle. A ClusterExtension installation is only
 	// considered deprecated by a channel deprecation when a deprecated channel is specified via

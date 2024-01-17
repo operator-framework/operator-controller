@@ -229,3 +229,55 @@ func TestBundleHasDeprecation(t *testing.T) {
 		})
 	}
 }
+
+func TestBundleIsDeprecated(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		bundle     *catalogmetadata.Bundle
+		deprecated bool
+	}{
+		{
+			name: "has package and channel deprecations, not deprecated",
+			bundle: &catalogmetadata.Bundle{
+				Deprecations: []declcfg.DeprecationEntry{
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: "olm.package",
+						},
+					},
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: "olm.channel",
+							Name:   "foo",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "has no deprecation entries, not deprecated",
+			bundle: &catalogmetadata.Bundle{},
+		},
+		{
+			name: "has bundle deprecation entry, deprecated",
+			bundle: &catalogmetadata.Bundle{
+				Bundle: declcfg.Bundle{
+					Name: "foo",
+				},
+				Deprecations: []declcfg.DeprecationEntry{
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: "olm.bundle",
+							Name:   "foo",
+						},
+					},
+				},
+			},
+			deprecated: true,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.deprecated, tt.bundle.IsDeprecated())
+		})
+	}
+}
