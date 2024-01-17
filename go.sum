@@ -252,8 +252,8 @@ github.com/opencontainers/runtime-spec v1.1.0 h1:HHUyrt9mwHUjtasSbXSMvs4cyFxh+Bl
 github.com/opencontainers/runtime-spec v1.1.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/operator-framework/api v0.20.0 h1:A2YCRhr+6s0k3pRJacnwjh1Ue8BqjIGuQ2jvPg9XCB4=
 github.com/operator-framework/api v0.20.0/go.mod h1:rXPOhrQ6mMeXqCmpDgt1ALoar9ZlHL+Iy5qut9R99a4=
-github.com/operator-framework/catalogd v0.10.0 h1:T207IQfQCcd3f31bDPCgfJcwEvmaPGV8BotqIzIvnRo=
-github.com/operator-framework/catalogd v0.10.0/go.mod h1:xIeR5f/Spr5rHnLp0yOi0AYetWcHvBAx9n+K3S/va2A=
+github.com/operator-framework/catalogd v0.11.0 h1:b1ifk/TriPTo4KkdVTSWi6HY959h/ZD7sHuBKGEbLDA=
+github.com/operator-framework/catalogd v0.11.0/go.mod h1:AHz6B7NxC7cywF6P3XclmCim1bs0y0g2+LdycdIGAmE=
 github.com/operator-framework/deppy v0.3.0 h1:W8wpF0ehcTAdH2WfMyqMPI5Ja0Qv8M5FMO5cXgJvEQ8=
 github.com/operator-framework/deppy v0.3.0/go.mod h1:EHDxZz8fKGvuymCng3G/Ou7wuX14GaLr0cmf2u29Oog=
 github.com/operator-framework/operator-registry v1.34.0 h1:dNgWTqMfixBaBwalypo3oJqQvqNwKwJ3NS9RaBHJxzs=

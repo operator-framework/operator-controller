@@ -25,6 +25,12 @@ export ARTIFACT_PATH ?=
 
 OPERATOR_CONTROLLER_NAMESPACE ?= operator-controller-system
 KIND_CLUSTER_NAME ?= operator-controller
+# Not guaranteed to have patch releases available and node image tags are full versions (i.e v1.28.0 - no v1.28, v1.29, etc.)
+# The KIND_NODE_VERSION is set by getting the version of the k8s.io/client-go dependency from the go.mod
+# and sets major version to "1" and the patch version to "0". For example, a client-go version of v0.28.5
+# will map to a KIND_NODE_VERSION of 1.28.0
+KIND_NODE_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.0/')
+KIND_CLUSTER_IMAGE ?= kindest/node:v${KIND_NODE_VERSION}
 
 CONTAINER_RUNTIME ?= docker
 
@@ -156,7 +162,7 @@ kind-deploy: manifests $(KUSTOMIZE) #EXHELP Install controller and dependencies 
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
 	-$(KIND) delete cluster --name ${KIND_CLUSTER_NAME}
-	$(KIND) create cluster --name ${KIND_CLUSTER_NAME}
+	$(KIND) create cluster --name ${KIND_CLUSTER_NAME} --image ${KIND_CLUSTER_IMAGE}
 	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
 
 .PHONY: kind-clean
