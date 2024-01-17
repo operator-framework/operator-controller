@@ -7,7 +7,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/go-logr/logr v1.4.1
 	github.com/google/go-cmp v0.6.0
-	github.com/operator-framework/catalogd v0.10.0
+	github.com/operator-framework/catalogd v0.11.0
 	github.com/operator-framework/deppy v0.3.0
 	github.com/operator-framework/operator-registry v1.34.0
 	github.com/operator-framework/rukpak v0.16.0
