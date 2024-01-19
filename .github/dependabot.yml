@@ -12,3 +12,9 @@ updates:
       interval: "daily"
     commit-message:
       prefix: ":seedling:"
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    commit-message:
+      prefix: ":seedling:"
