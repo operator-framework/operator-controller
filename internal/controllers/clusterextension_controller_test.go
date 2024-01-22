@@ -10,11 +10,13 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
@@ -77,7 +79,7 @@ func TestClusterExtensionNonExistentPackage(t *testing.T) {
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionNonExistentVersion(t *testing.T) {
@@ -124,7 +126,7 @@ func TestClusterExtensionNonExistentVersion(t *testing.T) {
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionBundleDeploymentDoesNotExist(t *testing.T) {
@@ -151,13 +153,12 @@ func TestClusterExtensionBundleDeploymentDoesNotExist(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("It results in the expected BundleDeployment")
-	bd := &rukpakv1alpha1.BundleDeployment{}
+	bd := &rukpakv1alpha2.BundleDeployment{}
 	require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
-	require.Equal(t, "core-rukpak-io-plain", bd.Spec.ProvisionerClassName)
-	require.Equal(t, "core-rukpak-io-registry", bd.Spec.Template.Spec.ProvisionerClassName)
-	require.Equal(t, rukpakv1alpha1.SourceTypeImage, bd.Spec.Template.Spec.Source.Type)
-	require.NotNil(t, bd.Spec.Template.Spec.Source.Image)
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Template.Spec.Source.Image.Ref)
+	require.Equal(t, "core-rukpak-io-registry", bd.Spec.ProvisionerClassName)
+	require.Equal(t, rukpakv1alpha2.SourceTypeImage, bd.Spec.Source.Type)
+	require.NotNil(t, bd.Spec.Source.Image)
+	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Source.Image.Ref)
 
 	t.Log("It sets the resolvedBundleResource status field")
 	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", clusterExtension.Status.ResolvedBundleResource)
@@ -180,7 +181,7 @@ func TestClusterExtensionBundleDeploymentDoesNotExist(t *testing.T) {
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionBundleDeploymentOutOfDate(t *testing.T) {
@@ -200,7 +201,7 @@ func TestClusterExtensionBundleDeploymentOutOfDate(t *testing.T) {
 	t.Log("When the expected BundleDeployment already exists")
 	t.Log("When the BundleDeployment spec is out of date")
 	t.Log("By patching the existing BD")
-	bd := &rukpakv1alpha1.BundleDeployment{
+	bd := &rukpakv1alpha2.BundleDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: extKey.Name,
 			OwnerReferences: []metav1.OwnerReference{
@@ -214,17 +215,12 @@ func TestClusterExtensionBundleDeploymentOutOfDate(t *testing.T) {
 				},
 			},
 		},
-		Spec: rukpakv1alpha1.BundleDeploymentSpec{
-			ProvisionerClassName: "core-rukpak-io-plain",
-			Template: rukpakv1alpha1.BundleTemplate{
-				Spec: rukpakv1alpha1.BundleSpec{
-					ProvisionerClassName: "core-rukpak-io-registry",
-					Source: rukpakv1alpha1.BundleSource{
-						Type: rukpakv1alpha1.SourceTypeImage,
-						Image: &rukpakv1alpha1.ImageSource{
-							Ref: "quay.io/operatorhubio/prometheus@fake2.0.0",
-						},
-					},
+		Spec: rukpakv1alpha2.BundleDeploymentSpec{
+			ProvisionerClassName: "core-rukpak-io-registry",
+			Source: rukpakv1alpha2.BundleSource{
+				Type: rukpakv1alpha2.SourceTypeImage,
+				Image: &rukpakv1alpha2.ImageSource{
+					Ref: "quay.io/operatorhubio/prometheus@fake2.0.0",
 				},
 			},
 		},
@@ -245,13 +241,12 @@ func TestClusterExtensionBundleDeploymentOutOfDate(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the expected BD spec")
-	bd = &rukpakv1alpha1.BundleDeployment{}
+	bd = &rukpakv1alpha2.BundleDeployment{}
 	require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
-	require.Equal(t, "core-rukpak-io-plain", bd.Spec.ProvisionerClassName)
-	require.Equal(t, "core-rukpak-io-registry", bd.Spec.Template.Spec.ProvisionerClassName)
-	require.Equal(t, rukpakv1alpha1.SourceTypeImage, bd.Spec.Template.Spec.Source.Type)
-	require.NotNil(t, bd.Spec.Template.Spec.Source.Image)
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Template.Spec.Source.Image.Ref)
+	require.Equal(t, "core-rukpak-io-registry", bd.Spec.ProvisionerClassName)
+	require.Equal(t, rukpakv1alpha2.SourceTypeImage, bd.Spec.Source.Type)
+	require.NotNil(t, bd.Spec.Source.Image)
+	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Source.Image.Ref)
 
 	t.Log("By checking the status fields")
 	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", clusterExtension.Status.ResolvedBundleResource)
@@ -271,7 +266,7 @@ func TestClusterExtensionBundleDeploymentOutOfDate(t *testing.T) {
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
@@ -291,7 +286,7 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 	t.Log("When the expected BundleDeployment already exists")
 	t.Log("When the BundleDeployment spec is up-to-date")
 	t.Log("By patching the existing BD")
-	bd := &rukpakv1alpha1.BundleDeployment{
+	bd := &rukpakv1alpha2.BundleDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: extKey.Name,
 			OwnerReferences: []metav1.OwnerReference{
@@ -305,17 +300,12 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 				},
 			},
 		},
-		Spec: rukpakv1alpha1.BundleDeploymentSpec{
-			ProvisionerClassName: "core-rukpak-io-plain",
-			Template: rukpakv1alpha1.BundleTemplate{
-				Spec: rukpakv1alpha1.BundleSpec{
-					ProvisionerClassName: "core-rukpak-io-registry",
-					Source: rukpakv1alpha1.BundleSource{
-						Type: rukpakv1alpha1.SourceTypeImage,
-						Image: &rukpakv1alpha1.ImageSource{
-							Ref: "quay.io/operatorhubio/prometheus@fake2.0.0",
-						},
-					},
+		Spec: rukpakv1alpha2.BundleDeploymentSpec{
+			ProvisionerClassName: "core-rukpak-io-registry",
+			Source: rukpakv1alpha2.BundleSource{
+				Type: rukpakv1alpha2.SourceTypeImage,
+				Image: &rukpakv1alpha2.ImageSource{
+					Ref: "quay.io/operatorhubio/prometheus@fake2.0.0",
 				},
 			},
 		},
@@ -354,12 +344,12 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
 	require.Equal(t, "bundledeployment status is unknown", cond.Message)
 
-	t.Log("It verifies cluster extension status when `HasValidBundle` condition of rukpak is false")
+	t.Log("It verifies cluster extension status when `Unpacked` condition of rukpak is false")
 	apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha1.TypeHasValidBundle,
+		Type:    rukpakv1alpha2.TypeUnpacked,
 		Status:  metav1.ConditionFalse,
 		Message: "failed to unpack",
-		Reason:  rukpakv1alpha1.ReasonUnpackFailed,
+		Reason:  rukpakv1alpha2.ReasonUnpackFailed,
 	})
 
 	t.Log("By updating the status of bundleDeployment")
@@ -392,10 +382,10 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 
 	t.Log("It verifies cluster extension status when `InstallReady` condition of rukpak is false")
 	apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha1.TypeInstalled,
+		Type:    rukpakv1alpha2.TypeInstalled,
 		Status:  metav1.ConditionFalse,
 		Message: "failed to install",
-		Reason:  rukpakv1alpha1.ReasonInstallFailed,
+		Reason:  rukpakv1alpha2.ReasonInstallFailed,
 	})
 
 	t.Log("By updating the status of bundleDeployment")
@@ -430,10 +420,10 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 
 	t.Log("It verifies cluster extension status when `InstallReady` condition of rukpak is true")
 	apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha1.TypeInstalled,
+		Type:    rukpakv1alpha2.TypeInstalled,
 		Status:  metav1.ConditionTrue,
 		Message: "cluster extension installed successfully",
-		Reason:  rukpakv1alpha1.ReasonInstallationSucceeded,
+		Reason:  rukpakv1alpha2.ReasonInstallationSucceeded,
 	})
 
 	t.Log("By updating the status of bundleDeployment")
@@ -466,17 +456,17 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 
 	t.Log("It verifies any other unknown status of bundledeployment")
 	apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha1.TypeHasValidBundle,
+		Type:    rukpakv1alpha2.TypeUnpacked,
 		Status:  metav1.ConditionUnknown,
 		Message: "unpacking",
-		Reason:  rukpakv1alpha1.ReasonUnpackSuccessful,
+		Reason:  rukpakv1alpha2.ReasonUnpackSuccessful,
 	})
 
 	apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha1.TypeInstalled,
+		Type:    rukpakv1alpha2.TypeInstalled,
 		Status:  metav1.ConditionUnknown,
 		Message: "installing",
-		Reason:  rukpakv1alpha1.ReasonInstallationSucceeded,
+		Reason:  rukpakv1alpha2.ReasonInstallationSucceeded,
 	})
 
 	t.Log("By updating the status of bundleDeployment")
@@ -510,10 +500,10 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 
 	t.Log("It verifies cluster extension status when bundleDeployment installation status is unknown")
 	apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha1.TypeInstalled,
+		Type:    rukpakv1alpha2.TypeInstalled,
 		Status:  metav1.ConditionUnknown,
 		Message: "installing",
-		Reason:  rukpakv1alpha1.ReasonInstallationSucceeded,
+		Reason:  rukpakv1alpha2.ReasonInstallationSucceeded,
 	})
 
 	t.Log("By updating the status of bundleDeployment")
@@ -546,7 +536,7 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionExpectedBundleDeployment(t *testing.T) {
@@ -565,19 +555,14 @@ func TestClusterExtensionExpectedBundleDeployment(t *testing.T) {
 
 	t.Log("When an out-of-date BundleDeployment exists")
 	t.Log("By creating the expected BD")
-	bd := &rukpakv1alpha1.BundleDeployment{
+	bd := &rukpakv1alpha2.BundleDeployment{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
-		Spec: rukpakv1alpha1.BundleDeploymentSpec{
-			ProvisionerClassName: "foo",
-			Template: rukpakv1alpha1.BundleTemplate{
-				Spec: rukpakv1alpha1.BundleSpec{
-					ProvisionerClassName: "bar",
-					Source: rukpakv1alpha1.BundleSource{
-						Type: rukpakv1alpha1.SourceTypeHTTP,
-						HTTP: &rukpakv1alpha1.HTTPSource{
-							URL: "http://localhost:8080/",
-						},
-					},
+		Spec: rukpakv1alpha2.BundleDeploymentSpec{
+			ProvisionerClassName: "bar",
+			Source: rukpakv1alpha2.BundleSource{
+				Type: rukpakv1alpha2.SourceTypeHTTP,
+				HTTP: &rukpakv1alpha2.HTTPSource{
+					URL: "http://localhost:8080/",
 				},
 			},
 		},
@@ -593,13 +578,12 @@ func TestClusterExtensionExpectedBundleDeployment(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("It results in the expected BundleDeployment")
-	bd = &rukpakv1alpha1.BundleDeployment{}
+	bd = &rukpakv1alpha2.BundleDeployment{}
 	require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
-	require.Equal(t, "core-rukpak-io-plain", bd.Spec.ProvisionerClassName)
-	require.Equal(t, "core-rukpak-io-registry", bd.Spec.Template.Spec.ProvisionerClassName)
-	require.Equal(t, rukpakv1alpha1.SourceTypeImage, bd.Spec.Template.Spec.Source.Type)
-	require.NotNil(t, bd.Spec.Template.Spec.Source.Image)
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Template.Spec.Source.Image.Ref)
+	require.Equal(t, "core-rukpak-io-registry", bd.Spec.ProvisionerClassName)
+	require.Equal(t, rukpakv1alpha2.SourceTypeImage, bd.Spec.Source.Type)
+	require.NotNil(t, bd.Spec.Source.Image)
+	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Source.Image.Ref)
 
 	t.Log("It sets the resolvedBundleResource status field")
 	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", clusterExtension.Status.ResolvedBundleResource)
@@ -621,7 +605,7 @@ func TestClusterExtensionExpectedBundleDeployment(t *testing.T) {
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionDuplicatePackage(t *testing.T) {
@@ -672,7 +656,7 @@ func TestClusterExtensionDuplicatePackage(t *testing.T) {
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionChannelVersionExists(t *testing.T) {
@@ -722,17 +706,16 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	require.Equal(t, "bundledeployment status is unknown", cond.Message)
 
 	t.Log("By fetching the bundled deployment")
-	bd := &rukpakv1alpha1.BundleDeployment{}
+	bd := &rukpakv1alpha2.BundleDeployment{}
 	require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
-	require.Equal(t, "core-rukpak-io-plain", bd.Spec.ProvisionerClassName)
-	require.Equal(t, "core-rukpak-io-registry", bd.Spec.Template.Spec.ProvisionerClassName)
-	require.Equal(t, rukpakv1alpha1.SourceTypeImage, bd.Spec.Template.Spec.Source.Type)
-	require.NotNil(t, bd.Spec.Template.Spec.Source.Image)
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", bd.Spec.Template.Spec.Source.Image.Ref)
+	require.Equal(t, "core-rukpak-io-registry", bd.Spec.ProvisionerClassName)
+	require.Equal(t, rukpakv1alpha2.SourceTypeImage, bd.Spec.Source.Type)
+	require.NotNil(t, bd.Spec.Source.Image)
+	require.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", bd.Spec.Source.Image.Ref)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
@@ -780,17 +763,16 @@ func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
 	require.Equal(t, "bundledeployment status is unknown", cond.Message)
 
 	t.Log("By fetching the bundledeployment")
-	bd := &rukpakv1alpha1.BundleDeployment{}
+	bd := &rukpakv1alpha2.BundleDeployment{}
 	require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
-	require.Equal(t, "core-rukpak-io-plain", bd.Spec.ProvisionerClassName)
-	require.Equal(t, "core-rukpak-io-registry", bd.Spec.Template.Spec.ProvisionerClassName)
-	require.Equal(t, rukpakv1alpha1.SourceTypeImage, bd.Spec.Template.Spec.Source.Type)
-	require.NotNil(t, bd.Spec.Template.Spec.Source.Image)
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Template.Spec.Source.Image.Ref)
+	require.Equal(t, "core-rukpak-io-registry", bd.Spec.ProvisionerClassName)
+	require.Equal(t, rukpakv1alpha2.SourceTypeImage, bd.Spec.Source.Type)
+	require.NotNil(t, bd.Spec.Source.Image)
+	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Source.Image.Ref)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionVersionNoChannel(t *testing.T) {
@@ -841,7 +823,7 @@ func TestClusterExtensionVersionNoChannel(t *testing.T) {
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionNoChannel(t *testing.T) {
@@ -889,7 +871,7 @@ func TestClusterExtensionNoChannel(t *testing.T) {
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionNoVersion(t *testing.T) {
@@ -939,7 +921,7 @@ func TestClusterExtensionNoVersion(t *testing.T) {
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionPlainV0Bundle(t *testing.T) {
@@ -987,17 +969,16 @@ func TestClusterExtensionPlainV0Bundle(t *testing.T) {
 	require.Equal(t, "bundledeployment status is unknown", cond.Message)
 
 	t.Log("By fetching the bundled deployment")
-	bd := &rukpakv1alpha1.BundleDeployment{}
+	bd := &rukpakv1alpha2.BundleDeployment{}
 	require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
 	require.Equal(t, "core-rukpak-io-plain", bd.Spec.ProvisionerClassName)
-	require.Equal(t, "core-rukpak-io-plain", bd.Spec.Template.Spec.ProvisionerClassName)
-	require.Equal(t, rukpakv1alpha1.SourceTypeImage, bd.Spec.Template.Spec.Source.Type)
-	require.NotNil(t, bd.Spec.Template.Spec.Source.Image)
-	require.Equal(t, "quay.io/operatorhub/plain@sha256:plain", bd.Spec.Template.Spec.Source.Image.Ref)
+	require.Equal(t, rukpakv1alpha2.SourceTypeImage, bd.Spec.Source.Type)
+	require.NotNil(t, bd.Spec.Source.Image)
+	require.Equal(t, "quay.io/operatorhub/plain@sha256:plain", bd.Spec.Source.Image.Ref)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionBadBundleMediaType(t *testing.T) {
@@ -1048,7 +1029,7 @@ func TestClusterExtensionBadBundleMediaType(t *testing.T) {
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func TestClusterExtensionInvalidSemverPastRegex(t *testing.T) {
@@ -1100,7 +1081,7 @@ func TestClusterExtensionInvalidSemverPastRegex(t *testing.T) {
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
 func verifyInvariants(ctx context.Context, t *testing.T, c client.Client, ext *ocv1alpha1.ClusterExtension) {
@@ -1125,6 +1106,56 @@ func verifyConditionsInvariants(t *testing.T, ext *ocv1alpha1.ClusterExtension) 
 	}
 }
 
+func TestGeneratedBundleDeployment(t *testing.T) {
+	test := []struct {
+		name                     string
+		clusterExtension         ocv1alpha1.ClusterExtension
+		bundlePath               string
+		bundleProvisioner        string
+		expectedBundleDeployment *unstructured.Unstructured
+	}{
+		{
+			name: "when all the specs are provided.",
+			clusterExtension: ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-bd",
+					UID:  types.UID("test"),
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					WatchNamespaces: []string{"alpha", "beta", "gamma"},
+				},
+			},
+			bundlePath:               "testpath",
+			bundleProvisioner:        "foo",
+			expectedBundleDeployment: &unstructured.Unstructured{},
+		},
+		{
+			name: "when watchNamespaces are not provided.",
+			clusterExtension: ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-bd",
+					UID:  types.UID("test"),
+				},
+			},
+			bundlePath:               "testpath",
+			bundleProvisioner:        "foo",
+			expectedBundleDeployment: &unstructured.Unstructured{},
+		},
+	}
+
+	for _, tt := range test {
+		fakeReconciler := &controllers.ClusterExtensionReconciler{}
+		objUnstructured := fakeReconciler.GenerateExpectedBundleDeployment(tt.clusterExtension, tt.bundlePath, tt.bundleProvisioner)
+		resultBundleDeployment := &rukpakv1alpha2.BundleDeployment{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(objUnstructured.Object, resultBundleDeployment))
+		// Verify the fields that have are being taken from cluster extension.
+		require.Equal(t, tt.clusterExtension.GetName(), resultBundleDeployment.GetName())
+		require.Equal(t, tt.bundlePath, resultBundleDeployment.Spec.Source.Image.Ref)
+		require.Equal(t, tt.bundleProvisioner, resultBundleDeployment.Spec.ProvisionerClassName)
+		require.Equal(t, tt.clusterExtension.Spec.WatchNamespaces, resultBundleDeployment.Spec.WatchNamespaces)
+	}
+}
+
 func TestClusterExtensionUpgrade(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
@@ -1133,7 +1164,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
 		defer func() {
 			require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-			require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+			require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 		}()
 
 		pkgName := "prometheus"
@@ -1226,7 +1257,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
 		defer func() {
 			require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-			require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+			require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 		}()
 
 		pkgName := "prometheus"
@@ -1333,7 +1364,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 				defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, tt.flagState)()
 				defer func() {
 					require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-					require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+					require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 				}()
 
 				extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
@@ -1421,7 +1452,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, tt.flagState)()
 				defer func() {
 					require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-					require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+					require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 				}()
 
 				extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
@@ -1503,7 +1534,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, tt.flagState)()
 				defer func() {
 					require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-					require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha1.BundleDeployment{}))
+					require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 				}()
 
 				extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}

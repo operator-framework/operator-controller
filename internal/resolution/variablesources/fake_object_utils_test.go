@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/utils/pointer"
 
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 )
 
 func fakeClusterExtension(name, packageName string, upgradeConstraintPolicy ocv1alpha1.UpgradeConstraintPolicy) ocv1alpha1.ClusterExtension {
@@ -26,21 +26,16 @@ func fakeClusterExtension(name, packageName string, upgradeConstraintPolicy ocv1
 	}
 }
 
-func fakeBundleDeployment(name, bundleImage string, owner *ocv1alpha1.ClusterExtension) rukpakv1alpha1.BundleDeployment {
-	bd := rukpakv1alpha1.BundleDeployment{
+func fakeBundleDeployment(name, bundleImage string, owner *ocv1alpha1.ClusterExtension) rukpakv1alpha2.BundleDeployment {
+	bd := rukpakv1alpha2.BundleDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
-		Spec: rukpakv1alpha1.BundleDeploymentSpec{
+		Spec: rukpakv1alpha2.BundleDeploymentSpec{
 			ProvisionerClassName: "core-rukpak-io-plain",
-			Template: rukpakv1alpha1.BundleTemplate{
-				Spec: rukpakv1alpha1.BundleSpec{
-					ProvisionerClassName: "core-rukpak-io-plain",
-					Source: rukpakv1alpha1.BundleSource{
-						Image: &rukpakv1alpha1.ImageSource{
-							Ref: bundleImage,
-						},
-					},
+			Source: rukpakv1alpha2.BundleSource{
+				Image: &rukpakv1alpha2.ImageSource{
+					Ref: bundleImage,
 				},
 			},
 		},

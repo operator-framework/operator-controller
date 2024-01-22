@@ -29,7 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"github.com/stretchr/testify/require"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
@@ -81,7 +81,7 @@ func TestMain(m *testing.M) {
 
 	sch = runtime.NewScheme()
 	utilruntime.Must(ocv1alpha1.AddToScheme(sch))
-	utilruntime.Must(rukpakv1alpha1.AddToScheme(sch))
+	utilruntime.Must(rukpakv1alpha2.AddToScheme(sch))
 
 	code := m.Run()
 	utilruntime.Must(testEnv.Stop())

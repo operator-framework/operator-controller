@@ -12,7 +12,7 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,7 +29,7 @@ import (
 func TestVariableSource(t *testing.T) {
 	sch := runtime.NewScheme()
 	utilruntime.Must(ocv1alpha1.AddToScheme(sch))
-	utilruntime.Must(rukpakv1alpha1.AddToScheme(sch))
+	utilruntime.Must(rukpakv1alpha2.AddToScheme(sch))
 
 	stableChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
 		Name: "stable",
@@ -69,7 +69,7 @@ func TestVariableSource(t *testing.T) {
 		},
 	}
 
-	bd := rukpakv1alpha1.BundleDeployment{
+	bd := rukpakv1alpha2.BundleDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterExtensionName,
 			OwnerReferences: []metav1.OwnerReference{
@@ -83,23 +83,18 @@ func TestVariableSource(t *testing.T) {
 				},
 			},
 		},
-		Spec: rukpakv1alpha1.BundleDeploymentSpec{
-			ProvisionerClassName: "core-rukpak-io-plain",
-			Template: rukpakv1alpha1.BundleTemplate{
-				Spec: rukpakv1alpha1.BundleSpec{
-					ProvisionerClassName: "core-rukpak-io-registry",
-					Source: rukpakv1alpha1.BundleSource{
-						Type: rukpakv1alpha1.SourceTypeImage,
-						Image: &rukpakv1alpha1.ImageSource{
-							Ref: "foo.io/packageA/packageA:v2.0.0",
-						},
-					},
+		Spec: rukpakv1alpha2.BundleDeploymentSpec{
+			ProvisionerClassName: "core-rukpak-io-registry",
+			Source: rukpakv1alpha2.BundleSource{
+				Type: rukpakv1alpha2.SourceTypeImage,
+				Image: &rukpakv1alpha2.ImageSource{
+					Ref: "foo.io/packageA/packageA:v2.0.0",
 				},
 			},
 		},
 	}
 
-	vars, err := controllers.GenerateVariables(allBundles, []ocv1alpha1.ClusterExtension{clusterExtension}, []rukpakv1alpha1.BundleDeployment{bd})
+	vars, err := controllers.GenerateVariables(allBundles, []ocv1alpha1.ClusterExtension{clusterExtension}, []rukpakv1alpha2.BundleDeployment{bd})
 	require.NoError(t, err)
 
 	expectedVars := []deppy.Variable{

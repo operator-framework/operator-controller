@@ -11,7 +11,7 @@ import (
 	"time"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -104,18 +104,18 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 		assert.Contains(ct, cond.Message, "installed from")
 		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundleResource)
 
-		bd := rukpakv1alpha1.BundleDeployment{}
+		bd := rukpakv1alpha2.BundleDeployment{}
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtensionName}, &bd))
-		hasValidBundle := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
-		if !assert.NotNil(ct, hasValidBundle) {
+		isUnpackSuccessful := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha2.TypeUnpacked)
+		if !assert.NotNil(ct, isUnpackSuccessful) {
 			return
 		}
-		assert.Equal(ct, rukpakv1alpha1.ReasonUnpackSuccessful, hasValidBundle.Reason)
-		installed := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeInstalled)
+		assert.Equal(ct, rukpakv1alpha2.ReasonUnpackSuccessful, isUnpackSuccessful.Reason)
+		installed := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha2.TypeInstalled)
 		if !assert.NotNil(ct, installed) {
 			return
 		}
-		assert.Equal(ct, rukpakv1alpha1.ReasonInstallationSucceeded, installed.Reason)
+		assert.Equal(ct, rukpakv1alpha2.ReasonInstallationSucceeded, installed.Reason)
 	}, pollDuration, pollInterval)
 }
 
@@ -160,18 +160,18 @@ func TestClusterExtensionInstallPlain(t *testing.T) {
 		assert.Contains(ct, cond.Message, "installed from")
 		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundleResource)
 
-		bd := rukpakv1alpha1.BundleDeployment{}
+		bd := rukpakv1alpha2.BundleDeployment{}
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtensionName}, &bd))
-		hasValidBundle := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeHasValidBundle)
-		if !assert.NotNil(ct, hasValidBundle) {
+		isUnpackSuccessful := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha2.TypeUnpacked)
+		if !assert.NotNil(ct, isUnpackSuccessful) {
 			return
 		}
-		assert.Equal(ct, rukpakv1alpha1.ReasonUnpackSuccessful, hasValidBundle.Reason)
-		installed := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha1.TypeInstalled)
+		assert.Equal(ct, rukpakv1alpha2.ReasonUnpackSuccessful, isUnpackSuccessful.Reason)
+		installed := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha2.TypeInstalled)
 		if !assert.NotNil(ct, installed) {
 			return
 		}
-		assert.Equal(ct, rukpakv1alpha1.ReasonInstallationSucceeded, installed.Reason)
+		assert.Equal(ct, rukpakv1alpha2.ReasonInstallationSucceeded, installed.Reason)
 	}, pollDuration, pollInterval)
 }
 
@@ -329,7 +329,6 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 // - clusterextensions
 // - pods logs
 // - deployments
-// - bundle
 // - bundledeployments
 // - catalogsources
 func getArtifactsOutput(t *testing.T) {
@@ -390,25 +389,8 @@ func getArtifactsOutput(t *testing.T) {
 		}
 	}
 
-	// Get all Bundles in the namespace and save them to the artifact path.
-	bundles := rukpakv1alpha1.BundleList{}
-	if err := c.List(context.Background(), &bundles, client.InNamespace("")); err != nil {
-		fmt.Printf("Failed to list bundles: %v", err)
-	}
-	for _, bundle := range bundles.Items {
-		// Save bundle to artifact path
-		bundleYaml, err := yaml.Marshal(bundle)
-		if err != nil {
-			fmt.Printf("Failed to marshal bundle: %v", err)
-			continue
-		}
-		if err := os.WriteFile(filepath.Join(artifactPath, bundle.Name+"-bundle.yaml"), bundleYaml, 0600); err != nil {
-			fmt.Printf("Failed to write bundle to file: %v", err)
-		}
-	}
-
 	// Get all BundleDeployments in the namespace and save them to the artifact path.
-	bundleDeployments := rukpakv1alpha1.BundleDeploymentList{}
+	bundleDeployments := rukpakv1alpha2.BundleDeploymentList{}
 	if err := c.List(context.Background(), &bundleDeployments, client.InNamespace("")); err != nil {
 		fmt.Printf("Failed to list bundleDeployments: %v", err)
 	}

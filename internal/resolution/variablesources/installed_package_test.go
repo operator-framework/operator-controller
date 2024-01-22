@@ -10,7 +10,7 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
@@ -249,7 +249,7 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			fakeOwnerClusterExtension := fakeClusterExtension("test-extension-semver", testPackageName, tt.upgradeConstraintPolicy)
-			bundleDeployments := []rukpakv1alpha1.BundleDeployment{}
+			bundleDeployments := []rukpakv1alpha2.BundleDeployment{}
 			if tt.installedBundle != nil {
 				bundleDeployments = append(bundleDeployments, fakeBundleDeployment("test-package-bd", tt.installedBundle.Image, &fakeOwnerClusterExtension))
 			}
@@ -412,7 +412,7 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			fakeOwnerClusterExtension := fakeClusterExtension("test-extension-legacy", testPackageName, tt.upgradeConstraintPolicy)
-			bundleDeployments := []rukpakv1alpha1.BundleDeployment{}
+			bundleDeployments := []rukpakv1alpha2.BundleDeployment{}
 			if tt.installedBundle != nil {
 				bundleDeployments = append(bundleDeployments, fakeBundleDeployment("test-package-bd", tt.installedBundle.Image, &fakeOwnerClusterExtension))
 			}
