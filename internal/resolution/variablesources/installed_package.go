@@ -5,7 +5,7 @@ import (
 	"sort"
 
 	mmsemver "github.com/Masterminds/semver/v3"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -24,7 +24,7 @@ import (
 func MakeInstalledPackageVariables(
 	allBundles []*catalogmetadata.Bundle,
 	clusterExtensions []ocv1alpha1.ClusterExtension,
-	bundleDeployments []rukpakv1alpha1.BundleDeployment,
+	bundleDeployments []rukpakv1alpha2.BundleDeployment,
 ) ([]*olmvariables.InstalledPackageVariable, error) {
 	var successors successorsFunc = legacySemanticsSuccessors
 	if features.OperatorControllerFeatureGate.Enabled(features.ForceSemverUpgradeConstraints) {
@@ -47,7 +47,7 @@ func MakeInstalledPackageVariables(
 			continue
 		}
 
-		sourceImage := bundleDeployment.Spec.Template.Spec.Source.Image
+		sourceImage := bundleDeployment.Spec.Source.Image
 		if sourceImage == nil || sourceImage.Ref == "" {
 			continue
 		}
@@ -135,8 +135,8 @@ func semverSuccessors(allBundles []*catalogmetadata.Bundle, installedBundle *cat
 	return upgradeEdges, nil
 }
 
-func mapOwnerIDToBundleDeployment(bundleDeployments []rukpakv1alpha1.BundleDeployment) map[types.UID]*rukpakv1alpha1.BundleDeployment {
-	result := map[types.UID]*rukpakv1alpha1.BundleDeployment{}
+func mapOwnerIDToBundleDeployment(bundleDeployments []rukpakv1alpha2.BundleDeployment) map[types.UID]*rukpakv1alpha2.BundleDeployment {
+	result := map[types.UID]*rukpakv1alpha2.BundleDeployment{}
 
 	for idx := range bundleDeployments {
 		for _, ref := range bundleDeployments[idx].OwnerReferences {

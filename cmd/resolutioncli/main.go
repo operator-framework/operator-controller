@@ -25,7 +25,7 @@ import (
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -61,7 +61,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(ocv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(rukpakv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(rukpakv1alpha2.AddToScheme(scheme))
 	utilruntime.Must(catalogd.AddToScheme(scheme))
 }
 
@@ -158,7 +158,7 @@ func run(ctx context.Context, packageName, packageChannel, packageVersionRange, 
 	if err := cl.List(ctx, &clusterExtensionList); err != nil {
 		return err
 	}
-	bundleDeploymentList := rukpakv1alpha1.BundleDeploymentList{}
+	bundleDeploymentList := rukpakv1alpha2.BundleDeploymentList{}
 	if err := cl.List(ctx, &bundleDeploymentList); err != nil {
 		return err
 	}

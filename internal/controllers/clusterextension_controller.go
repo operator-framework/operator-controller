@@ -26,7 +26,7 @@ import (
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
-	rukpakv1alpha1 "github.com/operator-framework/rukpak/api/v1alpha1"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -194,7 +194,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
 	// image we just looked up in the solution.
-	dep := r.generateExpectedBundleDeployment(*ext, bundle.Image, bundleProvisioner)
+	dep := r.GenerateExpectedBundleDeployment(*ext, bundle.Image, bundleProvisioner)
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
 		// originally Reason: ocv1alpha1.ReasonInstallationFailed
 		ext.Status.InstalledBundleResource = ""
@@ -204,7 +204,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 
 	// convert existing unstructured object into bundleDeployment for easier mapping of status.
-	existingTypedBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
+	existingTypedBundleDeployment := &rukpakv1alpha2.BundleDeployment{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(dep.UnstructuredContent(), existingTypedBundleDeployment); err != nil {
 		// originally Reason: ocv1alpha1.ReasonInstallationStatusUnknown
 		ext.Status.InstalledBundleResource = ""
@@ -232,7 +232,7 @@ func (r *ClusterExtensionReconciler) variables(ctx context.Context) ([]deppy.Var
 	if err := r.Client.List(ctx, &clusterExtensionList); err != nil {
 		return nil, err
 	}
-	bundleDeploymentList := rukpakv1alpha1.BundleDeploymentList{}
+	bundleDeploymentList := rukpakv1alpha2.BundleDeploymentList{}
 	if err := r.Client.List(ctx, &bundleDeploymentList); err != nil {
 		return nil, err
 	}
@@ -240,8 +240,8 @@ func (r *ClusterExtensionReconciler) variables(ctx context.Context) ([]deppy.Var
 	return GenerateVariables(allBundles, clusterExtensionList.Items, bundleDeploymentList.Items)
 }
 
-func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha1.BundleDeployment, ext *ocv1alpha1.ClusterExtension) {
-	bundleDeploymentReady := apimeta.FindStatusCondition(existingTypedBundleDeployment.Status.Conditions, rukpakv1alpha1.TypeInstalled)
+func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha2.BundleDeployment, ext *ocv1alpha1.ClusterExtension) {
+	bundleDeploymentReady := apimeta.FindStatusCondition(existingTypedBundleDeployment.Status.Conditions, rukpakv1alpha2.TypeInstalled)
 	if bundleDeploymentReady == nil {
 		ext.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "bundledeployment status is unknown", ext.GetGeneration())
@@ -258,16 +258,16 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 		return
 	}
 
-	bundleDeploymentSource := existingTypedBundleDeployment.Spec.Template.Spec.Source
+	bundleDeploymentSource := existingTypedBundleDeployment.Spec.Source
 	switch bundleDeploymentSource.Type {
-	case rukpakv1alpha1.SourceTypeImage:
+	case rukpakv1alpha2.SourceTypeImage:
 		ext.Status.InstalledBundleResource = bundleDeploymentSource.Image.Ref
 		setInstalledStatusConditionSuccess(
 			&ext.Status.Conditions,
 			fmt.Sprintf("installed from %q", bundleDeploymentSource.Image.Ref),
 			ext.GetGeneration(),
 		)
-	case rukpakv1alpha1.SourceTypeGit:
+	case rukpakv1alpha2.SourceTypeGit:
 		resource := bundleDeploymentSource.Git.Repository + "@" + bundleDeploymentSource.Git.Ref.Commit
 		ext.Status.InstalledBundleResource = resource
 		setInstalledStatusConditionSuccess(
@@ -380,35 +380,36 @@ func (r *ClusterExtensionReconciler) bundleFromSolution(selection []deppy.Variab
 	return nil, fmt.Errorf("bundle for package %q not found in solution", packageName)
 }
 
-func (r *ClusterExtensionReconciler) generateExpectedBundleDeployment(o ocv1alpha1.ClusterExtension, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {
+func (r *ClusterExtensionReconciler) GenerateExpectedBundleDeployment(o ocv1alpha1.ClusterExtension, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {
 	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
 	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
 	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
 	// unstructured ensures that the patch contains only what is specified. Using unstructured like this is basically
 	// identical to "kubectl apply -f"
 
+	spec := map[string]interface{}{
+		// TODO: Don't assume plain provisioner
+		"provisionerClassName": bundleProvisioner,
+		"source": map[string]interface{}{
+			// TODO: Don't assume image type
+			"type": string(rukpakv1alpha2.SourceTypeImage),
+			"image": map[string]interface{}{
+				"ref": bundlePath,
+			},
+		},
+	}
+
+	if len(o.Spec.WatchNamespaces) > 0 {
+		spec["watchNamespaces"] = o.Spec.WatchNamespaces
+	}
+
 	bd := &unstructured.Unstructured{Object: map[string]interface{}{
-		"apiVersion": rukpakv1alpha1.GroupVersion.String(),
-		"kind":       rukpakv1alpha1.BundleDeploymentKind,
+		"apiVersion": rukpakv1alpha2.GroupVersion.String(),
+		"kind":       rukpakv1alpha2.BundleDeploymentKind,
 		"metadata": map[string]interface{}{
 			"name": o.GetName(),
 		},
-		"spec": map[string]interface{}{
-			// TODO: Don't assume plain provisioner
-			"provisionerClassName": "core-rukpak-io-plain",
-			"template": map[string]interface{}{
-				"spec": map[string]interface{}{
-					"provisionerClassName": bundleProvisioner,
-					"source": map[string]interface{}{
-						// TODO: Don't assume image type
-						"type": string(rukpakv1alpha1.SourceTypeImage),
-						"image": map[string]interface{}{
-							"ref": bundlePath,
-						},
-					},
-				},
-			},
-		},
+		"spec": spec,
 	}}
 	bd.SetOwnerReferences([]metav1.OwnerReference{
 		{
@@ -429,7 +430,7 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&ocv1alpha1.ClusterExtension{}).
 		Watches(&catalogd.Catalog{},
 			handler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
-		Owns(&rukpakv1alpha1.BundleDeployment{}).
+		Owns(&rukpakv1alpha2.BundleDeployment{}).
 		Complete(r)
 
 	if err != nil {
@@ -460,13 +461,13 @@ func (r *ClusterExtensionReconciler) ensureBundleDeployment(ctx context.Context,
 }
 
 func (r *ClusterExtensionReconciler) existingBundleDeploymentUnstructured(ctx context.Context, name string) (*unstructured.Unstructured, error) {
-	existingBundleDeployment := &rukpakv1alpha1.BundleDeployment{}
+	existingBundleDeployment := &rukpakv1alpha2.BundleDeployment{}
 	err := r.Client.Get(ctx, types.NamespacedName{Name: name}, existingBundleDeployment)
 	if err != nil {
 		return nil, err
 	}
-	existingBundleDeployment.APIVersion = rukpakv1alpha1.GroupVersion.String()
-	existingBundleDeployment.Kind = rukpakv1alpha1.BundleDeploymentKind
+	existingBundleDeployment.APIVersion = rukpakv1alpha2.GroupVersion.String()
+	existingBundleDeployment.Kind = rukpakv1alpha2.BundleDeploymentKind
 	unstrExistingBundleDeploymentObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(existingBundleDeployment)
 	if err != nil {
 		return nil, err
