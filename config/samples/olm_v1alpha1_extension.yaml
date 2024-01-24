@@ -1,0 +1,18 @@
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: Extension
+metadata:
+  labels:
+    app.kubernetes.io/name: extension
+    app.kubernetes.io/instance: extension-sample
+    app.kubernetes.io/part-of: operator-controller
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: operator-controller
+  name: extension-sample
+  namespace: extension-namespace
+spec:
+  paused: false
+  serviceAccountName: extension-sa
+  defaultNamespace: extension-sample
+  package:
+    name: argocd-operator
+    version: 0.6.0

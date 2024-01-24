@@ -51,3 +51,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - olm.operatorframework.io
+  resources:
+  - extensions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - olm.operatorframework.io
+  resources:
+  - extensions/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - olm.operatorframework.io
+  resources:
+  - extensions/status
+  verbs:
+  - get
+  - patch
+  - update
