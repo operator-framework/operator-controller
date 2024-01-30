@@ -18,20 +18,22 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type ExtensionManagedState string
 
 const (
-	// Pause resolution of this Extension
+	// Peform reconcilliation of this Extension
 	ManagedStateActive ExtensionManagedState = "Active"
-	// Peform resolution of this Extension
+	// Pause reconcilliation of this Extension
 	ManagedStatePaused ExtensionManagedState = "Paused"
 )
 
 type ExtensionSourcePackage struct {
 	//+kubebuilder:validation:MaxLength:=48
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+(-[a-z0-9]+)*$
+	// name specifies the name of the name of the package
 	Name string `json:"name"`
 
 	//+kubebuilder:validation:MaxLength:=64
@@ -42,22 +44,26 @@ type ExtensionSourcePackage struct {
 	// Examples: 1.2.3, 1.0.0-alpha, 1.0.0-rc.1
 	//
 	// For more information on semver, please see https://semver.org/
+	// version constraint definition
 	Version string `json:"version,omitempty"`
 
 	//+kubebuilder:validation:MaxLength:=48
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
-	// Channel constraint definition
+	// channel constraint definition
 	Channel string `json:"channel,omitempty"`
+
+	//+kubebuilder:validation:Enum:=Enforce;Ignore
+	//+kubebuilder:default:=Enforce
+	//+kubebuilder:Optional
+	//
+	// upgradeConstraintPolicy Defines the policy for how to handle upgrade constraints
+	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 }
 
-// TODO: Implement ExtensionSourceDirect containing a URL or other reference mechanism
-
+// ExtensionSource defines the source for this Extension, right now, only a package is supported.
 type ExtensionSource struct {
 	// A source package defined by a name, version and/or channel
 	Package *ExtensionSourcePackage `json:"package,omitempty"`
-
-	// A direct package defined by a URL
-	// TODO: Direct *ExtensionSourceDirect `json:"direct,omitempty"`
 }
 
 // ExtensionSpec defines the desired state of Extension
@@ -66,31 +72,17 @@ type ExtensionSpec struct {
 	//+kubebuilder:default:=Active
 	//+kubebuilder:Optional
 	//
-	// Pause reconciliation on this Extension
+	// managed controls the management state of the extension. "Active" means this extension will be reconciled and "Paused" means this extension will be ignored.
 	Managed ExtensionManagedState `json:"managed,omitempty"`
 
-	//+kubebuilder:validation:MaxLength:=64
+	//+kubebuilder:validation:MaxLength:=253
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
 	//
-	// ServiceAccount name used to install this extension
+	// serviceAccountName is the name of a service account in the Extension's namespace that will be used to manage the installation and lifecycle of the extension.
 	ServiceAccountName string `json:"serviceAccountName"`
 
-	//+kubebuilder:validation:MaxLength:=64
-	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
-	//+kubebuilder:Optional
-	//
-	// Location of installation TBD??
-	DefaultNamespace string `json:"defaultNamespace,omitempty"`
-
-	// Source of Extension to be installed
+	// source of Extension to be installed
 	Source ExtensionSource `json:"source"`
-
-	//+kubebuilder:validation:Enum:=Enforce;Ignore
-	//+kubebuilder:default:=Enforce
-	//+kubebuilder:Optional
-	//
-	// Defines the policy for how to handle upgrade constraints
-	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 }
 
 // ExtensionStatus defines the observed state of Extension
@@ -109,6 +101,7 @@ type ExtensionStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Managed",type=string,JSONPath=`.spec.managed`,description="The current reconciliation state of this extension"
 
 // Extension is the Schema for the extensions API
 type Extension struct {
@@ -130,4 +123,19 @@ type ExtensionList struct {
 
 func init() {
 	SchemeBuilder.Register(&Extension{}, &ExtensionList{})
+}
+
+func (r *Extension) GetPackageSpec() *ExtensionSourcePackage {
+	return r.Spec.Source.Package.DeepCopy()
+}
+
+func (r *Extension) GetUID() types.UID {
+	return r.ObjectMeta.GetUID()
+}
+
+func (r *Extension) GetUpgradeConstraintPolicy() UpgradeConstraintPolicy {
+	if r.Spec.Source.Package != nil {
+		return r.Spec.Source.Package.UpgradeConstraintPolicy
+	}
+	return ""
 }

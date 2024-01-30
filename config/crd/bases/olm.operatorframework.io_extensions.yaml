@@ -14,7 +14,12 @@ spec:
     singular: extension
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: The current reconciliation state of this extension
+      jsonPath: .spec.managed
+      name: Managed
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: Extension is the Schema for the extensions API
@@ -34,38 +39,46 @@ spec:
           spec:
             description: ExtensionSpec defines the desired state of Extension
             properties:
-              defaultNamespace:
-                description: Location of installation TBD??
-                maxLength: 64
-                pattern: ^[a-z0-9]+([\.-][a-z0-9]+)*$
-                type: string
               managed:
                 default: Active
-                description: Pause reconciliation on this Extension
+                description: managed controls the management state of the extension.
+                  "Active" means this extension will be reconciled and "Paused" means
+                  this extension will be ignored.
                 enum:
                 - Active
                 - Paused
                 type: string
               serviceAccountName:
-                description: ServiceAccount name used to install this extension
-                maxLength: 64
+                description: serviceAccountName is the name of a service account in
+                  the Extension's namespace that will be used to manage the installation
+                  and lifecycle of the extension.
+                maxLength: 253
                 pattern: ^[a-z0-9]+([\.-][a-z0-9]+)*$
                 type: string
               source:
-                description: Source of Extension to be installed
+                description: source of Extension to be installed
                 properties:
                   package:
                     description: A source package defined by a name, version and/or
                       channel
                     properties:
                       channel:
-                        description: Channel constraint definition
+                        description: channel constraint definition
                         maxLength: 48
                         pattern: ^[a-z0-9]+([\.-][a-z0-9]+)*$
                         type: string
                       name:
+                        description: name specifies the name of the name of the package
                         maxLength: 48
                         pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+                        type: string
+                      upgradeConstraintPolicy:
+                        default: Enforce
+                        description: upgradeConstraintPolicy Defines the policy for
+                          how to handle upgrade constraints
+                        enum:
+                        - Enforce
+                        - Ignore
                         type: string
                       version:
                         description: "Version is an optional semver constraint on
@@ -74,7 +87,8 @@ spec:
                           the specific version of the package will be installed so
                           long as it is available in any of the content sources available.
                           Examples: 1.2.3, 1.0.0-alpha, 1.0.0-rc.1 \n For more information
-                          on semver, please see https://semver.org/"
+                          on semver, please see https://semver.org/ version constraint
+                          definition"
                         maxLength: 64
                         pattern: ^(\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\^)\s*(v?(0|[1-9]\d*|[x|X|\*])(\.(0|[1-9]\d*|x|X|\*]))?(\.(0|[1-9]\d*|x|X|\*))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)((?:\s+|,\s*|\s*\|\|\s*)(=||!=|>|<|>=|=>|<=|=<|~|~>|\^)\s*(v?(0|[1-9]\d*|x|X|\*])(\.(0|[1-9]\d*|x|X|\*))?(\.(0|[1-9]\d*|x|X|\*]))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)*$
                         type: string
@@ -82,13 +96,6 @@ spec:
                     - name
                     type: object
                 type: object
-              upgradeConstraintPolicy:
-                default: Enforce
-                description: Defines the policy for how to handle upgrade constraints
-                enum:
-                - Enforce
-                - Ignore
-                type: string
             required:
             - serviceAccountName
             - source

@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 )
@@ -157,4 +158,22 @@ type ClusterExtensionList struct {
 
 func init() {
 	SchemeBuilder.Register(&ClusterExtension{}, &ClusterExtensionList{})
+}
+
+func (r *ClusterExtension) GetPackageSpec() *ExtensionSourcePackage {
+	p := &ExtensionSourcePackage{}
+
+	p.Channel = r.Spec.Channel
+	p.Name = r.Spec.PackageName
+	p.Version = r.Spec.Version
+
+	return p
+}
+
+func (r *ClusterExtension) GetUID() types.UID {
+	return r.ObjectMeta.GetUID()
+}
+
+func (r *ClusterExtension) GetUpgradeConstraintPolicy() UpgradeConstraintPolicy {
+	return r.Spec.UpgradeConstraintPolicy
 }

@@ -10,6 +10,7 @@ const (
 	// Ex: SomeFeature featuregate.Feature = "SomeFeature"
 
 	ForceSemverUpgradeConstraints featuregate.Feature = "ForceSemverUpgradeConstraints"
+	EnableExtensionApi            featuregate.Feature = "EnableExtensionApi"
 )
 
 var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -17,6 +18,7 @@ var operatorControllerFeatureGates = map[featuregate.Feature]featuregate.Feature
 	// Ex: SomeFeature: {...}
 
 	ForceSemverUpgradeConstraints: {Default: false, PreRelease: featuregate.Alpha},
+	EnableExtensionApi:            {Default: false, PreRelease: featuregate.Alpha},
 }
 
 var OperatorControllerFeatureGate featuregate.MutableFeatureGate = featuregate.NewFeatureGate()

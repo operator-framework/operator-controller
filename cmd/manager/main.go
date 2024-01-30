@@ -123,12 +123,16 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
 	}
-	if err = (&controllers.ExtensionReconciler{
-		Client: cl,
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Extension")
-		os.Exit(1)
+	if features.OperatorControllerFeatureGate.Enabled(features.EnableExtensionApi) {
+		if err = (&controllers.ExtensionReconciler{
+			Client:         cl,
+			BundleProvider: catalogClient,
+			Scheme:         mgr.GetScheme(),
+			Resolver:       resolver,
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "Extension")
+			os.Exit(1)
+		}
 	}
 	//+kubebuilder:scaffold:builder
 

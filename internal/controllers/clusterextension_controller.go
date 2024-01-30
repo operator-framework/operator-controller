@@ -47,12 +47,6 @@ import (
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
-// BundleProvider provides the way to retrieve a list of Bundles from a source,
-// generally from a catalog client of some kind.
-type BundleProvider interface {
-	Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
-}
-
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
@@ -489,91 +483,6 @@ func mapBundleMediaTypeToBundleProvisioner(mediaType string) (string, error) {
 		return "core-rukpak-io-registry", nil
 	default:
 		return "", fmt.Errorf("unknown bundle mediatype: %s", mediaType)
-	}
-}
-
-// setResolvedStatusConditionSuccess sets the resolved status condition to success.
-func setResolvedStatusConditionSuccess(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeResolved,
-		Status:             metav1.ConditionTrue,
-		Reason:             ocv1alpha1.ReasonSuccess,
-		Message:            message,
-		ObservedGeneration: generation,
-	})
-}
-
-// setResolvedStatusConditionFailed sets the resolved status condition to failed.
-func setResolvedStatusConditionFailed(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeResolved,
-		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonResolutionFailed,
-		Message:            message,
-		ObservedGeneration: generation,
-	})
-}
-
-// setResolvedStatusConditionUnknown sets the resolved status condition to unknown.
-func setResolvedStatusConditionUnknown(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeResolved,
-		Status:             metav1.ConditionUnknown,
-		Reason:             ocv1alpha1.ReasonResolutionUnknown,
-		Message:            message,
-		ObservedGeneration: generation,
-	})
-}
-
-// setInstalledStatusConditionSuccess sets the installed status condition to success.
-func setInstalledStatusConditionSuccess(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeInstalled,
-		Status:             metav1.ConditionTrue,
-		Reason:             ocv1alpha1.ReasonSuccess,
-		Message:            message,
-		ObservedGeneration: generation,
-	})
-}
-
-// setInstalledStatusConditionFailed sets the installed status condition to failed.
-func setInstalledStatusConditionFailed(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeInstalled,
-		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonInstallationFailed,
-		Message:            message,
-		ObservedGeneration: generation,
-	})
-}
-
-// setInstalledStatusConditionUnknown sets the installed status condition to unknown.
-func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeInstalled,
-		Status:             metav1.ConditionUnknown,
-		Reason:             ocv1alpha1.ReasonInstallationStatusUnknown,
-		Message:            message,
-		ObservedGeneration: generation,
-	})
-}
-
-func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message string, generation int64) {
-	conditionTypes := []string{
-		ocv1alpha1.TypeDeprecated,
-		ocv1alpha1.TypePackageDeprecated,
-		ocv1alpha1.TypeChannelDeprecated,
-		ocv1alpha1.TypeBundleDeprecated,
-	}
-
-	for _, conditionType := range conditionTypes {
-		apimeta.SetStatusCondition(conditions, metav1.Condition{
-			Type:               conditionType,
-			Reason:             ocv1alpha1.ReasonDeprecated,
-			Status:             metav1.ConditionUnknown,
-			Message:            message,
-			ObservedGeneration: generation,
-		})
 	}
 }
 
