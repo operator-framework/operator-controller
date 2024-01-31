@@ -134,6 +134,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setResolvedStatusConditionUnknown(&ext.Status.Conditions, "validation has not been attempted as spec is invalid", ext.GetGeneration())
 
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as spec is invalid", ext.GetGeneration())
+		setHealthyStatusUnknown(&ext.Status.Conditions, ocv1alpha1.ReasonInstallationStatusUnknown, "health checks have not been attempted as spec is invalid", ext.GetGeneration())
 		return ctrl.Result{}, nil
 	}
 
@@ -146,6 +147,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted due to failure to gather data for resolution", ext.GetGeneration())
+		setHealthyStatusUnknown(&ext.Status.Conditions, ocv1alpha1.ReasonInstallationStatusUnknown, "health checks have not been attempted due to failure to gather data for resolution", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -158,6 +160,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as resolution failed", ext.GetGeneration())
+		setHealthyStatusUnknown(&ext.Status.Conditions, ocv1alpha1.ReasonInstallationStatusUnknown, "health checks have not been attempted as resolution failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -171,6 +174,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as resolution failed", ext.GetGeneration())
+		setHealthyStatusUnknown(&ext.Status.Conditions, ocv1alpha1.ReasonInstallationStatusUnknown, "health checks have not been attempted as resolution failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -184,12 +188,14 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	if err != nil {
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
+		setHealthyStatusUnknown(&ext.Status.Conditions, ocv1alpha1.ReasonInstallationFailed, "health checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 	bundleProvisioner, err := mapBundleMediaTypeToBundleProvisioner(mediaType)
 	if err != nil {
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
+		setHealthyStatusUnknown(&ext.Status.Conditions, ocv1alpha1.ReasonInstallationFailed, "health checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
@@ -200,6 +206,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		ext.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
+		setHealthyStatusUnknown(&ext.Status.Conditions, ocv1alpha1.ReasonInstallationFailed, "health checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -210,12 +217,13 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		ext.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
+		setHealthyStatusUnknown(&ext.Status.Conditions, ocv1alpha1.ReasonInstallationFailed, "health checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
-	// Let's set the proper Installed condition and InstalledBundleResource field based on the
+	// Let's set the proper conditions and status fields based on the
 	// existing BundleDeployment object status.
-	mapBDStatusToInstalledCondition(existingTypedBundleDeployment, ext)
+	mapBDStatusToClusterExtensionConditions(existingTypedBundleDeployment, ext)
 
 	SetDeprecationStatus(ext, bundle)
 
@@ -240,17 +248,23 @@ func (r *ClusterExtensionReconciler) variables(ctx context.Context) ([]deppy.Var
 	return GenerateVariables(allBundles, clusterExtensionList.Items, bundleDeploymentList.Items)
 }
 
-func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha2.BundleDeployment, ext *ocv1alpha1.ClusterExtension) {
+func mapBDStatusToClusterExtensionConditions(existingTypedBundleDeployment *rukpakv1alpha2.BundleDeployment, ext *ocv1alpha1.ClusterExtension) {
 	bundleDeploymentReady := apimeta.FindStatusCondition(existingTypedBundleDeployment.Status.Conditions, rukpakv1alpha2.TypeInstalled)
 	if bundleDeploymentReady == nil {
 		ext.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "bundledeployment status is unknown", ext.GetGeneration())
+		setHealthyStatusUnknown(&ext.Status.Conditions, ocv1alpha1.ReasonInstallationStatusUnknown, "installation status is unknown", ext.GetGeneration())
 		return
 	}
 
 	if bundleDeploymentReady.Status != metav1.ConditionTrue {
 		ext.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionFailed(
+			&ext.Status.Conditions,
+			fmt.Sprintf("bundledeployment not ready: %s", bundleDeploymentReady.Message),
+			ext.GetGeneration(),
+		)
+		setHealthyStatusUnhealthy(
 			&ext.Status.Conditions,
 			fmt.Sprintf("bundledeployment not ready: %s", bundleDeploymentReady.Message),
 			ext.GetGeneration(),
@@ -280,6 +294,45 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 		setInstalledStatusConditionUnknown(
 			&ext.Status.Conditions,
 			fmt.Sprintf("unknown bundledeployment source type %q", bundleDeploymentSource.Type),
+			ext.GetGeneration(),
+		)
+		setHealthyStatusUnknown(
+			&ext.Status.Conditions,
+			ocv1alpha1.ReasonInstallationStatusUnknown,
+			"installation status is unknown",
+			ext.GetGeneration(),
+		)
+	}
+
+	bundleDeploymentHealthy := apimeta.FindStatusCondition(existingTypedBundleDeployment.Status.Conditions, rukpakv1alpha2.TypeHealthy)
+	if bundleDeploymentHealthy == nil {
+		setHealthyStatusUnknown(
+			&ext.Status.Conditions,
+			ocv1alpha1.ReasonHealthStatusUnknown,
+			fmt.Sprintf("bundledeployment %q missing status condition %q", existingTypedBundleDeployment.Name, rukpakv1alpha2.TypeHealthy),
+			ext.GetGeneration(),
+		)
+		return
+	}
+
+	switch bundleDeploymentHealthy.Status {
+	case metav1.ConditionTrue:
+		setHealthyStatusHealthy(
+			&ext.Status.Conditions,
+			"extension is healthy",
+			ext.GetGeneration(),
+		)
+	case metav1.ConditionFalse:
+		setHealthyStatusUnhealthy(
+			&ext.Status.Conditions,
+			fmt.Sprintf("extension is unhealthy: %s", bundleDeploymentHealthy.Message),
+			ext.GetGeneration(),
+		)
+	case metav1.ConditionUnknown:
+		setHealthyStatusUnknown(
+			&ext.Status.Conditions,
+			ocv1alpha1.ReasonHealthStatusUnknown,
+			"extension health is unknown",
 			ext.GetGeneration(),
 		)
 	}
@@ -575,6 +628,36 @@ func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message strin
 			ObservedGeneration: generation,
 		})
 	}
+}
+
+func setHealthyStatusUnknown(conditions *[]metav1.Condition, reason, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeHealthy,
+		Reason:             reason,
+		Status:             metav1.ConditionUnknown,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+func setHealthyStatusHealthy(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeHealthy,
+		Reason:             ocv1alpha1.ReasonHealthy,
+		Status:             metav1.ConditionTrue,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+func setHealthyStatusUnhealthy(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeHealthy,
+		Reason:             ocv1alpha1.ReasonUnhealthy,
+		Status:             metav1.ConditionFalse,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
 }
 
 // Generate reconcile requests for all cluster extensions affected by a catalog change
