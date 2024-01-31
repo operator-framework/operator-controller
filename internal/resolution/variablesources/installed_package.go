@@ -11,7 +11,7 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
-	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/pkg/features"
@@ -23,6 +23,7 @@ import (
 // has own variable.
 func MakeInstalledPackageVariables(
 	allBundles []*catalogmetadata.Bundle,
+	allChannels []*catalogmetadata.Channel,
 	clusterExtensions []ocv1alpha1.ClusterExtension,
 	bundleDeployments []rukpakv1alpha2.BundleDeployment,
 ) ([]*olmvariables.InstalledPackageVariable, error) {
@@ -60,9 +61,9 @@ func MakeInstalledPackageVariables(
 		bundleImage := sourceImage.Ref
 
 		// find corresponding bundle for the installed content
-		resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(
-			catalogfilter.WithPackageName(clusterExtension.Spec.PackageName),
-			catalogfilter.WithBundleImage(bundleImage),
+		resultSet := filter.Filter(allBundles, filter.And(
+			filter.WithPackageName(clusterExtension.Spec.PackageName),
+			filter.WithImage(bundleImage),
 		))
 		if len(resultSet) == 0 {
 			return nil, fmt.Errorf("bundle with image %q for package %q not found in available catalogs but is currently installed via BundleDeployment %q", bundleImage, clusterExtension.Spec.PackageName, bundleDeployment.Name)
@@ -73,7 +74,19 @@ func MakeInstalledPackageVariables(
 		})
 		installedBundle := resultSet[0]
 
-		upgradeEdges, err := successors(allBundles, installedBundle)
+		channels := filter.Filter[catalogmetadata.Channel](allChannels, filter.And[catalogmetadata.Channel](
+			func(entity *catalogmetadata.Channel) bool {
+				return entity.Package == clusterExtension.Spec.PackageName
+			},
+			func(entity *catalogmetadata.Channel) bool {
+				if clusterExtension.Spec.Channel != "" {
+					return entity.Name == clusterExtension.Spec.Channel
+				}
+				return true
+			},
+		))
+
+		upgradeEdges, err := successors(allBundles, installedBundle, channels)
 		if err != nil {
 			return nil, err
 		}
@@ -89,16 +102,16 @@ func MakeInstalledPackageVariables(
 // successorsFunc must return successors of a currently installed bundle
 // from a list of all bundles provided to the function.
 // Must not return installed bundle as a successor
-type successorsFunc func(allBundles []*catalogmetadata.Bundle, installedBundle *catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error)
+type successorsFunc func(allBundles []*catalogmetadata.Bundle, installedBundle *catalogmetadata.Bundle, channels []*catalogmetadata.Channel) ([]*catalogmetadata.Bundle, error)
 
 // legacySemanticsSuccessors returns successors based on legacy OLMv0 semantics
 // which rely on Replaces, Skips and skipRange.
-func legacySemanticsSuccessors(allBundles []*catalogmetadata.Bundle, installedBundle *catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error) {
+func legacySemanticsSuccessors(allBundles []*catalogmetadata.Bundle, installedBundle *catalogmetadata.Bundle, channels []*catalogmetadata.Channel) ([]*catalogmetadata.Bundle, error) {
 	// find the bundles that replace the bundle provided
 	// TODO: this algorithm does not yet consider skips and skipRange
-	upgradeEdges := catalogfilter.Filter(allBundles, catalogfilter.And(
-		catalogfilter.WithPackageName(installedBundle.Package),
-		catalogfilter.Replaces(installedBundle.Name),
+	upgradeEdges := filter.Filter(allBundles, filter.And(
+		filter.WithPackageName(installedBundle.Package),
+		filter.Replaces(installedBundle.Name, channels),
 	))
 	sort.SliceStable(upgradeEdges, func(i, j int) bool {
 		return catalogsort.ByVersion(upgradeEdges[i], upgradeEdges[j])
@@ -110,7 +123,7 @@ func legacySemanticsSuccessors(allBundles []*catalogmetadata.Bundle, installedBu
 // semverSuccessors returns successors based on Semver.
 // Successors will not include versions outside the major version of the
 // installed bundle as major version is intended to indicate breaking changes.
-func semverSuccessors(allBundles []*catalogmetadata.Bundle, installedBundle *catalogmetadata.Bundle) ([]*catalogmetadata.Bundle, error) {
+func semverSuccessors(allBundles []*catalogmetadata.Bundle, installedBundle *catalogmetadata.Bundle, _ []*catalogmetadata.Channel) ([]*catalogmetadata.Bundle, error) {
 	currentVersion, err := installedBundle.Version()
 	if err != nil {
 		return nil, err
@@ -124,9 +137,9 @@ func semverSuccessors(allBundles []*catalogmetadata.Bundle, installedBundle *cat
 		return nil, err
 	}
 
-	upgradeEdges := catalogfilter.Filter(allBundles, catalogfilter.And(
-		catalogfilter.WithPackageName(installedBundle.Package),
-		catalogfilter.InMastermindsSemverRange(wantedVersionRangeConstraint),
+	upgradeEdges := filter.Filter(allBundles, filter.And(
+		filter.WithPackageName(installedBundle.Package),
+		filter.InMastermindsSemverRange(wantedVersionRangeConstraint),
 	))
 	sort.SliceStable(upgradeEdges, func(i, j int) bool {
 		return catalogsort.ByVersion(upgradeEdges[i], upgradeEdges[j])

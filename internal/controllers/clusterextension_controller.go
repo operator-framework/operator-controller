@@ -25,7 +25,6 @@ import (
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -43,22 +42,24 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
+	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
 // BundleProvider provides the way to retrieve a list of Bundles from a source,
 // generally from a catalog client of some kind.
-type BundleProvider interface {
-	Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
+type CatalogProvider interface {
+	CatalogContents(ctx context.Context) (*catalogclient.Contents, error)
 }
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
-	BundleProvider BundleProvider
-	Scheme         *runtime.Scheme
-	Resolver       *solver.Solver
+	CatalogProvider CatalogProvider
+	Scheme          *runtime.Scheme
+	Resolver        *solver.Solver
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
@@ -138,7 +139,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 
 	// gather vars for resolution
-	vars, err := r.variables(ctx)
+	vars, contents, err := r.variables(ctx)
 	if err != nil {
 		ext.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted due to failure to gather data for resolution", ext.GetGeneration())
@@ -217,27 +218,31 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// existing BundleDeployment object status.
 	mapBDStatusToInstalledCondition(existingTypedBundleDeployment, ext)
 
-	SetDeprecationStatus(ext, bundle)
+	SetDeprecationStatus(ext, bundle, contents)
 
 	// set the status of the cluster extension based on the respective bundle deployment status conditions.
 	return ctrl.Result{}, nil
 }
 
-func (r *ClusterExtensionReconciler) variables(ctx context.Context) ([]deppy.Variable, error) {
-	allBundles, err := r.BundleProvider.Bundles(ctx)
+func (r *ClusterExtensionReconciler) variables(ctx context.Context) ([]deppy.Variable, *catalogclient.Contents, error) {
+	contents, err := r.CatalogProvider.CatalogContents(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	clusterExtensionList := ocv1alpha1.ClusterExtensionList{}
 	if err := r.Client.List(ctx, &clusterExtensionList); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	bundleDeploymentList := rukpakv1alpha2.BundleDeploymentList{}
 	if err := r.Client.List(ctx, &bundleDeploymentList); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return GenerateVariables(allBundles, clusterExtensionList.Items, bundleDeploymentList.Items)
+	variables, err := GenerateVariables(contents, clusterExtensionList.Items, bundleDeploymentList.Items)
+	if err != nil {
+		return nil, nil, err
+	}
+	return variables, contents, nil
 }
 
 func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha2.BundleDeployment, ext *ocv1alpha1.ClusterExtension) {
@@ -287,7 +292,7 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 
 // setDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
 // based on the provided bundle
-func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetadata.Bundle) {
+func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetadata.Bundle, contents *catalogclient.Contents) {
 	// reset conditions to false
 	conditionTypes := []string{
 		ocv1alpha1.TypeDeprecated,
@@ -306,54 +311,55 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetad
 		})
 	}
 
-	// There are two early return scenarios here:
-	// 1) The bundle is not deprecated (i.e bundle deprecations)
-	// AND there are no other deprecations associated with the bundle
-	// 2) The bundle is not deprecated, there are deprecations associated
-	// with the bundle (i.e at least one channel the bundle is present in is deprecated OR whole package is deprecated),
-	// and the ClusterExtension does not specify a channel. This is because the channel deprecations
-	// are a loose deprecation coupling on the bundle. A ClusterExtension installation is only
-	// considered deprecated by a channel deprecation when a deprecated channel is specified via
-	// the spec.channel field.
-	if (!bundle.IsDeprecated() && !bundle.HasDeprecation()) || (!bundle.IsDeprecated() && ext.Spec.Channel == "") {
-		return
-	}
-
 	deprecationMessages := []string{}
 
-	for _, deprecation := range bundle.Deprecations {
-		switch deprecation.Reference.Schema {
-		case declcfg.SchemaPackage:
+	packages := filter.Filter[catalogmetadata.Package](contents.Packages,
+		func(entity *catalogmetadata.Package) bool {
+			return entity.Name == ext.Spec.PackageName && entity.Catalog == bundle.Catalog
+		},
+	)
+	if len(packages) > 0 {
+		if packages[0].IsDeprecated() {
 			apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 				Type:               ocv1alpha1.TypePackageDeprecated,
 				Reason:             ocv1alpha1.ReasonDeprecated,
 				Status:             metav1.ConditionTrue,
-				Message:            deprecation.Message,
+				Message:            packages[0].Deprecation.Message,
 				ObservedGeneration: ext.Generation,
 			})
-		case declcfg.SchemaChannel:
-			if ext.Spec.Channel != deprecation.Reference.Name {
-				continue
-			}
-
-			apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-				Type:               ocv1alpha1.TypeChannelDeprecated,
-				Reason:             ocv1alpha1.ReasonDeprecated,
-				Status:             metav1.ConditionTrue,
-				Message:            deprecation.Message,
-				ObservedGeneration: ext.Generation,
-			})
-		case declcfg.SchemaBundle:
-			apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-				Type:               ocv1alpha1.TypeBundleDeprecated,
-				Reason:             ocv1alpha1.ReasonDeprecated,
-				Status:             metav1.ConditionTrue,
-				Message:            deprecation.Message,
-				ObservedGeneration: ext.Generation,
-			})
+			deprecationMessages = append(deprecationMessages, packages[0].Deprecation.Message)
 		}
+	}
 
-		deprecationMessages = append(deprecationMessages, deprecation.Message)
+	if ext.Spec.Channel != "" {
+		channels := filter.Filter[catalogmetadata.Channel](contents.Channels,
+			func(entity *catalogmetadata.Channel) bool {
+				return entity.Package == ext.Spec.PackageName && entity.Name == ext.Spec.Channel && entity.Catalog == bundle.Catalog
+			},
+		)
+		if len(channels) > 0 {
+			if channels[0].IsDeprecated() {
+				apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+					Type:               ocv1alpha1.TypeChannelDeprecated,
+					Reason:             ocv1alpha1.ReasonDeprecated,
+					Status:             metav1.ConditionTrue,
+					Message:            channels[0].Deprecation.Message,
+					ObservedGeneration: ext.Generation,
+				})
+				deprecationMessages = append(deprecationMessages, channels[0].Deprecation.Message)
+			}
+		}
+	}
+
+	if bundle.IsDeprecated() {
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+			Type:               ocv1alpha1.TypeBundleDeprecated,
+			Reason:             ocv1alpha1.ReasonDeprecated,
+			Status:             metav1.ConditionTrue,
+			Message:            bundle.Deprecation.Message,
+			ObservedGeneration: ext.Generation,
+		})
+		deprecationMessages = append(deprecationMessages, bundle.Deprecation.Message)
 	}
 
 	if len(deprecationMessages) > 0 {

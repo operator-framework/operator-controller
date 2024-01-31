@@ -27,6 +27,7 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
+	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/pkg/features"
@@ -1604,6 +1605,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 		clusterExtension         *ocv1alpha1.ClusterExtension
 		expectedClusterExtension *ocv1alpha1.ClusterExtension
 		bundle                   *catalogmetadata.Bundle
+		catalogContents          *catalogclient.Contents
 	}{
 		{
 			name: "non-deprecated bundle, no deprecations associated with bundle, all deprecation statuses set to False",
@@ -1611,50 +1613,9 @@ func TestSetDeprecationStatus(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
 				},
-				Status: ocv1alpha1.ClusterExtensionStatus{
-					Conditions: []metav1.Condition{},
-				},
-			},
-			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
-				ObjectMeta: metav1.ObjectMeta{
-					Generation: 1,
-				},
-				Status: ocv1alpha1.ClusterExtensionStatus{
-					Conditions: []metav1.Condition{
-						{
-							Type:               ocv1alpha1.TypeDeprecated,
-							Reason:             ocv1alpha1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
-							ObservedGeneration: 1,
-						},
-						{
-							Type:               ocv1alpha1.TypePackageDeprecated,
-							Reason:             ocv1alpha1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
-							ObservedGeneration: 1,
-						},
-						{
-							Type:               ocv1alpha1.TypeChannelDeprecated,
-							Reason:             ocv1alpha1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
-							ObservedGeneration: 1,
-						},
-						{
-							Type:               ocv1alpha1.TypeBundleDeprecated,
-							Reason:             ocv1alpha1.ReasonDeprecated,
-							Status:             metav1.ConditionFalse,
-							ObservedGeneration: 1,
-						},
-					},
-				},
-			},
-			bundle: &catalogmetadata.Bundle{},
-		},
-		{
-			name: "non-deprecated bundle, olm.channel deprecations associated with bundle, no channel specified, all deprecation statuses set to False",
-			clusterExtension: &ocv1alpha1.ClusterExtension{
-				ObjectMeta: metav1.ObjectMeta{
-					Generation: 1,
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					PackageName: "foo",
+					Channel:     "stable",
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -1663,6 +1624,10 @@ func TestSetDeprecationStatus(t *testing.T) {
 			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					PackageName: "foo",
+					Channel:     "stable",
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -1694,11 +1659,110 @@ func TestSetDeprecationStatus(t *testing.T) {
 				},
 			},
 			bundle: &catalogmetadata.Bundle{
-				Deprecations: []declcfg.DeprecationEntry{
+				Bundle: declcfg.Bundle{
+					Name:    "foo.v1.0.0",
+					Package: "foo",
+				},
+				Catalog: "bar",
+			},
+			catalogContents: &catalogclient.Contents{
+				Packages: []*catalogmetadata.Package{
 					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: declcfg.SchemaChannel,
-							Name:   "badchannel",
+						Package: declcfg.Package{
+							Name: "foo",
+						},
+						Catalog: "bar",
+					},
+				},
+				Channels: []*catalogmetadata.Channel{
+					{
+						Channel: declcfg.Channel{
+							Name:    "stable",
+							Package: "foo",
+						},
+						Catalog: "bar",
+					},
+				},
+			},
+		},
+		{
+			name: "non-deprecated bundle, olm.channel deprecations associated with bundle, no channel specified, all deprecation statuses set to False",
+			clusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					PackageName: "foo",
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					PackageName: "foo",
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               ocv1alpha1.TypeDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypePackageDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeChannelDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeBundleDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+					},
+				},
+			},
+			bundle: &catalogmetadata.Bundle{
+				Bundle: declcfg.Bundle{
+					Name:    "foo.v1.0.0",
+					Package: "foo",
+				},
+				Catalog: "bar",
+			},
+			catalogContents: &catalogclient.Contents{
+				Packages: []*catalogmetadata.Package{
+					{
+						Package: declcfg.Package{
+							Name: "foo",
+						},
+						Catalog: "bar",
+					},
+				},
+				Channels: []*catalogmetadata.Channel{
+					{
+						Channel: declcfg.Channel{
+							Name:    "stable",
+							Package: "foo",
+						},
+						Catalog: "bar",
+						Deprecation: &declcfg.DeprecationEntry{
+							Reference: declcfg.PackageScopedReference{
+								Schema: declcfg.SchemaChannel,
+								Name:   "stable",
+							},
+							Message: "stable channel deprecated",
 						},
 					},
 				},
@@ -1711,7 +1775,8 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "nondeprecated",
+					PackageName: "foo",
+					Channel:     "nondeprecated",
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -1722,7 +1787,8 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "nondeprecated",
+					PackageName: "foo",
+					Channel:     "nondeprecated",
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -1754,12 +1820,42 @@ func TestSetDeprecationStatus(t *testing.T) {
 				},
 			},
 			bundle: &catalogmetadata.Bundle{
-				Deprecations: []declcfg.DeprecationEntry{
+				Bundle: declcfg.Bundle{
+					Name:    "foo.v1.0.0",
+					Package: "foo",
+				},
+				Catalog: "bar",
+			},
+			catalogContents: &catalogclient.Contents{
+				Packages: []*catalogmetadata.Package{
 					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: declcfg.SchemaChannel,
-							Name:   "badchannel",
+						Package: declcfg.Package{
+							Name: "foo",
 						},
+						Catalog: "bar",
+					},
+				},
+				Channels: []*catalogmetadata.Channel{
+					{
+						Channel: declcfg.Channel{
+							Name:    "stable",
+							Package: "foo",
+						},
+						Catalog: "bar",
+						Deprecation: &declcfg.DeprecationEntry{
+							Reference: declcfg.PackageScopedReference{
+								Schema: declcfg.SchemaChannel,
+								Name:   "stable",
+							},
+							Message: "stable channel deprecated",
+						},
+					},
+					{
+						Channel: declcfg.Channel{
+							Name:    "nondeprecated",
+							Package: "foo",
+						},
+						Catalog: "bar",
 					},
 				},
 			},
@@ -1771,7 +1867,8 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					PackageName: "foo",
+					Channel:     "stable",
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -1782,7 +1879,8 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					PackageName: "foo",
+					Channel:     "stable",
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -1814,13 +1912,35 @@ func TestSetDeprecationStatus(t *testing.T) {
 				},
 			},
 			bundle: &catalogmetadata.Bundle{
-				Deprecations: []declcfg.DeprecationEntry{
+				Bundle: declcfg.Bundle{
+					Name:    "foo.v1.0.0",
+					Package: "foo",
+				},
+				Catalog: "bar",
+			},
+			catalogContents: &catalogclient.Contents{
+				Packages: []*catalogmetadata.Package{
 					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: declcfg.SchemaChannel,
-							Name:   "badchannel",
+						Package: declcfg.Package{
+							Name: "foo",
 						},
-						Message: "bad channel!",
+						Catalog: "bar",
+					},
+				},
+				Channels: []*catalogmetadata.Channel{
+					{
+						Channel: declcfg.Channel{
+							Name:    "stable",
+							Package: "foo",
+						},
+						Catalog: "bar",
+						Deprecation: &declcfg.DeprecationEntry{
+							Reference: declcfg.PackageScopedReference{
+								Schema: declcfg.SchemaChannel,
+								Name:   "stable",
+							},
+							Message: "stable channel deprecated",
+						},
 					},
 				},
 			},
@@ -1832,7 +1952,8 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					PackageName: "foo",
+					Channel:     "stable",
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -1843,7 +1964,8 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					PackageName: "foo",
+					Channel:     "stable",
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -1875,26 +1997,48 @@ func TestSetDeprecationStatus(t *testing.T) {
 				},
 			},
 			bundle: &catalogmetadata.Bundle{
-				Deprecations: []declcfg.DeprecationEntry{
-					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: declcfg.SchemaChannel,
-							Name:   "badchannel",
-						},
-						Message: "bad channel!",
+				Bundle: declcfg.Bundle{
+					Name:    "foo.v1.0.0",
+					Package: "foo",
+				},
+				Catalog: "bar",
+				Deprecation: &declcfg.DeprecationEntry{
+					Reference: declcfg.PackageScopedReference{
+						Schema: declcfg.SchemaBundle,
+						Name:   "foo.v1.0.0",
 					},
+					Message: "foo.v1.0.0 deprecated",
+				},
+			},
+			catalogContents: &catalogclient.Contents{
+				Packages: []*catalogmetadata.Package{
 					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: declcfg.SchemaPackage,
+						Package: declcfg.Package{
+							Name: "foo",
 						},
-						Message: "bad package!",
+						Catalog: "bar",
+						Deprecation: &declcfg.DeprecationEntry{
+							Reference: declcfg.PackageScopedReference{
+								Schema: declcfg.SchemaPackage,
+							},
+							Message: "foo package deprecated",
+						},
 					},
+				},
+				Channels: []*catalogmetadata.Channel{
 					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: declcfg.SchemaBundle,
-							Name:   "badbundle",
+						Channel: declcfg.Channel{
+							Name:    "stable",
+							Package: "foo",
 						},
-						Message: "bad bundle!",
+						Catalog: "bar",
+						Deprecation: &declcfg.DeprecationEntry{
+							Reference: declcfg.PackageScopedReference{
+								Schema: declcfg.SchemaChannel,
+								Name:   "stable",
+							},
+							Message: "stable channel deprecated",
+						},
 					},
 				},
 			},
@@ -1906,7 +2050,8 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					PackageName: "foo",
+					Channel:     "stable",
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -1917,7 +2062,8 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					PackageName: "foo",
+					Channel:     "stable",
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -1949,20 +2095,42 @@ func TestSetDeprecationStatus(t *testing.T) {
 				},
 			},
 			bundle: &catalogmetadata.Bundle{
-				Deprecations: []declcfg.DeprecationEntry{
-					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: declcfg.SchemaChannel,
-							Name:   "badchannel",
-						},
-						Message: "bad channel!",
+				Bundle: declcfg.Bundle{
+					Name:    "foo.v1.0.0",
+					Package: "foo",
+				},
+				Catalog: "bar",
+				Deprecation: &declcfg.DeprecationEntry{
+					Reference: declcfg.PackageScopedReference{
+						Schema: declcfg.SchemaBundle,
+						Name:   "foo.v1.0.0",
 					},
+					Message: "foo.v1.0.0 deprecated",
+				},
+			},
+			catalogContents: &catalogclient.Contents{
+				Packages: []*catalogmetadata.Package{
 					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: declcfg.SchemaBundle,
-							Name:   "badbundle",
+						Package: declcfg.Package{
+							Name: "foo",
 						},
-						Message: "bad bundle!",
+						Catalog: "bar",
+					},
+				},
+				Channels: []*catalogmetadata.Channel{
+					{
+						Channel: declcfg.Channel{
+							Name:    "stable",
+							Package: "foo",
+						},
+						Catalog: "bar",
+						Deprecation: &declcfg.DeprecationEntry{
+							Reference: declcfg.PackageScopedReference{
+								Schema: declcfg.SchemaChannel,
+								Name:   "stable",
+							},
+							Message: "stable channel deprecated",
+						},
 					},
 				},
 			},
@@ -1974,7 +2142,8 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					PackageName: "foo",
+					Channel:     "stable",
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -1985,7 +2154,8 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					PackageName: "foo",
+					Channel:     "stable",
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -2017,26 +2187,48 @@ func TestSetDeprecationStatus(t *testing.T) {
 				},
 			},
 			bundle: &catalogmetadata.Bundle{
-				Deprecations: []declcfg.DeprecationEntry{
+				Bundle: declcfg.Bundle{
+					Name:    "foo.v1.0.0",
+					Package: "foo",
+				},
+				Catalog: "bar",
+			},
+			catalogContents: &catalogclient.Contents{
+				Packages: []*catalogmetadata.Package{
 					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: declcfg.SchemaChannel,
-							Name:   "badchannel",
+						Package: declcfg.Package{
+							Name: "foo",
 						},
-						Message: "bad channel!",
+						Catalog: "bar",
+						Deprecation: &declcfg.DeprecationEntry{
+							Reference: declcfg.PackageScopedReference{
+								Schema: declcfg.SchemaPackage,
+							},
+							Message: "foo package deprecated",
+						},
 					},
+				},
+				Channels: []*catalogmetadata.Channel{
 					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: declcfg.SchemaPackage,
+						Channel: declcfg.Channel{
+							Name:    "stable",
+							Package: "foo",
 						},
-						Message: "bad package!",
+						Catalog: "bar",
+						Deprecation: &declcfg.DeprecationEntry{
+							Reference: declcfg.PackageScopedReference{
+								Schema: declcfg.SchemaChannel,
+								Name:   "stable",
+							},
+							Message: "stable channel deprecated",
+						},
 					},
 				},
 			},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			controllers.SetDeprecationStatus(tc.clusterExtension, tc.bundle)
+			controllers.SetDeprecationStatus(tc.clusterExtension, tc.bundle, tc.catalogContents)
 			assert.Equal(t, "", cmp.Diff(tc.expectedClusterExtension, tc.clusterExtension, cmpopts.IgnoreFields(metav1.Condition{}, "Message", "LastTransitionTime")))
 		})
 	}
@@ -2076,15 +2268,53 @@ var (
 		Channel: declcfg.Channel{
 			Name:    "beta",
 			Package: "plain",
+			Entries: []declcfg.ChannelEntry{
+				{
+					Name: "operatorhub/plain/0.1.0",
+				},
+			},
 		},
 	}
 	badmediaBetaChannel = catalogmetadata.Channel{
 		Channel: declcfg.Channel{
 			Name:    "beta",
 			Package: "badmedia",
+			Entries: []declcfg.ChannelEntry{
+				{
+					Name: "operatorhub/badmedia/0.1.0",
+				},
+			},
 		},
 	}
 )
+
+var testPackageList = []*catalogmetadata.Package{
+	{
+		Package: declcfg.Package{
+			Name: "prometheus",
+		},
+		Catalog: "fake-catalog",
+	},
+	{
+		Package: declcfg.Package{
+			Name: "plain",
+		},
+		Catalog: "fake-catalog",
+	},
+	{
+		Package: declcfg.Package{
+			Name: "badmedia",
+		},
+		Catalog: "fake-catalog",
+	},
+}
+
+var testChannelList = []*catalogmetadata.Channel{
+	&prometheusAlphaChannel,
+	&prometheusBetaChannel,
+	&plainBetaChannel,
+	&badmediaBetaChannel,
+}
 
 var testBundleList = []*catalogmetadata.Bundle{
 	{
@@ -2097,8 +2327,7 @@ var testBundleList = []*catalogmetadata.Bundle{
 				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 			},
 		},
-		CatalogName: "fake-catalog",
-		InChannels:  []*catalogmetadata.Channel{&prometheusAlphaChannel},
+		Catalog: "fake-catalog",
 	},
 	{
 		Bundle: declcfg.Bundle{
@@ -2110,8 +2339,7 @@ var testBundleList = []*catalogmetadata.Bundle{
 				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 			},
 		},
-		CatalogName: "fake-catalog",
-		InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+		Catalog: "fake-catalog",
 	},
 	{
 		Bundle: declcfg.Bundle{
@@ -2123,8 +2351,7 @@ var testBundleList = []*catalogmetadata.Bundle{
 				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 			},
 		},
-		CatalogName: "fake-catalog",
-		InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+		Catalog: "fake-catalog",
 	},
 	{
 		Bundle: declcfg.Bundle{
@@ -2136,8 +2363,7 @@ var testBundleList = []*catalogmetadata.Bundle{
 				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 			},
 		},
-		CatalogName: "fake-catalog",
-		InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+		Catalog: "fake-catalog",
 	},
 	{
 		Bundle: declcfg.Bundle{
@@ -2149,8 +2375,7 @@ var testBundleList = []*catalogmetadata.Bundle{
 				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 			},
 		},
-		CatalogName: "fake-catalog",
-		InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+		Catalog: "fake-catalog",
 	},
 	{
 		Bundle: declcfg.Bundle{
@@ -2163,8 +2388,7 @@ var testBundleList = []*catalogmetadata.Bundle{
 				{Type: "olm.bundle.mediatype", Value: json.RawMessage(`"plain+v0"`)},
 			},
 		},
-		CatalogName: "fake-catalog",
-		InChannels:  []*catalogmetadata.Channel{&plainBetaChannel},
+		Catalog: "fake-catalog",
 	},
 	{
 		Bundle: declcfg.Bundle{
@@ -2177,7 +2401,6 @@ var testBundleList = []*catalogmetadata.Bundle{
 				{Type: "olm.bundle.mediatype", Value: json.RawMessage(`"badmedia+v1"`)},
 			},
 		},
-		CatalogName: "fake-catalog",
-		InChannels:  []*catalogmetadata.Channel{&badmediaBetaChannel},
+		Catalog: "fake-catalog",
 	},
 }

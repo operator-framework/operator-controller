@@ -49,12 +49,12 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterEx
 	require.NoError(t, err)
 
 	cl := newClient(t)
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
+	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList, testChannelList, testPackageList)
 	reconciler := &controllers.ClusterExtensionReconciler{
-		Client:         cl,
-		BundleProvider: &fakeCatalogClient,
-		Scheme:         sch,
-		Resolver:       resolver,
+		Client:          cl,
+		CatalogProvider: &fakeCatalogClient,
+		Scheme:          sch,
+		Resolver:        resolver,
 	}
 	return cl, reconciler
 }

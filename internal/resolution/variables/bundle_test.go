@@ -15,26 +15,17 @@ import (
 
 func TestBundleVariable(t *testing.T) {
 	bundle := &catalogmetadata.Bundle{
-		InChannels: []*catalogmetadata.Channel{
-			{Channel: declcfg.Channel{Name: "stable"}},
-		},
 		Bundle: declcfg.Bundle{Name: "bundle-1", Properties: []property.Property{
 			{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "1.0.0"}`)},
 		}},
 	}
 	dependencies := []*catalogmetadata.Bundle{
 		{
-			InChannels: []*catalogmetadata.Channel{
-				{Channel: declcfg.Channel{Name: "stable"}},
-			},
 			Bundle: declcfg.Bundle{Name: "bundle-2", Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.0.0"}`)},
 			}},
 		},
 		{
-			InChannels: []*catalogmetadata.Channel{
-				{Channel: declcfg.Channel{Name: "stable"}},
-			},
 			Bundle: declcfg.Bundle{Name: "bundle-3", Properties: []property.Property{
 				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "3.0.0"}`)},
 			}},

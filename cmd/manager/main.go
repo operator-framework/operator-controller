@@ -115,10 +115,10 @@ func main() {
 	}
 
 	if err = (&controllers.ClusterExtensionReconciler{
-		Client:         cl,
-		BundleProvider: catalogClient,
-		Scheme:         mgr.GetScheme(),
-		Resolver:       resolver,
+		Client:          cl,
+		CatalogProvider: catalogClient,
+		Scheme:          mgr.GetScheme(),
+		Resolver:        resolver,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)

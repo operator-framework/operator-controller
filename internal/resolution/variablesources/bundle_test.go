@@ -21,7 +21,6 @@ import (
 
 func TestMakeBundleVariables_ValidDepedencies(t *testing.T) {
 	const fakeCatalogName = "fake-catalog"
-	fakeChannel := catalogmetadata.Channel{Channel: declcfg.Channel{Name: "stable"}}
 	bundleSet := map[string]*catalogmetadata.Bundle{
 		// Test package which we will be using as input into
 		// the testable function
@@ -34,8 +33,7 @@ func TestMakeBundleVariables_ValidDepedencies(t *testing.T) {
 					{Type: property.TypePackageRequired, Value: json.RawMessage(`{"packageName": "first-level-dependency", "versionRange": ">=1.0.0 <2.0.0"}`)},
 				},
 			},
-			CatalogName: fakeCatalogName,
-			InChannels:  []*catalogmetadata.Channel{&fakeChannel},
+			Catalog: fakeCatalogName,
 		},
 
 		// First level dependency of test-package. Will be explicitly
@@ -52,8 +50,7 @@ func TestMakeBundleVariables_ValidDepedencies(t *testing.T) {
 					{Type: property.TypePackageRequired, Value: json.RawMessage(`{"packageName": "second-level-dependency", "versionRange": ">=1.0.0 <2.0.0"}`)},
 				},
 			},
-			CatalogName: fakeCatalogName,
-			InChannels:  []*catalogmetadata.Channel{&fakeChannel},
+			Catalog: fakeCatalogName,
 		},
 
 		// Second level dependency that matches requirements of the first level dependency.
@@ -65,8 +62,7 @@ func TestMakeBundleVariables_ValidDepedencies(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "second-level-dependency", "version": "1.0.0"}`)},
 				},
 			},
-			CatalogName: fakeCatalogName,
-			InChannels:  []*catalogmetadata.Channel{&fakeChannel},
+			Catalog: fakeCatalogName,
 		},
 
 		// Second level dependency that matches requirements of the first level dependency.
@@ -78,8 +74,7 @@ func TestMakeBundleVariables_ValidDepedencies(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "second-level-dependency", "version": "1.0.1"}`)},
 				},
 			},
-			CatalogName: fakeCatalogName,
-			InChannels:  []*catalogmetadata.Channel{&fakeChannel},
+			Catalog: fakeCatalogName,
 		},
 
 		// Second level dependency that does not match requirements of the first level dependency.
@@ -91,8 +86,7 @@ func TestMakeBundleVariables_ValidDepedencies(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "second-level-dependency", "version": "2.0.0"}`)},
 				},
 			},
-			CatalogName: fakeCatalogName,
-			InChannels:  []*catalogmetadata.Channel{&fakeChannel},
+			Catalog: fakeCatalogName,
 		},
 
 		// Package that is in a our fake catalog, but is not involved
@@ -106,8 +100,7 @@ func TestMakeBundleVariables_ValidDepedencies(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "uninvolved-package", "version": "1.0.0"}`)},
 				},
 			},
-			CatalogName: fakeCatalogName,
-			InChannels:  []*catalogmetadata.Channel{&fakeChannel},
+			Catalog: fakeCatalogName,
 		},
 	}
 
@@ -162,7 +155,6 @@ func TestMakeBundleVariables_ValidDepedencies(t *testing.T) {
 
 func TestMakeBundleVariables_NonExistentDepedencies(t *testing.T) {
 	const fakeCatalogName = "fake-catalog"
-	fakeChannel := catalogmetadata.Channel{Channel: declcfg.Channel{Name: "stable"}}
 	bundleSet := map[string]*catalogmetadata.Bundle{
 		"test-package.v1.0.0": {
 			Bundle: declcfg.Bundle{
@@ -173,8 +165,7 @@ func TestMakeBundleVariables_NonExistentDepedencies(t *testing.T) {
 					{Type: property.TypePackageRequired, Value: json.RawMessage(`{"packageName": "first-level-dependency", "versionRange": ">=1.0.0 <2.0.0"}`)},
 				},
 			},
-			CatalogName: fakeCatalogName,
-			InChannels:  []*catalogmetadata.Channel{&fakeChannel},
+			Catalog: fakeCatalogName,
 		},
 	}
 

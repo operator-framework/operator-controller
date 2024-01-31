@@ -53,27 +53,6 @@ func TestClient(t *testing.T) {
 				wantErr:     "error fetching catalog contents: mock cache error",
 			},
 			{
-				name: "channel has a ref to a missing bundle",
-				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
-					objs, _, catalogContentMap := defaultFakeCatalog()
-
-					catalogContentMap["catalog-1"] = append(catalogContentMap["catalog-1"], []byte(`{
-								"schema": "olm.channel",
-								"name": "channel-with-missing-bundle",
-								"package": "fake1",
-								"entries": [
-									{
-										"name": "fake1.v9.9.9"
-									}
-								]
-							}`)...)
-
-					return objs, nil, catalogContentMap
-				},
-				wantErr: `bundle "fake1.v9.9.9" not found in catalog "catalog-1" (package "fake1", channel "channel-with-missing-bundle")`,
-				fetcher: &MockFetcher{},
-			},
-			{
 				name: "invalid meta",
 				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
 					objs, _, catalogContentMap := defaultFakeCatalog()
@@ -127,37 +106,22 @@ func TestClient(t *testing.T) {
 				fetcher: &MockFetcher{},
 			},
 			{
-				name: "deprecated at the package, channel, and bundle level",
+				name: "bundle deprecated",
 				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
 					objs, bundles, catalogContentMap := defaultFakeCatalog()
 
 					catalogContentMap["catalog-1"] = append(catalogContentMap["catalog-1"],
-						[]byte(`{"schema": "olm.deprecations", "package":"fake1", "entries":[{"message": "fake1 is deprecated", "reference": {"schema": "olm.package"}}, {"message":"channel stable is deprecated", "reference": {"schema": "olm.channel", "name": "stable"}}, {"message": "bundle fake1.v1.0.0 is deprecated", "reference":{"schema":"olm.bundle", "name":"fake1.v1.0.0"}}]}`)...)
+						[]byte(`{"schema": "olm.deprecations", "package":"fake1", "entries":[{"message": "bundle fake1.v1.0.0 is deprecated", "reference":{"schema":"olm.bundle", "name":"fake1.v1.0.0"}}]}`)...)
 
 					for i := range bundles {
-						if bundles[i].Package == "fake1" && bundles[i].CatalogName == "catalog-1" && bundles[i].Name == "fake1.v1.0.0" {
-							bundles[i].Deprecations = append(bundles[i].Deprecations, declcfg.DeprecationEntry{
-								Reference: declcfg.PackageScopedReference{
-									Schema: "olm.package",
-								},
-								Message: "fake1 is deprecated",
-							})
-
-							bundles[i].Deprecations = append(bundles[i].Deprecations, declcfg.DeprecationEntry{
-								Reference: declcfg.PackageScopedReference{
-									Schema: "olm.channel",
-									Name:   "stable",
-								},
-								Message: "channel stable is deprecated",
-							})
-
-							bundles[i].Deprecations = append(bundles[i].Deprecations, declcfg.DeprecationEntry{
+						if bundles[i].Name == "fake1.v1.0.0" && bundles[i].Catalog == "catalog-1" {
+							bundles[i].Deprecation = &declcfg.DeprecationEntry{
 								Reference: declcfg.PackageScopedReference{
 									Schema: "olm.bundle",
 									Name:   "fake1.v1.0.0",
 								},
 								Message: "bundle fake1.v1.0.0 is deprecated",
-							})
+							}
 						}
 					}
 
@@ -176,10 +140,10 @@ func TestClient(t *testing.T) {
 					tt.fetcher,
 				)
 
-				bundles, err := fakeCatalogClient.Bundles(ctx)
+				contents, err := fakeCatalogClient.CatalogContents(ctx)
 				if tt.wantErr == "" {
 					assert.NoError(t, err)
-					assert.Equal(t, expectedBundles, bundles)
+					assert.Equal(t, expectedBundles, contents.Bundles)
 				} else {
 					assert.EqualError(t, err, tt.wantErr)
 				}
@@ -262,7 +226,7 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle, map[strin
 
 	expectedBundles := []*catalogmetadata.Bundle{
 		{
-			CatalogName: "catalog-1",
+			Catalog: "catalog-1",
 			Bundle: declcfg.Bundle{
 				Schema:  declcfg.SchemaBundle,
 				Name:    "fake1.v1.0.0",
@@ -272,38 +236,12 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle, map[strin
 					{
 						Type:  property.TypePackage,
 						Value: json.RawMessage(`{"packageName":"fake1","version":"1.0.0"}`),
-					},
-				},
-			},
-			InChannels: []*catalogmetadata.Channel{
-				{
-					Channel: declcfg.Channel{
-						Schema:  declcfg.SchemaChannel,
-						Name:    "stable",
-						Package: "fake1",
-						Entries: []declcfg.ChannelEntry{
-							{
-								Name: "fake1.v1.0.0",
-							},
-						},
-					},
-				},
-				{
-					Channel: declcfg.Channel{
-						Schema:  declcfg.SchemaChannel,
-						Name:    "beta",
-						Package: "fake1",
-						Entries: []declcfg.ChannelEntry{
-							{
-								Name: "fake1.v1.0.0",
-							},
-						},
 					},
 				},
 			},
 		},
 		{
-			CatalogName: "catalog-2",
+			Catalog: "catalog-2",
 			Bundle: declcfg.Bundle{
 				Schema:  declcfg.SchemaBundle,
 				Name:    "fake1.v1.0.0",
@@ -313,20 +251,6 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle, map[strin
 					{
 						Type:  property.TypePackage,
 						Value: json.RawMessage(`{"packageName":"fake1","version":"1.0.0"}`),
-					},
-				},
-			},
-			InChannels: []*catalogmetadata.Channel{
-				{
-					Channel: declcfg.Channel{
-						Schema:  declcfg.SchemaChannel,
-						Name:    "stable",
-						Package: "fake1",
-						Entries: []declcfg.ChannelEntry{
-							{
-								Name: "fake1.v1.0.0",
-							},
-						},
 					},
 				},
 			},

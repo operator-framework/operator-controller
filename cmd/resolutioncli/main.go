@@ -150,7 +150,7 @@ func run(ctx context.Context, packageName, packageChannel, packageVersionRange, 
 
 	cl := clientBuilder.Build()
 	catalogClient := newIndexRefClient(indexRef)
-	allBundles, err := catalogClient.Bundles(ctx)
+	contents, err := catalogClient.CatalogContents(ctx)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func run(ctx context.Context, packageName, packageChannel, packageVersionRange, 
 	if err := cl.List(ctx, &bundleDeploymentList); err != nil {
 		return err
 	}
-	variables, err := controllers.GenerateVariables(allBundles, clusterExtensionList.Items, bundleDeploymentList.Items)
+	variables, err := controllers.GenerateVariables(contents, clusterExtensionList.Items, bundleDeploymentList.Items)
 	if err != nil {
 		return err
 	}

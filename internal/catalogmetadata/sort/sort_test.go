@@ -85,23 +85,21 @@ func TestByVersion(t *testing.T) {
 
 func TestByDeprecated(t *testing.T) {
 	b1 := &catalogmetadata.Bundle{
-		CatalogName: "foo",
+		Catalog: "foo",
 		Bundle: declcfg.Bundle{
 			Name: "bar",
 		},
 	}
 
 	b2 := &catalogmetadata.Bundle{
-		CatalogName: "foo",
+		Catalog: "foo",
 		Bundle: declcfg.Bundle{
 			Name: "baz",
 		},
-		Deprecations: []declcfg.DeprecationEntry{
-			{
-				Reference: declcfg.PackageScopedReference{
-					Schema: "olm.bundle",
-					Name:   "baz",
-				},
+		Deprecation: &declcfg.DeprecationEntry{
+			Reference: declcfg.PackageScopedReference{
+				Schema: "olm.bundle",
+				Name:   "baz",
 			},
 		},
 	}
@@ -115,13 +113,7 @@ func TestByDeprecated(t *testing.T) {
 	assert.Equal(t, b1, toSort[0])
 	assert.Equal(t, b2, toSort[1])
 
-	// Channel deprecation association != bundle deprecated
-	b2.Deprecations[0] = declcfg.DeprecationEntry{
-		Reference: declcfg.PackageScopedReference{
-			Schema: "olm.channel",
-			Name:   "badchannel",
-		},
-	}
+	b2.Deprecation = nil
 
 	toSort = []*catalogmetadata.Bundle{b2, b1}
 	sort.SliceStable(toSort, func(i, j int) bool {
@@ -131,32 +123,4 @@ func TestByDeprecated(t *testing.T) {
 	require.Len(t, toSort, 2)
 	assert.Equal(t, b2, toSort[0])
 	assert.Equal(t, b1, toSort[1])
-
-	b1.Deprecations = []declcfg.DeprecationEntry{
-		{
-			Reference: declcfg.PackageScopedReference{
-				Schema: "olm.package",
-			},
-		},
-	}
-	b2.Deprecations = append(b2.Deprecations, declcfg.DeprecationEntry{
-		Reference: declcfg.PackageScopedReference{
-			Schema: "olm.package",
-		},
-	}, declcfg.DeprecationEntry{
-		Reference: declcfg.PackageScopedReference{
-			Schema: "olm.bundle",
-			Name:   "baz",
-		},
-	})
-
-	toSort = []*catalogmetadata.Bundle{b2, b1}
-	sort.SliceStable(toSort, func(i, j int) bool {
-		return catalogsort.ByDeprecated(toSort[i], toSort[j])
-	})
-	// Both are deprecated at package level, b2 is deprecated
-	// explicitly, b2 should be preferred less
-	require.Len(t, toSort, 2)
-	assert.Equal(t, b1, toSort[0])
-	assert.Equal(t, b2, toSort[1])
 }

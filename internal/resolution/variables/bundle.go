@@ -62,6 +62,6 @@ func NewBundleUniquenessVariable(id deppy.Identifier, atMostIDs ...deppy.Identif
 // BundleVariableID returns an ID for a given bundle.
 func BundleVariableID(bundle *catalogmetadata.Bundle) deppy.Identifier {
 	return deppy.Identifier(
-		fmt.Sprintf("%s-%s-%s", bundle.CatalogName, bundle.Package, bundle.Name),
+		fmt.Sprintf("%s-%s-%s", bundle.Catalog, bundle.Package, bundle.Name),
 	)
 }

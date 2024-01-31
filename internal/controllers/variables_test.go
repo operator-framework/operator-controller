@@ -22,6 +22,7 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
@@ -32,7 +33,8 @@ func TestVariableSource(t *testing.T) {
 	utilruntime.Must(rukpakv1alpha2.AddToScheme(sch))
 
 	stableChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
-		Name: "stable",
+		Name:    "stable",
+		Package: "packageA",
 		Entries: []declcfg.ChannelEntry{
 			{
 				Name: "packageA.v2.0.0",
@@ -49,8 +51,7 @@ func TestVariableSource(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"packageA","version":"2.0.0"}`)},
 				},
 			},
-			CatalogName: "fake-catalog",
-			InChannels:  []*catalogmetadata.Channel{&stableChannel},
+			Catalog: "fake-catalog",
 		},
 	}
 	allBundles := make([]*catalogmetadata.Bundle, 0, len(bundleSet))
@@ -94,7 +95,7 @@ func TestVariableSource(t *testing.T) {
 		},
 	}
 
-	vars, err := controllers.GenerateVariables(allBundles, []ocv1alpha1.ClusterExtension{clusterExtension}, []rukpakv1alpha2.BundleDeployment{bd})
+	vars, err := controllers.GenerateVariables(&client.Contents{Bundles: allBundles, Channels: []*catalogmetadata.Channel{&stableChannel}}, []ocv1alpha1.ClusterExtension{clusterExtension}, []rukpakv1alpha2.BundleDeployment{bd})
 	require.NoError(t, err)
 
 	expectedVars := []deppy.Variable{

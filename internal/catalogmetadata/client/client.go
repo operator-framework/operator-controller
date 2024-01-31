@@ -43,18 +43,31 @@ type Client struct {
 	fetcher Fetcher
 }
 
-func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error) {
-	var allBundles []*catalogmetadata.Bundle
+type Contents struct {
+	Packages []*catalogmetadata.Package
+	Channels []*catalogmetadata.Channel
+	Bundles  []*catalogmetadata.Bundle
+}
 
+func (c *Client) CatalogContents(ctx context.Context) (*Contents, error) {
 	var catalogList catalogd.CatalogList
 	if err := c.cl.List(ctx, &catalogList); err != nil {
 		return nil, err
 	}
+
+	contents := &Contents{
+		Packages: []*catalogmetadata.Package{},
+		Channels: []*catalogmetadata.Channel{},
+		Bundles:  []*catalogmetadata.Bundle{},
+	}
+
 	for _, catalog := range catalogList.Items {
 		// if the catalog has not been successfully unpacked, skip it
 		if !meta.IsStatusConditionPresentAndEqual(catalog.Status.Conditions, catalogd.TypeUnpacked, metav1.ConditionTrue) {
 			continue
 		}
+
+		packages := []*catalogmetadata.Package{}
 		channels := []*catalogmetadata.Channel{}
 		bundles := []*catalogmetadata.Bundle{}
 		deprecations := []*catalogmetadata.Deprecation{}
@@ -70,93 +83,81 @@ func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
 				return fmt.Errorf("error was provided to the WalkMetasReaderFunc: %s", err)
 			}
 			switch meta.Schema {
+			case declcfg.SchemaPackage:
+				var content catalogmetadata.Package
+				if err := json.Unmarshal(meta.Blob, &content); err != nil {
+					return fmt.Errorf("error unmarshalling channel from catalog metadata: %s", err)
+				}
+				content.Catalog = catalog.Name
+				packages = append(packages, &content)
 			case declcfg.SchemaChannel:
 				var content catalogmetadata.Channel
 				if err := json.Unmarshal(meta.Blob, &content); err != nil {
 					return fmt.Errorf("error unmarshalling channel from catalog metadata: %s", err)
 				}
+				content.Catalog = catalog.Name
 				channels = append(channels, &content)
 			case declcfg.SchemaBundle:
 				var content catalogmetadata.Bundle
 				if err := json.Unmarshal(meta.Blob, &content); err != nil {
 					return fmt.Errorf("error unmarshalling bundle from catalog metadata: %s", err)
 				}
+				content.Catalog = catalog.Name
 				bundles = append(bundles, &content)
 			case declcfg.SchemaDeprecation:
 				var content catalogmetadata.Deprecation
 				if err := json.Unmarshal(meta.Blob, &content); err != nil {
 					return fmt.Errorf("error unmarshalling deprecation from catalog metadata: %s", err)
 				}
+				content.Catalog = catalog.Name
 				deprecations = append(deprecations, &content)
 			}
 
 			return nil
 		})
+
 		if err != nil {
 			return nil, fmt.Errorf("error processing response: %s", err)
 		}
 
-		bundles, err = PopulateExtraFields(catalog.Name, channels, bundles, deprecations)
-		if err != nil {
-			return nil, err
-		}
-
-		allBundles = append(allBundles, bundles...)
-	}
-
-	return allBundles, nil
-}
-
-func PopulateExtraFields(catalogName string, channels []*catalogmetadata.Channel, bundles []*catalogmetadata.Bundle, deprecations []*catalogmetadata.Deprecation) ([]*catalogmetadata.Bundle, error) {
-	bundlesMap := map[string]*catalogmetadata.Bundle{}
-	for i := range bundles {
-		bundleKey := fmt.Sprintf("%s-%s", bundles[i].Package, bundles[i].Name)
-		bundlesMap[bundleKey] = bundles[i]
-
-		bundles[i].CatalogName = catalogName
-	}
-
-	for _, ch := range channels {
-		for _, chEntry := range ch.Entries {
-			bundleKey := fmt.Sprintf("%s-%s", ch.Package, chEntry.Name)
-			bundle, ok := bundlesMap[bundleKey]
-			if !ok {
-				return nil, fmt.Errorf("bundle %q not found in catalog %q (package %q, channel %q)", chEntry.Name, catalogName, ch.Package, ch.Name)
-			}
-
-			bundle.InChannels = append(bundle.InChannels, ch)
-		}
-	}
-
-	// According to https://docs.google.com/document/d/1EzefSzoGZL2ipBt-eCQwqqNwlpOIt7wuwjG6_8ZCi5s/edit?usp=sharing
-	// the olm.deprecations FBC object is only valid when either 0 or 1 instances exist
-	// for any given package
-	deprecationMap := make(map[string]*catalogmetadata.Deprecation, len(deprecations))
-	for _, deprecation := range deprecations {
-		deprecationMap[deprecation.Package] = deprecation
-	}
-
-	for i := range bundles {
-		if dep, ok := deprecationMap[bundles[i].Package]; ok {
-			for _, entry := range dep.Entries {
+		for _, deprecation := range deprecations {
+			for _, entry := range deprecation.Entries {
 				switch entry.Reference.Schema {
 				case declcfg.SchemaPackage:
-					bundles[i].Deprecations = append(bundles[i].Deprecations, entry)
+					for _, pkg := range packages {
+						if pkg.Name == deprecation.Package {
+							pkg.Deprecation = &declcfg.DeprecationEntry{
+								Reference: entry.Reference,
+								Message:   entry.Message,
+							}
+						}
+					}
 				case declcfg.SchemaChannel:
-					for _, ch := range bundles[i].InChannels {
-						if ch.Name == entry.Reference.Name {
-							bundles[i].Deprecations = append(bundles[i].Deprecations, entry)
-							break
+					for _, channel := range channels {
+						if channel.Package == deprecation.Package && channel.Name == entry.Reference.Name {
+							channel.Deprecation = &declcfg.DeprecationEntry{
+								Reference: entry.Reference,
+								Message:   entry.Message,
+							}
 						}
 					}
 				case declcfg.SchemaBundle:
-					if bundles[i].Name == entry.Reference.Name {
-						bundles[i].Deprecations = append(bundles[i].Deprecations, entry)
+					for _, bundle := range bundles {
+						if bundle.Package == deprecation.Package && bundle.Name == entry.Reference.Name {
+							bundle.Deprecation = &declcfg.DeprecationEntry{
+								Reference: entry.Reference,
+								Message:   entry.Message,
+							}
+						}
 					}
 				}
 			}
 		}
+
+		contents.Packages = append(contents.Packages, packages...)
+		contents.Channels = append(contents.Channels, channels...)
+		contents.Bundles = append(contents.Bundles, bundles...)
 	}
 
-	return bundles, nil
+	return contents, nil
 }
