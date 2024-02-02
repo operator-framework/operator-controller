@@ -34,7 +34,7 @@ type indexRefClient struct {
 	packagesCache []*catalogmetadata.Package
 }
 
-var _ controllers.CatalogProvider = &indexRefClient{}
+var _ controllers.CatalogProvider = (*indexRefClient)(nil)
 
 func newIndexRefClient(indexRef string) *indexRefClient {
 	return &indexRefClient{
