@@ -52,11 +52,18 @@ type PackageRequired struct {
 
 type Bundle struct {
 	declcfg.Bundle
-	Deprecation *declcfg.DeprecationEntry
-	Catalog     string
+	Deprecation      *declcfg.DeprecationEntry
+	Catalog          string
+	version          *bsemver.Version
+	requiredPackages []PackageRequired
+	mediaType        string
 }
 
 func (b *Bundle) Version() (*bsemver.Version, error) {
+	if b.version != nil {
+		return b.version, nil
+	}
+
 	pkg, err := loadOneFromProps[property.Package](b, property.TypePackage, true)
 	if err != nil {
 		return nil, err
@@ -65,10 +72,15 @@ func (b *Bundle) Version() (*bsemver.Version, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not parse semver %q for bundle '%s': %s", pkg.Version, b.Name, err)
 	}
-	return &semVer, nil
+	b.version = &semVer
+	return b.version, nil
 }
 
 func (b *Bundle) RequiredPackages() ([]PackageRequired, error) {
+	if len(b.requiredPackages) > 0 {
+		return b.requiredPackages, nil
+	}
+
 	requiredPackages, err := loadFromProps[PackageRequired](b, property.TypePackageRequired, false)
 	if err != nil {
 		return nil, fmt.Errorf("error determining bundle required packages for bundle %q: %s", b.Name, err)
@@ -85,16 +97,21 @@ func (b *Bundle) RequiredPackages() ([]PackageRequired, error) {
 		}
 		requiredPackages[i].SemverRange = semverRange
 	}
-	return requiredPackages, nil
+	b.requiredPackages = requiredPackages
+	return b.requiredPackages, nil
 }
 
 func (b *Bundle) MediaType() (string, error) {
+	if b.mediaType != "" {
+		return b.mediaType, nil
+	}
+
 	mediaType, err := loadOneFromProps[string](b, PropertyBundleMediaType, false)
 	if err != nil {
 		return "", fmt.Errorf("error determining bundle mediatype for bundle %q: %s", b.Name, err)
 	}
-
-	return mediaType, nil
+	b.mediaType = mediaType
+	return b.mediaType, nil
 }
 
 func (b *Bundle) propertiesByType(propType string) []*property.Property {
