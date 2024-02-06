@@ -36,7 +36,7 @@ jobs:
           name: e2e-artifacts
           path: /tmp/artifacts/
 
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         with:
           files: e2e-cover.out
           flags: e2e
