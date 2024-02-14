@@ -123,7 +123,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
 	}
-	if features.OperatorControllerFeatureGate.Enabled(features.EnableExtensionApi) {
+	if features.OperatorControllerFeatureGate.Enabled(features.EnableExtensionAPI) {
 		if err = (&controllers.ExtensionReconciler{
 			Client:         cl,
 			BundleProvider: catalogClient,

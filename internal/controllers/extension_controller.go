@@ -102,7 +102,7 @@ func (*ExtensionReconciler) checkForUnexpectedFieldChange(a, b ocv1alpha1.Extens
 // to return different results (e.g. requeue).
 //
 //nolint:unparam
-func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Extension) (ctrl.Result, error) {
+func (r *ExtensionReconciler) reconcile(_ context.Context, ext *ocv1alpha1.Extension) (ctrl.Result, error) {
 	// Don't do anything if Paused
 	if ext.Spec.Managed == ocv1alpha1.ManagedStatePaused {
 		return ctrl.Result{}, nil
