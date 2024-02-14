@@ -24,7 +24,6 @@ import (
 
 type ExtensionInterface interface {
 	GetPackageSpec() *ocv1alpha1.ExtensionSourcePackage
-	GetUpgradeConstraintPolicy() ocv1alpha1.UpgradeConstraintPolicy
 	GetUID() types.UID
 }
 

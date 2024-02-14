@@ -173,7 +173,3 @@ func (r *ClusterExtension) GetPackageSpec() *ExtensionSourcePackage {
 func (r *ClusterExtension) GetUID() types.UID {
 	return r.ObjectMeta.GetUID()
 }
-
-func (r *ClusterExtension) GetUpgradeConstraintPolicy() UpgradeConstraintPolicy {
-	return r.Spec.UpgradeConstraintPolicy
-}

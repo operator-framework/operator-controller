@@ -21,20 +21,18 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/go-logr/logr"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
+	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
 // ExtensionReconciler reconciles a Extension object
@@ -102,9 +100,29 @@ func (*ExtensionReconciler) checkForUnexpectedFieldChange(a, b ocv1alpha1.Extens
 // to return different results (e.g. requeue).
 //
 //nolint:unparam
-func (r *ExtensionReconciler) reconcile(_ context.Context, ext *ocv1alpha1.Extension) (ctrl.Result, error) {
+func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Extension) (ctrl.Result, error) {
+	l := log.FromContext(ctx).WithName("extension-controller")
+
+	// Don't do anything if feature gated
+	if !features.OperatorControllerFeatureGate.Enabled(features.EnableExtensionAPI) {
+		l.Info("extension feature is gated", "name", ext.GetName(), "namespace", ext.GetNamespace())
+
+		// Set the TypeInstalled condition to Unknown to indicate that the resolution
+		// hasn't been attempted yet, due to the spec being invalid.
+		ext.Status.InstalledBundleResource = ""
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "extension feature is disabled", ext.GetGeneration())
+		// Set the TypeResolved condition to Unknown to indicate that the resolution
+		// hasn't been attempted yet, due to the spec being invalid.
+		ext.Status.ResolvedBundleResource = ""
+		setResolvedStatusConditionUnknown(&ext.Status.Conditions, "extension feature is disabled", ext.GetGeneration())
+
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "extension feature is disabled", ext.GetGeneration())
+		return ctrl.Result{}, nil
+	}
+
 	// Don't do anything if Paused
 	if ext.Spec.Managed == ocv1alpha1.ManagedStatePaused {
+		l.Info("resource is paused", "name", ext.GetName(), "namespace", ext.GetNamespace())
 		return ctrl.Result{}, nil
 	}
 
@@ -146,32 +164,16 @@ func (r *ExtensionReconciler) reconcile(_ context.Context, ext *ocv1alpha1.Exten
 // SetupWithManager sets up the controller with the Manager.
 func (r *ExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// TODO: Add watch for kapp-controller resources
+
+	// When feature-gated, don't watch catalogs.
+	if !features.OperatorControllerFeatureGate.Enabled(features.EnableExtensionAPI) {
+		return ctrl.NewControllerManagedBy(mgr).
+			For(&ocv1alpha1.Extension{}).
+			Complete(r)
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1alpha1.Extension{}).
-		Watches(&catalogd.Catalog{},
-			handler.EnqueueRequestsFromMapFunc(extensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
+		Watches(&catalogd.Catalog{}, &handler.EnqueueRequestForObject{}).
 		Complete(r)
-}
-
-// Generate reconcile requests for all extensions affected by a catalog change
-func extensionRequestsForCatalog(c client.Reader, logger logr.Logger) handler.MapFunc {
-	return func(ctx context.Context, _ client.Object) []reconcile.Request {
-		// no way of associating an extension to a catalog so create reconcile requests for everything
-		extensions := ocv1alpha1.ExtensionList{}
-		err := c.List(ctx, &extensions)
-		if err != nil {
-			logger.Error(err, "unable to enqueue extensions for catalog reconcile")
-			return nil
-		}
-		var requests []reconcile.Request
-		for _, ext := range extensions.Items {
-			requests = append(requests, reconcile.Request{
-				NamespacedName: types.NamespacedName{
-					Namespace: ext.GetNamespace(),
-					Name:      ext.GetName(),
-				},
-			})
-		}
-		return requests
-	}
 }

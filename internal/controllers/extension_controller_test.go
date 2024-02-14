@@ -12,12 +12,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
+	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
 // Describe: Extension Controller Test
@@ -113,7 +115,29 @@ func TestExtensionBadResources(t *testing.T) {
 		require.NotNil(t, cond, fmt.Sprintf("Get condition failed on %q", ext.ObjectMeta.GetName()))
 		require.Equal(t, metav1.ConditionUnknown, cond.Status, fmt.Sprintf("Get status check failed on %q", ext.ObjectMeta.GetName()))
 		require.Equal(t, ocv1alpha1.ReasonResolutionUnknown, cond.Reason, fmt.Sprintf("Get status reason failed on %q", ext.ObjectMeta.GetName()))
+		require.Equal(t, "extension feature is disabled", cond.Message)
+		require.NoError(t, client.IgnoreNotFound(cl.Delete(ctx, ext)))
+	}
+
+	for _, e := range invalidExtensions {
+		resetFeatureGate := featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.EnableExtensionAPI, true)
+		ext := e.DeepCopy()
+		require.NoError(t, cl.Create(ctx, ext), fmt.Sprintf("Create failed on %q", e.GetObjectMeta().GetName()))
+		name := types.NamespacedName{Name: e.GetObjectMeta().GetName(), Namespace: e.GetObjectMeta().GetNamespace()}
+
+		cl, reconciler := newClientAndExtensionReconciler(t)
+		res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: name})
+		require.Equal(t, ctrl.Result{}, res)
+		require.NoError(t, err)
+
+		require.NoError(t, cl.Get(ctx, name, ext), fmt.Sprintf("Get failed on %q", e.ObjectMeta.GetName()))
+		cond := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeResolved)
+		require.NotNil(t, cond, fmt.Sprintf("Get condition failed on %q", ext.ObjectMeta.GetName()))
+		require.Equal(t, metav1.ConditionUnknown, cond.Status, fmt.Sprintf("Get status check failed on %q", ext.ObjectMeta.GetName()))
+		require.Equal(t, ocv1alpha1.ReasonResolutionUnknown, cond.Reason, fmt.Sprintf("Get status reason failed on %q", ext.ObjectMeta.GetName()))
 		require.Equal(t, "validation has not been attempted as spec is invalid", cond.Message)
+
+		resetFeatureGate()
 	}
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.Extension{}, client.InNamespace(extKey.Namespace)))
@@ -121,6 +145,7 @@ func TestExtensionBadResources(t *testing.T) {
 }
 
 func TestExtensionInvalidSemverPastRegex(t *testing.T) {
+	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.EnableExtensionAPI, true)()
 	cl, reconciler := newClientAndExtensionReconciler(t)
 	ctx := context.Background()
 	t.Log("When an invalid semver is provided that bypasses the regex validation")
@@ -135,7 +160,7 @@ func TestExtensionInvalidSemverPastRegex(t *testing.T) {
 	}
 	require.NoError(t, cl.Create(ctx, namespace))
 
-	t.Log("By injecting creating a client with the bad clusterextension CR")
+	t.Log("By injecting creating a client with the bad extension CR")
 	pkgName := fmt.Sprintf("exists-%s", rand.String(6))
 	extension := &ocv1alpha1.Extension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name, Namespace: extKey.Namespace},

@@ -132,10 +132,3 @@ func (r *Extension) GetPackageSpec() *ExtensionSourcePackage {
 func (r *Extension) GetUID() types.UID {
 	return r.ObjectMeta.GetUID()
 }
-
-func (r *Extension) GetUpgradeConstraintPolicy() UpgradeConstraintPolicy {
-	if r.Spec.Source.Package != nil {
-		return r.Spec.Source.Package.UpgradeConstraintPolicy
-	}
-	return ""
-}
