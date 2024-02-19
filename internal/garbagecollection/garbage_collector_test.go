@@ -1,4 +1,4 @@
-package main
+package garbagecollection
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +15,7 @@ import (
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
 )
 
-func TestUnpackStartupGarbageCollection(t *testing.T) {
+func TestRunGarbageCollection(t *testing.T) {
 	for _, tt := range []struct {
 		name             string
 		existCatalogs    []*metav1.PartialObjectMetadata
@@ -76,7 +75,7 @@ func TestUnpackStartupGarbageCollection(t *testing.T) {
 
 			metaClient := fake.NewSimpleMetadataClient(scheme, runtimeObjs...)
 
-			err := unpackStartupGarbageCollection(ctx, cachePath, logr.Discard(), metaClient)
+			_, err := runGarbageCollection(ctx, cachePath, metaClient)
 			if !tt.wantErr {
 				assert.NoError(t, err)
 				entries, err := os.ReadDir(cachePath)

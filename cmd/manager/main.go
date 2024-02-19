@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -31,10 +30,8 @@ import (
 	"k8s.io/client-go/metadata"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/sets"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -42,9 +39,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
 
+	"github.com/operator-framework/catalogd/internal/garbagecollection"
 	"github.com/operator-framework/catalogd/internal/source"
 	"github.com/operator-framework/catalogd/internal/third_party/server"
 	"github.com/operator-framework/catalogd/internal/version"
@@ -82,6 +79,7 @@ func main() {
 		catalogServerAddr    string
 		httpExternalAddr     string
 		cacheDir             string
+		gcInterval           time.Duration
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -94,6 +92,7 @@ func main() {
 	flag.StringVar(&httpExternalAddr, "http-external-address", "http://catalogd-catalogserver.catalogd-system.svc", "The external address at which the http server is reachable.")
 	flag.StringVar(&cacheDir, "cache-dir", "/var/cache/", "The directory in the filesystem that catalogd will use for file based caching")
 	flag.BoolVar(&catalogdVersion, "version", false, "print the catalogd version and exit")
+	flag.DurationVar(&gcInterval, "gc-interval", 12*time.Hour, "interval in which garbage collection should be run against the catalog content cache")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -202,8 +201,14 @@ func main() {
 	}
 
 	ctx := ctrl.SetupSignalHandler()
-	if err := unpackStartupGarbageCollection(ctx, filepath.Join(cacheDir, source.UnpackCacheDir), setupLog, metaClient); err != nil {
-		setupLog.Error(err, "running garbage collection")
+	gc := &garbagecollection.GarbageCollector{
+		CachePath:      filepath.Join(cacheDir, source.UnpackCacheDir),
+		Logger:         ctrl.Log.WithName("garbage-collector"),
+		MetadataClient: metaClient,
+		Interval:       gcInterval,
+	}
+	if err := mgr.Add(gc); err != nil {
+		setupLog.Error(err, "problem adding garbage collector to manager")
 		os.Exit(1)
 	}
 
@@ -220,33 +225,4 @@ func podNamespace() string {
 		return "catalogd-system"
 	}
 	return string(namespace)
-}
-
-func unpackStartupGarbageCollection(ctx context.Context, cachePath string, log logr.Logger, metaClient metadata.Interface) error {
-	getter := metaClient.Resource(v1alpha1.GroupVersion.WithResource("catalogs"))
-	metaList, err := getter.List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return fmt.Errorf("error listing catalogs: %w", err)
-	}
-
-	expectedCatalogs := sets.New[string]()
-	for _, meta := range metaList.Items {
-		expectedCatalogs.Insert(meta.GetName())
-	}
-
-	cacheDirEntries, err := os.ReadDir(cachePath)
-	if err != nil {
-		return fmt.Errorf("error reading cache directory: %w", err)
-	}
-	for _, cacheDirEntry := range cacheDirEntries {
-		if cacheDirEntry.IsDir() && expectedCatalogs.Has(cacheDirEntry.Name()) {
-			continue
-		}
-		if err := os.RemoveAll(filepath.Join(cachePath, cacheDirEntry.Name())); err != nil {
-			return fmt.Errorf("error removing cache directory entry %q: %w  ", cacheDirEntry.Name(), err)
-		}
-
-		log.Info("deleted unexpected cache directory entry", "path", cacheDirEntry.Name(), "isDir", cacheDirEntry.IsDir())
-	}
-	return nil
 }
