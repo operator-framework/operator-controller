@@ -89,6 +89,10 @@ OLM should have an opinion about how administrators can carry out roll outs of n
 ### F27 - Pluggable certificate management (P2)
 OLM should rely on other controllers to create and lifecycle TLS certificates required to drive the functionality of certain extensions, like webhooks that need to trust /  need to be trusted by the cluster's API server. OLM should not implement any certificate handling itself. In a first implementation support should be established for cert-manager.
 
+### F28 - Provided service versions (P2)
+Workload-based extensions can offer multiple services (a.k.a. operands) and their respective versions. Extension admins need to see which operand versions each extension supports by the extension version. Extension admins are guaranteed to install or upgrade an extension that supports their desired operand version(s). Extension authors can list supported operand versions and have guarantees that they can list dependencies that support the necessary operand version(s). When mirroring a catalog, mirroring users can select a subset of the related images to mirror, based on desired operand version(s).
+
+
 # Behavioral Requirements
 
 _Priority Rating: 1 highest, 2 medium, 3 lower (ex. P2 = Medium Priority)_
