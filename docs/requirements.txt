@@ -31,5 +31,5 @@ regex==2023.12.25
 requests==2.31.0
 six==1.16.0
 soupsieve==2.5
-urllib3==2.2.0
+urllib3==2.2.1
 watchdog==4.0.0
