@@ -608,6 +608,144 @@ func TestClusterExtensionExpectedBundleDeployment(t *testing.T) {
 	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
+func TestClusterExtensionHealthStatus(t *testing.T) {
+	cl, reconciler := newClientAndReconciler(t)
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+	const pkgName = "prometheus"
+
+	t.Log("When the cluster extension specifies a valid available package")
+	t.Log("By initializing cluster state")
+	clusterExtension := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec:       ocv1alpha1.ClusterExtensionSpec{PackageName: pkgName},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+
+	t.Log("When the expected BundleDeployment already exists")
+	t.Log("When the BundleDeployment spec is up-to-date")
+	t.Log("By patching the existing BD")
+	bd := &rukpakv1alpha2.BundleDeployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: extKey.Name,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion:         ocv1alpha1.GroupVersion.String(),
+					Kind:               "ClusterExtension",
+					Name:               clusterExtension.Name,
+					UID:                clusterExtension.UID,
+					Controller:         pointer.Bool(true),
+					BlockOwnerDeletion: pointer.Bool(true),
+				},
+			},
+		},
+		Spec: rukpakv1alpha2.BundleDeploymentSpec{
+			ProvisionerClassName: "core-rukpak-io-registry",
+			Source: rukpakv1alpha2.BundleSource{
+				Type: rukpakv1alpha2.SourceTypeImage,
+				Image: &rukpakv1alpha2.ImageSource{
+					Ref: "quay.io/operatorhubio/prometheus@fake2.0.0",
+				},
+			},
+		},
+	}
+
+	require.NoError(t, cl.Create(ctx, bd))
+	bd.Status.ObservedGeneration = bd.GetGeneration()
+
+	t.Log("When the BundleDeployment status is mapped to the expected ClusterExtension status")
+	t.Log("It verifies cluster extension status when bundle deployment is waiting to be created")
+	t.Log("By updating the status of bundleDeployment")
+	require.NoError(t, cl.Status().Update(ctx, bd))
+
+	t.Log("It verifies cluster extension status when bundleDeployment installed status is true")
+	apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
+		Type:    rukpakv1alpha2.TypeInstalled,
+		Status:  metav1.ConditionTrue,
+		Message: "cluster extension installed successfully",
+		Reason:  rukpakv1alpha2.ReasonInstallationSucceeded,
+	})
+
+	t.Log("It verifies cluster extension status when bundleDeployment healthy status is unknown")
+	apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
+		Type:    rukpakv1alpha2.TypeHealthy,
+		Status:  metav1.ConditionUnknown,
+		Message: "message",
+		Reason:  rukpakv1alpha2.ReasonHealthy,
+	})
+
+	t.Log("By updating the status of bundleDeployment")
+	require.NoError(t, cl.Status().Update(ctx, bd))
+
+	t.Log("running reconcile")
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.NoError(t, err)
+
+	t.Log("By fetching the updated cluster extension after reconcile")
+	ext := &ocv1alpha1.ClusterExtension{}
+	require.NoError(t, cl.Get(ctx, extKey, ext))
+
+	t.Log("By checking the expected conditions")
+	cond := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeHealthy)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionUnknown, cond.Status)
+	require.Equal(t, ocv1alpha1.ReasonHealthStatusUnknown, cond.Reason)
+
+	t.Log("It verifies cluster extension status when bundleDeployment healthy status is false")
+	apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
+		Type:    rukpakv1alpha2.TypeHealthy,
+		Status:  metav1.ConditionFalse,
+		Message: "unhealthymessage",
+		Reason:  rukpakv1alpha2.ReasonUnhealthy,
+	})
+
+	t.Log("By updating the status of bundleDeployment")
+	require.NoError(t, cl.Status().Update(ctx, bd))
+
+	t.Log("running reconcile")
+	res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.NoError(t, err)
+
+	t.Log("By fetching the updated cluster extension after reconcile")
+	ext = &ocv1alpha1.ClusterExtension{}
+	require.NoError(t, cl.Get(ctx, extKey, ext))
+
+	t.Log("By checking the expected conditions")
+	cond = apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeHealthy)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionFalse, cond.Status)
+	require.Equal(t, ocv1alpha1.ReasonUnhealthy, cond.Reason)
+	require.Equal(t, "extension is unhealthy: unhealthymessage", cond.Message)
+
+	t.Log("It verifies cluster extension status when bundleDeployment healthy status is true")
+	apimeta.SetStatusCondition(&bd.Status.Conditions, metav1.Condition{
+		Type:    rukpakv1alpha2.TypeHealthy,
+		Status:  metav1.ConditionTrue,
+		Message: "healthy",
+		Reason:  rukpakv1alpha2.ReasonHealthy,
+	})
+
+	t.Log("By updating the status of bundleDeployment")
+	require.NoError(t, cl.Status().Update(ctx, bd))
+
+	t.Log("running reconcile")
+	res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.NoError(t, err)
+
+	t.Log("By fetching the updated cluster extension after reconcile")
+	ext = &ocv1alpha1.ClusterExtension{}
+	require.NoError(t, cl.Get(ctx, extKey, ext))
+
+	t.Log("By checking the expected conditions")
+	cond = apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeHealthy)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionTrue, cond.Status)
+	require.Equal(t, ocv1alpha1.ReasonHealthy, cond.Reason)
+}
+
 func TestClusterExtensionDuplicatePackage(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
