@@ -29,10 +29,47 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 	someOtherPackageChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
 		Name:    "stable",
 		Package: "some-other-package",
+		Entries: []declcfg.ChannelEntry{
+			{
+				Name: "some-other-package.v2.3.0",
+			},
+		},
 	}}
 	testPackageChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
 		Name:    "stable",
 		Package: testPackageName,
+		Entries: []declcfg.ChannelEntry{
+			{
+				Name: "test-package.v0.0.1",
+			},
+			{
+				Name: "test-package.v0.0.2",
+			},
+			{
+				Name: "test-package.v0.1.0",
+			},
+			{
+				Name: "test-package.v0.1.1",
+			},
+			{
+				Name: "test-package.v0.1.2",
+			},
+			{
+				Name: "test-package.v0.2.0",
+			},
+			{
+				Name: "test-package.v2.0.0",
+			},
+			{
+				Name: "test-package.v2.1.0",
+			},
+			{
+				Name: "test-package.v2.2.0",
+			},
+			{
+				Name: "test-package.v3.0.0",
+			},
+		},
 	}}
 	bundleSet := map[string]*catalogmetadata.Bundle{
 		// Major version zero is for initial development and
@@ -49,7 +86,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "0.0.1"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		"test-package.v0.0.2": {
 			Bundle: declcfg.Bundle{
@@ -60,7 +96,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "0.0.2"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		"test-package.v0.1.0": {
 			Bundle: declcfg.Bundle{
@@ -71,7 +106,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "0.1.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		"test-package.v0.1.1": {
 			Bundle: declcfg.Bundle{
@@ -82,7 +116,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "0.1.1"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		"test-package.v0.1.2": {
 			Bundle: declcfg.Bundle{
@@ -93,7 +126,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "0.1.2"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		"test-package.v0.2.0": {
 			Bundle: declcfg.Bundle{
@@ -104,7 +136,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "0.2.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		"test-package.v2.0.0": {
 			Bundle: declcfg.Bundle{
@@ -115,7 +146,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.0.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		"test-package.v2.1.0": {
 			Bundle: declcfg.Bundle{
@@ -126,7 +156,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.1.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		"test-package.v2.2.0": {
 			Bundle: declcfg.Bundle{
@@ -137,7 +166,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.2.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		// We need a bundle with a different major version to ensure
 		// that we do not allow upgrades from one major version to another
@@ -150,7 +178,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "3.0.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		// We need a bundle from different package to ensure that
 		// we filter out bundles certain bundle image
@@ -163,7 +190,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "some-other-package", "version": "2.3.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&someOtherPackageChannel},
 		},
 	}
 	allBundles := make([]*catalogmetadata.Bundle, 0, len(bundleSet))
@@ -242,7 +268,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "9.0.0"}`)},
 					},
 				},
-				InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 			},
 			expectedError: `bundle with image "registry.io/repo/test-package@v9.0.0" for package "test-package" not found in available catalogs but is currently installed via BundleDeployment "test-package-bd"`,
 		},
@@ -256,6 +281,7 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 
 			installedPackages, err := variablesources.MakeInstalledPackageVariables(
 				allBundles,
+				[]*catalogmetadata.Channel{&testPackageChannel, &someOtherPackageChannel},
 				[]ocv1alpha1.ClusterExtension{fakeOwnerClusterExtension},
 				bundleDeployments,
 			)
@@ -318,7 +344,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.0.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		"test-package.v2.1.0": {
 			Bundle: declcfg.Bundle{
@@ -329,7 +354,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.1.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		"test-package.v2.2.0": {
 			Bundle: declcfg.Bundle{
@@ -340,7 +364,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.2.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		// We need a bundle from different package to ensure that
 		// we filter out bundles certain bundle image
@@ -353,7 +376,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "some-other-package", "version": "2.3.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&someOtherPackageChannel},
 		},
 	}
 	allBundles := make([]*catalogmetadata.Bundle, 0, len(bundleSet))
@@ -405,7 +427,6 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "9.0.0"}`)},
 					},
 				},
-				InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 			},
 			expectedError: `bundle with image "registry.io/repo/test-package@v9.0.0" for package "test-package" not found in available catalogs but is currently installed via BundleDeployment "test-package-bd"`,
 		},
@@ -419,6 +440,7 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 
 			installedPackages, err := variablesources.MakeInstalledPackageVariables(
 				allBundles,
+				[]*catalogmetadata.Channel{&testPackageChannel, &someOtherPackageChannel},
 				[]ocv1alpha1.ClusterExtension{fakeOwnerClusterExtension},
 				bundleDeployments,
 			)

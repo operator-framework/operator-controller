@@ -8,7 +8,7 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
-	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
@@ -16,7 +16,7 @@ import (
 // MakeRequiredPackageVariables returns a variable which represent
 // explicit requirement for a package from an user.
 // This is when a user explicitly asks "install this" via ClusterExtension API.
-func MakeRequiredPackageVariables(allBundles []*catalogmetadata.Bundle, clusterExtensions []ocv1alpha1.ClusterExtension) ([]*olmvariables.RequiredPackageVariable, error) {
+func MakeRequiredPackageVariables(allBundles []*catalogmetadata.Bundle, allChannels []*catalogmetadata.Channel, clusterExtensions []ocv1alpha1.ClusterExtension) ([]*olmvariables.RequiredPackageVariable, error) {
 	result := make([]*olmvariables.RequiredPackageVariable, 0, len(clusterExtensions))
 
 	for _, clusterExtension := range clusterExtensions {
@@ -24,12 +24,23 @@ func MakeRequiredPackageVariables(allBundles []*catalogmetadata.Bundle, clusterE
 		channelName := clusterExtension.Spec.Channel
 		versionRange := clusterExtension.Spec.Version
 
-		predicates := []catalogfilter.Predicate[catalogmetadata.Bundle]{
-			catalogfilter.WithPackageName(packageName),
+		// get all channels that belong to the specified
+		// package. If a channel is specified that does not exist, no
+		// bundles should be returned from the filtering
+		// TODO: could probably optimize the InChannel filter to only accept
+		// a single channel.
+		channels := filter.Filter[catalogmetadata.Channel](allChannels,
+			func(entity *catalogmetadata.Channel) bool {
+				return entity.Package == packageName
+			},
+		)
+
+		predicates := []filter.Predicate[catalogmetadata.Bundle]{
+			filter.WithPackageName(packageName),
 		}
 
 		if channelName != "" {
-			predicates = append(predicates, catalogfilter.InChannel(channelName))
+			predicates = append(predicates, filter.InChannel(channelName, channels))
 		}
 
 		if versionRange != "" {
@@ -37,10 +48,10 @@ func MakeRequiredPackageVariables(allBundles []*catalogmetadata.Bundle, clusterE
 			if err != nil {
 				return nil, fmt.Errorf("invalid version range %q: %w", versionRange, err)
 			}
-			predicates = append(predicates, catalogfilter.InMastermindsSemverRange(vr))
+			predicates = append(predicates, filter.InMastermindsSemverRange(vr))
 		}
 
-		resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(predicates...))
+		resultSet := filter.Filter(allBundles, filter.And(predicates...))
 		if len(resultSet) == 0 {
 			if versionRange != "" && channelName != "" {
 				return nil, fmt.Errorf("no package %q matching version %q found in channel %q", packageName, versionRange, channelName)

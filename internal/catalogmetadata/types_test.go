@@ -202,34 +202,6 @@ func TestBundleMediaType(t *testing.T) {
 	}
 }
 
-func TestBundleHasDeprecation(t *testing.T) {
-	for _, tt := range []struct {
-		name       string
-		bundle     *catalogmetadata.Bundle
-		deprecated bool
-	}{
-		{
-			name: "has deprecation entries",
-			bundle: &catalogmetadata.Bundle{
-				Deprecations: []declcfg.DeprecationEntry{
-					{
-						Reference: declcfg.PackageScopedReference{},
-					},
-				},
-			},
-			deprecated: true,
-		},
-		{
-			name:   "has no deprecation entries",
-			bundle: &catalogmetadata.Bundle{},
-		},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.deprecated, tt.bundle.HasDeprecation())
-		})
-	}
-}
-
 func TestBundleIsDeprecated(t *testing.T) {
 	for _, tt := range []struct {
 		name       string
@@ -237,19 +209,13 @@ func TestBundleIsDeprecated(t *testing.T) {
 		deprecated bool
 	}{
 		{
-			name: "has package and channel deprecations, not deprecated",
+			name:       "has bundle deprecation entry, deprecated",
+			deprecated: true,
 			bundle: &catalogmetadata.Bundle{
-				Deprecations: []declcfg.DeprecationEntry{
-					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: "olm.package",
-						},
-					},
-					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: "olm.channel",
-							Name:   "foo",
-						},
+				Deprecation: &declcfg.DeprecationEntry{
+					Reference: declcfg.PackageScopedReference{
+						Schema: "olm.bundle",
+						Name:   "foo",
 					},
 				},
 			},
@@ -257,23 +223,6 @@ func TestBundleIsDeprecated(t *testing.T) {
 		{
 			name:   "has no deprecation entries, not deprecated",
 			bundle: &catalogmetadata.Bundle{},
-		},
-		{
-			name: "has bundle deprecation entry, deprecated",
-			bundle: &catalogmetadata.Bundle{
-				Bundle: declcfg.Bundle{
-					Name: "foo",
-				},
-				Deprecations: []declcfg.DeprecationEntry{
-					{
-						Reference: declcfg.PackageScopedReference{
-							Schema: "olm.bundle",
-							Name:   "foo",
-						},
-					},
-				},
-			},
-			deprecated: true,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

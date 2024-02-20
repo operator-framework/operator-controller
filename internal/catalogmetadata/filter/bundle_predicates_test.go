@@ -97,80 +97,28 @@ func TestInBlangSemverRange(t *testing.T) {
 	assert.False(t, f(b3))
 }
 
-func TestInChannel(t *testing.T) {
-	b1 := &catalogmetadata.Bundle{InChannels: []*catalogmetadata.Channel{
-		{Channel: declcfg.Channel{Name: "alpha"}},
-		{Channel: declcfg.Channel{Name: "stable"}},
-	}}
-	b2 := &catalogmetadata.Bundle{InChannels: []*catalogmetadata.Channel{
-		{Channel: declcfg.Channel{Name: "alpha"}},
-	}}
-	b3 := &catalogmetadata.Bundle{}
-
-	f := filter.InChannel("stable")
-
-	assert.True(t, f(b1))
-	assert.False(t, f(b2))
-	assert.False(t, f(b3))
-}
-
-func TestWithBundleImage(t *testing.T) {
+func TestWithImage(t *testing.T) {
 	b1 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{Image: "fake-image-uri-1"}}
 	b2 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{Image: "fake-image-uri-2"}}
 	b3 := &catalogmetadata.Bundle{}
 
-	f := filter.WithBundleImage("fake-image-uri-1")
+	f := filter.WithImage("fake-image-uri-1")
 
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))
 	assert.False(t, f(b3))
 }
 
-func TestReplaces(t *testing.T) {
-	fakeChannel := &catalogmetadata.Channel{
-		Channel: declcfg.Channel{
-			Entries: []declcfg.ChannelEntry{
-				{
-					Name:     "package1.v0.0.2",
-					Replaces: "package1.v0.0.1",
-				},
-				{
-					Name:     "package1.v0.0.3",
-					Replaces: "package1.v0.0.2",
-				},
-			},
-		},
-	}
-
+func TestWithDeprecated(t *testing.T) {
 	b1 := &catalogmetadata.Bundle{
-		Bundle:     declcfg.Bundle{Name: "package1.v0.0.2"},
-		InChannels: []*catalogmetadata.Channel{fakeChannel},
-	}
-	b2 := &catalogmetadata.Bundle{
-		Bundle:     declcfg.Bundle{Name: "package1.v0.0.3"},
-		InChannels: []*catalogmetadata.Channel{fakeChannel},
-	}
-	b3 := &catalogmetadata.Bundle{}
-
-	f := filter.Replaces("package1.v0.0.1")
-
-	assert.True(t, f(b1))
-	assert.False(t, f(b2))
-	assert.False(t, f(b3))
-}
-
-func TestWithDeprecation(t *testing.T) {
-	b1 := &catalogmetadata.Bundle{
-		Deprecations: []declcfg.DeprecationEntry{
-			{
-				Reference: declcfg.PackageScopedReference{},
-			},
+		Deprecation: &declcfg.DeprecationEntry{
+			Reference: declcfg.PackageScopedReference{},
 		},
 	}
 
 	b2 := &catalogmetadata.Bundle{}
 
-	f := filter.WithDeprecation(true)
+	f := filter.WithDeprecated(true)
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))
 }

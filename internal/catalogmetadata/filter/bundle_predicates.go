@@ -41,26 +41,30 @@ func InBlangSemverRange(semverRange bsemver.Range) Predicate[catalogmetadata.Bun
 	}
 }
 
-func InChannel(channelName string) Predicate[catalogmetadata.Bundle] {
+func InChannel(channelName string, channels []*catalogmetadata.Channel) Predicate[catalogmetadata.Bundle] {
 	return func(bundle *catalogmetadata.Bundle) bool {
-		for _, ch := range bundle.InChannels {
+		for _, ch := range channels {
 			if ch.Name == channelName {
-				return true
+				for _, entry := range ch.Entries {
+					if entry.Name == bundle.Name {
+						return true
+					}
+				}
 			}
 		}
 		return false
 	}
 }
 
-func WithBundleImage(bundleImage string) Predicate[catalogmetadata.Bundle] {
+func WithImage(image string) Predicate[catalogmetadata.Bundle] {
 	return func(bundle *catalogmetadata.Bundle) bool {
-		return bundle.Image == bundleImage
+		return bundle.Image == image
 	}
 }
 
-func Replaces(bundleName string) Predicate[catalogmetadata.Bundle] {
+func Replaces(bundleName string, channels []*catalogmetadata.Channel) Predicate[catalogmetadata.Bundle] {
 	return func(bundle *catalogmetadata.Bundle) bool {
-		for _, ch := range bundle.InChannels {
+		for _, ch := range channels {
 			for _, chEntry := range ch.Entries {
 				if bundle.Name == chEntry.Name && chEntry.Replaces == bundleName {
 					return true
@@ -71,8 +75,8 @@ func Replaces(bundleName string) Predicate[catalogmetadata.Bundle] {
 	}
 }
 
-func WithDeprecation(deprecated bool) Predicate[catalogmetadata.Bundle] {
+func WithDeprecated(deprecated bool) Predicate[catalogmetadata.Bundle] {
 	return func(bundle *catalogmetadata.Bundle) bool {
-		return bundle.HasDeprecation() == deprecated
+		return bundle.IsDeprecated() == deprecated
 	}
 }

@@ -20,7 +20,6 @@ import (
 
 func TestMakeBundleUniquenessVariables(t *testing.T) {
 	const fakeCatalogName = "fake-catalog"
-	channel := catalogmetadata.Channel{Channel: declcfg.Channel{Name: "stable"}}
 	bundleSet := map[string]*catalogmetadata.Bundle{
 		"test-package.v1.0.0": {
 			Bundle: declcfg.Bundle{
@@ -31,8 +30,7 @@ func TestMakeBundleUniquenessVariables(t *testing.T) {
 					{Type: property.TypePackageRequired, Value: json.RawMessage(`{"packageName": "some-package", "versionRange": ">=1.0.0 <2.0.0"}`)},
 				},
 			},
-			CatalogName: fakeCatalogName,
-			InChannels:  []*catalogmetadata.Channel{&channel},
+			Catalog: fakeCatalogName,
 		},
 		"test-package.v1.0.1": {
 			Bundle: declcfg.Bundle{
@@ -43,8 +41,7 @@ func TestMakeBundleUniquenessVariables(t *testing.T) {
 					{Type: property.TypePackageRequired, Value: json.RawMessage(`{"packageName": "some-package", "versionRange": ">=1.0.0 <2.0.0"}`)},
 				},
 			},
-			CatalogName: fakeCatalogName,
-			InChannels:  []*catalogmetadata.Channel{&channel},
+			Catalog: fakeCatalogName,
 		},
 
 		"some-package.v1.0.0": {
@@ -55,8 +52,7 @@ func TestMakeBundleUniquenessVariables(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "some-package", "version": "1.0.0"}`)},
 				},
 			},
-			CatalogName: fakeCatalogName,
-			InChannels:  []*catalogmetadata.Channel{&channel},
+			Catalog: fakeCatalogName,
 		},
 	}
 

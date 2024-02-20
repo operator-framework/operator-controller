@@ -24,10 +24,37 @@ import (
 
 func TestMakeRequiredPackageVariables(t *testing.T) {
 	stableChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
-		Name: "stable",
+		Name:    "stable",
+		Package: "test-package",
+		Entries: []declcfg.ChannelEntry{
+			{
+				Name: "test-package.v1.0.0",
+			},
+			{
+				Name: "test-package.v2.0.0",
+			},
+			{
+				Name: "test-package.v3.0.0",
+			},
+			{
+				Name: "test-package.v4.0.0",
+			},
+			{
+				Name: "test-package.v4.1.0",
+			},
+			{
+				Name: "test-package.v5.0.0",
+			},
+		},
 	}}
 	betaChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
-		Name: "beta",
+		Name:    "beta",
+		Package: "test-package",
+		Entries: []declcfg.ChannelEntry{
+			{
+				Name: "test-package.v3.0.0",
+			},
+		},
 	}}
 	bundleSet := map[string]*catalogmetadata.Bundle{
 		// Bundles which belong to test-package we will be using
@@ -41,7 +68,6 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "1.0.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&stableChannel},
 		},
 		"test-package.v3.0.0": {
 			Bundle: declcfg.Bundle{
@@ -51,7 +77,6 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "3.0.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&stableChannel, &betaChannel},
 		},
 		"test-package.v2.0.0": {
 			Bundle: declcfg.Bundle{
@@ -61,7 +86,6 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "2.0.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&stableChannel},
 		},
 		"test-package.v4.0.0": {
 			Bundle: declcfg.Bundle{
@@ -71,15 +95,12 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "4.0.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&stableChannel},
-			Deprecations: []declcfg.DeprecationEntry{
-				{
-					Reference: declcfg.PackageScopedReference{
-						Schema: declcfg.SchemaBundle,
-						Name:   "test-package.v4.0.0",
-					},
-					Message: "test-package.v4.0.0 has been deprecated",
+			Deprecation: &declcfg.DeprecationEntry{
+				Reference: declcfg.PackageScopedReference{
+					Schema: declcfg.SchemaBundle,
+					Name:   "test-package.v4.0.0",
 				},
+				Message: "test-package.v4.0.0 has been deprecated",
 			},
 		},
 		"test-package.v4.1.0": {
@@ -90,15 +111,12 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "4.1.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&stableChannel},
-			Deprecations: []declcfg.DeprecationEntry{
-				{
-					Reference: declcfg.PackageScopedReference{
-						Schema: declcfg.SchemaBundle,
-						Name:   "test-package.v4.1.0",
-					},
-					Message: "test-package.v4.1.0 has been deprecated",
+			Deprecation: &declcfg.DeprecationEntry{
+				Reference: declcfg.PackageScopedReference{
+					Schema: declcfg.SchemaBundle,
+					Name:   "test-package.v4.1.0",
 				},
+				Message: "test-package.v4.1.0 has been deprecated",
 			},
 		},
 		"test-package.v5.0.0": {
@@ -109,15 +127,12 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "5.0.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&stableChannel},
-			Deprecations: []declcfg.DeprecationEntry{
-				{
-					Reference: declcfg.PackageScopedReference{
-						Schema: declcfg.SchemaBundle,
-						Name:   "test-package.v5.0.0",
-					},
-					Message: "test-package.v5.0.0 has been deprecated",
+			Deprecation: &declcfg.DeprecationEntry{
+				Reference: declcfg.PackageScopedReference{
+					Schema: declcfg.SchemaBundle,
+					Name:   "test-package.v5.0.0",
 				},
+				Message: "test-package.v5.0.0 has been deprecated",
 			},
 		},
 
@@ -131,7 +146,6 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package-2", "version": "1.0.0"}`)},
 				},
 			},
-			InChannels: []*catalogmetadata.Channel{&stableChannel},
 		},
 	}
 	allBundles := make([]*catalogmetadata.Bundle, 0, len(bundleSet))
@@ -233,7 +247,8 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			vars, err := variablesources.MakeRequiredPackageVariables(allBundles, tt.clusterExtensions)
+			channels := []*catalogmetadata.Channel{&stableChannel, &betaChannel}
+			vars, err := variablesources.MakeRequiredPackageVariables(allBundles, channels, tt.clusterExtensions)
 			if tt.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

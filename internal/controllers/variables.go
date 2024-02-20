@@ -21,22 +21,22 @@ import (
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
 
-func GenerateVariables(allBundles []*catalogmetadata.Bundle, clusterExtensions []ocv1alpha1.ClusterExtension, bundleDeployments []rukpakv1alpha2.BundleDeployment) ([]deppy.Variable, error) {
-	requiredPackages, err := variablesources.MakeRequiredPackageVariables(allBundles, clusterExtensions)
+func GenerateVariables(catalogContent *client.Contents, clusterExtensions []ocv1alpha1.ClusterExtension, bundleDeployments []rukpakv1alpha2.BundleDeployment) ([]deppy.Variable, error) {
+	requiredPackages, err := variablesources.MakeRequiredPackageVariables(catalogContent.Bundles, catalogContent.Channels, clusterExtensions)
 	if err != nil {
 		return nil, err
 	}
 
-	installedPackages, err := variablesources.MakeInstalledPackageVariables(allBundles, clusterExtensions, bundleDeployments)
+	installedPackages, err := variablesources.MakeInstalledPackageVariables(catalogContent.Bundles, catalogContent.Channels, clusterExtensions, bundleDeployments)
 	if err != nil {
 		return nil, err
 	}
 
-	bundles, err := variablesources.MakeBundleVariables(allBundles, requiredPackages, installedPackages)
+	bundles, err := variablesources.MakeBundleVariables(catalogContent.Bundles, requiredPackages, installedPackages)
 	if err != nil {
 		return nil, err
 	}

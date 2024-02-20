@@ -45,7 +45,7 @@ func MakeBundleVariables(
 		// get bundle dependencies
 		dependencies, err := filterBundleDependencies(allBundles, head)
 		if err != nil {
-			return nil, fmt.Errorf("could not determine dependencies for bundle %q from package %q in catalog %q: %s", head.Name, head.Package, head.CatalogName, err)
+			return nil, fmt.Errorf("could not determine dependencies for bundle %q from package %q in catalog %q: %s", head.Name, head.Package, head.Catalog, err)
 		}
 
 		// add bundle dependencies to queue for processing
