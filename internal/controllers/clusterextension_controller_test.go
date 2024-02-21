@@ -23,7 +23,6 @@ import (
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
@@ -1026,58 +1025,6 @@ func TestClusterExtensionBadBundleMediaType(t *testing.T) {
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonInstallationFailed, cond.Reason)
 	require.Equal(t, "unknown bundle mediatype: badmedia+v1", cond.Message)
-
-	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
-	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
-}
-
-func TestClusterExtensionInvalidSemverPastRegex(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
-	ctx := context.Background()
-	t.Log("When an invalid semver is provided that bypasses the regex validation")
-	extKey := types.NamespacedName{Name: fmt.Sprintf("clusterextension-validation-test-%s", rand.String(8))}
-
-	t.Log("By injecting creating a client with the bad clusterextension CR")
-	pkgName := fmt.Sprintf("exists-%s", rand.String(6))
-	clusterExtension := &ocv1alpha1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
-		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName: pkgName,
-			Version:     "1.2.3-123abc_def", // bad semver that matches the regex on the CR validation
-		},
-	}
-
-	// this bypasses client/server-side CR validation and allows us to test the reconciler's validation
-	fakeClient := fake.NewClientBuilder().WithScheme(sch).WithObjects(clusterExtension).WithStatusSubresource(clusterExtension).Build()
-
-	t.Log("By changing the reconciler client to the fake client")
-	reconciler.Client = fakeClient
-
-	t.Log("It should add an invalid spec condition and *not* re-enqueue for reconciliation")
-	t.Log("By running reconcile")
-	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
-	require.Equal(t, ctrl.Result{}, res)
-	require.NoError(t, err)
-
-	t.Log("By fetching updated cluster extension after reconcile")
-	require.NoError(t, fakeClient.Get(ctx, extKey, clusterExtension))
-
-	t.Log("By checking the status fields")
-	require.Empty(t, clusterExtension.Status.ResolvedBundleResource)
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
-
-	t.Log("By checking the expected conditions")
-	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionUnknown, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonResolutionUnknown, cond.Reason)
-	require.Equal(t, "validation has not been attempted as spec is invalid", cond.Message)
-	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionUnknown, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "installation has not been attempted as spec is invalid", cond.Message)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))

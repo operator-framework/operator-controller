@@ -43,7 +43,6 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
-	"github.com/operator-framework/operator-controller/internal/controllers/validators"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
@@ -116,21 +115,6 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 //
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
-	// validate spec
-	if err := validators.ValidateClusterExtensionSpec(ext); err != nil {
-		// Set the TypeInstalled condition to Unknown to indicate that the resolution
-		// hasn't been attempted yet, due to the spec being invalid.
-		ext.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as spec is invalid", ext.GetGeneration())
-		// Set the TypeResolved condition to Unknown to indicate that the resolution
-		// hasn't been attempted yet, due to the spec being invalid.
-		ext.Status.ResolvedBundleResource = ""
-		setResolvedStatusConditionUnknown(&ext.Status.Conditions, "validation has not been attempted as spec is invalid", ext.GetGeneration())
-
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as spec is invalid", ext.GetGeneration())
-		return ctrl.Result{}, nil
-	}
-
 	// gather vars for resolution
 	vars, err := r.variables(ctx)
 	if err != nil {

@@ -95,6 +95,8 @@ spec:
                     required:
                     - name
                     type: object
+                required:
+                - package
                 type: object
             required:
             - serviceAccountName

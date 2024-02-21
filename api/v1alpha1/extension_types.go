@@ -63,7 +63,8 @@ type ExtensionSourcePackage struct {
 // ExtensionSource defines the source for this Extension, right now, only a package is supported.
 type ExtensionSource struct {
 	// A source package defined by a name, version and/or channel
-	Package *ExtensionSourcePackage `json:"package,omitempty"`
+	//+kubebuilder:validation:Required
+	Package *ExtensionSourcePackage `json:"package"`
 }
 
 // ExtensionSpec defines the desired state of Extension

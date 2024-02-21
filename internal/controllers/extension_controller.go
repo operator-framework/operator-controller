@@ -28,7 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/controllers/validators"
 	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
@@ -117,21 +116,6 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	// Don't do anything if Paused
 	if ext.Spec.Managed == ocv1alpha1.ManagedStatePaused {
 		l.Info("resource is paused", "name", ext.GetName(), "namespace", ext.GetNamespace())
-		return ctrl.Result{}, nil
-	}
-
-	// validate spec
-	if err := validators.ValidateExtensionSpec(ext); err != nil {
-		// Set the TypeInstalled condition to Unknown to indicate that the resolution
-		// hasn't been attempted yet, due to the spec being invalid.
-		ext.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as spec is invalid", ext.GetGeneration())
-		// Set the TypeResolved condition to Unknown to indicate that the resolution
-		// hasn't been attempted yet, due to the spec being invalid.
-		ext.Status.ResolvedBundleResource = ""
-		setResolvedStatusConditionUnknown(&ext.Status.Conditions, "validation has not been attempted as spec is invalid", ext.GetGeneration())
-
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as spec is invalid", ext.GetGeneration())
 		return ctrl.Result{}, nil
 	}
 
