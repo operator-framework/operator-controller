@@ -19,16 +19,13 @@ package controllers
 import (
 	"context"
 
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
-	"k8s.io/apimachinery/pkg/runtime"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	"github.com/operator-framework/deppy/pkg/deppy/solver"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
@@ -38,9 +35,6 @@ import (
 // ExtensionReconciler reconciles a Extension object
 type ExtensionReconciler struct {
 	client.Client
-	BundleProvider BundleProvider
-	Scheme         *runtime.Scheme
-	Resolver       *solver.Solver
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=extensions,verbs=get;list;watch;create;update;patch;delete
