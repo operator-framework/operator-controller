@@ -18,7 +18,6 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 type ExtensionManagedState string
@@ -124,12 +123,4 @@ type ExtensionList struct {
 
 func init() {
 	SchemeBuilder.Register(&Extension{}, &ExtensionList{})
-}
-
-func (r *Extension) GetPackageSpec() *ExtensionSourcePackage {
-	return r.Spec.Source.Package.DeepCopy()
-}
-
-func (r *Extension) GetUID() types.UID {
-	return r.ObjectMeta.GetUID()
 }
