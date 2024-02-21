@@ -1,12 +1,6 @@
 apiVersion: olm.operatorframework.io/v1alpha1
 kind: ClusterExtension
 metadata:
-  labels:
-    app.kubernetes.io/name: clusterextension
-    app.kubernetes.io/instance: clusterextension-sample
-    app.kubernetes.io/part-of: operator-controller
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: operator-controller
   name: clusterextension-sample
 spec:
   packageName: argocd-operator

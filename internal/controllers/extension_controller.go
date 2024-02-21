@@ -44,7 +44,7 @@ type ExtensionReconciler struct {
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=extensions,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=extensions/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=extensions/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=extensions/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
