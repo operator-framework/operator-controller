@@ -48,7 +48,6 @@ rules:
   resources:
   - clusterextensions/status
   verbs:
-  - get
   - patch
   - update
 - apiGroups:
@@ -74,6 +73,5 @@ rules:
   resources:
   - extensions/status
   verbs:
-  - get
   - patch
   - update
