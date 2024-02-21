@@ -19,13 +19,16 @@ package controllers
 import (
 	"context"
 
+	"github.com/go-logr/logr"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers/validators"
@@ -168,6 +171,29 @@ func (r *ExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1alpha1.Extension{}).
-		Watches(&catalogd.Catalog{}, &handler.EnqueueRequestForObject{}).
+		Watches(&catalogd.Catalog{}, handler.EnqueueRequestsFromMapFunc(extensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
 		Complete(r)
+}
+
+// Generate reconcile requests for all extensions affected by a catalog change
+func extensionRequestsForCatalog(c client.Reader, logger logr.Logger) handler.MapFunc {
+	return func(ctx context.Context, _ client.Object) []reconcile.Request {
+		// no way of associating an extension to a catalog so create reconcile requests for everything
+		extensions := ocv1alpha1.ExtensionList{}
+		err := c.List(ctx, &extensions)
+		if err != nil {
+			logger.Error(err, "unable to enqueue extensions for catalog reconcile")
+			return nil
+		}
+		var requests []reconcile.Request
+		for _, ext := range extensions.Items {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: ext.GetNamespace(),
+					Name:      ext.GetName(),
+				},
+			})
+		}
+		return requests
+	}
 }
