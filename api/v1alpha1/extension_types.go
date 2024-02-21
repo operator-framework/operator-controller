@@ -30,6 +30,10 @@ const (
 	ManagedStatePaused ExtensionManagedState = "Paused"
 )
 
+const (
+	SourceTypePackage = "package"
+)
+
 type ExtensionSourcePackage struct {
 	//+kubebuilder:validation:MaxLength:=48
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+(-[a-z0-9]+)*$
@@ -60,11 +64,17 @@ type ExtensionSourcePackage struct {
 	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 }
 
+// +kubebuilder:validation:XValidation:rule="self.sourceType=='package' && has(self.__package__)",message="sourceType must match populated union field"
+//
 // ExtensionSource defines the source for this Extension, right now, only a package is supported.
 type ExtensionSource struct {
-	// A source package defined by a name, version and/or channel
+	//+kubebuilder:validation:Enum:=package
 	//+kubebuilder:validation:Required
-	Package *ExtensionSourcePackage `json:"package"`
+	// sourceType is the discriminator for the source type
+	SourceType string `json:"sourceType"`
+
+	// package defines a reference for a bundle in a catalog defined by a name and a version and/or channel
+	Package *ExtensionSourcePackage `json:"package,omitempty"`
 }
 
 // ExtensionSpec defines the desired state of Extension

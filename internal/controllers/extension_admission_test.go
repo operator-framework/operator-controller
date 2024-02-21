@@ -44,6 +44,7 @@ func TestExtensionAdmissionServiceAccount(t *testing.T) {
 			err := cl.Create(context.Background(), buildExtension(ocv1alpha1.ExtensionSpec{
 				ServiceAccountName: tc.saName,
 				Source: ocv1alpha1.ExtensionSource{
+					SourceType: ocv1alpha1.SourceTypePackage,
 					Package: &ocv1alpha1.ExtensionSourcePackage{
 						Name: "package",
 					},
@@ -65,9 +66,11 @@ func TestExtensionAdmissionSource(t *testing.T) {
 		source ocv1alpha1.ExtensionSource
 		err    string
 	}{
-		{"empty source", ocv1alpha1.ExtensionSource{}, "spec.source.package: Required value"},
-		{"source with empty package", ocv1alpha1.ExtensionSource{Package: &ocv1alpha1.ExtensionSourcePackage{}}, "spec.source.package.name in body should match"},
-		{"source with minimal valid package", ocv1alpha1.ExtensionSource{Package: &ocv1alpha1.ExtensionSourcePackage{Name: "package"}}, ""},
+		{"empty source", ocv1alpha1.ExtensionSource{}, `spec.source.sourceType: Unsupported value: "": supported values: "package"`},
+		{"invalid sourceType", ocv1alpha1.ExtensionSource{SourceType: "invalid"}, `spec.source.sourceType: Unsupported value: "invalid": supported values: "package"`},
+		{"source with unset package", ocv1alpha1.ExtensionSource{SourceType: ocv1alpha1.SourceTypePackage}, `spec.source: Invalid value: "object": sourceType must match populated union field`},
+		{"source with empty package", ocv1alpha1.ExtensionSource{SourceType: ocv1alpha1.SourceTypePackage, Package: &ocv1alpha1.ExtensionSourcePackage{}}, "spec.source.package.name in body should match"},
+		{"source with minimal valid package", ocv1alpha1.ExtensionSource{SourceType: ocv1alpha1.SourceTypePackage, Package: &ocv1alpha1.ExtensionSourcePackage{Name: "package"}}, ""},
 	}
 
 	t.Parallel()
@@ -124,6 +127,7 @@ func TestExtensionAdmissionSourcePackageName(t *testing.T) {
 			err := cl.Create(context.Background(), buildExtension(ocv1alpha1.ExtensionSpec{
 				ServiceAccountName: "serviceaccount",
 				Source: ocv1alpha1.ExtensionSource{
+					SourceType: ocv1alpha1.SourceTypePackage,
 					Package: &ocv1alpha1.ExtensionSourcePackage{
 						Name: tc.pkgName,
 					},
@@ -216,6 +220,7 @@ func TestExtensionAdmissionSourcePackageVersion(t *testing.T) {
 			err := cl.Create(context.Background(), buildExtension(ocv1alpha1.ExtensionSpec{
 				ServiceAccountName: "serviceaccount",
 				Source: ocv1alpha1.ExtensionSource{
+					SourceType: ocv1alpha1.SourceTypePackage,
 					Package: &ocv1alpha1.ExtensionSourcePackage{
 						Name:    "package",
 						Version: tc.version,
@@ -265,6 +270,7 @@ func TestExtensionAdmissionSourcePackageChannel(t *testing.T) {
 			err := cl.Create(context.Background(), buildExtension(ocv1alpha1.ExtensionSpec{
 				ServiceAccountName: "serviceaccount",
 				Source: ocv1alpha1.ExtensionSource{
+					SourceType: ocv1alpha1.SourceTypePackage,
 					Package: &ocv1alpha1.ExtensionSourcePackage{
 						Name:    "package",
 						Channel: tc.channelName,

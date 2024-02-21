@@ -59,8 +59,8 @@ spec:
                 description: source of Extension to be installed
                 properties:
                   package:
-                    description: A source package defined by a name, version and/or
-                      channel
+                    description: package defines a reference for a bundle in a catalog
+                      defined by a name and a version and/or channel
                     properties:
                       channel:
                         description: channel constraint definition
@@ -95,9 +95,17 @@ spec:
                     required:
                     - name
                     type: object
+                  sourceType:
+                    description: sourceType is the discriminator for the source type
+                    enum:
+                    - package
+                    type: string
                 required:
-                - package
+                - sourceType
                 type: object
+                x-kubernetes-validations:
+                - message: sourceType must match populated union field
+                  rule: self.sourceType=='package' && has(self.__package__)
             required:
             - serviceAccountName
             - source
