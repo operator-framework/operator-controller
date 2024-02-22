@@ -75,7 +75,7 @@ func TestExtensionReconcile(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: extKey.Name, Namespace: extKey.Namespace},
 				Spec: ocv1alpha1.ExtensionSpec{
 					ServiceAccountName: "test-service-account",
-					Source:             ocv1alpha1.ExtensionSource{Package: &ocv1alpha1.ExtensionSourcePackage{Name: "test-package"}},
+					Source:             ocv1alpha1.ExtensionSource{SourceType: ocv1alpha1.SourceTypePackage, Package: &ocv1alpha1.ExtensionSourcePackage{Name: "test-package"}},
 				},
 			}
 			if tc.paused {
