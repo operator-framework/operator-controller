@@ -41,3 +41,4 @@ jobs:
           files: e2e-cover.out
           flags: e2e
           functionalities: fixes
+          token: ${{ secrets.CODECOV_TOKEN }}

@@ -28,3 +28,4 @@ jobs:
         files: cover.out
         flags: unit
         functionalities: fixes
+        token: ${{ secrets.CODECOV_TOKEN }}
