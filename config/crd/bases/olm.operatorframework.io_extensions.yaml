@@ -16,8 +16,8 @@ spec:
   versions:
   - additionalPrinterColumns:
     - description: The current reconciliation state of this extension
-      jsonPath: .spec.managed
-      name: Managed
+      jsonPath: .status.paused
+      name: Paused
       type: string
     name: v1alpha1
     schema:
@@ -39,15 +39,11 @@ spec:
           spec:
             description: ExtensionSpec defines the desired state of Extension
             properties:
-              managed:
-                default: Active
-                description: managed controls the management state of the extension.
-                  "Active" means this extension will be reconciled and "Paused" means
-                  this extension will be ignored.
-                enum:
-                - Active
-                - Paused
-                type: string
+              paused:
+                description: paused controls the management state of the extension.
+                  If the extension is paused, it will be ignored by the extension
+                  controller.
+                type: boolean
               serviceAccountName:
                 description: serviceAccountName is the name of a service account in
                   the Extension's namespace that will be used to manage the installation
@@ -186,8 +182,14 @@ spec:
                 x-kubernetes-list-type: map
               installedBundleResource:
                 type: string
+              paused:
+                description: paused indicates the current reconciliation state of
+                  this extension
+                type: boolean
               resolvedBundleResource:
                 type: string
+            required:
+            - paused
             type: object
         type: object
     served: true
