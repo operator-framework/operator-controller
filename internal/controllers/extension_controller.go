@@ -117,7 +117,8 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	}
 
 	// Don't do anything if Paused
-	if ext.Spec.Managed == ocv1alpha1.ManagedStatePaused {
+	ext.Status.Paused = ext.Spec.Paused
+	if ext.Spec.Paused {
 		l.Info("resource is paused", "name", ext.GetName(), "namespace", ext.GetNamespace())
 		return ctrl.Result{}, nil
 	}

@@ -20,15 +20,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ExtensionManagedState string
-
-const (
-	// Peform reconcilliation of this Extension
-	ManagedStateActive ExtensionManagedState = "Active"
-	// Pause reconcilliation of this Extension
-	ManagedStatePaused ExtensionManagedState = "Paused"
-)
-
 const (
 	SourceTypePackage = "package"
 )
@@ -78,12 +69,10 @@ type ExtensionSource struct {
 
 // ExtensionSpec defines the desired state of Extension
 type ExtensionSpec struct {
-	//+kubebuilder:validation:Enum:=Active;Paused
-	//+kubebuilder:default:=Active
 	//+kubebuilder:Optional
 	//
-	// managed controls the management state of the extension. "Active" means this extension will be reconciled and "Paused" means this extension will be ignored.
-	Managed ExtensionManagedState `json:"managed,omitempty"`
+	// paused controls the management state of the extension. If the extension is paused, it will be ignored by the extension controller.
+	Paused bool `json:"paused,omitempty"`
 
 	//+kubebuilder:validation:MaxLength:=253
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
@@ -97,6 +86,9 @@ type ExtensionSpec struct {
 
 // ExtensionStatus defines the observed state of Extension
 type ExtensionStatus struct {
+	// paused indicates the current reconciliation state of this extension
+	Paused bool `json:"paused"`
+
 	// +optional
 	InstalledBundleResource string `json:"installedBundleResource,omitempty"`
 	// +optional
@@ -111,7 +103,7 @@ type ExtensionStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="Managed",type=string,JSONPath=`.spec.managed`,description="The current reconciliation state of this extension"
+//+kubebuilder:printcolumn:name="Paused",type=string,JSONPath=`.status.paused`,description="The current reconciliation state of this extension"
 
 // Extension is the Schema for the extensions API
 type Extension struct {

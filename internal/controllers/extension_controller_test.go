@@ -54,12 +54,13 @@ func TestExtensionReconcile(t *testing.T) {
 		{"feature gate enabled and paused", true, true, func(t *testing.T, res ctrl.Result, err error, ext *ocv1alpha1.Extension) {
 			assert.Equal(t, ctrl.Result{}, res)
 			assert.NoError(t, err)
-			assert.Equal(t, ocv1alpha1.ExtensionStatus{}, ext.Status)
+			assert.Equal(t, ocv1alpha1.ExtensionStatus{Paused: true}, ext.Status)
 		}},
 		{"feature gate enabled and active", true, false, func(t *testing.T, res ctrl.Result, err error, ext *ocv1alpha1.Extension) {
 			assert.Equal(t, ctrl.Result{}, res)
 			assert.NoError(t, err)
 			verifyExtensionInvariants(t, ext)
+			assert.False(t, ext.Status.Paused)
 			assert.Empty(t, ext.Status.InstalledBundleResource)
 			assert.Empty(t, ext.Status.ResolvedBundleResource)
 			for _, cond := range ext.Status.Conditions {
@@ -74,14 +75,10 @@ func TestExtensionReconcile(t *testing.T) {
 			ext := &ocv1alpha1.Extension{
 				ObjectMeta: metav1.ObjectMeta{Name: extKey.Name, Namespace: extKey.Namespace},
 				Spec: ocv1alpha1.ExtensionSpec{
+					Paused:             tc.paused,
 					ServiceAccountName: "test-service-account",
 					Source:             ocv1alpha1.ExtensionSource{SourceType: ocv1alpha1.SourceTypePackage, Package: &ocv1alpha1.ExtensionSourcePackage{Name: "test-package"}},
 				},
-			}
-			if tc.paused {
-				ext.Spec.Managed = ocv1alpha1.ManagedStatePaused
-			} else {
-				ext.Spec.Managed = ocv1alpha1.ManagedStateActive
 			}
 			require.NoError(t, c.Create(ctx, ext))
 
