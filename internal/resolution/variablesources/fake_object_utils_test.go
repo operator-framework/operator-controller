@@ -5,7 +5,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 )
@@ -48,8 +48,8 @@ func fakeBundleDeployment(name, bundleImage string, owner *ocv1alpha1.ClusterExt
 				Kind:               "ClusterExtension",
 				Name:               owner.Name,
 				UID:                owner.UID,
-				Controller:         pointer.Bool(true),
-				BlockOwnerDeletion: pointer.Bool(true),
+				Controller:         ptr.To(true),
+				BlockOwnerDeletion: ptr.To(true),
 			},
 		})
 	}

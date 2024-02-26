@@ -18,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/rand"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
@@ -78,8 +78,8 @@ func TestVariableSource(t *testing.T) {
 					Kind:               "ClusterExtension",
 					Name:               clusterExtension.Name,
 					UID:                clusterExtension.UID,
-					Controller:         pointer.Bool(true),
-					BlockOwnerDeletion: pointer.Bool(true),
+					Controller:         ptr.To(true),
+					BlockOwnerDeletion: ptr.To(true),
 				},
 			},
 		},

@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -209,8 +209,8 @@ func TestClusterExtensionBundleDeploymentOutOfDate(t *testing.T) {
 					Kind:               "ClusterExtension",
 					Name:               clusterExtension.Name,
 					UID:                clusterExtension.UID,
-					Controller:         pointer.Bool(true),
-					BlockOwnerDeletion: pointer.Bool(true),
+					Controller:         ptr.To(true),
+					BlockOwnerDeletion: ptr.To(true),
 				},
 			},
 		},
@@ -294,8 +294,8 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 					Kind:               "ClusterExtension",
 					Name:               clusterExtension.Name,
 					UID:                clusterExtension.UID,
-					Controller:         pointer.Bool(true),
-					BlockOwnerDeletion: pointer.Bool(true),
+					Controller:         ptr.To(true),
+					BlockOwnerDeletion: ptr.To(true),
 				},
 			},
 		},

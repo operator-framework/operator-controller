@@ -34,7 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -395,8 +395,8 @@ func (r *ClusterExtensionReconciler) GenerateExpectedBundleDeployment(o ocv1alph
 			Kind:               "ClusterExtension",
 			Name:               o.Name,
 			UID:                o.UID,
-			Controller:         pointer.Bool(true),
-			BlockOwnerDeletion: pointer.Bool(true),
+			Controller:         ptr.To(true),
+			BlockOwnerDeletion: ptr.To(true),
 		},
 	})
 	return bd
