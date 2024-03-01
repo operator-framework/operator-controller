@@ -30,6 +30,17 @@ rules:
   - update
   - watch
 - apiGroups:
+  - kappctrl.k14s.io
+  resources:
+  - apps
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - olm.operatorframework.io
   resources:
   - clusterextensions

@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -27,14 +28,19 @@ import (
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/discovery"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	carvelv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
@@ -54,6 +60,7 @@ func init() {
 	utilruntime.Must(ocv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(rukpakv1alpha2.AddToScheme(scheme))
 	utilruntime.Must(catalogd.AddToScheme(scheme))
+	utilruntime.Must(carvelv1alpha1.AddToScheme(scheme))
 
 	//+kubebuilder:scaffold:scheme
 }
@@ -124,8 +131,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	hasKappApis, err := hasKappApis(mgr.GetConfig())
+	if err != nil {
+		setupLog.Error(err, "unable to evaluate if App needs to be created")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.ExtensionReconciler{
-		Client: cl,
+		Client:         cl,
+		BundleProvider: catalogClient,
+		HasKappApis:    hasKappApis,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Extension")
 		os.Exit(1)
@@ -146,4 +161,24 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+// hasKappApis checks whether the cluster has Kapp APIs installed in the cluster.
+// This does not guarantee that the controller is present to reconcile the App CRs.
+func hasKappApis(config *rest.Config) (bool, error) {
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
+	if err != nil {
+		return false, fmt.Errorf("creating discovery client: %v", err)
+	}
+	apiResourceList, err := discoveryClient.ServerResourcesForGroupVersion(carvelv1alpha1.SchemeGroupVersion.String())
+	if err != nil && !errors.IsNotFound(err) {
+		return false, fmt.Errorf("listing resource APIs: %v", err)
+	}
+
+	for _, resource := range apiResourceList.APIResources {
+		if resource.Kind == "App" {
+			return true, nil
+		}
+	}
+	return false, nil
 }

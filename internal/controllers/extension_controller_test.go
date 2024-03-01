@@ -31,6 +31,7 @@ func TestExtensionDoesNotExist(t *testing.T) {
 }
 
 func TestExtensionReconcile(t *testing.T) {
+	t.Skip("Skipping this till kapp-controller test setup is implemented.")
 	c, reconciler := newClientAndExtensionReconciler(t)
 	ctx := context.Background()
 
