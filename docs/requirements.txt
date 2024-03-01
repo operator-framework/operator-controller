@@ -23,7 +23,7 @@ platformdirs==4.2.0
 Pygments==2.17.2
 pymdown-extensions==10.7
 pyquery==2.0.0
-python-dateutil==2.8.2
+python-dateutil==2.9.0
 PyYAML==6.0.1
 pyyaml_env_tag==0.1
 readtime==3.0.0
