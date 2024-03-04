@@ -175,6 +175,10 @@ func hasKappApis(config *rest.Config) (bool, error) {
 		return false, fmt.Errorf("listing resource APIs: %v", err)
 	}
 
+	if apiResourceList == nil {
+		return false, nil
+	}
+
 	for _, resource := range apiResourceList.APIResources {
 		if resource.Kind == "App" {
 			return true, nil
