@@ -122,9 +122,9 @@ func init() {
 // ClusterExtensionStatus defines the observed state of ClusterExtension
 type ClusterExtensionStatus struct {
 	// +optional
-	InstalledBundleResource string `json:"installedBundleResource,omitempty"`
+	InstalledBundle *BundleMetadata `json:"installedBundle,omitempty"`
 	// +optional
-	ResolvedBundleResource string `json:"resolvedBundleResource,omitempty"`
+	ResolvedBundle *BundleMetadata `json:"resolvedBundle,omitempty"`
 
 	// +patchMergeKey=type
 	// +patchStrategy=merge

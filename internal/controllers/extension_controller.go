@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	mmsemver "github.com/Masterminds/semver/v3"
+	bsemver "github.com/blang/semver/v4"
 	"github.com/go-logr/logr"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
@@ -43,11 +44,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
-
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
+	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
@@ -127,11 +127,11 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 
 		// Set the TypeInstalled condition to Unknown to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "extension feature is disabled", ext.GetGeneration())
 		// Set the TypeResolved condition to Unknown to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
-		ext.Status.ResolvedBundleResource = ""
+		ext.Status.ResolvedBundle = nil
 		setResolvedStatusConditionUnknown(&ext.Status.Conditions, "extension feature is disabled", ext.GetGeneration())
 
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "extension feature is disabled", ext.GetGeneration())
@@ -146,10 +146,10 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	}
 
 	if !r.HasKappApis {
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, errkappAPIUnavailable.Error(), ext.GetGeneration())
 
-		ext.Status.ResolvedBundleResource = ""
+		ext.Status.ResolvedBundle = nil
 		setResolvedStatusConditionUnknown(&ext.Status.Conditions, "kapp apis are unavailable", ext.GetGeneration())
 
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "kapp apis are unavailable", ext.GetGeneration())
@@ -159,16 +159,16 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	// TODO: Improve the resolution logic.
 	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as resolution failed", ext.GetGeneration())
-		ext.Status.ResolvedBundleResource = ""
+		ext.Status.ResolvedBundle = nil
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as resolution failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
 	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundle.Image value.
-	ext.Status.ResolvedBundleResource = bundle.Image
+	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
 	setResolvedStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), ext.GetGeneration())
 
 	mediaType, err := bundle.MediaType()
@@ -183,7 +183,7 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	if mediaType != catalogmetadata.MediaTypePlain {
 		// Set the TypeInstalled condition to Unknown to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, fmt.Sprintf("bundle type %s not supported currently", mediaType), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, nil
@@ -192,7 +192,7 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	app := r.GenerateExpectedApp(*ext, bundle.Image)
 	if err := r.ensureApp(ctx, app); err != nil {
 		// originally Reason: ocv1alpha1.ReasonInstallationFailed
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
@@ -201,13 +201,13 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	existingTypedApp := &kappctrlv1alpha1.App{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(app.UnstructuredContent(), existingTypedApp); err != nil {
 		// originally Reason: ocv1alpha1.ReasonInstallationStatusUnknown
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
-	mapAppStatusToInstalledCondition(existingTypedApp, ext, bundle.Image)
+	mapAppStatusToInstalledCondition(existingTypedApp, ext, bundle)
 	SetDeprecationStatusInExtension(ext, bundle)
 
 	return ctrl.Result{}, nil
@@ -233,16 +233,16 @@ func (r *ExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // TODO: follow up with mapping of all the available App statuses: https://github.com/carvel-dev/kapp-controller/blob/855063edee53315811a13ee8d5df1431ba258ede/pkg/apis/kappctrl/v1alpha1/status.go#L28-L35
 // mapAppStatusToInstalledCondition currently maps only the installed condition.
-func mapAppStatusToInstalledCondition(existingApp *kappctrlv1alpha1.App, ext *ocv1alpha1.Extension, bundleImage string) {
+func mapAppStatusToInstalledCondition(existingApp *kappctrlv1alpha1.App, ext *ocv1alpha1.Extension, bundle *catalogmetadata.Bundle) {
 	appReady := findStatusCondition(existingApp.Status.GenericStatus.Conditions, kappctrlv1alpha1.ReconcileSucceeded)
 	if appReady == nil {
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "install status unknown", ext.Generation)
 		return
 	}
 
 	if appReady.Status != corev1.ConditionTrue {
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionFailed(
 			&ext.Status.Conditions,
 			appReady.Message,
@@ -251,9 +251,7 @@ func mapAppStatusToInstalledCondition(existingApp *kappctrlv1alpha1.App, ext *oc
 		return
 	}
 
-	// InstalledBundleResource this should be converted into a slice as App allows fetching
-	// from multiple sources.
-	ext.Status.InstalledBundleResource = bundleImage
+	ext.Status.InstalledBundle = bundleMetadataFor(bundle)
 	setInstalledStatusConditionSuccess(&ext.Status.Conditions, appReady.Message, ext.Generation)
 }
 
@@ -504,4 +502,20 @@ func (r *ExtensionReconciler) resolve(ctx context.Context, extension ocv1alpha1.
 		return catalogsort.ByDeprecated(resultSet[i], resultSet[j])
 	})
 	return resultSet[0], nil
+}
+
+// bundleMetadataFor returns a BundleMetadata for the given bundle. If the provided bundle is nil,
+// this function panics. It is up to the caller to ensure that the bundle is non-nil.
+func bundleMetadataFor(bundle *catalogmetadata.Bundle) *ocv1alpha1.BundleMetadata {
+	if bundle == nil {
+		panic("programmer error: provided bundle must be non-nil to create BundleMetadata")
+	}
+	ver, err := bundle.Version()
+	if err != nil {
+		ver = &bsemver.Version{}
+	}
+	return &ocv1alpha1.BundleMetadata{
+		Name:    bundle.Name,
+		Version: ver.String(),
+	}
 }

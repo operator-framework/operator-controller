@@ -185,14 +185,30 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
-              installedBundleResource:
-                type: string
+              installedBundle:
+                properties:
+                  name:
+                    type: string
+                  version:
+                    type: string
+                required:
+                - name
+                - version
+                type: object
               paused:
                 description: paused indicates the current reconciliation state of
                   this extension
                 type: boolean
-              resolvedBundleResource:
-                type: string
+              resolvedBundle:
+                properties:
+                  name:
+                    type: string
+                  version:
+                    type: string
+                required:
+                - name
+                - version
+                type: object
             required:
             - paused
             type: object
