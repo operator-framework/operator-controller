@@ -98,7 +98,29 @@ func setInstalledStatusConditionFailed(conditions *[]metav1.Condition, message s
 	})
 }
 
-// setDeprecationStatusesUnknown sets the deprecation status conditions to unknown.
+// setInstalledStatusConditionDeleting sets the installed status condition to unknown for deletes in progress.
+func setInstalledStatusConditionDeleting(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeInstalled,
+		Status:             metav1.ConditionUnknown,
+		Reason:             ocv1alpha1.ReasonDeleting,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+// setInstalledStatusConditionDeleteFailed sets the installed status condition to unknown for failed deletes.
+func setInstalledStatusConditionDeleteFailed(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeInstalled,
+		Status:             metav1.ConditionUnknown,
+		Reason:             ocv1alpha1.ReasonDeleteFailed,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+// setDEprecationStatusesUnknown sets the deprecation status conditions to unknown.
 func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message string, generation int64) {
 	conditionTypes := []string{
 		ocv1alpha1.TypeDeprecated,

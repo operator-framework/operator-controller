@@ -204,7 +204,8 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 		return ctrl.Result{}, err
 	}
 
-	mapAppStatusToInstalledCondition(existingTypedApp, ext, bundle)
+	version, _ := bundle.Version()
+	MapAppStatusToCondition(existingTypedApp, ext, &ocv1alpha1.BundleMetadata{Name: bundle.Name, Version: fmt.Sprintf("%v", version)})
 	SetDeprecationStatusInExtension(ext, bundle)
 
 	return ctrl.Result{}, nil
@@ -228,28 +229,64 @@ func (r *ExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// TODO: follow up with mapping of all the available App statuses: https://github.com/carvel-dev/kapp-controller/blob/855063edee53315811a13ee8d5df1431ba258ede/pkg/apis/kappctrl/v1alpha1/status.go#L28-L35
-// mapAppStatusToInstalledCondition currently maps only the installed condition.
-func mapAppStatusToInstalledCondition(existingApp *kappctrlv1alpha1.App, ext *ocv1alpha1.Extension, bundle *catalogmetadata.Bundle) {
-	appReady := findStatusCondition(existingApp.Status.GenericStatus.Conditions, kappctrlv1alpha1.ReconcileSucceeded)
-	if appReady == nil {
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "install status unknown", ext.Generation)
+// mapAppStatusToCondition maps the reconciling/deleting App conditions to the installed/deleting conditions on the Extension.
+func MapAppStatusToCondition(existingApp *kappctrlv1alpha1.App, ext *ocv1alpha1.Extension, bundle *ocv1alpha1.BundleMetadata) {
+	if ext == nil {
 		return
 	}
+	message := "install status unknown"
+	ext.Status.InstalledBundle = nil
 
-	if appReady.Status != corev1.ConditionTrue {
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionFailed(
-			&ext.Status.Conditions,
-			appReady.Message,
-			ext.GetGeneration(),
-		)
+	if existingApp == nil {
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, message, ext.Generation)
 		return
 	}
+	message = existingApp.Status.FriendlyDescription
+	if strings.Contains(message, "Error (see .status.usefulErrorMessage for details)") || len(message) == 0 {
+		message = existingApp.Status.UsefulErrorMessage
+	}
 
-	ext.Status.InstalledBundle = bundleMetadataFor(bundle)
-	setInstalledStatusConditionSuccess(&ext.Status.Conditions, appReady.Message, ext.Generation)
+	orderedAppStatuses := []kappctrlv1alpha1.ConditionType{
+		kappctrlv1alpha1.DeleteFailed,
+		kappctrlv1alpha1.Deleting,
+		kappctrlv1alpha1.ReconcileSucceeded,
+		kappctrlv1alpha1.ReconcileFailed,
+		kappctrlv1alpha1.Reconciling,
+	}
+	appStatusMapFn := map[kappctrlv1alpha1.ConditionType]func(*[]metav1.Condition, string, int64){
+		kappctrlv1alpha1.DeleteFailed:       setInstalledStatusConditionDeleteFailed,
+		kappctrlv1alpha1.Deleting:           setInstalledStatusConditionDeleting,
+		kappctrlv1alpha1.ReconcileSucceeded: setInstalledStatusConditionSuccess,
+		kappctrlv1alpha1.ReconcileFailed:    setInstalledStatusConditionFailed,
+		kappctrlv1alpha1.Reconciling:        setInstalledStatusConditionUnknown,
+	}
+	for _, cond := range orderedAppStatuses {
+		if c := findStatusCondition(existingApp.Status.GenericStatus.Conditions, cond); c != nil && c.Status == corev1.ConditionTrue {
+			if len(message) == 0 {
+				message = c.Message
+			}
+			if c.Type == kappctrlv1alpha1.ReconcileSucceeded {
+				ext.Status.InstalledBundle = bundle
+			}
+			appStatusMapFn[cond](&ext.Status.Conditions, message, ext.Generation)
+			return
+		}
+	}
+	if len(message) == 0 {
+		message = "install status unknown"
+	}
+	setInstalledStatusConditionUnknown(&ext.Status.Conditions, message, ext.Generation)
+}
+
+// findStatusCondition finds the conditionType in conditions.
+// TODO: suggest using upstream conditions to Carvel.
+func findStatusCondition(conditions []kappctrlv1alpha1.Condition, conditionType kappctrlv1alpha1.ConditionType) *kappctrlv1alpha1.Condition {
+	for i := range conditions {
+		if conditions[i].Type == conditionType {
+			return &conditions[i]
+		}
+	}
+	return nil
 }
 
 // setDeprecationStatus will set the appropriate deprecation statuses for a Extension
@@ -332,17 +369,6 @@ func SetDeprecationStatusInExtension(ext *ocv1alpha1.Extension, bundle *catalogm
 			ObservedGeneration: ext.Generation,
 		})
 	}
-}
-
-// findStatusCondition finds the conditionType in conditions.
-// TODO: suggest using upstream conditions to Carvel.
-func findStatusCondition(conditions []kappctrlv1alpha1.Condition, conditionType kappctrlv1alpha1.ConditionType) *kappctrlv1alpha1.Condition {
-	for i := range conditions {
-		if conditions[i].Type == conditionType {
-			return &conditions[i]
-		}
-	}
-	return nil
 }
 
 func (r *ExtensionReconciler) ensureApp(ctx context.Context, desiredApp *unstructured.Unstructured) error {
