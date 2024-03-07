@@ -93,6 +93,8 @@ const (
 	ReasonResolutionUnknown         = "ResolutionUnknown"
 	ReasonSuccess                   = "Success"
 	ReasonDeprecated                = "Deprecated"
+	ReasonDeleteFailed              = "DeleteFailed"
+	ReasonDeleting                  = "Deleting"
 )
 
 func init() {
@@ -116,6 +118,8 @@ func init() {
 		ReasonInvalidSpec,
 		ReasonSuccess,
 		ReasonDeprecated,
+		ReasonDeleteFailed,
+		ReasonDeleting,
 	)
 }
 
