@@ -6,7 +6,8 @@ metadata:
 spec:
   paused: false
   serviceAccountName: extension-sa
-  defaultNamespace: extension-sample
-  package:
-    name: argocd-operator
-    version: 0.6.0
+  source:
+    sourceType: package
+    package:
+      name: argocd-operator
+      version: 0.6.0
