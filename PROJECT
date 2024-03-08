@@ -1,6 +1,6 @@
 domain: operatorframework.io
 layout:
-- go.kubebuilder.io/v4-alpha
+- go.kubebuilder.io/v4
 projectName: operator-controller
 repo: github.com/operator-framework/operator-controller
 resources:
