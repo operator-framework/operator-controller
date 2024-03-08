@@ -1,0 +1,29 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /kapp-user-info
+  failurePolicy: Fail
+  name: vkappcrsuserinfo.kb.io
+  rules:
+  - apiGroups:
+    - internal.packaging.carvel.dev
+    - kappctrl.k14s.io
+    - packaging.carvel.dev
+    apiVersions:
+    - '*'
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - '*/*'
+  sideEffects: None

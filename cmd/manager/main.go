@@ -46,6 +46,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/internal/webhook"
 	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
@@ -144,6 +145,18 @@ func main() {
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Extension")
 		os.Exit(1)
+	}
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = (&webhook.KAppUserInfo{
+			WhitelistedUsernames: []string{
+				// TODO: make it configurable
+				"system:serviceaccount:operator-controller-system:operator-controller-controller-manager",
+				"system:serviceaccount:kapp-controller:kapp-controller-sa",
+			},
+		}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "KAppCRs")
+			os.Exit(1)
+		}
 	}
 	//+kubebuilder:scaffold:builder
 
