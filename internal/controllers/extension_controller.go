@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -55,10 +54,7 @@ import (
 type ExtensionReconciler struct {
 	client.Client
 	BundleProvider BundleProvider
-	HasKappApis    bool
 }
-
-var errkappAPIUnavailable = errors.New("kapp-controller apis unavailable on cluster")
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=extensions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=extensions/status,verbs=update;patch
@@ -143,17 +139,6 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	if ext.Spec.Paused {
 		l.Info("resource is paused", "name", ext.GetName(), "namespace", ext.GetNamespace())
 		return ctrl.Result{}, nil
-	}
-
-	if !r.HasKappApis {
-		ext.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, errkappAPIUnavailable.Error(), ext.GetGeneration())
-
-		ext.Status.ResolvedBundleResource = ""
-		setResolvedStatusConditionUnknown(&ext.Status.Conditions, "kapp apis are unavailable", ext.GetGeneration())
-
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "kapp apis are unavailable", ext.GetGeneration())
-		return ctrl.Result{}, errkappAPIUnavailable
 	}
 
 	// TODO: Improve the resolution logic.
