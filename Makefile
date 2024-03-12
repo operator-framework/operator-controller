@@ -141,7 +141,7 @@ build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and pus
 test-e2e: KIND_CLUSTER_NAME=operator-controller-e2e
 test-e2e: KUSTOMIZE_BUILD_DIR=config/e2e
 test-e2e: GO_BUILD_FLAGS=-cover
-test-e2e: run image-registry build-push-e2e-catalog kind-load-test-artifacts e2e e2e-coverage undeploy kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: run image-registry build-push-e2e-catalog kind-load-test-artifacts e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KIND_CLUSTER_NAME=operator-controller-ext-dev-e2e  #EXHELP Run extension-developer e2e on local kind cluster
@@ -232,22 +232,6 @@ quickstart: export MANIFEST="https://github.com/operator-framework/operator-cont
 quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the installation release manifests and scripts.
 	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
 	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$KAPP_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh > install.sh
-
-#SECTION Deployment
-
-ifndef ignore-not-found
-  ignore-not-found = false
-endif
-
-.PHONY: deploy
-deploy: manifests $(KUSTOMIZE) #HELP Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | kubectl apply -f -
-
-.PHONY: undeploy
-undeploy: #HELP Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
-
 
 ##@ Docs
 
