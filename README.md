@@ -1,12 +1,22 @@
 # operator-controller
 The operator-controller is the central component of Operator Lifecycle Manager (OLM) v1. It extends Kubernetes with an API through which users can install extensions.
 
-## Description
-OLM v1 is the follow-up to OLM v0, located [here](https://github.com/operator-framework/operator-lifecycle-manager). It consists of four different components, including this one, which are as follows:
+
+## Mission
+
+OLM’s purpose is to provide APIs, controllers, and tooling that support the packaging, distribution, and lifecycling of Kubernetes extensions. It aims to align with Kubernetes designs and user assumptions, provide secure, high-quality, and predictable user experiences centered around declarative GitOps concepts, and to give cluster admins the minimal necessary controls to build their desired cluster architectures and to have ultimate control.
+
+## Overview
+
+OLM v1 is the follow-up to OLM v0, located [here](https://github.com/operator-framework/operator-lifecycle-manager).
+
+OLM v1 consists of four different components, including this one, which are as follows:
 * operator-controller
 * [deppy](https://github.com/operator-framework/deppy)
 * [rukpak](https://github.com/operator-framework/rukpak)
 * [catalogd](https://github.com/operator-framework/catalogd)
+
+For a more complete overview of OLM v1 and how it differs from OLM v0, see our [overview](./docs/olmv1_overview.md).
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
