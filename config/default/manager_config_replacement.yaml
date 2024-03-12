@@ -1,0 +1,34 @@
+# Add operator-controller's service account into ConfigMap
+
+- source:
+    kind: ServiceAccount
+    version: v1
+    name: controller-manager
+    namespace: system
+    fieldPath: .metadata.namespace
+  targets:
+    - select:
+        kind: ConfigMap
+        version: v1
+      fieldPaths:
+        - .data.operator-controller-service-account-name
+      options:
+        delimiter: ":"
+        index: 2
+        create: true
+- source:
+    kind: ServiceAccount
+    version: v1
+    name: controller-manager
+    namespace: system
+    fieldPath: .metadata.name
+  targets:
+    - select:
+        kind: ConfigMap
+        version: v1
+      fieldPaths:
+        - .data.operator-controller-service-account-name
+      options:
+        delimiter: ":"
+        index: 3
+        create: true

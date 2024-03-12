@@ -85,6 +85,9 @@ spec:
           requests:
             cpu: 10m
             memory: 64Mi
+        envFrom:
+        - configMapRef:
+            name: manager
       - name: kube-rbac-proxy
         securityContext:
           allowPrivilegeEscalation: false

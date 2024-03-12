@@ -29,3 +29,4 @@ patches:
 
 replacements:
 - path: cert_manager_replacement.yaml
+- path: manager_config_replacement.yaml

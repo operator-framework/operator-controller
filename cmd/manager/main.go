@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
@@ -72,6 +73,7 @@ func main() {
 		enableLeaderElection bool
 		probeAddr            string
 		cachePath            string
+		allowServiceAccounts commaSeparatedValue
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -79,6 +81,8 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
+	flag.Var(&allowServiceAccounts, "allow-service-account-names", "Comma-separated names of service accounts which are allowed to make create, update and delete Carvel kapp resources.")
+
 	opts := zap.Options{
 		Development: true,
 	}
@@ -148,13 +152,9 @@ func main() {
 	}
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = (&webhook.KAppUserInfo{
-			WhitelistedUsernames: []string{
-				// TODO: make it configurable
-				"system:serviceaccount:operator-controller-system:operator-controller-controller-manager",
-				"system:serviceaccount:kapp-controller:kapp-controller-sa",
-			},
+			WhitelistedUsernames: allowServiceAccounts,
 		}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "KAppCRs")
+			setupLog.Error(err, "unable to create webhook", "webhook", "KAppUserInfo")
 			os.Exit(1)
 		}
 	}
@@ -198,4 +198,15 @@ func hasKappApis(config *rest.Config) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+type commaSeparatedValue []string
+
+func (v *commaSeparatedValue) String() string {
+	return strings.Join(*v, ",")
+}
+
+func (v *commaSeparatedValue) Set(value string) error {
+	*v = strings.Split(value, ",")
+	return nil
 }

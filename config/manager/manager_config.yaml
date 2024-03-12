@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: manager
+data:
+  kapp-controller-service-account-name: "system:serviceaccount:kapp-controller:kapp-controller-sa"
+  operator-controller-service-account-name: "system:serviceaccount:OPERATOR-CONTROLLER-SA-NAMESPACE:OPERATOR-CONTROLLER-SA-NAME"
