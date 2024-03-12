@@ -1,3 +1,5 @@
+# Adding a catalog of extensions to a cluster
+
 Extension authors can publish their products in catalogs.
 Catalogs are curated collections of Operators and extensions.
 Cluster administrators can add these catalogs to their cluster.
@@ -17,110 +19,108 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
 ## Procedure
 
 1. Create a catalog custom resource (CR):
-   ```yaml
-   apiVersion: catalogd.operatorframework.io/v1alpha1
-   kind: Catalog
-   metadata:
-     name: operatorhubio
-   spec:
-     source:
-       type: image
-       image:
-         ref: <catalog_image>
-         pollInterval: <poll_interval_duration>
-    ```
-    where:
 
-    `catalog_image`
-    :Specifies the image reference for the catalog you want to install, such as `quay.io/operatorhubio/catalog:latest`.
+    ``` yaml title="catalog_cr.yaml"
+    apiVersion: catalogd.operatorframework.io/v1alpha1
+    kind: Catalog
+    metadata:
+      name: operatorhubio
+    spec:
+      source:
+        type: image
+        image:
+          ref: <catalog_image>
+          pollInterval: <poll_interval_duration>
+    ```
+
+    `catalog_name`
+    :   Specifies the image reference for the catalog you want to install, such as `quay.io/operatorhubio/catalog:latest`.
 
     `poll_interval_duration`
-    :Specifies the interval for polling the remote registry for newer image digests.
-    The default value is `24h`.
-    Valid units include seconds (`s`), minutes (`m`), and hours (`h`).
-    To disable polling, set a zero value, such as `0s`.
+    :   Specifies the interval for polling the remote registry for newer image digests.
+            The default value is `24h`.
+            Valid units include seconds (`s`), minutes (`m`), and hours (`h`).
+            To disable polling, set a zero value, such as `0s`.
 
-   <details>
-   <summary>Example `operatorhub.yaml` CR</summary>
-   ```yaml
-   apiVersion: catalogd.operatorframework.io/v1alpha1
-   kind: Catalog
-   metadata:
-     name: operatorhub
-   spec:
-     source:
-       type: image
-       image:
-         ref: quay.io/operatorhubio/catalog:latest
-         pollInterval: 1h
+    ``` yaml title="Example `operatorhubio.yaml` CR"
+    apiVersion: catalogd.operatorframework.io/v1alpha1
+    kind: Catalog
+    metadata:
+      name: operatorhub
+    spec:
+      source:
+        type: image
+        image:
+          ref: quay.io/operatorhubio/catalog:latest
+          pollInterval: 1h
     ```
 
-1. Apply the catalog CR:
-  ```terminal
-  $ kubectl apply -f <catalog_cr>.yaml
-  ```
+2. Apply the catalog CR:
 
-  **Example output**
-   ```text
-   catalog.catalogd.operatorframework.io/redhat-operators created
-   ```
+    ``` terminal
+    $ kubectl apply -f <catalog_cr>.yaml
+    ```
+
+    ``` text title="Example output"
+    catalog.catalogd.operatorframework.io/redhat-operators created
+    ```
 
 ### Verification
 
 * Run the following commands to verify the status of your catalog:
 
-  * Check if your catalog is available on the cluster:
-    ```terminal
-    $ kubectl get catalog
-    ```
+    * Check if your catalog is available on the cluster:
 
-    **Example output**
-    ```text
-     NAME            PHASE   AGE
-     operatorhubio           9s
-     ```
+        ``` terminal
+        $ kubectl get catalog
+        ```
 
-   * Check the status of your catalog:
-     ```terminal
-     $ kubectl describe catalog
-     ```
+        ``` terminal title="Example output"
+        NAME            PHASE   AGE
+        operatorhubio           9s
+        ```
 
-     **Example output**
-     ```text
-     Name:         operatorhubio
-     Namespace:
-     Labels:       <none>
-     Annotations:  <none>
-     API Version:  catalogd.operatorframework.io/v1alpha1
-     Kind:         Catalog
-     Metadata:
-       Creation Timestamp:  2024-03-12T19:34:50Z
-       Finalizers:
-         catalogd.operatorframework.io/delete-server-cache
-       Generation:        2
-       Resource Version:  6469
-       UID:               2e2778cb-dda6-4645-96b7-992e8dd37503
-     Spec:
-       Source:
-         Image:
-           Poll Interval:  15m0s
-           Ref:            quay.io/operatorhubio/catalog:latest
-         Type:             image
-     Status:
-       Conditions:
-         Last Transition Time:  2024-03-12T19:35:34Z
-         Message:
-         Reason:                UnpackSuccessful
-         Status:                True
-         Type:                  Unpacked
-       Content URL:             http://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json
-       Observed Generation:     2
-       Phase:                   Unpacked
-       Resolved Source:
-         Image:
-           Last Poll Attempt:  2024-03-12T19:35:26Z
-           Ref:                quay.io/operatorhubio/catalog:latest
-           Resolved Ref:       quay.io/operatorhubio/catalog@sha256:dee29aaed76fd1c72b654b9bc8bebc4b48b34fd8d41ece880524dc0c3c1c55ec
-         Type:                 image
-     Events:                   <none>
-     ```
+    * Check the status of your catalog:
+
+        ``` terminal
+        $ kubectl describe catalog
+        ```
+
+        ``` terminal title="Example output"
+        Name:         operatorhubio
+        Namespace:
+        Labels:       <none>
+        Annotations:  <none>
+        API Version:  catalogd.operatorframework.io/v1alpha1
+        Kind:         Catalog
+        Metadata:
+          Creation Timestamp:  2024-03-12T19:34:50Z
+          Finalizers:
+            catalogd.operatorframework.io/delete-server-cache
+          Generation:        2
+          Resource Version:  6469
+          UID:               2e2778cb-dda6-4645-96b7-992e8dd37503
+        Spec:
+          Source:
+            Image:
+              Poll Interval:  15m0s
+              Ref:            quay.io/operatorhubio/catalog:latest
+            Type:             image
+        Status:
+          Conditions:
+            Last Transition Time:  2024-03-12T19:35:34Z
+            Message:
+            Reason:                UnpackSuccessful
+            Status:                True
+            Type:                  Unpacked
+          Content URL:             http://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json
+          Observed Generation:     2
+          Phase:                   Unpacked
+          Resolved Source:
+            Image:
+              Last Poll Attempt:  2024-03-12T19:35:26Z
+              Ref:                quay.io/operatorhubio/catalog:latest
+              Resolved Ref:       quay.io/operatorhubio/catalog@sha256:dee29aaed76fd1c72b654b9bc8bebc4b48b34fd8d41ece880524dc0c3c1c55ec
+            Type:                 image
+        Events:                   <none>
+        ```
