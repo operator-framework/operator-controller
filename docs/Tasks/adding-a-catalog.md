@@ -1,76 +1,126 @@
-Extension authors have the mechanisms to offer their product as part of a curated catalog of extensions, that they can push updates to over-the-air (eg publish new versions, publish patched versions with CVEs, etc). Cluster admins can sign up to receive these updates on clusters, by adding the catalog to the cluster. When a catalog is added to a cluster, the kubernetes extension packages in that catalog become available on cluster for installation and receiving updates.  
+# Adding a catalog of extensions to a cluster
 
-For example, the [k8s-operatorhub/community-operators](https://github.com/k8s-operatorhub/community-operators) is a catalog of curated extensions that contains a list of extensions being developed by the community. The list of extensions can be viewed in [Operatorhub.io](https://operatorhub.io). This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://quay.io/repository/operatorhubio/catalog?tag=latest&tab=tags) for consumption on clusters. 
+Extension authors can publish their products in catalogs.
+Catalogs are curated collections of Kubernetes extensions, such as Operators.
+Cluster administrators can add these catalogs to their cluster.
+Cluster administrators can enable polling to get over-the-air updates to catalogs when extension authors publish changes such as bug fixes and new features.
 
-To consume this catalog on cluster, create a `Catalog` Custom Resource(CR) with the image specified in the `spec.source.image` field: 
+For example, the [Kubernetes community Operators catalog](https://github.com/k8s-operatorhub/community-operators) is a catalog of curated extensions that is developed by the Kubernetes community.
+You can see the available extensions at [Operatorhub.io](https://operatorhub.io).
+This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://quay.io/repository/operatorhubio/catalog?tag=latest&tab=tags) that can be installed on clusters.
 
-```bash
-$ kubectl apply -f - <<EOF
-apiVersion: catalogd.operatorframework.io/v1alpha1
-kind: Catalog
-metadata:
-  name: operatorhubio
-spec:
-  source:
-    type: image
-    image:
-      ref: quay.io/operatorhubio/catalog:latest
-EOF
-```
+## Prerequisites
 
-The packages made available for installation/receiving updates on cluster can then be explored by querying the `Package` and `BundleMetadata` CRs: 
+* Access to a Kubernetes cluster, for example `kind`, using an account with `cluster-admin` permissions
+* [Operator Controller installed](https://github.com/operator-framework/operator-controller/releases) on the cluster
+* [Catalogd installed](https://github.com/operator-framework/catalogd/releases/) on the cluster
+* Kubernetes CLI (`kubectl`) installed on your workstation
 
-```bash
-$ kubectl get packages 
-NAME                                                     AGE
-operatorhubio-ack-acm-controller                         3m12s
-operatorhubio-ack-apigatewayv2-controller                3m12s
-operatorhubio-ack-applicationautoscaling-controller      3m12s
-operatorhubio-ack-cloudtrail-controller                  3m12s
-operatorhubio-ack-dynamodb-controller                    3m12s
-operatorhubio-ack-ec2-controller                         3m12s
-operatorhubio-ack-ecr-controller                         3m12s
-operatorhubio-ack-eks-controller                         3m12s
-operatorhubio-ack-elasticache-controller                 3m12s
-operatorhubio-ack-emrcontainers-controller               3m12s
-operatorhubio-ack-eventbridge-controller                 3m12s
-operatorhubio-ack-iam-controller                         3m12s
-operatorhubio-ack-kinesis-controller                     3m12s
-operatorhubio-ack-kms-controller                         3m12s
-operatorhubio-ack-lambda-controller                      3m12s
-operatorhubio-ack-memorydb-controller                    3m12s
-operatorhubio-ack-mq-controller                          3m12s
-operatorhubio-ack-opensearchservice-controller           3m12s
-.
-.
-.
+## Procedure
 
-$ kubectl get bundlemetadata 
-NAME                                                            AGE
-operatorhubio-ack-acm-controller.v0.0.1                         3m58s
-operatorhubio-ack-acm-controller.v0.0.2                         3m58s
-operatorhubio-ack-acm-controller.v0.0.4                         3m58s
-operatorhubio-ack-acm-controller.v0.0.5                         3m58s
-operatorhubio-ack-acm-controller.v0.0.6                         3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.10               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.11               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.12               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.13               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.14               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.15               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.16               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.17               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.18               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.19               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.20               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.21               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.22               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.9                3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.1.0                3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.1.1                3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.1.2                3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.1.3                3m58s
-.
-.
-.
-```
+1. Create a catalog custom resource (CR):
+
+    ``` yaml title="catalog_cr.yaml"
+    apiVersion: catalogd.operatorframework.io/v1alpha1
+    kind: Catalog
+    metadata:
+      name: operatorhubio
+    spec:
+      source:
+        type: image
+        image:
+          ref: <catalog_image>
+          pollInterval: <poll_interval_duration>
+    ```
+
+    `catalog_name`
+    :   Specifies the image reference for the catalog you want to install, such as `quay.io/operatorhubio/catalog:latest`.
+
+    `poll_interval_duration`
+    :   Specifies the interval for polling the remote registry for newer image digests.
+            The default value is `24h`.
+            Valid units include seconds (`s`), minutes (`m`), and hours (`h`).
+            To disable polling, set a zero value, such as `0s`.
+
+    ``` yaml title="Example `operatorhubio.yaml` CR"
+    apiVersion: catalogd.operatorframework.io/v1alpha1
+    kind: Catalog
+    metadata:
+      name: operatorhub
+    spec:
+      source:
+        type: image
+        image:
+          ref: quay.io/operatorhubio/catalog:latest
+          pollInterval: 1h
+    ```
+
+2. Apply the catalog CR:
+
+    ``` terminal
+    $ kubectl apply -f <catalog_cr>.yaml
+    ```
+
+    ``` text title="Example output"
+    catalog.catalogd.operatorframework.io/redhat-operators created
+    ```
+
+### Verification
+
+* Run the following commands to verify the status of your catalog:
+
+    * Check if your catalog is available on the cluster:
+
+        ``` terminal
+        $ kubectl get catalog
+        ```
+
+        ``` terminal title="Example output"
+        NAME            PHASE   AGE
+        operatorhubio           9s
+        ```
+
+    * Check the status of your catalog:
+
+        ``` terminal
+        $ kubectl describe catalog
+        ```
+
+        ``` terminal title="Example output"
+        Name:         operatorhubio
+        Namespace:
+        Labels:       <none>
+        Annotations:  <none>
+        API Version:  catalogd.operatorframework.io/v1alpha1
+        Kind:         Catalog
+        Metadata:
+          Creation Timestamp:  2024-03-12T19:34:50Z
+          Finalizers:
+            catalogd.operatorframework.io/delete-server-cache
+          Generation:        2
+          Resource Version:  6469
+          UID:               2e2778cb-dda6-4645-96b7-992e8dd37503
+        Spec:
+          Source:
+            Image:
+              Poll Interval:  15m0s
+              Ref:            quay.io/operatorhubio/catalog:latest
+            Type:             image
+        Status:
+          Conditions:
+            Last Transition Time:  2024-03-12T19:35:34Z
+            Message:
+            Reason:                UnpackSuccessful
+            Status:                True
+            Type:                  Unpacked
+          Content URL:             http://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json
+          Observed Generation:     2
+          Phase:                   Unpacked
+          Resolved Source:
+            Image:
+              Last Poll Attempt:  2024-03-12T19:35:26Z
+              Ref:                quay.io/operatorhubio/catalog:latest
+              Resolved Ref:       quay.io/operatorhubio/catalog@sha256:dee29aaed76fd1c72b654b9bc8bebc4b48b34fd8d41ece880524dc0c3c1c55ec
+            Type:                 image
+        Events:                   <none>
+        ```
