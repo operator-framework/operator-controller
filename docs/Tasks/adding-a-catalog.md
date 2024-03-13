@@ -1,9 +1,9 @@
 # Adding a catalog of extensions to a cluster
 
 Extension authors can publish their products in catalogs.
-Catalogs are curated collections of Operators and extensions.
+Catalogs are curated collections of Kubernetes extensions, such as Operators.
 Cluster administrators can add these catalogs to their cluster.
-When extension authors publish updates to their catalogs, cluster administrators can install and update those changes.
+Cluster administrators can enable polling to get over-the-air updates to catalogs when extension authors publish changes such as bug fixes and new features.
 
 For example, the [Kubernetes community Operators catalog](https://github.com/k8s-operatorhub/community-operators) is a catalog of curated extensions that is developed by the Kubernetes community.
 You can see the available extensions at [Operatorhub.io](https://operatorhub.io).
