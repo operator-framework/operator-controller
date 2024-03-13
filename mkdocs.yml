@@ -3,6 +3,8 @@
 site_name: Operator Controller documentation
 theme:
  name: "material"
+ features:
+   - content.code.copy
 
 repo_url: https://github.com/operator-framework/operator-controller
 
@@ -28,3 +30,5 @@ markdown_extensions:
   - def_list
   - pymdownx.tasklist:
       custom_checkbox: true
+  - admonition
+  - pymdownx.details
