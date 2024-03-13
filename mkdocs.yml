@@ -14,3 +14,15 @@ nav:
     - Explore extensions available for installation: 'Tasks/explore-available-packages.md'
     - Installing an extension: 'Tasks/installing-an-extension.md'
     - Deleting an extension: 'Tasks/uninstall-an-extension.md'
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
