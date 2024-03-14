@@ -3,6 +3,8 @@
 site_name: Operator Controller documentation
 theme:
  name: "material"
+ features:
+   - content.code.copy
 
 repo_url: https://github.com/operator-framework/operator-controller
 
@@ -11,9 +13,11 @@ nav:
   - Components: 'components.md'
   - Tasks:
     - Adding a catalog of extensions: 'Tasks/adding-a-catalog.md'
-    - Explore extensions available for installation: 'Tasks/explore-available-packages.md'
+    - Finding extensions to install: 'Tasks/explore-available-packages.md'
     - Installing an extension: 'Tasks/installing-an-extension.md'
     - Deleting an extension: 'Tasks/uninstall-an-extension.md'
+  - References:
+    - Catalog queries: 'refs/catalog-queries.md'
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -26,3 +30,5 @@ markdown_extensions:
   - def_list
   - pymdownx.tasklist:
       custom_checkbox: true
+  - admonition
+  - pymdownx.details

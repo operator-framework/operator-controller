@@ -1,135 +1,141 @@
-The packages available for installation/receiving updates on cluster can be explored by querying the `Package` and `BundleMetadata` CRs: 
+After you add a catalog of exetensions to your cluster, you must port forward your catalog as a service.
+Then you can query the catalog by using `curl` commands and the `jq` CLI tool to find extensions to install.
 
-```bash
-$ kubectl get packages 
-NAME                                                     AGE
-operatorhubio-ack-acm-controller                         3m12s
-operatorhubio-ack-apigatewayv2-controller                3m12s
-operatorhubio-ack-applicationautoscaling-controller      3m12s
-operatorhubio-ack-cloudtrail-controller                  3m12s
-operatorhubio-ack-dynamodb-controller                    3m12s
-operatorhubio-ack-ec2-controller                         3m12s
-operatorhubio-ack-ecr-controller                         3m12s
-operatorhubio-ack-eks-controller                         3m12s
-operatorhubio-ack-elasticache-controller                 3m12s
-operatorhubio-ack-emrcontainers-controller               3m12s
-operatorhubio-ack-eventbridge-controller                 3m12s
-operatorhubio-ack-iam-controller                         3m12s
-operatorhubio-ack-kinesis-controller                     3m12s
-operatorhubio-ack-kms-controller                         3m12s
-operatorhubio-ack-lambda-controller                      3m12s
-operatorhubio-ack-memorydb-controller                    3m12s
-operatorhubio-ack-mq-controller                          3m12s
-operatorhubio-ack-opensearchservice-controller           3m12s
-.
-.
-.
+## Prerequisites
 
-$ kubectl get bundlemetadata 
-NAME                                                            AGE
-operatorhubio-ack-acm-controller.v0.0.1                         3m58s
-operatorhubio-ack-acm-controller.v0.0.2                         3m58s
-operatorhubio-ack-acm-controller.v0.0.4                         3m58s
-operatorhubio-ack-acm-controller.v0.0.5                         3m58s
-operatorhubio-ack-acm-controller.v0.0.6                         3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.10               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.11               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.12               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.13               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.14               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.15               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.16               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.17               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.18               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.19               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.20               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.21               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.22               3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.0.9                3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.1.0                3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.1.1                3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.1.2                3m58s
-operatorhubio-ack-apigatewayv2-controller.v0.1.3                3m58s
-.
-.
-.
-``` 
+* You have added a catalog of extensions, such as [OperatorHub.io](https://operatorhub.io), to your cluster.
+* You have installed the `jq` CLI tool.
 
-Individual `Package`/`BundleMetadata` CRs can then be explored more by retrieving their yamls. Eg the `operatorhubio-argocd-operator` CR has more detailed information about the `argocd-operator`: 
+## Procedure
 
-```bash
-$ kubectl get packages | grep argocd 
-operatorhubio-argocd-operator                            5m19s
-operatorhubio-argocd-operator-helm                       5m19s
+1. Port forward the catalog server sevice:
 
-$ kubectl get package operatorhubio-argocd-operator -o yaml 
-apiVersion: catalogd.operatorframework.io/v1alpha1
-kind: Package
-metadata:
-  creationTimestamp: "2023-06-16T14:34:04Z"
-  generation: 1
-  labels:
-    catalog: operatorhubio
-  name: operatorhubio-argocd-operator
-  ownerReferences:
-  - apiVersion: catalogd.operatorframework.io/v1alpha1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Catalog
-    name: operatorhubio
-    uid: 9a949664-9069-4376-9a66-a9921f7488e2
-  resourceVersion: "3765"
-  uid: 43396920-4af4-4daf-a069-be68b8a0631e
-spec:
-  catalog:
-    name: operatorhubio
-  channels:
-  - entries:
-    - name: argocd-operator.v0.0.11
-      replaces: argocd-operator.v0.0.9
-    - name: argocd-operator.v0.0.12
-      replaces: argocd-operator.v0.0.11
-    - name: argocd-operator.v0.0.13
-      replaces: argocd-operator.v0.0.12
-    - name: argocd-operator.v0.0.14
-      replaces: argocd-operator.v0.0.13
-    - name: argocd-operator.v0.0.15
-      replaces: argocd-operator.v0.0.14
-    - name: argocd-operator.v0.0.2
-    - name: argocd-operator.v0.0.3
-      replaces: argocd-operator.v0.0.2
-    - name: argocd-operator.v0.0.4
-      replaces: argocd-operator.v0.0.3
-    - name: argocd-operator.v0.0.5
-      replaces: argocd-operator.v0.0.4
-    - name: argocd-operator.v0.0.6
-      replaces: argocd-operator.v0.0.5
-    - name: argocd-operator.v0.0.8
-      replaces: argocd-operator.v0.0.6
-    - name: argocd-operator.v0.0.9
-      replaces: argocd-operator.v0.0.8
-    - name: argocd-operator.v0.1.0
-      replaces: argocd-operator.v0.0.15
-    - name: argocd-operator.v0.2.0
-      replaces: argocd-operator.v0.1.0
-    - name: argocd-operator.v0.2.1
-      replaces: argocd-operator.v0.2.0
-    - name: argocd-operator.v0.3.0
-      replaces: argocd-operator.v0.2.1
-    - name: argocd-operator.v0.4.0
-      replaces: argocd-operator.v0.3.0
-    - name: argocd-operator.v0.5.0
-      replaces: argocd-operator.v0.4.0
-    - name: argocd-operator.v0.6.0
-      replaces: argocd-operator.v0.5.0
-    name: ""
-  defaultChannel: ""
-  description: ""
-  icon:
-    data: PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2Z==
-    mediatype: image/svg+xml
-  packageName: argocd-operator
-status: {}
-```
+    ``` terminal
+    $ kubectl -n catalogd-system port-forward svc/catalogd-catalogserver 8080:80
+    ```
 
-**This CR is most helpful when exploring the versions of a package that are available for installation on cluster, and the upgrade graph of versions** (eg if v0.5.0 of `argocd-operator` is installed on cluster, what is the next upgrade available? The answer is v0.6.0).
+2. Return a list of all the extensions in a catalog:
+    ``` terminal
+    $ curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.package") | .name'
+    ```
+
+    ??? success
+        ``` text title="Example output"
+        "ack-acm-controller"
+        "ack-acmpca-controller"
+        "ack-apigatewayv2-controller"
+        "ack-applicationautoscaling-controller"
+        "ack-cloudfront-controller"
+        "ack-cloudtrail-controller"
+        "ack-cloudwatch-controller"
+        "ack-cloudwatchlogs-controller"
+        "ack-dynamodb-controller"
+        "ack-ec2-controller"
+        "ack-ecr-controller"
+        "ack-ecs-controller"
+        "ack-efs-controller"
+        "ack-eks-controller"
+        "ack-elasticache-controller"
+        "ack-emrcontainers-controller"
+        "ack-eventbridge-controller"
+        "ack-iam-controller"
+        "ack-kafka-controller"
+        "ack-keyspaces-controller"
+        "ack-kinesis-controller"
+        "ack-kms-controller"
+        "ack-lambda-controller"
+        "ack-memorydb-controller"
+        "ack-mq-controller"
+        "ack-networkfirewall-controller"
+        "ack-opensearchservice-controller"
+        "ack-pipes-controller"
+        "ack-prometheusservice-controller"
+        "ack-rds-controller"
+        "ack-route53-controller"
+        "ack-route53resolver-controller"
+        "ack-s3-controller"
+        "ack-sagemaker-controller"
+        "ack-secretsmanager-controller"
+        "ack-sfn-controller"
+        "ack-sns-controller"
+        "ack-sqs-controller"
+        "aerospike-kubernetes-operator"
+        "airflow-helm-operator"
+        "aiven-operator"
+        "akka-cluster-operator"
+        "alvearie-imaging-ingestion"
+        "anchore-engine"
+        "apch-operator"
+        "api-operator"
+        "api-testing-operator"
+        "apicast-community-operator"
+        "apicurio-registry"
+        "apimatic-kubernetes-operator"
+        "app-director-operator"
+        "appdynamics-operator"
+        "application-services-metering-operator"
+        "appranix"
+        "aqua"
+        "argocd-operator"
+        ...
+        ```
+
+    !!! important
+        Currently, OLM 1.0 does not support the installation of extensions that use webhooks or that target a single or specified set of namespaces.
+
+    * Return list of packages that support `AllNamespaces` install mode and do not use webhooks:
+
+        ``` terminal
+        $ curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -c 'select(.schema == "olm.bundle") | {"package":.package, "version":.properties[] | select(.type == "olm.bundle.object").value.data | @base64d | fromjson | select(.kind == "ClusterServiceVersion" and (.spec.installModes[] | select(.type == "AllNamespaces" and .supported == true) != null) and .spec.webhookdefinitions == null).spec.version}'
+        ```
+
+        ??? success
+            ``` text title="Example output"
+            {"package":"ack-acm-controller","version":"0.0.12"}
+            {"package":"ack-acmpca-controller","version":"0.0.5"}
+            {"package":"ack-apigatewayv2-controller","version":"1.0.7"}
+            {"package":"ack-applicationautoscaling-controller","version":"1.0.11"}
+            {"package":"ack-cloudfront-controller","version":"0.0.9"}
+            {"package":"ack-cloudtrail-controller","version":"1.0.8"}
+            {"package":"ack-cloudwatch-controller","version":"0.0.3"}
+            {"package":"ack-cloudwatchlogs-controller","version":"0.0.4"}
+            {"package":"ack-dynamodb-controller","version":"1.2.9"}
+            {"package":"ack-ec2-controller","version":"1.2.4"}
+            {"package":"ack-ecr-controller","version":"1.0.12"}
+            {"package":"ack-ecs-controller","version":"0.0.4"}
+            {"package":"ack-efs-controller","version":"0.0.5"}
+            {"package":"ack-eks-controller","version":"1.3.3"}
+            {"package":"ack-elasticache-controller","version":"0.0.29"}
+            {"package":"ack-emrcontainers-controller","version":"1.0.8"}
+            {"package":"ack-eventbridge-controller","version":"1.0.6"}
+            {"package":"ack-iam-controller","version":"1.3.6"}
+            {"package":"ack-kafka-controller","version":"0.0.4"}
+            {"package":"ack-keyspaces-controller","version":"0.0.11"}
+            ...
+            ```
+
+3. Inspect the contents of an extension's metadata:
+
+    ``` terminal
+    $ curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select( .schema == "olm.package") | select( .name == "<package_name>")'
+    ```
+
+    `package_name`
+    :   Specifies the name of the package you want to inspect.
+
+    ??? success
+        ``` text title="Example output"
+        {
+          "defaultChannel": "stable-v6.x",
+          "icon": {
+            "base64data": "PHN2ZyB4bWxucz0ia...
+            "mediatype": "image/svg+xml"
+          },
+          "name": "cockroachdb",
+          "schema": "olm.package"
+        }
+        ```
+
+### Additional resources
+
+* [Catalog queries](../refs/catalog-queries.md)
