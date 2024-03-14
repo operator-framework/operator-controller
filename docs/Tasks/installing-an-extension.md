@@ -114,10 +114,3 @@ After you add a catalog to your cluster, you can install an extension by creatin
           Resolved Bundle Resource:  quay.io/operatorhubio/argocd-operator@sha256:046a9764dadcbef0b9ce67e367393fb1c8e3b1d24e361341f33ac5fb93cf32a1
         Events:                      <none>
         ```
-
-### Additional resources
-
-* References > Catalog queries
-* Concepts > Version resolution
-* Concepts > Version ranges
-* References > Version comparison operators
