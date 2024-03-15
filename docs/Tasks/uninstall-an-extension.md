@@ -23,7 +23,7 @@ You can uninstall a Kubernetes extension and its associated custom resource defi
 
 ### Verification
 
-1. Verify that the Kubernetes extension is deleted:
+* Verify that the Kubernetes extension is deleted:
 
     ``` terminal
     $ kubectl get clusterextension.olm.operatorframework.io
@@ -31,14 +31,4 @@ You can uninstall a Kubernetes extension and its associated custom resource defi
 
     ``` text title="Example output"
     No resources found
-    ```
-
-2. Verify that the extension's system namespace is deleted:
-
-    ``` terminal
-    $ kubectl get ns <extension_name>-system
-    ```
-
-    ``` text title="Example output"
-    Error from server (NotFound): namespaces "argo-operator-system" not found
     ```

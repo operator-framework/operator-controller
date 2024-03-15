@@ -19,7 +19,7 @@ After you add a catalog to your cluster, you can install an extension by creatin
 1. Create a CR for the Kubernetes extension you want to install:
 
     ``` yaml title="Example CR"
-    apiVersion: clusterextension.operatorframework.io/v1alpha1
+    apiVersion: olm.operatorframework.io/v1alpha1
     kind: ClusterExtension
     metadata:
       name: <extension_name>
@@ -30,10 +30,10 @@ After you add a catalog to your cluster, you can install an extension by creatin
     ```
 
      `extension_name`
-     : Specifies a custom name for the Kubernetes extension you want to install, such as `my-argocd`.
+     : Specifies a custom name for the Kubernetes extension you want to install, such as `my-camel-k`.
 
      `package_name`
-     : Specifies the name of the package you want to install, such as `argocd-operator`.
+     : Specifies the name of the package you want to install, such as `camel-k`.
 
      `channel`
      : Optional: Specifies the extension's channel, such as `stable` or `candidate`.
@@ -49,6 +49,7 @@ After you add a catalog to your cluster, you can install an extension by creatin
         * OLM 1.0 requires that all of the extensions have unique bundle and package names for dependency resolution.
 
         As a result, if two catalogs have an extension with the same name, the installation might fail or lead to an unintended outcome.
+        For example, the first extension that matches might install successfully and finish without searching for a match in the second catalog.
 
 2. Apply the CR the cluster:
 
@@ -58,22 +59,10 @@ After you add a catalog to your cluster, you can install an extension by creatin
 
     ??? success
         ``` text title="Example output"
-        clusterextension.olm.operatorframework.io/argocd-operator created
+        clusterextension.olm.operatorframework.io/camel-k created
         ```
 
 ### Verification
-
-* Get information about your bundle deployment:
-
-    ``` terminal
-    $ kubectl get bundledeployment
-    ```
-
-    ??? success
-        ``` text title="Example output"
-        NAME              ACTIVE BUNDLE   INSTALL STATE   AGE
-        argocd-operator                                   111s
-        ```
 
 * Describe the installed extension:
 
@@ -83,34 +72,35 @@ After you add a catalog to your cluster, you can install an extension by creatin
 
     ??? success
         ``` text title="Example output"
-        Name:         argocd-operator
+        Name:         my-camel-k
         Namespace:
         Labels:       <none>
         Annotations:  <none>
         API Version:  olm.operatorframework.io/v1alpha1
         Kind:         ClusterExtension
         Metadata:
-          Creation Timestamp:  2024-03-14T19:42:43Z
-          Generation:          2
-          Resource Version:    371915
-          UID:                 6f37c260-327f-4aa3-9ba1-fa1d9bc20621
+          Creation Timestamp:  2024-03-15T15:03:47Z
+          Generation:          1
+          Resource Version:    7691
+          UID:                 d756879f-217d-4ebe-85b1-8427bbb2f1df
         Spec:
-          Package Name:               argocd-operator
+          Package Name:               camel-k
           Upgrade Constraint Policy:  Enforce
         Status:
           Conditions:
-            Last Transition Time:    2024-03-14T19:42:47Z
-            Message:                 bundledeployment status is unknown
-            Observed Generation:     2
-            Reason:                  InstallationStatusUnknown
-            Status:                  Unknown
-            Type:                    Installed
-            Last Transition Time:    2024-03-14T19:49:52Z
-            Message:                 resolved to "quay.io/operatorhubio/argocd-operator@sha256:046a9764dadcbef0b9ce67e367393fb1c8e3b1d24e361341f33ac5fb93cf32a1"
-            Observed Generation:     2
-            Reason:                  Success
-            Status:                  True
-            Type:                    Resolved
-          Resolved Bundle Resource:  quay.io/operatorhubio/argocd-operator@sha256:046a9764dadcbef0b9ce67e367393fb1c8e3b1d24e361341f33ac5fb93cf32a1
-        Events:                      <none>
+            Last Transition Time:     2024-03-15T15:03:50Z
+            Message:                  resolved to "quay.io/operatorhubio/camel-k@sha256:d2b74c43ec8f9294450c9dcf2057be328d0998bb924ad036db489af79d1b39c3"
+            Observed Generation:      1
+            Reason:                   Success
+            Status:                   True
+            Type:                     Resolved
+            Last Transition Time:     2024-03-15T15:04:13Z
+            Message:                  installed from "quay.io/operatorhubio/camel-k@sha256:d2b74c43ec8f9294450c9dcf2057be328d0998bb924ad036db489af79d1b39c3"
+            Observed Generation:      1
+            Reason:                   Success
+            Status:                   True
+            Type:                     Installed
+          Installed Bundle Resource:  quay.io/operatorhubio/camel-k@sha256:d2b74c43ec8f9294450c9dcf2057be328d0998bb924ad036db489af79d1b39c3
+          Resolved Bundle Resource:   quay.io/operatorhubio/camel-k@sha256:d2b74c43ec8f9294450c9dcf2057be328d0998bb924ad036db489af79d1b39c3
+        Events:                       <none>
         ```
