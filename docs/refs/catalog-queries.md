@@ -24,7 +24,7 @@ Catalog blobs in a package
 ## Channel queries
 
 Channels in a package
-: `jq -s '.[] | select( .schema == "olm.channel" ) | select( .package == "<package_name>") \| .name'`
+: `jq -s '.[] | select( .schema == "olm.channel" ) | select( .package == "<package_name>") | .name'`
 
 Versions in a channel
 : `jq -s '.[] | select( .package == "<package_name>" ) | select( .schema == "olm.channel" ) | select( .name == "<channel_name>" ) | .entries | .[] | .name'`
