@@ -6,7 +6,7 @@ export IMAGE_REPO ?= quay.io/operator-framework/operator-controller
 export IMAGE_TAG ?= devel
 export CERT_MGR_VERSION ?= v1.9.0
 export CATALOGD_VERSION ?= $(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/catalogd)
-export KAPP_VERSION ?= v0.50.0# TODO replace with above or below line to pull version from go.mod
+export KAPP_VERSION ?= $(shell go list -mod=mod -m -f "{{.Version}}" github.com/vmware-tanzu/carvel-kapp-controller)
 export RUKPAK_VERSION=$(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/rukpak)
 export WAIT_TIMEOUT ?= 60s
 IMG?=$(IMAGE_REPO):$(IMAGE_TAG)
