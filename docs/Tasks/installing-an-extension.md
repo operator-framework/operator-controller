@@ -51,7 +51,7 @@ After you add a catalog to your cluster, you can install an extension by creatin
         As a result, if two catalogs have an extension with the same name, the installation might fail or lead to an unintended outcome.
         For example, the first extension that matches might install successfully and finish without searching for a match in the second catalog.
 
-2. Apply the CR the cluster:
+2. Apply the CR to the cluster:
 
     ``` terminal
     $ kubectl apply -f <cr_name>.yaml
