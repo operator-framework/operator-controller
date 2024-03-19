@@ -28,7 +28,7 @@ jobs:
           # after failing tests.
           # With -k flag make will continue the build, but will return non-zero
           # exit code in case of any errors.
-          ARTIFACT_PATH=/tmp/artifacts make -k test-e2e
+          ARTIFACT_PATH=/tmp/artifacts make test-e2e
 
       - uses: cytopia/upload-artifact-retry-action@v0.1.7
         if: failure()
