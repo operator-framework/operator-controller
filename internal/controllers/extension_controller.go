@@ -18,18 +18,19 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
 
 	mmsemver "github.com/Masterminds/semver/v3"
+	bsemver "github.com/blang/semver/v4"
 	"github.com/go-logr/logr"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -55,10 +56,11 @@ import (
 type ExtensionReconciler struct {
 	client.Client
 	BundleProvider BundleProvider
-	HasKappApis    bool
 }
 
-var errkappAPIUnavailable = errors.New("kapp-controller apis unavailable on cluster")
+var (
+	bundleVersionKey = "olm.bundle-version"
+)
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=extensions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=extensions/status,verbs=update;patch
@@ -145,17 +147,6 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 		return ctrl.Result{}, nil
 	}
 
-	if !r.HasKappApis {
-		ext.Status.InstalledBundleResource = ""
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, errkappAPIUnavailable.Error(), ext.GetGeneration())
-
-		ext.Status.ResolvedBundleResource = ""
-		setResolvedStatusConditionUnknown(&ext.Status.Conditions, "kapp apis are unavailable", ext.GetGeneration())
-
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "kapp apis are unavailable", ext.GetGeneration())
-		return ctrl.Result{}, errkappAPIUnavailable
-	}
-
 	// TODO: Improve the resolution logic.
 	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
@@ -189,7 +180,12 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 		return ctrl.Result{}, nil
 	}
 
-	app := r.GenerateExpectedApp(*ext, bundle.Image)
+	bundleVersion, err := bundle.Version()
+	if err != nil {
+		l.Info("could not determine bundle version", "name", ext.GetName(), "namespace", ext.GetNamespace())
+	}
+
+	app := r.GenerateExpectedApp(*ext, bundle.Image, bundleVersion.String())
 	if err := r.ensureApp(ctx, app); err != nil {
 		// originally Reason: ocv1alpha1.ReasonInstallationFailed
 		ext.Status.InstalledBundleResource = ""
@@ -404,7 +400,7 @@ func extensionRequestsForCatalog(c client.Reader, logger logr.Logger) handler.Ma
 	}
 }
 
-func (r *ExtensionReconciler) GenerateExpectedApp(o ocv1alpha1.Extension, bundlePath string) *unstructured.Unstructured {
+func (r *ExtensionReconciler) GenerateExpectedApp(o ocv1alpha1.Extension, bundlePath string, bundleVersion string) *unstructured.Unstructured {
 	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
 	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
 	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
@@ -438,6 +434,9 @@ func (r *ExtensionReconciler) GenerateExpectedApp(o ocv1alpha1.Extension, bundle
 			"metadata": map[string]interface{}{
 				"name":      o.GetName(),
 				"namespace": o.GetNamespace(),
+				"annotations": map[string]string{
+					bundleVersionKey: bundleVersion,
+				},
 			},
 			"spec": spec,
 		},
@@ -482,19 +481,38 @@ func (r *ExtensionReconciler) resolve(ctx context.Context, extension ocv1alpha1.
 		predicates = append(predicates, catalogfilter.InMastermindsSemverRange(vr))
 	}
 
+	// Do not include versions older than currently installed unless UpgradeConstraintPolicy = 'Ignore'
+	var installedVersion string
+	if extension.Spec.Source.Package.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicyIgnore {
+		existingApp, err := r.existingAppUnstructured(ctx, extension.GetName(), extension.GetNamespace())
+		if err != nil {
+			// No need for an error if the App hasn't been created yet
+			if !apierrors.IsNotFound(err) {
+				return nil, err
+			}
+		} else if existingVersion, ok := existingApp.GetAnnotations()[bundleVersionKey]; ok {
+			existingVersionSemver, err := bsemver.New(existingVersion)
+			if err == nil {
+				installedVersion = existingVersion
+				predicates = append(predicates, catalogfilter.HigherBundleVersion(existingVersionSemver))
+			}
+		}
+	}
+
 	resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(predicates...))
 
 	if len(resultSet) == 0 {
-		if versionRange != "" && channelName != "" {
-			return nil, fmt.Errorf("no package %q matching version %q found in channel %q", packageName, versionRange, channelName)
-		}
+		var versionError, channelError, existingVersionError string
 		if versionRange != "" {
-			return nil, fmt.Errorf("no package %q matching version %q found", packageName, versionRange)
+			versionError = fmt.Sprintf(" matching version %q", versionRange)
 		}
 		if channelName != "" {
-			return nil, fmt.Errorf("no package %q found in channel %q", packageName, channelName)
+			channelError = fmt.Sprintf(" in channel %q", channelName)
 		}
-		return nil, fmt.Errorf("no package %q found", packageName)
+		if installedVersion != "" {
+			existingVersionError = fmt.Sprintf(" which upgrades currently installed version %q", installedVersion)
+		}
+		return nil, fmt.Errorf("no package %q%s%s%s found", packageName, versionError, channelError, existingVersionError)
 	}
 
 	sort.SliceStable(resultSet, func(i, j int) bool {

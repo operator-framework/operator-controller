@@ -62,6 +62,53 @@ func TestInMastermindsSemverRange(t *testing.T) {
 	assert.False(t, f(b3))
 }
 
+func TestHigherBundleVersion(t *testing.T) {
+	b1 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+		Properties: []property.Property{
+			{
+				Type:  property.TypePackage,
+				Value: json.RawMessage(`{"packageName": "package1", "version": "1.0.0"}`),
+			},
+		},
+	}}
+	b2 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+		Properties: []property.Property{
+			{
+				Type:  property.TypePackage,
+				Value: json.RawMessage(`{"packageName": "package1", "version": "0.0.1"}`),
+			},
+		},
+	}}
+	b3 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+		Properties: []property.Property{
+			{
+				Type:  property.TypePackage,
+				Value: json.RawMessage(`{"packageName": "package1", "version": "2.0.0"}`),
+			},
+		},
+	}}
+	b4 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+		Properties: []property.Property{
+			{
+				Type:  property.TypePackage,
+				Value: json.RawMessage(`{"packageName": "package1", "version": "broken"}`),
+			},
+		},
+	}}
+	var nilVersion *bsemver.Version
+	version := bsemver.MustParse("1.0.0")
+
+	f := filter.HigherBundleVersion(&version)
+
+	assert.True(t, f(b1))
+	assert.False(t, f(b2))
+	assert.True(t, f(b3))
+	assert.False(t, f(b4))
+
+	nilFilter := filter.HigherBundleVersion(nilVersion)
+	assert.False(t, nilFilter(b1))
+}
+
 func TestInBlangSemverRange(t *testing.T) {
 	b1 := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
 		Properties: []property.Property{

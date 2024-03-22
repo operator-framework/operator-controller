@@ -7,16 +7,22 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	carvelv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/pkg/features"
+)
+
+const (
+	testServiceAccount = "test-sa"
 )
 
 // Describe: Extension Controller Test
@@ -88,6 +94,152 @@ func TestExtensionReconcile(t *testing.T) {
 
 			require.NoError(t, c.Get(ctx, extKey, ext))
 			tc.assert(t, res, err, ext)
+		})
+	}
+}
+
+func TestExtensionResolve(t *testing.T) {
+	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.EnableExtensionAPI, true)()
+	ctx := context.Background()
+
+	testCases := []struct {
+		name                    string
+		packageName             string
+		packageVersion          string
+		upgradeConstraintPolicy ocv1alpha1.UpgradeConstraintPolicy
+		wantErr                 error
+		existingApp             *carvelv1alpha1.App
+		assert                  func(*testing.T, ctrl.Result, client.Client, types.NamespacedName)
+	}{
+		{
+			name:           "basic install with specified version",
+			packageName:    "prometheus",
+			packageVersion: "0.37.0",
+			assert: func(t *testing.T, res ctrl.Result, c client.Client, extNN types.NamespacedName) {
+				ext := &ocv1alpha1.Extension{}
+				err := c.Get(ctx, extNN, ext)
+				assert.NoError(t, err)
+
+				assert.Equal(t, ctrl.Result{}, res)
+
+				condition := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeResolved)
+				assert.NotNil(t, condition)
+				assert.Equal(t, metav1.ConditionTrue, condition.Status)
+				assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"`, condition.Message)
+			},
+		},
+		{
+			name:           "existing App of same version",
+			packageName:    "prometheus",
+			packageVersion: "0.37.0",
+			existingApp: &carvelv1alpha1.App{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						"olm.bundle-version": "0.37.0",
+					},
+				},
+				Spec: carvelv1alpha1.AppSpec{},
+			},
+			assert: func(t *testing.T, res ctrl.Result, c client.Client, extNN types.NamespacedName) {
+				ext := &ocv1alpha1.Extension{}
+				err := c.Get(ctx, extNN, ext)
+				assert.NoError(t, err)
+
+				assert.Equal(t, ctrl.Result{}, res)
+
+				condition := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeResolved)
+				assert.NotNil(t, condition)
+				assert.Equal(t, metav1.ConditionTrue, condition.Status)
+				assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"`, condition.Message)
+			},
+		},
+		{
+			name:           "existing App of higher version than available",
+			packageName:    "prometheus",
+			packageVersion: "0.37.0",
+			existingApp: &carvelv1alpha1.App{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						"olm.bundle-version": "0.38.0",
+					},
+				},
+				Spec: carvelv1alpha1.AppSpec{},
+			},
+			wantErr: fmt.Errorf("no package \"prometheus\" matching version \"0.37.0\" which upgrades currently installed version \"0.38.0\" found"),
+			assert: func(t *testing.T, res ctrl.Result, c client.Client, extNN types.NamespacedName) {
+				ext := &ocv1alpha1.Extension{}
+				err := c.Get(ctx, extNN, ext)
+				assert.NoError(t, err)
+
+				assert.Equal(t, ctrl.Result{}, res)
+
+				condition := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeResolved)
+				assert.NotNil(t, condition)
+				assert.Equal(t, metav1.ConditionFalse, condition.Status)
+				assert.Equal(t, `no package "prometheus" matching version "0.37.0" which upgrades currently installed version "0.38.0" found`, condition.Message)
+			},
+		},
+		{
+			name:                    "downgrade with UpgradeConstraintPolicy of 'Ignore'",
+			packageName:             "prometheus",
+			packageVersion:          "0.37.0",
+			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyIgnore,
+			existingApp: &carvelv1alpha1.App{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						"olm.bundle-version": "0.38.0",
+					},
+				},
+				Spec: carvelv1alpha1.AppSpec{},
+			},
+			assert: func(t *testing.T, res ctrl.Result, c client.Client, extNN types.NamespacedName) {
+				ext := &ocv1alpha1.Extension{}
+				err := c.Get(ctx, extNN, ext)
+				assert.NoError(t, err)
+
+				assert.Equal(t, ctrl.Result{}, res)
+
+				condition := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeResolved)
+				assert.NotNil(t, condition)
+				assert.Equal(t, metav1.ConditionTrue, condition.Status)
+				assert.Equal(t, `resolved to "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35"`, condition.Message)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			c, reconciler := newClientAndExtensionReconciler(t)
+			extName := fmt.Sprintf("extension-test-%s", rand.String(8))
+			ext := &ocv1alpha1.Extension{
+				ObjectMeta: metav1.ObjectMeta{Name: extName, Namespace: "default"},
+				Spec: ocv1alpha1.ExtensionSpec{
+					ServiceAccountName: testServiceAccount,
+					Source: ocv1alpha1.ExtensionSource{
+						SourceType: ocv1alpha1.SourceTypePackage,
+						Package: &ocv1alpha1.ExtensionSourcePackage{
+							Name:                    tc.packageName,
+							Version:                 tc.packageVersion,
+							UpgradeConstraintPolicy: tc.upgradeConstraintPolicy,
+						},
+					},
+				},
+			}
+			if tc.existingApp != nil {
+				tc.existingApp.Name = extName
+				require.NoError(t, c.Create(ctx, tc.existingApp))
+			}
+
+			require.NoError(t, c.Create(ctx, ext))
+			extNN := types.NamespacedName{Name: ext.GetName(), Namespace: ext.GetNamespace()}
+
+			res, reconcileErr := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extNN})
+			assert.Equal(t, reconcileErr, tc.wantErr)
+
+			tc.assert(t, res, c, extNN)
 		})
 	}
 }
