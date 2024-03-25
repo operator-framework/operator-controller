@@ -127,14 +127,14 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	if !features.OperatorControllerFeatureGate.Enabled(features.EnableExtensionAPI) {
 		l.Info("extension feature is gated", "name", ext.GetName(), "namespace", ext.GetNamespace())
 
-		// Set the TypeInstalled condition to Unknown to indicate that the resolution
+		// Set the TypeInstalled condition to Failed to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
 		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "extension feature is disabled", ext.GetGeneration())
-		// Set the TypeResolved condition to Unknown to indicate that the resolution
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, "extension feature is disabled", ext.GetGeneration())
+		// Set the TypeResolved condition to Failed to indicate that the resolution
 		// hasn't been attempted yet, due to the spec being invalid.
 		ext.Status.ResolvedBundle = nil
-		setResolvedStatusConditionUnknown(&ext.Status.Conditions, "extension feature is disabled", ext.GetGeneration())
+		setResolvedStatusConditionFailed(&ext.Status.Conditions, "extension feature is disabled", ext.GetGeneration())
 
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "extension feature is disabled", ext.GetGeneration())
 		return ctrl.Result{}, nil
@@ -150,8 +150,10 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	// TODO: Improve the resolution logic.
 	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as resolution failed", ext.GetGeneration())
+		if c := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeInstalled); c == nil {
+			ext.Status.InstalledBundle = nil
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, "installation has not been attempted as resolution failed", ext.GetGeneration())
+		}
 		ext.Status.ResolvedBundle = nil
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as resolution failed", ext.GetGeneration())
@@ -162,28 +164,39 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
 	setResolvedStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), ext.GetGeneration())
 
+	// Populate the deprecation status using the resolved bundle
+	SetDeprecationStatusInExtension(ext, bundle)
+
 	mediaType, err := bundle.MediaType()
 	if err != nil {
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
+		if c := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeInstalled); c == nil {
+			ext.Status.InstalledBundle = nil
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("failed to read bundle mediaType: %v", err), ext.GetGeneration())
+		}
+		setProgressingStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("failed to read bundle mediaType: %v", err), ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
 	// TODO: this needs to include the registryV1 bundle option. As of this PR, this only supports direct
 	// installation of a set of manifests.
 	if mediaType != catalogmetadata.MediaTypePlain {
-		// Set the TypeInstalled condition to Unknown to indicate that the resolution
-		// hasn't been attempted yet, due to the spec being invalid.
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, fmt.Sprintf("bundle type %s not supported currently", mediaType), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
+		if c := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeInstalled); c == nil {
+			// Set the TypeInstalled condition to Failed to indicate that the resolution
+			// hasn't been attempted yet, due to the spec being invalid.
+			ext.Status.InstalledBundle = nil
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("bundle type %s not supported currently", mediaType), ext.GetGeneration())
+		}
+		setProgressingStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("bundle type %s not supported currently", mediaType), ext.GetGeneration())
 		return ctrl.Result{}, nil
 	}
 
 	app, err := r.GenerateExpectedApp(*ext, bundle)
 	if err != nil {
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
+		if c := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeInstalled); c == nil {
+			ext.Status.InstalledBundle = nil
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		}
+		setProgressingStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -191,6 +204,7 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 		// originally Reason: ocv1alpha1.ReasonInstallationFailed
 		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setProgressingStatusConditionProgressing(&ext.Status.Conditions, "installation failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -199,14 +213,16 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(app.UnstructuredContent(), existingTypedApp); err != nil {
 		// originally Reason: ocv1alpha1.ReasonInstallationStatusUnknown
 		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setProgressingStatusConditionProgressing(&ext.Status.Conditions, "installation failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
-	version, _ := bundle.Version()
-	MapAppStatusToCondition(existingTypedApp, ext, &ocv1alpha1.BundleMetadata{Name: bundle.Name, Version: fmt.Sprintf("%v", version)})
-	SetDeprecationStatusInExtension(ext, bundle)
+	ext.Status.InstalledBundle = bundleMetadataFor(bundle)
+	setInstalledStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("successfully installed %v", ext.Status.InstalledBundle), ext.GetGeneration())
+
+	// TODO: add conditions to determine extension health
+	mapAppStatusToCondition(existingTypedApp, ext)
 
 	return ctrl.Result{}, nil
 }
@@ -230,63 +246,36 @@ func (r *ExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // mapAppStatusToCondition maps the reconciling/deleting App conditions to the installed/deleting conditions on the Extension.
-func MapAppStatusToCondition(existingApp *kappctrlv1alpha1.App, ext *ocv1alpha1.Extension, bundle *ocv1alpha1.BundleMetadata) {
-	if ext == nil {
+func mapAppStatusToCondition(existingApp *kappctrlv1alpha1.App, ext *ocv1alpha1.Extension) {
+	// Note: App.Status.Inspect errors are never surfaced to App conditions, so are currently ignored when determining App status.
+	if ext == nil || existingApp == nil {
 		return
 	}
-	message := "install status unknown"
-	ext.Status.InstalledBundle = nil
-
-	if existingApp == nil {
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, message, ext.Generation)
-		return
-	}
-	message = existingApp.Status.FriendlyDescription
-	if strings.Contains(message, "Error (see .status.usefulErrorMessage for details)") || len(message) == 0 {
+	message := existingApp.Status.FriendlyDescription
+	if len(message) == 0 || strings.Contains(message, "Error (see .status.usefulErrorMessage for details)") {
 		message = existingApp.Status.UsefulErrorMessage
 	}
 
-	orderedAppStatuses := []kappctrlv1alpha1.ConditionType{
-		kappctrlv1alpha1.DeleteFailed,
-		kappctrlv1alpha1.Deleting,
-		kappctrlv1alpha1.ReconcileSucceeded,
-		kappctrlv1alpha1.ReconcileFailed,
-		kappctrlv1alpha1.Reconciling,
-	}
 	appStatusMapFn := map[kappctrlv1alpha1.ConditionType]func(*[]metav1.Condition, string, int64){
-		kappctrlv1alpha1.DeleteFailed:       setInstalledStatusConditionDeleteFailed,
-		kappctrlv1alpha1.Deleting:           setInstalledStatusConditionDeleting,
-		kappctrlv1alpha1.ReconcileSucceeded: setInstalledStatusConditionSuccess,
-		kappctrlv1alpha1.ReconcileFailed:    setInstalledStatusConditionFailed,
-		kappctrlv1alpha1.Reconciling:        setInstalledStatusConditionUnknown,
+		kappctrlv1alpha1.Deleting:           setProgressingStatusConditionProgressing,
+		kappctrlv1alpha1.Reconciling:        setProgressingStatusConditionProgressing,
+		kappctrlv1alpha1.DeleteFailed:       setProgressingStatusConditionFailed,
+		kappctrlv1alpha1.ReconcileFailed:    setProgressingStatusConditionFailed,
+		kappctrlv1alpha1.ReconcileSucceeded: setProgressingStatusConditionSuccess,
 	}
-	for _, cond := range orderedAppStatuses {
+	for cond := range appStatusMapFn {
 		if c := findStatusCondition(existingApp.Status.GenericStatus.Conditions, cond); c != nil && c.Status == corev1.ConditionTrue {
 			if len(message) == 0 {
 				message = c.Message
 			}
-			if c.Type == kappctrlv1alpha1.ReconcileSucceeded {
-				ext.Status.InstalledBundle = bundle
-			}
-			appStatusMapFn[cond](&ext.Status.Conditions, message, ext.Generation)
+			appStatusMapFn[cond](&ext.Status.Conditions, fmt.Sprintf("App %s: %s", c.Type, message), ext.Generation)
 			return
 		}
 	}
 	if len(message) == 0 {
-		message = "install status unknown"
+		message = "waiting for app"
 	}
-	setInstalledStatusConditionUnknown(&ext.Status.Conditions, message, ext.Generation)
-}
-
-// findStatusCondition finds the conditionType in conditions.
-// TODO: suggest using upstream conditions to Carvel.
-func findStatusCondition(conditions []kappctrlv1alpha1.Condition, conditionType kappctrlv1alpha1.ConditionType) *kappctrlv1alpha1.Condition {
-	for i := range conditions {
-		if conditions[i].Type == conditionType {
-			return &conditions[i]
-		}
-	}
-	return nil
+	setProgressingStatusConditionProgressing(&ext.Status.Conditions, message, ext.Generation)
 }
 
 // setDeprecationStatus will set the appropriate deprecation statuses for a Extension
@@ -369,6 +358,17 @@ func SetDeprecationStatusInExtension(ext *ocv1alpha1.Extension, bundle *catalogm
 			ObservedGeneration: ext.Generation,
 		})
 	}
+}
+
+// findStatusCondition finds the conditionType in conditions.
+// TODO: suggest using upstream conditions to Carvel.
+func findStatusCondition(conditions []kappctrlv1alpha1.Condition, conditionType kappctrlv1alpha1.ConditionType) *kappctrlv1alpha1.Condition {
+	for i := range conditions {
+		if conditions[i].Type == conditionType {
+			return &conditions[i]
+		}
+	}
+	return nil
 }
 
 func (r *ExtensionReconciler) ensureApp(ctx context.Context, desiredApp *unstructured.Unstructured) error {

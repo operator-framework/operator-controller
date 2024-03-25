@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -133,6 +134,25 @@ type ExtensionList struct {
 	Items           []Extension `json:"items"`
 }
 
+const (
+	// TypeProgressing indicates whether operator-controller is
+	// reconciling, installing, updating or deleting an extension.
+	TypeProgressing = "Progressing"
+
+	ReasonProgressing                = "Progressing"
+	ReasonFailedToReachDesiredIntent = "FailedToReachDesiredIntent"
+	ReasonReachedDesiredIntent       = "ReachedDesiredIntent"
+)
+
 func init() {
 	SchemeBuilder.Register(&Extension{}, &ExtensionList{})
+
+	conditionsets.ExtensionConditionTypes = []string{
+		TypeProgressing,
+	}
+	conditionsets.ExtensionConditionReasons = []string{
+		ReasonProgressing,
+		ReasonFailedToReachDesiredIntent,
+		ReasonReachedDesiredIntent,
+	}
 }
