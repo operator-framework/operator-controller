@@ -117,11 +117,10 @@ func verifyExtensionConditionsInvariants(t *testing.T, ext *ocv1alpha1.Extension
 
 func TestMapAppCondtitionToStatus(t *testing.T) {
 	testCases := []struct {
-		name        string
-		app         *kappctrlv1alpha1.App
-		ext         *ocv1alpha1.Extension
-		bundleImage string
-		expected    *ocv1alpha1.Extension
+		name     string
+		app      *kappctrlv1alpha1.App
+		ext      *ocv1alpha1.Extension
+		expected *ocv1alpha1.Extension
 	}{
 		{
 			name: "preserve existing conditions on extension while reconciling",
@@ -173,88 +172,6 @@ func TestMapAppCondtitionToStatus(t *testing.T) {
 							Reason:             ocv1alpha1.ReasonInstallationStatusUnknown,
 							Message:            "Paused/Cancelled",
 							ObservedGeneration: 1,
-						},
-					},
-				},
-			},
-		},
-
-		{
-			name:        "update installedBundleResource on successful reconcile",
-			bundleImage: "test-bundle",
-			app: &kappctrlv1alpha1.App{
-				Status: kappctrlv1alpha1.AppStatus{
-					GenericStatus: kappctrlv1alpha1.GenericStatus{
-						Conditions: []kappctrlv1alpha1.Condition{{
-							Type:   kappctrlv1alpha1.ReconcileSucceeded,
-							Status: corev1.ConditionTrue,
-							//							Reason:  "",
-							Message: "Reconcile Succeeded",
-						}},
-					},
-				},
-			},
-			ext: &ocv1alpha1.Extension{
-				Status: ocv1alpha1.ExtensionStatus{
-					Conditions: []metav1.Condition{
-						{
-							Type:   ocv1alpha1.TypeInstalled,
-							Status: metav1.ConditionUnknown,
-							Reason: ocv1alpha1.ReasonInstallationStatusUnknown,
-						},
-					},
-				},
-			},
-			expected: &ocv1alpha1.Extension{
-				Status: ocv1alpha1.ExtensionStatus{
-					InstalledBundleResource: "test-bundle",
-					Conditions: []metav1.Condition{
-						{
-							Type:    ocv1alpha1.TypeInstalled,
-							Status:  metav1.ConditionTrue,
-							Reason:  ocv1alpha1.ReasonSuccess,
-							Message: "Reconcile Succeeded",
-						},
-					},
-				},
-			},
-		},
-		{
-			name:        "remove installedBundleResource when not successful reconcile",
-			bundleImage: "test-bundle",
-			app: &kappctrlv1alpha1.App{
-				Status: kappctrlv1alpha1.AppStatus{
-					GenericStatus: kappctrlv1alpha1.GenericStatus{
-						Conditions: []kappctrlv1alpha1.Condition{{
-							Type:    kappctrlv1alpha1.Reconciling,
-							Status:  corev1.ConditionTrue,
-							Message: "Reconciling",
-						}},
-						FriendlyDescription: "Reconciling",
-					},
-				},
-			},
-			ext: &ocv1alpha1.Extension{
-				Status: ocv1alpha1.ExtensionStatus{
-					InstalledBundleResource: "test-bundle",
-					Conditions: []metav1.Condition{
-						{
-							Type:    ocv1alpha1.TypeInstalled,
-							Status:  metav1.ConditionTrue,
-							Reason:  ocv1alpha1.ReasonSuccess,
-							Message: "Success",
-						},
-					},
-				},
-			},
-			expected: &ocv1alpha1.Extension{
-				Status: ocv1alpha1.ExtensionStatus{
-					Conditions: []metav1.Condition{
-						{
-							Type:    ocv1alpha1.TypeInstalled,
-							Status:  metav1.ConditionUnknown,
-							Reason:  ocv1alpha1.ReasonInstallationStatusUnknown,
-							Message: "Reconciling",
 						},
 					},
 				},
@@ -408,7 +325,7 @@ func TestMapAppCondtitionToStatus(t *testing.T) {
 	}
 
 	for _, tt := range testCases {
-		controllers.MapAppStatusToCondition(tt.app, tt.ext, tt.bundleImage)
+		controllers.MapAppStatusToCondition(tt.app, tt.ext)
 		for i := range tt.ext.Status.Conditions {
 			//unset transition time for comparison
 			tt.ext.Status.Conditions[i].LastTransitionTime = metav1.Time{}
