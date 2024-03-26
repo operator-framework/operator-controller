@@ -58,7 +58,7 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet -tags '$(GO_BUILD_TAGS)' ./...
 
-.PHONY: test
+.PHONY: test-unit
 test-unit: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
 	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION)) && go test $(shell go list ./... | grep -v /test/e2e) -coverprofile cover.out
 
