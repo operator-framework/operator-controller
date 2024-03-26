@@ -1,0 +1,1608 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.15">
+    
+    
+      
+        <title>Coast-to-coast Demo for Q4 2023 - Operator Controller documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e359304.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#coast-to-coast-demo-for-q4-2023" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Operator Controller documentation" class="md-header__button md-logo" aria-label="Operator Controller documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Operator Controller documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Coast-to-coast Demo for Q4 2023
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/operator-framework/operator-controller" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Operator Controller documentation" class="md-nav__button md-logo" aria-label="Operator Controller documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Operator Controller documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/operator-framework/operator-controller" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../components/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Components
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tasks
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Tasks
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Tasks/adding-a-catalog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adding a catalog of extensions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Tasks/explore-available-packages/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Finding extensions to install
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Tasks/installing-an-extension/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installing an extension
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Tasks/uninstall-an-extension/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deleting an extension
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    References
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            References
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../refs/catalog-queries/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Catalog queries
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prerequisites
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prepare-for-takeoff" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prepare for takeoff
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prepare for takeoff">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-an-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create an extension
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#build-the-extension-and-bundle-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Build the extension and bundle images
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-an-initial-file-based-catalog-fbc-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create an initial File-Based Catalog (FBC) Image
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-catalog-resource" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Catalog Resource
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#only-installupgrade-to-v10z-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Only install/upgrade to v1.0.z releases
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Only install/upgrade to v1.0.z releases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#update-the-fbc-image-to-contain-a-bundle-for-v100" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update the FBC Image to contain a bundle for v1.0.0
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-the-fbc-image-to-contain-a-bundle-for-v110" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update the FBC Image to contain a bundle for v1.1.0
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-the-fbc-image-to-contain-a-bundle-for-v101" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update the FBC Image to contain a bundle for v1.0.1
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#change-version-range-to-pin-installsupgrades-to-v11z-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Change version range to pin installs/upgrades to v1.1.z releases
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attempting-a-major-version-upgrade-by-changing-the-version-range" class="md-nav__link">
+    <span class="md-ellipsis">
+      Attempting a major version upgrade by changing the version range
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Attempting a major version upgrade by changing the version range">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#update-the-fbc-image-to-contain-a-bundle-for-v200" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update the FBC Image to contain a bundle for v2.0.0
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#to-the-escape-hatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      To the escape hatch!
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#attempting-to-downgrade-by-changing-the-version-range" class="md-nav__link">
+    <span class="md-ellipsis">
+      Attempting to downgrade by changing the version range
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#back-to-the-escape-hatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Back to the escape hatch!
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="coast-to-coast-demo-for-q4-2023">Coast-to-coast Demo for Q4 2023</h1>
+<p>This coast-to-coast demo highlights some of the new features introduced to OLMv1 in Q4 of 2023.</p>
+<p>New Features:
+- <code>Catalog</code> polling
+- Version range support on the <code>spec.version</code> field for <code>ClusterExtension</code> resources
+- Semver upgrade constraint policy
+- <code>BundleDeployment</code> health status</p>
+<p>This document will go through an example that highlights each of these new features. Each step will be documented as if you are following along and will be done sequentially. This document will also use some values specific to this example and in your own projects should be replaced to use a different value.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>A running Kubernetes cluster where you have admin privileges</li>
+<li><code>operator-sdk</code> installed<ul>
+<li>Installation instructions can be found at https://sdk.operatorframework.io/docs/installation/</li>
+</ul>
+</li>
+<li><code>kubectl</code> installed<ul>
+<li>Installation instructions can be found at https://kubernetes.io/docs/tasks/tools/</li>
+</ul>
+</li>
+<li>A container runtime of your choice, in this demo we will be using <code>docker</code></li>
+<li>Install <code>operator-controller</code> v0.8.0 <ul>
+<li>Installation instructions can be found at https://github.com/operator-framework/operator-controller/releases/tag/v0.8.0</li>
+</ul>
+</li>
+<li><code>kustomize</code> installed<ul>
+<li>Installation instructions can be found at https://kubectl.docs.kubernetes.io/installation/kustomize/</li>
+</ul>
+</li>
+<li><code>yq</code> installed<ul>
+<li>Installation instructions can be found at https://github.com/mikefarah/yq/#install</li>
+</ul>
+</li>
+</ul>
+<h2 id="prepare-for-takeoff">Prepare for takeoff</h2>
+<p>Before we can start exploring the new features we need to do some preparation by creating a new
+extension and building a few different versions.</p>
+<h3 id="create-an-extension">Create an extension</h3>
+<blockquote>
+<p>[!NOTE]
+In this demo, we aren't going to make the extension do anything.</p>
+</blockquote>
+<p>We will create a new extension using the <code>operator-sdk</code>.</p>
+<ul>
+<li>
+<p>Create a new directory for the project and <code>cd</code> into it:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>mkdir<span class="w"> </span>coastal<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>coastal
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Initialize the project:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>operator-sdk<span class="w"> </span>init<span class="w"> </span>--domain<span class="w"> </span>coastal.operatorframework.io
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Create a new API:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>operator-sdk<span class="w"> </span>create<span class="w"> </span>api<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>--group<span class="w"> </span>coastal.operatorframework.io<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>--version<span class="w"> </span>v1alpha1<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>--kind<span class="w"> </span>Coast<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span>--resource<span class="w"> </span>--controller
+</span></code></pre></div></p>
+</li>
+</ul>
+<h3 id="build-the-extension-and-bundle-images">Build the extension and bundle images</h3>
+<p>For this demo we are going to build a several different versions of this extension:
+- <code>v1.0.0-alpha1</code>
+- <code>v1.0.0</code>
+- <code>v1.0.1</code>
+- <code>v1.1.0</code>
+- <code>v2.0.0</code></p>
+<p>Initial setup:
+- Create the <code>manifests/</code> directory for building the plain bundle
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="w">  </span>mkdir<span class="w"> </span>-p<span class="w"> </span>manifests
+</span></code></pre></div></p>
+<ul>
+<li>Create a Dockerfile for the plain bundle image
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>cat<span class="w"> </span><span class="s">&lt;&lt; EOF &gt; plainbundle.Dockerfile</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="s">FROM scratch</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="s">ADD manifests /manifests</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s">EOF</span>
+</span></code></pre></div></li>
+</ul>
+<p>For each of the versions above, perform the following actions:
+- Generate the manifests
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="w">  </span>make<span class="w"> </span>generate<span class="w"> </span>manifests
+</span></code></pre></div></p>
+<ul>
+<li>
+<p>Build the controller image
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="w">  </span>make<span class="w"> </span>docker-build<span class="w"> </span><span class="nv">IMG</span><span class="o">=</span><span class="s2">&quot;quay.io/operator-framework/coastal:{VERSION}&quot;</span>
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Populate the <code>manifests/</code> directory for building the plain bundle
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="w">  </span>kustomize<span class="w"> </span>build<span class="w"> </span>config/default<span class="w"> </span>&gt;<span class="w"> </span>manifests/manifests.yaml
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Build the plain bundle image
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>quay.io/operator-framework/coastal-bundle:<span class="o">{</span>VERSION<span class="o">}</span><span class="w"> </span>-f<span class="w"> </span>plainbundle.Dockerfile<span class="w"> </span>.
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Push the controller image and plain bundle image
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>docker<span class="w"> </span>push<span class="w"> </span>quay.io/operator-framework/coastal:<span class="o">{</span>VERSION<span class="o">}</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>docker<span class="w"> </span>push<span class="w"> </span>quay.io/operator-framework/coastal-bundle:<span class="o">{</span>VERSION<span class="o">}</span>
+</span></code></pre></div></p>
+</li>
+</ul>
+<p>A handy little script to run all these steps for you:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="ch">#!/usr/bin/env bash</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">set</span><span class="w"> </span>-e
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>manifests
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>cat<span class="w"> </span><span class="s">&lt;&lt; EOF &gt; plainbundle.Dockerfile</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="s">FROM scratch</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="s">ADD manifests /manifests</span>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="s">EOF</span>
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="nv">versions</span><span class="o">=(</span><span class="w"> </span>v1.0.0-alpha1<span class="w"> </span>v1.0.0<span class="w"> </span>v1.0.1<span class="w"> </span>v1.1.0<span class="w"> </span>v2.0.0<span class="w"> </span><span class="o">)</span>
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="k">for</span><span class="w"> </span>version<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">versions</span><span class="p">[@]</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="k">do</span>
+</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">  </span>make<span class="w"> </span>generate<span class="w"> </span>manifests
+</span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">  </span>make<span class="w"> </span>docker-build<span class="w"> </span><span class="nv">IMG</span><span class="o">=</span><span class="s2">&quot;quay.io/operator-framework/coastal:</span><span class="si">${</span><span class="nv">version</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="__span-10-16"><a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">  </span>mkdir<span class="w"> </span>-p<span class="w"> </span>manifests
+</span><span id="__span-10-17"><a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">  </span>kustomize<span class="w"> </span>build<span class="w"> </span>config/default<span class="w"> </span>&gt;<span class="w"> </span>manifests/manifests.yaml
+</span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">  </span>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span><span class="s2">&quot;quay.io/operator-framework/coastal-bundle:</span><span class="si">${</span><span class="nv">version</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span>-f<span class="w"> </span>plainbundle.Dockerfile<span class="w"> </span>.
+</span><span id="__span-10-19"><a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="w">  </span>docker<span class="w"> </span>push<span class="w"> </span><span class="s2">&quot;quay.io/operator-framework/coastal:</span><span class="si">${</span><span class="nv">version</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="w">  </span>docker<span class="w"> </span>push<span class="w"> </span><span class="s2">&quot;quay.io/operator-framework/coastal-bundle:</span><span class="si">${</span><span class="nv">version</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="k">done</span>
+</span></code></pre></div></p>
+<h3 id="create-an-initial-file-based-catalog-fbc-image">Create an initial File-Based Catalog (FBC) Image</h3>
+<p>Now we need to build and push an initial File-Based Catalog (FBC) image containing
+our bundles. To help highlight the new polling functionality, we will generate a catalog containing
+only the <code>v1.0.0-alpha1</code> bundle and we will mimic active development by incrementally updating the catalog
+image to include more of our bundles.</p>
+<ul>
+<li>
+<p>Create a <code>catalog/</code> directory
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>mkdir<span class="w"> </span>catalog
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Create a Dockerfile for the catalog image
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>cat<span class="w"> </span><span class="s">&lt;&lt; EOF &gt; catalog.Dockerfile</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="s">FROM scratch</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="s">ADD catalog /configs</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="s">LABEL operators.operatorframework.io.index.configs.v1=/configs</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="s">EOF</span>
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Create the FBC YAML file
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>cat<span class="w"> </span><span class="s">&lt;&lt; EOF &gt; catalog/index.yaml</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="s">schema: olm.package</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="s">name: coastal</span>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="s">---</span>
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="s">schema: olm.bundle</span>
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="s">name: coastal.v1.0.0-alpha1</span>
+</span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="s">package: coastal</span>
+</span><span id="__span-13-8"><a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="s">image: quay.io/operator-framework/coastal-bundle:v1.0.0-alpha1</span>
+</span><span id="__span-13-9"><a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="s">properties:</span>
+</span><span id="__span-13-10"><a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="s">  - type: olm.package</span>
+</span><span id="__span-13-11"><a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="s">    value:</span>
+</span><span id="__span-13-12"><a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="s">      packageName: coastal</span>
+</span><span id="__span-13-13"><a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="s">      version: 1.0.0-alpha1</span>
+</span><span id="__span-13-14"><a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="s">  - type: olm.bundle.mediatype</span>
+</span><span id="__span-13-15"><a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="s">    value: plain+v0</span>
+</span><span id="__span-13-16"><a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="s">---</span>
+</span><span id="__span-13-17"><a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="s">schema: olm.channel</span>
+</span><span id="__span-13-18"><a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="s">name: stable</span>
+</span><span id="__span-13-19"><a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="s">package: coastal</span>
+</span><span id="__span-13-20"><a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="s">entries:</span>
+</span><span id="__span-13-21"><a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="s">  - name: coastal.v1.0.0-alpha1</span>
+</span><span id="__span-13-22"><a id="__codelineno-13-22" name="__codelineno-13-22" href="#__codelineno-13-22"></a><span class="s">EOF</span>
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Build and push the catalog image
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>quay.io/operator-framework/coastal-catalog:latest<span class="w"> </span>-f<span class="w"> </span>catalog.Dockerfile<span class="w"> </span>.<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>docker<span class="w"> </span>push<span class="w"> </span>quay.io/operator-framework/coastal-catalog:latest
+</span></code></pre></div></p>
+</li>
+</ul>
+<h3 id="create-a-catalog-resource">Create a <code>Catalog</code> Resource</h3>
+<p>Create a <code>Catalog</code> resource that references the catalog image we built
+in the previous step and specify a polling interval of 15 seconds. This will make sure that the updates
+we make to the catalog image are reflected on our cluster relatively quickly.</p>
+<ul>
+<li>Create the <code>Catalog</code> resource:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="s">apiVersion: catalogd.operatorframework.io/v1alpha1</span>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="s">kind: Catalog</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="s">metadata:</span>
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="s">  name: coastal</span>
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="s">spec:</span>
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="s">  source:</span>
+</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="s">    type: image</span>
+</span><span id="__span-15-9"><a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="s">    image:</span>
+</span><span id="__span-15-10"><a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="s">      ref: quay.io/operator-framework/coastal-catalog:latest</span>
+</span><span id="__span-15-11"><a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="s">      pollInterval: 15s</span>
+</span><span id="__span-15-12"><a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="s">EOF</span>
+</span></code></pre></div></li>
+</ul>
+<h2 id="only-installupgrade-to-v10z-releases">Only install/upgrade to <code>v1.0.z</code> releases</h2>
+<p>In this section we are going to create a <code>ClusterExtension</code> resource that attempts to install our extension
+with a version range of <code>1.0.x</code>. This version range ensures we only install z-stream releases for <code>v1.0</code>
+excluding pre-release versions.</p>
+<ul>
+<li>Create the <code>ClusterExtension</code> resource:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="s">apiVersion: olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="s">kind: ClusterExtension</span>
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="s">metadata:</span>
+</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="s">  name: coastal</span>
+</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="s">spec:</span>
+</span><span id="__span-16-7"><a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="s">  packageName: coastal</span>
+</span><span id="__span-16-8"><a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="s">  version: 1.0.x</span>
+</span><span id="__span-16-9"><a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="s">EOF</span>
+</span></code></pre></div></li>
+</ul>
+<p>We should see the <code>ClusterExtension</code> resource eventually has a failed resolution status. Verify this with:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clusterextension/coastal<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span>-w
+</span></code></pre></div></p>
+<details>
+<summary>Example</summary>
+
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterExtension</span>
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span><span class="nt">kubectl.kubernetes.io/last-applied-configuration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-18-6"><a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">      </span><span class="no">{&quot;apiVersion&quot;:&quot;olm.operatorframework.io/v1alpha1&quot;,&quot;kind&quot;:&quot;ClusterExtension&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;coastal&quot;},&quot;spec&quot;:{&quot;packageName&quot;:&quot;coastal&quot;,&quot;version&quot;:&quot;1.0.x&quot;}}</span>
+</span><span id="__span-18-7"><a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">  </span><span class="nt">creationTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:29:18Z&quot;</span>
+</span><span id="__span-18-8"><a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">  </span><span class="nt">generation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-18-9"><a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-18-10"><a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2983&quot;</span>
+</span><span id="__span-18-11"><a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">  </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">48d16240-edae-4904-bad8-58137bebcf8a</span>
+</span><span id="__span-18-12"><a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-18-13"><a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="w">  </span><span class="nt">packageName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-18-14"><a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="w">  </span><span class="nt">upgradeConstraintPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Enforce</span>
+</span><span id="__span-18-15"><a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0.x</span>
+</span><span id="__span-18-16"><a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a><span class="nt">status</span><span class="p">:</span>
+</span><span id="__span-18-17"><a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a><span class="w">  </span><span class="nt">conditions</span><span class="p">:</span>
+</span><span id="__span-18-18"><a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:29:18Z&quot;</span>
+</span><span id="__span-18-19"><a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">installation has not been attempted as resolution failed</span>
+</span><span id="__span-18-20"><a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-18-21"><a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">InstallationStatusUnknown</span>
+</span><span id="__span-18-22"><a id="__codelineno-18-22" name="__codelineno-18-22" href="#__codelineno-18-22"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Unknown</span>
+</span><span id="__span-18-23"><a id="__codelineno-18-23" name="__codelineno-18-23" href="#__codelineno-18-23"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Installed</span>
+</span><span id="__span-18-24"><a id="__codelineno-18-24" name="__codelineno-18-24" href="#__codelineno-18-24"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:29:18Z&quot;</span>
+</span><span id="__span-18-25"><a id="__codelineno-18-25" name="__codelineno-18-25" href="#__codelineno-18-25"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">no package &quot;coastal&quot; matching version &quot;1.0.x&quot; found</span>
+</span><span id="__span-18-26"><a id="__codelineno-18-26" name="__codelineno-18-26" href="#__codelineno-18-26"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-18-27"><a id="__codelineno-18-27" name="__codelineno-18-27" href="#__codelineno-18-27"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ResolutionFailed</span>
+</span><span id="__span-18-28"><a id="__codelineno-18-28" name="__codelineno-18-28" href="#__codelineno-18-28"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;False&quot;</span>
+</span><span id="__span-18-29"><a id="__codelineno-18-29" name="__codelineno-18-29" href="#__codelineno-18-29"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Resolved</span>
+</span></code></pre></div>
+
+</details>
+
+<blockquote>
+<p>[!NOTE]
+The above command establishes a watch on the <code>ClusterExtension</code> resource and blocks. Once you are done verifying
+the resolution status you can exit the command with <code>ctrl+c</code></p>
+</blockquote>
+<h3 id="update-the-fbc-image-to-contain-a-bundle-for-v100">Update the FBC Image to contain a bundle for <code>v1.0.0</code></h3>
+<p>To highlight both the polling functionality and the version range constraints, let's add the <code>v1.0.0</code> bundle
+of our extension to the catalog image we created in the preparation steps and push the changes.</p>
+<ul>
+<li>
+<p>Add the new bundle to the catalog YAML file
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>cat<span class="w"> </span><span class="s">&lt;&lt; EOF &gt;&gt; catalog/index.yaml</span>
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="s">---</span>
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="s">schema: olm.bundle</span>
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="s">name: coastal.v1.0.0</span>
+</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="s">package: coastal</span>
+</span><span id="__span-19-6"><a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="s">image: quay.io/operator-framework/coastal-bundle:v1.0.0</span>
+</span><span id="__span-19-7"><a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="s">properties:</span>
+</span><span id="__span-19-8"><a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="s">  - type: olm.package</span>
+</span><span id="__span-19-9"><a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="s">    value:</span>
+</span><span id="__span-19-10"><a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="s">      packageName: coastal</span>
+</span><span id="__span-19-11"><a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="s">      version: 1.0.0</span>
+</span><span id="__span-19-12"><a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="s">  - type: olm.bundle.mediatype</span>
+</span><span id="__span-19-13"><a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="s">    value: plain+v0</span>
+</span><span id="__span-19-14"><a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a><span class="s">EOF</span>
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Using <code>yq</code>, update the channel to include this bundle as an entry
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>yq<span class="w"> </span><span class="nb">eval</span><span class="w"> </span><span class="s1">&#39;select(.schema==&quot;olm.channel&quot; and .name == &quot;stable&quot;).entries += [{&quot;name&quot; : &quot;coastal.v1.0.0&quot;}]&#39;</span><span class="w"> </span>-i<span class="w"> </span>catalog/index.yaml
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Build and push the catalog image
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>quay.io/operator-framework/coastal-catalog:latest<span class="w"> </span>-f<span class="w"> </span>catalog.Dockerfile<span class="w"> </span>.<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>docker<span class="w"> </span>push<span class="w"> </span>quay.io/operator-framework/coastal-catalog:latest
+</span></code></pre></div></p>
+</li>
+</ul>
+<p>Shortly, we should see that the <code>Catalog</code> resource updates to have a new resolved reference and the <code>ClusterExtension</code> resource we created previously is successfully installed. </p>
+<p>Verify this for the <code>ClusterExtension</code> with:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clusterextension/coastal<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span>-w
+</span></code></pre></div></p>
+<details>
+<summary>Example</summary>
+
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterExtension</span>
+</span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-23-4"><a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+</span><span id="__span-23-5"><a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">    </span><span class="nt">kubectl.kubernetes.io/last-applied-configuration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-23-6"><a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="w">      </span><span class="no">{&quot;apiVersion&quot;:&quot;olm.operatorframework.io/v1alpha1&quot;,&quot;kind&quot;:&quot;ClusterExtension&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;coastal&quot;},&quot;spec&quot;:{&quot;packageName&quot;:&quot;coastal&quot;,&quot;version&quot;:&quot;1.0.x&quot;}}</span>
+</span><span id="__span-23-7"><a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="w">  </span><span class="nt">creationTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:29:18Z&quot;</span>
+</span><span id="__span-23-8"><a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="w">  </span><span class="nt">generation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-23-9"><a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-23-10"><a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3875&quot;</span>
+</span><span id="__span-23-11"><a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a><span class="w">  </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">48d16240-edae-4904-bad8-58137bebcf8a</span>
+</span><span id="__span-23-12"><a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-23-13"><a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a><span class="w">  </span><span class="nt">packageName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-23-14"><a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a><span class="w">  </span><span class="nt">upgradeConstraintPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Enforce</span>
+</span><span id="__span-23-15"><a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0.x</span>
+</span><span id="__span-23-16"><a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a><span class="nt">status</span><span class="p">:</span>
+</span><span id="__span-23-17"><a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a><span class="w">  </span><span class="nt">conditions</span><span class="p">:</span>
+</span><span id="__span-23-18"><a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:34:53Z&quot;</span>
+</span><span id="__span-23-19"><a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">installed from &quot;docker.io/bpalmer/coastal-bundle:v1.0.0&quot;</span>
+</span><span id="__span-23-20"><a id="__codelineno-23-20" name="__codelineno-23-20" href="#__codelineno-23-20"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-23-21"><a id="__codelineno-23-21" name="__codelineno-23-21" href="#__codelineno-23-21"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Success</span>
+</span><span id="__span-23-22"><a id="__codelineno-23-22" name="__codelineno-23-22" href="#__codelineno-23-22"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-23-23"><a id="__codelineno-23-23" name="__codelineno-23-23" href="#__codelineno-23-23"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Installed</span>
+</span><span id="__span-23-24"><a id="__codelineno-23-24" name="__codelineno-23-24" href="#__codelineno-23-24"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:34:49Z&quot;</span>
+</span><span id="__span-23-25"><a id="__codelineno-23-25" name="__codelineno-23-25" href="#__codelineno-23-25"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">resolved to &quot;docker.io/bpalmer/coastal-bundle:v1.0.0&quot;</span>
+</span><span id="__span-23-26"><a id="__codelineno-23-26" name="__codelineno-23-26" href="#__codelineno-23-26"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-23-27"><a id="__codelineno-23-27" name="__codelineno-23-27" href="#__codelineno-23-27"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Success</span>
+</span><span id="__span-23-28"><a id="__codelineno-23-28" name="__codelineno-23-28" href="#__codelineno-23-28"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-23-29"><a id="__codelineno-23-29" name="__codelineno-23-29" href="#__codelineno-23-29"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Resolved</span>
+</span><span id="__span-23-30"><a id="__codelineno-23-30" name="__codelineno-23-30" href="#__codelineno-23-30"></a><span class="w">  </span><span class="nt">installedBundleResource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-bundle:v1.0.0</span>
+</span><span id="__span-23-31"><a id="__codelineno-23-31" name="__codelineno-23-31" href="#__codelineno-23-31"></a><span class="w">  </span><span class="nt">resolvedBundleResource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-bundle:v1.0.0</span>
+</span></code></pre></div>
+
+</details>
+
+<p>and for the <code>Catalog</code> with:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>catalog/coastal<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span>-w
+</span></code></pre></div></p>
+<details>
+<summary>Example</summary>
+
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">catalogd.operatorframework.io/v1alpha1</span>
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Catalog</span>
+</span><span id="__span-25-3"><a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-25-4"><a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+</span><span id="__span-25-5"><a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">    </span><span class="nt">kubectl.kubernetes.io/last-applied-configuration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-25-6"><a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="w">      </span><span class="no">{&quot;apiVersion&quot;:&quot;catalogd.operatorframework.io/v1alpha1&quot;,&quot;kind&quot;:&quot;Catalog&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;coastal&quot;},&quot;spec&quot;:{&quot;source&quot;:{&quot;image&quot;:{&quot;pollInterval&quot;:&quot;15s&quot;,&quot;ref&quot;:&quot;docker.io/bpalmer/coastal-catalog:latest&quot;},&quot;type&quot;:&quot;image&quot;}}}</span>
+</span><span id="__span-25-7"><a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="w">  </span><span class="nt">creationTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:23:55Z&quot;</span>
+</span><span id="__span-25-8"><a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="w">  </span><span class="nt">finalizers</span><span class="p">:</span>
+</span><span id="__span-25-9"><a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">catalogd.operatorframework.io/delete-server-cache</span>
+</span><span id="__span-25-10"><a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="w">  </span><span class="nt">generation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-25-11"><a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-25-12"><a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a><span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4173&quot;</span>
+</span><span id="__span-25-13"><a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a><span class="w">  </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0bb0ca54-bdfe-4c55-abeb-03b8e3f32374</span>
+</span><span id="__span-25-14"><a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-25-15"><a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a><span class="w">  </span><span class="nt">source</span><span class="p">:</span>
+</span><span id="__span-25-16"><a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span>
+</span><span id="__span-25-17"><a id="__codelineno-25-17" name="__codelineno-25-17" href="#__codelineno-25-17"></a><span class="w">      </span><span class="nt">pollInterval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15s</span>
+</span><span id="__span-25-18"><a id="__codelineno-25-18" name="__codelineno-25-18" href="#__codelineno-25-18"></a><span class="w">      </span><span class="nt">ref</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-catalog:latest</span>
+</span><span id="__span-25-19"><a id="__codelineno-25-19" name="__codelineno-25-19" href="#__codelineno-25-19"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">image</span>
+</span><span id="__span-25-20"><a id="__codelineno-25-20" name="__codelineno-25-20" href="#__codelineno-25-20"></a><span class="nt">status</span><span class="p">:</span>
+</span><span id="__span-25-21"><a id="__codelineno-25-21" name="__codelineno-25-21" href="#__codelineno-25-21"></a><span class="w">  </span><span class="nt">conditions</span><span class="p">:</span>
+</span><span id="__span-25-22"><a id="__codelineno-25-22" name="__codelineno-25-22" href="#__codelineno-25-22"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:23:57Z&quot;</span>
+</span><span id="__span-25-23"><a id="__codelineno-25-23" name="__codelineno-25-23" href="#__codelineno-25-23"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+</span><span id="__span-25-24"><a id="__codelineno-25-24" name="__codelineno-25-24" href="#__codelineno-25-24"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UnpackSuccessful</span>
+</span><span id="__span-25-25"><a id="__codelineno-25-25" name="__codelineno-25-25" href="#__codelineno-25-25"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-25-26"><a id="__codelineno-25-26" name="__codelineno-25-26" href="#__codelineno-25-26"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Unpacked</span>
+</span><span id="__span-25-27"><a id="__codelineno-25-27" name="__codelineno-25-27" href="#__codelineno-25-27"></a><span class="w">  </span><span class="nt">contentURL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://catalogd-catalogserver.catalogd-system.svc/catalogs/coastal/all.json</span>
+</span><span id="__span-25-28"><a id="__codelineno-25-28" name="__codelineno-25-28" href="#__codelineno-25-28"></a><span class="w">  </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-25-29"><a id="__codelineno-25-29" name="__codelineno-25-29" href="#__codelineno-25-29"></a><span class="w">  </span><span class="nt">phase</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Unpacked</span>
+</span><span id="__span-25-30"><a id="__codelineno-25-30" name="__codelineno-25-30" href="#__codelineno-25-30"></a><span class="w">  </span><span class="nt">resolvedSource</span><span class="p">:</span>
+</span><span id="__span-25-31"><a id="__codelineno-25-31" name="__codelineno-25-31" href="#__codelineno-25-31"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span>
+</span><span id="__span-25-32"><a id="__codelineno-25-32" name="__codelineno-25-32" href="#__codelineno-25-32"></a><span class="w">      </span><span class="nt">lastPollAttempt</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:36:22Z&quot;</span>
+</span><span id="__span-25-33"><a id="__codelineno-25-33" name="__codelineno-25-33" href="#__codelineno-25-33"></a><span class="w">      </span><span class="nt">ref</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-catalog:latest</span>
+</span><span id="__span-25-34"><a id="__codelineno-25-34" name="__codelineno-25-34" href="#__codelineno-25-34"></a><span class="w">      </span><span class="nt">resolvedRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">index.docker.io/bpalmer/coastal-catalog@sha256:b8cb9a4a61f57b59394047cab94f5b4ef1083493809f8180125faedaab17c71d</span>
+</span><span id="__span-25-35"><a id="__codelineno-25-35" name="__codelineno-25-35" href="#__codelineno-25-35"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">image</span>
+</span></code></pre></div>
+
+</details>
+
+<p>Once the <code>ClusterExtension</code> has been successfully installed we can verify that all the resources created are healthy by checking the <code>BundleDeployment</code> resource owned by the <code>ClusterExtension</code> we created. Verify the <code>BundleDeployment</code> has a status condition showing whether or not it is healthy with:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>bundledeployment/coastal<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span>-w
+</span></code></pre></div></p>
+<details>
+<summary>Example</summary>
+
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">core.rukpak.io/v1alpha1</span>
+</span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BundleDeployment</span>
+</span><span id="__span-27-3"><a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-27-4"><a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">  </span><span class="nt">creationTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:34:49Z&quot;</span>
+</span><span id="__span-27-5"><a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">  </span><span class="nt">generation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</span><span id="__span-27-6"><a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-27-7"><a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="w">  </span><span class="nt">ownerReferences</span><span class="p">:</span>
+</span><span id="__span-27-8"><a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-27-9"><a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span class="w">    </span><span class="nt">blockOwnerDeletion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-27-10"><a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a><span class="w">    </span><span class="nt">controller</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-27-11"><a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterExtension</span>
+</span><span id="__span-27-12"><a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-27-13"><a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a><span class="w">    </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">48d16240-edae-4904-bad8-58137bebcf8a</span>
+</span><span id="__span-27-14"><a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a><span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3935&quot;</span>
+</span><span id="__span-27-15"><a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a><span class="w">  </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7e487080-15c3-4e56-8789-9a9b516e98b7</span>
+</span><span id="__span-27-16"><a id="__codelineno-27-16" name="__codelineno-27-16" href="#__codelineno-27-16"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-27-17"><a id="__codelineno-27-17" name="__codelineno-27-17" href="#__codelineno-27-17"></a><span class="w">  </span><span class="nt">provisionerClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">core-rukpak-io-plain</span>
+</span><span id="__span-27-18"><a id="__codelineno-27-18" name="__codelineno-27-18" href="#__codelineno-27-18"></a><span class="w">  </span><span class="nt">template</span><span class="p">:</span>
+</span><span id="__span-27-19"><a id="__codelineno-27-19" name="__codelineno-27-19" href="#__codelineno-27-19"></a><span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+</span><span id="__span-27-20"><a id="__codelineno-27-20" name="__codelineno-27-20" href="#__codelineno-27-20"></a><span class="w">    </span><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-27-21"><a id="__codelineno-27-21" name="__codelineno-27-21" href="#__codelineno-27-21"></a><span class="w">      </span><span class="nt">provisionerClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">core-rukpak-io-plain</span>
+</span><span id="__span-27-22"><a id="__codelineno-27-22" name="__codelineno-27-22" href="#__codelineno-27-22"></a><span class="w">      </span><span class="nt">source</span><span class="p">:</span>
+</span><span id="__span-27-23"><a id="__codelineno-27-23" name="__codelineno-27-23" href="#__codelineno-27-23"></a><span class="w">        </span><span class="nt">image</span><span class="p">:</span>
+</span><span id="__span-27-24"><a id="__codelineno-27-24" name="__codelineno-27-24" href="#__codelineno-27-24"></a><span class="w">          </span><span class="nt">ref</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-bundle:v1.0.0</span>
+</span><span id="__span-27-25"><a id="__codelineno-27-25" name="__codelineno-27-25" href="#__codelineno-27-25"></a><span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">image</span>
+</span><span id="__span-27-26"><a id="__codelineno-27-26" name="__codelineno-27-26" href="#__codelineno-27-26"></a><span class="nt">status</span><span class="p">:</span>
+</span><span id="__span-27-27"><a id="__codelineno-27-27" name="__codelineno-27-27" href="#__codelineno-27-27"></a><span class="w">  </span><span class="nt">activeBundle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal-v725xf</span>
+</span><span id="__span-27-28"><a id="__codelineno-27-28" name="__codelineno-27-28" href="#__codelineno-27-28"></a><span class="w">  </span><span class="nt">conditions</span><span class="p">:</span>
+</span><span id="__span-27-29"><a id="__codelineno-27-29" name="__codelineno-27-29" href="#__codelineno-27-29"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:34:49Z&quot;</span>
+</span><span id="__span-27-30"><a id="__codelineno-27-30" name="__codelineno-27-30" href="#__codelineno-27-30"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Successfully unpacked the coastal-v725xf Bundle</span>
+</span><span id="__span-27-31"><a id="__codelineno-27-31" name="__codelineno-27-31" href="#__codelineno-27-31"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UnpackSuccessful</span>
+</span><span id="__span-27-32"><a id="__codelineno-27-32" name="__codelineno-27-32" href="#__codelineno-27-32"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-27-33"><a id="__codelineno-27-33" name="__codelineno-27-33" href="#__codelineno-27-33"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">HasValidBundle</span>
+</span><span id="__span-27-34"><a id="__codelineno-27-34" name="__codelineno-27-34" href="#__codelineno-27-34"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:34:53Z&quot;</span>
+</span><span id="__span-27-35"><a id="__codelineno-27-35" name="__codelineno-27-35" href="#__codelineno-27-35"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Instantiated bundle coastal-v725xf successfully</span>
+</span><span id="__span-27-36"><a id="__codelineno-27-36" name="__codelineno-27-36" href="#__codelineno-27-36"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">InstallationSucceeded</span>
+</span><span id="__span-27-37"><a id="__codelineno-27-37" name="__codelineno-27-37" href="#__codelineno-27-37"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-27-38"><a id="__codelineno-27-38" name="__codelineno-27-38" href="#__codelineno-27-38"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Installed</span>
+</span><span id="__span-27-39"><a id="__codelineno-27-39" name="__codelineno-27-39" href="#__codelineno-27-39"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:35:04Z&quot;</span>
+</span><span id="__span-27-40"><a id="__codelineno-27-40" name="__codelineno-27-40" href="#__codelineno-27-40"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BundleDeployment is healthy</span>
+</span><span id="__span-27-41"><a id="__codelineno-27-41" name="__codelineno-27-41" href="#__codelineno-27-41"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Healthy</span>
+</span><span id="__span-27-42"><a id="__codelineno-27-42" name="__codelineno-27-42" href="#__codelineno-27-42"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-27-43"><a id="__codelineno-27-43" name="__codelineno-27-43" href="#__codelineno-27-43"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Healthy</span>
+</span><span id="__span-27-44"><a id="__codelineno-27-44" name="__codelineno-27-44" href="#__codelineno-27-44"></a><span class="w">  </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</span></code></pre></div>
+
+</details>
+
+<h3 id="update-the-fbc-image-to-contain-a-bundle-for-v110">Update the FBC Image to contain a bundle for <code>v1.1.0</code></h3>
+<p>Let's ensure that adding a bundle with a version of <code>v1.1.0</code> does not trigger an upgrade.</p>
+<ul>
+<li>
+<p>Add the new bundle to the catalog YAML file
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>cat<span class="w"> </span><span class="s">&lt;&lt; EOF &gt;&gt; catalog/index.yaml</span>
+</span><span id="__span-28-2"><a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="s">---</span>
+</span><span id="__span-28-3"><a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="s">schema: olm.bundle</span>
+</span><span id="__span-28-4"><a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="s">name: coastal.v1.1.0</span>
+</span><span id="__span-28-5"><a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="s">package: coastal</span>
+</span><span id="__span-28-6"><a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="s">image: quay.io/operator-framework/coastal-bundle:v1.1.0</span>
+</span><span id="__span-28-7"><a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="s">properties:</span>
+</span><span id="__span-28-8"><a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a><span class="s">  - type: olm.package</span>
+</span><span id="__span-28-9"><a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a><span class="s">    value:</span>
+</span><span id="__span-28-10"><a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a><span class="s">      packageName: coastal</span>
+</span><span id="__span-28-11"><a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a><span class="s">      version: 1.1.0</span>
+</span><span id="__span-28-12"><a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a><span class="s">  - type: olm.bundle.mediatype</span>
+</span><span id="__span-28-13"><a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a><span class="s">    value: plain+v0</span>
+</span><span id="__span-28-14"><a id="__codelineno-28-14" name="__codelineno-28-14" href="#__codelineno-28-14"></a><span class="s">EOF</span>
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Using <code>yq</code>, update the channel to include this bundle as an entry
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>yq<span class="w"> </span><span class="nb">eval</span><span class="w"> </span><span class="s1">&#39;select(.schema==&quot;olm.channel&quot; and .name == &quot;stable&quot;).entries += [{&quot;name&quot; : &quot;coastal.v1.1.0&quot;}]&#39;</span><span class="w"> </span>-i<span class="w"> </span>catalog/index.yaml
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Build and push the catalog image
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>quay.io/operator-framework/coastal-catalog:latest<span class="w"> </span>-f<span class="w"> </span>catalog.Dockerfile<span class="w"> </span>.<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-30-2"><a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>docker<span class="w"> </span>push<span class="w"> </span>quay.io/operator-framework/coastal-catalog:latest
+</span></code></pre></div></p>
+</li>
+</ul>
+<p>Similar to the previous procedure, the <code>Catalog</code> updates its resolved reference,
+but the <code>ClusterExtension</code> resource remains the same and does not 
+automatically upgrade to <code>v1.1.0</code></p>
+<h3 id="update-the-fbc-image-to-contain-a-bundle-for-v101">Update the FBC Image to contain a bundle for <code>v1.0.1</code></h3>
+<p>Lets add the <code>v1.0.1</code> bundle to our catalog 
+and ensure it automatically upgrades within the z-stream.</p>
+<ul>
+<li>
+<p>Add the new bundle to the catalog YAML file
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>cat<span class="w"> </span><span class="s">&lt;&lt; EOF &gt;&gt; catalog/index.yaml</span>
+</span><span id="__span-31-2"><a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="s">---</span>
+</span><span id="__span-31-3"><a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="s">schema: olm.bundle</span>
+</span><span id="__span-31-4"><a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="s">name: coastal.v1.0.1</span>
+</span><span id="__span-31-5"><a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="s">package: coastal</span>
+</span><span id="__span-31-6"><a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a><span class="s">image: quay.io/operator-framework/coastal-bundle:v1.0.1</span>
+</span><span id="__span-31-7"><a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="s">properties:</span>
+</span><span id="__span-31-8"><a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a><span class="s">  - type: olm.package</span>
+</span><span id="__span-31-9"><a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a><span class="s">    value:</span>
+</span><span id="__span-31-10"><a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a><span class="s">      packageName: coastal</span>
+</span><span id="__span-31-11"><a id="__codelineno-31-11" name="__codelineno-31-11" href="#__codelineno-31-11"></a><span class="s">      version: 1.0.1</span>
+</span><span id="__span-31-12"><a id="__codelineno-31-12" name="__codelineno-31-12" href="#__codelineno-31-12"></a><span class="s">  - type: olm.bundle.mediatype</span>
+</span><span id="__span-31-13"><a id="__codelineno-31-13" name="__codelineno-31-13" href="#__codelineno-31-13"></a><span class="s">    value: plain+v0</span>
+</span><span id="__span-31-14"><a id="__codelineno-31-14" name="__codelineno-31-14" href="#__codelineno-31-14"></a><span class="s">EOF</span>
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Using <code>yq</code>, update the channel to include this bundle as an entry
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>yq<span class="w"> </span><span class="nb">eval</span><span class="w"> </span><span class="s1">&#39;select(.schema==&quot;olm.channel&quot; and .name == &quot;stable&quot;).entries += [{&quot;name&quot; : &quot;coastal.v1.0.1&quot;}]&#39;</span><span class="w"> </span>-i<span class="w"> </span>catalog/index.yaml
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Build and push the catalog image
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>quay.io/operator-framework/coastal-catalog:latest<span class="w"> </span>-f<span class="w"> </span>catalog.Dockerfile<span class="w"> </span>.<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-33-2"><a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>docker<span class="w"> </span>push<span class="w"> </span>quay.io/operator-framework/coastal-catalog:latest
+</span></code></pre></div></p>
+</li>
+</ul>
+<p>Once again, we should see the <code>Catalog</code> update its resolved reference. This time, we expect that the <code>ClusterExtension</code> resource is automatically upgraded to the new <code>v1.0.1</code> bundle we added.</p>
+<details>
+<summary>Example Catalog</summary>
+
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-34-1"><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">catalogd.operatorframework.io/v1alpha1</span>
+</span><span id="__span-34-2"><a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Catalog</span>
+</span><span id="__span-34-3"><a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-34-4"><a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+</span><span id="__span-34-5"><a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="w">    </span><span class="nt">kubectl.kubernetes.io/last-applied-configuration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-34-6"><a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="w">      </span><span class="no">{&quot;apiVersion&quot;:&quot;catalogd.operatorframework.io/v1alpha1&quot;,&quot;kind&quot;:&quot;Catalog&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;coastal&quot;},&quot;spec&quot;:{&quot;source&quot;:{&quot;image&quot;:{&quot;pollInterval&quot;:&quot;15s&quot;,&quot;ref&quot;:&quot;docker.io/bpalmer/coastal-catalog:latest&quot;},&quot;type&quot;:&quot;image&quot;}}}</span>
+</span><span id="__span-34-7"><a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a><span class="w">  </span><span class="nt">creationTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:23:55Z&quot;</span>
+</span><span id="__span-34-8"><a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a><span class="w">  </span><span class="nt">finalizers</span><span class="p">:</span>
+</span><span id="__span-34-9"><a id="__codelineno-34-9" name="__codelineno-34-9" href="#__codelineno-34-9"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">catalogd.operatorframework.io/delete-server-cache</span>
+</span><span id="__span-34-10"><a id="__codelineno-34-10" name="__codelineno-34-10" href="#__codelineno-34-10"></a><span class="w">  </span><span class="nt">generation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-34-11"><a id="__codelineno-34-11" name="__codelineno-34-11" href="#__codelineno-34-11"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-34-12"><a id="__codelineno-34-12" name="__codelineno-34-12" href="#__codelineno-34-12"></a><span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4776&quot;</span>
+</span><span id="__span-34-13"><a id="__codelineno-34-13" name="__codelineno-34-13" href="#__codelineno-34-13"></a><span class="w">  </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0bb0ca54-bdfe-4c55-abeb-03b8e3f32374</span>
+</span><span id="__span-34-14"><a id="__codelineno-34-14" name="__codelineno-34-14" href="#__codelineno-34-14"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-34-15"><a id="__codelineno-34-15" name="__codelineno-34-15" href="#__codelineno-34-15"></a><span class="w">  </span><span class="nt">source</span><span class="p">:</span>
+</span><span id="__span-34-16"><a id="__codelineno-34-16" name="__codelineno-34-16" href="#__codelineno-34-16"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span>
+</span><span id="__span-34-17"><a id="__codelineno-34-17" name="__codelineno-34-17" href="#__codelineno-34-17"></a><span class="w">      </span><span class="nt">pollInterval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15s</span>
+</span><span id="__span-34-18"><a id="__codelineno-34-18" name="__codelineno-34-18" href="#__codelineno-34-18"></a><span class="w">      </span><span class="nt">ref</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-catalog:latest</span>
+</span><span id="__span-34-19"><a id="__codelineno-34-19" name="__codelineno-34-19" href="#__codelineno-34-19"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">image</span>
+</span><span id="__span-34-20"><a id="__codelineno-34-20" name="__codelineno-34-20" href="#__codelineno-34-20"></a><span class="nt">status</span><span class="p">:</span>
+</span><span id="__span-34-21"><a id="__codelineno-34-21" name="__codelineno-34-21" href="#__codelineno-34-21"></a><span class="w">  </span><span class="nt">conditions</span><span class="p">:</span>
+</span><span id="__span-34-22"><a id="__codelineno-34-22" name="__codelineno-34-22" href="#__codelineno-34-22"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:23:57Z&quot;</span>
+</span><span id="__span-34-23"><a id="__codelineno-34-23" name="__codelineno-34-23" href="#__codelineno-34-23"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+</span><span id="__span-34-24"><a id="__codelineno-34-24" name="__codelineno-34-24" href="#__codelineno-34-24"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">UnpackSuccessful</span>
+</span><span id="__span-34-25"><a id="__codelineno-34-25" name="__codelineno-34-25" href="#__codelineno-34-25"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-34-26"><a id="__codelineno-34-26" name="__codelineno-34-26" href="#__codelineno-34-26"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Unpacked</span>
+</span><span id="__span-34-27"><a id="__codelineno-34-27" name="__codelineno-34-27" href="#__codelineno-34-27"></a><span class="w">  </span><span class="nt">contentURL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://catalogd-catalogserver.catalogd-system.svc/catalogs/coastal/all.json</span>
+</span><span id="__span-34-28"><a id="__codelineno-34-28" name="__codelineno-34-28" href="#__codelineno-34-28"></a><span class="w">  </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-34-29"><a id="__codelineno-34-29" name="__codelineno-34-29" href="#__codelineno-34-29"></a><span class="w">  </span><span class="nt">phase</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Unpacked</span>
+</span><span id="__span-34-30"><a id="__codelineno-34-30" name="__codelineno-34-30" href="#__codelineno-34-30"></a><span class="w">  </span><span class="nt">resolvedSource</span><span class="p">:</span>
+</span><span id="__span-34-31"><a id="__codelineno-34-31" name="__codelineno-34-31" href="#__codelineno-34-31"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span>
+</span><span id="__span-34-32"><a id="__codelineno-34-32" name="__codelineno-34-32" href="#__codelineno-34-32"></a><span class="w">      </span><span class="nt">lastPollAttempt</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:39:45Z&quot;</span>
+</span><span id="__span-34-33"><a id="__codelineno-34-33" name="__codelineno-34-33" href="#__codelineno-34-33"></a><span class="w">      </span><span class="nt">ref</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-catalog:latest</span>
+</span><span id="__span-34-34"><a id="__codelineno-34-34" name="__codelineno-34-34" href="#__codelineno-34-34"></a><span class="w">      </span><span class="nt">resolvedRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">index.docker.io/bpalmer/coastal-catalog@sha256:8affa0e6ca81e07bb9d03b934173687f63015d8b36fac3ba3391a942b23cc3ee</span>
+</span><span id="__span-34-35"><a id="__codelineno-34-35" name="__codelineno-34-35" href="#__codelineno-34-35"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">image</span>
+</span></code></pre></div>
+
+</details>
+
+<details>
+<summary>Example ClusterExtension</summary>
+
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-35-2"><a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterExtension</span>
+</span><span id="__span-35-3"><a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-35-4"><a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+</span><span id="__span-35-5"><a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="w">    </span><span class="nt">kubectl.kubernetes.io/last-applied-configuration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-35-6"><a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a><span class="w">      </span><span class="no">{&quot;apiVersion&quot;:&quot;olm.operatorframework.io/v1alpha1&quot;,&quot;kind&quot;:&quot;ClusterExtension&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;coastal&quot;},&quot;spec&quot;:{&quot;packageName&quot;:&quot;coastal&quot;,&quot;version&quot;:&quot;1.0.x&quot;}}</span>
+</span><span id="__span-35-7"><a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a><span class="w">  </span><span class="nt">creationTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:29:18Z&quot;</span>
+</span><span id="__span-35-8"><a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a><span class="w">  </span><span class="nt">generation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-35-9"><a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-35-10"><a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a><span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4778&quot;</span>
+</span><span id="__span-35-11"><a id="__codelineno-35-11" name="__codelineno-35-11" href="#__codelineno-35-11"></a><span class="w">  </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">48d16240-edae-4904-bad8-58137bebcf8a</span>
+</span><span id="__span-35-12"><a id="__codelineno-35-12" name="__codelineno-35-12" href="#__codelineno-35-12"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-35-13"><a id="__codelineno-35-13" name="__codelineno-35-13" href="#__codelineno-35-13"></a><span class="w">  </span><span class="nt">packageName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-35-14"><a id="__codelineno-35-14" name="__codelineno-35-14" href="#__codelineno-35-14"></a><span class="w">  </span><span class="nt">upgradeConstraintPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Enforce</span>
+</span><span id="__span-35-15"><a id="__codelineno-35-15" name="__codelineno-35-15" href="#__codelineno-35-15"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0.x</span>
+</span><span id="__span-35-16"><a id="__codelineno-35-16" name="__codelineno-35-16" href="#__codelineno-35-16"></a><span class="nt">status</span><span class="p">:</span>
+</span><span id="__span-35-17"><a id="__codelineno-35-17" name="__codelineno-35-17" href="#__codelineno-35-17"></a><span class="w">  </span><span class="nt">conditions</span><span class="p">:</span>
+</span><span id="__span-35-18"><a id="__codelineno-35-18" name="__codelineno-35-18" href="#__codelineno-35-18"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:34:53Z&quot;</span>
+</span><span id="__span-35-19"><a id="__codelineno-35-19" name="__codelineno-35-19" href="#__codelineno-35-19"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">installed from &quot;docker.io/bpalmer/coastal-bundle:v1.0.1&quot;</span>
+</span><span id="__span-35-20"><a id="__codelineno-35-20" name="__codelineno-35-20" href="#__codelineno-35-20"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-35-21"><a id="__codelineno-35-21" name="__codelineno-35-21" href="#__codelineno-35-21"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Success</span>
+</span><span id="__span-35-22"><a id="__codelineno-35-22" name="__codelineno-35-22" href="#__codelineno-35-22"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-35-23"><a id="__codelineno-35-23" name="__codelineno-35-23" href="#__codelineno-35-23"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Installed</span>
+</span><span id="__span-35-24"><a id="__codelineno-35-24" name="__codelineno-35-24" href="#__codelineno-35-24"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:34:49Z&quot;</span>
+</span><span id="__span-35-25"><a id="__codelineno-35-25" name="__codelineno-35-25" href="#__codelineno-35-25"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">resolved to &quot;docker.io/bpalmer/coastal-bundle:v1.0.1&quot;</span>
+</span><span id="__span-35-26"><a id="__codelineno-35-26" name="__codelineno-35-26" href="#__codelineno-35-26"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-35-27"><a id="__codelineno-35-27" name="__codelineno-35-27" href="#__codelineno-35-27"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Success</span>
+</span><span id="__span-35-28"><a id="__codelineno-35-28" name="__codelineno-35-28" href="#__codelineno-35-28"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-35-29"><a id="__codelineno-35-29" name="__codelineno-35-29" href="#__codelineno-35-29"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Resolved</span>
+</span><span id="__span-35-30"><a id="__codelineno-35-30" name="__codelineno-35-30" href="#__codelineno-35-30"></a><span class="w">  </span><span class="nt">installedBundleResource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-bundle:v1.0.1</span>
+</span><span id="__span-35-31"><a id="__codelineno-35-31" name="__codelineno-35-31" href="#__codelineno-35-31"></a><span class="w">  </span><span class="nt">resolvedBundleResource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-bundle:v1.0.1</span>
+</span></code></pre></div>
+
+</details>
+
+<h2 id="change-version-range-to-pin-installsupgrades-to-v11z-releases">Change version range to pin installs/upgrades to <code>v1.1.z</code> releases</h2>
+<p>Making changes to the <code>ClusterExtension</code> resource should result in a re-reconciliation of the resource
+which should result in another resolution loop. To see this, let's update the version range
+on our <code>ClusterExtension</code> resource to <code>1.1.x</code> with:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-36-1"><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+</span><span id="__span-36-2"><a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="s">apiVersion: olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-36-3"><a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="s">kind: ClusterExtension</span>
+</span><span id="__span-36-4"><a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="s">metadata:</span>
+</span><span id="__span-36-5"><a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="s">  name: coastal</span>
+</span><span id="__span-36-6"><a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a><span class="s">spec:</span>
+</span><span id="__span-36-7"><a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a><span class="s">  packageName: coastal</span>
+</span><span id="__span-36-8"><a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a><span class="s">  version: 1.1.x</span>
+</span><span id="__span-36-9"><a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a><span class="s">EOF</span>
+</span></code></pre></div></p>
+<p>After this change has been applied, the <code>ClusterExtension</code> resource is updated
+and says that we have installed the <code>v1.1.0</code> bundle.</p>
+<p>You can watch this change happen with:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-37-1"><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clusterextension/coastal<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span>-w
+</span></code></pre></div></p>
+<details>
+<summary>Example</summary>
+
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-38-1"><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-38-2"><a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterExtension</span>
+</span><span id="__span-38-3"><a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-38-4"><a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+</span><span id="__span-38-5"><a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a><span class="w">    </span><span class="nt">kubectl.kubernetes.io/last-applied-configuration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-38-6"><a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a><span class="w">      </span><span class="no">{&quot;apiVersion&quot;:&quot;olm.operatorframework.io/v1alpha1&quot;,&quot;kind&quot;:&quot;ClusterExtension&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;coastal&quot;},&quot;spec&quot;:{&quot;packageName&quot;:&quot;coastal&quot;,&quot;version&quot;:&quot;1.1.x&quot;}}</span>
+</span><span id="__span-38-7"><a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a><span class="w">  </span><span class="nt">creationTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:29:18Z&quot;</span>
+</span><span id="__span-38-8"><a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a><span class="w">  </span><span class="nt">generation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</span><span id="__span-38-9"><a id="__codelineno-38-9" name="__codelineno-38-9" href="#__codelineno-38-9"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-38-10"><a id="__codelineno-38-10" name="__codelineno-38-10" href="#__codelineno-38-10"></a><span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;5251&quot;</span>
+</span><span id="__span-38-11"><a id="__codelineno-38-11" name="__codelineno-38-11" href="#__codelineno-38-11"></a><span class="w">  </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">48d16240-edae-4904-bad8-58137bebcf8a</span>
+</span><span id="__span-38-12"><a id="__codelineno-38-12" name="__codelineno-38-12" href="#__codelineno-38-12"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-38-13"><a id="__codelineno-38-13" name="__codelineno-38-13" href="#__codelineno-38-13"></a><span class="w">  </span><span class="nt">packageName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-38-14"><a id="__codelineno-38-14" name="__codelineno-38-14" href="#__codelineno-38-14"></a><span class="w">  </span><span class="nt">upgradeConstraintPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Enforce</span>
+</span><span id="__span-38-15"><a id="__codelineno-38-15" name="__codelineno-38-15" href="#__codelineno-38-15"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.1.x</span>
+</span><span id="__span-38-16"><a id="__codelineno-38-16" name="__codelineno-38-16" href="#__codelineno-38-16"></a><span class="nt">status</span><span class="p">:</span>
+</span><span id="__span-38-17"><a id="__codelineno-38-17" name="__codelineno-38-17" href="#__codelineno-38-17"></a><span class="w">  </span><span class="nt">conditions</span><span class="p">:</span>
+</span><span id="__span-38-18"><a id="__codelineno-38-18" name="__codelineno-38-18" href="#__codelineno-38-18"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:34:53Z&quot;</span>
+</span><span id="__span-38-19"><a id="__codelineno-38-19" name="__codelineno-38-19" href="#__codelineno-38-19"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">installed from &quot;docker.io/bpalmer/coastal-bundle:v1.1.0&quot;</span>
+</span><span id="__span-38-20"><a id="__codelineno-38-20" name="__codelineno-38-20" href="#__codelineno-38-20"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</span><span id="__span-38-21"><a id="__codelineno-38-21" name="__codelineno-38-21" href="#__codelineno-38-21"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Success</span>
+</span><span id="__span-38-22"><a id="__codelineno-38-22" name="__codelineno-38-22" href="#__codelineno-38-22"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-38-23"><a id="__codelineno-38-23" name="__codelineno-38-23" href="#__codelineno-38-23"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Installed</span>
+</span><span id="__span-38-24"><a id="__codelineno-38-24" name="__codelineno-38-24" href="#__codelineno-38-24"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:34:49Z&quot;</span>
+</span><span id="__span-38-25"><a id="__codelineno-38-25" name="__codelineno-38-25" href="#__codelineno-38-25"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">resolved to &quot;docker.io/bpalmer/coastal-bundle:v1.1.0&quot;</span>
+</span><span id="__span-38-26"><a id="__codelineno-38-26" name="__codelineno-38-26" href="#__codelineno-38-26"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</span><span id="__span-38-27"><a id="__codelineno-38-27" name="__codelineno-38-27" href="#__codelineno-38-27"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Success</span>
+</span><span id="__span-38-28"><a id="__codelineno-38-28" name="__codelineno-38-28" href="#__codelineno-38-28"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-38-29"><a id="__codelineno-38-29" name="__codelineno-38-29" href="#__codelineno-38-29"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Resolved</span>
+</span><span id="__span-38-30"><a id="__codelineno-38-30" name="__codelineno-38-30" href="#__codelineno-38-30"></a><span class="w">  </span><span class="nt">installedBundleResource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-bundle:v1.1.0</span>
+</span><span id="__span-38-31"><a id="__codelineno-38-31" name="__codelineno-38-31" href="#__codelineno-38-31"></a><span class="w">  </span><span class="nt">resolvedBundleResource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-bundle:v1.1.0</span>
+</span></code></pre></div>
+
+</details>
+
+<h2 id="attempting-a-major-version-upgrade-by-changing-the-version-range">Attempting a major version upgrade by changing the version range</h2>
+<p>The operator-controller follows semver and prevents automatic upgrades to new major versions when a <code>ClusterExtension</code>'s <code>spec.upgradeConstraintPolicy</code> is set to <code>Enforce</code>. New major versions might
+have breaking changes and could cause problems for users. Let's add a new major 
+version of our bundle to the catalog image and update the version range on the <code>ClusterExtension</code>.</p>
+<h3 id="update-the-fbc-image-to-contain-a-bundle-for-v200">Update the FBC Image to contain a bundle for <code>v2.0.0</code></h3>
+<ul>
+<li>
+<p>Add the new bundle to the catalog YAML file
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-39-1"><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>cat<span class="w"> </span><span class="s">&lt;&lt; EOF &gt;&gt; catalog/index.yaml</span>
+</span><span id="__span-39-2"><a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a><span class="s">---</span>
+</span><span id="__span-39-3"><a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a><span class="s">schema: olm.bundle</span>
+</span><span id="__span-39-4"><a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="s">name: coastal.v2.0.0</span>
+</span><span id="__span-39-5"><a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a><span class="s">package: coastal</span>
+</span><span id="__span-39-6"><a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a><span class="s">image: quay.io/operator-framework/coastal-bundle:v2.0.0</span>
+</span><span id="__span-39-7"><a id="__codelineno-39-7" name="__codelineno-39-7" href="#__codelineno-39-7"></a><span class="s">properties:</span>
+</span><span id="__span-39-8"><a id="__codelineno-39-8" name="__codelineno-39-8" href="#__codelineno-39-8"></a><span class="s">  - type: olm.package</span>
+</span><span id="__span-39-9"><a id="__codelineno-39-9" name="__codelineno-39-9" href="#__codelineno-39-9"></a><span class="s">    value:</span>
+</span><span id="__span-39-10"><a id="__codelineno-39-10" name="__codelineno-39-10" href="#__codelineno-39-10"></a><span class="s">      packageName: coastal</span>
+</span><span id="__span-39-11"><a id="__codelineno-39-11" name="__codelineno-39-11" href="#__codelineno-39-11"></a><span class="s">      version: 2.0.0</span>
+</span><span id="__span-39-12"><a id="__codelineno-39-12" name="__codelineno-39-12" href="#__codelineno-39-12"></a><span class="s">  - type: olm.bundle.mediatype</span>
+</span><span id="__span-39-13"><a id="__codelineno-39-13" name="__codelineno-39-13" href="#__codelineno-39-13"></a><span class="s">    value: plain+v0</span>
+</span><span id="__span-39-14"><a id="__codelineno-39-14" name="__codelineno-39-14" href="#__codelineno-39-14"></a><span class="s">EOF</span>
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Using <code>yq</code>, update the channel to include this bundle as an entry
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-40-1"><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>yq<span class="w"> </span><span class="nb">eval</span><span class="w"> </span><span class="s1">&#39;select(.schema==&quot;olm.channel&quot; and .name == &quot;stable&quot;).entries += [{&quot;name&quot; : &quot;coastal.v2.0.0&quot;}]&#39;</span><span class="w"> </span>-i<span class="w"> </span>catalog/index.yaml
+</span></code></pre></div></p>
+</li>
+<li>
+<p>Build and push the catalog image
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-41-1"><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>quay.io/operator-framework/coastal-catalog:latest<span class="w"> </span>-f<span class="w"> </span>catalog.Dockerfile<span class="w"> </span>.<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-41-2"><a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>docker<span class="w"> </span>push<span class="w"> </span>quay.io/operator-framework/coastal-catalog:latest
+</span></code></pre></div></p>
+</li>
+</ul>
+<p>The <code>Catalog</code> updates its resolved reference and no changes are applied to the <code>ClusterExtension</code> resource.</p>
+<p>Updating the <code>ClusterExtension</code> resource's version range will still result in a resolution failure since the version installed
+is a lower major version than specified by the version range. Try it by running:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-42-1"><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+</span><span id="__span-42-2"><a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="s">apiVersion: olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-42-3"><a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a><span class="s">kind: ClusterExtension</span>
+</span><span id="__span-42-4"><a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="s">metadata:</span>
+</span><span id="__span-42-5"><a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a><span class="s">  name: coastal</span>
+</span><span id="__span-42-6"><a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a><span class="s">spec:</span>
+</span><span id="__span-42-7"><a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a><span class="s">  packageName: coastal</span>
+</span><span id="__span-42-8"><a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a><span class="s">  version: 2.0.x</span>
+</span><span id="__span-42-9"><a id="__codelineno-42-9" name="__codelineno-42-9" href="#__codelineno-42-9"></a><span class="s">EOF</span>
+</span></code></pre></div></p>
+<p>Watch for a resolution failure with:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-43-1"><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clusterextension/coastal<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span>-w
+</span></code></pre></div></p>
+<details>
+<summary>Example</summary>
+
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-44-1"><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-44-2"><a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterExtension</span>
+</span><span id="__span-44-3"><a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-44-4"><a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+</span><span id="__span-44-5"><a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a><span class="w">    </span><span class="nt">kubectl.kubernetes.io/last-applied-configuration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-44-6"><a id="__codelineno-44-6" name="__codelineno-44-6" href="#__codelineno-44-6"></a><span class="w">      </span><span class="no">{&quot;apiVersion&quot;:&quot;olm.operatorframework.io/v1alpha1&quot;,&quot;kind&quot;:&quot;ClusterExtension&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;coastal&quot;},&quot;spec&quot;:{&quot;packageName&quot;:&quot;coastal&quot;,&quot;version&quot;:&quot;2.0.x&quot;}}</span>
+</span><span id="__span-44-7"><a id="__codelineno-44-7" name="__codelineno-44-7" href="#__codelineno-44-7"></a><span class="w">  </span><span class="nt">creationTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:29:18Z&quot;</span>
+</span><span id="__span-44-8"><a id="__codelineno-44-8" name="__codelineno-44-8" href="#__codelineno-44-8"></a><span class="w">  </span><span class="nt">generation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</span><span id="__span-44-9"><a id="__codelineno-44-9" name="__codelineno-44-9" href="#__codelineno-44-9"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-44-10"><a id="__codelineno-44-10" name="__codelineno-44-10" href="#__codelineno-44-10"></a><span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;6883&quot;</span>
+</span><span id="__span-44-11"><a id="__codelineno-44-11" name="__codelineno-44-11" href="#__codelineno-44-11"></a><span class="w">  </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">48d16240-edae-4904-bad8-58137bebcf8a</span>
+</span><span id="__span-44-12"><a id="__codelineno-44-12" name="__codelineno-44-12" href="#__codelineno-44-12"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-44-13"><a id="__codelineno-44-13" name="__codelineno-44-13" href="#__codelineno-44-13"></a><span class="w">  </span><span class="nt">packageName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-44-14"><a id="__codelineno-44-14" name="__codelineno-44-14" href="#__codelineno-44-14"></a><span class="w">  </span><span class="nt">upgradeConstraintPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Enforce</span>
+</span><span id="__span-44-15"><a id="__codelineno-44-15" name="__codelineno-44-15" href="#__codelineno-44-15"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0.x</span>
+</span><span id="__span-44-16"><a id="__codelineno-44-16" name="__codelineno-44-16" href="#__codelineno-44-16"></a><span class="nt">status</span><span class="p">:</span>
+</span><span id="__span-44-17"><a id="__codelineno-44-17" name="__codelineno-44-17" href="#__codelineno-44-17"></a><span class="w">  </span><span class="nt">conditions</span><span class="p">:</span>
+</span><span id="__span-44-18"><a id="__codelineno-44-18" name="__codelineno-44-18" href="#__codelineno-44-18"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:50:27Z&quot;</span>
+</span><span id="__span-44-19"><a id="__codelineno-44-19" name="__codelineno-44-19" href="#__codelineno-44-19"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">installation has not been attempted as resolution is unsatisfiable</span>
+</span><span id="__span-44-20"><a id="__codelineno-44-20" name="__codelineno-44-20" href="#__codelineno-44-20"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</span><span id="__span-44-21"><a id="__codelineno-44-21" name="__codelineno-44-21" href="#__codelineno-44-21"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">InstallationStatusUnknown</span>
+</span><span id="__span-44-22"><a id="__codelineno-44-22" name="__codelineno-44-22" href="#__codelineno-44-22"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Unknown</span>
+</span><span id="__span-44-23"><a id="__codelineno-44-23" name="__codelineno-44-23" href="#__codelineno-44-23"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Installed</span>
+</span><span id="__span-44-24"><a id="__codelineno-44-24" name="__codelineno-44-24" href="#__codelineno-44-24"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:50:27Z&quot;</span>
+</span><span id="__span-44-25"><a id="__codelineno-44-25" name="__codelineno-44-25" href="#__codelineno-44-25"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|-</span>
+</span><span id="__span-44-26"><a id="__codelineno-44-26" name="__codelineno-44-26" href="#__codelineno-44-26"></a><span class="w">      </span><span class="no">constraints not satisfiable:</span>
+</span><span id="__span-44-27"><a id="__codelineno-44-27" name="__codelineno-44-27" href="#__codelineno-44-27"></a><span class="w">      </span><span class="no">coastal package uniqueness permits at most 1 of coastal-coastal-coastal.v2.0.0, coastal-coastal-coastal.v1.1.0</span>
+</span><span id="__span-44-28"><a id="__codelineno-44-28" name="__codelineno-44-28" href="#__codelineno-44-28"></a><span class="w">      </span><span class="no">installed package coastal requires at least one of coastal-coastal-coastal.v1.1.0</span>
+</span><span id="__span-44-29"><a id="__codelineno-44-29" name="__codelineno-44-29" href="#__codelineno-44-29"></a><span class="w">      </span><span class="no">installed package coastal is mandatory</span>
+</span><span id="__span-44-30"><a id="__codelineno-44-30" name="__codelineno-44-30" href="#__codelineno-44-30"></a><span class="w">      </span><span class="no">required package coastal requires at least one of coastal-coastal-coastal.v2.0.0</span>
+</span><span id="__span-44-31"><a id="__codelineno-44-31" name="__codelineno-44-31" href="#__codelineno-44-31"></a><span class="w">      </span><span class="no">required package coastal is mandatory</span>
+</span><span id="__span-44-32"><a id="__codelineno-44-32" name="__codelineno-44-32" href="#__codelineno-44-32"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</span><span id="__span-44-33"><a id="__codelineno-44-33" name="__codelineno-44-33" href="#__codelineno-44-33"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ResolutionFailed</span>
+</span><span id="__span-44-34"><a id="__codelineno-44-34" name="__codelineno-44-34" href="#__codelineno-44-34"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;False&quot;</span>
+</span><span id="__span-44-35"><a id="__codelineno-44-35" name="__codelineno-44-35" href="#__codelineno-44-35"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Resolved</span>
+</span></code></pre></div>
+
+</details>
+
+<h2 id="to-the-escape-hatch">To the escape hatch!</h2>
+<p>To tell operator-controller to ignore the semver policies and allow upgrades across major versions,
+set the <code>ClusterExtension</code>'s <code>spec.upgradeConstraintPolicy</code> to <code>Ignore</code> with:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-45-1"><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+</span><span id="__span-45-2"><a id="__codelineno-45-2" name="__codelineno-45-2" href="#__codelineno-45-2"></a><span class="s">apiVersion: olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-45-3"><a id="__codelineno-45-3" name="__codelineno-45-3" href="#__codelineno-45-3"></a><span class="s">kind: ClusterExtension</span>
+</span><span id="__span-45-4"><a id="__codelineno-45-4" name="__codelineno-45-4" href="#__codelineno-45-4"></a><span class="s">metadata:</span>
+</span><span id="__span-45-5"><a id="__codelineno-45-5" name="__codelineno-45-5" href="#__codelineno-45-5"></a><span class="s">  name: coastal</span>
+</span><span id="__span-45-6"><a id="__codelineno-45-6" name="__codelineno-45-6" href="#__codelineno-45-6"></a><span class="s">spec:</span>
+</span><span id="__span-45-7"><a id="__codelineno-45-7" name="__codelineno-45-7" href="#__codelineno-45-7"></a><span class="s">  packageName: coastal</span>
+</span><span id="__span-45-8"><a id="__codelineno-45-8" name="__codelineno-45-8" href="#__codelineno-45-8"></a><span class="s">  upgradeConstraintPolicy: Ignore</span>
+</span><span id="__span-45-9"><a id="__codelineno-45-9" name="__codelineno-45-9" href="#__codelineno-45-9"></a><span class="s">  version: 2.0.x</span>
+</span><span id="__span-45-10"><a id="__codelineno-45-10" name="__codelineno-45-10" href="#__codelineno-45-10"></a><span class="s">EOF</span>
+</span></code></pre></div></p>
+<p>We should see that eventually the <code>ClusterExtension</code> will resolve and install the <code>v2.0.0</code> bundle we added to the
+catalog image in the previous step. Watch this happen with:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-46-1"><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clusterextension/coastal<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span>-w
+</span></code></pre></div></p>
+<details>
+<summary>Example</summary>
+
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-47-1"><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-47-2"><a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterExtension</span>
+</span><span id="__span-47-3"><a id="__codelineno-47-3" name="__codelineno-47-3" href="#__codelineno-47-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-47-4"><a id="__codelineno-47-4" name="__codelineno-47-4" href="#__codelineno-47-4"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+</span><span id="__span-47-5"><a id="__codelineno-47-5" name="__codelineno-47-5" href="#__codelineno-47-5"></a><span class="w">    </span><span class="nt">kubectl.kubernetes.io/last-applied-configuration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-47-6"><a id="__codelineno-47-6" name="__codelineno-47-6" href="#__codelineno-47-6"></a><span class="w">      </span><span class="no">{&quot;apiVersion&quot;:&quot;olm.operatorframework.io/v1alpha1&quot;,&quot;kind&quot;:&quot;ClusterExtension&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;coastal&quot;},&quot;spec&quot;:{&quot;packageName&quot;:&quot;coastal&quot;,&quot;upgradeConstraintPolicy&quot;:&quot;Ignore&quot;,&quot;version&quot;:&quot;2.0.x&quot;}}</span>
+</span><span id="__span-47-7"><a id="__codelineno-47-7" name="__codelineno-47-7" href="#__codelineno-47-7"></a><span class="w">  </span><span class="nt">creationTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:29:18Z&quot;</span>
+</span><span id="__span-47-8"><a id="__codelineno-47-8" name="__codelineno-47-8" href="#__codelineno-47-8"></a><span class="w">  </span><span class="nt">generation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+</span><span id="__span-47-9"><a id="__codelineno-47-9" name="__codelineno-47-9" href="#__codelineno-47-9"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-47-10"><a id="__codelineno-47-10" name="__codelineno-47-10" href="#__codelineno-47-10"></a><span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;7338&quot;</span>
+</span><span id="__span-47-11"><a id="__codelineno-47-11" name="__codelineno-47-11" href="#__codelineno-47-11"></a><span class="w">  </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">48d16240-edae-4904-bad8-58137bebcf8a</span>
+</span><span id="__span-47-12"><a id="__codelineno-47-12" name="__codelineno-47-12" href="#__codelineno-47-12"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-47-13"><a id="__codelineno-47-13" name="__codelineno-47-13" href="#__codelineno-47-13"></a><span class="w">  </span><span class="nt">packageName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-47-14"><a id="__codelineno-47-14" name="__codelineno-47-14" href="#__codelineno-47-14"></a><span class="w">  </span><span class="nt">upgradeConstraintPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Ignore</span>
+</span><span id="__span-47-15"><a id="__codelineno-47-15" name="__codelineno-47-15" href="#__codelineno-47-15"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0.x</span>
+</span><span id="__span-47-16"><a id="__codelineno-47-16" name="__codelineno-47-16" href="#__codelineno-47-16"></a><span class="nt">status</span><span class="p">:</span>
+</span><span id="__span-47-17"><a id="__codelineno-47-17" name="__codelineno-47-17" href="#__codelineno-47-17"></a><span class="w">  </span><span class="nt">conditions</span><span class="p">:</span>
+</span><span id="__span-47-18"><a id="__codelineno-47-18" name="__codelineno-47-18" href="#__codelineno-47-18"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:52:58Z&quot;</span>
+</span><span id="__span-47-19"><a id="__codelineno-47-19" name="__codelineno-47-19" href="#__codelineno-47-19"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">installed from &quot;docker.io/bpalmer/coastal-bundle:v2.0.0&quot;</span>
+</span><span id="__span-47-20"><a id="__codelineno-47-20" name="__codelineno-47-20" href="#__codelineno-47-20"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+</span><span id="__span-47-21"><a id="__codelineno-47-21" name="__codelineno-47-21" href="#__codelineno-47-21"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Success</span>
+</span><span id="__span-47-22"><a id="__codelineno-47-22" name="__codelineno-47-22" href="#__codelineno-47-22"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-47-23"><a id="__codelineno-47-23" name="__codelineno-47-23" href="#__codelineno-47-23"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Installed</span>
+</span><span id="__span-47-24"><a id="__codelineno-47-24" name="__codelineno-47-24" href="#__codelineno-47-24"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:52:58Z&quot;</span>
+</span><span id="__span-47-25"><a id="__codelineno-47-25" name="__codelineno-47-25" href="#__codelineno-47-25"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">resolved to &quot;docker.io/bpalmer/coastal-bundle:v2.0.0&quot;</span>
+</span><span id="__span-47-26"><a id="__codelineno-47-26" name="__codelineno-47-26" href="#__codelineno-47-26"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+</span><span id="__span-47-27"><a id="__codelineno-47-27" name="__codelineno-47-27" href="#__codelineno-47-27"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Success</span>
+</span><span id="__span-47-28"><a id="__codelineno-47-28" name="__codelineno-47-28" href="#__codelineno-47-28"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-47-29"><a id="__codelineno-47-29" name="__codelineno-47-29" href="#__codelineno-47-29"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Resolved</span>
+</span><span id="__span-47-30"><a id="__codelineno-47-30" name="__codelineno-47-30" href="#__codelineno-47-30"></a><span class="w">  </span><span class="nt">installedBundleResource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-bundle:v2.0.0</span>
+</span><span id="__span-47-31"><a id="__codelineno-47-31" name="__codelineno-47-31" href="#__codelineno-47-31"></a><span class="w">  </span><span class="nt">resolvedBundleResource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-bundle:v2.0.0</span>
+</span></code></pre></div>
+
+</details>
+
+<h2 id="attempting-to-downgrade-by-changing-the-version-range">Attempting to downgrade by changing the version range</h2>
+<p>We can disable downgrades by setting the <code>ClusterExtension</code> resource's <code>spec.UpgradeConstraintPolicy</code> field to <code>Enforce</code>.
+To see this, run:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-48-1"><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+</span><span id="__span-48-2"><a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a><span class="s">apiVersion: olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-48-3"><a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a><span class="s">kind: ClusterExtension</span>
+</span><span id="__span-48-4"><a id="__codelineno-48-4" name="__codelineno-48-4" href="#__codelineno-48-4"></a><span class="s">metadata:</span>
+</span><span id="__span-48-5"><a id="__codelineno-48-5" name="__codelineno-48-5" href="#__codelineno-48-5"></a><span class="s">  name: coastal</span>
+</span><span id="__span-48-6"><a id="__codelineno-48-6" name="__codelineno-48-6" href="#__codelineno-48-6"></a><span class="s">spec:</span>
+</span><span id="__span-48-7"><a id="__codelineno-48-7" name="__codelineno-48-7" href="#__codelineno-48-7"></a><span class="s">  packageName: coastal</span>
+</span><span id="__span-48-8"><a id="__codelineno-48-8" name="__codelineno-48-8" href="#__codelineno-48-8"></a><span class="s">  upgradeConstraintPolicy: Enforce</span>
+</span><span id="__span-48-9"><a id="__codelineno-48-9" name="__codelineno-48-9" href="#__codelineno-48-9"></a><span class="s">  version: 1.1.x</span>
+</span><span id="__span-48-10"><a id="__codelineno-48-10" name="__codelineno-48-10" href="#__codelineno-48-10"></a><span class="s">EOF</span>
+</span></code></pre></div></p>
+<p>We should see resolution fail since it is attempting to downgrade. Watch this happen with:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-49-1"><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clusterextension/coastal<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span>-w
+</span></code></pre></div></p>
+<details>
+<summary>Example</summary>
+
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-50-1"><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-50-2"><a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterExtension</span>
+</span><span id="__span-50-3"><a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-50-4"><a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+</span><span id="__span-50-5"><a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a><span class="w">    </span><span class="nt">kubectl.kubernetes.io/last-applied-configuration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-50-6"><a id="__codelineno-50-6" name="__codelineno-50-6" href="#__codelineno-50-6"></a><span class="w">      </span><span class="no">{&quot;apiVersion&quot;:&quot;olm.operatorframework.io/v1alpha1&quot;,&quot;kind&quot;:&quot;ClusterExtension&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;coastal&quot;},&quot;spec&quot;:{&quot;packageName&quot;:&quot;coastal&quot;,&quot;upgradeConstraintPolicy&quot;:&quot;Enforce&quot;,&quot;version&quot;:&quot;1.1.x&quot;}}</span>
+</span><span id="__span-50-7"><a id="__codelineno-50-7" name="__codelineno-50-7" href="#__codelineno-50-7"></a><span class="w">  </span><span class="nt">creationTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:29:18Z&quot;</span>
+</span><span id="__span-50-8"><a id="__codelineno-50-8" name="__codelineno-50-8" href="#__codelineno-50-8"></a><span class="w">  </span><span class="nt">generation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</span><span id="__span-50-9"><a id="__codelineno-50-9" name="__codelineno-50-9" href="#__codelineno-50-9"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-50-10"><a id="__codelineno-50-10" name="__codelineno-50-10" href="#__codelineno-50-10"></a><span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;7601&quot;</span>
+</span><span id="__span-50-11"><a id="__codelineno-50-11" name="__codelineno-50-11" href="#__codelineno-50-11"></a><span class="w">  </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">48d16240-edae-4904-bad8-58137bebcf8a</span>
+</span><span id="__span-50-12"><a id="__codelineno-50-12" name="__codelineno-50-12" href="#__codelineno-50-12"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-50-13"><a id="__codelineno-50-13" name="__codelineno-50-13" href="#__codelineno-50-13"></a><span class="w">  </span><span class="nt">packageName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-50-14"><a id="__codelineno-50-14" name="__codelineno-50-14" href="#__codelineno-50-14"></a><span class="w">  </span><span class="nt">upgradeConstraintPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Enforce</span>
+</span><span id="__span-50-15"><a id="__codelineno-50-15" name="__codelineno-50-15" href="#__codelineno-50-15"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.1.x</span>
+</span><span id="__span-50-16"><a id="__codelineno-50-16" name="__codelineno-50-16" href="#__codelineno-50-16"></a><span class="nt">status</span><span class="p">:</span>
+</span><span id="__span-50-17"><a id="__codelineno-50-17" name="__codelineno-50-17" href="#__codelineno-50-17"></a><span class="w">  </span><span class="nt">conditions</span><span class="p">:</span>
+</span><span id="__span-50-18"><a id="__codelineno-50-18" name="__codelineno-50-18" href="#__codelineno-50-18"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:53:55Z&quot;</span>
+</span><span id="__span-50-19"><a id="__codelineno-50-19" name="__codelineno-50-19" href="#__codelineno-50-19"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">installation has not been attempted as resolution is unsatisfiable</span>
+</span><span id="__span-50-20"><a id="__codelineno-50-20" name="__codelineno-50-20" href="#__codelineno-50-20"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</span><span id="__span-50-21"><a id="__codelineno-50-21" name="__codelineno-50-21" href="#__codelineno-50-21"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">InstallationStatusUnknown</span>
+</span><span id="__span-50-22"><a id="__codelineno-50-22" name="__codelineno-50-22" href="#__codelineno-50-22"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Unknown</span>
+</span><span id="__span-50-23"><a id="__codelineno-50-23" name="__codelineno-50-23" href="#__codelineno-50-23"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Installed</span>
+</span><span id="__span-50-24"><a id="__codelineno-50-24" name="__codelineno-50-24" href="#__codelineno-50-24"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:53:55Z&quot;</span>
+</span><span id="__span-50-25"><a id="__codelineno-50-25" name="__codelineno-50-25" href="#__codelineno-50-25"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|-</span>
+</span><span id="__span-50-26"><a id="__codelineno-50-26" name="__codelineno-50-26" href="#__codelineno-50-26"></a><span class="w">      </span><span class="no">constraints not satisfiable:</span>
+</span><span id="__span-50-27"><a id="__codelineno-50-27" name="__codelineno-50-27" href="#__codelineno-50-27"></a><span class="w">      </span><span class="no">coastal package uniqueness permits at most 1 of coastal-coastal-coastal.v1.1.0, coastal-coastal-coastal.v2.0.0</span>
+</span><span id="__span-50-28"><a id="__codelineno-50-28" name="__codelineno-50-28" href="#__codelineno-50-28"></a><span class="w">      </span><span class="no">installed package coastal requires at least one of coastal-coastal-coastal.v2.0.0</span>
+</span><span id="__span-50-29"><a id="__codelineno-50-29" name="__codelineno-50-29" href="#__codelineno-50-29"></a><span class="w">      </span><span class="no">installed package coastal is mandatory</span>
+</span><span id="__span-50-30"><a id="__codelineno-50-30" name="__codelineno-50-30" href="#__codelineno-50-30"></a><span class="w">      </span><span class="no">required package coastal requires at least one of coastal-coastal-coastal.v1.1.0</span>
+</span><span id="__span-50-31"><a id="__codelineno-50-31" name="__codelineno-50-31" href="#__codelineno-50-31"></a><span class="w">      </span><span class="no">required package coastal is mandatory</span>
+</span><span id="__span-50-32"><a id="__codelineno-50-32" name="__codelineno-50-32" href="#__codelineno-50-32"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</span><span id="__span-50-33"><a id="__codelineno-50-33" name="__codelineno-50-33" href="#__codelineno-50-33"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ResolutionFailed</span>
+</span><span id="__span-50-34"><a id="__codelineno-50-34" name="__codelineno-50-34" href="#__codelineno-50-34"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;False&quot;</span>
+</span><span id="__span-50-35"><a id="__codelineno-50-35" name="__codelineno-50-35" href="#__codelineno-50-35"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Resolved</span>
+</span></code></pre></div>
+
+</details>
+
+<h2 id="back-to-the-escape-hatch">Back to the escape hatch!</h2>
+<p>To tell operator-controller to ignore the safety mechanisms and downgrade the <code>ClusterExtension</code> version,
+set the <code>ClusterExtension</code>'s <code>spec.upgradeConstraintPolicy</code> to <code>Ignore</code> with:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-51-1"><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+</span><span id="__span-51-2"><a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a><span class="s">apiVersion: olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-51-3"><a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a><span class="s">kind: ClusterExtension</span>
+</span><span id="__span-51-4"><a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a><span class="s">metadata:</span>
+</span><span id="__span-51-5"><a id="__codelineno-51-5" name="__codelineno-51-5" href="#__codelineno-51-5"></a><span class="s">  name: coastal</span>
+</span><span id="__span-51-6"><a id="__codelineno-51-6" name="__codelineno-51-6" href="#__codelineno-51-6"></a><span class="s">spec:</span>
+</span><span id="__span-51-7"><a id="__codelineno-51-7" name="__codelineno-51-7" href="#__codelineno-51-7"></a><span class="s">  packageName: coastal</span>
+</span><span id="__span-51-8"><a id="__codelineno-51-8" name="__codelineno-51-8" href="#__codelineno-51-8"></a><span class="s">  upgradeConstraintPolicy: Ignore</span>
+</span><span id="__span-51-9"><a id="__codelineno-51-9" name="__codelineno-51-9" href="#__codelineno-51-9"></a><span class="s">  version: 1.1.x</span>
+</span><span id="__span-51-10"><a id="__codelineno-51-10" name="__codelineno-51-10" href="#__codelineno-51-10"></a><span class="s">EOF</span>
+</span></code></pre></div></p>
+<p>We should see that eventually the <code>ClusterExtension</code> will resolve and install the <code>v1.1.0</code> bundle we added to the
+catalog image in a previous step.  Watch this happen with:
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-52-1"><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clusterextension/coastal<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span>-w
+</span></code></pre></div></p>
+<details>
+<summary>Example</summary>
+
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-53-1"><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">olm.operatorframework.io/v1alpha1</span>
+</span><span id="__span-53-2"><a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterExtension</span>
+</span><span id="__span-53-3"><a id="__codelineno-53-3" name="__codelineno-53-3" href="#__codelineno-53-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-53-4"><a id="__codelineno-53-4" name="__codelineno-53-4" href="#__codelineno-53-4"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+</span><span id="__span-53-5"><a id="__codelineno-53-5" name="__codelineno-53-5" href="#__codelineno-53-5"></a><span class="w">    </span><span class="nt">kubectl.kubernetes.io/last-applied-configuration</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-53-6"><a id="__codelineno-53-6" name="__codelineno-53-6" href="#__codelineno-53-6"></a><span class="w">      </span><span class="no">{&quot;apiVersion&quot;:&quot;olm.operatorframework.io/v1alpha1&quot;,&quot;kind&quot;:&quot;ClusterExtension&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;coastal&quot;},&quot;spec&quot;:{&quot;packageName&quot;:&quot;coastal&quot;,&quot;upgradeConstraintPolicy&quot;:&quot;Ignore&quot;,&quot;version&quot;:&quot;1.1.x&quot;}}</span>
+</span><span id="__span-53-7"><a id="__codelineno-53-7" name="__codelineno-53-7" href="#__codelineno-53-7"></a><span class="w">  </span><span class="nt">creationTimestamp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:29:18Z&quot;</span>
+</span><span id="__span-53-8"><a id="__codelineno-53-8" name="__codelineno-53-8" href="#__codelineno-53-8"></a><span class="w">  </span><span class="nt">generation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span>
+</span><span id="__span-53-9"><a id="__codelineno-53-9" name="__codelineno-53-9" href="#__codelineno-53-9"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-53-10"><a id="__codelineno-53-10" name="__codelineno-53-10" href="#__codelineno-53-10"></a><span class="w">  </span><span class="nt">resourceVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;7732&quot;</span>
+</span><span id="__span-53-11"><a id="__codelineno-53-11" name="__codelineno-53-11" href="#__codelineno-53-11"></a><span class="w">  </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">48d16240-edae-4904-bad8-58137bebcf8a</span>
+</span><span id="__span-53-12"><a id="__codelineno-53-12" name="__codelineno-53-12" href="#__codelineno-53-12"></a><span class="nt">spec</span><span class="p">:</span>
+</span><span id="__span-53-13"><a id="__codelineno-53-13" name="__codelineno-53-13" href="#__codelineno-53-13"></a><span class="w">  </span><span class="nt">packageName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">coastal</span>
+</span><span id="__span-53-14"><a id="__codelineno-53-14" name="__codelineno-53-14" href="#__codelineno-53-14"></a><span class="w">  </span><span class="nt">upgradeConstraintPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Ignore</span>
+</span><span id="__span-53-15"><a id="__codelineno-53-15" name="__codelineno-53-15" href="#__codelineno-53-15"></a><span class="w">  </span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.1.x</span>
+</span><span id="__span-53-16"><a id="__codelineno-53-16" name="__codelineno-53-16" href="#__codelineno-53-16"></a><span class="nt">status</span><span class="p">:</span>
+</span><span id="__span-53-17"><a id="__codelineno-53-17" name="__codelineno-53-17" href="#__codelineno-53-17"></a><span class="w">  </span><span class="nt">conditions</span><span class="p">:</span>
+</span><span id="__span-53-18"><a id="__codelineno-53-18" name="__codelineno-53-18" href="#__codelineno-53-18"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:54:38Z&quot;</span>
+</span><span id="__span-53-19"><a id="__codelineno-53-19" name="__codelineno-53-19" href="#__codelineno-53-19"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">installed from &quot;docker.io/bpalmer/coastal-bundle:v1.1.0&quot;</span>
+</span><span id="__span-53-20"><a id="__codelineno-53-20" name="__codelineno-53-20" href="#__codelineno-53-20"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span>
+</span><span id="__span-53-21"><a id="__codelineno-53-21" name="__codelineno-53-21" href="#__codelineno-53-21"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Success</span>
+</span><span id="__span-53-22"><a id="__codelineno-53-22" name="__codelineno-53-22" href="#__codelineno-53-22"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-53-23"><a id="__codelineno-53-23" name="__codelineno-53-23" href="#__codelineno-53-23"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Installed</span>
+</span><span id="__span-53-24"><a id="__codelineno-53-24" name="__codelineno-53-24" href="#__codelineno-53-24"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">lastTransitionTime</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2023-11-27T20:54:38Z&quot;</span>
+</span><span id="__span-53-25"><a id="__codelineno-53-25" name="__codelineno-53-25" href="#__codelineno-53-25"></a><span class="w">    </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">resolved to &quot;docker.io/bpalmer/coastal-bundle:v1.1.0&quot;</span>
+</span><span id="__span-53-26"><a id="__codelineno-53-26" name="__codelineno-53-26" href="#__codelineno-53-26"></a><span class="w">    </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span>
+</span><span id="__span-53-27"><a id="__codelineno-53-27" name="__codelineno-53-27" href="#__codelineno-53-27"></a><span class="w">    </span><span class="nt">reason</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Success</span>
+</span><span id="__span-53-28"><a id="__codelineno-53-28" name="__codelineno-53-28" href="#__codelineno-53-28"></a><span class="w">    </span><span class="nt">status</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;True&quot;</span>
+</span><span id="__span-53-29"><a id="__codelineno-53-29" name="__codelineno-53-29" href="#__codelineno-53-29"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Resolved</span>
+</span><span id="__span-53-30"><a id="__codelineno-53-30" name="__codelineno-53-30" href="#__codelineno-53-30"></a><span class="w">  </span><span class="nt">installedBundleResource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-bundle:v1.1.0</span>
+</span><span id="__span-53-31"><a id="__codelineno-53-31" name="__codelineno-53-31" href="#__codelineno-53-31"></a><span class="w">  </span><span class="nt">resolvedBundleResource</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker.io/bpalmer/coastal-bundle:v1.1.0</span>
+</span></code></pre></div>
+
+</details>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.bd41221c.min.js"></script>
+      
+    
+  </body>
+</html>
