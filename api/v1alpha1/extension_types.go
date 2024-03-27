@@ -95,15 +95,20 @@ type ExtensionStatus struct {
 	Paused bool `json:"paused"`
 
 	// +optional
-	InstalledBundleResource string `json:"installedBundleResource,omitempty"`
+	InstalledBundle *BundleMetadata `json:"installedBundle,omitempty"`
 	// +optional
-	ResolvedBundleResource string `json:"resolvedBundleResource,omitempty"`
+	ResolvedBundle *BundleMetadata `json:"resolvedBundle,omitempty"`
 
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+}
+
+type BundleMetadata struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }
 
 //+kubebuilder:object:root=true

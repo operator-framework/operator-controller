@@ -66,8 +66,8 @@ func TestClusterExtensionNonExistentPackage(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Empty(t, clusterExtension.Status.ResolvedBundleResource)
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	require.Empty(t, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -108,8 +108,8 @@ func TestClusterExtensionNonExistentVersion(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Empty(t, clusterExtension.Status.ResolvedBundleResource)
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	require.Empty(t, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -159,11 +159,11 @@ func TestClusterExtensionBundleDeploymentDoesNotExist(t *testing.T) {
 	require.NotNil(t, bd.Spec.Source.Image)
 	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Source.Image.Ref)
 
-	t.Log("It sets the resolvedBundleResource status field")
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", clusterExtension.Status.ResolvedBundleResource)
+	t.Log("It sets the ResolvedBundle status field")
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
 
-	t.Log("It sets the InstalledBundleResource status field")
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	t.Log("It sets the InstalledBundle status field")
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("It sets the status on the cluster extension")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -248,8 +248,8 @@ func TestClusterExtensionBundleDeploymentOutOfDate(t *testing.T) {
 	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Source.Image.Ref)
 
 	t.Log("By checking the status fields")
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", clusterExtension.Status.ResolvedBundleResource)
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected status conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -328,8 +328,8 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, ext))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", ext.Status.ResolvedBundleResource)
-	require.Empty(t, ext.Status.InstalledBundleResource)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, ext.Status.ResolvedBundle)
+	require.Empty(t, ext.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -364,8 +364,8 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, ext))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", ext.Status.ResolvedBundleResource)
-	require.Equal(t, "", ext.Status.InstalledBundleResource)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, ext.Status.ResolvedBundle)
+	require.Nil(t, ext.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond = apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -401,8 +401,8 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Log("By checking the status fields")
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", ext.Status.ResolvedBundleResource)
-	require.Empty(t, ext.Status.InstalledBundleResource)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, ext.Status.ResolvedBundle)
+	require.Empty(t, ext.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond = apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -438,8 +438,8 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, ext))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", ext.Status.ResolvedBundleResource)
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", ext.Status.InstalledBundleResource)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, ext.Status.ResolvedBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, ext.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond = apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -481,8 +481,8 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, ext))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", ext.Status.ResolvedBundleResource)
-	require.Empty(t, ext.Status.InstalledBundleResource)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, ext.Status.ResolvedBundle)
+	require.Nil(t, ext.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond = apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -518,8 +518,8 @@ func TestClusterExtensionBundleDeploymentUpToDate(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, ext))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", ext.Status.ResolvedBundleResource)
-	require.Empty(t, ext.Status.InstalledBundleResource)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, ext.Status.ResolvedBundle)
+	require.Nil(t, ext.Status.InstalledBundle)
 
 	t.Log("By cchecking the expected conditions")
 	cond = apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -584,11 +584,11 @@ func TestClusterExtensionExpectedBundleDeployment(t *testing.T) {
 	require.NotNil(t, bd.Spec.Source.Image)
 	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Source.Image.Ref)
 
-	t.Log("It sets the resolvedBundleResource status field")
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", clusterExtension.Status.ResolvedBundleResource)
+	t.Log("It sets the ResolvedBundle status field")
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
 
-	t.Log("It sets the InstalledBundleResource status field")
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	t.Log("It sets the InstalledBundle status field")
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("It sets resolution to unknown status")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -637,8 +637,8 @@ func TestClusterExtensionDuplicatePackage(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Empty(t, clusterExtension.Status.ResolvedBundleResource)
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	require.Empty(t, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -689,8 +689,8 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", clusterExtension.Status.ResolvedBundleResource)
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -746,8 +746,8 @@ func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", clusterExtension.Status.ResolvedBundleResource)
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -804,8 +804,8 @@ func TestClusterExtensionVersionNoChannel(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Empty(t, clusterExtension.Status.ResolvedBundleResource)
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	require.Empty(t, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -853,8 +853,8 @@ func TestClusterExtensionNoChannel(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Empty(t, clusterExtension.Status.ResolvedBundleResource)
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	require.Empty(t, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -903,8 +903,8 @@ func TestClusterExtensionNoVersion(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Empty(t, clusterExtension.Status.ResolvedBundleResource)
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	require.Empty(t, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -953,8 +953,8 @@ func TestClusterExtensionPlainV0Bundle(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, "quay.io/operatorhub/plain@sha256:plain", clusterExtension.Status.ResolvedBundleResource)
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/plain/0.1.0", Version: "0.1.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
 	require.NotNil(t, cond)
@@ -1011,8 +1011,8 @@ func TestClusterExtensionBadBundleMediaType(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, "quay.io/operatorhub/badmedia@sha256:badmedia", clusterExtension.Status.ResolvedBundleResource)
-	require.Empty(t, clusterExtension.Status.InstalledBundleResource)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/badmedia/0.1.0", Version: "0.1.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1140,7 +1140,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NoError(t, err)
 
 		// Checking the status fields
-		assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", clusterExtension.Status.ResolvedBundleResource)
+		assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 
 		// checking the expected conditions
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1165,7 +1165,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 
 		// Checking the status fields
 		// TODO: https://github.com/operator-framework/operator-controller/issues/320
-		assert.Equal(t, "", clusterExtension.Status.ResolvedBundleResource)
+		assert.Nil(t, clusterExtension.Status.ResolvedBundle)
 
 		// checking the expected conditions
 		cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1190,7 +1190,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NoError(t, err)
 
 		// Checking the status fields
-		assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.2.0", clusterExtension.Status.ResolvedBundleResource)
+		assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
 
 		// checking the expected conditions
 		cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1233,7 +1233,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NoError(t, err)
 
 		// Checking the status fields
-		assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", clusterExtension.Status.ResolvedBundleResource)
+		assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 
 		// checking the expected conditions
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1258,7 +1258,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 
 		// Checking the status fields
 		// TODO: https://github.com/operator-framework/operator-controller/issues/320
-		assert.Equal(t, "", clusterExtension.Status.ResolvedBundleResource)
+		assert.Nil(t, clusterExtension.Status.ResolvedBundle)
 
 		// checking the expected conditions
 		cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1283,7 +1283,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NoError(t, err)
 
 		// Checking the status fields
-		assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.1", clusterExtension.Status.ResolvedBundleResource)
+		assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.1", Version: "1.0.1"}, clusterExtension.Status.ResolvedBundle)
 
 		// checking the expected conditions
 		cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1338,7 +1338,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 				require.NoError(t, err)
 
 				// Checking the status fields
-				assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", clusterExtension.Status.ResolvedBundleResource)
+				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 
 				// checking the expected conditions
 				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1364,7 +1364,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 				require.NoError(t, err)
 
 				// Checking the status fields
-				assert.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", clusterExtension.Status.ResolvedBundleResource)
+				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
 
 				// checking the expected conditions
 				cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1425,7 +1425,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				require.NoError(t, err)
 
 				// Checking the status fields
-				assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.1", clusterExtension.Status.ResolvedBundleResource)
+				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.1", Version: "1.0.1"}, clusterExtension.Status.ResolvedBundle)
 
 				// checking the expected conditions
 				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1450,7 +1450,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 
 				// Checking the status fields
 				// TODO: https://github.com/operator-framework/operator-controller/issues/320
-				assert.Equal(t, "", clusterExtension.Status.ResolvedBundleResource)
+				assert.Nil(t, clusterExtension.Status.ResolvedBundle)
 
 				// checking the expected conditions
 				cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1508,7 +1508,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				require.NoError(t, err)
 
 				// Checking the status fields
-				assert.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", clusterExtension.Status.ResolvedBundleResource)
+				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
 
 				// checking the expected conditions
 				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1532,7 +1532,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				require.NoError(t, err)
 
 				// Checking the status fields
-				assert.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", clusterExtension.Status.ResolvedBundleResource)
+				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 
 				// checking the expected conditions
 				cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)

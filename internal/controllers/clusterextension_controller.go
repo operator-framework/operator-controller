@@ -118,9 +118,9 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// gather vars for resolution
 	vars, err := r.variables(ctx)
 	if err != nil {
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted due to failure to gather data for resolution", ext.GetGeneration())
-		ext.Status.ResolvedBundleResource = ""
+		ext.Status.ResolvedBundle = nil
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted due to failure to gather data for resolution", ext.GetGeneration())
@@ -130,9 +130,9 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// run resolution
 	selection, err := r.Resolver.Solve(vars)
 	if err != nil {
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as resolution failed", ext.GetGeneration())
-		ext.Status.ResolvedBundleResource = ""
+		ext.Status.ResolvedBundle = nil
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as resolution failed", ext.GetGeneration())
@@ -143,9 +143,9 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// ClusterExtension's desired package name.
 	bundle, err := r.bundleFromSolution(selection, ext.Spec.PackageName)
 	if err != nil {
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as resolution failed", ext.GetGeneration())
-		ext.Status.ResolvedBundleResource = ""
+		ext.Status.ResolvedBundle = nil
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as resolution failed", ext.GetGeneration())
@@ -153,7 +153,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 
 	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundle.Image value.
-	ext.Status.ResolvedBundleResource = bundle.Image
+	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
 	setResolvedStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), ext.GetGeneration())
 
 	// TODO: Question - Should we set the deprecation statuses after we have successfully resolved instead of after a successful installation?
@@ -175,7 +175,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	dep := r.GenerateExpectedBundleDeployment(*ext, bundle.Image, bundleProvisioner)
 	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
 		// originally Reason: ocv1alpha1.ReasonInstallationFailed
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
@@ -185,15 +185,15 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	existingTypedBundleDeployment := &rukpakv1alpha2.BundleDeployment{}
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(dep.UnstructuredContent(), existingTypedBundleDeployment); err != nil {
 		// originally Reason: ocv1alpha1.ReasonInstallationStatusUnknown
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
-	// Let's set the proper Installed condition and InstalledBundleResource field based on the
+	// Let's set the proper Installed condition and InstalledBundle field based on the
 	// existing BundleDeployment object status.
-	mapBDStatusToInstalledCondition(existingTypedBundleDeployment, ext)
+	mapBDStatusToInstalledCondition(existingTypedBundleDeployment, ext, bundle)
 
 	SetDeprecationStatus(ext, bundle)
 
@@ -218,16 +218,16 @@ func (r *ClusterExtensionReconciler) variables(ctx context.Context) ([]deppy.Var
 	return GenerateVariables(allBundles, clusterExtensionList.Items, bundleDeploymentList.Items)
 }
 
-func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha2.BundleDeployment, ext *ocv1alpha1.ClusterExtension) {
+func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha2.BundleDeployment, ext *ocv1alpha1.ClusterExtension, bundle *catalogmetadata.Bundle) {
 	bundleDeploymentReady := apimeta.FindStatusCondition(existingTypedBundleDeployment.Status.Conditions, rukpakv1alpha2.TypeInstalled)
 	if bundleDeploymentReady == nil {
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "bundledeployment status is unknown", ext.GetGeneration())
 		return
 	}
 
 	if bundleDeploymentReady.Status != metav1.ConditionTrue {
-		ext.Status.InstalledBundleResource = ""
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionFailed(
 			&ext.Status.Conditions,
 			fmt.Sprintf("bundledeployment not ready: %s", bundleDeploymentReady.Message),
@@ -236,25 +236,25 @@ func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alph
 		return
 	}
 
+	installedBundle := bundleMetadataFor(bundle)
 	bundleDeploymentSource := existingTypedBundleDeployment.Spec.Source
 	switch bundleDeploymentSource.Type {
 	case rukpakv1alpha2.SourceTypeImage:
-		ext.Status.InstalledBundleResource = bundleDeploymentSource.Image.Ref
+		ext.Status.InstalledBundle = installedBundle
 		setInstalledStatusConditionSuccess(
 			&ext.Status.Conditions,
 			fmt.Sprintf("installed from %q", bundleDeploymentSource.Image.Ref),
 			ext.GetGeneration(),
 		)
 	case rukpakv1alpha2.SourceTypeGit:
+		ext.Status.InstalledBundle = installedBundle
 		resource := bundleDeploymentSource.Git.Repository + "@" + bundleDeploymentSource.Git.Ref.Commit
-		ext.Status.InstalledBundleResource = resource
 		setInstalledStatusConditionSuccess(
 			&ext.Status.Conditions,
 			fmt.Sprintf("installed from %q", resource),
 			ext.GetGeneration(),
 		)
 	default:
-		ext.Status.InstalledBundleResource = ""
 		setInstalledStatusConditionUnknown(
 			&ext.Status.Conditions,
 			fmt.Sprintf("unknown bundledeployment source type %q", bundleDeploymentSource.Type),

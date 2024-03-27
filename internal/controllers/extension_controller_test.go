@@ -45,8 +45,8 @@ func TestExtensionReconcile(t *testing.T) {
 			assert.Equal(t, ctrl.Result{}, res)
 			assert.NoError(t, err)
 			verifyExtensionInvariants(t, ext)
-			assert.Empty(t, ext.Status.InstalledBundleResource)
-			assert.Empty(t, ext.Status.ResolvedBundleResource)
+			assert.Empty(t, ext.Status.InstalledBundle)
+			assert.Empty(t, ext.Status.ResolvedBundle)
 			for _, cond := range ext.Status.Conditions {
 				assert.Equal(t, metav1.ConditionUnknown, cond.Status)
 				assert.Equal(t, "extension feature is disabled", cond.Message)
@@ -62,8 +62,8 @@ func TestExtensionReconcile(t *testing.T) {
 			assert.NoError(t, err)
 			verifyExtensionInvariants(t, ext)
 			assert.False(t, ext.Status.Paused)
-			assert.Empty(t, ext.Status.InstalledBundleResource)
-			assert.Empty(t, ext.Status.ResolvedBundleResource)
+			assert.Empty(t, ext.Status.InstalledBundle)
+			assert.Empty(t, ext.Status.ResolvedBundle)
 			for _, cond := range ext.Status.Conditions {
 				assert.Equal(t, metav1.ConditionUnknown, cond.Status)
 				assert.Equal(t, "the Extension interface is not fully implemented", cond.Message)

@@ -89,7 +89,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, "localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0", clusterExtension.Status.ResolvedBundleResource)
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
 	}, pollDuration, pollInterval)
 
 	t.Log("By eventually installing the package successfully")
@@ -102,7 +102,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "installed from")
-		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundleResource)
+		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle)
 
 		bd := rukpakv1alpha2.BundleDeployment{}
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtensionName}, &bd))
@@ -145,7 +145,7 @@ func TestClusterExtensionInstallPlain(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.NotEmpty(ct, clusterExtension.Status.ResolvedBundleResource)
+		assert.NotEmpty(ct, clusterExtension.Status.ResolvedBundle)
 	}, pollDuration, pollInterval)
 
 	t.Log("By eventually installing the package successfully")
@@ -158,7 +158,7 @@ func TestClusterExtensionInstallPlain(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "installed from")
-		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundleResource)
+		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle)
 
 		bd := rukpakv1alpha2.BundleDeployment{}
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtensionName}, &bd))
@@ -259,7 +259,7 @@ func TestClusterExtensionInstallNonSuccessorVersion(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, "localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0", clusterExtension.Status.ResolvedBundleResource)
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 	}, pollDuration, pollInterval)
 
 	t.Log("It does not allow to upgrade the ClusterExtension to a non-successor version")
@@ -277,7 +277,7 @@ func TestClusterExtensionInstallNonSuccessorVersion(t *testing.T) {
 		assert.Equal(ct, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
 		assert.Contains(ct, cond.Message, "constraints not satisfiable")
 		assert.Contains(ct, cond.Message, "installed package prometheus requires at least one of test-catalog-prometheus-prometheus-operator.1.2.0, test-catalog-prometheus-prometheus-operator.1.0.1, test-catalog-prometheus-prometheus-operator.1.0.0")
-		assert.Empty(ct, clusterExtension.Status.ResolvedBundleResource)
+		assert.Empty(ct, clusterExtension.Status.ResolvedBundle)
 	}, pollDuration, pollInterval)
 }
 
@@ -303,7 +303,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, "localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0", clusterExtension.Status.ResolvedBundleResource)
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 	}, pollDuration, pollInterval)
 
 	t.Log("It does allow to upgrade the ClusterExtension to any of the successor versions within non-zero major version")
@@ -320,7 +320,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, "localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0", clusterExtension.Status.ResolvedBundleResource)
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
 	}, pollDuration, pollInterval)
 }
 
