@@ -75,8 +75,15 @@ type ClusterExtensionSpec struct {
 
 const (
 	// TODO(user): add more Types, here and into init()
+	// TypeInstalled indicates whether the install for the bundle
+	// referenced in the status was completed.
+	// It does not indicate whether the App created by the bundle is healthy.
 	TypeInstalled = "Installed"
-	TypeResolved  = "Resolved"
+	// TypeProgressing indicates whether operator-controller is
+	// reconciling, installing, updating or deleting an extension.
+	TypeProgressing = "Progressing"
+	TypeResolved    = "Resolved"
+	//TODO: Add a TypeHealthy to status of App health checks
 	// TypeDeprecated is a rollup condition that is present when
 	// any of the deprecated conditions are present.
 	TypeDeprecated        = "Deprecated"
@@ -84,21 +91,29 @@ const (
 	TypeChannelDeprecated = "ChannelDeprecated"
 	TypeBundleDeprecated  = "BundleDeprecated"
 
-	ReasonBundleLookupFailed        = "BundleLookupFailed"
-	ReasonInstallationFailed        = "InstallationFailed"
-	ReasonInstallationStatusUnknown = "InstallationStatusUnknown"
-	ReasonInstallationSucceeded     = "InstallationSucceeded"
-	ReasonInvalidSpec               = "InvalidSpec"
-	ReasonResolutionFailed          = "ResolutionFailed"
-	ReasonResolutionUnknown         = "ResolutionUnknown"
-	ReasonSuccess                   = "Success"
-	ReasonDeprecated                = "Deprecated"
+	ReasonBundleLookupFailed         = "BundleLookupFailed"
+	ReasonInstallationFailed         = "InstallationFailed"
+	ReasonInstallationStatusUnknown  = "InstallationStatusUnknown"
+	ReasonInstallationSucceeded      = "InstallationSucceeded"
+	ReasonInvalidSpec                = "InvalidSpec"
+	ReasonResolutionFailed           = "ResolutionFailed"
+	ReasonResolutionUnknown          = "ResolutionUnknown"
+	ReasonSuccess                    = "Success"
+	ReasonDeprecated                 = "Deprecated"
+	ReasonDeleteFailed               = "DeleteFailed"
+	ReasonDeleting                   = "Deleting"
+	ReasonUnknown                    = "Unknown"
+	ReasonPending                    = "Pending"
+	ReasonReconcileFailed            = "ReconcileFailed"
+	ReasonReconciling                = "Reconciling"
+	ReasonUnsupportedOrInvalidBundle = "UnsupportedOrInvalidBundle"
 )
 
 func init() {
 	// TODO(user): add Types from above
 	conditionsets.ConditionTypes = append(conditionsets.ConditionTypes,
 		TypeInstalled,
+		TypeProgressing,
 		TypeResolved,
 		TypeDeprecated,
 		TypePackageDeprecated,
@@ -116,6 +131,13 @@ func init() {
 		ReasonInvalidSpec,
 		ReasonSuccess,
 		ReasonDeprecated,
+		ReasonDeleteFailed,
+		ReasonDeleting,
+		ReasonUnknown,
+		ReasonPending,
+		ReasonReconcileFailed,
+		ReasonReconciling,
+		ReasonUnsupportedOrInvalidBundle,
 	)
 }
 
