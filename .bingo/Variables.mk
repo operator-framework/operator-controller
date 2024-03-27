@@ -41,11 +41,11 @@ $(GORELEASER): $(BINGO_DIR)/goreleaser.mod
 	@echo "(re)installing $(GOBIN)/goreleaser-v1.16.2"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=goreleaser.mod -o=$(GOBIN)/goreleaser-v1.16.2 "github.com/goreleaser/goreleaser"
 
-KIND := $(GOBIN)/kind-v0.20.0
+KIND := $(GOBIN)/kind-v0.22.0
 $(KIND): $(BINGO_DIR)/kind.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/kind-v0.20.0"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kind.mod -o=$(GOBIN)/kind-v0.20.0 "sigs.k8s.io/kind"
+	@echo "(re)installing $(GOBIN)/kind-v0.22.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kind.mod -o=$(GOBIN)/kind-v0.22.0 "sigs.k8s.io/kind"
 
 KUSTOMIZE := $(GOBIN)/kustomize-v4.5.7
 $(KUSTOMIZE): $(BINGO_DIR)/kustomize.mod
