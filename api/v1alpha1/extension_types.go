@@ -82,6 +82,11 @@ type ExtensionSpec struct {
 
 	// source of Extension to be installed
 	Source ExtensionSource `json:"source"`
+
+	//+kubebuilder:Optional
+	//
+	// skipCRDUpgradeSafetyCheck specifies whether or not the CRD upgrade safety checks should be skipped when attempting to install the extension
+	SkipCRDUpgradeSafetyCheck bool `json:"skipCRDUpgradeSafetyCheck,omitempty"`
 }
 
 // ExtensionStatus defines the observed state of Extension
