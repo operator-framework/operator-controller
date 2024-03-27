@@ -1,0 +1,728 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: apps.kappctrl.k14s.io
+spec:
+  group: kappctrl.k14s.io
+  names:
+    categories:
+    - carvel
+    kind: App
+    listKind: AppList
+    plural: apps
+    singular: app
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: Friendly description
+      jsonPath: .status.friendlyDescription
+      name: Description
+      type: string
+    - description: Last time app started being deployed. Does not mean anything was changed.
+      jsonPath: .status.deploy.startedAt
+      name: Since-Deploy
+      type: date
+    - description: Time since creation
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: 'An App is a set of Kubernetes resources. These resources could span any number of namespaces or could be cluster-wide (e.g. CRDs). An App is represented in kapp-controller using a App CR. The App CR comprises of three main sections: spec.fetch – declare source for fetching configuration and OCI images spec.template – declare templating tool and values spec.deploy – declare deployment tool and any deploy specific configuration'
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              canceled:
+                description: Cancels current and future reconciliations (optional; default=false)
+                type: boolean
+              cluster:
+                description: Specifies that app should be deployed to destination cluster; by default, cluster is same as where this resource resides (optional; v0.5.0+)
+                properties:
+                  kubeconfigSecretRef:
+                    description: Specifies secret containing kubeconfig (required)
+                    properties:
+                      key:
+                        description: Specifies key that contains kubeconfig (optional)
+                        type: string
+                      name:
+                        description: Specifies secret name within app's namespace (required)
+                        type: string
+                    type: object
+                  namespace:
+                    description: Specifies namespace in destination cluster (optional)
+                    type: string
+                type: object
+              defaultNamespace:
+                description: Specifies the default namespace to install the App resources, by default this is same as the App's namespace (optional; v0.48.0+)
+                type: string
+              deploy:
+                items:
+                  properties:
+                    kapp:
+                      description: Use kapp to deploy resources
+                      properties:
+                        delete:
+                          description: Configuration for delete command (optional)
+                          properties:
+                            rawOptions:
+                              description: Pass through options to kapp delete (optional)
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        inspect:
+                          description: 'Configuration for inspect command (optional) as of kapp-controller v0.31.0, inspect is disabled by default add rawOptions or use an empty inspect config like `inspect: {}` to enable'
+                          properties:
+                            rawOptions:
+                              description: Pass through options to kapp inspect (optional)
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        intoNs:
+                          description: Override namespace for all resources (optional)
+                          type: string
+                        mapNs:
+                          description: Provide custom namespace override mapping (optional)
+                          items:
+                            type: string
+                          type: array
+                        rawOptions:
+                          description: Pass through options to kapp deploy (optional)
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                  type: object
+                type: array
+              fetch:
+                items:
+                  properties:
+                    git:
+                      description: Uses git to clone repository
+                      properties:
+                        forceHTTPBasicAuth:
+                          description: Force the usage of HTTP Basic Auth when Basic Auth is provided (optional)
+                          type: boolean
+                        lfsSkipSmudge:
+                          description: Skip lfs download (optional)
+                          type: boolean
+                        ref:
+                          description: Branch, tag, commit; origin is the name of the remote (optional)
+                          type: string
+                        refSelection:
+                          description: Specifies a strategy to resolve to an explicit ref (optional; v0.24.0+)
+                          properties:
+                            semver:
+                              properties:
+                                constraints:
+                                  type: string
+                                prereleases:
+                                  properties:
+                                    identifiers:
+                                      items:
+                                        type: string
+                                      type: array
+                                  type: object
+                              type: object
+                          type: object
+                        secretRef:
+                          description: 'Secret with auth details. allowed keys: ssh-privatekey, ssh-knownhosts, username, password (optional) (if ssh-knownhosts is not specified, git will not perform strict host checking)'
+                          properties:
+                            name:
+                              description: Object is expected to be within same namespace
+                              type: string
+                          type: object
+                        subPath:
+                          description: Grab only portion of repository (optional)
+                          type: string
+                        url:
+                          description: http or ssh urls are supported (required)
+                          type: string
+                      type: object
+                    helmChart:
+                      description: Uses helm fetch to fetch specified chart
+                      properties:
+                        name:
+                          description: 'Example: stable/redis'
+                          type: string
+                        repository:
+                          properties:
+                            secretRef:
+                              properties:
+                                name:
+                                  description: Object is expected to be within same namespace
+                                  type: string
+                              type: object
+                            url:
+                              description: Repository url; scheme of oci:// will fetch experimental helm oci chart (v0.19.0+) (required)
+                              type: string
+                          type: object
+                        version:
+                          type: string
+                      type: object
+                    http:
+                      description: Uses http library to fetch file
+                      properties:
+                        secretRef:
+                          description: 'Secret to provide auth details (optional) Secret may include one or more keys: username, password'
+                          properties:
+                            name:
+                              description: Object is expected to be within same namespace
+                              type: string
+                          type: object
+                        sha256:
+                          description: Checksum to verify after download (optional)
+                          type: string
+                        subPath:
+                          description: Grab only portion of download (optional)
+                          type: string
+                        url:
+                          description: 'URL can point to one of following formats: text, tgz, zip http and https url are supported; plain file, tgz and tar types are supported (required)'
+                          type: string
+                      type: object
+                    image:
+                      description: Pulls content from Docker/OCI registry
+                      properties:
+                        secretRef:
+                          description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication.'
+                          properties:
+                            name:
+                              description: Object is expected to be within same namespace
+                              type: string
+                          type: object
+                        subPath:
+                          description: Grab only portion of image (optional)
+                          type: string
+                        tagSelection:
+                          description: Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key
+                          properties:
+                            semver:
+                              properties:
+                                constraints:
+                                  type: string
+                                prereleases:
+                                  properties:
+                                    identifiers:
+                                      items:
+                                        type: string
+                                      type: array
+                                  type: object
+                              type: object
+                          type: object
+                        url:
+                          description: 'Docker image url; unqualified, tagged, or digest references supported (required) Example: username/app1-config:v0.1.0'
+                          type: string
+                      type: object
+                    imgpkgBundle:
+                      description: Pulls imgpkg bundle from Docker/OCI registry (v0.17.0+)
+                      properties:
+                        image:
+                          description: Docker image url; unqualified, tagged, or digest references supported (required)
+                          type: string
+                        secretRef:
+                          description: 'Secret may include one or more keys: username, password, token. By default anonymous access is used for authentication.'
+                          properties:
+                            name:
+                              description: Object is expected to be within same namespace
+                              type: string
+                          type: object
+                        tagSelection:
+                          description: Specifies a strategy to choose a tag (optional; v0.24.0+) if specified, do not include a tag in url key
+                          properties:
+                            semver:
+                              properties:
+                                constraints:
+                                  type: string
+                                prereleases:
+                                  properties:
+                                    identifiers:
+                                      items:
+                                        type: string
+                                      type: array
+                                  type: object
+                              type: object
+                          type: object
+                      type: object
+                    inline:
+                      description: Pulls content from within this resource; or other resources in the cluster
+                      properties:
+                        paths:
+                          additionalProperties:
+                            type: string
+                          description: Specifies mapping of paths to their content; not recommended for sensitive values as CR is not encrypted (optional)
+                          type: object
+                        pathsFrom:
+                          description: Specifies content via secrets and config maps; data values are recommended to be placed in secrets (optional)
+                          items:
+                            properties:
+                              configMapRef:
+                                properties:
+                                  directoryPath:
+                                    description: Specifies where to place files found in secret (optional)
+                                    type: string
+                                  name:
+                                    type: string
+                                type: object
+                              secretRef:
+                                properties:
+                                  directoryPath:
+                                    description: Specifies where to place files found in secret (optional)
+                                    type: string
+                                  name:
+                                    type: string
+                                type: object
+                            type: object
+                          type: array
+                      type: object
+                    path:
+                      description: Relative path to place the fetched artifacts
+                      type: string
+                  type: object
+                type: array
+              noopDelete:
+                description: Deletion requests for the App will result in the App CR being deleted, but its associated resources will not be deleted (optional; default=false; v0.18.0+)
+                type: boolean
+              paused:
+                description: Pauses _future_ reconciliation; does _not_ affect currently running reconciliation (optional; default=false)
+                type: boolean
+              serviceAccountName:
+                description: Specifies that app should be deployed authenticated via given service account, found in this namespace (optional; v0.6.0+)
+                type: string
+              syncPeriod:
+                description: Specifies the length of time to wait, in time + unit format, before reconciling. Always >= 30s. If value below 30s is specified, 30s will be used. (optional; v0.9.0+; default=30s)
+                type: string
+              template:
+                items:
+                  properties:
+                    cue:
+                      properties:
+                        inputExpression:
+                          description: Cue expression for single path component, can be used to unify ValuesFrom into a given field (optional)
+                          type: string
+                        outputExpression:
+                          description: Cue expression to output, default will export all visible fields (optional)
+                          type: string
+                        paths:
+                          description: Explicit list of files/directories (optional)
+                          items:
+                            type: string
+                          type: array
+                        valuesFrom:
+                          description: Provide values (optional)
+                          items:
+                            properties:
+                              configMapRef:
+                                properties:
+                                  name:
+                                    type: string
+                                type: object
+                              downwardAPI:
+                                properties:
+                                  items:
+                                    items:
+                                      properties:
+                                        fieldPath:
+                                          description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
+                                          type: string
+                                        kappControllerVersion:
+                                          description: 'Optional: Get running KappController version, defaults (empty) to retrieving the current running version.. Can be manually supplied instead.'
+                                          properties:
+                                            version:
+                                              type: string
+                                          type: object
+                                        kubernetesAPIs:
+                                          description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
+                                          properties:
+                                            groupVersions:
+                                              items:
+                                                type: string
+                                              type: array
+                                          type: object
+                                        kubernetesVersion:
+                                          description: 'Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster. Can be manually supplied instead.'
+                                          properties:
+                                            version:
+                                              type: string
+                                          type: object
+                                        name:
+                                          type: string
+                                      type: object
+                                    type: array
+                                type: object
+                              path:
+                                type: string
+                              secretRef:
+                                properties:
+                                  name:
+                                    type: string
+                                type: object
+                            type: object
+                          type: array
+                      type: object
+                    helmTemplate:
+                      description: Use helm template command to render helm chart
+                      properties:
+                        kubernetesAPIs:
+                          description: 'Optional: Use kubernetes group/versions resources available in the live cluster'
+                          properties:
+                            groupVersions:
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        kubernetesVersion:
+                          description: 'Optional: Get Kubernetes version, defaults (empty) to retrieving the version from the cluster. Can be manually overridden to a value instead.'
+                          properties:
+                            version:
+                              type: string
+                          type: object
+                        name:
+                          description: Set name explicitly, default is App CR's name (optional; v0.13.0+)
+                          type: string
+                        namespace:
+                          description: Set namespace explicitly, default is App CR's namespace (optional; v0.13.0+)
+                          type: string
+                        path:
+                          description: Path to chart (optional; v0.13.0+)
+                          type: string
+                        valuesFrom:
+                          description: One or more secrets, config maps, paths that provide values (optional)
+                          items:
+                            properties:
+                              configMapRef:
+                                properties:
+                                  name:
+                                    type: string
+                                type: object
+                              downwardAPI:
+                                properties:
+                                  items:
+                                    items:
+                                      properties:
+                                        fieldPath:
+                                          description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
+                                          type: string
+                                        kappControllerVersion:
+                                          description: 'Optional: Get running KappController version, defaults (empty) to retrieving the current running version.. Can be manually supplied instead.'
+                                          properties:
+                                            version:
+                                              type: string
+                                          type: object
+                                        kubernetesAPIs:
+                                          description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
+                                          properties:
+                                            groupVersions:
+                                              items:
+                                                type: string
+                                              type: array
+                                          type: object
+                                        kubernetesVersion:
+                                          description: 'Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster. Can be manually supplied instead.'
+                                          properties:
+                                            version:
+                                              type: string
+                                          type: object
+                                        name:
+                                          type: string
+                                      type: object
+                                    type: array
+                                type: object
+                              path:
+                                type: string
+                              secretRef:
+                                properties:
+                                  name:
+                                    type: string
+                                type: object
+                            type: object
+                          type: array
+                      type: object
+                    jsonnet:
+                      description: TODO implement jsonnet
+                      type: object
+                    kbld:
+                      description: Use kbld to resolve image references to use digests
+                      properties:
+                        paths:
+                          items:
+                            type: string
+                          type: array
+                      type: object
+                    kustomize:
+                      description: TODO implement kustomize
+                      type: object
+                    sops:
+                      description: Use sops to decrypt *.sops.yml files (optional; v0.11.0+)
+                      properties:
+                        age:
+                          properties:
+                            privateKeysSecretRef:
+                              description: Secret with private armored PGP private keys (required)
+                              properties:
+                                name:
+                                  type: string
+                              type: object
+                          type: object
+                        paths:
+                          description: Lists paths to decrypt explicitly (optional; v0.13.0+)
+                          items:
+                            type: string
+                          type: array
+                        pgp:
+                          description: Use PGP to decrypt files (required)
+                          properties:
+                            privateKeysSecretRef:
+                              description: Secret with private armored PGP private keys (required)
+                              properties:
+                                name:
+                                  type: string
+                              type: object
+                          type: object
+                      type: object
+                    ytt:
+                      description: Use ytt to template configuration
+                      properties:
+                        fileMarks:
+                          description: Control metadata about input files passed to ytt (optional; v0.18.0+) see https://carvel.dev/ytt/docs/latest/file-marks/ for more details
+                          items:
+                            type: string
+                          type: array
+                        ignoreUnknownComments:
+                          description: Ignores comments that ytt doesn't recognize (optional; default=false)
+                          type: boolean
+                        inline:
+                          description: Specify additional files, including data values (optional)
+                          properties:
+                            paths:
+                              additionalProperties:
+                                type: string
+                              description: Specifies mapping of paths to their content; not recommended for sensitive values as CR is not encrypted (optional)
+                              type: object
+                            pathsFrom:
+                              description: Specifies content via secrets and config maps; data values are recommended to be placed in secrets (optional)
+                              items:
+                                properties:
+                                  configMapRef:
+                                    properties:
+                                      directoryPath:
+                                        description: Specifies where to place files found in secret (optional)
+                                        type: string
+                                      name:
+                                        type: string
+                                    type: object
+                                  secretRef:
+                                    properties:
+                                      directoryPath:
+                                        description: Specifies where to place files found in secret (optional)
+                                        type: string
+                                      name:
+                                        type: string
+                                    type: object
+                                type: object
+                              type: array
+                          type: object
+                        paths:
+                          description: Lists paths to provide to ytt explicitly (optional)
+                          items:
+                            type: string
+                          type: array
+                        strict:
+                          description: Forces strict mode https://github.com/k14s/ytt/blob/develop/docs/strict.md (optional; default=false)
+                          type: boolean
+                        valuesFrom:
+                          description: Provide values via ytt's --data-values-file (optional; v0.19.0-alpha.9)
+                          items:
+                            properties:
+                              configMapRef:
+                                properties:
+                                  name:
+                                    type: string
+                                type: object
+                              downwardAPI:
+                                properties:
+                                  items:
+                                    items:
+                                      properties:
+                                        fieldPath:
+                                          description: 'Required: Selects a field of the app: only annotations, labels, uid, name and namespace are supported.'
+                                          type: string
+                                        kappControllerVersion:
+                                          description: 'Optional: Get running KappController version, defaults (empty) to retrieving the current running version.. Can be manually supplied instead.'
+                                          properties:
+                                            version:
+                                              type: string
+                                          type: object
+                                        kubernetesAPIs:
+                                          description: 'Optional: Get running KubernetesAPIs from cluster, defaults (empty) to retrieving the APIs from the cluster. Can be manually supplied instead, e.g ["group/version", "group2/version2"]'
+                                          properties:
+                                            groupVersions:
+                                              items:
+                                                type: string
+                                              type: array
+                                          type: object
+                                        kubernetesVersion:
+                                          description: 'Optional: Get running Kubernetes version from cluster, defaults (empty) to retrieving the version from the cluster. Can be manually supplied instead.'
+                                          properties:
+                                            version:
+                                              type: string
+                                          type: object
+                                        name:
+                                          type: string
+                                      type: object
+                                    type: array
+                                type: object
+                              path:
+                                type: string
+                              secretRef:
+                                properties:
+                                  name:
+                                    type: string
+                                type: object
+                            type: object
+                          type: array
+                      type: object
+                  type: object
+                type: array
+            type: object
+          status:
+            properties:
+              conditions:
+                items:
+                  properties:
+                    message:
+                      description: Human-readable message indicating details about last transition.
+                      type: string
+                    reason:
+                      description: Unique, this should be a short, machine understandable string that gives the reason for condition's last transition. If it reports "ResizeStarted" that means the underlying persistent volume is being resized.
+                      type: string
+                    status:
+                      type: string
+                    type:
+                      description: ConditionType represents reconciler state
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+              consecutiveReconcileFailures:
+                type: integer
+              consecutiveReconcileSuccesses:
+                type: integer
+              deploy:
+                properties:
+                  error:
+                    type: string
+                  exitCode:
+                    type: integer
+                  finished:
+                    type: boolean
+                  kapp:
+                    description: KappDeployStatus contains the associated AppCR deployed resources
+                    properties:
+                      associatedResources:
+                        description: AssociatedResources contains the associated App label, namespaces and GKs
+                        properties:
+                          groupKinds:
+                            items:
+                              description: GroupKind specifies a Group and a Kind, but does not force a version.  This is useful for identifying concepts during lookup stages without having partially valid types
+                              properties:
+                                group:
+                                  type: string
+                                kind:
+                                  type: string
+                              required:
+                              - group
+                              - kind
+                              type: object
+                            type: array
+                          label:
+                            type: string
+                          namespaces:
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                    type: object
+                  startedAt:
+                    format: date-time
+                    type: string
+                  stderr:
+                    type: string
+                  stdout:
+                    type: string
+                  updatedAt:
+                    format: date-time
+                    type: string
+                type: object
+              fetch:
+                properties:
+                  error:
+                    type: string
+                  exitCode:
+                    type: integer
+                  startedAt:
+                    format: date-time
+                    type: string
+                  stderr:
+                    type: string
+                  stdout:
+                    type: string
+                  updatedAt:
+                    format: date-time
+                    type: string
+                type: object
+              friendlyDescription:
+                type: string
+              inspect:
+                properties:
+                  error:
+                    type: string
+                  exitCode:
+                    type: integer
+                  stderr:
+                    type: string
+                  stdout:
+                    type: string
+                  updatedAt:
+                    format: date-time
+                    type: string
+                type: object
+              managedAppName:
+                type: string
+              observedGeneration:
+                description: Populated based on metadata.generation when controller observes a change to the resource; if this value is out of data, other status fields do not reflect latest state
+                format: int64
+                type: integer
+              template:
+                properties:
+                  error:
+                    type: string
+                  exitCode:
+                    type: integer
+                  stderr:
+                    type: string
+                  updatedAt:
+                    format: date-time
+                    type: string
+                type: object
+              usefulErrorMessage:
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
