@@ -95,7 +95,7 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: tidy fmt vet generate #HELP Verify all generated code is up-to-date.
+verify: tidy fmt vet generate manifests #HELP Verify all generated code is up-to-date.
 	git diff --exit-code
 
 .PHONY: fmt

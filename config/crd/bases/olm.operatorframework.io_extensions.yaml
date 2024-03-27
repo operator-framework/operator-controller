@@ -51,6 +51,11 @@ spec:
                 maxLength: 253
                 pattern: ^[a-z0-9]+([\.-][a-z0-9]+)*$
                 type: string
+              skipCRDUpgradeSafetyCheck:
+                description: skipCRDUpgradeSafetyCheck specifies whether or not the
+                  CRD upgrade safety checks should be skipped when attempting to install
+                  the extension
+                type: boolean
               source:
                 description: source of Extension to be installed
                 properties:
