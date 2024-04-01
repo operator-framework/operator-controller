@@ -44,6 +44,7 @@ import (
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
+	"github.com/operator-framework/operator-controller/pkg/deployer"
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
@@ -62,6 +63,14 @@ type ClusterExtensionReconciler struct {
 
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
+
+// Permissions needed by kapp
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;create;update;delete
+//+kubebuilder:rbac:groups="",resources=namespaces,verbs=list
+
+// For the sake of this PoC, give access to everything. In a real implementation
+// we will need to use a provided service account.
+//+kubebuilder:rbac:groups="*",resources="*",verbs="*"
 
 func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("operator-controller")
@@ -158,43 +167,11 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	// TODO: Question - Should we set the deprecation statuses after we have successfully resolved instead of after a successful installation?
 
-	mediaType, err := bundle.MediaType()
+	d := &deployer.Deployer{}
+	err = d.DeployImage(bundle.Image)
 	if err != nil {
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
-		return ctrl.Result{}, err
+		return reconcile.Result{}, err
 	}
-	bundleProvisioner, err := mapBundleMediaTypeToBundleProvisioner(mediaType)
-	if err != nil {
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
-		return ctrl.Result{}, err
-	}
-	// Ensure a BundleDeployment exists with its bundle source from the bundle
-	// image we just looked up in the solution.
-	dep := r.GenerateExpectedBundleDeployment(*ext, bundle.Image, bundleProvisioner)
-	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
-		// originally Reason: ocv1alpha1.ReasonInstallationFailed
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
-		return ctrl.Result{}, err
-	}
-
-	// convert existing unstructured object into bundleDeployment for easier mapping of status.
-	existingTypedBundleDeployment := &rukpakv1alpha2.BundleDeployment{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(dep.UnstructuredContent(), existingTypedBundleDeployment); err != nil {
-		// originally Reason: ocv1alpha1.ReasonInstallationStatusUnknown
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
-		return ctrl.Result{}, err
-	}
-
-	// Let's set the proper Installed condition and InstalledBundle field based on the
-	// existing BundleDeployment object status.
-	mapBDStatusToInstalledCondition(existingTypedBundleDeployment, ext, bundle)
-
 	SetDeprecationStatus(ext, bundle)
 
 	// set the status of the cluster extension based on the respective bundle deployment status conditions.
