@@ -1,4 +1,4 @@
-After you add a catalog of exetensions to your cluster, you must port forward your catalog as a service.
+After you add a catalog of extensions to your cluster, you must port forward your catalog as a service.
 Then you can query the catalog by using `curl` commands and the `jq` CLI tool to find extensions to install.
 
 ## Prerequisites
@@ -8,7 +8,7 @@ Then you can query the catalog by using `curl` commands and the `jq` CLI tool to
 
 ## Procedure
 
-1. Port forward the catalog server sevice:
+1. Port forward the catalog server service:
 
     ``` terminal
     $ kubectl -n catalogd-system port-forward svc/catalogd-catalogserver 8080:80
