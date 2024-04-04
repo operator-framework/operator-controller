@@ -1,17 +1,21 @@
 # operator-controller
-The operator-controller is the central component of Operator Lifecycle Manager (OLM) v1. It extends Kubernetes with an API through which users can install extensions.
+The operator-controller is the central component of Operator Lifecycle Manager (OLM) v1.
+It extends Kubernetes with an API through which users can install extensions.
 
 
 ## Mission
 
-OLM’s purpose is to provide APIs, controllers, and tooling that support the packaging, distribution, and lifecycling of Kubernetes extensions. It aims to align with Kubernetes designs and user assumptions, provide secure, high-quality, and predictable user experiences centered around declarative GitOps concepts, and to give cluster admins the minimal necessary controls to build their desired cluster architectures and to have ultimate control.
+OLM’s purpose is to provide APIs, controllers, and tooling that support the packaging, distribution, and lifecycling of Kubernetes extensions. It aims to:
+- align with Kubernetes designs and user assumptions
+- provide secure, high-quality, and predictable user experiences centered around declarative GitOps concepts
+- give cluster admins the minimal necessary controls to build their desired cluster architectures and to have ultimate control
 
 ## Overview
 
 OLM v1 is the follow-up to OLM v0, located [here](https://github.com/operator-framework/operator-lifecycle-manager).
 
-OLM v1 consists of four different components, including this one, which are as follows:
-* operator-controller
+OLM v1 consists of four different components:
+* operator-controller (this repository)
 * [deppy](https://github.com/operator-framework/deppy)
 * [rukpak](https://github.com/operator-framework/rukpak)
 * [catalogd](https://github.com/operator-framework/catalogd)
@@ -49,7 +53,7 @@ make uninstall
 ```
 
 ### Undeploy controller
-UnDeploy the controller to the cluster:
+To undeploy the controller from the cluster:
 
 ```sh
 make undeploy
@@ -60,10 +64,10 @@ make undeploy
 Refer to [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
 
 ### How it works
-This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
+This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
 
-It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/) 
-which provides a reconcile function responsible for synchronizing resources untile the desired state is reached on the cluster 
+It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/)
+which provide a reconcile function responsible for synchronizing resources until the desired state is reached on the cluster.
 
 ### Test It Out
 
@@ -81,9 +85,9 @@ If you are editing the API definitions, generate the manifests such as CRs or CR
 make manifests
 ```
 
-**NOTE:** Run `make help` for more information on all potential `make` targets
+**NOTE:** Run `make help` for more information on all potential `make` targets.
 
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html).
 
 ## License
 
