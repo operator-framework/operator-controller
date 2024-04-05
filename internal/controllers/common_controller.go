@@ -22,9 +22,8 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
-
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
 
 // BundleProvider provides the way to retrieve a list of Bundles from a source,
@@ -99,7 +98,7 @@ func setInstalledStatusConditionFailed(conditions *[]metav1.Condition, message s
 	})
 }
 
-// setDEprecationStatusesUnknown sets the deprecation status conditions to unknown.
+// setDeprecationStatusesUnknown sets the deprecation status conditions to unknown.
 func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message string, generation int64) {
 	conditionTypes := []string{
 		ocv1alpha1.TypeDeprecated,

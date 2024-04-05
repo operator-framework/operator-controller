@@ -3,6 +3,7 @@ package filter
 import (
 	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
@@ -58,11 +59,30 @@ func WithBundleImage(bundleImage string) Predicate[catalogmetadata.Bundle] {
 	}
 }
 
-func Replaces(bundleName string) Predicate[catalogmetadata.Bundle] {
-	return func(bundle *catalogmetadata.Bundle) bool {
-		for _, ch := range bundle.InChannels {
+func LegacySuccessor(installedBundle *catalogmetadata.Bundle) Predicate[catalogmetadata.Bundle] {
+	isSuccessor := func(candidateBundleEntry declcfg.ChannelEntry) bool {
+		if candidateBundleEntry.Replaces == installedBundle.Name {
+			return true
+		}
+		for _, skip := range candidateBundleEntry.Skips {
+			if skip == installedBundle.Name {
+				return true
+			}
+		}
+		if candidateBundleEntry.SkipRange != "" {
+			installedBundleVersion, _ := installedBundle.Version()
+			skipRange, _ := bsemver.ParseRange(candidateBundleEntry.SkipRange)
+			if installedBundleVersion != nil && skipRange != nil && skipRange(*installedBundleVersion) {
+				return true
+			}
+		}
+		return false
+	}
+
+	return func(candidateBundle *catalogmetadata.Bundle) bool {
+		for _, ch := range candidateBundle.InChannels {
 			for _, chEntry := range ch.Entries {
-				if bundle.Name == chEntry.Name && chEntry.Replaces == bundleName {
+				if candidateBundle.Name == chEntry.Name && isSuccessor(chEntry) {
 					return true
 				}
 			}

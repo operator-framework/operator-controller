@@ -126,7 +126,7 @@ func TestWithBundleImage(t *testing.T) {
 	assert.False(t, f(b3))
 }
 
-func TestReplaces(t *testing.T) {
+func TestLegacySuccessor(t *testing.T) {
 	fakeChannel := &catalogmetadata.Channel{
 		Channel: declcfg.Channel{
 			Entries: []declcfg.ChannelEntry{
@@ -138,25 +138,51 @@ func TestReplaces(t *testing.T) {
 					Name:     "package1.v0.0.3",
 					Replaces: "package1.v0.0.2",
 				},
+				{
+					Name:  "package1.v0.0.4",
+					Skips: []string{"package1.v0.0.1"},
+				},
+				{
+					Name:      "package1.v0.0.5",
+					SkipRange: "<=0.0.1",
+				},
+			},
+		},
+	}
+	installedBundle := &catalogmetadata.Bundle{
+		Bundle: declcfg.Bundle{
+			Name: "package1.v0.0.1",
+			Properties: []property.Property{
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "package1", "version": "0.0.1"}`)},
 			},
 		},
 	}
 
-	b1 := &catalogmetadata.Bundle{
+	b2 := &catalogmetadata.Bundle{
 		Bundle:     declcfg.Bundle{Name: "package1.v0.0.2"},
 		InChannels: []*catalogmetadata.Channel{fakeChannel},
 	}
-	b2 := &catalogmetadata.Bundle{
+	b3 := &catalogmetadata.Bundle{
 		Bundle:     declcfg.Bundle{Name: "package1.v0.0.3"},
 		InChannels: []*catalogmetadata.Channel{fakeChannel},
 	}
-	b3 := &catalogmetadata.Bundle{}
+	b4 := &catalogmetadata.Bundle{
+		Bundle:     declcfg.Bundle{Name: "package1.v0.0.4"},
+		InChannels: []*catalogmetadata.Channel{fakeChannel},
+	}
+	b5 := &catalogmetadata.Bundle{
+		Bundle:     declcfg.Bundle{Name: "package1.v0.0.5"},
+		InChannels: []*catalogmetadata.Channel{fakeChannel},
+	}
+	emptyBundle := &catalogmetadata.Bundle{}
 
-	f := filter.Replaces("package1.v0.0.1")
+	f := filter.LegacySuccessor(installedBundle)
 
-	assert.True(t, f(b1))
-	assert.False(t, f(b2))
+	assert.True(t, f(b2))
 	assert.False(t, f(b3))
+	assert.True(t, f(b4))
+	assert.True(t, f(b5))
+	assert.False(t, f(emptyBundle))
 }
 
 func TestWithDeprecation(t *testing.T) {

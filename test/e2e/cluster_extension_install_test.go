@@ -236,7 +236,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	}, pollDuration, pollInterval)
 }
 
-func TestClusterExtensionInstallNonSuccessorVersion(t *testing.T) {
+func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
 
@@ -264,8 +264,8 @@ func TestClusterExtensionInstallNonSuccessorVersion(t *testing.T) {
 
 	t.Log("It does not allow to upgrade the ClusterExtension to a non-successor version")
 	t.Log("By updating the ClusterExtension resource to a non-successor version")
-	// Semver only allows upgrades within major version at the moment.
-	clusterExtension.Spec.Version = "2.0.0"
+	// 1.2.0 does not replace/skip/skipRange 1.0.0.
+	clusterExtension.Spec.Version = "1.2.0"
 	require.NoError(t, c.Update(context.Background(), clusterExtension))
 	t.Log("By eventually reporting an unsatisfiable resolution")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -276,8 +276,53 @@ func TestClusterExtensionInstallNonSuccessorVersion(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
 		assert.Contains(ct, cond.Message, "constraints not satisfiable")
-		assert.Contains(ct, cond.Message, "installed package prometheus requires at least one of test-catalog-prometheus-prometheus-operator.1.2.0, test-catalog-prometheus-prometheus-operator.1.0.1, test-catalog-prometheus-prometheus-operator.1.0.0")
+		assert.Contains(ct, cond.Message, "installed package prometheus requires at least one of test-catalog-prometheus-prometheus-operator.1.0.1, test-catalog-prometheus-prometheus-operator.1.0.0")
 		assert.Empty(ct, clusterExtension.Status.ResolvedBundle)
+	}, pollDuration, pollInterval)
+}
+
+func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
+	t.Log("When a cluster extension is installed from a catalog")
+	t.Log("When resolving upgrade edges")
+
+	clusterExtension, _, extensionCatalog := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension)
+	defer getArtifactsOutput(t)
+
+	t.Log("By creating an ClusterExtension at a specified version")
+	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
+		PackageName: "prometheus",
+		Version:     "1.0.0",
+	}
+	require.NoError(t, c.Create(context.Background(), clusterExtension))
+	t.Log("By eventually reporting a successful resolution")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "resolved to")
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+	}, pollDuration, pollInterval)
+
+	t.Log("It does not allow to upgrade the ClusterExtension to a non-successor version")
+	t.Log("By updating the ClusterExtension resource to a non-successor version")
+	// 1.2.0 does not replace/skip/skipRange 1.0.0.
+	clusterExtension.Spec.Version = "1.2.0"
+	clusterExtension.Spec.UpgradeConstraintPolicy = ocv1alpha1.UpgradeConstraintPolicyIgnore
+	require.NoError(t, c.Update(context.Background(), clusterExtension))
+	t.Log("By eventually reporting an unsatisfiable resolution")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "resolved to")
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
 	}, pollDuration, pollInterval)
 }
 
@@ -308,8 +353,8 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 
 	t.Log("It does allow to upgrade the ClusterExtension to any of the successor versions within non-zero major version")
 	t.Log("By updating the ClusterExtension resource by skipping versions")
-	// Test catalog has versions between the initial version and new version
-	clusterExtension.Spec.Version = "1.2.0"
+	// 1.0.1 replaces 1.0.0 in the test catalog
+	clusterExtension.Spec.Version = "1.0.1"
 	require.NoError(t, c.Update(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution and bundle path")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -320,7 +365,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.ResolvedBundle)
 	}, pollDuration, pollInterval)
 }
 
