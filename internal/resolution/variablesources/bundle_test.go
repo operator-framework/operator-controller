@@ -6,13 +6,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/operator-framework/deppy/pkg/deppy/constraint"
 	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"

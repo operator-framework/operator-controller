@@ -23,10 +23,8 @@ import (
 	"os"
 	"time"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	"github.com/operator-framework/deppy/pkg/deppy/solver"
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"github.com/spf13/pflag"
+	carvelv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,7 +38,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	carvelv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"

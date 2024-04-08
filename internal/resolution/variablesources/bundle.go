@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/operator-framework/deppy/pkg/deppy"
 	"k8s.io/apimachinery/pkg/util/sets"
+
+	"github.com/operator-framework/deppy/pkg/deppy"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"

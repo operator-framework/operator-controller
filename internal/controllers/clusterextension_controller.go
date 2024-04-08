@@ -22,11 +22,6 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	"github.com/operator-framework/deppy/pkg/deppy"
-	"github.com/operator-framework/deppy/pkg/deppy/solver"
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,6 +35,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/deppy/pkg/deppy"
+	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"

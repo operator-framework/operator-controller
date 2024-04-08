@@ -5,9 +5,10 @@ import (
 	"sort"
 
 	mmsemver "github.com/Masterminds/semver/v3"
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
+
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"

@@ -1,13 +1,13 @@
 package variablesources_test
 
 import (
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/utils/ptr"
 
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
+
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
 func fakeClusterExtension(name, packageName string, upgradeConstraintPolicy ocv1alpha1.UpgradeConstraintPolicy) ocv1alpha1.ClusterExtension {

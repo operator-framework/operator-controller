@@ -26,8 +26,6 @@ import (
 	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 	"github.com/go-logr/logr"
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	kappctrlv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -43,6 +41,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"

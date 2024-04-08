@@ -8,9 +8,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
-	"github.com/operator-framework/operator-registry/alpha/property"
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -23,6 +20,10 @@ import (
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/alpha/property"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"

@@ -6,9 +6,10 @@ import (
 
 	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"

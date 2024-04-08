@@ -3,8 +3,9 @@ package filter_test
 import (
 	"testing"
 
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
