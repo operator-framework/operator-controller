@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	carvelv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -62,8 +63,10 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterEx
 
 func newClientAndExtensionReconciler(t *testing.T) (client.Client, *controllers.ExtensionReconciler) {
 	cl := newClient(t)
+	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.ExtensionReconciler{
-		Client: cl,
+		Client:         cl,
+		BundleProvider: &fakeCatalogClient,
 	}
 	return cl, reconciler
 }
@@ -92,6 +95,7 @@ func TestMain(m *testing.M) {
 	utilruntime.Must(ocv1alpha1.AddToScheme(sch))
 	utilruntime.Must(rukpakv1alpha2.AddToScheme(sch))
 	utilruntime.Must(corev1.AddToScheme(sch))
+	utilruntime.Must(carvelv1alpha1.AddToScheme(sch))
 
 	code := m.Run()
 	utilruntime.Must(testEnv.Stop())

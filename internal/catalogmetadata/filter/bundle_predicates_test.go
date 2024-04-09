@@ -2,6 +2,7 @@ package filter_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	mmsemver "github.com/Masterminds/semver/v3"
@@ -61,6 +62,67 @@ func TestInMastermindsSemverRange(t *testing.T) {
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))
 	assert.False(t, f(b3))
+}
+
+func TestHigherBundleVersion(t *testing.T) {
+	testCases := []struct {
+		name             string
+		requestedVersion string
+		comparedVersion  string
+		wantResult       bool
+	}{
+		{
+			name:             "includes equal version",
+			requestedVersion: "1.0.0",
+			comparedVersion:  "1.0.0",
+			wantResult:       true,
+		},
+		{
+			name:             "filters out older version",
+			requestedVersion: "1.0.0",
+			comparedVersion:  "0.0.1",
+			wantResult:       false,
+		},
+		{
+			name:             "includes higher version",
+			requestedVersion: "1.0.0",
+			comparedVersion:  "2.0.0",
+			wantResult:       true,
+		},
+		{
+			name:             "filters out broken version",
+			requestedVersion: "1.0.0",
+			comparedVersion:  "broken",
+			wantResult:       false,
+		},
+		{
+			name:             "filter returns false with nil version",
+			requestedVersion: "",
+			comparedVersion:  "1.0.0",
+			wantResult:       false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			bundle := &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
+				Properties: []property.Property{
+					{
+						Type:  property.TypePackage,
+						Value: json.RawMessage(fmt.Sprintf(`{"packageName": "package1", "version": "%s"}`, tc.comparedVersion)),
+					},
+				},
+			}}
+			var version *bsemver.Version
+			if tc.requestedVersion != "" {
+				parsedVersion := bsemver.MustParse(tc.requestedVersion)
+				// to test with nil requested version
+				version = &parsedVersion
+			}
+			f := filter.HigherBundleVersion(version)
+			assert.Equal(t, tc.wantResult, f(bundle))
+		})
+	}
 }
 
 func TestInBlangSemverRange(t *testing.T) {
