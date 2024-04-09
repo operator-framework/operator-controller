@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/operator-framework/operator-controller/internal/conditionsets"
-
 	"golang.org/x/exp/slices" // replace with "slices" in go 1.21
+
+	"github.com/operator-framework/operator-controller/internal/conditionsets"
 )
 
 func TestClusterExtensionTypeRegistration(t *testing.T) {

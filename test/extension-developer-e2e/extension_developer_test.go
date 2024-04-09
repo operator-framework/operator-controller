@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -14,6 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )

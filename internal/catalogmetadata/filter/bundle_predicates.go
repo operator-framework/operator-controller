@@ -3,6 +3,7 @@ package filter
 import (
 	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
+
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"

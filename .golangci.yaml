@@ -7,6 +7,7 @@ linters:
   - asciicheck
   - bodyclose
   - errorlint
+  - gci
   - gofmt
   - goimports
   - gosec
@@ -24,6 +25,14 @@ linters:
   - whitespace
 
 linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/operator-framework)
+      - prefix(github.com/operator-framework/operator-controller)
+    custom-order: true
+
   errorlint:
     errorf: false
 
@@ -49,4 +58,5 @@ linters-settings:
     local-prefixes: github.com/operator-framework/operator-controller
 
 output:
-  format: tab
+  formats:
+    - format: tab

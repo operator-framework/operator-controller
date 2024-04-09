@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -25,6 +23,9 @@ import (
 	kubeclient "k8s.io/client-go/kubernetes"
 	"k8s.io/utils/env"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
