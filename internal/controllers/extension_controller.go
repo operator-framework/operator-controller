@@ -164,14 +164,12 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
 	setResolvedStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), ext.GetGeneration())
 
-	// Populate the deprecation status using the resolved bundle
-	SetDeprecationStatusInExtension(ext, bundle)
-
 	mediaType, err := bundle.MediaType()
 	if err != nil {
 		if c := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeInstalled); c == nil {
 			ext.Status.InstalledBundle = nil
 			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("failed to read bundle mediaType: %v", err), ext.GetGeneration())
+			setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		}
 		setProgressingStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("failed to read bundle mediaType: %v", err), ext.GetGeneration())
 		return ctrl.Result{}, err
@@ -185,6 +183,7 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 			// hasn't been attempted yet, due to the spec being invalid.
 			ext.Status.InstalledBundle = nil
 			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("bundle type %s not supported currently", mediaType), ext.GetGeneration())
+			setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		}
 		setProgressingStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("bundle type %s not supported currently", mediaType), ext.GetGeneration())
 		return ctrl.Result{}, nil
@@ -195,6 +194,7 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 		if c := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeInstalled); c == nil {
 			ext.Status.InstalledBundle = nil
 			setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+			setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		}
 		setProgressingStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		return ctrl.Result{}, err
@@ -204,6 +204,7 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 		// originally Reason: ocv1alpha1.ReasonInstallationFailed
 		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		setProgressingStatusConditionProgressing(&ext.Status.Conditions, "installation failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
@@ -214,12 +215,14 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 		// originally Reason: ocv1alpha1.ReasonInstallationStatusUnknown
 		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		setProgressingStatusConditionProgressing(&ext.Status.Conditions, "installation failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
 	ext.Status.InstalledBundle = bundleMetadataFor(bundle)
 	setInstalledStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("successfully installed %v", ext.Status.InstalledBundle), ext.GetGeneration())
+	SetDeprecationStatusInExtension(ext, bundle)
 
 	// TODO: add conditions to determine extension health
 	mapAppStatusToCondition(existingTypedApp, ext)
