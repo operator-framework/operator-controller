@@ -22,6 +22,7 @@ import (
 	"os"
 	"time"
 
+	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/spf13/pflag"
 	carvelv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"go.uber.org/zap/zapcore"
@@ -35,7 +36,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
@@ -111,17 +111,22 @@ func main() {
 	cl := mgr.GetClient()
 	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, &http.Client{Timeout: 10 * time.Second}))
 
-	resolver, err := solver.New()
+	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(), mgr.GetLogger())
 	if err != nil {
-		setupLog.Error(err, "unable to create a solver")
+		setupLog.Error(err, "unable to config for creating helm client")
 		os.Exit(1)
 	}
 
+	acg, err := helmclient.NewActionClientGetter(cfgGetter)
+	if err != nil {
+		setupLog.Error(err, "unable to create helm client")
+	}
+
 	if err = (&controllers.ClusterExtensionReconciler{
-		Client:         cl,
-		BundleProvider: catalogClient,
-		Scheme:         mgr.GetScheme(),
-		Resolver:       resolver,
+		Client:             cl,
+		BundleProvider:     catalogClient,
+		Scheme:             mgr.GetScheme(),
+		ActionClientGetter: acg,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
