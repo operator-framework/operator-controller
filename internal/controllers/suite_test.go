@@ -43,7 +43,7 @@ func newClient(t *testing.T) client.Client {
 }
 
 func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterExtensionReconciler) {
-	resolver, err := solver.New()
+	_, err := solver.New()
 	require.NoError(t, err)
 
 	cl := newClient(t)
@@ -52,7 +52,6 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterEx
 		Client:         cl,
 		BundleProvider: &fakeCatalogClient,
 		Scheme:         scheme.Scheme,
-		Resolver:       resolver,
 	}
 	return cl, reconciler
 }

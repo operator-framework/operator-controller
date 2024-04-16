@@ -31,9 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
-
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
