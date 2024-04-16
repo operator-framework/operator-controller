@@ -50,6 +50,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
+	rukpakapi "github.com/operator-framework/operator-controller/internal/rukpak/api"
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
@@ -135,6 +136,12 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// Unpack contents into a fs based on the bundle.
 	// Considering only image source.
 
+	// Generate a BundleSource, and then pass this and the ClusterExtension to Unpack
+	// TODO:
+	// bs := r.GenerateExpectedBundleSource(*ext, bundle.Image)
+	// unpacker := NewDefaultUnpacker(msg, namespace, unpackImage)
+	// unpacker..Unpack(bs, ext)
+
 	// set the status of the cluster extension based on the respective bundle deployment status conditions.
 	return ctrl.Result{}, nil
 }
@@ -218,6 +225,15 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetad
 			Message:            strings.Join(deprecationMessages, ";"),
 			ObservedGeneration: ext.Generation,
 		})
+	}
+}
+
+func (r *ClusterExtensionReconciler) GenerateExpectedBundleSource(o ocv1alpha1.ClusterExtension, bundlePath string) *rukpakapi.BundleSource {
+	return &rukpakapi.BundleSource{
+		Type: rukpakapi.SourceTypeImage,
+		Image: rukpakapi.ImageSource{
+			Ref: bundlePath,
+		},
 	}
 }
 
