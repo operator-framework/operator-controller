@@ -22,7 +22,7 @@ const (
 	manifestsDir = "manifests"
 )
 
-func HandleClusterExtension(ctx context.Context, fsys fs.FS, ext *ocv1alpha1.ClusterExtension) (*chart.Chart, chartutil.Values, error) {
+func HandleClusterExtension(_ context.Context, fsys fs.FS, ext *ocv1alpha1.ClusterExtension) (*chart.Chart, chartutil.Values, error) {
 	plainFS, err := convert.RegistryV1ToPlain(fsys, ext.Spec.WatchNamespaces)
 	if err != nil {
 		return nil, nil, fmt.Errorf("convert registry+v1 bundle to plain+v0 bundle: %v", err)
