@@ -204,7 +204,7 @@ func TestExtensionResolve(t *testing.T) {
 			extNN := types.NamespacedName{Name: ext.GetName(), Namespace: ext.GetNamespace()}
 
 			res, reconcileErr := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extNN})
-			assert.Equal(t, reconcileErr, tc.wantErr)
+			assert.Equal(t, tc.wantErr, reconcileErr)
 			if tc.wantErr != nil {
 				err := c.Get(ctx, extNN, ext)
 				assert.NoError(t, err)
