@@ -17,11 +17,12 @@ limitations under the License.
 package controllers
 
 import (
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	rukpakapi "github.com/operator-framework/operator-controller/internal/rukpak/api"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
-	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func updateStatusUnpackFailing(status *ocv1alpha1.ClusterExtensionStatus, err error) error {

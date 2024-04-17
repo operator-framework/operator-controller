@@ -24,7 +24,6 @@ import (
 	"os"
 	"time"
 
-	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/spf13/pflag"
 	carvelv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	"go.uber.org/zap/zapcore"
@@ -38,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"

@@ -25,16 +25,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/operator-framework/operator-controller/internal/rukpak/handler"
-	"github.com/operator-framework/operator-controller/internal/rukpak/util"
-	"helm.sh/helm/v3/pkg/postrender"
-
 	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 	"github.com/go-logr/logr"
+	"helm.sh/helm/v3/pkg/postrender"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -59,8 +55,10 @@ import (
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	rukpakapi "github.com/operator-framework/operator-controller/internal/rukpak/api"
+	"github.com/operator-framework/operator-controller/internal/rukpak/handler"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 	"github.com/operator-framework/operator-controller/internal/rukpak/storage"
+	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
@@ -181,7 +179,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	bundleFS, err := r.Storage.Load(ctx, ext)
 	if err != nil {
-		meta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 			Type:    ocv1alpha1.TypeHasValidBundle,
 			Status:  metav1.ConditionFalse,
 			Reason:  ocv1alpha1.ReasonBundleLoadFailed,
@@ -192,7 +190,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	_, _, err = r.Handler.Handle(ctx, bundleFS, ext)
 	if err != nil {
-		meta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 			Type:    rukpakv1alpha2.TypeInstalled,
 			Status:  metav1.ConditionFalse,
 			Reason:  rukpakv1alpha2.ReasonInstallFailed,
