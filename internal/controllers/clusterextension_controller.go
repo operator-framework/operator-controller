@@ -24,39 +24,51 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"sync"
 
 	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 	"github.com/go-logr/logr"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/postrender"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	crhandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
+	"github.com/operator-framework/operator-controller/api/v1alpha1"
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	rukpakapi "github.com/operator-framework/operator-controller/internal/rukpak/api"
 	"github.com/operator-framework/operator-controller/internal/rukpak/handler"
-	"github.com/operator-framework/operator-controller/internal/rukpak/source"
+	helmpredicate "github.com/operator-framework/operator-controller/internal/rukpak/helm-operator-plugins/predicate"
+	rukpaksource "github.com/operator-framework/operator-controller/internal/rukpak/source"
 	"github.com/operator-framework/operator-controller/internal/rukpak/storage"
 	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 )
@@ -66,11 +78,15 @@ type ClusterExtensionReconciler struct {
 	client.Client
 	ReleaseNamespace   string
 	BundleProvider     BundleProvider
-	Unpacker           source.Unpacker
+	Unpacker           rukpaksource.Unpacker
 	ActionClientGetter helmclient.ActionClientGetter
 	Storage            storage.Storage
 	Handler            handler.Handler
 	Scheme             *runtime.Scheme
+	dynamicWatchMutex  sync.RWMutex
+	dynamicWatchGVKs   map[schema.GroupVersionKind]struct{}
+	controller         crcontroller.Controller
+	cache              cache.Cache
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
@@ -156,15 +172,15 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 
 	switch unpackResult.State {
-	case source.StatePending:
+	case rukpaksource.StatePending:
 		updateStatusUnpackPending(&ext.Status, unpackResult)
 		// There must be a limit to number of entries if status is stuck at
 		// unpack pending.
 		return ctrl.Result{}, nil
-	case source.StateUnpacking:
+	case rukpaksource.StateUnpacking:
 		updateStatusUnpacking(&ext.Status, unpackResult)
 		return ctrl.Result{}, nil
-	case source.StateUnpacked:
+	case rukpaksource.StateUnpacked:
 		if err := r.Storage.Store(ctx, ext, unpackResult.Bundle); err != nil {
 			return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, fmt.Errorf("persist bundle content: %v", err))
 		}
@@ -188,7 +204,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
-	_, _, err = r.Handler.Handle(ctx, bundleFS, ext)
+	chrt, values, err := r.Handler.Handle(ctx, bundleFS, ext)
 	if err != nil {
 		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 			Type:    rukpakv1alpha2.TypeInstalled,
@@ -200,11 +216,94 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 
 	ext.SetNamespace(r.ReleaseNamespace)
-	_, err = r.ActionClientGetter.ActionClientFor(ext)
+	ac, err := r.ActionClientGetter.ActionClientFor(ext)
 	if err != nil {
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingClient, err), ext.Generation)
 		return ctrl.Result{}, err
 	}
+
+	post := &postrenderer{
+		labels: map[string]string{
+			util.CoreOwnerKindKey: v1alpha1.ClusterExtensionKind,
+			util.CoreOwnerNameKey: ext.GetName(),
+		},
+	}
+
+	rel, state, err := r.getReleaseState(ac, ext, chrt, values, post)
+	if err != nil {
+		setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingReleaseState, err), ext.Generation)
+		return ctrl.Result{}, err
+	}
+
+	switch state {
+	case stateNeedsInstall:
+		rel, err = ac.Install(ext.GetName(), r.ReleaseNamespace, chrt, values, func(install *action.Install) error {
+			install.CreateNamespace = false
+			return nil
+		}, helmclient.AppendInstallPostRenderer(post))
+		if err != nil {
+			if isResourceNotFoundErr(err) {
+				err = errRequiredResourceNotFound{err}
+			}
+			setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err), ext.Generation)
+			return ctrl.Result{}, err
+		}
+	case stateNeedsUpgrade:
+		rel, err = ac.Upgrade(ext.GetName(), r.ReleaseNamespace, chrt, values, helmclient.AppendUpgradePostRenderer(post))
+		if err != nil {
+			if isResourceNotFoundErr(err) {
+				err = errRequiredResourceNotFound{err}
+			}
+			setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err), ext.Generation)
+			return ctrl.Result{}, err
+		}
+	case stateUnchanged:
+		if err := ac.Reconcile(rel); err != nil {
+			if isResourceNotFoundErr(err) {
+				err = errRequiredResourceNotFound{err}
+			}
+			setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonResolutionFailed, err), ext.Generation)
+			return ctrl.Result{}, err
+		}
+	default:
+		return ctrl.Result{}, fmt.Errorf("unexpected release state %q", state)
+	}
+
+	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
+	if err != nil {
+		setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+		return ctrl.Result{}, err
+	}
+
+	for _, obj := range relObjects {
+		uMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+		if err != nil {
+			setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+			return ctrl.Result{}, err
+		}
+
+		unstructuredObj := &unstructured.Unstructured{Object: uMap}
+		if err := func() error {
+			r.dynamicWatchMutex.Lock()
+			defer r.dynamicWatchMutex.Unlock()
+
+			_, isWatched := r.dynamicWatchGVKs[unstructuredObj.GroupVersionKind()]
+			if !isWatched {
+				if err := r.controller.Watch(
+					source.Kind(r.cache, unstructuredObj),
+					crhandler.EnqueueRequestForOwner(r.Scheme, r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
+					helmpredicate.DependentPredicateFuncs()); err != nil {
+					return err
+				}
+				r.dynamicWatchGVKs[unstructuredObj.GroupVersionKind()] = struct{}{}
+			}
+			return nil
+		}(); err != nil {
+			setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+			return ctrl.Result{}, err
+		}
+	}
+	setInstalledStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("Instantiated bundle %s successfully", ext.GetName()), ext.Generation)
 
 	// set the status of the cluster extension based on the respective bundle deployment status conditions.
 	return ctrl.Result{}, nil
@@ -347,16 +446,18 @@ func (r *ClusterExtensionReconciler) GenerateExpectedBundleDeployment(o ocv1alph
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	err := ctrl.NewControllerManagedBy(mgr).
+	controller, err := ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1alpha1.ClusterExtension{}).
 		Watches(&catalogd.Catalog{},
 			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
 		Owns(&rukpakv1alpha2.BundleDeployment{}).
-		Complete(r)
+		Build(r)
 
 	if err != nil {
 		return err
 	}
+	r.controller = controller
+	r.cache = mgr.GetCache()
 	return nil
 }
 
@@ -480,6 +581,69 @@ func (r *ClusterExtensionReconciler) getInstalledVersion(ctx context.Context, cl
 		return nil, fmt.Errorf("could not determine bundle version for the chart %q: %w", chart.Name(), err)
 	}
 	return existingVersionSemver, nil
+}
+
+type releaseState string
+
+const (
+	stateNeedsInstall releaseState = "NeedsInstall"
+	stateNeedsUpgrade releaseState = "NeedsUpgrade"
+	stateUnchanged    releaseState = "Unchanged"
+	stateError        releaseState = "Error"
+)
+
+func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterface, obj metav1.Object, chrt *chart.Chart, values chartutil.Values, post *postrenderer) (*release.Release, releaseState, error) {
+	currentRelease, err := cl.Get(obj.GetName())
+	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
+		return nil, stateError, err
+	}
+	if errors.Is(err, driver.ErrReleaseNotFound) {
+		return nil, stateNeedsInstall, nil
+	}
+	desiredRelease, err := cl.Upgrade(obj.GetName(), r.ReleaseNamespace, chrt, values, func(upgrade *action.Upgrade) error {
+		upgrade.DryRun = true
+		return nil
+	}, helmclient.AppendUpgradePostRenderer(post))
+	if err != nil {
+		return currentRelease, stateError, err
+	}
+	if desiredRelease.Manifest != currentRelease.Manifest ||
+		currentRelease.Info.Status == release.StatusFailed ||
+		currentRelease.Info.Status == release.StatusSuperseded {
+		return currentRelease, stateNeedsUpgrade, nil
+	}
+	return currentRelease, stateUnchanged, nil
+}
+
+type errRequiredResourceNotFound struct {
+	error
+}
+
+func (err errRequiredResourceNotFound) Error() string {
+	return fmt.Sprintf("required resource not found: %v", err.error)
+}
+
+func isResourceNotFoundErr(err error) bool {
+	var agg utilerrors.Aggregate
+	if errors.As(err, &agg) {
+		for _, err := range agg.Errors() {
+			return isResourceNotFoundErr(err)
+		}
+	}
+
+	nkme := &apimeta.NoKindMatchError{}
+	if errors.As(err, &nkme) {
+		return true
+	}
+	if apierrors.IsNotFound(err) {
+		return true
+	}
+
+	// TODO: improve NoKindMatchError matching
+	//   An error that is bubbled up from the k8s.io/cli-runtime library
+	//   does not wrap meta.NoKindMatchError, so we need to fallback to
+	//   the use of string comparisons for now.
+	return strings.Contains(err.Error(), "no matches for kind")
 }
 
 type postrenderer struct {
