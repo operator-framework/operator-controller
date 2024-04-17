@@ -117,3 +117,22 @@ func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message strin
 		})
 	}
 }
+
+// setInstalledAndHealthyFalse sets the Installed and if the feature gate is enabled, the Healthy conditions to False,
+// and allows to set the Installed condition reason and message.
+func setInstalledAndHealthyFalse(conditions *[]metav1.Condition, message string, generation int64) {
+	conditionTypes := []string{
+		ocv1alpha1.TypeInstalled,
+		ocv1alpha1.TypeHealthy,
+	}
+
+	for _, conditionType := range conditionTypes {
+		apimeta.SetStatusCondition(conditions, metav1.Condition{
+			Type:               conditionType,
+			Reason:             ocv1alpha1.ReasonInstallationFailed,
+			Status:             metav1.ConditionFalse,
+			Message:            message,
+			ObservedGeneration: generation,
+		})
+	}
+}
