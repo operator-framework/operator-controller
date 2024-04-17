@@ -83,6 +83,7 @@ const (
 	TypeInstalled      = "Installed"
 	TypeResolved       = "Resolved"
 	TypeHasValidBundle = "HasValidBundle"
+
 	// TypeDeprecated is a rollup condition that is present when
 	// any of the deprecated conditions are present.
 	TypeDeprecated        = "Deprecated"

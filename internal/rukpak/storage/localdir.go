@@ -14,8 +14,9 @@ import (
 	"path/filepath"
 
 	"github.com/nlepage/go-tarfs"
-	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 )
 
 var _ Storage = &LocalDirectory{}

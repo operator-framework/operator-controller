@@ -24,7 +24,6 @@ import (
 	"os"
 	"time"
 
-	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -32,6 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
