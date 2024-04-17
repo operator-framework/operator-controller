@@ -60,7 +60,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
-	"github.com/operator-framework/operator-controller/api/v1alpha1"
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
@@ -224,7 +223,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	post := &postrenderer{
 		labels: map[string]string{
-			util.CoreOwnerKindKey: v1alpha1.ClusterExtensionKind,
+			util.CoreOwnerKindKey: ocv1alpha1.ClusterExtensionKind,
 			util.CoreOwnerNameKey: ext.GetName(),
 		},
 	}
