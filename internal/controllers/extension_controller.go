@@ -512,7 +512,14 @@ func (r *ExtensionReconciler) resolve(ctx context.Context, extension ocv1alpha1.
 		}
 		if installedVersionSemver != nil {
 			installedVersion = installedVersionSemver.String()
-			predicates = append(predicates, catalogfilter.HigherBundleVersion(installedVersionSemver))
+
+			// Based on installed version create a caret range comparison constraint
+			// to allow only minor and patch version as successors.
+			wantedVersionRangeConstraint, err := mmsemver.NewConstraint(fmt.Sprintf("^%s", installedVersion))
+			if err != nil {
+				return nil, err
+			}
+			predicates = append(predicates, catalogfilter.InMastermindsSemverRange(wantedVersionRangeConstraint))
 		}
 	}
 

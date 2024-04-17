@@ -33,19 +33,6 @@ func InMastermindsSemverRange(semverRange *mmsemver.Constraints) Predicate[catal
 	}
 }
 
-func HigherBundleVersion(currentVersion *bsemver.Version) Predicate[catalogmetadata.Bundle] {
-	return func(bundle *catalogmetadata.Bundle) bool {
-		if currentVersion == nil {
-			return false
-		}
-		bundleVersion, err := bundle.Version()
-		if err != nil {
-			return false
-		}
-		return bundleVersion.GTE(*currentVersion)
-	}
-}
-
 func InBlangSemverRange(semverRange bsemver.Range) Predicate[catalogmetadata.Bundle] {
 	return func(bundle *catalogmetadata.Bundle) bool {
 		bundleVersion, err := bundle.Version()
