@@ -22,6 +22,11 @@ import (
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 )
 
+var (
+	ClusterExtensionGVK  = SchemeBuilder.GroupVersion.WithKind("ClusterExtension")
+	ClusterExtensionKind = ClusterExtensionGVK.Kind
+)
+
 type UpgradeConstraintPolicy string
 
 const (
@@ -75,8 +80,9 @@ type ClusterExtensionSpec struct {
 
 const (
 	// TODO(user): add more Types, here and into init()
-	TypeInstalled = "Installed"
-	TypeResolved  = "Resolved"
+	TypeInstalled      = "Installed"
+	TypeResolved       = "Resolved"
+	TypeHasValidBundle = "HasValidBundle"
 	// TypeDeprecated is a rollup condition that is present when
 	// any of the deprecated conditions are present.
 	TypeDeprecated        = "Deprecated"
@@ -84,6 +90,8 @@ const (
 	TypeChannelDeprecated = "ChannelDeprecated"
 	TypeBundleDeprecated  = "BundleDeprecated"
 
+	ReasonErrorGettingClient        = "ErrorGettingClient"
+	ReasonBundleLoadFailed          = "BundleLoadFailed"
 	ReasonBundleLookupFailed        = "BundleLookupFailed"
 	ReasonInstallationFailed        = "InstallationFailed"
 	ReasonInstallationStatusUnknown = "InstallationStatusUnknown"

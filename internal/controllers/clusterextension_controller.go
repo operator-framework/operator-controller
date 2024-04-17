@@ -17,27 +17,35 @@ limitations under the License.
 package controllers
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
+
+	"github.com/operator-framework/operator-controller/internal/rukpak/handler"
+	"github.com/operator-framework/operator-controller/internal/rukpak/util"
+	"helm.sh/helm/v3/pkg/postrender"
 
 	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
+	crhandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -51,13 +59,19 @@ import (
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	rukpakapi "github.com/operator-framework/operator-controller/internal/rukpak/api"
+	"github.com/operator-framework/operator-controller/internal/rukpak/source"
+	"github.com/operator-framework/operator-controller/internal/rukpak/storage"
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
+	ReleaseNamespace   string
 	BundleProvider     BundleProvider
+	Unpacker           source.Unpacker
 	ActionClientGetter helmclient.ActionClientGetter
+	Storage            storage.Storage
+	Handler            handler.Handler
 	Scheme             *runtime.Scheme
 }
 
@@ -137,10 +151,62 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// Considering only image source.
 
 	// Generate a BundleSource, and then pass this and the ClusterExtension to Unpack
-	// TODO:
-	// bs := r.GenerateExpectedBundleSource(*ext, bundle.Image)
-	// unpacker := NewDefaultUnpacker(msg, namespace, unpackImage)
-	// unpacker..Unpack(bs, ext)
+	bs := r.GenerateExpectedBundleSource(*ext, bundle.Image)
+	unpackResult, err := r.Unpacker.Unpack(ctx, bs, ext)
+	if err != nil {
+		return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, fmt.Errorf("source bundle content: %v", err))
+	}
+
+	switch unpackResult.State {
+	case source.StatePending:
+		updateStatusUnpackPending(&ext.Status, unpackResult)
+		// There must be a limit to number of entries if status is stuck at
+		// unpack pending.
+		return ctrl.Result{}, nil
+	case source.StateUnpacking:
+		updateStatusUnpacking(&ext.Status, unpackResult)
+		return ctrl.Result{}, nil
+	case source.StateUnpacked:
+		if err := r.Storage.Store(ctx, ext, unpackResult.Bundle); err != nil {
+			return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, fmt.Errorf("persist bundle content: %v", err))
+		}
+		contentURL, err := r.Storage.URLFor(ctx, ext)
+		if err != nil {
+			return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, fmt.Errorf("get content URL: %v", err))
+		}
+		updateStatusUnpacked(&ext.Status, unpackResult, contentURL)
+	default:
+		return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, fmt.Errorf("unknown unpack state %q: %v", unpackResult.State, err))
+	}
+
+	bundleFS, err := r.Storage.Load(ctx, ext)
+	if err != nil {
+		meta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+			Type:    ocv1alpha1.TypeHasValidBundle,
+			Status:  metav1.ConditionFalse,
+			Reason:  ocv1alpha1.ReasonBundleLoadFailed,
+			Message: err.Error(),
+		})
+		return ctrl.Result{}, err
+	}
+
+	_, _, err = r.Handler.Handle(ctx, bundleFS, ext)
+	if err != nil {
+		meta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+			Type:    rukpakv1alpha2.TypeInstalled,
+			Status:  metav1.ConditionFalse,
+			Reason:  rukpakv1alpha2.ReasonInstallFailed,
+			Message: err.Error(),
+		})
+		return ctrl.Result{}, err
+	}
+
+	ext.SetNamespace(r.ReleaseNamespace)
+	_, err = r.ActionClientGetter.ActionClientFor(ext)
+	if err != nil {
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingClient, err), ext.Generation)
+		return ctrl.Result{}, err
+	}
 
 	// set the status of the cluster extension based on the respective bundle deployment status conditions.
 	return ctrl.Result{}, nil
@@ -286,7 +352,7 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1alpha1.ClusterExtension{}).
 		Watches(&catalogd.Catalog{},
-			handler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
+			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
 		Owns(&rukpakv1alpha2.BundleDeployment{}).
 		Complete(r)
 
@@ -297,7 +363,7 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // Generate reconcile requests for all cluster extensions affected by a catalog change
-func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) handler.MapFunc {
+func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crhandler.MapFunc {
 	return func(ctx context.Context, _ client.Object) []reconcile.Request {
 		// no way of associating an extension to a catalog so create reconcile requests for everything
 		clusterExtensions := ocv1alpha1.ClusterExtensionList{}
@@ -424,4 +490,34 @@ func (r *ClusterExtensionReconciler) getInstalledVersion(ctx context.Context, cl
 		return nil, fmt.Errorf("could not determine bundle version for the chart %q: %w", chart.Name(), err)
 	}
 	return existingVersionSemver, nil
+}
+
+type postrenderer struct {
+	labels  map[string]string
+	cascade postrender.PostRenderer
+}
+
+func (p *postrenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
+	var buf bytes.Buffer
+	dec := apimachyaml.NewYAMLOrJSONDecoder(renderedManifests, 1024)
+	for {
+		obj := unstructured.Unstructured{}
+		err := dec.Decode(&obj)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		obj.SetLabels(util.MergeMaps(obj.GetLabels(), p.labels))
+		b, err := obj.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(b)
+	}
+	if p.cascade != nil {
+		return p.cascade.Run(&buf)
+	}
+	return &buf, nil
 }

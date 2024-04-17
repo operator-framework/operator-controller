@@ -18,7 +18,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -34,6 +36,10 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/internal/rukpak/handler"
+	"github.com/operator-framework/operator-controller/internal/rukpak/source"
+	"github.com/operator-framework/operator-controller/internal/rukpak/storage"
+	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 	"github.com/operator-framework/operator-controller/pkg/features"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
 )
@@ -44,17 +50,25 @@ var (
 
 func main() {
 	var (
-		metricsAddr          string
-		enableLeaderElection bool
-		probeAddr            string
-		cachePath            string
+		metricsAddr                 string
+		enableLeaderElection        bool
+		probeAddr                   string
+		cachePath                   string
+		httpExternalAddr            string
+		systemNamespace             string
+		unpackImage                 string
+		provisionerStorageDirectory string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&httpExternalAddr, "http-external-address", "http://localhost:8080", "The external address at which the http server is reachable.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
+	flag.StringVar(&systemNamespace, "system-namespace", "", "Configures the namespace that gets used to deploy system resources.")
+	flag.StringVar(&unpackImage, "unpack-image", util.DefaultUnpackImage, "Configures the container image that gets used to unpack Bundle contents.")
+	flag.StringVar(&provisionerStorageDirectory, "provisioner-storage-dir", storage.DefaultBundleCacheDir, "The directory that is used to store bundle contents.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -103,11 +117,35 @@ func main() {
 		setupLog.Error(err, "unable to create helm client")
 	}
 
+	if systemNamespace == "" {
+		systemNamespace = util.PodNamespace()
+	}
+
+	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, unpackImage)
+	if err != nil {
+		setupLog.Error(err, "unable to create unpacker")
+	}
+
+	storageURL, err := url.Parse(fmt.Sprintf("%s/bundles/", httpExternalAddr))
+	if err != nil {
+		setupLog.Error(err, "unable to parse bundle content server URL")
+		os.Exit(1)
+	}
+
+	localStorage := &storage.LocalDirectory{
+		RootDirectory: provisionerStorageDirectory,
+		URL:           *storageURL,
+	}
+
 	if err = (&controllers.ClusterExtensionReconciler{
 		Client:             cl,
+		ReleaseNamespace:   systemNamespace,
 		BundleProvider:     catalogClient,
 		Scheme:             mgr.GetScheme(),
 		ActionClientGetter: acg,
+		Unpacker:           unpacker,
+		Storage:            localStorage,
+		Handler:            handler.HandlerFunc(handler.HandleClusterExtension),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
