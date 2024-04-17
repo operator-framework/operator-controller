@@ -276,8 +276,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 			return
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-		assert.Contains(ct, cond.Message, "constraints not satisfiable")
-		assert.Contains(ct, cond.Message, "installed package prometheus requires at least one of test-catalog-prometheus-prometheus-operator.1.0.1, test-catalog-prometheus-prometheus-operator.1.0.0")
+		assert.Equal(ct, "error upgrading from currently installed version \"1.0.0\": no package \"prometheus\" matching version \"1.2.0\" found", cond.Message)
 		assert.Empty(ct, clusterExtension.Status.ResolvedBundle)
 	}, pollDuration, pollInterval)
 }

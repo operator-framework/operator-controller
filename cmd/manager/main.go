@@ -30,8 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	"github.com/operator-framework/deppy/pkg/deppy/solver"
-
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
@@ -93,17 +91,10 @@ func main() {
 	cl := mgr.GetClient()
 	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, &http.Client{Timeout: 10 * time.Second}))
 
-	resolver, err := solver.New()
-	if err != nil {
-		setupLog.Error(err, "unable to create a solver")
-		os.Exit(1)
-	}
-
 	if err = (&controllers.ClusterExtensionReconciler{
 		Client:         cl,
 		BundleProvider: catalogClient,
 		Scheme:         mgr.GetScheme(),
-		Resolver:       resolver,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
