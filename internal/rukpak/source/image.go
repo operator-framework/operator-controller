@@ -119,8 +119,8 @@ func (i *Image) getDesiredPodApplyConfig(bs *rukpakapi.BundleSource, ce *cluster
 	// These references need to be based on ClusterExtension...
 	podApply := applyconfigurationcorev1.Pod(ce.Name, i.PodNamespace).
 		WithLabels(map[string]string{
-			util.CoreOwnerKindKey: ce.Kind,
-			util.CoreOwnerNameKey: ce.Name,
+			util.OwnerKindKey: ce.Kind,
+			util.OwnerNameKey: ce.Name,
 		}).
 		WithOwnerReferences(v1.OwnerReference().
 			WithName(ce.Name).

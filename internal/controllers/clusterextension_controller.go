@@ -231,11 +231,11 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	post := &postrenderer{
 		labels: map[string]string{
-			util.CoreOwnerKindKey:          ocv1alpha1.ClusterExtensionKind,
-			util.CoreOwnerNameKey:          ext.GetName(),
-			util.ResolvedbundleName:        bundle.Name,
-			util.ResolvedbundlePackageName: bundle.Package,
-			util.ResolvedbundleVersion:     bundleVersion.String(),
+			util.OwnerKindKey:     ocv1alpha1.ClusterExtensionKind,
+			util.OwnerNameKey:     ext.GetName(),
+			util.BundleNameKey:    bundle.Name,
+			util.PackageNameKey:   bundle.Package,
+			util.BundleVersionKey: bundleVersion.String(),
 		},
 	}
 
@@ -636,7 +636,7 @@ func (r *ClusterExtensionReconciler) getInstalledVersion(clusterExtension ocv1al
 	}
 
 	// TODO: when the chart is created these annotations are to be added.
-	existingVersion, ok := chart.Metadata.Annotations[util.ResolvedbundleVersion]
+	existingVersion, ok := chart.Metadata.Annotations[util.BundleVersionKey]
 	if !ok {
 		return nil, fmt.Errorf("chart %q: missing bundle version", chart.Name())
 	}
