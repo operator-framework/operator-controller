@@ -1,10 +1,9 @@
 package util
 
 const (
-	CoreOwnerKindKey          = "core.clusterextension.io/owner-kind"
-	CoreOwnerNameKey          = "core.clusterextension.io/owner-name"
-	ResolvedBundleCatalogID   = "core.clusterextension.io/catalog-id"
-	ResolvedbundlePackageName = "core.clusterextension.io/package-name"
-	ResolvedbundleName        = "core.clusterextension.io/bundle-name"
-	ResolvedbundleVersion     = "core.clusterextension.io/bundle-version"
+	OwnerKindKey     = "olm.operatorframework.io/owner-kind"
+	OwnerNameKey     = "olm.operatorframework.io/owner-name"
+	PackageNameKey   = "olm.operatorframework.io/package-name"
+	BundleNameKey    = "olm.operatorframework.io/bundle-name"
+	BundleVersionKey = "olm.operatorframework.io/bundle-version"
 )
