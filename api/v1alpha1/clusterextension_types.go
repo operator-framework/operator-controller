@@ -134,6 +134,8 @@ func init() {
 		ReasonErrorGettingReleaseState,
 		ReasonUpgradeFailed,
 		ReasonCreateDynamicWatchFailed,
+		ReasonBundleLoadFailed,
+		ReasonErrorGettingClient,
 	)
 }
 
