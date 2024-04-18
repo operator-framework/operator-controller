@@ -35,6 +35,7 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -49,6 +50,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	crhandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -156,6 +158,12 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
+	bundleVersion, err := bundle.Version()
+	if err != nil {
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", "unable to get resolved bundle version", err), ext.Generation)
+		return ctrl.Result{}, err
+	}
+
 	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundle.Image value.
 	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
 	setResolvedStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), ext.GetGeneration())
@@ -164,7 +172,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// Considering only image source.
 
 	// Generate a BundleSource, and then pass this and the ClusterExtension to Unpack
-	bs := r.GenerateExpectedBundleSource(*ext, bundle.Image)
+	bs := r.GenerateExpectedBundleSource(bundle.Image)
 	unpackResult, err := r.Unpacker.Unpack(ctx, bs, ext)
 	if err != nil {
 		return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, fmt.Errorf("source bundle content: %v", err))
@@ -223,8 +231,11 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	post := &postrenderer{
 		labels: map[string]string{
-			util.CoreOwnerKindKey: ocv1alpha1.ClusterExtensionKind,
-			util.CoreOwnerNameKey: ext.GetName(),
+			util.CoreOwnerKindKey:          ocv1alpha1.ClusterExtensionKind,
+			util.CoreOwnerNameKey:          ext.GetName(),
+			util.ResolvedbundleName:        bundle.Name,
+			util.ResolvedbundlePackageName: bundle.Package,
+			util.ResolvedbundleVersion:     bundleVersion.String(),
 		},
 	}
 
@@ -390,7 +401,7 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetad
 	}
 }
 
-func (r *ClusterExtensionReconciler) GenerateExpectedBundleSource(o ocv1alpha1.ClusterExtension, bundlePath string) *rukpakapi.BundleSource {
+func (r *ClusterExtensionReconciler) GenerateExpectedBundleSource(bundlePath string) *rukpakapi.BundleSource {
 	return &rukpakapi.BundleSource{
 		Type: rukpakapi.SourceTypeImage,
 		Image: rukpakapi.ImageSource{
@@ -449,7 +460,7 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&ocv1alpha1.ClusterExtension{}).
 		Watches(&catalogd.Catalog{},
 			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
-		Owns(&rukpakv1alpha2.BundleDeployment{}).
+		Watches(&corev1.Pod{}, mapOwneeToOwnerHandler(mgr.GetClient(), mgr.GetLogger(), &ocv1alpha1.ClusterExtension{})).
 		Build(r)
 
 	if err != nil {
@@ -458,6 +469,58 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.controller = controller
 	r.cache = mgr.GetCache()
 	return nil
+}
+
+func mapOwneeToOwnerHandler(cl client.Client, log logr.Logger, owner client.Object) crhandler.EventHandler {
+	return crhandler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+		ownerGVK, err := apiutil.GVKForObject(owner, cl.Scheme())
+		if err != nil {
+			log.Error(err, "map ownee to owner: lookup GVK for owner")
+			return nil
+		}
+		owneeGVK, err := apiutil.GVKForObject(obj, cl.Scheme())
+		if err != nil {
+			log.Error(err, "map ownee to owner: lookup GVK for ownee")
+			return nil
+		}
+
+		type ownerInfo struct {
+			key types.NamespacedName
+			gvk schema.GroupVersionKind
+		}
+		var oi *ownerInfo
+
+		for _, ref := range obj.GetOwnerReferences() {
+			gv, err := schema.ParseGroupVersion(ref.APIVersion)
+			if err != nil {
+				log.Error(err, fmt.Sprintf("map ownee to owner: parse ownee's owner reference group version %q", ref.APIVersion))
+				return nil
+			}
+			refGVK := gv.WithKind(ref.Kind)
+			if refGVK == ownerGVK && ref.Controller != nil && *ref.Controller {
+				oi = &ownerInfo{
+					key: types.NamespacedName{Name: ref.Name},
+					gvk: ownerGVK,
+				}
+				break
+			}
+		}
+		if oi == nil {
+			return nil
+		}
+
+		if err := cl.Get(ctx, oi.key, owner); client.IgnoreNotFound(err) != nil {
+			log.Info("map ownee to owner: get owner",
+				"ownee", client.ObjectKeyFromObject(obj),
+				"owneeKind", owneeGVK,
+				"owner", oi.key,
+				"ownerKind", oi.gvk,
+				"error", err.Error(),
+			)
+			return nil
+		}
+		return []reconcile.Request{{NamespacedName: oi.key}}
+	})
 }
 
 // Generate reconcile requests for all cluster extensions affected by a catalog change
@@ -513,7 +576,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, clusterExtensi
 	var installedVersion string
 	// Do not include bundle versions older than currently installed unless UpgradeConstraintPolicy = 'Ignore'
 	if clusterExtension.Spec.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicyIgnore {
-		installedVersionSemver, err := r.getInstalledVersion(ctx, clusterExtension)
+		installedVersionSemver, err := r.getInstalledVersion(clusterExtension)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return nil, err
 		}
@@ -556,7 +619,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, clusterExtensi
 	return resultSet[0], nil
 }
 
-func (r *ClusterExtensionReconciler) getInstalledVersion(ctx context.Context, clusterExtension ocv1alpha1.ClusterExtension) (*bsemver.Version, error) {
+func (r *ClusterExtensionReconciler) getInstalledVersion(clusterExtension ocv1alpha1.ClusterExtension) (*bsemver.Version, error) {
 	cl, err := r.ActionClientGetter.ActionClientFor(&clusterExtension)
 	if err != nil {
 		return nil, err
@@ -564,6 +627,9 @@ func (r *ClusterExtensionReconciler) getInstalledVersion(ctx context.Context, cl
 
 	// Clarify - Every release will have a unique name as the cluster extension?
 	// Also filter relases whose owner is the operator controller?
+	// I think this should work, given we are setting the release Name to the clusterExtension name.
+	// If not, the other option is to get the Helm secret in the release namespace, list all the releases,
+	// get the chart annotations.
 	release, err := cl.Get(clusterExtension.GetName())
 	if err != nil {
 		return nil, err
@@ -578,7 +644,7 @@ func (r *ClusterExtensionReconciler) getInstalledVersion(ctx context.Context, cl
 	}
 
 	// TODO: when the chart is created these annotations are to be added.
-	existingVersion, ok := chart.Metadata.Annotations[bundleVersionKey]
+	existingVersion, ok := chart.Metadata.Annotations[util.ResolvedbundleVersion]
 	if !ok {
 		return nil, fmt.Errorf("chart %q: missing bundle version", chart.Name())
 	}

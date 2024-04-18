@@ -1,6 +1,10 @@
 package util
 
 const (
-	CoreOwnerKindKey = "core.rukpak.io/owner-kind"
-	CoreOwnerNameKey = "core.rukpak.io/owner-name"
+	CoreOwnerKindKey          = "core.clusterextension.io/owner-kind"
+	CoreOwnerNameKey          = "core.clusterextension.io/owner-name"
+	ResolvedBundleCatalogID   = "core.clusterextension.io/catalog-id"
+	ResolvedbundlePackageName = "core.clusterextension.io/package-name"
+	ResolvedbundleName        = "core.clusterextension.io/bundle-name"
+	ResolvedbundleVersion     = "core.clusterextension.io/bundle-version"
 )
