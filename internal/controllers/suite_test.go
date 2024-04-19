@@ -22,20 +22,26 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/require"
 	carvelv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/internal/rukpak/source"
+	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
@@ -53,9 +59,11 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterEx
 	cl := newClient(t)
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.ClusterExtensionReconciler{
-		Client:         cl,
-		BundleProvider: &fakeCatalogClient,
-		Scheme:         sch,
+		Client:             cl,
+		BundleProvider:     &fakeCatalogClient,
+		Scheme:             sch,
+		ActionClientGetter: acg,
+		Unpacker:           unp,
 	}
 	return cl, reconciler
 }
@@ -73,6 +81,8 @@ func newClientAndExtensionReconciler(t *testing.T) (client.Client, *controllers.
 var (
 	sch *runtime.Scheme
 	cfg *rest.Config
+	acg helmclient.ActionClientGetter
+	unp source.Unpacker
 )
 
 func TestMain(m *testing.M) {
@@ -95,6 +105,17 @@ func TestMain(m *testing.M) {
 	utilruntime.Must(rukpakv1alpha2.AddToScheme(sch))
 	utilruntime.Must(corev1.AddToScheme(sch))
 	utilruntime.Must(carvelv1alpha1.AddToScheme(sch))
+
+	rm := meta.NewDefaultRESTMapper(nil)
+	cfgGetter, err := helmclient.NewActionConfigGetter(cfg, rm, logr.Logger{})
+	utilruntime.Must(err)
+	acg, err = helmclient.NewActionClientGetter(cfgGetter)
+	utilruntime.Must(err)
+
+	mgr, err := manager.New(cfg, manager.Options{})
+	utilruntime.Must(err)
+	unp, err = source.NewDefaultUnpacker(mgr, util.DefaultSystemNamespace, util.DefaultUnpackImage)
+	utilruntime.Must(err)
 
 	code := m.Run()
 	utilruntime.Must(testEnv.Stop())

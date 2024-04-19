@@ -134,6 +134,7 @@ func main() {
 	acg, err := helmclient.NewActionClientGetter(cfgGetter)
 	if err != nil {
 		setupLog.Error(err, "unable to create helm client")
+		os.Exit(1)
 	}
 
 	if systemNamespace == "" {
@@ -143,6 +144,7 @@ func main() {
 	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, unpackImage)
 	if err != nil {
 		setupLog.Error(err, "unable to create unpacker")
+		os.Exit(1)
 	}
 
 	storageURL, err := url.Parse(fmt.Sprintf("%s/bundles/", httpExternalAddr))
