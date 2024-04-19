@@ -1,3 +1,5 @@
+carvel.dev/vendir v0.40.0 h1:JdhCp/EjAPGI8F5zoAVYwZHf1sPEFee19RpgGb3ciT8=
+carvel.dev/vendir v0.40.0/go.mod h1:XPdluJu7322RZNx05AA4gYnV52aKywBdh7Ma12GuM2Q=
 github.com/Masterminds/semver/v3 v3.2.1 h1:RN9w6+7QoMeJVGyfmbcgs28Br8cvmnucEXnY0rYXWg0=
 github.com/Masterminds/semver/v3 v3.2.1/go.mod h1:qvl/7zhW3nngYb5+80sSMF+FG2BjYrf8m9wsX0PNOMQ=
 github.com/Microsoft/go-winio v0.4.14/go.mod h1:qXqCSQ3Xa7+6tgxaGTIe4Kpcdsi+P8jBhyzoq1bpyYA=
@@ -165,10 +167,8 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/vmware-tanzu/carvel-kapp-controller v0.50.2 h1:/0iDxqCzQIDLhasdnx2Hw+iW5VbL2OenfHESbWOZ5fE=
-github.com/vmware-tanzu/carvel-kapp-controller v0.50.2/go.mod h1:dcE+zg3cMl6CWRWwA1K9I9x24wGF98wlsatz5UEfdFo=
-github.com/vmware-tanzu/carvel-vendir v0.36.0 h1:F9FNk2YysC6DlUDP2Nl2ynsv6JH8S0FYT4OK6HrRco0=
-github.com/vmware-tanzu/carvel-vendir v0.36.0/go.mod h1:rPGI/zItMK4QgLRpLix2aykoYufavHyKqqLTONXb2uE=
+github.com/vmware-tanzu/carvel-kapp-controller v0.51.0 h1:lCCHy9n/AzWPtq5gqbINJHgmF32RCUkh9DbVQgx6HAs=
+github.com/vmware-tanzu/carvel-kapp-controller v0.51.0/go.mod h1:go1MQz1D2kVgjaE2ZHtuHGECFk8EDLeXMpjmDNDzuJM=
 github.com/xanzy/ssh-agent v0.3.0/go.mod h1:3s9xbODqPuuhK9JV1R321M/FlMZSBvE5aY6eAcqrDh0=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
