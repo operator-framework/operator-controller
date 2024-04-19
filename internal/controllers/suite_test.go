@@ -22,15 +22,21 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
+	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/internal/rukpak/source"
+	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
 	testutil "github.com/operator-framework/operator-controller/test/util"
 )
@@ -49,9 +55,11 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterEx
 	cl := newClient(t)
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.ClusterExtensionReconciler{
-		Client:         cl,
-		BundleProvider: &fakeCatalogClient,
-		Scheme:         scheme.Scheme,
+		Client:             cl,
+		BundleProvider:     &fakeCatalogClient,
+		Scheme:             scheme.Scheme,
+		ActionClientGetter: acg,
+		Unpacker:           unp,
 	}
 	return cl, reconciler
 }
@@ -68,6 +76,8 @@ func newClientAndExtensionReconciler(t *testing.T) (client.Client, *controllers.
 
 var (
 	cfg *rest.Config
+	acg helmclient.ActionClientGetter
+	unp source.Unpacker
 )
 
 func TestMain(m *testing.M) {
@@ -84,6 +94,17 @@ func TestMain(m *testing.M) {
 	if cfg == nil {
 		log.Panic("expected cfg to not be nil")
 	}
+
+	rm := meta.NewDefaultRESTMapper(nil)
+	cfgGetter, err := helmclient.NewActionConfigGetter(cfg, rm, logr.Logger{})
+	utilruntime.Must(err)
+	acg, err = helmclient.NewActionClientGetter(cfgGetter)
+	utilruntime.Must(err)
+
+	mgr, err := manager.New(cfg, manager.Options{})
+	utilruntime.Must(err)
+	unp, err = source.NewDefaultUnpacker(mgr, util.DefaultSystemNamespace, util.DefaultUnpackImage)
+	utilruntime.Must(err)
 
 	code := m.Run()
 	utilruntime.Must(testEnv.Stop())
