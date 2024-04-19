@@ -9,9 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/rand"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/utils/ptr"
 
 	"github.com/operator-framework/deppy/pkg/deppy"
@@ -28,10 +26,6 @@ import (
 )
 
 func TestVariableSource(t *testing.T) {
-	sch := runtime.NewScheme()
-	utilruntime.Must(ocv1alpha1.AddToScheme(sch))
-	utilruntime.Must(rukpakv1alpha2.AddToScheme(sch))
-
 	stableChannel := catalogmetadata.Channel{Channel: declcfg.Channel{
 		Name: "stable",
 		Entries: []declcfg.ChannelEntry{

@@ -5,19 +5,15 @@ import (
 	"os"
 	"testing"
 
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/pkg/scheme"
 )
 
 var (
@@ -33,16 +29,8 @@ const (
 func TestMain(m *testing.M) {
 	cfg = ctrl.GetConfigOrDie()
 
-	scheme := runtime.NewScheme()
-
-	utilruntime.Must(ocv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(rukpakv1alpha2.AddToScheme(scheme))
-	utilruntime.Must(catalogd.AddToScheme(scheme))
-	utilruntime.Must(appsv1.AddToScheme(scheme))
-	utilruntime.Must(corev1.AddToScheme(scheme))
-
 	var err error
-	c, err = client.New(cfg, client.Options{Scheme: scheme})
+	c, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	utilruntime.Must(err)
 
 	os.Exit(m.Run())

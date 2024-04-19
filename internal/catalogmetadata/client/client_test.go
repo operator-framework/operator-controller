@@ -11,8 +11,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -22,16 +20,8 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogClient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
+	"github.com/operator-framework/operator-controller/pkg/scheme"
 )
-
-var (
-	scheme *runtime.Scheme
-)
-
-func init() {
-	scheme = runtime.NewScheme()
-	utilruntime.Must(catalogd.AddToScheme(scheme))
-}
 
 func TestClient(t *testing.T) {
 	t.Run("Bundles", func(t *testing.T) {
@@ -172,7 +162,7 @@ func TestClient(t *testing.T) {
 				tt.fetcher.contentMap = catalogContentMap
 
 				fakeCatalogClient := catalogClient.New(
-					fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).Build(),
+					fake.NewClientBuilder().WithScheme(scheme.Scheme).WithObjects(objs...).Build(),
 					tt.fetcher,
 				)
 
