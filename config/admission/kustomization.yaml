@@ -1,2 +1,5 @@
+configurations:
+- kustomizeconfig.yaml
+
 resources:
 - admission.yaml
