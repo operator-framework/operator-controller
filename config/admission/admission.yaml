@@ -1,0 +1,37 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: "clusterextensions-package-uniqueness"
+spec:
+  failurePolicy: Fail
+  paramKind:
+    apiVersion: olm.operatorframework.io/v1alpha1
+    kind: ClusterExtension
+  matchConstraints:
+    resourceRules:
+    - apiGroups:   ["olm.operatorframework.io"]
+      apiVersions: ["v1alpha1"]
+      operations:  ["CREATE", "UPDATE"]
+      resources:   ["clusterextensions"]
+  matchConditions:
+    # Only apply the policy when the request operation is CREATE
+    # or when the package is being changed
+    - name: 'only-create-or-package-change'
+      expression: request.operation == 'CREATE' || oldObject.spec.packageName != object.spec.packageName
+  validations:
+    - expression: object.spec.packageName != params.spec.packageName
+      messageExpression: "'Package \"' + string(object.spec.packageName) + '\" is already installed via ClusterExtension \"' +  string(params.metadata.name) + '\"'"
+      reason: Invalid
+
+---
+
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: "clusterextensions-package-uniqueness-binding"
+spec:
+  policyName: "clusterextensions-package-uniqueness"
+  validationActions: [Deny]
+  paramRef:
+    parameterNotFoundAction: Allow
+    selector: {}
