@@ -163,7 +163,8 @@ kind-deploy: manifests $(KUSTOMIZE) #EXHELP Install controller and dependencies 
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
 	-$(KIND) delete cluster --name ${KIND_CLUSTER_NAME}
-	$(KIND) create cluster --name ${KIND_CLUSTER_NAME} --image ${KIND_CLUSTER_IMAGE}
+	# kind-config.yaml can be deleted after upgrading to Kubernetes 1.30
+	$(KIND) create cluster --name ${KIND_CLUSTER_NAME} --image ${KIND_CLUSTER_IMAGE} --config ./kind-config.yaml
 	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
 
 .PHONY: kind-clean
