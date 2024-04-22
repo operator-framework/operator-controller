@@ -44,6 +44,11 @@ spec:
           spec:
             description: ExtensionSpec defines the desired state of Extension
             properties:
+              noopdelete:
+                default: false
+                description: NoopDelete controls what is done with the associated
+                  resources. If set to true they will not be deleted.
+                type: boolean
               paused:
                 description: paused controls the management state of the extension.
                   If the extension is paused, it will be ignored by the extension

@@ -74,6 +74,12 @@ type ExtensionSpec struct {
 	// paused controls the management state of the extension. If the extension is paused, it will be ignored by the extension controller.
 	Paused bool `json:"paused,omitempty"`
 
+	//+kubebuilder:default:=false
+	//+kubebuilder:Optional
+	//
+	// NoopDelete controls what is done with the associated resources. If set to true they will not be deleted.
+	NoopDelete bool `json:"noopdelete,omitempty"`
+
 	//+kubebuilder:validation:MaxLength:=253
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
 	//

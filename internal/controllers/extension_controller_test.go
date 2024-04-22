@@ -44,9 +44,10 @@ func TestExtensionReconcile(t *testing.T) {
 		name               string
 		featureGateEnabled bool
 		paused             bool
+		noopdelete         bool
 		assert             func(*testing.T, ctrl.Result, error, *ocv1alpha1.Extension)
 	}{
-		{"feature gate disabled", false, false, func(t *testing.T, res ctrl.Result, err error, ext *ocv1alpha1.Extension) {
+		{"feature gate disabled", false, false, false, func(t *testing.T, res ctrl.Result, err error, ext *ocv1alpha1.Extension) {
 			assert.Equal(t, ctrl.Result{}, res)
 			assert.NoError(t, err)
 			verifyExtensionInvariants(t, ext)
@@ -57,22 +58,28 @@ func TestExtensionReconcile(t *testing.T) {
 				assert.Equal(t, "extension feature is disabled", cond.Message)
 			}
 		}},
-		{"feature gate enabled and paused", true, true, func(t *testing.T, res ctrl.Result, err error, ext *ocv1alpha1.Extension) {
+		{"feature gate enabled and paused", true, true, false, func(t *testing.T, res ctrl.Result, err error, ext *ocv1alpha1.Extension) {
 			assert.Equal(t, ctrl.Result{}, res)
 			assert.NoError(t, err)
 			assert.Equal(t, ocv1alpha1.ExtensionStatus{Paused: true}, ext.Status)
 		}},
-		{"feature gate enabled and active", true, false, func(t *testing.T, res ctrl.Result, err error, ext *ocv1alpha1.Extension) {
+		{"feature gate enabled and active", true, false, false, func(t *testing.T, res ctrl.Result, err error, ext *ocv1alpha1.Extension) {
 			assert.Equal(t, ctrl.Result{}, res)
 			assert.NoError(t, err)
 			verifyExtensionInvariants(t, ext)
 			assert.False(t, ext.Status.Paused)
 			assert.Empty(t, ext.Status.InstalledBundle)
 			assert.Empty(t, ext.Status.ResolvedBundle)
+			assert.Empty(t, ext.Spec.NoopDelete)
 			for _, cond := range ext.Status.Conditions {
 				assert.Equal(t, metav1.ConditionUnknown, cond.Status)
 				assert.Equal(t, "the Extension interface is not fully implemented", cond.Message)
 			}
+		}},
+		{"feature gate enabled and noopdelete", true, true, true, func(t *testing.T, res ctrl.Result, err error, ext *ocv1alpha1.Extension) {
+			assert.Equal(t, ctrl.Result{}, res)
+			assert.NoError(t, err)
+			assert.Equal(t, ocv1alpha1.ExtensionSpec{NoopDelete: true}, ext.Spec.NoopDelete)
 		}},
 	}
 	for _, tc := range testCases {
@@ -85,6 +92,9 @@ func TestExtensionReconcile(t *testing.T) {
 					ServiceAccountName: "test-service-account",
 					Source:             ocv1alpha1.ExtensionSource{SourceType: ocv1alpha1.SourceTypePackage, Package: &ocv1alpha1.ExtensionSourcePackage{Name: "test-package"}},
 				},
+			}
+			if tc.noopdelete {
+				ext.Spec.NoopDelete = true
 			}
 			require.NoError(t, c.Create(ctx, ext))
 

@@ -430,6 +430,7 @@ func (r *ExtensionReconciler) GenerateExpectedApp(o ocv1alpha1.Extension, bundle
 				"kapp": map[string]interface{}{},
 			},
 		},
+		"noopdelete": o.Spec.NoopDelete,
 	}
 
 	app := &unstructured.Unstructured{
