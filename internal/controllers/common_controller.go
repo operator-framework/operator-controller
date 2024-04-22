@@ -65,17 +65,6 @@ func setResolvedStatusConditionFailed(conditions *[]metav1.Condition, message st
 	})
 }
 
-// setResolvedStatusConditionUnknown sets the resolved status condition to unknown.
-func setResolvedStatusConditionUnknown(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeResolved,
-		Status:             metav1.ConditionUnknown,
-		Reason:             ocv1alpha1.ReasonResolutionUnknown,
-		Message:            message,
-		ObservedGeneration: generation,
-	})
-}
-
 // setInstalledStatusConditionSuccess sets the installed status condition to success.
 func setInstalledStatusConditionSuccess(conditions *[]metav1.Condition, message string, generation int64) {
 	apimeta.SetStatusCondition(conditions, metav1.Condition{
@@ -116,4 +105,37 @@ func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message strin
 			ObservedGeneration: generation,
 		})
 	}
+}
+
+// setProgressingStatusConditionSuccess sets the progressing status condition to false for a successful install or upgrade.
+func setProgressingStatusConditionSuccess(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeProgressing,
+		Status:             metav1.ConditionFalse,
+		Reason:             ocv1alpha1.ReasonReachedDesiredIntent,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+// setProgressingStatusConditionFailed sets the progressing status condition to False for a failed install or upgrade.
+func setProgressingStatusConditionFailed(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeProgressing,
+		Status:             metav1.ConditionFalse,
+		Reason:             ocv1alpha1.ReasonFailedToReachDesiredIntent,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+// setProgressingStatusConditionProgressing sets the progressing status condition to true for an app being reconciled.
+func setProgressingStatusConditionProgressing(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeProgressing,
+		Status:             metav1.ConditionTrue,
+		Reason:             ocv1alpha1.ReasonProgressing,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
 }

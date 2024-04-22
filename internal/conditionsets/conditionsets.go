@@ -22,3 +22,7 @@ package conditionsets
 // NOTE: These are populated by init() in api/v1alpha1/clusterextension_types.go
 var ConditionTypes []string
 var ConditionReasons []string
+
+// ExtensionConditionTypes is the set of Extension exclusive condition Types.
+var ExtensionConditionTypes []string
+var ExtensionConditionReasons []string
