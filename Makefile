@@ -110,10 +110,8 @@ vet: #EXHELP Run go vet against code.
 test: manifests generate fmt vet test-unit test-e2e #HELP Run all tests.
 
 .PHONY: e2e
-FOCUS := $(if $(TEST),-v -focus "$(TEST)")
-E2E_FLAGS ?= ""
 e2e: $(SETUP_ENVTEST) #EXHELP Run the e2e tests.
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -v ./test/e2e/...
+	go test -tags $(GO_BUILD_TAGS) -v ./test/e2e/...
 
 export REG_PKG_NAME=registry-operator
 export PLAIN_PKG_NAME=plain-operator
@@ -121,7 +119,7 @@ export CATALOG_IMG=${E2E_REGISTRY_NAME}.${E2E_REGISTRY_NAMESPACE}.svc:5000/test-
 .PHONY: test-ext-dev-e2e
 test-ext-dev-e2e: $(SETUP_ENVTEST) $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) ${E2E_REGISTRY_NAMESPACE}
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -v ./test/extension-developer-e2e/...
+	go test -tags $(GO_BUILD_TAGS) -v ./test/extension-developer-e2e/...
 
 .PHONY: test-unit
 ENVTEST_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
