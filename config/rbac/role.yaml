@@ -5,6 +5,12 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
+- apiGroups:
   - catalogd.operatorframework.io
   resources:
   - catalogmetadata
@@ -19,16 +25,27 @@ rules:
   - list
   - watch
 - apiGroups:
-  - core.rukpak.io
+  - ""
   resources:
-  - bundledeployments
+  - configmaps
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
   verbs:
   - create
-  - get
+  - delete
   - list
-  - patch
-  - update
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
 - apiGroups:
   - kappctrl.k14s.io
   resources:

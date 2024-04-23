@@ -93,8 +93,10 @@ type ClusterExtensionReconciler struct {
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/finalizers,verbs=update
-
-//+kubebuilder:rbac:groups=core.rukpak.io,resources=bundledeployments,verbs=get;list;watch;create;update;patch
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=list;watch;create;delete
+//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=list;watch
+//+kubebuilder:rbac:groups=core,resources=pods/log,verbs=get
+//+kubebuilder:rbac:groups=*,resources=*,verbs=*
 
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
