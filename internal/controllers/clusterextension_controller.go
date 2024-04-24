@@ -102,6 +102,7 @@ type ClusterExtensionReconciler struct {
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
 
 func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	fmt.Println("start reconciling")
 	l := log.FromContext(ctx).WithName("operator-controller")
 	l.V(1).Info("starting")
 	defer l.V(1).Info("ending")
@@ -157,17 +158,20 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
 	// run resolution
+	fmt.Println("reconciling!!!")
 	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
 		// set right statuses
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("error resolving: %v", err)
 	}
 
 	bundleVersion, err := bundle.Version()
 	if err != nil {
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", "unable to get resolved bundle version", err), ext.Generation)
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("error bundleVersion: %v", err)
 	}
+
+	fmt.Printf("bundle Version", bundleVersion)
 
 	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundle.Image value.
 	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
@@ -183,6 +187,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, fmt.Errorf("source bundle content: %v", err))
 	}
 
+	fmt.Println("unpack state", unpackResult.State)
 	switch unpackResult.State {
 	case rukpaksource.StatePending:
 		updateStatusUnpackPending(&ext.Status, unpackResult)
@@ -554,8 +559,10 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 func (r *ClusterExtensionReconciler) resolve(ctx context.Context, clusterExtension ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
 	allBundles, err := r.BundleProvider.Bundles(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error listing bundles: %v", err)
 	}
+
+	fmt.Printf("all bundles set %v", allBundles[0].Bundle.Package)
 
 	// TODO: change clusterExtension spec to contain a source field.
 	packageName := clusterExtension.Spec.PackageName
@@ -583,7 +590,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, clusterExtensi
 	if clusterExtension.Spec.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicyIgnore {
 		installedVersionSemver, err := r.getInstalledVersion(clusterExtension)
 		if err != nil && !apierrors.IsNotFound(err) {
-			return nil, err
+			return nil, fmt.Errorf("err: %v", err)
 		}
 		if installedVersionSemver != nil {
 			installedVersion = installedVersionSemver.String()
@@ -592,6 +599,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, clusterExtensi
 	}
 
 	resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(predicates...))
+	fmt.Printf("result set %v", resultSet)
 
 	if len(resultSet) == 0 {
 		var versionError, channelError, existingVersionError string
@@ -628,8 +636,8 @@ func (r *ClusterExtensionReconciler) getInstalledVersion(clusterExtension ocv1al
 	// If not, the other option is to get the Helm secret in the release namespace, list all the releases,
 	// get the chart annotations.
 	release, err := cl.Get(clusterExtension.GetName())
-	if err != nil {
-		return nil, err
+	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
+		return nil, fmt.Errorf("error fetching chart: %v", err)
 	}
 	if release == nil {
 		return nil, nil
