@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,6 +41,7 @@ import (
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
@@ -140,6 +142,13 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
+
+	if err := r.validateBundle(bundle); err != nil {
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
+		return ctrl.Result{}, err
+	}
+
 	bundleProvisioner, err := mapBundleMediaTypeToBundleProvisioner(mediaType)
 	if err != nil {
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
@@ -276,6 +285,25 @@ func (r *ClusterExtensionReconciler) installedBundle(ctx context.Context, allBun
 	})
 
 	return resultSet[0], nil
+}
+
+func (r *ClusterExtensionReconciler) validateBundle(bundle *catalogmetadata.Bundle) error {
+	unsupportedProps := sets.New(
+		property.TypePackageRequired,
+		property.TypeGVKRequired,
+		property.TypeConstraint,
+	)
+	for i := range bundle.Properties {
+		if unsupportedProps.Has(bundle.Properties[i].Type) {
+			return fmt.Errorf(
+				"bundle %q has a dependency declared via property %q which is currently not supported",
+				bundle.Name,
+				bundle.Properties[i].Type,
+			)
+		}
+	}
+
+	return nil
 }
 
 func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha2.BundleDeployment, ext *ocv1alpha1.ClusterExtension, bundle *catalogmetadata.Bundle) {
