@@ -110,10 +110,8 @@ vet: #EXHELP Run go vet against code.
 test: manifests generate fmt vet test-unit test-e2e #HELP Run all tests.
 
 .PHONY: e2e
-FOCUS := $(if $(TEST),-v -focus "$(TEST)")
-E2E_FLAGS ?= ""
 e2e: $(SETUP_ENVTEST) #EXHELP Run the e2e tests.
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -v ./test/e2e/...
+	go test -tags $(GO_BUILD_TAGS) -v ./test/e2e/...
 
 export REG_PKG_NAME=registry-operator
 export PLAIN_PKG_NAME=plain-operator
@@ -121,7 +119,7 @@ export CATALOG_IMG=${E2E_REGISTRY_NAME}.${E2E_REGISTRY_NAMESPACE}.svc:5000/test-
 .PHONY: test-ext-dev-e2e
 test-ext-dev-e2e: $(SETUP_ENVTEST) $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) ${E2E_REGISTRY_NAMESPACE}
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -v ./test/extension-developer-e2e/...
+	go test -tags $(GO_BUILD_TAGS) -v ./test/extension-developer-e2e/...
 
 .PHONY: test-unit
 ENVTEST_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
@@ -151,9 +149,20 @@ extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean
 e2e-coverage:
 	COVERAGE_OUTPUT=./e2e-cover.out ./hack/e2e-coverage.sh
 
-.PHONY: kind-load
 kind-load: $(KIND) #EXHELP Loads the currently constructed image onto the cluster.
+ifeq ($(CONTAINER_RUNTIME),podman)
+	@echo "Using Podman"
+	@DEPLOY_TEMPLATE_IMG_NAME=quay.io/operator-framework/operator-controller:devel; \
+	TMP_FILE=temp_image.tar; \
+	podman tag $(IMG) $$DEPLOY_TEMPLATE_IMG_NAME; \
+	echo "Saving image to temporary file $$TMP_FILE"; \
+	podman save $$DEPLOY_TEMPLATE_IMG_NAME -o $$TMP_FILE; \
+	$(KIND) load image-archive $$TMP_FILE --name $(KIND_CLUSTER_NAME); \
+	rm $$TMP_FILE
+else
+	@echo "Using Docker"
 	$(KIND) load docker-image $(IMG) --name $(KIND_CLUSTER_NAME)
+endif
 
 kind-deploy: export MANIFEST="./operator-controller.yaml"
 kind-deploy: manifests $(KUSTOMIZE) #EXHELP Install controller and dependencies onto the kind cluster.
@@ -163,7 +172,8 @@ kind-deploy: manifests $(KUSTOMIZE) #EXHELP Install controller and dependencies 
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
 	-$(KIND) delete cluster --name ${KIND_CLUSTER_NAME}
-	$(KIND) create cluster --name ${KIND_CLUSTER_NAME} --image ${KIND_CLUSTER_IMAGE}
+	# kind-config.yaml can be deleted after upgrading to Kubernetes 1.30
+	$(KIND) create cluster --name ${KIND_CLUSTER_NAME} --image ${KIND_CLUSTER_IMAGE} --config ./kind-config.yaml
 	$(KIND) export kubeconfig --name ${KIND_CLUSTER_NAME}
 
 .PHONY: kind-clean
@@ -216,7 +226,7 @@ run: docker-build kind-cluster kind-load kind-deploy #HELP Build the operator-co
 
 .PHONY: docker-build
 docker-build: build-linux #EXHELP Build docker image for operator-controller with GOOS=linux and local GOARCH.
-	docker build -t ${IMG} -f Dockerfile ./bin/linux
+	$(CONTAINER_RUNTIME) build -t ${IMG} -f Dockerfile ./bin/linux
 
 #SECTION Release
 
