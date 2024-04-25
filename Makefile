@@ -151,7 +151,15 @@ e2e-coverage:
 
 .PHONY: kind-load
 kind-load: $(KIND) #EXHELP Loads the currently constructed image onto the cluster.
+ifeq ($(CONTAINER_RUNTIME),podman)
+	@echo "Using Podman"
+	podman save $(IMG) -o $(IMG).tar
+	$(KIND) load image-archive $(IMG).tar --name $(KIND_CLUSTER_NAME)
+	rm $(IMG).tar
+else
+	@echo "Using Docker"
 	$(KIND) load docker-image $(IMG) --name $(KIND_CLUSTER_NAME)
+endif
 
 kind-deploy: export MANIFEST="./operator-controller.yaml"
 kind-deploy: manifests $(KUSTOMIZE) #EXHELP Install controller and dependencies onto the kind cluster.
@@ -215,7 +223,7 @@ run: docker-build kind-cluster kind-load kind-deploy #HELP Build the operator-co
 
 .PHONY: docker-build
 docker-build: build-linux #EXHELP Build docker image for operator-controller with GOOS=linux and local GOARCH.
-	docker build -t ${IMG} -f Dockerfile ./bin/linux
+	$(CONTAINER_RUNTIME) build -t ${IMG} -f Dockerfile ./bin/linux
 
 #SECTION Release
 
