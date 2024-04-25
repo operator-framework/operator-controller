@@ -56,7 +56,7 @@ func TestPollIntervalCELValidationRules(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&tc.spec)
+			obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&tc.spec) //nolint:gosec
 			require.NoError(t, err)
 			errs := validator(obj, nil)
 			require.Equal(t, len(tc.wantErrs), len(errs))

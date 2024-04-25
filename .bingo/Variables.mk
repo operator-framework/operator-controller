@@ -35,11 +35,11 @@ $(GINKGO): $(BINGO_DIR)/ginkgo.mod
 	@echo "(re)installing $(GOBIN)/ginkgo-v2.12.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=ginkgo.mod -o=$(GOBIN)/ginkgo-v2.12.0 "github.com/onsi/ginkgo/v2/ginkgo"
 
-GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.53.3
+GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.57.2
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/golangci-lint-v1.53.3"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v1.53.3 "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	@echo "(re)installing $(GOBIN)/golangci-lint-v1.57.2"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=golangci-lint.mod -o=$(GOBIN)/golangci-lint-v1.57.2 "github.com/golangci/golangci-lint/cmd/golangci-lint"
 
 GORELEASER := $(GOBIN)/goreleaser-v1.16.2
 $(GORELEASER): $(BINGO_DIR)/goreleaser.mod

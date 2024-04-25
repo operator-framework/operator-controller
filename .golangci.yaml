@@ -1,3 +1,18 @@
+########
+# NOTE
+#
+#  This file is duplicated in the following repos:
+#    - operator-framework/kubectl-operator
+#    - operator-framework/catalogd
+#    - operator-framework/operator-controller
+#    - operator-framework/rukpak
+#
+#  If you are making a change, please make it in ALL
+#  of the above repositories!
+#
+#  TODO: Find a way to have a shared golangci config.
+########
+
 run:
   # Default timeout is 1m, up to give more room
   timeout: 4m
@@ -7,16 +22,14 @@ linters:
   - asciicheck
   - bodyclose
   - errorlint
-  - ginkgolinter
+  - gci
   - gofmt
-  - goimports
   - gosec
   - importas
   - misspell
   - nestif
   - nonamedreturns
   - prealloc
-  - revive
   - stylecheck
   - tparallel
   - unconvert
@@ -25,6 +38,18 @@ linters:
   - whitespace
 
 linters-settings:
+  gci:
+    sections:
+      - standard
+      - dot
+      - default
+      - prefix(github.com/operator-framework)
+
+      # TODO: change this to `localmodule` when golangci-lint
+      # is updated to 1.58+
+      - prefix(github.com/operator-framework/catalogd)
+    custom-order: true
+
   errorlint:
     errorf: false
 
@@ -42,10 +67,11 @@ linters-settings:
       alias: $1$2
     - pkg: sigs.k8s.io/controller-runtime
       alias: ctrl
-    - pkg: github.com/operator-framework/rukpak/api/v1alpha1
-      alias: rukpakv1alpha1
-  goimports:
-    local-prefixes: github.com/operator-framework/catalogd
+    - pkg: github.com/operator-framework/rukpak/api/v1alpha2
+      alias: rukpakv1alpha2
+    - pkg: github.com/blang/semver/v4
+      alias: bsemver
 
 output:
-  format: tab
+  formats:
+    - format: tab

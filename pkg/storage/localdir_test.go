@@ -12,9 +12,11 @@ import (
 	"path/filepath"
 	"testing/fstest"
 
-	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
 
