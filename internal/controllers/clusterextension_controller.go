@@ -103,6 +103,7 @@ type ClusterExtensionReconciler struct {
 
 func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	fmt.Println("start reconciling")
+
 	l := log.FromContext(ctx).WithName("operator-controller")
 	l.V(1).Info("starting")
 	defer l.V(1).Info("ending")
@@ -171,7 +172,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, fmt.Errorf("error bundleVersion: %v", err)
 	}
 
-	fmt.Printf("bundle Version", bundleVersion)
+	fmt.Printf("bundle Version %q", bundleVersion)
 
 	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundle.Image value.
 	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
@@ -259,6 +260,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	case stateNeedsInstall:
 		rel, err = ac.Install(ext.GetName(), r.ReleaseNamespace, chrt, values, func(install *action.Install) error {
 			install.CreateNamespace = false
+			install.Labels = map[string]string{util.BundleNameKey: bundle.Name, util.PackageNameKey: bundle.Package, util.BundleVersionKey: bundleVersion.String()}
 			return nil
 		}, helmclient.AppendInstallPostRenderer(post))
 		if err != nil {
@@ -562,8 +564,6 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, clusterExtensi
 		return nil, fmt.Errorf("error listing bundles: %v", err)
 	}
 
-	fmt.Printf("all bundles set %v", allBundles[0].Bundle.Package)
-
 	// TODO: change clusterExtension spec to contain a source field.
 	packageName := clusterExtension.Spec.PackageName
 	channelName := clusterExtension.Spec.Channel
@@ -599,7 +599,6 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, clusterExtensi
 	}
 
 	resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(predicates...))
-	fmt.Printf("result set %v", resultSet)
 
 	if len(resultSet) == 0 {
 		var versionError, channelError, existingVersionError string
@@ -643,20 +642,15 @@ func (r *ClusterExtensionReconciler) getInstalledVersion(clusterExtension ocv1al
 		return nil, nil
 	}
 
-	chart := release.Chart
-	if chart == nil {
-		return nil, errors.New("empty chart associated with the release")
-	}
-
 	// TODO: when the chart is created these annotations are to be added.
-	existingVersion, ok := chart.Metadata.Annotations[util.BundleVersionKey]
+	existingVersion, ok := release.Labels[util.BundleVersionKey]
 	if !ok {
-		return nil, fmt.Errorf("chart %q: missing bundle version", chart.Name())
+		return nil, fmt.Errorf("release %q: missing bundle version", release.Name)
 	}
 
 	existingVersionSemver, err := bsemver.New(existingVersion)
 	if err != nil {
-		return nil, fmt.Errorf("could not determine bundle version for the chart %q: %w", chart.Name(), err)
+		return nil, fmt.Errorf("could not determine bundle version for the chart %q: %w", release.Name, err)
 	}
 	return existingVersionSemver, nil
 }
@@ -678,6 +672,7 @@ func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterfa
 	if errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil, stateNeedsInstall, nil
 	}
+
 	desiredRelease, err := cl.Upgrade(obj.GetName(), r.ReleaseNamespace, chrt, values, func(upgrade *action.Upgrade) error {
 		upgrade.DryRun = true
 		return nil
@@ -739,12 +734,12 @@ func (p *postrenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, erro
 			break
 		}
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error decoding objeccts %v", err)
 		}
 		obj.SetLabels(util.MergeMaps(obj.GetLabels(), p.labels))
 		b, err := obj.MarshalJSON()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error marshalling: %v", err)
 		}
 		buf.Write(b)
 	}
