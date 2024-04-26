@@ -12,10 +12,13 @@ export WAIT_TIMEOUT ?= 60s
 IMG?=$(IMAGE_REPO):$(IMAGE_TAG)
 TESTDATA_DIR := testdata
 
-# setup-envtest on *nix uses XDG_DATA_HOME, falling back to HOME, as the default storage directory. Some CI setups
-# don't have XDG_DATA_HOME set; in those cases, we set it here so setup-envtest functions correctly. This shouldn't
-# affect developers.
-export XDG_DATA_HOME ?= /tmp/.local/share
+# By default setup-envtest will write to $XDG_DATA_HOME, or $HOME/.local/share if that is not defined.
+# If $HOME is not set, we need to specify a binary directory to prevent an error in setup-envtest.
+# Useful for some CI/CD environments that set neither $XDG_DATA_HOME nor $HOME.
+setup_envtest_bin_dir_override=
+ifeq ($(shell [[ $$HOME == "" || $$HOME == "/" ]] && [[ $$XDG_DATA_HOME == "" ]] && echo true ), true)
+	setup_envtest_bin_dir_override += --bin-dir /tmp/envtest-binaries
+endif
 
 # bingo manages consistent tooling versions for things like kind, kustomize, etc.
 include .bingo/Variables.mk
@@ -125,7 +128,7 @@ test-ext-dev-e2e: $(SETUP_ENVTEST) $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Ru
 ENVTEST_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 UNIT_TEST_DIRS=$(shell go list ./... | grep -v /test/)
 test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION)) && go test -tags $(GO_BUILD_TAGS) -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
+	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION)) $(setup_envtest_bin_dir_override) && go test -tags $(GO_BUILD_TAGS) -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
 
 E2E_REGISTRY_NAME=docker-registry
 E2E_REGISTRY_NAMESPACE=operator-controller-e2e
