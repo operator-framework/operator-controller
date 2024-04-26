@@ -149,6 +149,7 @@ extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean
 e2e-coverage:
 	COVERAGE_OUTPUT=./e2e-cover.out ./hack/e2e-coverage.sh
 
+.PHONY: kind-load
 kind-load: $(KIND) #EXHELP Loads the currently constructed image onto the cluster.
 ifeq ($(CONTAINER_RUNTIME),podman)
 	@echo "Using Podman"
