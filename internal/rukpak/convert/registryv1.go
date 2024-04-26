@@ -336,7 +336,9 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 		obj := obj
 		objs = append(objs, &obj)
 	}
-	return &Plain{Objects: objs}, nil
+
+	p := &Plain{Objects: objs}
+	return p, nil
 }
 
 const maxNameLength = 63

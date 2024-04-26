@@ -61,6 +61,8 @@ spec:
         volumeMounts:
           - name: cache
             mountPath: /var/cache
+          - name: bundle-cache
+            mountPath: /var/cache/bundles
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -108,4 +110,6 @@ spec:
       terminationGracePeriodSeconds: 10
       volumes:
         - name: cache
+          emptyDir: {}
+        - name: bundle-cache
           emptyDir: {}

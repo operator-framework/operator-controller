@@ -11,7 +11,7 @@ import (
 // TODO verify these
 const (
 	DefaultSystemNamespace = "operator-controller-system"
-	DefaultUnpackImage     = "quay.io/operator-framework/operator-controller:main"
+	DefaultUnpackImage     = "quay.io/operator-framework/rukpak:main"
 )
 
 func MergeMaps(maps ...map[string]string) map[string]string {
