@@ -7,7 +7,7 @@ toolchain go1.21.8
 require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/containerd v1.7.11
-	github.com/go-logr/logr v1.3.0
+	github.com/go-logr/logr v1.4.1
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.15.2
 	github.com/google/go-containerregistry/pkg/authn/k8schain v0.0.0-20230919002926-dbcd01c402b2
