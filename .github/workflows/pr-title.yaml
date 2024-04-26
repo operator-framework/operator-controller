@@ -8,6 +8,6 @@ jobs:
     name: Verify PR title
     steps:
     - name: Verify PR title
-      uses: kubernetes-sigs/kubebuilder-release-tools@v0.4.0
+      uses: kubernetes-sigs/kubebuilder-release-tools@v0.4.3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
