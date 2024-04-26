@@ -153,9 +153,13 @@ e2e-coverage:
 kind-load: $(KIND) #EXHELP Loads the currently constructed image onto the cluster.
 ifeq ($(CONTAINER_RUNTIME),podman)
 	@echo "Using Podman"
-	podman save $(IMG) -o $(IMG).tar
-	$(KIND) load image-archive $(IMG).tar --name $(KIND_CLUSTER_NAME)
-	rm $(IMG).tar
+	@DEPLOY_TEMPLATE_IMG_NAME=quay.io/operator-framework/operator-controller:devel; \
+	TMP_FILE=temp_image.tar; \
+	podman tag $(IMG) $$DEPLOY_TEMPLATE_IMG_NAME; \
+	echo "Saving image to temporary file $$TMP_FILE"; \
+	podman save $$DEPLOY_TEMPLATE_IMG_NAME -o $$TMP_FILE; \
+	$(KIND) load image-archive $$TMP_FILE --name $(KIND_CLUSTER_NAME); \
+	rm $$TMP_FILE
 else
 	@echo "Using Docker"
 	$(KIND) load docker-image $(IMG) --name $(KIND_CLUSTER_NAME)
