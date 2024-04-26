@@ -109,7 +109,7 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	defer l.V(1).Info("ending")
 
 	var existingExt = &ocv1alpha1.ClusterExtension{}
-	if err := r.Get(ctx, req.NamespacedName, existingExt); err != nil {
+	if err := r.Client.Get(ctx, req.NamespacedName, existingExt); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
@@ -125,7 +125,7 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	unexpectedFieldsChanged := checkForUnexpectedFieldChange(*existingExt, *reconciledExt)
 
 	if updateStatus {
-		if updateErr := r.Status().Update(ctx, reconciledExt); updateErr != nil {
+		if updateErr := r.Client.Status().Update(ctx, reconciledExt); updateErr != nil {
 			return res, utilerrors.NewAggregate([]error{reconcileErr, updateErr})
 		}
 	}
@@ -135,7 +135,7 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	if updateFinalizers {
-		if updateErr := r.Update(ctx, reconciledExt); updateErr != nil {
+		if updateErr := r.Client.Update(ctx, reconciledExt); updateErr != nil {
 			return res, utilerrors.NewAggregate([]error{reconcileErr, updateErr})
 		}
 	}
@@ -313,7 +313,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			if !isWatched {
 				if err := r.controller.Watch(
 					source.Kind(r.cache, unstructuredObj),
-					crhandler.EnqueueRequestForOwner(r.Scheme, r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
+					crhandler.EnqueueRequestForOwner(r.Scheme, r.Client.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
 					helmpredicate.DependentPredicateFuncs()); err != nil {
 					return err
 				}

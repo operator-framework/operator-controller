@@ -88,7 +88,7 @@ func (b *Bundle) loadPackage() error {
 	if b.semVersion == nil {
 		semVer, err := bsemver.Parse(b.bundlePackage.Version)
 		if err != nil {
-			return fmt.Errorf("could not parse semver %q for bundle '%s': %s", b.bundlePackage.Version, b.Name, err)
+			return fmt.Errorf("could not parse semver %q for bundle '%s': %s", b.bundlePackage.Version, b.Bundle.Name, err)
 		}
 		b.semVersion = &semVer
 	}
@@ -101,15 +101,15 @@ func (b *Bundle) loadRequiredPackages() error {
 	if b.requiredPackages == nil {
 		requiredPackages, err := loadFromProps[PackageRequired](b, property.TypePackageRequired, false)
 		if err != nil {
-			return fmt.Errorf("error determining bundle required packages for bundle %q: %s", b.Name, err)
+			return fmt.Errorf("error determining bundle required packages for bundle %q: %s", b.Bundle.Name, err)
 		}
 		for i := range requiredPackages {
-			semverRange, err := bsemver.ParseRange(requiredPackages[i].VersionRange)
+			semverRange, err := bsemver.ParseRange(requiredPackages[i].PackageRequired.VersionRange)
 			if err != nil {
 				return fmt.Errorf(
 					"error parsing bundle required package semver range for bundle %q (required package %q): %s",
-					b.Name,
-					requiredPackages[i].PackageName,
+					b.Bundle.Name,
+					requiredPackages[i].PackageRequired.PackageName,
 					err,
 				)
 			}
@@ -126,7 +126,7 @@ func (b *Bundle) loadMediaType() error {
 	if b.mediaType == nil {
 		mediaType, err := loadOneFromProps[string](b, PropertyBundleMediaType, false)
 		if err != nil {
-			return fmt.Errorf("error determining bundle mediatype for bundle %q: %s", b.Name, err)
+			return fmt.Errorf("error determining bundle mediatype for bundle %q: %s", b.Bundle.Name, err)
 		}
 		b.mediaType = &mediaType
 	}
@@ -136,8 +136,8 @@ func (b *Bundle) loadMediaType() error {
 func (b *Bundle) propertiesByType(propType string) []*property.Property {
 	if b.propertiesMap == nil {
 		b.propertiesMap = make(map[string][]*property.Property)
-		for i := range b.Properties {
-			prop := b.Properties[i]
+		for i := range b.Bundle.Properties {
+			prop := b.Bundle.Properties[i]
 			b.propertiesMap[prop.Type] = append(b.propertiesMap[prop.Type], &prop)
 		}
 	}
@@ -166,7 +166,7 @@ func (b *Bundle) HasDeprecation() bool {
 // bundle deprecation, so package deprecation is not considered.
 func (b *Bundle) IsDeprecated() bool {
 	for _, dep := range b.Deprecations {
-		if dep.Reference.Schema == declcfg.SchemaBundle && dep.Reference.Name == b.Name {
+		if dep.Reference.Schema == declcfg.SchemaBundle && dep.Reference.Name == b.Bundle.Name {
 			return true
 		}
 	}
