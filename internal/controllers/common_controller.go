@@ -43,17 +43,6 @@ func setResolvedStatusConditionSuccess(conditions *[]metav1.Condition, message s
 	})
 }
 
-// setInstalledStatusConditionUnknown sets the installed status condition to unknown.
-func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeInstalled,
-		Status:             metav1.ConditionUnknown,
-		Reason:             ocv1alpha1.ReasonInstallationStatusUnknown,
-		Message:            message,
-		ObservedGeneration: generation,
-	})
-}
-
 // setResolvedStatusConditionFailed sets the resolved status condition to failed.
 func setResolvedStatusConditionFailed(conditions *[]metav1.Condition, message string, generation int64) {
 	apimeta.SetStatusCondition(conditions, metav1.Condition{
@@ -85,24 +74,4 @@ func setInstalledStatusConditionFailed(conditions *[]metav1.Condition, message s
 		Message:            message,
 		ObservedGeneration: generation,
 	})
-}
-
-// setDeprecationStatusesUnknown sets the deprecation status conditions to unknown.
-func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message string, generation int64) {
-	conditionTypes := []string{
-		ocv1alpha1.TypeDeprecated,
-		ocv1alpha1.TypePackageDeprecated,
-		ocv1alpha1.TypeChannelDeprecated,
-		ocv1alpha1.TypeBundleDeprecated,
-	}
-
-	for _, conditionType := range conditionTypes {
-		apimeta.SetStatusCondition(conditions, metav1.Condition{
-			Type:               conditionType,
-			Reason:             ocv1alpha1.ReasonDeprecated,
-			Status:             metav1.ConditionUnknown,
-			Message:            message,
-			ObservedGeneration: generation,
-		})
-	}
 }
