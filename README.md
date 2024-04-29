@@ -17,7 +17,6 @@ OLM v1 is the follow-up to OLM v0, located [here](https://github.com/operator-fr
 OLM v1 consists of four different components:
 * operator-controller (this repository)
 * [deppy](https://github.com/operator-framework/deppy)
-* [rukpak](https://github.com/operator-framework/rukpak)
 * [catalogd](https://github.com/operator-framework/catalogd)
 
 For a more complete overview of OLM v1 and how it differs from OLM v0, see our [overview](./docs/olmv1_overview.md).
@@ -76,7 +75,7 @@ Install the CRDs and the operator-controller into a new [KIND cluster](https://k
 make run
 ```
 This will build a local container image of the operator-controller, create a new KIND cluster and then deploy onto that cluster.
-This will also deploy the catalogd, rukpak and cert-manager dependencies.
+This will also deploy the catalogd and cert-manager dependencies.
 
 ### Modifying the API definitions
 If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
