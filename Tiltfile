@@ -5,7 +5,7 @@ load('../tilt-support/Tiltfile', 'deploy_repo')
 
 config.define_string_list('repos', args=True)
 cfg = config.parse()
-repos = cfg.get('repos', ['operator-controller', 'rukpak', 'catalogd'])
+repos = cfg.get('repos', ['operator-controller', 'catalogd'])
 
 repo = {
     'image': 'quay.io/operator-framework/operator-controller',
