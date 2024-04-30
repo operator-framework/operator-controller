@@ -24,10 +24,6 @@ jobs:
         path: operator-controller
     - uses: actions/checkout@v4
       with:
-        repository: operator-framework/rukpak
-        path: rukpak
-    - uses: actions/checkout@v4
-      with:
         repository: operator-framework/catalogd
         path: catalogd
     - name: Install Tilt
