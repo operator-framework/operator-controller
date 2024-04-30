@@ -73,7 +73,8 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName: "prometheus",
+		PackageName:      "prometheus",
+		InstallNamespace: "default",
 	}
 	t.Log("It resolves the specified package with correct bundle path")
 	t.Log("By creating the ClusterExtension resource")
@@ -129,7 +130,8 @@ func TestClusterExtensionInstallPlain(t *testing.T) {
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName: "plain",
+		PackageName:      "plain",
+		InstallNamespace: "default",
 	}
 	t.Log("It resolves the specified package with correct bundle path")
 	t.Log("By creating the ClusterExtension resource")
@@ -186,7 +188,8 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 
 	pkgName := "prometheus"
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName: pkgName,
+		PackageName:      pkgName,
+		InstallNamespace: "default",
 	}
 
 	t.Log("By deleting the catalog first")
@@ -247,8 +250,9 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 
 	t.Log("By creating an ClusterExtension at a specified version")
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName: "prometheus",
-		Version:     "1.0.0",
+		PackageName:      "prometheus",
+		Version:          "1.0.0",
+		InstallNamespace: "default",
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution")
@@ -291,8 +295,9 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 
 	t.Log("By creating an ClusterExtension at a specified version")
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName: "prometheus",
-		Version:     "1.0.0",
+		PackageName:      "prometheus",
+		Version:          "1.0.0",
+		InstallNamespace: "default",
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution")
@@ -335,8 +340,9 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 
 	t.Log("By creating an ClusterExtension at a specified version")
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName: "prometheus",
-		Version:     "1.0.0",
+		PackageName:      "prometheus",
+		Version:          "1.0.0",
+		InstallNamespace: "default",
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution")

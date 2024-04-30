@@ -441,7 +441,7 @@ func (r *ClusterExtensionReconciler) GenerateExpectedBundleDeployment(o ocv1alph
 	// identical to "kubectl apply -f"
 
 	spec := map[string]interface{}{
-		// TODO: Don't assume plain provisioner
+		"installNamespace":     o.Spec.InstallNamespace,
 		"provisionerClassName": bundleProvisioner,
 		"source": map[string]interface{}{
 			// TODO: Don't assume image type
@@ -450,10 +450,6 @@ func (r *ClusterExtensionReconciler) GenerateExpectedBundleDeployment(o ocv1alph
 				"ref": bundlePath,
 			},
 		},
-	}
-
-	if len(o.Spec.WatchNamespaces) > 0 {
-		spec["watchNamespaces"] = o.Spec.WatchNamespaces
 	}
 
 	bd := &unstructured.Unstructured{Object: map[string]interface{}{
