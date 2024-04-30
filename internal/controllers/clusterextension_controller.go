@@ -160,11 +160,15 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
 		// set right statuses
+		ext.Status.ResolvedBundle = nil
+		ext.Status.InstalledBundle = nil
 		return ctrl.Result{}, err
 	}
 
 	bundleVersion, err := bundle.Version()
 	if err != nil {
+		ext.Status.ResolvedBundle = nil
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", "unable to get resolved bundle version", err), ext.Generation)
 		return ctrl.Result{}, err
 	}
@@ -229,6 +233,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	ac, err := r.ActionClientGetter.ActionClientFor(ext)
 	if err != nil {
+		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingClient, err), ext.Generation)
 		return ctrl.Result{}, err
 	}
@@ -314,10 +319,12 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			}
 			return nil
 		}(); err != nil {
+			ext.Status.InstalledBundle = nil
 			setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
 			return ctrl.Result{}, err
 		}
 	}
+	ext.Status.InstalledBundle = bundleMetadataFor(bundle)
 	setInstalledStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("Instantiated bundle %s successfully", ext.GetName()), ext.Generation)
 
 	// set the status of the cluster extension based on the respective bundle deployment status conditions.
