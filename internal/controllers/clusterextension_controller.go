@@ -66,6 +66,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
+	"github.com/operator-framework/operator-controller/internal/packageerrors"
 	rukpakapi "github.com/operator-framework/operator-controller/internal/rukpak/api"
 	"github.com/operator-framework/operator-controller/internal/rukpak/handler"
 	helmpredicate "github.com/operator-framework/operator-controller/internal/rukpak/helm-operator-plugins/predicate"
@@ -610,17 +611,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, clusterExtensi
 	resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(predicates...))
 
 	if len(resultSet) == 0 {
-		var versionError, channelError, existingVersionError string
-		if versionRange != "" {
-			versionError = fmt.Sprintf(" matching version %q", versionRange)
-		}
-		if channelName != "" {
-			channelError = fmt.Sprintf(" in channel %q", channelName)
-		}
-		if installedVersion != "" {
-			existingVersionError = fmt.Sprintf(" which upgrades currently installed version %q", installedVersion)
-		}
-		return nil, fmt.Errorf("no package %q%s%s%s found", packageName, versionError, channelError, existingVersionError)
+		return nil, packageerrors.GenerateFullError(packageName, versionRange, channelName, installedVersion)
 	}
 
 	sort.SliceStable(resultSet, func(i, j int) bool {
