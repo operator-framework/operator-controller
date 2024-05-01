@@ -10,6 +10,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
+	"github.com/operator-framework/operator-controller/internal/packageerrors"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 )
 
@@ -42,16 +43,7 @@ func MakeRequiredPackageVariables(allBundles []*catalogmetadata.Bundle, clusterE
 
 		resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(predicates...))
 		if len(resultSet) == 0 {
-			if versionRange != "" && channelName != "" {
-				return nil, fmt.Errorf("no package %q matching version %q found in channel %q", packageName, versionRange, channelName)
-			}
-			if versionRange != "" {
-				return nil, fmt.Errorf("no package %q matching version %q found", packageName, versionRange)
-			}
-			if channelName != "" {
-				return nil, fmt.Errorf("no package %q found in channel %q", packageName, channelName)
-			}
-			return nil, fmt.Errorf("no package %q found", packageName)
+			return nil, packageerrors.GenerateVersionChannelError(packageName, versionRange, channelName)
 		}
 		sort.SliceStable(resultSet, func(i, j int) bool {
 			return catalogsort.ByVersion(resultSet[i], resultSet[j])

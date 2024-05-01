@@ -18,6 +18,7 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
+	"github.com/operator-framework/operator-controller/internal/packageerrors"
 	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
 	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
 )
@@ -208,28 +209,28 @@ func TestMakeRequiredPackageVariables(t *testing.T) {
 			clusterExtensions: []ocv1alpha1.ClusterExtension{
 				fakeClusterExtension("non-existent-test-package", "", ""),
 			},
-			expectedError: `no package "non-existent-test-package" found`,
+			expectedError: packageerrors.GenerateError("non-existent-test-package").Error(),
 		},
 		{
 			name: "not found: package name and channel",
 			clusterExtensions: []ocv1alpha1.ClusterExtension{
 				fakeClusterExtension("non-existent-test-package", "stable", ""),
 			},
-			expectedError: `no package "non-existent-test-package" found in channel "stable"`,
+			expectedError: packageerrors.GenerateChannelError("non-existent-test-package", "stable").Error(),
 		},
 		{
 			name: "not found: package name and version range",
 			clusterExtensions: []ocv1alpha1.ClusterExtension{
 				fakeClusterExtension("non-existent-test-package", "", "1.0.0"),
 			},
-			expectedError: `no package "non-existent-test-package" matching version "1.0.0" found`,
+			expectedError: packageerrors.GenerateVersionError("non-existent-test-package", "1.0.0").Error(),
 		},
 		{
 			name: "not found: package name with channel and version range",
 			clusterExtensions: []ocv1alpha1.ClusterExtension{
 				fakeClusterExtension("non-existent-test-package", "stable", "1.0.0"),
 			},
-			expectedError: `no package "non-existent-test-package" matching version "1.0.0" found in channel "stable"`,
+			expectedError: packageerrors.GenerateVersionChannelError("non-existent-test-package", "1.0.0", "stable").Error(),
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
