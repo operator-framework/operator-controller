@@ -13,7 +13,8 @@ require (
 	github.com/operator-framework/deppy v0.3.0
 	github.com/operator-framework/helm-operator-plugins v0.2.1
 	github.com/operator-framework/operator-registry v1.40.0
-	github.com/operator-framework/rukpak v0.20.1-0.20240503190249-f2fc69ef9ff1
+	github.com/operator-framework/rukpak v0.20.1-0.20240506151208-b6c74d40c3e9
+	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.51.0
@@ -167,7 +168,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.2.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
-	github.com/spf13/cobra v1.8.0 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect

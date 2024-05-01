@@ -6,3 +6,23 @@ images:
 - name: controller
   newName: quay.io/operator-framework/operator-controller
   newTag: devel
+replacements:
+- source: # replaces UNPACK_IMAGE in manager.yaml with image set by kustomize above
+    kind: Deployment
+    group: apps
+    version: v1
+    name: controller-manager
+    namespace: system
+    fieldPath: spec.template.spec.containers.[name=manager].image
+  targets:
+  - select:
+      kind: Deployment
+      group: apps
+      version: v1
+      name: controller-manager
+      namespace: system
+    fieldPaths: 
+    - spec.template.spec.containers.[name=manager].args.0
+    options:
+      delimiter: "="
+      index: 1
