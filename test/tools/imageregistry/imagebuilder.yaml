@@ -13,6 +13,7 @@ spec:
                 "--context=/workspace/",
                 "--destination=docker-registry.catalogd-e2e.svc:5000/test-catalog:e2e",
                 "--skip-tls-verify"]
+        terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
           - name: dockerfile
             mountPath: /workspace/

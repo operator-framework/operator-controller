@@ -70,6 +70,7 @@ spec:
           requests:
             cpu: 5m
             memory: 64Mi
+        terminationMessagePolicy: FallbackToLogsOnError
       - command:
         - ./manager
         args:
@@ -103,6 +104,7 @@ spec:
             cpu: 1000m
             memory: 200Mi
         imagePullPolicy: IfNotPresent
+        terminationMessagePolicy: FallbackToLogsOnError
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
       volumes:
