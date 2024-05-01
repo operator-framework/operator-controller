@@ -18,6 +18,7 @@ spec:
       capabilities:
         drop:
           - "ALL"
+    terminationMessagePolicy: FallbackToLogsOnError
     volumeMounts:
     - name: e2e-coverage-volume
       mountPath: /e2e-coverage
