@@ -35,7 +35,8 @@ func TestClusterExtensionPackageUniqueness(t *testing.T) {
 			Name: firstResourceName,
 		},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName: firstResourcePackageName,
+			PackageName:      firstResourcePackageName,
+			InstallNamespace: "default",
 		},
 	}
 	require.NoError(t, c.Create(ctx, clusterExtension1))
@@ -47,7 +48,8 @@ func TestClusterExtensionPackageUniqueness(t *testing.T) {
 			GenerateName: "test-extension-",
 		},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName: firstResourcePackageName,
+			PackageName:      firstResourcePackageName,
+			InstallNamespace: "default",
 		},
 	}
 	err := c.Create(ctx, clusterExtension2)
@@ -59,7 +61,8 @@ func TestClusterExtensionPackageUniqueness(t *testing.T) {
 			GenerateName: "test-extension-",
 		},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName: "package2",
+			PackageName:      "package2",
+			InstallNamespace: "default",
 		},
 	}
 	require.NoError(t, c.Create(ctx, clusterExtension2))
@@ -75,7 +78,8 @@ func TestClusterExtensionPackageUniqueness(t *testing.T) {
 			Name: clusterExtension2.Name,
 		},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName: firstResourcePackageName,
+			PackageName:      firstResourcePackageName,
+			InstallNamespace: "default",
 		},
 	}
 	err = c.Patch(ctx, intent, client.Apply, client.ForceOwnership, fieldOwner)
@@ -91,7 +95,8 @@ func TestClusterExtensionPackageUniqueness(t *testing.T) {
 			Name: clusterExtension2.Name,
 		},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName: "package3",
+			PackageName:      "package3",
+			InstallNamespace: "default",
 		},
 	}
 	require.NoError(t, c.Patch(ctx, intent, client.Apply, client.ForceOwnership, fieldOwner))

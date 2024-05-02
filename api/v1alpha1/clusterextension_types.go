@@ -66,11 +66,13 @@ type ClusterExtensionSpec struct {
 	// Defines the policy for how to handle upgrade constraints
 	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 
-	//+kubebuilder:Optional
+	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+	//+kubebuilder:validation:MaxLength:=63
 	//
-	// watchNamespaces indicates which namespaces the extension should watch.
-	// This feature is currently supported only with RegistryV1 bundles.
-	WatchNamespaces []string `json:"watchNamespaces,omitempty"`
+	// installNamespace is the namespace where the bundle should be installed. However, note that
+	// the bundle may contain resources that are cluster-scoped or that are
+	// installed in a different namespace. This namespace is expected to exist.
+	InstallNamespace string `json:"installNamespace"`
 }
 
 const (

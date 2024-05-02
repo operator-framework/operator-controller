@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -42,7 +43,8 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName: tc.pkgName,
+				PackageName:      tc.pkgName,
+				InstallNamespace: "default",
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for package name %q: %w", tc.pkgName, err)
@@ -129,8 +131,9 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName: "package",
-				Version:     tc.version,
+				PackageName:      "package",
+				Version:          tc.version,
+				InstallNamespace: "default",
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for version %q: %w", tc.version, err)
@@ -173,11 +176,57 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName: "package",
-				Channel:     tc.channelName,
+				PackageName:      "package",
+				Channel:          tc.channelName,
+				InstallNamespace: "default",
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for channel %q: %w", tc.channelName, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errMsg)
+			}
+		})
+	}
+}
+
+func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
+	tooLongError := "spec.installNamespace: Too long: may not be longer than 63"
+	regexMismatchError := "spec.installNamespace in body should match"
+
+	testCases := []struct {
+		name             string
+		installNamespace string
+		errMsg           string
+	}{
+		{"just alphanumeric", "justalphanumberic1", ""},
+		{"hypen-separated", "hyphenated-name", ""},
+		{"no install namespace", "", regexMismatchError},
+		{"dot-separated", "dotted.name", regexMismatchError},
+		{"longest valid install namespace", strings.Repeat("x", 63), ""},
+		{"too long install namespace name", strings.Repeat("x", 64), tooLongError},
+		{"spaces", "spaces spaces", regexMismatchError},
+		{"capitalized", "Capitalized", regexMismatchError},
+		{"camel case", "camelCase", regexMismatchError},
+		{"invalid characters", "many/invalid$characters+in_name", regexMismatchError},
+		{"starts with hyphen", "-start-with-hyphen", regexMismatchError},
+		{"ends with hyphen", "end-with-hyphen-", regexMismatchError},
+		{"starts with period", ".start-with-period", regexMismatchError},
+		{"ends with period", "end-with-period.", regexMismatchError},
+	}
+
+	t.Parallel()
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
+				PackageName:      "package",
+				InstallNamespace: tc.installNamespace,
+			}))
+			if tc.errMsg == "" {
+				require.NoError(t, err, "unexpected error for installNamespace %q: %w", tc.installNamespace, err)
 			} else {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errMsg)

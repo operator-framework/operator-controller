@@ -44,6 +44,14 @@ spec:
                 maxLength: 48
                 pattern: ^[a-z0-9]+([\.-][a-z0-9]+)*$
                 type: string
+              installNamespace:
+                description: |-
+                  installNamespace is the namespace where the bundle should be installed. However, note that
+                  the bundle may contain resources that are cluster-scoped or that are
+                  installed in a different namespace. This namespace is expected to exist.
+                maxLength: 63
+                pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                type: string
               packageName:
                 maxLength: 48
                 pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
@@ -66,14 +74,8 @@ spec:
                 maxLength: 64
                 pattern: ^(\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\^)\s*(v?(0|[1-9]\d*|[x|X|\*])(\.(0|[1-9]\d*|x|X|\*]))?(\.(0|[1-9]\d*|x|X|\*))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)((?:\s+|,\s*|\s*\|\|\s*)(=||!=|>|<|>=|=>|<=|=<|~|~>|\^)\s*(v?(0|[1-9]\d*|x|X|\*])(\.(0|[1-9]\d*|x|X|\*))?(\.(0|[1-9]\d*|x|X|\*]))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)*$
                 type: string
-              watchNamespaces:
-                description: |-
-                  watchNamespaces indicates which namespaces the extension should watch.
-                  This feature is currently supported only with RegistryV1 bundles.
-                items:
-                  type: string
-                type: array
             required:
+            - installNamespace
             - packageName
             type: object
           status:
