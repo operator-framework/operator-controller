@@ -52,7 +52,6 @@ import (
 type ClusterExtensionReconciler struct {
 	client.Client
 	BundleProvider BundleProvider
-	Scheme         *runtime.Scheme
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
