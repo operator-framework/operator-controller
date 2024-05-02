@@ -46,7 +46,6 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterEx
 	reconciler := &controllers.ClusterExtensionReconciler{
 		Client:         cl,
 		BundleProvider: &fakeCatalogClient,
-		Scheme:         scheme.Scheme,
 	}
 	return cl, reconciler
 }
