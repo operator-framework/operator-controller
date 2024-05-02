@@ -135,25 +135,16 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	// TODO: Question - Should we set the deprecation statuses after we have successfully resolved instead of after a successful installation?
 
-	mediaType, err := bundle.MediaType()
-	if err != nil {
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
-		return ctrl.Result{}, err
-	}
-
 	if err := r.validateBundle(bundle); err != nil {
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
-	bundleProvisioner, err := mapBundleMediaTypeToBundleProvisioner(mediaType)
-	if err != nil {
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
-		return ctrl.Result{}, err
-	}
+	// Assume all bundles are registry+v1 for now, since that's all we support.
+	// If the bundle is not a registry+v1 bundle, the conversion will fail.
+	bundleProvisioner := "core-rukpak-io-registry"
+
 	// Ensure a BundleDeployment exists with its bundle source from the bundle
 	// image we just looked up in the solution.
 	dep := r.GenerateExpectedBundleDeployment(*ext, bundle.Image, bundleProvisioner)
@@ -521,23 +512,6 @@ func (r *ClusterExtensionReconciler) existingBundleDeploymentUnstructured(ctx co
 		return nil, err
 	}
 	return &unstructured.Unstructured{Object: unstrExistingBundleDeploymentObj}, nil
-}
-
-// mapBundleMediaTypeToBundleProvisioner maps an olm.bundle.mediatype property to a
-// rukpak bundle provisioner class name that is capable of unpacking the bundle type
-func mapBundleMediaTypeToBundleProvisioner(mediaType string) (string, error) {
-	switch mediaType {
-	case catalogmetadata.MediaTypePlain:
-		return "core-rukpak-io-plain", nil
-	// To ensure compatibility with bundles created with OLMv0 where the
-	// olm.bundle.mediatype property doesn't exist, we assume that if the
-	// property is empty (i.e doesn't exist) that the bundle is one created
-	// with OLMv0 and therefore should use the registry provisioner
-	case catalogmetadata.MediaTypeRegistry, "":
-		return "core-rukpak-io-registry", nil
-	default:
-		return "", fmt.Errorf("unknown bundle mediatype: %s", mediaType)
-	}
 }
 
 // Generate reconcile requests for all cluster extensions affected by a catalog change

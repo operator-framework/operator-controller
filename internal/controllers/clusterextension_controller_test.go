@@ -909,116 +909,6 @@ func TestClusterExtensionNoVersion(t *testing.T) {
 	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
-func TestClusterExtensionPlainV0Bundle(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
-	ctx := context.Background()
-	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
-
-	t.Log("When the cluster extension specifies a package with a plain+v0 bundle")
-	t.Log("By initializing cluster state")
-	pkgName := "plain"
-	pkgVer := "0.1.0"
-	pkgChan := "beta"
-	clusterExtension := &ocv1alpha1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
-		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
-			InstallNamespace: "default",
-		},
-	}
-	require.NoError(t, cl.Create(ctx, clusterExtension))
-
-	t.Log("It sets resolution success status")
-	t.Log("By running reconcile")
-	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
-	require.Equal(t, ctrl.Result{}, res)
-	require.NoError(t, err)
-
-	t.Log("By fetching updated cluster extension after reconcile")
-	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
-
-	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/plain/0.1.0", Version: "0.1.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
-	t.Log("By checking the expected conditions")
-	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionTrue, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, cond.Reason)
-	require.Equal(t, "resolved to \"quay.io/operatorhub/plain@sha256:plain\"", cond.Message)
-	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionUnknown, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "bundledeployment status is unknown", cond.Message)
-
-	t.Log("By fetching the bundled deployment")
-	bd := &rukpakv1alpha2.BundleDeployment{}
-	require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
-	require.Equal(t, "core-rukpak-io-plain", bd.Spec.ProvisionerClassName)
-	require.Equal(t, rukpakv1alpha2.SourceTypeImage, bd.Spec.Source.Type)
-	require.NotNil(t, bd.Spec.Source.Image)
-	require.Equal(t, "quay.io/operatorhub/plain@sha256:plain", bd.Spec.Source.Image.Ref)
-
-	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
-	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
-}
-
-func TestClusterExtensionBadBundleMediaType(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
-	ctx := context.Background()
-	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
-
-	t.Log("When the cluster extension specifies a package with a bad bundle mediatype")
-	t.Log("By initializing cluster state")
-	pkgName := "badmedia"
-	pkgVer := "0.1.0"
-	pkgChan := "beta"
-	clusterExtension := &ocv1alpha1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
-		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
-			InstallNamespace: "default",
-		},
-	}
-	require.NoError(t, cl.Create(ctx, clusterExtension))
-
-	t.Log("It sets resolution success status")
-	t.Log("By running reconcile")
-	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
-	require.Equal(t, ctrl.Result{}, res)
-	require.Error(t, err)
-	require.ErrorContains(t, err, "unknown bundle mediatype: badmedia+v1")
-
-	t.Log("By fetching updated cluster extension after reconcile")
-	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
-
-	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/badmedia/0.1.0", Version: "0.1.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
-
-	t.Log("By checking the expected conditions")
-	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionTrue, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, cond.Reason)
-	require.Equal(t, "resolved to \"quay.io/operatorhub/badmedia@sha256:badmedia\"", cond.Message)
-	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionFalse, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationFailed, cond.Reason)
-	require.Equal(t, "unknown bundle mediatype: badmedia+v1", cond.Message)
-
-	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
-	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
-}
-
 func verifyInvariants(ctx context.Context, t *testing.T, c client.Client, ext *ocv1alpha1.ClusterExtension) {
 	key := client.ObjectKeyFromObject(ext)
 	require.NoError(t, c.Get(ctx, key, ext))
@@ -2000,18 +1890,6 @@ var (
 			},
 		},
 	}
-	plainBetaChannel = catalogmetadata.Channel{
-		Channel: declcfg.Channel{
-			Name:    "beta",
-			Package: "plain",
-		},
-	}
-	badmediaBetaChannel = catalogmetadata.Channel{
-		Channel: declcfg.Channel{
-			Name:    "beta",
-			Package: "badmedia",
-		},
-	}
 )
 
 var testBundleList = []*catalogmetadata.Bundle{
@@ -2079,33 +1957,5 @@ var testBundleList = []*catalogmetadata.Bundle{
 		},
 		CatalogName: "fake-catalog",
 		InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
-	},
-	{
-		Bundle: declcfg.Bundle{
-			Name:    "operatorhub/plain/0.1.0",
-			Package: "plain",
-			Image:   "quay.io/operatorhub/plain@sha256:plain",
-			Properties: []property.Property{
-				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"plain","version":"0.1.0"}`)},
-				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-				{Type: "olm.bundle.mediatype", Value: json.RawMessage(`"plain+v0"`)},
-			},
-		},
-		CatalogName: "fake-catalog",
-		InChannels:  []*catalogmetadata.Channel{&plainBetaChannel},
-	},
-	{
-		Bundle: declcfg.Bundle{
-			Name:    "operatorhub/badmedia/0.1.0",
-			Package: "badmedia",
-			Image:   "quay.io/operatorhub/badmedia@sha256:badmedia",
-			Properties: []property.Property{
-				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"badmedia","version":"0.1.0"}`)},
-				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-				{Type: "olm.bundle.mediatype", Value: json.RawMessage(`"badmedia+v1"`)},
-			},
-		},
-		CatalogName: "fake-catalog",
-		InChannels:  []*catalogmetadata.Channel{&badmediaBetaChannel},
 	},
 }

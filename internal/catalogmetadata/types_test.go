@@ -2,7 +2,6 @@ package catalogmetadata_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	bsemver "github.com/blang/semver/v4"
@@ -138,61 +137,6 @@ func TestBundleRequiredPackages(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.wantRequiredPackages, packages)
-			if tt.wantErr != "" {
-				assert.EqualError(t, err, tt.wantErr)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestBundleMediaType(t *testing.T) {
-	for _, tt := range []struct {
-		name          string
-		bundle        *catalogmetadata.Bundle
-		wantMediaType string
-		wantErr       string
-	}{
-		{
-			name: "valid mediatype property",
-			bundle: &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-				Name: "fake-bundle.v1",
-				Properties: []property.Property{
-					{
-						Type:  catalogmetadata.PropertyBundleMediaType,
-						Value: json.RawMessage(fmt.Sprintf(`"%s"`, catalogmetadata.MediaTypePlain)),
-					},
-				},
-			}},
-			wantMediaType: catalogmetadata.MediaTypePlain,
-		},
-		{
-			name: "no media type provided",
-			bundle: &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-				Name:       "fake-bundle.noMediaType",
-				Properties: []property.Property{},
-			}},
-			wantMediaType: "",
-		},
-		{
-			name: "malformed media type",
-			bundle: &catalogmetadata.Bundle{Bundle: declcfg.Bundle{
-				Name: "fake-bundle.badMediaType",
-				Properties: []property.Property{
-					{
-						Type:  catalogmetadata.PropertyBundleMediaType,
-						Value: json.RawMessage("badtype"),
-					},
-				},
-			}},
-			wantMediaType: "",
-			wantErr:       `error determining bundle mediatype for bundle "fake-bundle.badMediaType": property "olm.bundle.mediatype" with value "badtype" could not be parsed: invalid character 'b' looking for beginning of value`,
-		},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			mediaType, err := tt.bundle.MediaType()
-			assert.Equal(t, tt.wantMediaType, mediaType)
 			if tt.wantErr != "" {
 				assert.EqualError(t, err, tt.wantErr)
 			} else {

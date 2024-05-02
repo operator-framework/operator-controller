@@ -11,12 +11,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 )
 
-const (
-	MediaTypePlain          = "plain+v0"
-	MediaTypeRegistry       = "registry+v1"
-	PropertyBundleMediaType = "olm.bundle.mediatype"
-)
-
 type Schemas interface {
 	Package | Bundle | Channel | Deprecation
 }
@@ -50,7 +44,6 @@ type Bundle struct {
 	bundlePackage    *property.Package
 	semVersion       *bsemver.Version
 	requiredPackages []PackageRequired
-	mediaType        *string
 }
 
 func (b *Bundle) Version() (*bsemver.Version, error) {
@@ -65,14 +58,6 @@ func (b *Bundle) RequiredPackages() ([]PackageRequired, error) {
 		return nil, err
 	}
 	return b.requiredPackages, nil
-}
-
-func (b *Bundle) MediaType() (string, error) {
-	if err := b.loadMediaType(); err != nil {
-		return "", err
-	}
-
-	return *b.mediaType, nil
 }
 
 func (b *Bundle) loadPackage() error {
@@ -116,19 +101,6 @@ func (b *Bundle) loadRequiredPackages() error {
 			requiredPackages[i].SemverRange = semverRange
 		}
 		b.requiredPackages = requiredPackages
-	}
-	return nil
-}
-
-func (b *Bundle) loadMediaType() error {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	if b.mediaType == nil {
-		mediaType, err := loadOneFromProps[string](b, PropertyBundleMediaType, false)
-		if err != nil {
-			return fmt.Errorf("error determining bundle mediatype for bundle %q: %s", b.Name, err)
-		}
-		b.mediaType = &mediaType
 	}
 	return nil
 }
