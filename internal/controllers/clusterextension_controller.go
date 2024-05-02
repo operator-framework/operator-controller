@@ -201,11 +201,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		if err := r.Storage.Store(ctx, ext, unpackResult.Bundle); err != nil {
 			return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, err)
 		}
-		contentURL, err := r.Storage.URLFor(ctx, ext)
-		if err != nil {
-			return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, err)
-		}
-		updateStatusUnpacked(&ext.Status, unpackResult, contentURL)
+		updateStatusUnpacked(&ext.Status, unpackResult)
 	default:
 		return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, err)
 	}

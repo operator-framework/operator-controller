@@ -145,7 +145,6 @@ type ClusterExtensionStatus struct {
 	InstalledBundle *BundleMetadata `json:"installedBundle,omitempty"`
 	// +optional
 	ResolvedBundle *BundleMetadata `json:"resolvedBundle,omitempty"`
-
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +listType=map
