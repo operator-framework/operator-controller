@@ -122,7 +122,7 @@ func TestClusterExtensionNonExistentVersion(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionUnknown, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "installation has not been attempted due to failure to gather data for resolution", cond.Message)
+	require.Equal(t, "installation has not been attempted as resolution failed", cond.Message)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -608,57 +608,6 @@ func TestClusterExtensionExpectedBundleDeployment(t *testing.T) {
 	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
 }
 
-func TestClusterExtensionDuplicatePackage(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
-	ctx := context.Background()
-	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
-	const pkgName = "prometheus"
-
-	t.Log("When the cluster extension specifies a duplicate package")
-	t.Log("By initializing cluster state")
-	dupClusterExtension := &ocv1alpha1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("orig-%s", extKey.Name)},
-		Spec:       ocv1alpha1.ClusterExtensionSpec{PackageName: pkgName},
-	}
-	require.NoError(t, cl.Create(ctx, dupClusterExtension))
-
-	clusterExtension := &ocv1alpha1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
-		Spec:       ocv1alpha1.ClusterExtensionSpec{PackageName: pkgName},
-	}
-	require.NoError(t, cl.Create(ctx, clusterExtension))
-
-	t.Log("It sets resolution failure status")
-	t.Log("By running reconcile")
-	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
-	require.Equal(t, ctrl.Result{}, res)
-	require.EqualError(t, err, `duplicate identifier "required package prometheus" in input`)
-
-	t.Log("By fetching updated cluster extension after reconcile")
-	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
-
-	t.Log("By checking the status fields")
-	require.Empty(t, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
-
-	t.Log("By checking the expected conditions")
-	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionFalse, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-	require.Equal(t, `duplicate identifier "required package prometheus" in input`, cond.Message)
-
-	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionUnknown, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "installation has not been attempted as resolution failed", cond.Message)
-
-	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
-	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-	require.NoError(t, cl.DeleteAllOf(ctx, &rukpakv1alpha2.BundleDeployment{}))
-}
-
 func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t)
 	ctx := context.Background()
@@ -819,7 +768,7 @@ func TestClusterExtensionVersionNoChannel(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionUnknown, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "installation has not been attempted due to failure to gather data for resolution", cond.Message)
+	require.Equal(t, "installation has not been attempted as resolution failed", cond.Message)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -867,7 +816,7 @@ func TestClusterExtensionNoChannel(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionUnknown, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "installation has not been attempted due to failure to gather data for resolution", cond.Message)
+	require.Equal(t, "installation has not been attempted as resolution failed", cond.Message)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -917,7 +866,7 @@ func TestClusterExtensionNoVersion(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionUnknown, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "installation has not been attempted due to failure to gather data for resolution", cond.Message)
+	require.Equal(t, "installation has not been attempted as resolution failed", cond.Message)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -1173,8 +1122,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NotNil(t, cond)
 		assert.Equal(t, metav1.ConditionFalse, cond.Status)
 		assert.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-		assert.Contains(t, cond.Message, "constraints not satisfiable")
-		assert.Regexp(t, "installed package prometheus requires at least one of fake-catalog-prometheus-operatorhub/prometheus/beta/1.2.0, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.1, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.0$", cond.Message)
+		assert.Equal(t, "error upgrading from currently installed version \"1.0.0\": no package \"prometheus\" matching version \"2.0.0\" found in channel \"beta\"", cond.Message)
 
 		// Valid update skipping one version
 		clusterExtension.Spec.Version = "1.2.0"
@@ -1266,8 +1214,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NotNil(t, cond)
 		assert.Equal(t, metav1.ConditionFalse, cond.Status)
 		assert.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-		assert.Contains(t, cond.Message, "constraints not satisfiable")
-		assert.Contains(t, cond.Message, "installed package prometheus requires at least one of fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.1, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.0\n")
+		assert.Equal(t, "error upgrading from currently installed version \"1.0.0\": no package \"prometheus\" matching version \"1.2.0\" found in channel \"beta\"", cond.Message)
 
 		// Valid update skipping one version
 		clusterExtension.Spec.Version = "1.0.1"
@@ -1458,8 +1405,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				require.NotNil(t, cond)
 				assert.Equal(t, metav1.ConditionFalse, cond.Status)
 				assert.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-				assert.Contains(t, cond.Message, "constraints not satisfiable")
-				assert.Contains(t, cond.Message, "installed package prometheus requires at least one of fake-catalog-prometheus-operatorhub/prometheus/beta/1.2.0, fake-catalog-prometheus-operatorhub/prometheus/beta/1.0.1\n")
+				assert.Equal(t, "error upgrading from currently installed version \"1.0.1\": no package \"prometheus\" matching version \"1.0.0\" found in channel \"beta\"", cond.Message)
 			})
 		}
 	})

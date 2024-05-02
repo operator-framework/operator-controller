@@ -1,7 +1,8 @@
-package variablesources_test
+package controllers_test
 
 import (
 	"encoding/json"
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -10,20 +11,17 @@ import (
 	"github.com/stretchr/testify/require"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 
-	"github.com/operator-framework/deppy/pkg/deppy/constraint"
-	"github.com/operator-framework/deppy/pkg/deppy/input"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
-	olmvariables "github.com/operator-framework/operator-controller/internal/resolution/variables"
-	"github.com/operator-framework/operator-controller/internal/resolution/variablesources"
+	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
+	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
+	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
-func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t *testing.T) {
+func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.T) {
 	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
 
 	const testPackageName = "test-package"
@@ -173,67 +171,40 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 	}
 
 	for _, tt := range []struct {
-		name                    string
-		upgradeConstraintPolicy ocv1alpha1.UpgradeConstraintPolicy
-		installedBundle         *catalogmetadata.Bundle
-		expectedResult          []*olmvariables.InstalledPackageVariable
-		expectedError           string
+		name            string
+		installedBundle *catalogmetadata.Bundle
+		expectedResult  []*catalogmetadata.Bundle
 	}{
 		{
-			name:                    "with non-zero major version",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
-			installedBundle:         bundleSet["test-package.v2.0.0"],
-			expectedResult: []*olmvariables.InstalledPackageVariable{
-				olmvariables.NewInstalledPackageVariable(testPackageName, []*catalogmetadata.Bundle{
-					// Updates are allowed within the major version.
-					// Ensure bundles are in version order (high to low)
-					// with current version at the end
-					bundleSet["test-package.v2.2.0"],
-					bundleSet["test-package.v2.1.0"],
-					bundleSet["test-package.v2.0.0"],
-				}),
+			name:            "with non-zero major version",
+			installedBundle: bundleSet["test-package.v2.0.0"],
+			expectedResult: []*catalogmetadata.Bundle{
+				// Updates are allowed within the major version
+				bundleSet["test-package.v2.2.0"],
+				bundleSet["test-package.v2.1.0"],
+				bundleSet["test-package.v2.0.0"],
 			},
 		},
 		{
-			name:                    "with zero major and zero minor version",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
-			installedBundle:         bundleSet["test-package.v0.0.1"],
-			expectedResult: []*olmvariables.InstalledPackageVariable{
-				olmvariables.NewInstalledPackageVariable(testPackageName, []*catalogmetadata.Bundle{
-					// No updates are allowed in major version zero when minor version is also zero
-					bundleSet["test-package.v0.0.1"],
-				}),
+			name:            "with zero major and zero minor version",
+			installedBundle: bundleSet["test-package.v0.0.1"],
+			expectedResult: []*catalogmetadata.Bundle{
+				// No updates are allowed in major version zero when minor version is also zero
+				bundleSet["test-package.v0.0.1"],
 			},
 		},
 		{
-			name:                    "with zero major and non-zero minor version",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
-			installedBundle:         bundleSet["test-package.v0.1.0"],
-			expectedResult: []*olmvariables.InstalledPackageVariable{
-				olmvariables.NewInstalledPackageVariable(testPackageName, []*catalogmetadata.Bundle{
-					// Patch version updates are allowed within the minor version
-					// Ensure bundles are in version order (high to low)
-					// with current version at the end.
-					bundleSet["test-package.v0.1.2"],
-					bundleSet["test-package.v0.1.1"],
-					bundleSet["test-package.v0.1.0"],
-				}),
+			name:            "with zero major and non-zero minor version",
+			installedBundle: bundleSet["test-package.v0.1.0"],
+			expectedResult: []*catalogmetadata.Bundle{
+				// Patch version updates are allowed within the minor version
+				bundleSet["test-package.v0.1.2"],
+				bundleSet["test-package.v0.1.1"],
+				bundleSet["test-package.v0.1.0"],
 			},
 		},
 		{
-			name:                    "UpgradeConstraintPolicy is set to Ignore",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyIgnore,
-			installedBundle:         bundleSet["test-package.v2.0.0"],
-			expectedResult:          []*olmvariables.InstalledPackageVariable{},
-		},
-		{
-			name:                    "no BundleDeployment for an ClusterExtension",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
-			expectedResult:          []*olmvariables.InstalledPackageVariable{},
-		},
-		{
-			name:                    "installed bundle not found",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
+			name: "installed bundle not found",
 			installedBundle: &catalogmetadata.Bundle{
 				Bundle: declcfg.Bundle{
 					Name:    "test-package.v9.0.0",
@@ -245,41 +216,28 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsEnabled(t
 				},
 				InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 			},
-			expectedError: `bundle with image "registry.io/repo/test-package@v9.0.0" for package "test-package" not found in available catalogs but is currently installed via BundleDeployment "test-package-bd"`,
+			expectedResult: []*catalogmetadata.Bundle{},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			fakeOwnerClusterExtension := fakeClusterExtension("test-extension-semver", testPackageName, tt.upgradeConstraintPolicy)
-			bundleDeployments := []rukpakv1alpha2.BundleDeployment{}
-			if tt.installedBundle != nil {
-				bundleDeployments = append(bundleDeployments, fakeBundleDeployment("test-package-bd", tt.installedBundle.Image, &fakeOwnerClusterExtension))
-			}
+			successors, err := controllers.SuccessorsPredicate(tt.installedBundle)
+			assert.NoError(t, err)
+			result := catalogfilter.Filter(allBundles, successors)
 
-			installedPackages, err := variablesources.MakeInstalledPackageVariables(
-				allBundles,
-				[]ocv1alpha1.ClusterExtension{fakeOwnerClusterExtension},
-				bundleDeployments,
-			)
-			if tt.expectedError == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.ErrorContains(t, err, tt.expectedError)
-			}
+			// sort before comparison for stable order
+			sort.SliceStable(result, func(i, j int) bool {
+				return catalogsort.ByVersion(result[i], result[j])
+			})
 
 			gocmpopts := []cmp.Option{
 				cmpopts.IgnoreUnexported(catalogmetadata.Bundle{}),
-				cmp.AllowUnexported(
-					olmvariables.InstalledPackageVariable{},
-					input.SimpleVariable{},
-					constraint.DependencyConstraint{},
-				),
 			}
-			require.Empty(t, cmp.Diff(installedPackages, tt.expectedResult, gocmpopts...))
+			require.Empty(t, cmp.Diff(result, tt.expectedResult, gocmpopts...))
 		})
 	}
 }
 
-func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(t *testing.T) {
+func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing.T) {
 	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
 
 	const testPackageName = "test-package"
@@ -391,7 +349,7 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 			InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 		},
 		// We need a bundle from different package to ensure that
-		// we filter out bundles certain bundle image
+		// we filter out certain bundle image
 		"some-other-package.v2.3.0": {
 			Bundle: declcfg.Bundle{
 				Name:    "some-other-package.v2.3.0",
@@ -410,68 +368,45 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 	}
 
 	for _, tt := range []struct {
-		name                    string
-		upgradeConstraintPolicy ocv1alpha1.UpgradeConstraintPolicy
-		installedBundle         *catalogmetadata.Bundle
-		expectedResult          []*olmvariables.InstalledPackageVariable
-		expectedError           string
+		name            string
+		installedBundle *catalogmetadata.Bundle
+		expectedResult  []*catalogmetadata.Bundle
 	}{
 		{
-			name:                    "respect replaces directive from catalog",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
-			installedBundle:         bundleSet["test-package.v2.0.0"],
-			expectedResult: []*olmvariables.InstalledPackageVariable{
-				olmvariables.NewInstalledPackageVariable(testPackageName, []*catalogmetadata.Bundle{
-					// Must only have two bundle:
-					// - the one which replaces the current version
-					// - the current version (to allow to stay on the current version)
-					bundleSet["test-package.v2.1.0"],
-					bundleSet["test-package.v2.0.0"],
-				}),
+			name:            "respect replaces directive from catalog",
+			installedBundle: bundleSet["test-package.v2.0.0"],
+			expectedResult: []*catalogmetadata.Bundle{
+				// Must only have two bundle:
+				// - the one which replaces the current version
+				// - the current version (to allow to stay on the current version)
+				bundleSet["test-package.v2.1.0"],
+				bundleSet["test-package.v2.0.0"],
 			},
 		},
 		{
-			name:                    "respect skips directive from catalog",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
-			installedBundle:         bundleSet["test-package.v2.2.1"],
-			expectedResult: []*olmvariables.InstalledPackageVariable{
-				olmvariables.NewInstalledPackageVariable(testPackageName, []*catalogmetadata.Bundle{
-					// Must only have two bundle:
-					// - the one which skips the current version
-					// - the current version (to allow to stay on the current version)
-					bundleSet["test-package.v2.3.0"],
-					bundleSet["test-package.v2.2.1"],
-				}),
+			name:            "respect skips directive from catalog",
+			installedBundle: bundleSet["test-package.v2.2.1"],
+			expectedResult: []*catalogmetadata.Bundle{
+				// Must only have two bundle:
+				// - the one which skips the current version
+				// - the current version (to allow to stay on the current version)
+				bundleSet["test-package.v2.3.0"],
+				bundleSet["test-package.v2.2.1"],
 			},
 		},
 		{
-			name:                    "respect skipRange directive from catalog",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
-			installedBundle:         bundleSet["test-package.v2.3.0"],
-			expectedResult: []*olmvariables.InstalledPackageVariable{
-				olmvariables.NewInstalledPackageVariable(testPackageName, []*catalogmetadata.Bundle{
-					// Must only have two bundle:
-					// - the one which is skipRanges the current version
-					// - the current version (to allow to stay on the current version)
-					bundleSet["test-package.v2.4.0"],
-					bundleSet["test-package.v2.3.0"],
-				}),
+			name:            "respect skipRange directive from catalog",
+			installedBundle: bundleSet["test-package.v2.3.0"],
+			expectedResult: []*catalogmetadata.Bundle{
+				// Must only have two bundle:
+				// - the one which is skipRanges the current version
+				// - the current version (to allow to stay on the current version)
+				bundleSet["test-package.v2.4.0"],
+				bundleSet["test-package.v2.3.0"],
 			},
 		},
 		{
-			name:                    "UpgradeConstraintPolicy is set to Ignore",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyIgnore,
-			installedBundle:         bundleSet["test-package.v2.0.0"],
-			expectedResult:          []*olmvariables.InstalledPackageVariable{},
-		},
-		{
-			name:                    "no BundleDeployment for an ClusterExtension",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
-			expectedResult:          []*olmvariables.InstalledPackageVariable{},
-		},
-		{
-			name:                    "installed bundle not found",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyEnforce,
+			name: "installed bundle not found",
 			installedBundle: &catalogmetadata.Bundle{
 				Bundle: declcfg.Bundle{
 					Name:    "test-package.v9.0.0",
@@ -483,52 +418,23 @@ func TestMakeInstalledPackageVariablesWithForceSemverUpgradeConstraintsDisabled(
 				},
 				InChannels: []*catalogmetadata.Channel{&testPackageChannel},
 			},
-			expectedError: `bundle with image "registry.io/repo/test-package@v9.0.0" for package "test-package" not found in available catalogs but is currently installed via BundleDeployment "test-package-bd"`,
-		},
-		{
-			name:                    "installed bundle not found, but UpgradeConstraintPolicy is set to Ignore",
-			upgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyIgnore,
-			installedBundle: &catalogmetadata.Bundle{
-				Bundle: declcfg.Bundle{
-					Name:    "test-package.v9.0.0",
-					Package: testPackageName,
-					Image:   "registry.io/repo/test-package@v9.0.0",
-					Properties: []property.Property{
-						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "9.0.0"}`)},
-					},
-				},
-				InChannels: []*catalogmetadata.Channel{&testPackageChannel},
-			},
-			expectedResult: []*olmvariables.InstalledPackageVariable{},
+			expectedResult: []*catalogmetadata.Bundle{},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			fakeOwnerClusterExtension := fakeClusterExtension("test-extension-legacy", testPackageName, tt.upgradeConstraintPolicy)
-			bundleDeployments := []rukpakv1alpha2.BundleDeployment{}
-			if tt.installedBundle != nil {
-				bundleDeployments = append(bundleDeployments, fakeBundleDeployment("test-package-bd", tt.installedBundle.Image, &fakeOwnerClusterExtension))
-			}
+			successors, err := controllers.SuccessorsPredicate(tt.installedBundle)
+			assert.NoError(t, err)
+			result := catalogfilter.Filter(allBundles, successors)
 
-			installedPackages, err := variablesources.MakeInstalledPackageVariables(
-				allBundles,
-				[]ocv1alpha1.ClusterExtension{fakeOwnerClusterExtension},
-				bundleDeployments,
-			)
-			if tt.expectedError == "" {
-				assert.NoError(t, err)
-			} else {
-				assert.ErrorContains(t, err, tt.expectedError)
-			}
+			// sort before comparison for stable order
+			sort.SliceStable(result, func(i, j int) bool {
+				return catalogsort.ByVersion(result[i], result[j])
+			})
 
 			gocmpopts := []cmp.Option{
 				cmpopts.IgnoreUnexported(catalogmetadata.Bundle{}),
-				cmp.AllowUnexported(
-					olmvariables.InstalledPackageVariable{},
-					input.SimpleVariable{},
-					constraint.DependencyConstraint{},
-				),
 			}
-			require.Empty(t, cmp.Diff(installedPackages, tt.expectedResult, gocmpopts...))
+			require.Empty(t, cmp.Diff(result, tt.expectedResult, gocmpopts...))
 		})
 	}
 }

@@ -28,8 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
-	"github.com/operator-framework/deppy/pkg/deppy/solver"
-
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
 	testutil "github.com/operator-framework/operator-controller/test/util"
@@ -43,16 +41,12 @@ func newClient(t *testing.T) client.Client {
 }
 
 func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterExtensionReconciler) {
-	resolver, err := solver.New()
-	require.NoError(t, err)
-
 	cl := newClient(t)
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
 	reconciler := &controllers.ClusterExtensionReconciler{
 		Client:         cl,
 		BundleProvider: &fakeCatalogClient,
 		Scheme:         scheme.Scheme,
-		Resolver:       resolver,
 	}
 	return cl, reconciler
 }
