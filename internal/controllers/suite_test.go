@@ -17,12 +17,12 @@ limitations under the License.
 package controllers_test
 
 import (
+	"crypto/x509"
 	"log"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -33,10 +33,10 @@ import (
 
 	"github.com/operator-framework/deppy/pkg/deppy/solver"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	"github.com/operator-framework/rukpak/pkg/source"
+	"github.com/operator-framework/rukpak/pkg/util"
 
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	"github.com/operator-framework/operator-controller/internal/rukpak/source"
-	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
 	testutil "github.com/operator-framework/operator-controller/test/util"
 )
@@ -96,14 +96,14 @@ func TestMain(m *testing.M) {
 	}
 
 	rm := meta.NewDefaultRESTMapper(nil)
-	cfgGetter, err := helmclient.NewActionConfigGetter(cfg, rm, logr.Logger{})
+	cfgGetter, err := helmclient.NewActionConfigGetter(cfg, rm)
 	utilruntime.Must(err)
 	acg, err = helmclient.NewActionClientGetter(cfgGetter)
 	utilruntime.Must(err)
 
 	mgr, err := manager.New(cfg, manager.Options{})
 	utilruntime.Must(err)
-	unp, err = source.NewDefaultUnpacker(mgr, util.DefaultSystemNamespace, util.DefaultUnpackImage)
+	unp, err = source.NewDefaultUnpacker(mgr, util.DefaultSystemNamespace, util.DefaultUnpackImage, (*x509.CertPool)(nil))
 	utilruntime.Must(err)
 
 	code := m.Run()

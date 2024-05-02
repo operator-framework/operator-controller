@@ -1070,16 +1070,14 @@ func TestGeneratedBundleDeployment(t *testing.T) {
 					Name: "test-bd",
 					UID:  types.UID("test"),
 				},
-				Spec: ocv1alpha1.ClusterExtensionSpec{
-					WatchNamespaces: []string{"alpha", "beta", "gamma"},
-				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{},
 			},
 			bundlePath:               "testpath",
 			bundleProvisioner:        "foo",
 			expectedBundleDeployment: &unstructured.Unstructured{},
 		},
 		{
-			name: "when watchNamespaces are not provided.",
+			name: "when watchNamespaces are not provided DUPLICATE.",
 			clusterExtension: ocv1alpha1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-bd",
@@ -1101,7 +1099,6 @@ func TestGeneratedBundleDeployment(t *testing.T) {
 		require.Equal(t, tt.clusterExtension.GetName(), resultBundleDeployment.GetName())
 		require.Equal(t, tt.bundlePath, resultBundleDeployment.Spec.Source.Image.Ref)
 		require.Equal(t, tt.bundleProvisioner, resultBundleDeployment.Spec.ProvisionerClassName)
-		require.Equal(t, tt.clusterExtension.Spec.WatchNamespaces, resultBundleDeployment.Spec.WatchNamespaces)
 	}
 }
 

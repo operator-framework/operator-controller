@@ -1,4 +1,4 @@
-package util
+package labels
 
 const (
 	OwnerKindKey = "olm.operatorframework.io/owner-kind"
