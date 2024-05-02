@@ -3,15 +3,19 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/pkg/scheme"
 )
 
 func TestClusterExtensionPackageUniqueness(t *testing.T) {
@@ -95,4 +99,68 @@ func TestClusterExtensionPackageUniqueness(t *testing.T) {
 		},
 	}
 	require.NoError(t, c.Patch(ctx, intent, client.Apply, client.ForceOwnership, fieldOwner))
+}
+
+type synchronizedRoundTripper struct {
+	ready    <-chan struct{}
+	delegate http.RoundTripper
+}
+
+func (rt synchronizedRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
+	// not necessary to reproduce but improves the odds
+	<-rt.ready
+	return rt.delegate.RoundTrip(r)
+}
+
+func TestClusterExtensionPackageUniquenessConsistency(t *testing.T) {
+	ctx := context.Background()
+
+	if err := c.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := rest.CopyConfig(cfg)
+	ready := make(chan struct{})
+	cfg.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+		return synchronizedRoundTripper{delegate: rt, ready: ready}
+	})
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			c, err := client.New(cfg, client.Options{Scheme: scheme.Scheme})
+			if err != nil {
+				panic(err)
+			}
+
+			_ = c.Create(ctx, &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: fmt.Sprintf("ext-%d", i),
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					PackageName: "pkg-x",
+				},
+			})
+		}(i)
+	}
+	close(ready)
+	wg.Wait()
+
+	var l ocv1alpha1.ClusterExtensionList
+	if err := c.List(ctx, &l); err != nil {
+		t.Fatal(err)
+	}
+
+	counts := make(map[string]int)
+	for _, ext := range l.Items {
+		counts[ext.Spec.PackageName]++
+	}
+
+	for pkg, count := range counts {
+		if count > 1 {
+			t.Errorf("duplicate package name: %s (%d duplicates)", pkg, count)
+		}
+	}
 }
