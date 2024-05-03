@@ -13,7 +13,7 @@ require (
 	github.com/operator-framework/deppy v0.3.0
 	github.com/operator-framework/helm-operator-plugins v0.2.1
 	github.com/operator-framework/operator-registry v1.40.0
-	github.com/operator-framework/rukpak v0.20.1-0.20240502203826-72cffe62499b
+	github.com/operator-framework/rukpak v0.20.1-0.20240503190249-f2fc69ef9ff1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	github.com/vmware-tanzu/carvel-kapp-controller v0.51.0
