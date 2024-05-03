@@ -18,9 +18,9 @@ IMG := $(IMAGE_REPO):$(IMAGE_TAG)
 # Define dependency versions (use go.mod if we also use Go code from dependency)
 export CERT_MGR_VERSION := v1.9.0
 export CATALOGD_VERSION := $(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/catalogd)
-export KAPP_VERSION     := $(shell go list -mod=mod -m -f "{{.Version}}" github.com/vmware-tanzu/carvel-kapp-controller)
-export RUKPAK_VERSION   := $(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/rukpak)
-export WAIT_TIMEOUT     := 60s
+export KAPP_VERSION := $(shell go list -mod=mod -m -f "{{.Version}}" github.com/vmware-tanzu/carvel-kapp-controller)
+export RUKPAK_VERSION := $(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/rukpak)
+export WAIT_TIMEOUT := 60s
 
 # By default setup-envtest will write to $XDG_DATA_HOME, or $HOME/.local/share if that is not defined.
 # If $HOME is not set, we need to specify a binary directory to prevent an error in setup-envtest.
@@ -38,7 +38,7 @@ KIND_CLUSTER_NAME := operator-controller
 # The KIND_NODE_VERSION is set by getting the version of the k8s.io/client-go dependency from the go.mod
 # and sets major version to "1" and the patch version to "0". For example, a client-go version of v0.28.5
 # will map to a KIND_NODE_VERSION of 1.28.0
-KIND_NODE_VERSION  := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.0/')
+KIND_NODE_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.0/')
 KIND_CLUSTER_IMAGE := kindest/node:v$(KIND_NODE_VERSION)
 
 ifneq (, $(shell command -v docker 2>/dev/null))
@@ -120,11 +120,11 @@ test: manifests generate fmt vet test-unit test-e2e #HELP Run all tests.
 e2e: $(SETUP_ENVTEST) #EXHELP Run the e2e tests.
 	go test -v ./test/e2e/...
 
-E2E_REGISTRY_NAME      := docker-registry
+E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
-export REG_PKG_NAME   := registry-operator
+export REG_PKG_NAME := registry-operator
 export PLAIN_PKG_NAME := plain-operator
-export CATALOG_IMG    := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000/test-catalog:e2e
+export CATALOG_IMG := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000/test-catalog:e2e
 .PHONY: test-ext-dev-e2e
 test-ext-dev-e2e: $(SETUP_ENVTEST) $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
@@ -132,7 +132,7 @@ test-ext-dev-e2e: $(SETUP_ENVTEST) $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Ru
 
 .PHONY: test-unit
 ENVTEST_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
-UNIT_TEST_DIRS  := $(shell go list ./... | grep -v /test/)
+UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/)
 test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
 	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && go test -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
 
@@ -208,9 +208,9 @@ endif
 export CGO_ENABLED
 
 export GO_BUILD_ASMFLAGS := all=-trimpath=$(PWD)
-export GO_BUILD_LDFLAGS  := -s -w -X $(shell go list -m)/version.Version=$(VERSION)
-export GO_BUILD_GCFLAGS  := all=-trimpath=$(PWD)
-export GO_BUILD_FLAGS    :=
+export GO_BUILD_LDFLAGS := -s -w -X $(shell go list -m)/version.Version=$(VERSION)
+export GO_BUILD_GCFLAGS := all=-trimpath=$(PWD)
+export GO_BUILD_FLAGS :=
 
 BUILDCMD = go build $(GO_BUILD_FLAGS) -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/manager ./cmd/manager
 
@@ -241,7 +241,7 @@ ifeq ($(origin ENABLE_RELEASE_PIPELINE), undefined)
 ENABLE_RELEASE_PIPELINE := false
 endif
 ifeq ($(origin GORELEASER_ARGS), undefined)
-GORELEASER_ARGS         := --snapshot --clean
+GORELEASER_ARGS := --snapshot --clean
 endif
 
 export ENABLE_RELEASE_PIPELINE
