@@ -117,7 +117,7 @@ vet: #EXHELP Run go vet against code.
 test: manifests generate fmt vet test-unit test-e2e #HELP Run all tests.
 
 .PHONY: e2e
-e2e: $(SETUP_ENVTEST) #EXHELP Run the e2e tests.
+e2e: #EXHELP Run the e2e tests.
 	go test -v ./test/e2e/...
 
 E2E_REGISTRY_NAME := docker-registry
@@ -126,7 +126,7 @@ export REG_PKG_NAME := registry-operator
 export PLAIN_PKG_NAME := plain-operator
 export CATALOG_IMG := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000/test-catalog:e2e
 .PHONY: test-ext-dev-e2e
-test-ext-dev-e2e: $(SETUP_ENVTEST) $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
+test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
 	go test -v ./test/extension-developer-e2e/...
 
