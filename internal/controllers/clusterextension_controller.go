@@ -35,8 +35,10 @@ import (
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
@@ -469,6 +471,23 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&ocv1alpha1.ClusterExtension{}).
 		Watches(&catalogd.Catalog{},
 			handler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
+		WithEventFilter(predicate.Funcs{
+			UpdateFunc: func(ue event.UpdateEvent) bool {
+				oldObject, isOldCatalog := ue.ObjectOld.(*catalogd.Catalog)
+				newObject, isNewCatalog := ue.ObjectNew.(*catalogd.Catalog)
+
+				if !isOldCatalog || !isNewCatalog {
+					return true
+				}
+
+				if oldObject.Status.ResolvedSource != nil && newObject.Status.ResolvedSource != nil {
+					if oldObject.Status.ResolvedSource.Image != nil && newObject.Status.ResolvedSource.Image != nil {
+						return oldObject.Status.ResolvedSource.Image.ResolvedRef != newObject.Status.ResolvedSource.Image.ResolvedRef
+					}
+				}
+				return true
+			},
+		}).
 		Owns(&rukpakv1alpha2.BundleDeployment{}).
 		Complete(r)
 
