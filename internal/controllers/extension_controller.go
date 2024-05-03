@@ -164,31 +164,7 @@ func (r *ExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.Ext
 	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
 	setResolvedStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), ext.GetGeneration())
 
-	mediaType, err := bundle.MediaType()
-	if err != nil {
-		if c := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeInstalled); c == nil {
-			ext.Status.InstalledBundle = nil
-			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("failed to read bundle mediaType: %v", err), ext.GetGeneration())
-			setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
-		}
-		setProgressingStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("failed to read bundle mediaType: %v", err), ext.GetGeneration())
-		return ctrl.Result{}, err
-	}
-
-	// TODO: this needs to include the registryV1 bundle option. As of this PR, this only supports direct
-	// installation of a set of manifests.
-	if mediaType != catalogmetadata.MediaTypePlain {
-		if c := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeInstalled); c == nil {
-			// Set the TypeInstalled condition to Failed to indicate that the resolution
-			// hasn't been attempted yet, due to the spec being invalid.
-			ext.Status.InstalledBundle = nil
-			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("bundle type %s not supported currently", mediaType), ext.GetGeneration())
-			setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
-		}
-		setProgressingStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("bundle type %s not supported currently", mediaType), ext.GetGeneration())
-		return ctrl.Result{}, nil
-	}
-
+	// Right now, we just assume that the bundle is a plain+v0 bundle.
 	app, err := r.GenerateExpectedApp(*ext, bundle)
 	if err != nil {
 		if c := apimeta.FindStatusCondition(ext.Status.Conditions, ocv1alpha1.TypeInstalled); c == nil {

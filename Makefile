@@ -123,7 +123,6 @@ e2e: #EXHELP Run the e2e tests.
 E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
 export REG_PKG_NAME := registry-operator
-export PLAIN_PKG_NAME := plain-operator
 export CATALOG_IMG := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000/test-catalog:e2e
 .PHONY: test-ext-dev-e2e
 test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
@@ -187,12 +186,10 @@ kind-load-test-artifacts: $(KIND) #EXHELP Load the e2e testdata container images
 	$(CONTAINER_RUNTIME) tag localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0 localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.1
 	$(CONTAINER_RUNTIME) tag localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0 localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0
 	$(CONTAINER_RUNTIME) tag localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0 localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0
-	$(CONTAINER_RUNTIME) build testdata/bundles/plain-v0/plain.v0.1.0 -t localhost/testdata/bundles/plain-v0/plain:v0.1.0
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.1 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0 --name $(KIND_CLUSTER_NAME)
-	$(KIND) load docker-image localhost/testdata/bundles/plain-v0/plain:v0.1.0 --name $(KIND_CLUSTER_NAME)
 
 
 #SECTION Build

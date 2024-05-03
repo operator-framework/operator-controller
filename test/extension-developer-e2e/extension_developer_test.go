@@ -34,15 +34,6 @@ func TestExtensionDeveloper(t *testing.T) {
 	var clusterExtensions = []*ocv1alpha1.ClusterExtension{
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "plainv0",
-			},
-			Spec: ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      os.Getenv("PLAIN_PKG_NAME"),
-				InstallNamespace: "default",
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
 				Name: "registryv1",
 			},
 			Spec: ocv1alpha1.ClusterExtensionSpec{
