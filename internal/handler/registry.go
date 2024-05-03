@@ -13,9 +13,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
+	"github.com/operator-framework/rukpak/pkg/convert"
+	"github.com/operator-framework/rukpak/pkg/util"
+
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
-	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 )
 
 const (
@@ -23,7 +24,7 @@ const (
 )
 
 func HandleClusterExtension(_ context.Context, fsys fs.FS, ext *ocv1alpha1.ClusterExtension) (*chart.Chart, chartutil.Values, error) {
-	plainFS, err := convert.RegistryV1ToPlain(fsys, ext.Spec.WatchNamespaces)
+	plainFS, err := convert.RegistryV1ToPlain(fsys, "", ext.Spec.WatchNamespaces)
 	if err != nil {
 		return nil, nil, fmt.Errorf("convert registry+v1 bundle to plain+v0 bundle: %v", err)
 	}

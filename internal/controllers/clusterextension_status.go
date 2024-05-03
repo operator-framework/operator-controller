@@ -20,18 +20,19 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
+	"github.com/operator-framework/rukpak/pkg/source"
+
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	rukpakapi "github.com/operator-framework/operator-controller/internal/rukpak/api"
-	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 )
 
 func updateStatusUnpackFailing(status *ocv1alpha1.ClusterExtensionStatus, err error) error {
 	status.ResolvedBundle = nil
 	status.InstalledBundle = nil
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    rukpakapi.TypeUnpacked,
+		Type:    rukpakv1alpha2.TypeUnpacked,
 		Status:  metav1.ConditionFalse,
-		Reason:  rukpakapi.ReasonUnpackFailed,
+		Reason:  rukpakv1alpha2.ReasonUnpackFailed,
 		Message: err.Error(),
 	})
 	return err
@@ -42,9 +43,9 @@ func updateStatusUnpackPending(status *ocv1alpha1.ClusterExtensionStatus, result
 	status.ResolvedBundle = nil
 	status.InstalledBundle = nil
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    rukpakapi.TypeUnpacked,
+		Type:    rukpakv1alpha2.TypeUnpacked,
 		Status:  metav1.ConditionFalse,
-		Reason:  rukpakapi.ReasonUnpackPending,
+		Reason:  rukpakv1alpha2.ReasonUnpackPending,
 		Message: result.Message,
 	})
 }
@@ -54,9 +55,9 @@ func updateStatusUnpacking(status *ocv1alpha1.ClusterExtensionStatus, result *so
 	status.ResolvedBundle = nil
 	status.InstalledBundle = nil
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    rukpakapi.TypeUnpacked,
+		Type:    rukpakv1alpha2.TypeUnpacked,
 		Status:  metav1.ConditionFalse,
-		Reason:  rukpakapi.ReasonUnpacking,
+		Reason:  rukpakv1alpha2.ReasonUnpacking,
 		Message: result.Message,
 	})
 }
@@ -67,9 +68,9 @@ func updateStatusUnpacked(status *ocv1alpha1.ClusterExtensionStatus, result *sou
 		Name: result.ResolvedSource.Image.Ref,
 	}
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    rukpakapi.TypeUnpacked,
+		Type:    rukpakv1alpha2.TypeUnpacked,
 		Status:  metav1.ConditionTrue,
-		Reason:  rukpakapi.ReasonUnpackSuccessful,
+		Reason:  rukpakv1alpha2.ReasonUnpackSuccessful,
 		Message: result.Message,
 	})
 }

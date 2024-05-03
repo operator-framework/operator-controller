@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"crypto/x509"
 	"flag"
 	"fmt"
 	"net/http"
@@ -34,14 +35,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	"github.com/operator-framework/rukpak/pkg/source"
+	"github.com/operator-framework/rukpak/pkg/storage"
+	"github.com/operator-framework/rukpak/pkg/util"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	"github.com/operator-framework/operator-controller/internal/rukpak/handler"
-	"github.com/operator-framework/operator-controller/internal/rukpak/source"
-	"github.com/operator-framework/operator-controller/internal/rukpak/storage"
-	"github.com/operator-framework/operator-controller/internal/rukpak/util"
+	"github.com/operator-framework/operator-controller/internal/handler"
 	"github.com/operator-framework/operator-controller/pkg/features"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
 )
@@ -109,7 +110,7 @@ func main() {
 	cl := mgr.GetClient()
 	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, &http.Client{Timeout: 10 * time.Second}))
 
-	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(), mgr.GetLogger(), helmclient.StorageNamespaceMapper(func(o client.Object) (string, error) {
+	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(), helmclient.StorageNamespaceMapper(func(o client.Object) (string, error) {
 		return systemNamespace, nil
 	}))
 	if err != nil {
@@ -127,7 +128,7 @@ func main() {
 		systemNamespace = util.PodNamespace()
 	}
 
-	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, unpackImage)
+	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, unpackImage, (*x509.CertPool)(nil))
 	if err != nil {
 		setupLog.Error(err, "unable to create unpacker")
 		os.Exit(1)

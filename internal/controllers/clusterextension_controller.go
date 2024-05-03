@@ -61,18 +61,18 @@ import (
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
+	rukpaksource "github.com/operator-framework/rukpak/pkg/source"
+	"github.com/operator-framework/rukpak/pkg/storage"
+	"github.com/operator-framework/rukpak/pkg/util"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
+	"github.com/operator-framework/operator-controller/internal/handler"
+	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/packageerrors"
-	rukpakapi "github.com/operator-framework/operator-controller/internal/rukpak/api"
-	"github.com/operator-framework/operator-controller/internal/rukpak/handler"
 	helmpredicate "github.com/operator-framework/operator-controller/internal/rukpak/helm-operator-plugins/predicate"
-	rukpaksource "github.com/operator-framework/operator-controller/internal/rukpak/source"
-	"github.com/operator-framework/operator-controller/internal/rukpak/storage"
-	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
@@ -181,9 +181,9 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// Unpack contents into a fs based on the bundle.
 	// Considering only image source.
 
-	// Generate a BundleSource, and then pass this and the ClusterExtension to Unpack
-	bs := r.GenerateExpectedBundleSource(bundle.Image)
-	unpackResult, err := r.Unpacker.Unpack(ctx, bs, ext)
+	// Generate a BundleDeployment from the ClusterExtension to Unpack
+	bd := r.generateBundleDeploymentForUnpack(bundle.Image, ext)
+	unpackResult, err := r.Unpacker.Unpack(ctx, bd)
 	if err != nil {
 		return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, err)
 	}
@@ -232,7 +232,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
-	ac, err := r.ActionClientGetter.ActionClientFor(ext)
+	ac, err := r.ActionClientGetter.ActionClientFor(ctx, ext)
 	if err != nil {
 		ext.Status.InstalledBundle = nil
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingClient, err), ext.Generation)
@@ -241,11 +241,11 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	post := &postrenderer{
 		labels: map[string]string{
-			util.OwnerKindKey:     ocv1alpha1.ClusterExtensionKind,
-			util.OwnerNameKey:     ext.GetName(),
-			util.BundleNameKey:    bundle.Name,
-			util.PackageNameKey:   bundle.Package,
-			util.BundleVersionKey: bundleVersion.String(),
+			labels.OwnerKindKey:     ocv1alpha1.ClusterExtensionKind,
+			labels.OwnerNameKey:     ext.GetName(),
+			labels.BundleNameKey:    bundle.Name,
+			labels.PackageNameKey:   bundle.Package,
+			labels.BundleVersionKey: bundleVersion.String(),
 		},
 	}
 
@@ -259,7 +259,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	case stateNeedsInstall:
 		rel, err = ac.Install(ext.GetName(), r.ReleaseNamespace, chrt, values, func(install *action.Install) error {
 			install.CreateNamespace = false
-			install.Labels = map[string]string{util.BundleNameKey: bundle.Name, util.PackageNameKey: bundle.Package, util.BundleVersionKey: bundleVersion.String()}
+			install.Labels = map[string]string{labels.BundleNameKey: bundle.Name, labels.PackageNameKey: bundle.Package, labels.BundleVersionKey: bundleVersion.String()}
 			return nil
 		}, helmclient.AppendInstallPostRenderer(post))
 		if err != nil {
@@ -414,11 +414,23 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetad
 	}
 }
 
-func (r *ClusterExtensionReconciler) GenerateExpectedBundleSource(bundlePath string) *rukpakapi.BundleSource {
-	return &rukpakapi.BundleSource{
-		Type: rukpakapi.SourceTypeImage,
-		Image: rukpakapi.ImageSource{
-			Ref: bundlePath,
+func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePath string, ce *ocv1alpha1.ClusterExtension) *rukpakv1alpha2.BundleDeployment {
+	return &rukpakv1alpha2.BundleDeployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       ce.Kind,
+			APIVersion: ce.APIVersion,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: ce.Name,
+			UID:  ce.UID,
+		},
+		Spec: rukpakv1alpha2.BundleDeploymentSpec{
+			Source: rukpakv1alpha2.BundleSource{
+				Type: rukpakv1alpha2.SourceTypeImage,
+				Image: &rukpakv1alpha2.ImageSource{
+					Ref: bundlePath,
+				},
+			},
 		},
 	}
 }
@@ -590,7 +602,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, clusterExtensi
 	var installedVersion string
 	// Do not include bundle versions older than currently installed unless UpgradeConstraintPolicy = 'Ignore'
 	if clusterExtension.Spec.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicyIgnore {
-		installedVersionSemver, err := r.getInstalledVersion(clusterExtension)
+		installedVersionSemver, err := r.getInstalledVersion(ctx, clusterExtension)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return nil, err
 		}
@@ -604,7 +616,6 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, clusterExtensi
 				return nil, err
 			}
 			predicates = append(predicates, catalogfilter.InMastermindsSemverRange(wantedVersionRangeConstraint))
-
 		}
 	}
 
@@ -623,8 +634,8 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, clusterExtensi
 	return resultSet[0], nil
 }
 
-func (r *ClusterExtensionReconciler) getInstalledVersion(clusterExtension ocv1alpha1.ClusterExtension) (*bsemver.Version, error) {
-	cl, err := r.ActionClientGetter.ActionClientFor(&clusterExtension)
+func (r *ClusterExtensionReconciler) getInstalledVersion(ctx context.Context, clusterExtension ocv1alpha1.ClusterExtension) (*bsemver.Version, error) {
+	cl, err := r.ActionClientGetter.ActionClientFor(ctx, &clusterExtension)
 	if err != nil {
 		return nil, err
 	}
@@ -643,7 +654,7 @@ func (r *ClusterExtensionReconciler) getInstalledVersion(clusterExtension ocv1al
 	}
 
 	// TODO: when the chart is created these annotations are to be added.
-	existingVersion, ok := release.Labels[util.BundleVersionKey]
+	existingVersion, ok := release.Labels[labels.BundleVersionKey]
 	if !ok {
 		return nil, fmt.Errorf("release %q: missing bundle version", release.Name)
 	}
