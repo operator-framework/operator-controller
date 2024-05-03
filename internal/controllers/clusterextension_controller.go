@@ -61,6 +61,7 @@ import (
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
+	helmpredicate "github.com/operator-framework/rukpak/pkg/helm-operator-plugins/predicate"
 	rukpaksource "github.com/operator-framework/rukpak/pkg/source"
 	"github.com/operator-framework/rukpak/pkg/storage"
 	"github.com/operator-framework/rukpak/pkg/util"
@@ -72,7 +73,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/handler"
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/packageerrors"
-	helmpredicate "github.com/operator-framework/operator-controller/internal/rukpak/helm-operator-plugins/predicate"
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
