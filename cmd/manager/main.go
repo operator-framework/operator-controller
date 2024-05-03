@@ -25,14 +25,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/operator-framework/operator-controller/internal/labels"
-
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
+	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -48,9 +47,9 @@ import (
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/handler"
+	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/pkg/features"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
-	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 )
 
 var (
