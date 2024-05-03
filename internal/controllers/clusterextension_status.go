@@ -62,11 +62,7 @@ func updateStatusUnpacking(status *ocv1alpha1.ClusterExtensionStatus, result *so
 	})
 }
 
-func updateStatusUnpacked(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result, contentURL string) {
-	// TODO: Expose content URL through CE status.
-	status.ResolvedBundle = &ocv1alpha1.BundleMetadata{
-		Name: result.ResolvedSource.Image.Ref,
-	}
+func updateStatusUnpacked(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:    rukpakv1alpha2.TypeUnpacked,
 		Status:  metav1.ConditionTrue,
