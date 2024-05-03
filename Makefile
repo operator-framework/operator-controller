@@ -259,8 +259,7 @@ quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the installation release man
 
 ##@ Docs
 
-VENVDIR          := $(abspath docs/.venv)
-REQUIREMENTS_TXT := docs/requirements.txt
+VENVDIR := $(abspath docs/.venv)
 
 .PHONY: build-docs
 build-docs: venv
