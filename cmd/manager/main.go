@@ -40,7 +40,6 @@ import (
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/rukpak/pkg/source"
 	"github.com/operator-framework/rukpak/pkg/storage"
-	"github.com/operator-framework/rukpak/pkg/util"
 
 	"github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
@@ -53,8 +52,22 @@ import (
 )
 
 var (
-	setupLog = ctrl.Log.WithName("setup")
+	setupLog               = ctrl.Log.WithName("setup")
+	defaultUnpackImage     = "quay.io/operator-framework/operator-controller:latest"
+	defaultSystemNamespace = "operator-controller-system"
 )
+
+// podNamespace checks whether the controller is running in a Pod vs.
+// being run locally by inspecting the namespace file that gets mounted
+// automatically for Pods at runtime. If that file doesn't exist, then
+// return defaultSystemNamespace.
+func podNamespace() string {
+	namespace, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		return defaultSystemNamespace
+	}
+	return string(namespace)
+}
 
 func main() {
 	var (
@@ -75,7 +88,7 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
 	flag.StringVar(&systemNamespace, "system-namespace", "", "Configures the namespace that gets used to deploy system resources.")
-	flag.StringVar(&unpackImage, "unpack-image", util.DefaultUnpackImage, "Configures the container image that gets used to unpack Bundle contents.")
+	flag.StringVar(&unpackImage, "unpack-image", defaultUnpackImage, "Configures the container image that gets used to unpack Bundle contents.")
 	flag.StringVar(&provisionerStorageDirectory, "provisioner-storage-dir", storage.DefaultBundleCacheDir, "The directory that is used to store bundle contents.")
 	opts := zap.Options{
 		Development: true,
@@ -89,7 +102,7 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts), zap.StacktraceLevel(zapcore.DPanicLevel)))
 
 	if systemNamespace == "" {
-		systemNamespace = util.PodNamespace()
+		systemNamespace = podNamespace()
 	}
 
 	dependentRequirement, err := k8slabels.NewRequirement(labels.OwnerKindKey, selection.In, []string{v1alpha1.ClusterExtensionKind})

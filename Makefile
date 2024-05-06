@@ -213,7 +213,10 @@ export GO_BUILD_LDFLAGS := -s -w -X $(shell go list -m)/version.Version=$(VERSIO
 export GO_BUILD_GCFLAGS := all=-trimpath=$(PWD)
 export GO_BUILD_FLAGS :=
 
-BUILDCMD = go build $(GO_BUILD_FLAGS) -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/manager ./cmd/manager
+BINARIES=manager unpack
+
+$(BINARIES):
+	go build $(GO_BUILD_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$@ ./cmd/$@
 
 .PHONY: build-deps
 build-deps: manifests generate fmt vet
@@ -221,14 +224,13 @@ build-deps: manifests generate fmt vet
 .PHONY: build go-build-local
 build: build-deps go-build-local #HELP Build manager binary for current GOOS and GOARCH. Default target.
 go-build-local: BUILDBIN := bin
-go-build-local:
-	$(BUILDCMD)
+go-build-local: $(BINARIES)
 
 .PHONY: build-linux go-build-linux
 build-linux: build-deps go-build-linux #EXHELP Build manager binary for GOOS=linux and local GOARCH.
 go-build-linux: BUILDBIN := bin/linux
-go-build-linux:
-	GOOS=linux $(BUILDCMD)
+go-build-linux: GOOS=linux
+go-build-linux: $(BINARIES)
 
 .PHONY: run
 run: docker-build kind-cluster kind-load kind-deploy #HELP Build the operator-controller then deploy it into a new kind cluster.
