@@ -1,6 +1,11 @@
 ###########################
 # Configuration Variables #
 ###########################
+# Setting SHELL to bash allows bash commands to be executed by recipes.
+# Options are set to exit when a recipe line exits non-zero or a piped command fails.
+SHELL := /usr/bin/env bash -o pipefail
+.SHELLFLAGS := -ec
+
 # Image URL to use all building/pushing image targets
 ifeq ($(origin IMAGE_REPO), undefined)
 IMAGE_REPO := quay.io/operator-framework/operator-controller
@@ -13,7 +18,6 @@ endif
 export IMAGE_TAG
 
 IMG := $(IMAGE_REPO):$(IMAGE_TAG)
-
 
 # Define dependency versions (use go.mod if we also use Go code from dependency)
 export CERT_MGR_VERSION := v1.9.0
@@ -50,11 +54,6 @@ $(error Could not find docker or podman in path!)
 endif
 
 KUSTOMIZE_BUILD_DIR := config/default
-
-# Setting SHELL to bash allows bash commands to be executed by recipes.
-# Options are set to exit when a recipe line exits non-zero or a piped command fails.
-SHELL := /usr/bin/env bash -o pipefail
-.SHELLFLAGS := -ec
 
 # Disable -j flag for make
 .NOTPARALLEL:
