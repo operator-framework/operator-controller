@@ -203,10 +203,13 @@ CGO_ENABLED := 0
 endif
 export CGO_ENABLED
 
+export GIT_REPO := $(shell go list -m)
+export VERSION_PATH := ${GIT_REPO}/internal/version
 export GO_BUILD_ASMFLAGS := all=-trimpath=$(PWD)
-export GO_BUILD_LDFLAGS := -s -w -X $(shell go list -m)/version.Version=$(VERSION)
 export GO_BUILD_GCFLAGS := all=-trimpath=$(PWD)
 export GO_BUILD_FLAGS :=
+export GO_BUILD_LDFLAGS := -s -w \
+    -X '$(VERSION_PATH).version=$(VERSION)' \
 
 BUILDCMD = go build $(GO_BUILD_FLAGS) -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/manager ./cmd/manager
 
