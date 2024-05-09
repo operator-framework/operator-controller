@@ -22,17 +22,12 @@ func TestClusterExtensionTypeRegistration(t *testing.T) {
 	}
 
 	for _, tt := range types {
-		if !slices.Contains(conditionsets.ConditionTypes, tt) && !slices.Contains(conditionsets.ExtensionConditionTypes, tt) {
+		if !slices.Contains(conditionsets.ConditionTypes, tt) {
 			t.Errorf("append Type%s to conditionsets.ConditionTypes in this package's init function", tt)
 		}
 	}
 
 	for _, tt := range conditionsets.ConditionTypes {
-		if !slices.Contains(types, tt) {
-			t.Errorf("there must be a Type%[1]s string literal constant for type %[1]q (i.e. 'const Type%[1]s = %[1]q')", tt)
-		}
-	}
-	for _, tt := range conditionsets.ExtensionConditionTypes {
 		if !slices.Contains(types, tt) {
 			t.Errorf("there must be a Type%[1]s string literal constant for type %[1]q (i.e. 'const Type%[1]s = %[1]q')", tt)
 		}
@@ -46,16 +41,11 @@ func TestClusterExtensionReasonRegistration(t *testing.T) {
 	}
 
 	for _, r := range reasons {
-		if !slices.Contains(conditionsets.ConditionReasons, r) && !slices.Contains(conditionsets.ExtensionConditionReasons, r) {
+		if !slices.Contains(conditionsets.ConditionReasons, r) {
 			t.Errorf("append Reason%s to conditionsets.ConditionReasons in this package's init function.", r)
 		}
 	}
 	for _, r := range conditionsets.ConditionReasons {
-		if !slices.Contains(reasons, r) {
-			t.Errorf("there must be a Reason%[1]s string literal constant for reason %[1]q (i.e. 'const Reason%[1]s = %[1]q')", r)
-		}
-	}
-	for _, r := range conditionsets.ExtensionConditionReasons {
 		if !slices.Contains(reasons, r) {
 			t.Errorf("there must be a Reason%[1]s string literal constant for reason %[1]q (i.e. 'const Reason%[1]s = %[1]q')", r)
 		}
