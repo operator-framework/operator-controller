@@ -73,7 +73,40 @@ type ClusterExtensionSpec struct {
 	// the bundle may contain resources that are cluster-scoped or that are
 	// installed in a different namespace. This namespace is expected to exist.
 	InstallNamespace string `json:"installNamespace"`
+
+	//+kubebuilder:Optional
+	// Preflight defines the strategy for the preflight checks (i.e. as of now, the CRD upgrade safety checks) to be applied or skipped when attempting to install the cluster extension.
+	Preflight PreflightConfig `json:"preflight,omitempty"`
 }
+
+// PreflightConfig holds the config for the preflight checks. Currently, this is implemented for the
+// CRDUpgradeSafety preflight check and can be extended in the future to add other preflight checks.
+type PreflightConfig struct {
+	CRDUpgradeSafety CRDUpgradeSafetyPreflightConfig `json:"crdUpgradeSafety,omitempty"`
+}
+
+// CRDUpgradeSafetyPreflightConfig is a custom struct that holds the necessary configuration values to
+// enable or disable the CRD Upgrade Safety validations. Currently, this holds Mode
+// that sets the CRD Upgrade Safety validations to either Enabled/Disabled.
+// By default, this is set to "Enabled".
+type CRDUpgradeSafetyPreflightConfig struct {
+	//+kubebuilder:validation:Enum:=Enabled;Disabled
+	//+kubebuilder:default:=Enabled
+	//+kubebuilder:Optional
+	CRDUpgradeSafetyMode CRDUpgradeSafetyMode `json:"crdUpgradeSafetyMode,omitempty"`
+}
+
+type CRDUpgradeSafetyMode string
+
+const (
+	// CRDUpgradeSafetyModeEnabled represents the default state for the
+	// CRD Upgrade Safety validations by setting it to "Enabled".
+	CRDUpgradeSafetyModeEnabled CRDUpgradeSafetyMode = "Enabled"
+
+	// CRDUpgradeSafetyModeDisabled represents the option for the
+	// CRD Upgrade Safety validations to be disabled by setting it to "Disabled".
+	CRDUpgradeSafetyModeDisabled CRDUpgradeSafetyMode = "Disabled"
+)
 
 const (
 	// TODO(user): add more Types, here and into init()

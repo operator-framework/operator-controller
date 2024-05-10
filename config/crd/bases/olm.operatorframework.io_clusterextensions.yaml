@@ -56,6 +56,26 @@ spec:
                 maxLength: 48
                 pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
                 type: string
+              preflight:
+                description: Preflight defines the strategy for the preflight checks
+                  (i.e. as of now, the CRD upgrade safety checks) to be applied or
+                  skipped when attempting to install the cluster extension.
+                properties:
+                  crdUpgradeSafety:
+                    description: |-
+                      CRDUpgradeSafetyPreflightConfig is a custom struct that holds the necessary configuration values to
+                      enable or disable the CRD Upgrade Safety validations. Currently, this holds Mode
+                      that sets the CRD Upgrade Safety validations to either Enabled/Disabled.
+                      By default, this is set to "Enabled".
+                    properties:
+                      crdUpgradeSafetyMode:
+                        default: Enabled
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
+                    type: object
+                type: object
               upgradeConstraintPolicy:
                 default: Enforce
                 description: Defines the policy for how to handle upgrade constraints
