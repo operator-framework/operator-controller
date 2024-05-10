@@ -25,6 +25,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
@@ -59,6 +60,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
@@ -72,6 +74,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
+	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/handler"
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/packageerrors"
@@ -111,14 +114,13 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	var existingExt = &ocv1alpha1.ClusterExtension{}
 	if err := r.Client.Get(ctx, req.NamespacedName, existingExt); err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		return ctrl.Result{}, utilerrors.NewAggregate([]error{client.IgnoreNotFound(err), nil})
 	}
 
 	reconciledExt := existingExt.DeepCopy()
 	res, reconcileErr := r.reconcile(ctx, reconciledExt)
-	if reconcileErr != nil {
-		return ctrl.Result{}, reconcileErr
-	}
+
+	var updateErrors []error
 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingExt.Status, reconciledExt.Status)
@@ -127,7 +129,7 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	if updateStatus {
 		if updateErr := r.Client.Status().Update(ctx, reconciledExt); updateErr != nil {
-			return res, utilerrors.NewAggregate([]error{reconcileErr, updateErr})
+			updateErrors = append(updateErrors, updateErr)
 		}
 	}
 
@@ -137,11 +139,35 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	if updateFinalizers {
 		if updateErr := r.Client.Update(ctx, reconciledExt); updateErr != nil {
-			return res, utilerrors.NewAggregate([]error{reconcileErr, updateErr})
+			updateErrors = append(updateErrors, updateErr)
 		}
 	}
 
-	return res, reconcileErr
+	if reconcileErr != nil {
+		updateErrors = append(updateErrors, reconcileErr)
+	}
+
+	return res, utilerrors.NewAggregate(updateErrors)
+}
+
+// ensureAllConditionsWithReason checks that all defined condition types exist in the given ClusterExtension,
+// and assigns a specified reason and custom message to any missing condition.
+func ensureAllConditionsWithReason(ext *ocv1alpha1.ClusterExtension, reason v1alpha1.ConditionReason, message string) {
+	for _, condType := range conditionsets.ConditionTypes {
+		cond := apimeta.FindStatusCondition(ext.Status.Conditions, condType)
+		if cond == nil {
+			// Create a new condition with a valid reason and add it
+			newCond := metav1.Condition{
+				Type:               condType,
+				Status:             metav1.ConditionFalse,
+				Reason:             string(reason),
+				Message:            message,
+				ObservedGeneration: ext.GetGeneration(),
+				LastTransitionTime: metav1.NewTime(time.Now()),
+			}
+			ext.Status.Conditions = append(ext.Status.Conditions, newCond)
+		}
+	}
 }
 
 // Compare resources - ignoring status & metadata.finalizers
@@ -149,6 +175,34 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 	a.Status, b.Status = ocv1alpha1.ClusterExtensionStatus{}, ocv1alpha1.ClusterExtensionStatus{}
 	a.Finalizers, b.Finalizers = []string{}, []string{}
 	return !equality.Semantic.DeepEqual(a, b)
+}
+
+func (r *ClusterExtensionReconciler) handleResolutionErrors(ext *ocv1alpha1.ClusterExtension, err error) (ctrl.Result, error) {
+	var aggErrs utilerrors.Aggregate
+	if errors.As(err, &aggErrs) {
+		for _, err := range aggErrs.Errors() {
+			errorMessage := err.Error()
+			if strings.Contains(errorMessage, "no package") {
+				// Handle no package found errors, potentially setting status conditions
+				setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
+				ensureAllConditionsWithReason(ext, "ResolutionFailed", errorMessage)
+			} else if strings.Contains(errorMessage, "invalid version range") {
+				// Handle invalid version range errors, potentially setting status conditions
+				setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
+				ensureAllConditionsWithReason(ext, "ResolutionFailed", errorMessage)
+			} else {
+				// General error handling
+				setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
+				ensureAllConditionsWithReason(ext, "InstallationStatusUnknown", "")
+			}
+		}
+	} else {
+		// If the error is not an aggregate, handle it as a general error
+		errorMessage := err.Error()
+		setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
+		ensureAllConditionsWithReason(ext, "InstallationStatusUnknown", "")
+	}
+	return ctrl.Result{}, err
 }
 
 // Helper function to do the actual reconcile
@@ -159,13 +213,12 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 //
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
-	// Lookup the bundle that corresponds to the ClusterExtension's desired package.
-	bundle, err := r.resolve(ctx, ext)
+	l := log.FromContext(ctx).WithName("operator-controller")
+	// run resolution
+	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
-		ext.Status.ResolvedBundle = nil
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", "unable to get resolved bundle version", err), ext.Generation)
-		return ctrl.Result{}, err
+		l.V(1).Info("bundle resolve error", "error", err)
+		return r.handleResolutionErrors(ext, err)
 	}
 
 	bundleVersion, err := bundle.Version()
@@ -330,13 +383,12 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	return ctrl.Result{}, nil
 }
 
-func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
 	allBundles, err := r.BundleProvider.Bundles(ctx)
 	if err != nil {
-		return nil, err
+		return nil, utilerrors.NewAggregate([]error{fmt.Errorf("error fetching bundles: %w", err)})
 	}
 
-	// TODO: change ext spec to contain a source field.
 	packageName := ext.Spec.PackageName
 	channelName := ext.Spec.Channel
 	versionRange := ext.Spec.Version
@@ -352,47 +404,53 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext *ocv1alpha
 	if versionRange != "" {
 		vr, err := mmsemver.NewConstraint(versionRange)
 		if err != nil {
-			return nil, fmt.Errorf("invalid version range %q: %w", versionRange, err)
+			return nil, utilerrors.NewAggregate([]error{fmt.Errorf("invalid version range '%s': %w", versionRange, err)})
 		}
 		predicates = append(predicates, catalogfilter.InMastermindsSemverRange(vr))
 	}
 
 	var installedVersion string
-	// Do not include bundle versions older than currently installed unless UpgradeConstraintPolicy = 'Ignore'
+	var upgradeErrorPrefix string
 	if ext.Spec.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicyIgnore {
-		installedVersionSemver, err := r.getInstalledVersion(ctx, *ext)
-		if err != nil && !apierrors.IsNotFound(err) {
-			return nil, err
+		installedBundle, err := r.getInstalledVersion(ctx, ext)
+		if err != nil {
+			return nil, utilerrors.NewAggregate([]error{fmt.Errorf("error fetching installed version: %w", err)})
 		}
-		if installedVersionSemver != nil {
-			installedVersion = installedVersionSemver.String()
-
-			// Based on installed version create a caret range comparison constraint
-			// to allow only minor and patch version as successors.
+		if installedBundle != nil {
+			installedVersion = installedBundle.String()
+			upgradeErrorPrefix = fmt.Sprintf("error upgrading from currently installed version %q: ", installedVersion)
 			wantedVersionRangeConstraint, err := mmsemver.NewConstraint(fmt.Sprintf("^%s", installedVersion))
 			if err != nil {
-				return nil, err
+				return nil, utilerrors.NewAggregate([]error{fmt.Errorf("%serror creating version constraint: %w", upgradeErrorPrefix, err)})
 			}
 			predicates = append(predicates, catalogfilter.InMastermindsSemverRange(wantedVersionRangeConstraint))
 		}
 	}
 
 	resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(predicates...))
-
 	if len(resultSet) == 0 {
-		return nil, packageerrors.GenerateFullError(packageName, versionRange, channelName, installedVersion)
+		switch {
+		case versionRange != "" && channelName != "":
+			return nil, packageerrors.GenerateVersionChannelError(packageName, versionRange, channelName)
+		case versionRange != "":
+			return nil, packageerrors.GenerateVersionError(packageName, versionRange)
+		case channelName != "":
+			return nil, packageerrors.GenerateChannelError(packageName, channelName)
+		default:
+			return nil, packageerrors.GenerateError(packageName)
+		}
 	}
-
 	sort.SliceStable(resultSet, func(i, j int) bool {
 		return catalogsort.ByVersion(resultSet[i], resultSet[j])
 	})
 	sort.SliceStable(resultSet, func(i, j int) bool {
 		return catalogsort.ByDeprecated(resultSet[i], resultSet[j])
 	})
+
 	return resultSet[0], nil
 }
 
-// setDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
+// SetDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
 // based on the provided bundle
 func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetadata.Bundle) {
 	// reset conditions to false
