@@ -229,7 +229,8 @@ go-build-local: $(BINARIES)
 .PHONY: build-linux go-build-linux
 build-linux: build-deps go-build-linux #EXHELP Build manager binary for GOOS=linux and local GOARCH.
 go-build-linux: BUILDBIN := bin/linux
-go-build-linux: GOOS=linux
+go-build-linux: export GOOS=linux
+go-build-linux: export GOARCH=amd64
 go-build-linux: $(BINARIES)
 
 .PHONY: run

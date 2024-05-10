@@ -13,7 +13,7 @@ require (
 	github.com/operator-framework/catalogd v0.12.0
 	github.com/operator-framework/helm-operator-plugins v0.2.1
 	github.com/operator-framework/operator-registry v1.40.0
-	github.com/operator-framework/rukpak v0.20.1-0.20240506151208-b6c74d40c3e9
+	github.com/operator-framework/rukpak v0.20.1-0.20240510194410-99faf1c1763f
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
