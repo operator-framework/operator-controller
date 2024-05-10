@@ -177,6 +177,34 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 	return !equality.Semantic.DeepEqual(a, b)
 }
 
+func (r *ClusterExtensionReconciler) handleResolutionErrors(ext *ocv1alpha1.ClusterExtension, err error) (ctrl.Result, error) {
+	var aggErrs utilerrors.Aggregate
+	if errors.As(err, &aggErrs) {
+		for _, err := range aggErrs.Errors() {
+			errorMessage := err.Error()
+			if strings.Contains(errorMessage, "no package") {
+				// Handle no package found errors, potentially setting status conditions
+				setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
+				ensureAllConditionsWithReason(ext, "ResolutionFailed", errorMessage)
+			} else if strings.Contains(errorMessage, "invalid version range") {
+				// Handle invalid version range errors, potentially setting status conditions
+				setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
+				ensureAllConditionsWithReason(ext, "ResolutionFailed", errorMessage)
+			} else {
+				// General error handling
+				setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
+				ensureAllConditionsWithReason(ext, "InstallationStatusUnknown", "")
+			}
+		}
+	} else {
+		// If the error is not an aggregate, handle it as a general error
+		errorMessage := err.Error()
+		setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
+		ensureAllConditionsWithReason(ext, "InstallationStatusUnknown", "")
+	}
+	return ctrl.Result{}, err
+}
+
 // Helper function to do the actual reconcile
 //
 // Today we always return ctrl.Result{} and an error.
@@ -190,33 +218,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
 		l.V(1).Info("bundle resolve error", "error", err)
-
-		if aggErrs, ok := err.(utilerrors.Aggregate); ok {
-			for _, err := range aggErrs.Errors() {
-				if errMsg := err.Error(); strings.Contains(errMsg, "no package") {
-					// Handle no package found errors, potentially setting status conditions
-					errorMessage := errMsg
-					setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
-					ensureAllConditionsWithReason(ext, "ResolutionFailed", errorMessage)
-				} else if strings.Contains(errMsg, "invalid version range") {
-					// Handle invalid version range errors, potentially setting status conditions
-					errorMessage := errMsg
-					setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
-					ensureAllConditionsWithReason(ext, "ResolutionFailed", errorMessage)
-				} else {
-					// General error handling
-					errorMessage := err.Error()
-					setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
-					ensureAllConditionsWithReason(ext, "InstallationStatusUnknown", "")
-				}
-			}
-		} else {
-			// If the error is not an aggregate, handle it as a general error
-			errorMessage := err.Error()
-			setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
-			ensureAllConditionsWithReason(ext, "InstallationStatusUnknown", "")
-		}
-		return ctrl.Result{}, err
+		return r.handleResolutionErrors(ext, err)
 	}
 
 	bundleVersion, err := bundle.Version()
