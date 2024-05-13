@@ -1,9 +1,0 @@
-# This file is for teaching kustomize how to substitute name in ValidatingAdmissionPolicyBinding
-# This might become obsolete depending on the outcome of https://github.com/kubernetes-sigs/kustomize/issues/5674
-nameReference:
-- kind: ValidatingAdmissionPolicy
-  group: admissionregistration.k8s.io
-  fieldSpecs:
-  - kind: ValidatingAdmissionPolicyBinding
-    group: admissionregistration.k8s.io
-    path: spec/policyName
