@@ -50,7 +50,7 @@ CONTAINER_RUNTIME := docker
 else ifneq (, $(shell command -v podman 2>/dev/null))
 CONTAINER_RUNTIME := podman
 else
-$(error Could not find docker or podman in path!)
+$(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!) 
 endif
 
 KUSTOMIZE_BUILD_DIR := config/default
