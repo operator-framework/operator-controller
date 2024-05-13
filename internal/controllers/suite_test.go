@@ -60,6 +60,16 @@ func newClientAndExtensionReconciler(t *testing.T) (client.Client, *controllers.
 	return cl, reconciler
 }
 
+func newClientAndOperatorConditionsReconciler(t *testing.T) (client.Client, *controllers.OperatorConditionsReconciler) {
+	cl := newClient(t)
+	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
+	reconciler := &controllers.OperatorConditionsReconciler{
+		Client:         cl,
+		BundleProvider: &fakeCatalogClient,
+	}
+	return cl, reconciler
+}
+
 var (
 	cfg *rest.Config
 )

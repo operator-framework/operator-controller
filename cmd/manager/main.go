@@ -116,6 +116,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Extension")
 		os.Exit(1)
 	}
+
+	if err = (&controllers.OperatorConditionsReconciler{
+		Client:         cl,
+		BundleProvider: catalogClient,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "OperatorConditions")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

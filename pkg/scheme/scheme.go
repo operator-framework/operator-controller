@@ -11,6 +11,7 @@ import (
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
+	operatorsv2 "github.com/operator-framework/api/pkg/operators/v2"
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
@@ -24,5 +25,6 @@ func init() {
 	utilruntime.Must(carvelv1alpha1.AddToScheme(Scheme))
 	utilruntime.Must(appsv1.AddToScheme(Scheme))
 	utilruntime.Must(corev1.AddToScheme(Scheme))
+	utilruntime.Must(operatorsv2.AddToScheme(Scheme))
 	//+kubebuilder:scaffold:scheme
 }
