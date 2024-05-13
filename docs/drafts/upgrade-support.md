@@ -8,12 +8,12 @@ It also introduces an API to enable independently verified upgrades and downgrad
 
 ## Upgrade constraint semantics
 
-As of operator-controller release 0.8.0, OLM 1.0 supports the following upgrade constraint semantics:
+As of operator-controller release 0.10.0, OLM 1.0 supports the following upgrade constraint semantics:
 
 * [Semantic Versioning](https://semver.org/) (Semver)
-* The `replaces` directive from the [legacy OLM 0 semantics](https://olm.operatorframework.io/docs/concepts/olm-architecture/operator-catalog/creating-an-update-graph/#methods-for-specifying-updates)
+* [Legacy OLM 0 semantics](https://olm.operatorframework.io/docs/concepts/olm-architecture/operator-catalog/creating-an-update-graph/#methods-for-specifying-updates): the `replaces`/`skips`/`skipRange` directives
 
-The Kubernetes manifests in this repo enable Semver support by default. Cluster admins can control which semantics to use by passing one of the following arguments to the `manager` binary:
+The Kubernetes manifests in this repo enable legacy support by default. Cluster admins can control which semantics to use by passing one of the following arguments to the `manager` binary:
 * `--feature-gates=ForceSemverUpgradeConstraints=true` - enable Semver
 * `--feature-gates=ForceSemverUpgradeConstraints=false` - disable Semver, use legacy semantics
 
