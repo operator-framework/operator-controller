@@ -189,6 +189,8 @@ kind-load-test-artifacts: $(KIND) #EXHELP Load the e2e testdata container images
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.1 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0 --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0 --name $(KIND_CLUSTER_NAME)
+	$(CONTAINER_RUNTIME) build testdata/bundles/registry-v1/package-with-webhooks.v1.0.0 -t  localhost/testdata/bundles/registry-v1/package-with-webhooks:v1.0.0
+	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/package-with-webhooks:v1.0.0 --name $(KIND_CLUSTER_NAME)
 
 
 #SECTION Build

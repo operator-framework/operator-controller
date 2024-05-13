@@ -60,3 +60,23 @@ properties:
     value:
       packageName: prometheus
       version: 2.0.0
+---
+schema: olm.package
+name: package-with-webhooks
+defaultChannel: beta
+---
+schema: olm.channel
+name: beta
+package: package-with-webhooks
+entries:
+  - name: package-with-webhooks.1.0.0
+---
+schema: olm.bundle
+name: package-with-webhooks.1.0.0
+package: package-with-webhooks
+image: localhost/testdata/bundles/registry-v1/package-with-webhooks:v1.0.0
+properties:
+  - type: olm.package
+    value:
+      packageName: package-with-webhooks
+      version: 1.0.0
