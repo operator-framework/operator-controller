@@ -68,7 +68,7 @@ spec:
                       that sets the CRD Upgrade Safety validations to either Enabled/Disabled.
                       By default, this is set to "Enabled".
                     properties:
-                      crdUpgradeSafetyMode:
+                      mode:
                         default: Enabled
                         enum:
                         - Enabled

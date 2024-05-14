@@ -93,7 +93,7 @@ type CRDUpgradeSafetyPreflightConfig struct {
 	//+kubebuilder:validation:Enum:=Enabled;Disabled
 	//+kubebuilder:default:=Enabled
 	//+kubebuilder:Optional
-	CRDUpgradeSafetyMode CRDUpgradeSafetyMode `json:"crdUpgradeSafetyMode,omitempty"`
+	CRDUpgradeSafetyMode CRDUpgradeSafetyMode `json:"mode,omitempty"`
 }
 
 type CRDUpgradeSafetyMode string
