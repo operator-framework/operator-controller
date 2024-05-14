@@ -8,7 +8,9 @@ Catalogd helps customers discover installable content by hosting catalog metadat
 [![asciicast](https://asciinema.org/a/624043.svg)](https://asciinema.org/a/624043)
 
 ## Quickstart Steps
-**NOTE:** Procedure steps marked with an asterisk (`*`) are likely to change with future API updates.
+Procedure steps marked with an asterisk (`*`) are likely to change with future API updates.
+
+**NOTE:** The examples below use the `-k` flag in curl to skip validating the TLS certificates. This is for demonstration purposes only.
 
 1. To install catalogd, navigate to the [releases](https://github.com/operator-framework/catalogd/releases/) page, and follow the install instructions included in the release you want to install.
 
@@ -95,13 +97,13 @@ Catalogd helps customers discover installable content by hosting catalog metadat
 
 1. Port forward the `catalogd-catalogserver` service in the `catalogd-system` namespace:
     ```sh
-    $ kubectl -n catalogd-system port-forward svc/catalogd-catalogserver 8080:80
+    $ kubectl -n catalogd-system port-forward svc/catalogd-catalogserver 8080:443
     ```
 
 1. Run the following command to get a list of packages:
 
     ```sh
-    $ curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.package") | .name'
+    $ curl -k https://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.package") | .name'
     ```
 
     *Example output*
@@ -128,7 +130,7 @@ Catalogd helps customers discover installable content by hosting catalog metadat
 1. Run the following command to get a list of channels for the `ack-acm-controller` package:
 
     ```sh
-    $ curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.channel") | select(.package == "ack-acm-controller") | .name'
+    $ curl -k https://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.channel") | select(.package == "ack-acm-controller") | .name'
     ```
 
     *Example output*
@@ -142,7 +144,7 @@ Catalogd helps customers discover installable content by hosting catalog metadat
 1. Run the following command to get a list of bundles belonging to the `ack-acm-controller` package:
 
     ```sh
-    $ curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.bundle") | select(.package == "ack-acm-controller") | .name'
+    $ curl -k https://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.bundle") | select(.package == "ack-acm-controller") | .name'
     ```
     
     *Example output*

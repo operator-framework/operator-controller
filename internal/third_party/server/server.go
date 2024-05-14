@@ -38,7 +38,7 @@ var (
 	_ manager.LeaderElectionRunnable = (*Server)(nil)
 )
 
-// Server is a general purpose HTTP server Runnable for a manager.
+// Server is a general purpose HTTP(S) server Runnable for a manager.
 // It is used to serve some internal handlers for health probes and profiling,
 // but it can also be used to run custom servers.
 type Server struct {
@@ -118,5 +118,6 @@ func (s *Server) serve() error {
 	if s.Listener != nil {
 		return s.Server.Serve(s.Listener)
 	}
+
 	return s.Server.ListenAndServe()
 }

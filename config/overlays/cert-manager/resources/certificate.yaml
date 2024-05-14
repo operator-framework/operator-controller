@@ -1,0 +1,14 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: catalogserver-cert
+  namespace: system
+spec:
+  secretName: catalogd-catalogserver-cert
+  dnsNames:
+    - localhost
+    - catalogd-catalogserver.catalogd-system.svc
+  issuerRef:
+    kind: Issuer
+    name: catalogd-catalogserver-ca-issuer

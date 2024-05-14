@@ -5,7 +5,7 @@ load('../tilt-support/Tiltfile', 'deploy_repo')
 
 repo = {
     'image': 'quay.io/operator-framework/catalogd',
-    'yaml': 'config/default',
+    'yaml': 'config/overlays/cert-manager',
     'binaries': {
         'manager': 'catalogd-controller-manager',
     },

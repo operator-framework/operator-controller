@@ -15,4 +15,3 @@ resources:
 - ../crd
 - ../rbac
 - ../manager
-

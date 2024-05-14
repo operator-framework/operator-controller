@@ -48,7 +48,7 @@ clean: ## Remove binaries and test artifacts
 .PHONY: generate
 generate: $(CONTROLLER_GEN) ## Generate code and manifests.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -152,20 +152,24 @@ kind-load: $(KIND) ## Load the built images onto the local cluster
 	$(KIND) load docker-image $(IMAGE) --name $(KIND_CLUSTER_NAME)
 
 .PHONY: install
-install: build-container kind-load deploy wait ## Install local catalogd
+install: build-container kind-load cert-manager deploy wait ## Install local catalogd
 
 .PHONY: deploy
 deploy: $(KUSTOMIZE) ## Deploy Catalogd to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	cd config/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
+	$(KUSTOMIZE) build config/overlays/cert-manager | kubectl apply -f -
 
 .PHONY: undeploy
 undeploy: $(KUSTOMIZE) ## Undeploy Catalogd from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=true -f -
+	$(KUSTOMIZE) build config/overlays/cert-manager | kubectl delete --ignore-not-found=true -f -
 
 wait:
 	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
 
+.PHONY: cert-manager
+cert-manager:
+	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MGR_VERSION}/cert-manager.yaml
+	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
 ##@ Release
 
 export ENABLE_RELEASE_PIPELINE ?= false
@@ -175,7 +179,7 @@ release: $(GORELEASER) ## Runs goreleaser for catalogd. By default, this will ru
 	$(GORELEASER) $(GORELEASER_ARGS)
 
 quickstart: $(KUSTOMIZE) generate ## Generate the installation release manifests and scripts
-	$(KUSTOMIZE) build config/default | sed "s/:devel/:$(GIT_VERSION)/g" > catalogd.yaml
+	$(KUSTOMIZE) build config/overlays/cert-manager | sed "s/:devel/:$(GIT_VERSION)/g" > catalogd.yaml
 
 .PHONY: demo-update
 demo-update:

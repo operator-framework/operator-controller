@@ -1,11 +1,14 @@
 # Fetching `Catalog` contents from the Catalogd HTTP Server
 This document covers how to fetch the contents for a `Catalog` from the
-Catalogd HTTP Server that runs when the `HTTPServer` feature-gate is enabled
-(enabled by default).
+Catalogd HTTP(S) Server.
 
 For example purposes we make the following assumption:
 - A `Catalog` named `operatorhubio` has been created and successfully unpacked
 (denoted in the `Catalog.Status`)
+
+**NOTE:** By default, Catalogd is configured to use TLS with self-signed certificates.
+For local development, consider skipping TLS verification, such as `curl -k`, or reference external material
+on self-signed certificate verification.
 
 `Catalog` CRs have a status.contentURL field whose value is the location where the content 
 of a catalog can be read from:
@@ -18,7 +21,7 @@ of a catalog can be read from:
       reason: UnpackSuccessful
       status: "True"
       type: Unpacked
-    contentURL: http://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json
+    contentURL: https://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json
     phase: Unpacked
     resolvedSource:
       image:
@@ -34,11 +37,11 @@ object.
 
 When making a request for the contents of the `operatorhubio` `Catalog` from within
 the cluster issue a HTTP `GET` request to 
-`http://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json`
+`https://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json`
 
 An example command to run a `Pod` to `curl` the catalog contents:
 ```sh
-kubectl run fetcher --image=curlimages/curl:latest -- curl http://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json
+kubectl run fetcher --image=curlimages/curl:latest -- curl https://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json
 ```
 
 ## Off cluster
@@ -47,11 +50,11 @@ When making a request for the contents of the `operatorhubio` `Catalog` from out
 the cluster, we have to perform an extra step:
 1. Port forward the `catalogd-catalogserver` service in the `catalogd-system` namespace:
 ```sh
-kubectl -n catalogd-system port-forward svc/catalogd-catalogserver 8080:80
+kubectl -n catalogd-system port-forward svc/catalogd-catalogserver 8080:443
 ```
 
 Once the service has been successfully forwarded to a localhost port, issue a HTTP `GET`
-request to `http://localhost:8080/catalogs/operatorhubio/all.json`
+request to `https://localhost:8080/catalogs/operatorhubio/all.json`
 
 An example `curl` request that assumes the port-forwarding is mapped to port 8080 on the local machine:
 ```sh
@@ -126,7 +129,7 @@ This section outlines a way of exposing the `Catalogd` Service's endpoints outsi
 1. Run the below example `curl` request to retrieve all of the catalog contents:
 
     ```sh
-      $ curl http://<address>/catalogs/operatorhubio/all.json
+      $ curl https://<address>/catalogs/operatorhubio/all.json
     ```
     
     To obtain `address` of the ingress object, you can run the below command and look for the value in the `ADDRESS` field from output: 
