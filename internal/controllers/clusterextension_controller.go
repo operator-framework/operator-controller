@@ -276,9 +276,9 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	chrt, values, err := r.Handler.Handle(ctx, bundleFS, ext)
 	if err != nil {
 		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:    rukpakv1alpha2.TypeInstalled,
+			Type:    ocv1alpha1.TypeInstalled,
 			Status:  metav1.ConditionFalse,
-			Reason:  rukpakv1alpha2.ReasonInstallFailed,
+			Reason:  ocv1alpha1.ReasonInstallationFailed,
 			Message: err.Error(),
 		})
 		return ctrl.Result{}, err
@@ -303,7 +303,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	rel, state, err := r.getReleaseState(ac, ext, chrt, values, post)
 	if err != nil {
-		setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingReleaseState, err), ext.Generation)
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingReleaseState, err), ext.Generation)
 		return ctrl.Result{}, err
 	}
 
@@ -318,7 +318,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			if isResourceNotFoundErr(err) {
 				err = errRequiredResourceNotFound{err}
 			}
-			setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err), ext.Generation)
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err), ext.Generation)
 			return ctrl.Result{}, err
 		}
 	case stateNeedsUpgrade:
@@ -327,7 +327,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			if isResourceNotFoundErr(err) {
 				err = errRequiredResourceNotFound{err}
 			}
-			setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err), ext.Generation)
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err), ext.Generation)
 			return ctrl.Result{}, err
 		}
 	case stateUnchanged:
@@ -335,7 +335,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			if isResourceNotFoundErr(err) {
 				err = errRequiredResourceNotFound{err}
 			}
-			setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonResolutionFailed, err), ext.Generation)
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonResolutionFailed, err), ext.Generation)
 			return ctrl.Result{}, err
 		}
 	default:
@@ -344,14 +344,14 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
 	if err != nil {
-		setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
 		return ctrl.Result{}, err
 	}
 
 	for _, obj := range relObjects {
 		uMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 		if err != nil {
-			setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
 			return ctrl.Result{}, err
 		}
 
@@ -373,7 +373,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			return nil
 		}(); err != nil {
 			ext.Status.InstalledBundle = nil
-			setInstalledAndHealthyFalse(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
 			return ctrl.Result{}, err
 		}
 	}
