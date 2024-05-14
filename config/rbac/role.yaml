@@ -30,17 +30,6 @@ rules:
   - update
   - watch
 - apiGroups:
-  - kappctrl.k14s.io
-  resources:
-  - apps
-  verbs:
-  - create
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
   - olm.operatorframework.io
   resources:
   - clusterextensions
@@ -58,31 +47,6 @@ rules:
   - olm.operatorframework.io
   resources:
   - clusterextensions/status
-  verbs:
-  - patch
-  - update
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - extensions
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - extensions/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - extensions/status
   verbs:
   - patch
   - update

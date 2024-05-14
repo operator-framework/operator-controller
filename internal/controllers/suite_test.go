@@ -50,16 +50,6 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterEx
 	return cl, reconciler
 }
 
-func newClientAndExtensionReconciler(t *testing.T) (client.Client, *controllers.ExtensionReconciler) {
-	cl := newClient(t)
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-	reconciler := &controllers.ExtensionReconciler{
-		Client:         cl,
-		BundleProvider: &fakeCatalogClient,
-	}
-	return cl, reconciler
-}
-
 var (
 	cfg *rest.Config
 )

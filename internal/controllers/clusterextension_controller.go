@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	mmsemver "github.com/Masterminds/semver/v3"
+	bsemver "github.com/blang/semver/v4"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -553,5 +554,21 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) han
 			})
 		}
 		return requests
+	}
+}
+
+// bundleMetadataFor returns a BundleMetadata for the given bundle. If the provided bundle is nil,
+// this function panics. It is up to the caller to ensure that the bundle is non-nil.
+func bundleMetadataFor(bundle *catalogmetadata.Bundle) *ocv1alpha1.BundleMetadata {
+	if bundle == nil {
+		panic("programmer error: provided bundle must be non-nil to create BundleMetadata")
+	}
+	ver, err := bundle.Version()
+	if err != nil {
+		ver = &bsemver.Version{}
+	}
+	return &ocv1alpha1.BundleMetadata{
+		Name:    bundle.Name,
+		Version: ver.String(),
 	}
 }

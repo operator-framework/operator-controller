@@ -14,7 +14,6 @@ require (
 	github.com/operator-framework/rukpak v0.20.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
-	github.com/vmware-tanzu/carvel-kapp-controller v0.51.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	gopkg.in/yaml.v2 v2.4.0
@@ -27,7 +26,6 @@ require (
 )
 
 require (
-	carvel.dev/vendir v0.40.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

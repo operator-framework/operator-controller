@@ -12,9 +12,8 @@ fi
 catalogd_version=$CATALOGD_VERSION
 cert_mgr_version=$CERT_MGR_VERSION
 rukpak_version=$RUKPAK_VERSION
-kapp_version=$KAPP_VERSION
 
-if [[ -z "$catalogd_version" || -z "$cert_mgr_version" || -z "$rukpak_version" || -z "$kapp_version" ]]; then
+if [[ -z "$catalogd_version" || -z "$cert_mgr_version" || -z "$rukpak_version" ]]; then
     err="Error: Missing component version(s) for: "
     if [[ -z "$catalogd_version" ]]; then
         err+="catalogd "
@@ -24,9 +23,6 @@ if [[ -z "$catalogd_version" || -z "$cert_mgr_version" || -z "$rukpak_version" |
     fi 
     if [[ -z "$rukpak_version" ]]; then
         err+="rukpak "
-    fi 
-    if [[ -z "$kapp_version" ]]; then
-        err+="kapp "
     fi 
     echo "$err"
     exit 1
@@ -42,9 +38,6 @@ function kubectl_wait() {
 
 kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/${cert_mgr_version}/cert-manager.yaml"
 kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
-
-kubectl apply -f "https://github.com/carvel-dev/kapp-controller/releases/download/${kapp_version}/release.yml"
-kubectl_wait "kapp-controller" "deployment.apps/kapp-controller" 60s
 
 kubectl apply -f "https://github.com/operator-framework/rukpak/releases/download/${rukpak_version}/rukpak.yaml"
 kubectl_wait "rukpak-system" "deployment/core" "60s"

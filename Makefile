@@ -22,7 +22,6 @@ IMG := $(IMAGE_REPO):$(IMAGE_TAG)
 # Define dependency versions (use go.mod if we also use Go code from dependency)
 export CERT_MGR_VERSION := v1.9.0
 export CATALOGD_VERSION := $(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/catalogd)
-export KAPP_VERSION := $(shell go list -mod=mod -m -f "{{.Version}}" github.com/vmware-tanzu/carvel-kapp-controller)
 export RUKPAK_VERSION := $(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/rukpak)
 export WAIT_TIMEOUT := 60s
 
@@ -166,7 +165,7 @@ kind-load: $(KIND) #EXHELP Loads the currently constructed image onto the cluste
 kind-deploy: export MANIFEST := ./operator-controller.yaml
 kind-deploy: manifests $(KUSTOMIZE) #EXHELP Install controller and dependencies onto the kind cluster.
 	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) > operator-controller.yaml
-	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$KAPP_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh | bash -s
+	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
@@ -256,7 +255,7 @@ release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By d
 quickstart: export MANIFEST := https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml
 quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the installation release manifests and scripts.
 	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
-	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$KAPP_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh > install.sh
+	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$RUKPAK_VERSION,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
 ##@ Docs
 
