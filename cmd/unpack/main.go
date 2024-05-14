@@ -14,11 +14,13 @@ import (
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/sets"
+
+	"github.com/operator-framework/operator-controller/internal/version"
 )
 
 func main() {
 	var bundleDir string
-	var opConVersion bool
+	var operatorControllerVersion bool
 
 	skipRootPaths := sets.NewString(
 		"/dev",
@@ -33,9 +35,8 @@ func main() {
 		Use:  "unpack",
 		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			if opConVersion {
-				// TODO
-				//fmt.Println(version.String())
+			if operatorControllerVersion {
+				log.Println(version.String())
 				os.Exit(0)
 			}
 			var err error
@@ -113,7 +114,7 @@ func main() {
 		},
 	}
 	cmd.Flags().StringVar(&bundleDir, "bundle-dir", "", "directory in which the bundle can be found")
-	cmd.Flags().BoolVar(&opConVersion, "version", false, "displays operator-controller version information")
+	cmd.Flags().BoolVar(&operatorControllerVersion, "version", false, "displays operator-controller version information")
 
 	if err := cmd.Execute(); err != nil {
 		log.Fatal(err)

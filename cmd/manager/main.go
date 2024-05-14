@@ -121,7 +121,7 @@ func main() {
 	}
 	dependentSelector := k8slabels.NewSelector().Add(*dependentRequirement)
 
-	fmt.Println("set up manager")
+	setupLog.Info("set up manager")
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme.Scheme,
 		Metrics:                server.Options{BindAddress: metricsAddr},
