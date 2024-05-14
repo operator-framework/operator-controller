@@ -1,6 +1,14 @@
-export IMAGE_REPO                ?= quay.io/operator-framework/catalogd
-export IMAGE_TAG                 ?= devel
-IMAGE=$(IMAGE_REPO):$(IMAGE_TAG)
+ifeq ($(origin IMAGE_REPO), undefined)
+IMAGE_REPO := quay.io/operator-framework/catalogd
+endif
+export IMAGE_REPO
+
+ifeq ($(origin IMAGE_TAG), undefined)
+IMAGE_TAG := devel
+endif
+export IMAGE_TAG
+
+IMAGE := $(IMAGE_REPO):$(IMAGE_TAG)
 
 # setup-envtest on *nix uses XDG_DATA_HOME, falling back to HOME, as the default storage directory. Some CI setups
 # don't have XDG_DATA_HOME set; in those cases, we set it here so setup-envtest functions correctly. This shouldn't
@@ -11,17 +19,16 @@ export XDG_DATA_HOME ?= /tmp/.local/share
 include .bingo/Variables.mk
 
 # Dependencies
-CERT_MGR_VERSION        ?= v1.11.0
-ENVTEST_SERVER_VERSION = $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
+export CERT_MGR_VERSION := v1.11.0
+ENVTEST_SERVER_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 
 # Cluster configuration
-KIND_CLUSTER_NAME       ?= catalogd
-CATALOGD_NAMESPACE      ?= catalogd-system
-KIND_CLUSTER_IMAGE      ?= kindest/node:v1.28.0@sha256:b7a4cad12c197af3ba43202d3efe03246b3f0793f162afb40a33c923952d5b31
+ifeq ($(origin KIND_CLUSTER_NAME), undefined)
+KIND_CLUSTER_NAME := catalogd
+endif
 
-# E2E configuration
-TESTDATA_DIR            ?= testdata
-
+CATALOGD_NAMESPACE := catalogd-system
+KIND_CLUSTER_IMAGE := kindest/node:v1.28.0@sha256:b7a4cad12c197af3ba43202d3efe03246b3f0793f162afb40a33c923952d5b31
 
 ##@ General
 
@@ -56,16 +63,18 @@ fmt: ## Run go fmt against code.
 
 .PHONY: vet
 vet: ## Run go vet against code.
-	go vet -tags '$(GO_BUILD_TAGS)' ./...
+	go vet ./...
 
 .PHONY: test-unit
 test-unit: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
 	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION)) && go test $(shell go list ./... | grep -v /test/e2e) -coverprofile cover.out
 
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
-E2E_FLAGS ?= ""
+ifeq ($(origin E2E_FLAGS), undefined)
+E2E_FLAGS :=
+endif
 test-e2e: $(GINKGO) ## Run the e2e tests
-	$(GINKGO) --tags $(GO_BUILD_TAGS) $(E2E_FLAGS) -trace -vv $(FOCUS) test/e2e
+	$(GINKGO) $(E2E_FLAGS) -trace -vv $(FOCUS) test/e2e
 
 e2e: KIND_CLUSTER_NAME=catalogd-e2e
 e2e: run image-registry test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
@@ -91,24 +100,23 @@ BINARIES=manager
 LINUX_BINARIES=$(join $(addprefix linux/,$(BINARIES)), )
 
 # Build info
-export VERSION_PKG     ?= $(shell go list -m)/internal/version
+export VERSION_PKG     := $(shell go list -m)/internal/version
 
-export GIT_COMMIT      ?= $(shell git rev-parse HEAD)
-export GIT_VERSION     ?= $(shell git describe --tags --always --dirty)
-export GIT_TREE_STATE  ?= $(shell [ -z "$(shell git status --porcelain)" ] && echo "clean" || echo "dirty")
-export GIT_COMMIT_DATE ?= $(shell TZ=UTC0 git show --quiet --date=format:'%Y-%m-%dT%H:%M:%SZ' --format="%cd")
+export GIT_COMMIT      := $(shell git rev-parse HEAD)
+export GIT_VERSION     := $(shell git describe --tags --always --dirty)
+export GIT_TREE_STATE  := $(shell [ -z "$(shell git status --porcelain)" ] && echo "clean" || echo "dirty")
+export GIT_COMMIT_DATE := $(shell TZ=UTC0 git show --quiet --date=format:'%Y-%m-%dT%H:%M:%SZ' --format="%cd")
 
-export CGO_ENABLED       ?= 0
-export GO_BUILD_ASMFLAGS ?= all=-trimpath=${PWD}
-export GO_BUILD_LDFLAGS  ?= -s -w \
+export CGO_ENABLED       := 0
+export GO_BUILD_ASMFLAGS := all=-trimpath=${PWD}
+export GO_BUILD_LDFLAGS  := -s -w \
     -X "$(VERSION_PKG).gitVersion=$(GIT_VERSION)" \
     -X "$(VERSION_PKG).gitCommit=$(GIT_COMMIT)" \
     -X "$(VERSION_PKG).gitTreeState=$(GIT_TREE_STATE)" \
     -X "$(VERSION_PKG).commitDate=$(GIT_COMMIT_DATE)"
-export GO_BUILD_GCFLAGS  ?= all=-trimpath=${PWD}
-export GO_BUILD_TAGS     ?=
+export GO_BUILD_GCFLAGS  := all=-trimpath=${PWD}
 
-BUILDCMD = go build -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$(notdir $@) ./cmd/$(notdir $@)
+BUILDCMD = go build -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$(notdir $@) ./cmd/$(notdir $@)
 
 .PHONY: build-deps
 build-deps: generate fmt vet
@@ -170,11 +178,18 @@ wait:
 cert-manager:
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MGR_VERSION}/cert-manager.yaml
 	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
+
 ##@ Release
 
-export ENABLE_RELEASE_PIPELINE ?= false
-export GORELEASER_ARGS         ?= --snapshot --clean
-export CERT_MGR_VERSION        ?= $(CERT_MGR_VERSION)
+ifeq ($(origin ENABLE_RELEASE_PIPELINE), undefined)
+ENABLE_RELEASE_PIPELINE := false
+endif
+export ENABLE_RELEASE_PIPELINE
+
+ifeq ($(origin GORELEASER_ARGS), undefined)
+GORELEASER_ARGS := --snapshot --clean
+endif
+
 release: $(GORELEASER) ## Runs goreleaser for catalogd. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)
 
@@ -184,4 +199,3 @@ quickstart: $(KUSTOMIZE) generate ## Generate the installation release manifests
 .PHONY: demo-update
 demo-update:
 	hack/scripts/generate-asciidemo.sh
-
