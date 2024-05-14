@@ -1,7 +1,6 @@
 package scheme
 
 import (
-	carvelv1alpha1 "github.com/vmware-tanzu/carvel-kapp-controller/pkg/apis/kappctrl/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -21,7 +20,6 @@ func init() {
 	utilruntime.Must(ocv1alpha1.AddToScheme(Scheme))
 	utilruntime.Must(rukpakv1alpha2.AddToScheme(Scheme))
 	utilruntime.Must(catalogd.AddToScheme(Scheme))
-	utilruntime.Must(carvelv1alpha1.AddToScheme(Scheme))
 	utilruntime.Must(appsv1.AddToScheme(Scheme))
 	utilruntime.Must(corev1.AddToScheme(Scheme))
 	//+kubebuilder:scaffold:scheme

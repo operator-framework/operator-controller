@@ -121,6 +121,11 @@ func init() {
 	)
 }
 
+type BundleMetadata struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
 // ClusterExtensionStatus defines the observed state of ClusterExtension
 type ClusterExtensionStatus struct {
 	// +optional
