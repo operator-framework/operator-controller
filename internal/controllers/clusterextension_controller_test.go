@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
@@ -475,42 +474,6 @@ func verifyConditionsInvariants(t *testing.T, ext *ocv1alpha1.ClusterExtension) 
 		require.NotEmpty(t, cond.Status)
 		require.Contains(t, conditionsets.ConditionReasons, cond.Reason)
 		require.Equal(t, ext.GetGeneration(), cond.ObservedGeneration)
-	}
-}
-
-func TestGeneratedBundleDeployment(t *testing.T) {
-	test := []struct {
-		name              string
-		clusterExtension  ocv1alpha1.ClusterExtension
-		bundlePath        string
-		bundleProvisioner string
-	}{
-		{
-			name: "when all the specs are provided.",
-			clusterExtension: ocv1alpha1.ClusterExtension{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-bd",
-					UID:  types.UID("test"),
-				},
-				Spec: ocv1alpha1.ClusterExtensionSpec{
-					InstallNamespace: "test-ns",
-				},
-			},
-			bundlePath:        "testpath",
-			bundleProvisioner: "foo",
-		},
-	}
-
-	for _, tt := range test {
-		fakeReconciler := &controllers.ClusterExtensionReconciler{}
-		objUnstructured := fakeReconciler.GenerateExpectedBundleDeployment(tt.clusterExtension, tt.bundlePath, tt.bundleProvisioner)
-		resultBundleDeployment := &rukpakv1alpha2.BundleDeployment{}
-		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(objUnstructured.Object, resultBundleDeployment))
-		// Verify the fields that have are being taken from cluster extension.
-		require.Equal(t, tt.clusterExtension.GetName(), resultBundleDeployment.GetName())
-		require.Equal(t, tt.bundlePath, resultBundleDeployment.Spec.Source.Image.Ref)
-		require.Equal(t, tt.bundleProvisioner, resultBundleDeployment.Spec.ProvisionerClassName)
-		require.Equal(t, tt.clusterExtension.Spec.InstallNamespace, resultBundleDeployment.Spec.InstallNamespace)
 	}
 }
 

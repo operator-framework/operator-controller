@@ -47,7 +47,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -552,46 +551,6 @@ func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePat
 			},
 		},
 	}
-}
-
-func (r *ClusterExtensionReconciler) GenerateExpectedBundleDeployment(o ocv1alpha1.ClusterExtension, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {
-	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
-	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
-	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
-	// unstructured ensures that the patch contains only what is specified. Using unstructured like this is basically
-	// identical to "kubectl apply -f"
-
-	spec := map[string]interface{}{
-		"installNamespace":     o.Spec.InstallNamespace,
-		"provisionerClassName": bundleProvisioner,
-		"source": map[string]interface{}{
-			// TODO: Don't assume image type
-			"type": string(rukpakv1alpha2.SourceTypeImage),
-			"image": map[string]interface{}{
-				"ref": bundlePath,
-			},
-		},
-	}
-
-	bd := &unstructured.Unstructured{Object: map[string]interface{}{
-		"apiVersion": rukpakv1alpha2.GroupVersion.String(),
-		"kind":       rukpakv1alpha2.BundleDeploymentKind,
-		"metadata": map[string]interface{}{
-			"name": o.GetName(),
-		},
-		"spec": spec,
-	}}
-	bd.SetOwnerReferences([]metav1.OwnerReference{
-		{
-			APIVersion:         ocv1alpha1.GroupVersion.String(),
-			Kind:               "ClusterExtension",
-			Name:               o.Name,
-			UID:                o.UID,
-			Controller:         ptr.To(true),
-			BlockOwnerDeletion: ptr.To(true),
-		},
-	})
-	return bd
 }
 
 // SetupWithManager sets up the controller with the Manager.
