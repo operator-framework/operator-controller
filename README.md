@@ -14,12 +14,12 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
 
 1. To install catalogd, navigate to the [releases](https://github.com/operator-framework/catalogd/releases/) page, and follow the install instructions included in the release you want to install.
 
-1. Create a `Catalog` object that points to the OperatorHub Community catalog by running the following command:
+1. Create a `ClusterCatalog` object that points to the OperatorHub Community catalog by running the following command:
 
     ```sh
     $ kubectl apply -f - << EOF
     apiVersion: catalogd.operatorframework.io/v1alpha1
-    kind: Catalog
+    kind: ClusterCatalog
     metadata:
       name: operatorhubio
     spec:
@@ -30,10 +30,10 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
     EOF
     ```
 
-1. Verify the `Catalog` object was created successfully by running the following command:
+1. Verify the `ClusterCatalog` object was created successfully by running the following command:
 
     ```sh
-    $ kubectl describe catalog/operatorhubio
+    $ kubectl describe clustercatalog/operatorhubio
     ```
     
     *Example output*
@@ -43,7 +43,7 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
     Labels:       <none>
     Annotations:  <none>
     API Version:  catalogd.operatorframework.io/v1alpha1
-    Kind:         Catalog
+    Kind:         ClusterCatalog
     Metadata:
       Creation Timestamp:  2023-06-23T18:35:13Z
       Generation:          1

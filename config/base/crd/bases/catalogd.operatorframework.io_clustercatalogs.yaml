@@ -4,14 +4,14 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.14.0
-  name: catalogs.catalogd.operatorframework.io
+  name: clustercatalogs.catalogd.operatorframework.io
 spec:
   group: catalogd.operatorframework.io
   names:
-    kind: Catalog
-    listKind: CatalogList
-    plural: catalogs
-    singular: catalog
+    kind: ClusterCatalog
+    listKind: ClusterCatalogList
+    plural: clustercatalogs
+    singular: clustercatalog
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -24,7 +24,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Catalog is the Schema for the Catalogs API
+        description: ClusterCatalog is the Schema for the ClusterCatalogs API
         properties:
           apiVersion:
             description: |-
@@ -44,7 +44,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: CatalogSpec defines the desired state of Catalog
+            description: ClusterCatalogSpec defines the desired state of ClusterCatalog
             properties:
               source:
                 description: |-
@@ -96,10 +96,10 @@ spec:
               rule: '!has(self.source.image.pollInterval) || (self.source.image.ref.find(''@sha256:'')
                 == "")'
           status:
-            description: CatalogStatus defines the observed state of Catalog
+            description: ClusterCatalogStatus defines the observed state of ClusterCatalog
             properties:
               conditions:
-                description: Conditions store the status conditions of the Catalog
+                description: Conditions store the status conditions of the ClusterCatalog
                   instances
                 items:
                   description: "Condition contains details for one aspect of the current
@@ -176,8 +176,8 @@ spec:
                 type: string
               observedGeneration:
                 description: |-
-                  observedGeneration is the most recent generation observed for this Catalog. It corresponds to the
-                  Catalog's generation, which is updated on mutation by the API Server.
+                  observedGeneration is the most recent generation observed for this ClusterCatalog. It corresponds to the
+                  ClusterCatalog's generation, which is updated on mutation by the API Server.
                 format: int64
                 type: integer
               phase:

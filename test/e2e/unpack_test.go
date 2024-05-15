@@ -39,21 +39,21 @@ func catalogImageRef() string {
 	return "docker-registry.catalogd-e2e.svc:5000/test-catalog:e2e"
 }
 
-var _ = Describe("Catalog Unpacking", func() {
+var _ = Describe("ClusterCatalog Unpacking", func() {
 	var (
 		ctx     context.Context
-		catalog *catalogd.Catalog
+		catalog *catalogd.ClusterCatalog
 	)
-	When("A Catalog is created", func() {
+	When("A ClusterCatalog is created", func() {
 		BeforeEach(func() {
 			ctx = context.Background()
 			var err error
 
-			catalog = &catalogd.Catalog{
+			catalog = &catalogd.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: catalogName,
 				},
-				Spec: catalogd.CatalogSpec{
+				Spec: catalogd.ClusterCatalogSpec{
 					Source: catalogd.CatalogSource{
 						Type: catalogd.SourceTypeImage,
 						Image: &catalogd.ImageSource{
@@ -69,7 +69,7 @@ var _ = Describe("Catalog Unpacking", func() {
 		})
 
 		It("Successfully unpacks catalog contents", func() {
-			By("Ensuring Catalog has Status.Condition of Unpacked with a status == True")
+			By("Ensuring ClusterCatalog has Status.Condition of Unpacked with a status == True")
 			Eventually(func(g Gomega) {
 				err := c.Get(ctx, types.NamespacedName{Name: catalog.Name}, catalog)
 				g.Expect(err).ToNot(HaveOccurred())
@@ -111,7 +111,7 @@ var _ = Describe("Catalog Unpacking", func() {
 		AfterEach(func() {
 			Expect(c.Delete(ctx, catalog)).To(Succeed())
 			Eventually(func(g Gomega) {
-				err = c.Get(ctx, types.NamespacedName{Name: catalog.Name}, &catalogd.Catalog{})
+				err = c.Get(ctx, types.NamespacedName{Name: catalog.Name}, &catalogd.ClusterCatalog{})
 				g.Expect(errors.IsNotFound(err)).To(BeTrue())
 			}).Should(Succeed())
 		})

@@ -64,10 +64,10 @@ func (gc *GarbageCollector) Start(ctx context.Context) error {
 }
 
 func runGarbageCollection(ctx context.Context, cachePath string, metaClient metadata.Interface) ([]string, error) {
-	getter := metaClient.Resource(v1alpha1.GroupVersion.WithResource("catalogs"))
+	getter := metaClient.Resource(v1alpha1.GroupVersion.WithResource("clustercatalogs"))
 	metaList, err := getter.List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("error listing catalogs: %w", err)
+		return nil, fmt.Errorf("error listing clustercatalogs: %w", err)
 	}
 
 	expectedCatalogs := sets.New[string]()

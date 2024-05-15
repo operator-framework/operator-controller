@@ -27,7 +27,7 @@ func TestRunGarbageCollection(t *testing.T) {
 			existCatalogs: []*metav1.PartialObjectMetadata{
 				{
 					TypeMeta: metav1.TypeMeta{
-						Kind:       "Catalog",
+						Kind:       "ClusterCatalog",
 						APIVersion: v1alpha1.GroupVersion.String(),
 					},
 					ObjectMeta: metav1.ObjectMeta{
@@ -36,7 +36,7 @@ func TestRunGarbageCollection(t *testing.T) {
 				},
 				{
 					TypeMeta: metav1.TypeMeta{
-						Kind:       "Catalog",
+						Kind:       "ClusterCatalog",
 						APIVersion: v1alpha1.GroupVersion.String(),
 					},
 					ObjectMeta: metav1.ObjectMeta{
@@ -47,7 +47,7 @@ func TestRunGarbageCollection(t *testing.T) {
 			notExistCatalogs: []*metav1.PartialObjectMetadata{
 				{
 					TypeMeta: metav1.TypeMeta{
-						Kind:       "Catalog",
+						Kind:       "ClusterCatalog",
 						APIVersion: v1alpha1.GroupVersion.String(),
 					},
 					ObjectMeta: metav1.ObjectMeta{

@@ -50,36 +50,36 @@ const (
 //+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 //+kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
-// Catalog is the Schema for the Catalogs API
-type Catalog struct {
+// ClusterCatalog is the Schema for the ClusterCatalogs API
+type ClusterCatalog struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CatalogSpec   `json:"spec,omitempty"`
-	Status CatalogStatus `json:"status,omitempty"`
+	Spec   ClusterCatalogSpec   `json:"spec,omitempty"`
+	Status ClusterCatalogStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// CatalogList contains a list of Catalog
-type CatalogList struct {
+// ClusterCatalogList contains a list of ClusterCatalog
+type ClusterCatalogList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []Catalog `json:"items"`
+	Items []ClusterCatalog `json:"items"`
 }
 
-// CatalogSpec defines the desired state of Catalog
+// ClusterCatalogSpec defines the desired state of ClusterCatalog
 // +kubebuilder:validation:XValidation:rule="!has(self.source.image.pollInterval) || (self.source.image.ref.find('@sha256:') == \"\")",message="cannot specify PollInterval while using digest-based image"
-type CatalogSpec struct {
+type ClusterCatalogSpec struct {
 	// Source is the source of a Catalog that contains Operators' metadata in the FBC format
 	// https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
 	Source CatalogSource `json:"source"`
 }
 
-// CatalogStatus defines the observed state of Catalog
-type CatalogStatus struct {
-	// Conditions store the status conditions of the Catalog instances
+// ClusterCatalogStatus defines the observed state of ClusterCatalog
+type ClusterCatalogStatus struct {
+	// Conditions store the status conditions of the ClusterCatalog instances
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 
 	// ResolvedSource contains information about the resolved source
@@ -90,8 +90,8 @@ type CatalogStatus struct {
 	// ContentURL is a cluster-internal address that on-cluster components
 	// can read the content of a catalog from
 	ContentURL string `json:"contentURL,omitempty"`
-	// observedGeneration is the most recent generation observed for this Catalog. It corresponds to the
-	// Catalog's generation, which is updated on mutation by the API Server.
+	// observedGeneration is the most recent generation observed for this ClusterCatalog. It corresponds to the
+	// ClusterCatalog's generation, which is updated on mutation by the API Server.
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
@@ -145,5 +145,5 @@ type ImageSource struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Catalog{}, &CatalogList{})
+	SchemeBuilder.Register(&ClusterCatalog{}, &ClusterCatalogList{})
 }

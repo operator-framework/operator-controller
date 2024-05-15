@@ -31,8 +31,8 @@ import (
 // specifications. A source should treat a catalog root directory as an opaque
 // file tree and delegate catalog format concerns to catalog parsers.
 type Unpacker interface {
-	Unpack(context.Context, *catalogdv1alpha1.Catalog) (*Result, error)
-	Cleanup(context.Context, *catalogdv1alpha1.Catalog) error
+	Unpack(context.Context, *catalogdv1alpha1.ClusterCatalog) (*Result, error)
+	Cleanup(context.Context, *catalogdv1alpha1.ClusterCatalog) error
 }
 
 // Result conveys progress information about unpacking catalog content.
@@ -85,7 +85,7 @@ func NewUnpacker(sources map[catalogdv1alpha1.SourceType]Unpacker) Unpacker {
 	return &unpacker{sources: sources}
 }
 
-func (s *unpacker) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Catalog) (*Result, error) {
+func (s *unpacker) Unpack(ctx context.Context, catalog *catalogdv1alpha1.ClusterCatalog) (*Result, error) {
 	source, ok := s.sources[catalog.Spec.Source.Type]
 	if !ok {
 		return nil, fmt.Errorf("source type %q not supported", catalog.Spec.Source.Type)
@@ -95,7 +95,7 @@ func (s *unpacker) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Catalog
 
 // TODO: Generalize the cleanup logic for the Unpacker so that cleanup
 // logic isn't specific to individual source types.
-func (s *unpacker) Cleanup(ctx context.Context, catalog *catalogdv1alpha1.Catalog) error {
+func (s *unpacker) Cleanup(ctx context.Context, catalog *catalogdv1alpha1.ClusterCatalog) error {
 	source, ok := s.sources[catalog.Spec.Source.Type]
 	if !ok {
 		return fmt.Errorf("source type %q not supported", catalog.Spec.Source.Type)

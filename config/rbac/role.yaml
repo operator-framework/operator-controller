@@ -7,7 +7,7 @@ rules:
 - apiGroups:
   - catalogd.operatorframework.io
   resources:
-  - catalogs
+  - clustercatalogs
   verbs:
   - create
   - delete
@@ -19,13 +19,13 @@ rules:
 - apiGroups:
   - catalogd.operatorframework.io
   resources:
-  - catalogs/finalizers
+  - clustercatalogs/finalizers
   verbs:
   - update
 - apiGroups:
   - catalogd.operatorframework.io
   resources:
-  - catalogs/status
+  - clustercatalogs/status
   verbs:
   - get
   - patch

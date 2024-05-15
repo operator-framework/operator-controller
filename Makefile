@@ -55,7 +55,7 @@ clean: ## Remove binaries and test artifacts
 .PHONY: generate
 generate: $(CONTROLLER_GEN) ## Generate code and manifests.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.

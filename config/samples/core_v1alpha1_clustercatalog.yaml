@@ -1,5 +1,5 @@
 apiVersion: catalogd.operatorframework.io/v1alpha1
-kind: Catalog
+kind: ClusterCatalog
 metadata:
   name: operatorhubio
 spec:

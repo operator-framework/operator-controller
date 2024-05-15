@@ -31,7 +31,7 @@ type MockSource struct {
 	shouldError bool
 }
 
-func (ms *MockSource) Unpack(_ context.Context, _ *catalogdv1alpha1.Catalog) (*source.Result, error) {
+func (ms *MockSource) Unpack(_ context.Context, _ *catalogdv1alpha1.ClusterCatalog) (*source.Result, error) {
 	if ms.shouldError {
 		return nil, errors.New("mocksource error")
 	}
@@ -39,7 +39,7 @@ func (ms *MockSource) Unpack(_ context.Context, _ *catalogdv1alpha1.Catalog) (*s
 	return ms.result, nil
 }
 
-func (ms *MockSource) Cleanup(_ context.Context, _ *catalogdv1alpha1.Catalog) error {
+func (ms *MockSource) Cleanup(_ context.Context, _ *catalogdv1alpha1.ClusterCatalog) error {
 	if ms.shouldError {
 		return errors.New("mocksource error")
 	}
@@ -78,9 +78,9 @@ func (m MockStore) StorageServerHandler() http.Handler {
 func TestCatalogdControllerReconcile(t *testing.T) {
 	for _, tt := range []struct {
 		name            string
-		catalog         *catalogdv1alpha1.Catalog
+		catalog         *catalogdv1alpha1.ClusterCatalog
 		shouldErr       bool
-		expectedCatalog *catalogdv1alpha1.Catalog
+		expectedCatalog *catalogdv1alpha1.ClusterCatalog
 		source          source.Unpacker
 		store           storage.Instance
 	}{
@@ -88,29 +88,29 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			name:   "invalid source type, returns error",
 			source: &MockSource{},
 			store:  &MockStore{},
-			catalog: &catalogdv1alpha1.Catalog{
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "invalid",
 					},
 				},
 			},
 			shouldErr: true,
-			expectedCatalog: &catalogdv1alpha1.Catalog{
+			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "invalid",
 					},
 				},
-				Status: catalogdv1alpha1.CatalogStatus{
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
 					Phase: catalogdv1alpha1.PhaseFailing,
 					Conditions: []metav1.Condition{
 						{
@@ -128,12 +128,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				result: &source.Result{State: source.StatePending},
 			},
 			store: &MockStore{},
-			catalog: &catalogdv1alpha1.Catalog{
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -142,12 +142,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1alpha1.Catalog{
+			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -155,7 +155,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.CatalogStatus{
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
 					Phase: catalogdv1alpha1.PhasePending,
 					Conditions: []metav1.Condition{
 						{
@@ -173,12 +173,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				result: &source.Result{State: source.StateUnpacking},
 			},
 			store: &MockStore{},
-			catalog: &catalogdv1alpha1.Catalog{
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -187,12 +187,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1alpha1.Catalog{
+			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -200,7 +200,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.CatalogStatus{
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
 					Phase: catalogdv1alpha1.PhaseUnpacking,
 					Conditions: []metav1.Condition{
 						{
@@ -219,12 +219,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				result: &source.Result{State: "unknown"},
 			},
 			store: &MockStore{},
-			catalog: &catalogdv1alpha1.Catalog{
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -233,12 +233,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1alpha1.Catalog{
+			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -246,7 +246,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.CatalogStatus{
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
 					Phase: catalogdv1alpha1.PhaseFailing,
 					Conditions: []metav1.Condition{
 						{
@@ -265,12 +265,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				shouldError: true,
 			},
 			store: &MockStore{},
-			catalog: &catalogdv1alpha1.Catalog{
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -279,12 +279,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1alpha1.Catalog{
+			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -292,7 +292,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.CatalogStatus{
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
 					Phase: catalogdv1alpha1.PhaseFailing,
 					Conditions: []metav1.Condition{
 						{
@@ -313,12 +313,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 			},
 			store: &MockStore{},
-			catalog: &catalogdv1alpha1.Catalog{
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -327,12 +327,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1alpha1.Catalog{
+			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -340,7 +340,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.CatalogStatus{
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
 					Phase:      catalogdv1alpha1.PhaseUnpacked,
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
@@ -365,12 +365,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			store: &MockStore{
 				shouldError: true,
 			},
-			catalog: &catalogdv1alpha1.Catalog{
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -379,12 +379,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1alpha1.Catalog{
+			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -392,7 +392,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.CatalogStatus{
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
 					Phase: catalogdv1alpha1.PhaseFailing,
 					Conditions: []metav1.Condition{
 						{
@@ -408,11 +408,11 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			name:   "storage finalizer not set, storage finalizer gets set",
 			source: &MockSource{},
 			store:  &MockStore{},
-			catalog: &catalogdv1alpha1.Catalog{
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "catalog",
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -421,12 +421,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1alpha1.Catalog{
+			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -440,13 +440,13 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			name:   "storage finalizer set, catalog deletion timestamp is not zero (or nil), finalizer removed",
 			source: &MockSource{},
 			store:  &MockStore{},
-			catalog: &catalogdv1alpha1.Catalog{
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
 					Finalizers:        []string{fbcDeletionFinalizer},
 					DeletionTimestamp: &metav1.Time{Time: time.Date(2023, time.October, 10, 4, 19, 0, 0, time.UTC)},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -455,13 +455,13 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1alpha1.Catalog{
+			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
 					Finalizers:        []string{},
 					DeletionTimestamp: &metav1.Time{Time: time.Date(2023, time.October, 10, 4, 19, 0, 0, time.UTC)},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -478,13 +478,13 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			store: &MockStore{
 				shouldError: true,
 			},
-			catalog: &catalogdv1alpha1.Catalog{
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
 					Finalizers:        []string{fbcDeletionFinalizer},
 					DeletionTimestamp: &metav1.Time{Time: time.Date(2023, time.October, 10, 4, 19, 0, 0, time.UTC)},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -493,13 +493,13 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 			},
-			expectedCatalog: &catalogdv1alpha1.Catalog{
+			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
 					Finalizers:        []string{fbcDeletionFinalizer},
 					DeletionTimestamp: &metav1.Time{Time: time.Date(2023, time.October, 10, 4, 19, 0, 0, time.UTC)},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -507,7 +507,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.CatalogStatus{
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeDelete,
@@ -520,7 +520,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			reconciler := &CatalogReconciler{
+			reconciler := &ClusterCatalogReconciler{
 				Client: nil,
 				Unpacker: source.NewUnpacker(
 					map[catalogdv1alpha1.SourceType]source.Unpacker{
@@ -546,16 +546,16 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 
 func TestPollingRequeue(t *testing.T) {
 	for name, tc := range map[string]struct {
-		catalog              *catalogdv1alpha1.Catalog
+		catalog              *catalogdv1alpha1.ClusterCatalog
 		expectedRequeueAfter time.Duration
 	}{
-		"Catalog with tag based image ref without any poll interval specified, requeueAfter set to 0, ie polling disabled": {
-			catalog: &catalogdv1alpha1.Catalog{
+		"ClusterCatalog with tag based image ref without any poll interval specified, requeueAfter set to 0, ie polling disabled": {
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -566,13 +566,13 @@ func TestPollingRequeue(t *testing.T) {
 			},
 			expectedRequeueAfter: time.Second * 0,
 		},
-		"Catalog with tag based image ref with poll interval specified, requeueAfter set to wait.jitter(pollInterval)": {
-			catalog: &catalogdv1alpha1.Catalog{
+		"ClusterCatalog with tag based image ref with poll interval specified, requeueAfter set to wait.jitter(pollInterval)": {
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -586,7 +586,7 @@ func TestPollingRequeue(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			reconciler := &CatalogReconciler{
+			reconciler := &ClusterCatalogReconciler{
 				Client: nil,
 				Unpacker: source.NewUnpacker(
 					map[catalogdv1alpha1.SourceType]source.Unpacker{
@@ -609,16 +609,16 @@ func TestPollingRequeue(t *testing.T) {
 
 func TestPollingReconcilerUnpack(t *testing.T) {
 	for name, tc := range map[string]struct {
-		catalog           *catalogdv1alpha1.Catalog
+		catalog           *catalogdv1alpha1.ClusterCatalog
 		expectedUnpackRun bool
 	}{
-		"catalog being resolved the first time, unpack should run": {
-			catalog: &catalogdv1alpha1.Catalog{
+		"ClusterCatalog being resolved the first time, unpack should run": {
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -630,14 +630,14 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 			},
 			expectedUnpackRun: true,
 		},
-		"catalog not being resolved the first time, no pollInterval mentioned, unpack should not run": {
-			catalog: &catalogdv1alpha1.Catalog{
+		"ClusterCatalog not being resolved the first time, no pollInterval mentioned, unpack should not run": {
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 					Generation: 2,
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -645,7 +645,7 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.CatalogStatus{
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
 					Phase:      catalogdv1alpha1.PhaseUnpacked,
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
@@ -668,14 +668,14 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 			},
 			expectedUnpackRun: false,
 		},
-		"catalog not being resolved the first time, pollInterval mentioned, \"now\" is before next expected poll time, unpack should not run": {
-			catalog: &catalogdv1alpha1.Catalog{
+		"ClusterCatalog not being resolved the first time, pollInterval mentioned, \"now\" is before next expected poll time, unpack should not run": {
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 					Generation: 2,
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -684,7 +684,7 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.CatalogStatus{
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
 					Phase:      catalogdv1alpha1.PhaseUnpacked,
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
@@ -707,14 +707,14 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 			},
 			expectedUnpackRun: false,
 		},
-		"catalog not being resolved the first time, pollInterval mentioned, \"now\" is after next expected poll time, unpack should run": {
-			catalog: &catalogdv1alpha1.Catalog{
+		"ClusterCatalog not being resolved the first time, pollInterval mentioned, \"now\" is after next expected poll time, unpack should run": {
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 					Generation: 2,
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -723,7 +723,7 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.CatalogStatus{
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
 					Phase:      catalogdv1alpha1.PhaseUnpacked,
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
@@ -746,14 +746,14 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 			},
 			expectedUnpackRun: true,
 		},
-		"catalog not being resolved the first time, pollInterval mentioned, \"now\" is before next expected poll time, spec.image changed, unpack should run": {
-			catalog: &catalogdv1alpha1.Catalog{
+		"ClusterCatalog not being resolved the first time, pollInterval mentioned, \"now\" is before next expected poll time, spec.image changed, unpack should run": {
+			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
 					Finalizers: []string{fbcDeletionFinalizer},
 					Generation: 3,
 				},
-				Spec: catalogdv1alpha1.CatalogSpec{
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
 						Type: "image",
 						Image: &catalogdv1alpha1.ImageSource{
@@ -762,7 +762,7 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.CatalogStatus{
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
 					Phase:      catalogdv1alpha1.PhaseUnpacked,
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
@@ -787,7 +787,7 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			reconciler := &CatalogReconciler{
+			reconciler := &ClusterCatalogReconciler{
 				Client:   nil,
 				Unpacker: &MockSource{shouldError: true},
 				Storage:  &MockStore{},

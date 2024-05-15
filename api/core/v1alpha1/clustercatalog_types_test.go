@@ -20,17 +20,17 @@ import (
 )
 
 func TestPollIntervalCELValidationRules(t *testing.T) {
-	validators := fieldValidatorsFromFile(t, "../../../config/base/crd/bases/catalogd.operatorframework.io_catalogs.yaml")
+	validators := fieldValidatorsFromFile(t, "../../../config/base/crd/bases/catalogd.operatorframework.io_clustercatalogs.yaml")
 	pth := "openAPIV3Schema.properties.spec"
 	validator, found := validators["v1alpha1"][pth]
 	assert.True(t, found)
 
 	for name, tc := range map[string]struct {
-		spec     CatalogSpec
+		spec     ClusterCatalogSpec
 		wantErrs []string
 	}{
 		"digest based image ref, poll interval not allowed, poll interval specified": {
-			spec: CatalogSpec{
+			spec: ClusterCatalogSpec{
 				Source: CatalogSource{
 					Type: SourceTypeImage,
 					Image: &ImageSource{
@@ -44,7 +44,7 @@ func TestPollIntervalCELValidationRules(t *testing.T) {
 			},
 		},
 		"digest based image ref, poll interval not allowed, poll interval not specified": {
-			spec: CatalogSpec{
+			spec: ClusterCatalogSpec{
 				Source: CatalogSource{
 					Type: SourceTypeImage,
 					Image: &ImageSource{

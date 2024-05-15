@@ -35,7 +35,7 @@ type ImageRegistry struct {
 
 const ConfigDirLabel = "operators.operatorframework.io.index.configs.v1"
 
-func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Catalog) (*Result, error) {
+func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.ClusterCatalog) (*Result, error) {
 	l := log.FromContext(ctx)
 	if catalog.Spec.Source.Type != catalogdv1alpha1.SourceTypeImage {
 		panic(fmt.Sprintf("programmer error: source type %q is unable to handle specified catalog source type %q", catalogdv1alpha1.SourceTypeImage, catalog.Spec.Source.Type))
@@ -132,11 +132,11 @@ func wrapUnrecoverable(err error, isUnrecoverable bool) error {
 	return err
 }
 
-func (i *ImageRegistry) Cleanup(_ context.Context, catalog *catalogdv1alpha1.Catalog) error {
+func (i *ImageRegistry) Cleanup(_ context.Context, catalog *catalogdv1alpha1.ClusterCatalog) error {
 	return os.RemoveAll(filepath.Join(i.BaseCachePath, catalog.Name))
 }
 
-func unpackedResult(fsys fs.FS, catalog *catalogdv1alpha1.Catalog, ref string) *Result {
+func unpackedResult(fsys fs.FS, catalog *catalogdv1alpha1.ClusterCatalog, ref string) *Result {
 	return &Result{
 		FS: fsys,
 		ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{

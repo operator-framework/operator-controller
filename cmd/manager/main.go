@@ -180,12 +180,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&corecontrollers.CatalogReconciler{
+	if err = (&corecontrollers.ClusterCatalogReconciler{
 		Client:   mgr.GetClient(),
 		Unpacker: unpacker,
 		Storage:  localStorage,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Catalog")
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

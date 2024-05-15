@@ -46,16 +46,16 @@ const (
 	requeueJitterMaxFactor = 0.01
 )
 
-// CatalogReconciler reconciles a Catalog object
-type CatalogReconciler struct {
+// ClusterCatalogReconciler reconciles a Catalog object
+type ClusterCatalogReconciler struct {
 	client.Client
 	Unpacker source.Unpacker
 	Storage  storage.Instance
 }
 
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs/finalizers,verbs=update
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=create;update;patch;delete;get;list;watch
 //+kubebuilder:rbac:groups=core,resources=pods/log,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,namespace=system,resources=secrets,verbs=get;
@@ -65,11 +65,11 @@ type CatalogReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
-func (r *CatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// TODO: Where and when should we be logging errors and at which level?
 	_ = log.FromContext(ctx).WithName("catalogd-controller")
 
-	existingCatsrc := v1alpha1.Catalog{}
+	existingCatsrc := v1alpha1.ClusterCatalog{}
 	if err := r.Client.Get(ctx, req.NamespacedName, &existingCatsrc); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -92,7 +92,7 @@ func (r *CatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return res, apimacherrors.NewAggregate([]error{reconcileErr, updateErr})
 		}
 	}
-	existingCatsrc.Status, reconciledCatsrc.Status = v1alpha1.CatalogStatus{}, v1alpha1.CatalogStatus{}
+	existingCatsrc.Status, reconciledCatsrc.Status = v1alpha1.ClusterCatalogStatus{}, v1alpha1.ClusterCatalogStatus{}
 	if !equality.Semantic.DeepEqual(existingCatsrc, reconciledCatsrc) {
 		if updateErr := r.Client.Update(ctx, reconciledCatsrc); updateErr != nil {
 			return res, apimacherrors.NewAggregate([]error{reconcileErr, updateErr})
@@ -102,9 +102,9 @@ func (r *CatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *CatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ClusterCatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.Catalog{}).
+		For(&v1alpha1.ClusterCatalog{}).
 		Owns(&corev1.Pod{}).
 		Complete(r)
 }
@@ -117,7 +117,7 @@ func (r *CatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // to add the ctrl.Result type back as a return value. Adding a comment to ignore
 // linting from the linter that was fussing about this.
 // nolint:unparam
-func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.Catalog) (ctrl.Result, error) {
+func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.ClusterCatalog) (ctrl.Result, error) {
 	if catalog.DeletionTimestamp.IsZero() && !controllerutil.ContainsFinalizer(catalog, fbcDeletionFinalizer) {
 		controllerutil.AddFinalizer(catalog, fbcDeletionFinalizer)
 		return ctrl.Result{}, nil
@@ -178,7 +178,7 @@ func (r *CatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.Cat
 	}
 }
 
-func updateStatusUnpackPending(status *v1alpha1.CatalogStatus, result *source.Result) {
+func updateStatusUnpackPending(status *v1alpha1.ClusterCatalogStatus, result *source.Result) {
 	status.ResolvedSource = nil
 	status.Phase = v1alpha1.PhasePending
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
@@ -189,7 +189,7 @@ func updateStatusUnpackPending(status *v1alpha1.CatalogStatus, result *source.Re
 	})
 }
 
-func updateStatusUnpacking(status *v1alpha1.CatalogStatus, result *source.Result) {
+func updateStatusUnpacking(status *v1alpha1.ClusterCatalogStatus, result *source.Result) {
 	status.ResolvedSource = nil
 	status.Phase = v1alpha1.PhaseUnpacking
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
@@ -200,7 +200,7 @@ func updateStatusUnpacking(status *v1alpha1.CatalogStatus, result *source.Result
 	})
 }
 
-func updateStatusUnpacked(status *v1alpha1.CatalogStatus, result *source.Result, contentURL string, generation int64) {
+func updateStatusUnpacked(status *v1alpha1.ClusterCatalogStatus, result *source.Result, contentURL string, generation int64) {
 	status.ResolvedSource = result.ResolvedSource
 	status.ContentURL = contentURL
 	status.Phase = v1alpha1.PhaseUnpacked
@@ -213,7 +213,7 @@ func updateStatusUnpacked(status *v1alpha1.CatalogStatus, result *source.Result,
 	})
 }
 
-func updateStatusUnpackFailing(status *v1alpha1.CatalogStatus, err error) error {
+func updateStatusUnpackFailing(status *v1alpha1.ClusterCatalogStatus, err error) error {
 	status.ResolvedSource = nil
 	status.Phase = v1alpha1.PhaseFailing
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
@@ -225,7 +225,7 @@ func updateStatusUnpackFailing(status *v1alpha1.CatalogStatus, err error) error 
 	return err
 }
 
-func updateStatusStorageError(status *v1alpha1.CatalogStatus, err error) error {
+func updateStatusStorageError(status *v1alpha1.ClusterCatalogStatus, err error) error {
 	status.ResolvedSource = nil
 	status.Phase = v1alpha1.PhaseFailing
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
@@ -237,7 +237,7 @@ func updateStatusStorageError(status *v1alpha1.CatalogStatus, err error) error {
 	return err
 }
 
-func updateStatusStorageDeleteError(status *v1alpha1.CatalogStatus, err error) error {
+func updateStatusStorageDeleteError(status *v1alpha1.ClusterCatalogStatus, err error) error {
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:    v1alpha1.TypeDelete,
 		Status:  metav1.ConditionFalse,
@@ -247,7 +247,7 @@ func updateStatusStorageDeleteError(status *v1alpha1.CatalogStatus, err error) e
 	return err
 }
 
-func unpackAgain(catalog *v1alpha1.Catalog) bool {
+func unpackAgain(catalog *v1alpha1.ClusterCatalog) bool {
 	// if the spec.Source.Image.Ref was changed, unpack the new ref
 	if catalog.Spec.Source.Image.Ref != catalog.Status.ResolvedSource.Image.Ref {
 		return true
