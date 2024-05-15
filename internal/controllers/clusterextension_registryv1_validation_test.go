@@ -31,6 +31,7 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 		name    string
 		bundle  *catalogmetadata.Bundle
 		wantErr string
+		skip    bool
 	}{
 		{
 			name: "package with no dependencies",
@@ -45,6 +46,9 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 				},
 				CatalogName: "fake-catalog",
 			},
+			// Skipping the happy path, since it requires us to mock unpacker, store and the
+			// entire installation. This should be handled in an e2e instead.
+			skip: true,
 		},
 		{
 			name: "package with olm.package.required property",
@@ -96,15 +100,19 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Skip("Skip and replace with e2e for BundleDeployment")
 			defer func() {
 				require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 			}()
 
+			if tt.skip {
+				return
+			}
+
 			fakeCatalogClient := testutil.NewFakeCatalogClient([]*catalogmetadata.Bundle{tt.bundle})
 			reconciler := &controllers.ClusterExtensionReconciler{
-				Client:         cl,
-				BundleProvider: &fakeCatalogClient,
+				Client:             cl,
+				BundleProvider:     &fakeCatalogClient,
+				ActionClientGetter: acg,
 			}
 
 			installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))

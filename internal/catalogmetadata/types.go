@@ -73,7 +73,7 @@ func (b *Bundle) loadPackage() error {
 	if b.semVersion == nil {
 		semVer, err := bsemver.Parse(b.bundlePackage.Version)
 		if err != nil {
-			return fmt.Errorf("could not parse semver %q for bundle '%s': %s", b.bundlePackage.Version, b.Bundle.Name, err)
+			return fmt.Errorf("could not parse semver %q for bundle '%s': %s", b.bundlePackage.Version, b.Name, err)
 		}
 		b.semVersion = &semVer
 	}

@@ -101,11 +101,9 @@ const (
 	ReasonInstallationSucceeded     = "InstallationSucceeded"
 	ReasonResolutionFailed          = "ResolutionFailed"
 
-	ReasonSuccess                  = "Success"
-	ReasonDeprecated               = "Deprecated"
-	ReasonErrorGettingReleaseState = "ErrorGettingReleaseState"
-	ReasonUpgradeFailed            = "UpgradeFailed"
-	ReasonCreateDynamicWatchFailed = "CreateDynamicWatchFailed"
+	ReasonSuccess       = "Success"
+	ReasonDeprecated    = "Deprecated"
+	ReasonUpgradeFailed = "UpgradeFailed"
 )
 
 func init() {
@@ -124,14 +122,14 @@ func init() {
 		ReasonInstallationSucceeded,
 		ReasonResolutionFailed,
 		ReasonInstallationFailed,
-		ReasonInstallationStatusUnknown,
 		ReasonSuccess,
 		ReasonDeprecated,
-		ReasonErrorGettingReleaseState,
 		ReasonUpgradeFailed,
-		ReasonCreateDynamicWatchFailed,
 		ReasonBundleLoadFailed,
 		ReasonErrorGettingClient,
+		// TODO: this reason is not being used in the reconciler, it will be removed
+		// when we fix the tests. Avoiding removal here, to reduce diffs.
+		ReasonInstallationStatusUnknown,
 	)
 }
 

@@ -75,3 +75,23 @@ func setInstalledStatusConditionFailed(conditions *[]metav1.Condition, message s
 		ObservedGeneration: generation,
 	})
 }
+
+// setDeprecationStatusesUnknown sets the deprecation status conditions to unknown.
+func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message string, generation int64) {
+	conditionTypes := []string{
+		ocv1alpha1.TypeDeprecated,
+		ocv1alpha1.TypePackageDeprecated,
+		ocv1alpha1.TypeChannelDeprecated,
+		ocv1alpha1.TypeBundleDeprecated,
+	}
+
+	for _, conditionType := range conditionTypes {
+		apimeta.SetStatusCondition(conditions, metav1.Condition{
+			Type:               conditionType,
+			Reason:             ocv1alpha1.ReasonDeprecated,
+			Status:             metav1.ConditionUnknown,
+			Message:            message,
+			ObservedGeneration: generation,
+		})
+	}
+}
