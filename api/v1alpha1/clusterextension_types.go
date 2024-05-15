@@ -85,7 +85,6 @@ const (
 	TypeInstalled      = "Installed"
 	TypeResolved       = "Resolved"
 	TypeHasValidBundle = "HasValidBundle"
-	TypeHealthy        = "Healthy"
 
 	// TypeDeprecated is a rollup condition that is present when
 	// any of the deprecated conditions are present.
@@ -94,20 +93,19 @@ const (
 	TypeChannelDeprecated = "ChannelDeprecated"
 	TypeBundleDeprecated  = "BundleDeprecated"
 
-	ReasonErrorGettingClient        = "ErrorGettingClient"
-	ReasonBundleLoadFailed          = "BundleLoadFailed"
-	ReasonBundleLookupFailed        = "BundleLookupFailed"
+	ReasonErrorGettingClient = "ErrorGettingClient"
+	ReasonBundleLoadFailed   = "BundleLoadFailed"
+
 	ReasonInstallationFailed        = "InstallationFailed"
 	ReasonInstallationStatusUnknown = "InstallationStatusUnknown"
 	ReasonInstallationSucceeded     = "InstallationSucceeded"
-	ReasonInvalidSpec               = "InvalidSpec"
 	ReasonResolutionFailed          = "ResolutionFailed"
-	ReasonResolutionUnknown         = "ResolutionUnknown"
-	ReasonSuccess                   = "Success"
-	ReasonDeprecated                = "Deprecated"
-	ReasonErrorGettingReleaseState  = "ErrorGettingReleaseState"
-	ReasonUpgradeFailed             = "UpgradeFailed"
-	ReasonCreateDynamicWatchFailed  = "CreateDynamicWatchFailed"
+
+	ReasonSuccess                  = "Success"
+	ReasonDeprecated               = "Deprecated"
+	ReasonErrorGettingReleaseState = "ErrorGettingReleaseState"
+	ReasonUpgradeFailed            = "UpgradeFailed"
+	ReasonCreateDynamicWatchFailed = "CreateDynamicWatchFailed"
 )
 
 func init() {
@@ -116,7 +114,6 @@ func init() {
 		TypeInstalled,
 		TypeResolved,
 		TypeHasValidBundle,
-		TypeHealthy,
 		TypeDeprecated,
 		TypePackageDeprecated,
 		TypeChannelDeprecated,
@@ -126,11 +123,8 @@ func init() {
 	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
 		ReasonInstallationSucceeded,
 		ReasonResolutionFailed,
-		ReasonResolutionUnknown,
-		ReasonBundleLookupFailed,
 		ReasonInstallationFailed,
 		ReasonInstallationStatusUnknown,
-		ReasonInvalidSpec,
 		ReasonSuccess,
 		ReasonDeprecated,
 		ReasonErrorGettingReleaseState,
