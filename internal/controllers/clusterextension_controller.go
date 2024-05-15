@@ -46,6 +46,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -63,6 +64,7 @@ import (
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	helmpredicate "github.com/operator-framework/rukpak/pkg/helm-operator-plugins/predicate"
 	rukpaksource "github.com/operator-framework/rukpak/pkg/source"
@@ -106,6 +108,8 @@ type ClusterExtensionReconciler struct {
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
 
+// The operator controller needs to watch all the bundle objects and reconcile accordingly. Though not ideal, but these permissions are required.
+// This has been taken from rukpak, and an issue was created before to discuss it: https://github.com/operator-framework/rukpak/issues/800.
 func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("operator-controller")
 	l.V(1).Info("starting")
@@ -210,6 +214,15 @@ func (r *ClusterExtensionReconciler) handleResolutionErrors(ext *ocv1alpha1.Clus
 // But in the future we might update this function
 // to return different results (e.g. requeue).
 //
+/* The reconcile functions performs the following major tasks:
+1. Resolution: Run the resolution to find the bundle from the catalog which needs to be installed.
+2. Validate: Ensure that the bundle returned from the resolution for install meets our requirements.
+3. Unpack: Unpack the contents from the bundle and store in a localdir in the pod.
+4. Install: The process of installing involves:
+4.1 Converting the CSV in the bundle into a set of plain k8s objects.
+4.2 Generating a chart from k8s objects.
+4.3 Apply the release on cluster.
+*/
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("operator-controller")
@@ -218,6 +231,12 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	if err != nil {
 		l.V(1).Info("bundle resolve error", "error", err)
 		return r.handleResolutionErrors(ext, err)
+	}
+
+	if err := r.validateBundle(bundle); err != nil {
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
+		return ctrl.Result{}, err
 	}
 
 	bundleVersion, err := bundle.Version()
@@ -229,14 +248,12 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
-	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundle.Image value.
 	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
 	setResolvedStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), ext.GetGeneration())
 
-	// Unpack contents into a fs based on the bundle.
-	// Considering only image source.
-
-	// Generate a BundleDeployment from the ClusterExtension to Unpack
+	// Generate a BundleDeployment from the ClusterExtension to Unpack.
+	// Note: The BundleDeployment here is not a k8s API, its a simple Go struct which
+	// necessary embedded values.
 	bd := r.generateBundleDeploymentForUnpack(bundle.Image, ext)
 	unpackResult, err := r.Unpacker.Unpack(ctx, bd)
 	if err != nil {
@@ -253,6 +270,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		updateStatusUnpacking(&ext.Status, unpackResult)
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacked:
+		// TODO: Add finalizer to clean the stored bundles, after https://github.com/operator-framework/rukpak/pull/897
+		// merges.
 		if err := r.Storage.Store(ctx, ext, unpackResult.Bundle); err != nil {
 			return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, err)
 		}
@@ -302,7 +321,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	rel, state, err := r.getReleaseState(ac, ext, chrt, values, post)
 	if err != nil {
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingReleaseState, err), ext.Generation)
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", rukpakv1alpha2.ReasonErrorGettingReleaseState, err), ext.Generation)
 		return ctrl.Result{}, err
 	}
 
@@ -343,14 +362,14 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
 	if err != nil {
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", rukpakv1alpha2.ReasonCreateDynamicWatchFailed, err), ext.Generation)
 		return ctrl.Result{}, err
 	}
 
 	for _, obj := range relObjects {
 		uMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 		if err != nil {
-			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", rukpakv1alpha2.ReasonCreateDynamicWatchFailed, err), ext.Generation)
 			return ctrl.Result{}, err
 		}
 
@@ -372,17 +391,17 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			return nil
 		}(); err != nil {
 			ext.Status.InstalledBundle = nil
-			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", rukpakv1alpha2.ReasonCreateDynamicWatchFailed, err), ext.Generation)
 			return ctrl.Result{}, err
 		}
 	}
 	ext.Status.InstalledBundle = bundleMetadataFor(bundle)
 	setInstalledStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("Instantiated bundle %s successfully", ext.GetName()), ext.Generation)
 
-	// set the status of the cluster extension based on the respective bundle deployment status conditions.
 	return ctrl.Result{}, nil
 }
 
+// resolve returns a Bundle from the catalog that needs to get installed on the cluster.
 func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
 	allBundles, err := r.BundleProvider.Bundles(ctx)
 	if err != nil {
@@ -663,17 +682,14 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 	}
 }
 
+// getInstalledVersion fetches the installed version of a particular bundle from the cluster. To do so, we read the release label
+// which are added during install.
 func (r *ClusterExtensionReconciler) getInstalledVersion(ctx context.Context, clusterExtension ocv1alpha1.ClusterExtension) (*bsemver.Version, error) {
 	cl, err := r.ActionClientGetter.ActionClientFor(ctx, &clusterExtension)
 	if err != nil {
 		return nil, err
 	}
 
-	// Clarify - Every release will have a unique name as the cluster extension?
-	// Also filter relases whose owner is the operator controller?
-	// I think this should work, given we are setting the release Name to the clusterExtension name.
-	// If not, the other option is to get the Helm secret in the release namespace, list all the releases,
-	// get the chart annotations.
 	release, err := cl.Get(clusterExtension.GetName())
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil, err
@@ -682,7 +698,6 @@ func (r *ClusterExtensionReconciler) getInstalledVersion(ctx context.Context, cl
 		return nil, nil
 	}
 
-	// TODO: when the chart is created these annotations are to be added.
 	existingVersion, ok := release.Labels[labels.BundleVersionKey]
 	if !ok {
 		return nil, fmt.Errorf("release %q: missing bundle version", release.Name)
@@ -803,4 +818,23 @@ func bundleMetadataFor(bundle *catalogmetadata.Bundle) *ocv1alpha1.BundleMetadat
 		Name:    bundle.Name,
 		Version: ver.String(),
 	}
+}
+
+func (r *ClusterExtensionReconciler) validateBundle(bundle *catalogmetadata.Bundle) error {
+	unsupportedProps := sets.New(
+		property.TypePackageRequired,
+		property.TypeGVKRequired,
+		property.TypeConstraint,
+	)
+	for i := range bundle.Properties {
+		if unsupportedProps.Has(bundle.Properties[i].Type) {
+			return fmt.Errorf(
+				"bundle %q has a dependency declared via property %q which is currently not supported",
+				bundle.Name,
+				bundle.Properties[i].Type,
+			)
+		}
+	}
+
+	return nil
 }
