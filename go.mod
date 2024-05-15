@@ -1,8 +1,8 @@
 module github.com/operator-framework/operator-controller
 
-go 1.21
+go 1.22
 
-toolchain go1.21.0
+toolchain go1.22.3
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
