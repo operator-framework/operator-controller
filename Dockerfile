@@ -8,7 +8,7 @@ FROM gcr.io/distroless/static:debug-nonroot AS builder
 FROM gcr.io/distroless/static:nonroot
 
 # Grab the cp binary so we can cp the unpack
-# binary to a shared volume in the bundle image
+# binary to a shared volume in the bundle image (rukpak library needs it)
 COPY --from=builder /busybox/cp /cp
 
 WORKDIR /
