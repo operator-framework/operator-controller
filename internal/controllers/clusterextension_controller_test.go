@@ -26,7 +26,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	"github.com/operator-framework/operator-controller/internal/packageerrors"
 	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
@@ -62,7 +61,7 @@ func TestClusterExtensionNonExistentPackage(t *testing.T) {
 	t.Log("By running reconcile")
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
-	require.EqualError(t, err, packageerrors.GenerateError(pkgName).Error())
+	require.EqualError(t, err, fmt.Errorf("no package \"%v\" found", pkgName).Error())
 
 	t.Log("By fetching updated cluster extension after reconcile")
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
@@ -76,7 +75,7 @@ func TestClusterExtensionNonExistentPackage(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-	require.Equal(t, packageerrors.GenerateError(pkgName).Error(), cond.Message)
+	require.Equal(t, fmt.Errorf("no package \"%v\" found", pkgName).Error(), cond.Message)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -104,7 +103,7 @@ func TestClusterExtensionNonExistentVersion(t *testing.T) {
 	t.Log("By running reconcile")
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
-	require.EqualError(t, err, packageerrors.GenerateVersionError(pkgName, "0.50.0").Error())
+	require.EqualError(t, err, fmt.Errorf("no package \"%v\" matching version \"%v\" found", pkgName, "0.50.0").Error())
 
 	t.Log("By fetching updated cluster extension after reconcile")
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
@@ -118,7 +117,7 @@ func TestClusterExtensionNonExistentVersion(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-	require.Equal(t, packageerrors.GenerateVersionError(pkgName, "0.50.0").Error(), cond.Message)
+	require.Equal(t, fmt.Errorf("no package \"%v\" matching version \"%v\" found", pkgName, "0.50.0").Error(), cond.Message)
 	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
@@ -334,7 +333,7 @@ func TestClusterExtensionVersionNoChannel(t *testing.T) {
 	t.Log("By running reconcile")
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
-	require.EqualError(t, err, packageerrors.GenerateVersionChannelError(pkgName, pkgVer, pkgChan).Error())
+	require.EqualError(t, err, fmt.Errorf("no package \"%v\" matching version \"%v\" in channel \"%v\" found", pkgName, pkgVer, pkgChan).Error())
 
 	t.Log("By fetching updated cluster extension after reconcile")
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
@@ -348,7 +347,7 @@ func TestClusterExtensionVersionNoChannel(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-	require.Equal(t, packageerrors.GenerateVersionChannelError(pkgName, pkgVer, pkgChan).Error(), cond.Message)
+	require.Equal(t, fmt.Errorf("no package \"%v\" matching version \"%v\" in channel \"%v\" found", pkgName, pkgVer, pkgChan).Error(), cond.Message)
 	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 
 	require.NotNil(t, cond)
@@ -382,7 +381,7 @@ func TestClusterExtensionNoChannel(t *testing.T) {
 	t.Log("By running reconcile")
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
-	require.EqualError(t, err, packageerrors.GenerateChannelError(pkgName, pkgChan).Error())
+	require.EqualError(t, err, fmt.Errorf("no package \"%v\" in channel \"%v\" found", pkgName, pkgChan).Error())
 
 	t.Log("By fetching updated cluster extension after reconcile")
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
@@ -396,7 +395,7 @@ func TestClusterExtensionNoChannel(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-	require.Equal(t, packageerrors.GenerateChannelError(pkgName, pkgChan).Error(), cond.Message)
+	require.Equal(t, fmt.Errorf("no package \"%v\" in channel \"%v\" found", pkgName, pkgChan).Error(), cond.Message)
 	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
@@ -431,7 +430,7 @@ func TestClusterExtensionNoVersion(t *testing.T) {
 	t.Log("By running reconcile")
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
-	require.EqualError(t, err, packageerrors.GenerateVersionChannelError(pkgName, pkgVer, pkgChan).Error())
+	require.EqualError(t, err, fmt.Errorf("no package \"%v\" matching version \"%v\" in channel \"%v\" found", pkgName, pkgVer, pkgChan).Error())
 
 	t.Log("By fetching updated cluster extension after reconcile")
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
@@ -445,7 +444,7 @@ func TestClusterExtensionNoVersion(t *testing.T) {
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-	require.Equal(t, packageerrors.GenerateVersionChannelError(pkgName, pkgVer, pkgChan).Error(), cond.Message)
+	require.Equal(t, fmt.Errorf("no package \"%v\" matching version \"%v\" in channel \"%v\" found", pkgName, pkgVer, pkgChan).Error(), cond.Message)
 	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
