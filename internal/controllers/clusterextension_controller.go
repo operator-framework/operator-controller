@@ -78,7 +78,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/handler"
 	"github.com/operator-framework/operator-controller/internal/labels"
-	"github.com/operator-framework/operator-controller/internal/packageerrors"
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
@@ -450,15 +449,16 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 	if len(resultSet) == 0 {
 		switch {
 		case versionRange != "" && channelName != "":
-			return nil, packageerrors.GenerateVersionChannelError(packageName, versionRange, channelName)
+			return nil, fmt.Errorf("no package %q matching version %q in channel %q found", packageName, versionRange, channelName)
 		case versionRange != "":
-			return nil, packageerrors.GenerateVersionError(packageName, versionRange)
+			return nil, fmt.Errorf("no package %q matching version %q found", packageName, versionRange)
 		case channelName != "":
-			return nil, packageerrors.GenerateChannelError(packageName, channelName)
+			return nil, fmt.Errorf("no package %q in channel %q found", packageName, channelName)
 		default:
-			return nil, packageerrors.GenerateError(packageName)
+			return nil, fmt.Errorf("no package %q found", packageName)
 		}
 	}
+
 	sort.SliceStable(resultSet, func(i, j int) bool {
 		return catalogsort.ByVersion(resultSet[i], resultSet[j])
 	})
