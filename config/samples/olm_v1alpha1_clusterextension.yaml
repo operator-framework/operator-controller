@@ -3,5 +3,6 @@ kind: ClusterExtension
 metadata:
   name: clusterextension-sample
 spec:
+  installNamespace: default
   packageName: argocd-operator
   version: 0.6.0

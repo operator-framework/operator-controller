@@ -36,7 +36,10 @@ endif
 # bingo manages consistent tooling versions for things like kind, kustomize, etc.
 include .bingo/Variables.mk
 
+ifeq ($(origin KIND_CLUSTER_NAME), undefined)
 KIND_CLUSTER_NAME := operator-controller
+endif
+
 # Not guaranteed to have patch releases available and node image tags are full versions (i.e v1.28.0 - no v1.28, v1.29, etc.)
 # The KIND_NODE_VERSION is set by getting the version of the k8s.io/client-go dependency from the go.mod
 # and sets major version to "1" and the patch version to "0". For example, a client-go version of v0.28.5
