@@ -53,7 +53,7 @@ type MockStore struct {
 	shouldError bool
 }
 
-func (m MockStore) Store(_ string, _ fs.FS) error {
+func (m MockStore) Store(_ context.Context, _ string, _ fs.FS) error {
 	if m.shouldError {
 		return errors.New("mockstore store error")
 	}

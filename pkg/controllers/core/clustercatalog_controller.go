@@ -156,7 +156,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alp
 		// TODO: We should check to see if the unpacked result has the same content
 		//   as the already unpacked content. If it does, we should skip this rest
 		//   of the unpacking steps.
-		err := r.Storage.Store(catalog.Name, unpackResult.FS)
+		err := r.Storage.Store(ctx, catalog.Name, unpackResult.FS)
 		if err != nil {
 			return ctrl.Result{}, updateStatusStorageError(&catalog.Status, fmt.Errorf("error storing fbc: %v", err))
 		}

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"io/fs"
 	"net/http"
 )
@@ -10,7 +11,7 @@ import (
 // host's filesystem. It also a manager runnable object, that starts
 // a server to serve the content stored.
 type Instance interface {
-	Store(catalog string, fsys fs.FS) error
+	Store(ctx context.Context, catalog string, fsys fs.FS) error
 	Delete(catalog string) error
 	ContentURL(catalog string) string
 	StorageServerHandler() http.Handler
