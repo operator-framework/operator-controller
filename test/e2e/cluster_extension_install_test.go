@@ -183,7 +183,6 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 }
 
 func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
-	t.Skip("Skipping tests related to upgrades")
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
 
@@ -229,7 +228,6 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 }
 
 func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
-	t.Skip("Skipping tests related to upgrades")
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
 
@@ -276,7 +274,6 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 }
 
 func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
-	t.Skip("Skipping tests related to upgrades")
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
 	clusterExtension, extensionCatalog := testInit(t)

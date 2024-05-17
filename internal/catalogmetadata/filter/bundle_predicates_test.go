@@ -201,3 +201,16 @@ func TestWithDeprecation(t *testing.T) {
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))
 }
+
+func TestWithBundleName(t *testing.T) {
+	b1 := &catalogmetadata.Bundle{
+		Bundle: declcfg.Bundle{Name: "package1.v0.0.1"},
+	}
+	b2 := &catalogmetadata.Bundle{
+		Bundle: declcfg.Bundle{Name: "package1.v0.0.2"},
+	}
+
+	f := filter.WithBundleName("package1.v0.0.1")
+	assert.True(t, f(b1))
+	assert.False(t, f(b2))
+}

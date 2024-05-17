@@ -60,6 +60,12 @@ func WithBundleImage(bundleImage string) Predicate[catalogmetadata.Bundle] {
 	}
 }
 
+func WithBundleName(bundleName string) Predicate[catalogmetadata.Bundle] {
+	return func(bundle *catalogmetadata.Bundle) bool {
+		return bundle.Name == bundleName
+	}
+}
+
 func LegacySuccessor(installedBundle *catalogmetadata.Bundle) Predicate[catalogmetadata.Bundle] {
 	isSuccessor := func(candidateBundleEntry declcfg.ChannelEntry) bool {
 		if candidateBundleEntry.Replaces == installedBundle.Name {
