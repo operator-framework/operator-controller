@@ -204,6 +204,7 @@ func (r *ClusterExtensionReconciler) handleResolutionErrors(ext *ocv1alpha1.Clus
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
 		ensureAllConditionsWithReason(ext, "InstallationStatusUnknown", "")
 	}
+	ext.Status.ResolvedBundle = nil
 	return ctrl.Result{}, err
 }
 
@@ -411,6 +412,11 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 	channelName := ext.Spec.Channel
 	versionRange := ext.Spec.Version
 
+	installedBundle, err := r.installedBundle(ctx, allBundles, &ext)
+	if err != nil {
+		return nil, err
+	}
+
 	predicates := []catalogfilter.Predicate[catalogmetadata.Bundle]{
 		catalogfilter.WithPackageName(packageName),
 	}
@@ -427,35 +433,35 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 		predicates = append(predicates, catalogfilter.InMastermindsSemverRange(vr))
 	}
 
-	var installedVersion string
-	var upgradeErrorPrefix string
-	if ext.Spec.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicyIgnore {
-		installedBundle, err := r.getInstalledVersion(ctx, ext)
+	if ext.Spec.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicyIgnore && installedBundle != nil {
+		upgradePredicate, err := SuccessorsPredicate(installedBundle)
 		if err != nil {
-			return nil, utilerrors.NewAggregate([]error{fmt.Errorf("error fetching installed version: %w", err)})
+			return nil, err
 		}
-		if installedBundle != nil {
-			installedVersion = installedBundle.String()
-			upgradeErrorPrefix = fmt.Sprintf("error upgrading from currently installed version %q: ", installedVersion)
-			wantedVersionRangeConstraint, err := mmsemver.NewConstraint(fmt.Sprintf("^%s", installedVersion))
-			if err != nil {
-				return nil, utilerrors.NewAggregate([]error{fmt.Errorf("%serror creating version constraint: %w", upgradeErrorPrefix, err)})
-			}
-			predicates = append(predicates, catalogfilter.InMastermindsSemverRange(wantedVersionRangeConstraint))
-		}
+
+		predicates = append(predicates, upgradePredicate)
 	}
 
 	resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(predicates...))
+
+	var upgradeErrorPrefix string
+	if installedBundle != nil {
+		installedBundleVersion, err := installedBundle.Version()
+		if err != nil {
+			return nil, err
+		}
+		upgradeErrorPrefix = fmt.Sprintf("error upgrading from currently installed version %q: ", installedBundleVersion.String())
+	}
 	if len(resultSet) == 0 {
 		switch {
 		case versionRange != "" && channelName != "":
-			return nil, fmt.Errorf("no package %q matching version %q in channel %q found", packageName, versionRange, channelName)
+			return nil, fmt.Errorf("%sno package %q matching version %q in channel %q found", upgradeErrorPrefix, packageName, versionRange, channelName)
 		case versionRange != "":
-			return nil, fmt.Errorf("no package %q matching version %q found", packageName, versionRange)
+			return nil, fmt.Errorf("%sno package %q matching version %q found", upgradeErrorPrefix, packageName, versionRange)
 		case channelName != "":
-			return nil, fmt.Errorf("no package %q in channel %q found", packageName, channelName)
+			return nil, fmt.Errorf("%sno package %q in channel %q found", upgradeErrorPrefix, packageName, channelName)
 		default:
-			return nil, fmt.Errorf("no package %q found", packageName)
+			return nil, fmt.Errorf("%sno package %q found", upgradeErrorPrefix, packageName)
 		}
 	}
 
@@ -682,15 +688,13 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 	}
 }
 
-// getInstalledVersion fetches the installed version of a particular bundle from the cluster. To do so, we read the release label
-// which are added during install.
-func (r *ClusterExtensionReconciler) getInstalledVersion(ctx context.Context, clusterExtension ocv1alpha1.ClusterExtension) (*bsemver.Version, error) {
-	cl, err := r.ActionClientGetter.ActionClientFor(ctx, &clusterExtension)
+func (r *ClusterExtensionReconciler) installedBundle(ctx context.Context, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+	cl, err := r.ActionClientGetter.ActionClientFor(ctx, ext)
 	if err != nil {
 		return nil, err
 	}
 
-	release, err := cl.Get(clusterExtension.GetName())
+	release, err := cl.Get(ext.GetName())
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil, err
 	}
@@ -698,16 +702,27 @@ func (r *ClusterExtensionReconciler) getInstalledVersion(ctx context.Context, cl
 		return nil, nil
 	}
 
-	existingVersion, ok := release.Labels[labels.BundleVersionKey]
-	if !ok {
-		return nil, fmt.Errorf("release %q: missing bundle version", release.Name)
+	// Bundle must match installed version exactly
+	vr, err := mmsemver.NewConstraint(release.Labels[labels.BundleVersionKey])
+	if err != nil {
+		return nil, err
 	}
 
-	existingVersionSemver, err := bsemver.New(existingVersion)
-	if err != nil {
-		return nil, fmt.Errorf("could not determine bundle version for the chart %q: %w", release.Name, err)
+	// find corresponding bundle for the installed content
+	resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(
+		catalogfilter.WithPackageName(release.Labels[labels.PackageNameKey]),
+		catalogfilter.WithBundleName(release.Labels[labels.BundleNameKey]),
+		catalogfilter.InMastermindsSemverRange(vr),
+	))
+	if len(resultSet) == 0 {
+		return nil, fmt.Errorf("bundle %q for package %q not found in available catalogs but is currently installed via helm chart %q in namespace %q", release.Labels[labels.BundleNameKey], ext.Spec.PackageName, release.Name, release.Namespace)
 	}
-	return existingVersionSemver, nil
+
+	sort.SliceStable(resultSet, func(i, j int) bool {
+		return catalogsort.ByVersion(resultSet[i], resultSet[j])
+	})
+
+	return resultSet[0], nil
 }
 
 type releaseState string
