@@ -66,7 +66,7 @@ type filesystemCache struct {
 // resources that have been successfully reconciled, unpacked, and are being served.
 // These requirements help ensure that we can rely on status conditions to determine
 // when to issue a request to update the cached Catalog contents.
-func (fsc *filesystemCache) FetchCatalogContents(ctx context.Context, catalog *catalogd.Catalog) (io.ReadCloser, error) {
+func (fsc *filesystemCache) FetchCatalogContents(ctx context.Context, catalog *catalogd.ClusterCatalog) (io.ReadCloser, error) {
 	if catalog == nil {
 		return nil, fmt.Errorf("error: provided catalog must be non-nil")
 	}
