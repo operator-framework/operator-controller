@@ -3,16 +3,19 @@ package controllers_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/rand"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -21,6 +24,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
+	"github.com/operator-framework/rukpak/pkg/source"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
@@ -186,8 +190,17 @@ func TestClusterExtensionBundleDeploymentDoesNotExist(t *testing.T) {
 }
 
 func TestClusterExtensionChannelVersionExists(t *testing.T) {
-	t.Skip("Skip and replace with e2e for BundleDeployment")
 	cl, reconciler := newClientAndReconciler(t)
+	mockUnpacker := unp.(*MockUnpacker)
+	// Set up the Unpack method to return a result with StateUnpacked
+	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
+		State: source.StateUnpacked,
+	}, nil)
+	mockStorage := sto.(*MockStorage)
+	loadError := errors.New("load error")
+	mockStorage.On("Store", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	// Setting up the mock for Load method to return an error to avoid further mocking
+	mockStorage.On("Load", mock.Anything, mock.Anything, mock.Anything).Return(nil, loadError)
 	ctx := context.Background()
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 
@@ -214,7 +227,10 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	t.Log("By running reconcile")
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
-	require.NoError(t, err)
+	// Asserting that only loadError occurred
+	if assert.Error(t, err) {
+		assert.Equal(t, utilerrors.NewAggregate([]error{loadError}), err)
+	}
 
 	t.Log("By fetching updated cluster extension after reconcile")
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
@@ -229,22 +245,27 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	require.Equal(t, metav1.ConditionTrue, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonSuccess, cond.Reason)
 	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", cond.Message)
-	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionUnknown, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "bundledeployment status is unknown", cond.Message)
 
-	t.Log("By fetching the bundled deployment")
-	bd := &rukpakv1alpha2.BundleDeployment{}
-	require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
-	require.Equal(t, "core-rukpak-io-registry", bd.Spec.ProvisionerClassName)
-	require.Equal(t, installNamespace, bd.Spec.InstallNamespace)
-	require.Equal(t, rukpakv1alpha2.SourceTypeImage, bd.Spec.Source.Type)
-	require.NotNil(t, bd.Spec.Source.Image)
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", bd.Spec.Source.Image.Ref)
+	// we're skipping based on same loadError since Status.Condition setting path is skipped and bundle deployment is absent
+	// also invariants will be different
+	if err != nil && err.Error() != utilerrors.NewAggregate([]error{loadError}).Error() {
+		cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+		require.NotNil(t, cond)
+		require.Equal(t, metav1.ConditionUnknown, cond.Status)
+		require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
+		require.Equal(t, "bundledeployment status is unknown", cond.Message)
 
-	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
+		t.Log("By fetching the bundled deployment")
+		bd := &rukpakv1alpha2.BundleDeployment{}
+		require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
+		require.Equal(t, "core-rukpak-io-registry", bd.Spec.ProvisionerClassName)
+		require.Equal(t, installNamespace, bd.Spec.InstallNamespace)
+		require.Equal(t, rukpakv1alpha2.SourceTypeImage, bd.Spec.Source.Type)
+		require.NotNil(t, bd.Spec.Source.Image)
+		require.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", bd.Spec.Source.Image.Ref)
+
+		verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
+	}
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
 
