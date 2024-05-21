@@ -16,6 +16,8 @@ import (
 func TestClusterExtensionPackagesWithWebhooksAreNotAllowed(t *testing.T) {
 	ctx := context.Background()
 	clusterExtension, catalog := testInit(t)
+	defer testCleanup(t, catalog, clusterExtension)
+	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
 		PackageName:      "package-with-webhooks",
@@ -23,9 +25,6 @@ func TestClusterExtensionPackagesWithWebhooksAreNotAllowed(t *testing.T) {
 		InstallNamespace: "default",
 	}
 	require.NoError(t, c.Create(ctx, clusterExtension))
-	defer testCleanup(t, catalog, clusterExtension)
-	defer getArtifactsOutput(t)
-
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(ctx, types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
