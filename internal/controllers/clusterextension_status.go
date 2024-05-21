@@ -27,7 +27,6 @@ import (
 )
 
 func updateStatusUnpackFailing(status *ocv1alpha1.ClusterExtensionStatus, err error) error {
-	status.ResolvedBundle = nil
 	status.InstalledBundle = nil
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:    rukpakv1alpha2.TypeUnpacked,
@@ -40,7 +39,6 @@ func updateStatusUnpackFailing(status *ocv1alpha1.ClusterExtensionStatus, err er
 
 // TODO: verify if we need to update the installBundle status or leave it as is.
 func updateStatusUnpackPending(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
-	status.ResolvedBundle = nil
 	status.InstalledBundle = nil
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:    rukpakv1alpha2.TypeUnpacked,
@@ -52,7 +50,6 @@ func updateStatusUnpackPending(status *ocv1alpha1.ClusterExtensionStatus, result
 
 // TODO: verify if we need to update the installBundle status or leave it as is.
 func updateStatusUnpacking(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
-	status.ResolvedBundle = nil
 	status.InstalledBundle = nil
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:    rukpakv1alpha2.TypeUnpacked,

@@ -3,7 +3,6 @@ package controllers_test
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"testing"
 
@@ -15,7 +14,6 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/rand"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -194,13 +192,9 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpacked
 	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
-		State: source.StateUnpacked,
+		State: source.StatePending,
 	}, nil)
-	mockStorage := store.(*MockStorage)
-	loadError := errors.New("load error")
-	mockStorage.On("Store", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	// Setting up the mock for Load method to return an error to avoid further mocking
-	mockStorage.On("Load", mock.Anything, mock.Anything, mock.Anything).Return(nil, loadError)
+
 	ctx := context.Background()
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 
@@ -227,10 +221,7 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	t.Log("By running reconcile")
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
-	// Asserting that only loadError occurred
-	if assert.Error(t, err) {
-		assert.Equal(t, utilerrors.NewAggregate([]error{loadError}), err)
-	}
+	require.NoError(t, err, nil)
 
 	t.Log("By fetching updated cluster extension after reconcile")
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
@@ -240,23 +231,18 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
-	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionTrue, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, cond.Reason)
-	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", cond.Message)
+	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+	require.NotNil(t, resolvedCond)
+	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
+	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
 
-	// we're skipping based on same loadError since Status.Condition setting path is skipped
-	// and invariants will be different
-	if err != nil && err.Error() != utilerrors.NewAggregate([]error{loadError}).Error() {
-		cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
-		require.NotNil(t, cond)
-		require.Equal(t, metav1.ConditionUnknown, cond.Status)
-		require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-		require.Equal(t, "bundledeployment status is unknown", cond.Message)
+	t.Log("By checking the expected unpacked conditions")
+	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, rukpakv1alpha2.TypeUnpacked)
+	require.NotNil(t, unpackedCond)
+	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
+	require.Equal(t, rukpakv1alpha2.ReasonUnpackPending, unpackedCond.Reason)
 
-		verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
-	}
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
 
