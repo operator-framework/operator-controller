@@ -88,7 +88,7 @@ func (m *MockStorage) Store(ctx context.Context, owner client.Object, bundle fs.
 }
 
 func newClient(t *testing.T) client.Client {
-	cl, err := client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	cl, err := client.New(config, client.Options{Scheme: scheme.Scheme})
 	require.NoError(t, err)
 	require.NotNil(t, cl)
 	return cl
@@ -100,18 +100,18 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterEx
 	reconciler := &controllers.ClusterExtensionReconciler{
 		Client:             cl,
 		BundleProvider:     &fakeCatalogClient,
-		ActionClientGetter: acg,
-		Unpacker:           unp,
-		Storage:            sto,
+		ActionClientGetter: helmClientGetter,
+		Unpacker:           unpacker,
+		Storage:            store,
 	}
 	return cl, reconciler
 }
 
 var (
-	cfg *rest.Config
-	acg helmclient.ActionClientGetter
-	unp source.Unpacker // Interface, will be initialized as a mock in TestMain
-	sto storage.Storage
+	config           *rest.Config
+	helmClientGetter helmclient.ActionClientGetter
+	unpacker         source.Unpacker // Interface, will be initialized as a mock in TestMain
+	store            storage.Storage
 )
 
 func TestMain(m *testing.M) {
@@ -122,20 +122,20 @@ func TestMain(m *testing.M) {
 	}
 
 	var err error
-	cfg, err = testEnv.Start()
+	config, err = testEnv.Start()
 	utilruntime.Must(err)
-	if cfg == nil {
+	if config == nil {
 		log.Panic("expected cfg to not be nil")
 	}
 
 	rm := meta.NewDefaultRESTMapper(nil)
-	cfgGetter, err := helmclient.NewActionConfigGetter(cfg, rm)
+	cfgGetter, err := helmclient.NewActionConfigGetter(config, rm)
 	utilruntime.Must(err)
-	acg, err = helmclient.NewActionClientGetter(cfgGetter)
+	helmClientGetter, err = helmclient.NewActionClientGetter(cfgGetter)
 	utilruntime.Must(err)
 
-	unp = new(MockUnpacker)
-	sto = new(MockStorage)
+	unpacker = new(MockUnpacker)
+	store = new(MockStorage)
 
 	code := m.Run()
 	utilruntime.Must(testEnv.Stop())

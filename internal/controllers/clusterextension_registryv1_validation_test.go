@@ -112,7 +112,7 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 			reconciler := &controllers.ClusterExtensionReconciler{
 				Client:             cl,
 				BundleProvider:     &fakeCatalogClient,
-				ActionClientGetter: acg,
+				ActionClientGetter: helmClientGetter,
 			}
 
 			installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))

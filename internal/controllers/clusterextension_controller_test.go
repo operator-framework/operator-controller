@@ -191,12 +191,12 @@ func TestClusterExtensionBundleDeploymentDoesNotExist(t *testing.T) {
 
 func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t)
-	mockUnpacker := unp.(*MockUnpacker)
+	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpacked
 	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
 		State: source.StateUnpacked,
 	}, nil)
-	mockStorage := sto.(*MockStorage)
+	mockStorage := store.(*MockStorage)
 	loadError := errors.New("load error")
 	mockStorage.On("Store", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	// Setting up the mock for Load method to return an error to avoid further mocking
