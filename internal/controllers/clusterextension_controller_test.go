@@ -246,23 +246,14 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	require.Equal(t, ocv1alpha1.ReasonSuccess, cond.Reason)
 	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", cond.Message)
 
-	// we're skipping based on same loadError since Status.Condition setting path is skipped and bundle deployment is absent
-	// also invariants will be different
+	// we're skipping based on same loadError since Status.Condition setting path is skipped
+	// and invariants will be different
 	if err != nil && err.Error() != utilerrors.NewAggregate([]error{loadError}).Error() {
 		cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 		require.NotNil(t, cond)
 		require.Equal(t, metav1.ConditionUnknown, cond.Status)
 		require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
 		require.Equal(t, "bundledeployment status is unknown", cond.Message)
-
-		t.Log("By fetching the bundled deployment")
-		bd := &rukpakv1alpha2.BundleDeployment{}
-		require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
-		require.Equal(t, "core-rukpak-io-registry", bd.Spec.ProvisionerClassName)
-		require.Equal(t, installNamespace, bd.Spec.InstallNamespace)
-		require.Equal(t, rukpakv1alpha2.SourceTypeImage, bd.Spec.Source.Type)
-		require.NotNil(t, bd.Spec.Source.Image)
-		require.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", bd.Spec.Source.Image.Ref)
 
 		verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	}
