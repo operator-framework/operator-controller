@@ -120,6 +120,7 @@ func TestClusterExtensionNonExistentVersion(t *testing.T) {
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
 	require.Equal(t, fmt.Sprintf(`no package %q matching version "0.50.0" found`, pkgName), cond.Message)
+
 	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
@@ -286,11 +287,11 @@ func TestClusterExtensionVersionNoChannel(t *testing.T) {
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
 	require.Equal(t, fmt.Sprintf("no package %q matching version %q in channel %q found", pkgName, pkgVer, pkgChan), cond.Message)
-	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 
+	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -334,10 +335,11 @@ func TestClusterExtensionNoChannel(t *testing.T) {
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
 	require.Equal(t, fmt.Sprintf("no package %q in channel %q found", pkgName, pkgChan), cond.Message)
+
 	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -383,10 +385,11 @@ func TestClusterExtensionNoVersion(t *testing.T) {
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
 	require.Equal(t, fmt.Sprintf("no package %q matching version %q in channel %q found", pkgName, pkgVer, pkgChan), cond.Message)
+
 	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))

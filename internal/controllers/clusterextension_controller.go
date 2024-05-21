@@ -38,14 +38,12 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -79,6 +77,17 @@ import (
 	"github.com/operator-framework/operator-controller/internal/handler"
 	"github.com/operator-framework/operator-controller/internal/labels"
 )
+
+// ResolutionError type
+// If a more specific error type needs to be distinguished,
+// add another type here
+type ResolutionError struct {
+	message string
+}
+
+func (e ResolutionError) Error() string {
+	return e.message
+}
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
@@ -120,13 +129,14 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	var existingExt = &ocv1alpha1.ClusterExtension{}
 	if err := r.Client.Get(ctx, req.NamespacedName, existingExt); err != nil {
-		return ctrl.Result{}, utilerrors.NewAggregate([]error{client.IgnoreNotFound(err), nil})
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	reconciledExt := existingExt.DeepCopy()
-	res, reconcileErr := r.reconcile(ctx, reconciledExt)
+	var updateError error
 
-	var updateErrors []error
+	reconciledExt := existingExt.DeepCopy()
+	res, err := r.reconcile(ctx, reconciledExt)
+	updateError = errors.Join(updateError, err)
 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingExt.Status, reconciledExt.Status)
@@ -134,9 +144,8 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	unexpectedFieldsChanged := checkForUnexpectedFieldChange(*existingExt, *reconciledExt)
 
 	if updateStatus {
-		if updateErr := r.Client.Status().Update(ctx, reconciledExt); updateErr != nil {
-			updateErrors = append(updateErrors, updateErr)
-		}
+		err = r.Client.Status().Update(ctx, reconciledExt)
+		updateError = errors.Join(updateError, err)
 	}
 
 	if unexpectedFieldsChanged {
@@ -144,16 +153,11 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	if updateFinalizers {
-		if updateErr := r.Client.Update(ctx, reconciledExt); updateErr != nil {
-			updateErrors = append(updateErrors, updateErr)
-		}
+		err = r.Client.Update(ctx, reconciledExt)
+		updateError = errors.Join(updateError, err)
 	}
 
-	if reconcileErr != nil {
-		updateErrors = append(updateErrors, reconcileErr)
-	}
-
-	return res, utilerrors.NewAggregate(updateErrors)
+	return res, updateError
 }
 
 // ensureAllConditionsWithReason checks that all defined condition types exist in the given ClusterExtension,
@@ -183,35 +187,6 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 	return !equality.Semantic.DeepEqual(a, b)
 }
 
-func (r *ClusterExtensionReconciler) handleResolutionErrors(ext *ocv1alpha1.ClusterExtension, err error) (ctrl.Result, error) {
-	var aggErrs utilerrors.Aggregate
-	if errors.As(err, &aggErrs) {
-		for _, err := range aggErrs.Errors() {
-			errorMessage := err.Error()
-			if strings.Contains(errorMessage, "no package") {
-				// Handle no package found errors, potentially setting status conditions
-				setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
-				ensureAllConditionsWithReason(ext, "ResolutionFailed", errorMessage)
-			} else if strings.Contains(errorMessage, "invalid version range") {
-				// Handle invalid version range errors, potentially setting status conditions
-				setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
-				ensureAllConditionsWithReason(ext, "ResolutionFailed", errorMessage)
-			} else {
-				// General error handling
-				setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
-				ensureAllConditionsWithReason(ext, "InstallationStatusUnknown", "")
-			}
-		}
-	} else {
-		// If the error is not an aggregate, handle it as a general error
-		errorMessage := err.Error()
-		setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
-		ensureAllConditionsWithReason(ext, "InstallationStatusUnknown", "")
-	}
-	ext.Status.ResolvedBundle = nil
-	return ctrl.Result{}, err
-}
-
 // Helper function to do the actual reconcile
 //
 // Today we always return ctrl.Result{} and an error.
@@ -232,10 +207,22 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// run resolution
 	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
-		return r.handleResolutionErrors(ext, err)
+		ext.Status.ResolvedBundle = nil
+		ext.Status.InstalledBundle = nil
+		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		// TODO: indicate Progressing state based on whether error is ResolutionError or not
+		if errors.As(err, &ResolutionError{}) {
+			ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
+		} else {
+			ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonInstallationStatusUnknown, err.Error())
+		}
+		return ctrl.Result{}, err
 	}
 
 	if err := r.validateBundle(bundle); err != nil {
+		ext.Status.ResolvedBundle = nil
+		ext.Status.InstalledBundle = nil
+		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
@@ -291,23 +278,13 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	bundleFS, err := r.Storage.Load(ctx, ext)
 	if err != nil {
-		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:    ocv1alpha1.TypeHasValidBundle,
-			Status:  metav1.ConditionFalse,
-			Reason:  ocv1alpha1.ReasonBundleLoadFailed,
-			Message: err.Error(),
-		})
+		setHasValidBundleFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
 	chrt, values, err := r.Handler.Handle(ctx, bundleFS, ext)
 	if err != nil {
-		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:    ocv1alpha1.TypeInstalled,
-			Status:  metav1.ConditionFalse,
-			Reason:  ocv1alpha1.ReasonInstallationFailed,
-			Message: err.Error(),
-		})
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
 
@@ -342,26 +319,17 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			return nil
 		}, helmclient.AppendInstallPostRenderer(post))
 		if err != nil {
-			if isResourceNotFoundErr(err) {
-				err = errRequiredResourceNotFound{err}
-			}
 			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err), ext.Generation)
 			return ctrl.Result{}, err
 		}
 	case stateNeedsUpgrade:
 		rel, err = ac.Upgrade(ext.GetName(), r.ReleaseNamespace, chrt, values, helmclient.AppendUpgradePostRenderer(post))
 		if err != nil {
-			if isResourceNotFoundErr(err) {
-				err = errRequiredResourceNotFound{err}
-			}
 			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err), ext.Generation)
 			return ctrl.Result{}, err
 		}
 	case stateUnchanged:
 		if err := ac.Reconcile(rel); err != nil {
-			if isResourceNotFoundErr(err) {
-				err = errRequiredResourceNotFound{err}
-			}
 			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonResolutionFailed, err), ext.Generation)
 			return ctrl.Result{}, err
 		}
@@ -414,7 +382,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
 	allBundles, err := r.BundleProvider.Bundles(ctx)
 	if err != nil {
-		return nil, utilerrors.NewAggregate([]error{fmt.Errorf("error fetching bundles: %w", err)})
+		return nil, fmt.Errorf("error fetching bundles: %w", err)
 	}
 
 	packageName := ext.Spec.PackageName
@@ -437,7 +405,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 	if versionRange != "" {
 		vr, err := mmsemver.NewConstraint(versionRange)
 		if err != nil {
-			return nil, utilerrors.NewAggregate([]error{fmt.Errorf("invalid version range '%s': %w", versionRange, err)})
+			return nil, ResolutionError{fmt.Sprintf("invalid version range %q: %v", versionRange, err)}
 		}
 		predicates = append(predicates, catalogfilter.InMastermindsSemverRange(vr))
 	}
@@ -464,13 +432,13 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 	if len(resultSet) == 0 {
 		switch {
 		case versionRange != "" && channelName != "":
-			return nil, fmt.Errorf("%sno package %q matching version %q in channel %q found", upgradeErrorPrefix, packageName, versionRange, channelName)
+			return nil, ResolutionError{fmt.Sprintf("%sno package %q matching version %q in channel %q found", upgradeErrorPrefix, packageName, versionRange, channelName)}
 		case versionRange != "":
-			return nil, fmt.Errorf("%sno package %q matching version %q found", upgradeErrorPrefix, packageName, versionRange)
+			return nil, ResolutionError{fmt.Sprintf("%sno package %q matching version %q found", upgradeErrorPrefix, packageName, versionRange)}
 		case channelName != "":
-			return nil, fmt.Errorf("%sno package %q in channel %q found", upgradeErrorPrefix, packageName, channelName)
+			return nil, ResolutionError{fmt.Sprintf("%sno package %q in channel %q found", upgradeErrorPrefix, packageName, channelName)}
 		default:
-			return nil, fmt.Errorf("%sno package %q found", upgradeErrorPrefix, packageName)
+			return nil, ResolutionError{fmt.Sprintf("%sno package %q found", upgradeErrorPrefix, packageName)}
 		}
 	}
 
@@ -751,37 +719,6 @@ func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, a
 	})
 
 	return resultSet[0], nil
-}
-
-type errRequiredResourceNotFound struct {
-	error
-}
-
-func (err errRequiredResourceNotFound) Error() string {
-	return fmt.Sprintf("required resource not found: %v", err.error)
-}
-
-func isResourceNotFoundErr(err error) bool {
-	var agg utilerrors.Aggregate
-	if errors.As(err, &agg) {
-		for _, err := range agg.Errors() {
-			return isResourceNotFoundErr(err)
-		}
-	}
-
-	nkme := &apimeta.NoKindMatchError{}
-	if errors.As(err, &nkme) {
-		return true
-	}
-	if apierrors.IsNotFound(err) {
-		return true
-	}
-
-	// TODO: improve NoKindMatchError matching
-	//   An error that is bubbled up from the k8s.io/cli-runtime library
-	//   does not wrap meta.NoKindMatchError, so we need to fallback to
-	//   the use of string comparisons for now.
-	return strings.Contains(err.Error(), "no matches for kind")
 }
 
 type postrenderer struct {
