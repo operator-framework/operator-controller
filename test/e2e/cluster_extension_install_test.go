@@ -322,7 +322,6 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 // - clusterextensions
 // - pods logs
 // - deployments
-// - bundledeployments
 // - catalogsources
 func getArtifactsOutput(t *testing.T) {
 	basePath := env.GetString("ARTIFACT_PATH", "")
@@ -379,23 +378,6 @@ func getArtifactsOutput(t *testing.T) {
 		}
 		if err := os.WriteFile(filepath.Join(artifactPath, catalogsource.Name+"-catalogsource.yaml"), catalogsourceYaml, 0600); err != nil {
 			fmt.Printf("Failed to write catalogsource to file: %v", err)
-		}
-	}
-
-	// Get all BundleDeployments in the namespace and save them to the artifact path.
-	bundleDeployments := rukpakv1alpha2.BundleDeploymentList{}
-	if err := c.List(context.Background(), &bundleDeployments, client.InNamespace("")); err != nil {
-		fmt.Printf("Failed to list bundleDeployments: %v", err)
-	}
-	for _, bundleDeployment := range bundleDeployments.Items {
-		// Save bundleDeployment to artifact path
-		bundleDeploymentYaml, err := yaml.Marshal(bundleDeployment)
-		if err != nil {
-			fmt.Printf("Failed to marshal bundleDeployment: %v", err)
-			continue
-		}
-		if err := os.WriteFile(filepath.Join(artifactPath, bundleDeployment.Name+"-bundleDeployment.yaml"), bundleDeploymentYaml, 0600); err != nil {
-			fmt.Printf("Failed to write bundleDeployment to file: %v", err)
 		}
 	}
 
