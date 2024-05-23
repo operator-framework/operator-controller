@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
+	"github.com/operator-framework/rukpak/pkg/source"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
@@ -31,7 +33,6 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 		name    string
 		bundle  *catalogmetadata.Bundle
 		wantErr string
-		skip    bool
 	}{
 		{
 			name: "package with no dependencies",
@@ -46,9 +47,6 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 				},
 				CatalogName: "fake-catalog",
 			},
-			// Skipping the happy path, since it requires us to mock unpacker, store and the
-			// entire installation. This should be handled in an e2e instead.
-			skip: true,
 		},
 		{
 			name: "package with olm.package.required property",
@@ -103,16 +101,20 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 			defer func() {
 				require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 			}()
-
-			if tt.skip {
-				return
-			}
-
 			fakeCatalogClient := testutil.NewFakeCatalogClient([]*catalogmetadata.Bundle{tt.bundle})
+			mockUnpacker := unpacker.(*MockUnpacker)
+			// Verify if mockUnpacker is correctly set
+			t.Log("MockUnpacker set to:", mockUnpacker)
+			// Set up the Unpack method to return a result with StatePending
+			mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
+				State: source.StatePending,
+			}, nil)
+
 			reconciler := &controllers.ClusterExtensionReconciler{
 				Client:             cl,
 				BundleProvider:     &fakeCatalogClient,
 				ActionClientGetter: helmClientGetter,
+				Unpacker:           unpacker,
 			}
 
 			installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
