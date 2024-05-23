@@ -10,10 +10,13 @@ export IMAGE_TAG
 
 IMAGE := $(IMAGE_REPO):$(IMAGE_TAG)
 
-# setup-envtest on *nix uses XDG_DATA_HOME, falling back to HOME, as the default storage directory. Some CI setups
-# don't have XDG_DATA_HOME set; in those cases, we set it here so setup-envtest functions correctly. This shouldn't
-# affect developers.
-export XDG_DATA_HOME ?= /tmp/.local/share
+# By default setup-envtest will write to $XDG_DATA_HOME, or $HOME/.local/share if that is not defined.
+# If $HOME is not set, we need to specify a binary directory to prevent an error in setup-envtest.
+# Useful for some CI/CD environments that set neither $XDG_DATA_HOME nor $HOME.
+SETUP_ENVTEST_BIN_DIR_OVERRIDE=
+ifeq ($(shell [[ $$HOME == "" || $$HOME == "/" ]] && [[ $$XDG_DATA_HOME == "" ]] && echo true ), true)
+	SETUP_ENVTEST_BIN_DIR_OVERRIDE += --bin-dir /tmp/envtest-binaries
+endif
 
 # bingo manages consistent tooling versions for things like kind, kustomize, etc.
 include .bingo/Variables.mk
@@ -70,7 +73,7 @@ vet: ## Run go vet against code.
 
 .PHONY: test-unit
 test-unit: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION)) && go test $(shell go list ./... | grep -v /test/e2e) -coverprofile cover.out
+	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && go test $(shell go list ./... | grep -v /test/e2e) -coverprofile cover.out
 
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 ifeq ($(origin E2E_FLAGS), undefined)
