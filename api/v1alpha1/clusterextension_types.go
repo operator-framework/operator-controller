@@ -127,8 +127,6 @@ func init() {
 		ReasonUpgradeFailed,
 		ReasonBundleLoadFailed,
 		ReasonErrorGettingClient,
-		// TODO: this reason is not being used in the reconciler, it will be removed
-		// when we fix the tests. Avoiding removal here, to reduce diffs.
 		ReasonInstallationStatusUnknown,
 	)
 }

@@ -86,7 +86,7 @@ func (b *Bundle) loadRequiredPackages() error {
 	if b.requiredPackages == nil {
 		requiredPackages, err := loadFromProps[PackageRequired](b, property.TypePackageRequired, false)
 		if err != nil {
-			return fmt.Errorf("error determining bundle required packages for bundle %q: %s", b.Bundle.Name, err)
+			return fmt.Errorf("error determining bundle required packages for bundle %q: %s", b.Name, err)
 		}
 		for i := range requiredPackages {
 			semverRange, err := bsemver.ParseRange(requiredPackages[i].PackageRequired.VersionRange)

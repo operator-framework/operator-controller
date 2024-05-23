@@ -89,7 +89,6 @@ type ClusterExtensionReconciler struct {
 	ActionClientGetter helmclient.ActionClientGetter
 	Storage            storage.Storage
 	Handler            handler.Handler
-	Scheme             *runtime.Scheme
 	dynamicWatchMutex  sync.RWMutex
 	dynamicWatchGVKs   map[schema.GroupVersionKind]struct{}
 	controller         crcontroller.Controller
@@ -225,11 +224,9 @@ func (r *ClusterExtensionReconciler) handleResolutionErrors(ext *ocv1alpha1.Clus
 */
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
-	l := log.FromContext(ctx).WithName("operator-controller")
 	// run resolution
 	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
-		l.V(1).Info("bundle resolve error", "error", err)
 		return r.handleResolutionErrors(ext, err)
 	}
 
@@ -243,8 +240,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	if err != nil {
 		ext.Status.ResolvedBundle = nil
 		ext.Status.InstalledBundle = nil
-		setResolvedStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonResolutionFailed, err), ext.GetGeneration())
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err), ext.Generation)
+		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.Generation)
 		return ctrl.Result{}, err
 	}
 
@@ -382,7 +379,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			if !isWatched {
 				if err := r.controller.Watch(
 					source.Kind(r.cache, unstructuredObj),
-					crhandler.EnqueueRequestForOwner(r.Scheme, r.Client.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
+					crhandler.EnqueueRequestForOwner(r.Scheme(), r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
 					helmpredicate.DependentPredicateFuncs()); err != nil {
 					return err
 				}
@@ -620,11 +617,6 @@ func mapOwneeToOwnerHandler(cl client.Client, log logr.Logger, owner client.Obje
 			log.Error(err, "map ownee to owner: lookup GVK for owner")
 			return nil
 		}
-		owneeGVK, err := apiutil.GVKForObject(obj, cl.Scheme())
-		if err != nil {
-			log.Error(err, "map ownee to owner: lookup GVK for ownee")
-			return nil
-		}
 
 		type ownerInfo struct {
 			key types.NamespacedName
@@ -648,17 +640,6 @@ func mapOwneeToOwnerHandler(cl client.Client, log logr.Logger, owner client.Obje
 			}
 		}
 		if oi == nil {
-			return nil
-		}
-
-		if err := cl.Get(ctx, oi.key, owner); client.IgnoreNotFound(err) != nil {
-			log.Info("map ownee to owner: get owner",
-				"ownee", client.ObjectKeyFromObject(obj),
-				"owneeKind", owneeGVK,
-				"owner", oi.key,
-				"ownerKind", oi.gvk,
-				"error", err.Error(),
-			)
 			return nil
 		}
 		return []reconcile.Request{{NamespacedName: oi.key}}
@@ -715,7 +696,7 @@ func (r *ClusterExtensionReconciler) installedBundle(ctx context.Context, allBun
 		catalogfilter.InMastermindsSemverRange(vr),
 	))
 	if len(resultSet) == 0 {
-		return nil, fmt.Errorf("bundle %q for package %q not found in available catalogs but is currently installed via helm chart %q in namespace %q", release.Labels[labels.BundleNameKey], ext.Spec.PackageName, release.Name, release.Namespace)
+		return nil, fmt.Errorf("bundle %q for package %q not found in available catalogs but is currently installed in namespace %q", release.Labels[labels.BundleNameKey], ext.Spec.PackageName, release.Namespace)
 	}
 
 	sort.SliceStable(resultSet, func(i, j int) bool {
