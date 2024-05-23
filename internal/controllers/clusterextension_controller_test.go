@@ -19,6 +19,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
@@ -416,11 +417,16 @@ func verifyConditionsInvariants(t *testing.T, ext *ocv1alpha1.ClusterExtension) 
 func TestClusterExtensionUpgrade(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t)
 	mockUnpacker := unpacker.(*MockUnpacker)
-	// Set up the Unpack method to return a result with StateUnpacked
+	// Set up the Unpack method to return a result with StateUnpackPending
 	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
 		State: source.StatePending,
 	}, nil)
 	ctx := context.Background()
+	defer func() {
+		controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+			return nil, nil
+		}
+	}()
 
 	t.Run("semver upgrade constraints enforcement of upgrades within major version", func(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
@@ -470,6 +476,22 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		err = cl.Update(ctx, clusterExtension)
 		require.NoError(t, err)
 
+		controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+			return &catalogmetadata.Bundle{
+				Bundle: declcfg.Bundle{
+					Name:    "operatorhub/prometheus/beta/1.0.0",
+					Package: "prometheus",
+					Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
+						{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+					},
+				},
+				CatalogName: "fake-catalog",
+				InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+			}, nil
+		}
+
 		// Run reconcile again
 		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 		require.Error(t, err)
@@ -488,7 +510,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NotNil(t, cond)
 		assert.Equal(t, metav1.ConditionFalse, cond.Status)
 		assert.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-		assert.Equal(t, "error upgrading from currently installed version \"1.0.0\": no package \"prometheus\" matching version \"2.0.0\" found in channel \"beta\"", cond.Message)
+		assert.Equal(t, "error upgrading from currently installed version \"1.0.0\": no package \"prometheus\" matching version \"2.0.0\" in channel \"beta\" found", cond.Message)
 
 		// Valid update skipping one version
 		clusterExtension.Spec.Version = "1.2.0"
@@ -563,6 +585,22 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		err = cl.Update(ctx, clusterExtension)
 		require.NoError(t, err)
 
+		controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+			return &catalogmetadata.Bundle{
+				Bundle: declcfg.Bundle{
+					Name:    "operatorhub/prometheus/beta/1.0.0",
+					Package: "prometheus",
+					Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
+						{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+					},
+				},
+				CatalogName: "fake-catalog",
+				InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+			}, nil
+		}
+
 		// Run reconcile again
 		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 		require.Error(t, err)
@@ -581,7 +619,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NotNil(t, cond)
 		assert.Equal(t, metav1.ConditionFalse, cond.Status)
 		assert.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-		assert.Equal(t, "error upgrading from currently installed version \"1.0.0\": no package \"prometheus\" matching version \"1.2.0\" found in channel \"beta\"", cond.Message)
+		assert.Equal(t, "error upgrading from currently installed version \"1.0.0\": no package \"prometheus\" matching version \"1.2.0\" in channel \"beta\" found", cond.Message)
 
 		// Valid update skipping one version
 		clusterExtension.Spec.Version = "1.0.1"
@@ -670,6 +708,22 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 				err = cl.Update(ctx, clusterExtension)
 				require.NoError(t, err)
 
+				controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+					return &catalogmetadata.Bundle{
+						Bundle: declcfg.Bundle{
+							Name:    "operatorhub/prometheus/beta/1.0.0",
+							Package: "prometheus",
+							Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+							Properties: []property.Property{
+								{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
+								{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+							},
+						},
+						CatalogName: "fake-catalog",
+						InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+					}, nil
+				}
+
 				// Run reconcile again
 				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 				require.NoError(t, err)
@@ -701,6 +755,11 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 		State: source.StatePending,
 	}, nil)
 	ctx := context.Background()
+	defer func() {
+		controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+			return nil, nil
+		}
+	}()
 
 	t.Run("enforce upgrade constraints", func(t *testing.T) {
 		for _, tt := range []struct {
@@ -761,6 +820,22 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				err = cl.Update(ctx, clusterExtension)
 				require.NoError(t, err)
 
+				controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+					return &catalogmetadata.Bundle{
+						Bundle: declcfg.Bundle{
+							Name:    "operatorhub/prometheus/beta/1.0.1",
+							Package: "prometheus",
+							Image:   "quay.io/operatorhubio/prometheus@fake1.0.1",
+							Properties: []property.Property{
+								{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.1"}`)},
+								{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+							},
+						},
+						CatalogName: "fake-catalog",
+						InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+					}, nil
+				}
+
 				// Run reconcile again
 				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 				require.Error(t, err)
@@ -779,7 +854,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				require.NotNil(t, cond)
 				assert.Equal(t, metav1.ConditionFalse, cond.Status)
 				assert.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-				assert.Equal(t, "error upgrading from currently installed version \"1.0.1\": no package \"prometheus\" matching version \"1.0.0\" found in channel \"beta\"", cond.Message)
+				assert.Equal(t, "error upgrading from currently installed version \"1.0.1\": no package \"prometheus\" matching version \"1.0.0\" in channel \"beta\" found", cond.Message)
 			})
 		}
 	})
@@ -843,6 +918,22 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				clusterExtension.Spec.Version = "1.0.0"
 				err = cl.Update(ctx, clusterExtension)
 				require.NoError(t, err)
+
+				controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+					return &catalogmetadata.Bundle{
+						Bundle: declcfg.Bundle{
+							Name:    "operatorhub/prometheus/beta/2.0.0",
+							Package: "prometheus",
+							Image:   "quay.io/operatorhubio/prometheus@fake2.0.0",
+							Properties: []property.Property{
+								{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"2.0.0"}`)},
+								{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+							},
+						},
+						CatalogName: "fake-catalog",
+						InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+					}, nil
+				}
 
 				// Run reconcile again
 				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})

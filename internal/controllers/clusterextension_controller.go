@@ -409,7 +409,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 	channelName := ext.Spec.Channel
 	versionRange := ext.Spec.Version
 
-	installedBundle, err := r.installedBundle(ctx, allBundles, &ext)
+	installedBundle, err := GetInstalledbundle(ctx, r.ActionClientGetter, allBundles, &ext)
 	if err != nil {
 		return nil, err
 	}
@@ -447,11 +447,14 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("upgrade error!!!!")
 		upgradeErrorPrefix = fmt.Sprintf("error upgrading from currently installed version %q: ", installedBundleVersion.String())
 	}
 	if len(resultSet) == 0 {
+		fmt.Println("empty resilt set!!")
 		switch {
 		case versionRange != "" && channelName != "":
+			fmt.Println("here!!!")
 			return nil, fmt.Errorf("%sno package %q matching version %q in channel %q found", upgradeErrorPrefix, packageName, versionRange, channelName)
 		case versionRange != "":
 			return nil, fmt.Errorf("%sno package %q matching version %q found", upgradeErrorPrefix, packageName, versionRange)
@@ -669,8 +672,41 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 	}
 }
 
-func (r *ClusterExtensionReconciler) installedBundle(ctx context.Context, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
-	cl, err := r.ActionClientGetter.ActionClientFor(ctx, ext)
+type releaseState string
+
+const (
+	stateNeedsInstall releaseState = "NeedsInstall"
+	stateNeedsUpgrade releaseState = "NeedsUpgrade"
+	stateUnchanged    releaseState = "Unchanged"
+	stateError        releaseState = "Error"
+)
+
+func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterface, obj metav1.Object, chrt *chart.Chart, values chartutil.Values, post *postrenderer) (*release.Release, releaseState, error) {
+	currentRelease, err := cl.Get(obj.GetName())
+	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
+		return nil, stateError, err
+	}
+	if errors.Is(err, driver.ErrReleaseNotFound) {
+		return nil, stateNeedsInstall, nil
+	}
+
+	desiredRelease, err := cl.Upgrade(obj.GetName(), r.ReleaseNamespace, chrt, values, func(upgrade *action.Upgrade) error {
+		upgrade.DryRun = true
+		return nil
+	}, helmclient.AppendUpgradePostRenderer(post))
+	if err != nil {
+		return currentRelease, stateError, err
+	}
+	if desiredRelease.Manifest != currentRelease.Manifest ||
+		currentRelease.Info.Status == release.StatusFailed ||
+		currentRelease.Info.Status == release.StatusSuperseded {
+		return currentRelease, stateNeedsUpgrade, nil
+	}
+	return currentRelease, stateUnchanged, nil
+}
+
+var GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+	cl, err := acg.ActionClientFor(ctx, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -704,39 +740,6 @@ func (r *ClusterExtensionReconciler) installedBundle(ctx context.Context, allBun
 	})
 
 	return resultSet[0], nil
-}
-
-type releaseState string
-
-const (
-	stateNeedsInstall releaseState = "NeedsInstall"
-	stateNeedsUpgrade releaseState = "NeedsUpgrade"
-	stateUnchanged    releaseState = "Unchanged"
-	stateError        releaseState = "Error"
-)
-
-func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterface, obj metav1.Object, chrt *chart.Chart, values chartutil.Values, post *postrenderer) (*release.Release, releaseState, error) {
-	currentRelease, err := cl.Get(obj.GetName())
-	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
-		return nil, stateError, err
-	}
-	if errors.Is(err, driver.ErrReleaseNotFound) {
-		return nil, stateNeedsInstall, nil
-	}
-
-	desiredRelease, err := cl.Upgrade(obj.GetName(), r.ReleaseNamespace, chrt, values, func(upgrade *action.Upgrade) error {
-		upgrade.DryRun = true
-		return nil
-	}, helmclient.AppendUpgradePostRenderer(post))
-	if err != nil {
-		return currentRelease, stateError, err
-	}
-	if desiredRelease.Manifest != currentRelease.Manifest ||
-		currentRelease.Info.Status == release.StatusFailed ||
-		currentRelease.Info.Status == release.StatusSuperseded {
-		return currentRelease, stateNeedsUpgrade, nil
-	}
-	return currentRelease, stateUnchanged, nil
 }
 
 type errRequiredResourceNotFound struct {

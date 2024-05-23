@@ -19,11 +19,14 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
+	"github.com/operator-framework/rukpak/pkg/source"
 )
 
 // BundleProvider provides the way to retrieve a list of Bundles from a source,
@@ -94,4 +97,46 @@ func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message strin
 			ObservedGeneration: generation,
 		})
 	}
+}
+
+func updateStatusUnpackFailing(status *ocv1alpha1.ClusterExtensionStatus, err error) error {
+	status.InstalledBundle = nil
+	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
+		Type:    rukpakv1alpha2.TypeUnpacked,
+		Status:  metav1.ConditionFalse,
+		Reason:  rukpakv1alpha2.ReasonUnpackFailed,
+		Message: err.Error(),
+	})
+	return err
+}
+
+// TODO: verify if we need to update the installBundle status or leave it as is.
+func updateStatusUnpackPending(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
+	status.InstalledBundle = nil
+	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
+		Type:    rukpakv1alpha2.TypeUnpacked,
+		Status:  metav1.ConditionFalse,
+		Reason:  rukpakv1alpha2.ReasonUnpackPending,
+		Message: result.Message,
+	})
+}
+
+// TODO: verify if we need to update the installBundle status or leave it as is.
+func updateStatusUnpacking(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
+	status.InstalledBundle = nil
+	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
+		Type:    rukpakv1alpha2.TypeUnpacked,
+		Status:  metav1.ConditionFalse,
+		Reason:  rukpakv1alpha2.ReasonUnpacking,
+		Message: result.Message,
+	})
+}
+
+func updateStatusUnpacked(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
+	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
+		Type:    rukpakv1alpha2.TypeUnpacked,
+		Status:  metav1.ConditionTrue,
+		Reason:  rukpakv1alpha2.ReasonUnpackSuccessful,
+		Message: result.Message,
+	})
 }
