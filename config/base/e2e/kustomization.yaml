@@ -1,7 +1,7 @@
 namespace: operator-controller-system
 
 resources:
-- ../default
+- ../../overlays/tls
 - manager_e2e_coverage_pvc.yaml
 - manager_e2e_coverage_copy_pod.yaml
 

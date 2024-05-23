@@ -9,7 +9,7 @@ repos = cfg.get('repos', ['operator-controller', 'catalogd'])
 
 repo = {
     'image': 'quay.io/operator-framework/operator-controller',
-    'yaml': 'config/default',
+    'yaml': 'config/overlays/tls',
     'binaries': {
         'manager': 'operator-controller-controller-manager',
     },

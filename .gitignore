@@ -39,3 +39,4 @@ install.sh
 site
 
 .tiltbuild/
+.vscode

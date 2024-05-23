@@ -112,6 +112,6 @@ spec:
       terminationGracePeriodSeconds: 10
       volumes:
         - name: cache
-          emptyDir: {}
+          emptyDir: {} 
         - name: bundle-cache
           emptyDir: {}

@@ -17,9 +17,11 @@ limitations under the License.
 package main
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -82,9 +84,11 @@ func main() {
 		operatorControllerVersion   bool
 		systemNamespace             string
 		provisionerStorageDirectory string
+		tlsCert                     string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&tlsCert, "tls-cert", "", "The TLS certificate to use for verifying HTTPS connections to the Catalogd web server.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -153,8 +157,27 @@ func main() {
 		os.Exit(1)
 	}
 
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+
+	if tlsCert != "" {
+		cert, err := os.ReadFile(tlsCert)
+		if err != nil {
+			log.Fatalf("Failed to read certificate file: %v", err)
+		}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(cert)
+		tlsConfig := &tls.Config{
+			RootCAs:    caCertPool,
+			MinVersion: tls.VersionTLS12,
+		}
+		tlsTransport := &http.Transport{
+			TLSClientConfig: tlsConfig,
+		}
+		httpClient.Transport = tlsTransport
+	}
+
 	cl := mgr.GetClient()
-	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, &http.Client{Timeout: 10 * time.Second}))
+	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, httpClient))
 
 	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(), helmclient.StorageNamespaceMapper(func(o client.Object) (string, error) {
 		return systemNamespace, nil
