@@ -184,7 +184,6 @@ func main() {
 		Client:             cl,
 		ReleaseNamespace:   systemNamespace,
 		BundleProvider:     catalogClient,
-		Scheme:             mgr.GetScheme(),
 		ActionClientGetter: acg,
 		Unpacker:           unpacker,
 		Storage:            localStorage,
