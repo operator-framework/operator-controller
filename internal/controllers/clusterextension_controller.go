@@ -454,14 +454,11 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("upgrade error!!!!")
 		upgradeErrorPrefix = fmt.Sprintf("error upgrading from currently installed version %q: ", installedBundleVersion.String())
 	}
 	if len(resultSet) == 0 {
-		fmt.Println("empty resilt set!!")
 		switch {
 		case versionRange != "" && channelName != "":
-			fmt.Println("here!!!")
 			return nil, fmt.Errorf("%sno package %q matching version %q in channel %q found", upgradeErrorPrefix, packageName, versionRange, channelName)
 		case versionRange != "":
 			return nil, fmt.Errorf("%sno package %q matching version %q found", upgradeErrorPrefix, packageName, versionRange)
