@@ -235,6 +235,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
+	// set deprecation status after _successful_ resolution
+	SetDeprecationStatus(ext, bundle)
 
 	bundleVersion, err := bundle.Version()
 	if err != nil {
@@ -259,12 +261,17 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	switch unpackResult.State {
 	case rukpaksource.StatePending:
-		updateStatusUnpackPending(&ext.Status, unpackResult)
+		updateStatusUnpackPending(&ext.Status, unpackResult, ext.GetGeneration())
 		// There must be a limit to number of entries if status is stuck at
 		// unpack pending.
+		setHasValidBundleUnknown(&ext.Status.Conditions, "unpack pending", ext.GetGeneration())
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as unpack is pending", ext.GetGeneration())
+
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacking:
 		updateStatusUnpacking(&ext.Status, unpackResult)
+		setHasValidBundleUnknown(&ext.Status.Conditions, "unpack pending", ext.GetGeneration())
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as unpack is pending", ext.GetGeneration())
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacked:
 		// TODO: Add finalizer to clean the stored bundles, after https://github.com/operator-framework/rukpak/pull/897

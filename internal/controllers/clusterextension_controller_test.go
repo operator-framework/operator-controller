@@ -243,6 +243,7 @@ func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
 	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
 	require.Equal(t, rukpakv1alpha2.ReasonUnpackPending, unpackedCond.Reason)
 
+	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
 

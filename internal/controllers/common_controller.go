@@ -46,6 +46,28 @@ func setResolvedStatusConditionSuccess(conditions *[]metav1.Condition, message s
 	})
 }
 
+// setInstalledStatusConditionUnknown sets the installed status condition to unknown.
+func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeInstalled,
+		Status:             metav1.ConditionUnknown,
+		Reason:             ocv1alpha1.ReasonInstallationStatusUnknown,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+// setHasValidBundleUnknown sets the installed status condition to unknown.
+func setHasValidBundleUnknown(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeHasValidBundle,
+		Status:             metav1.ConditionUnknown,
+		Reason:             ocv1alpha1.ReasonHasValidBundleUnknown,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
 // setResolvedStatusConditionFailed sets the resolved status condition to failed.
 func setResolvedStatusConditionFailed(conditions *[]metav1.Condition, message string, generation int64) {
 	apimeta.SetStatusCondition(conditions, metav1.Condition{
@@ -111,13 +133,14 @@ func updateStatusUnpackFailing(status *ocv1alpha1.ClusterExtensionStatus, err er
 }
 
 // TODO: verify if we need to update the installBundle status or leave it as is.
-func updateStatusUnpackPending(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
+func updateStatusUnpackPending(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result, generation int64) {
 	status.InstalledBundle = nil
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha2.TypeUnpacked,
-		Status:  metav1.ConditionFalse,
-		Reason:  rukpakv1alpha2.ReasonUnpackPending,
-		Message: result.Message,
+		Type:               rukpakv1alpha2.TypeUnpacked,
+		Status:             metav1.ConditionFalse,
+		Reason:             rukpakv1alpha2.ReasonUnpackPending,
+		Message:            result.Message,
+		ObservedGeneration: generation,
 	})
 }
 
