@@ -235,6 +235,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
+	// set deprecation status after _successful_ resolution
+	SetDeprecationStatus(ext, bundle)
 
 	bundleVersion, err := bundle.Version()
 	if err != nil {
@@ -259,12 +261,17 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	switch unpackResult.State {
 	case rukpaksource.StatePending:
-		updateStatusUnpackPending(&ext.Status, unpackResult)
+		updateStatusUnpackPending(&ext.Status, unpackResult, ext.GetGeneration())
 		// There must be a limit to number of entries if status is stuck at
 		// unpack pending.
+		setHasValidBundleUnknown(&ext.Status.Conditions, "unpack pending", ext.GetGeneration())
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as unpack is pending", ext.GetGeneration())
+
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacking:
 		updateStatusUnpacking(&ext.Status, unpackResult)
+		setHasValidBundleUnknown(&ext.Status.Conditions, "unpack pending", ext.GetGeneration())
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as unpack is pending", ext.GetGeneration())
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacked:
 		// TODO: Add finalizer to clean the stored bundles, after https://github.com/operator-framework/rukpak/pull/897
@@ -409,7 +416,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 	channelName := ext.Spec.Channel
 	versionRange := ext.Spec.Version
 
-	installedBundle, err := r.installedBundle(ctx, allBundles, &ext)
+	installedBundle, err := GetInstalledbundle(ctx, r.ActionClientGetter, allBundles, &ext)
 	if err != nil {
 		return nil, err
 	}
@@ -669,8 +676,41 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 	}
 }
 
-func (r *ClusterExtensionReconciler) installedBundle(ctx context.Context, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
-	cl, err := r.ActionClientGetter.ActionClientFor(ctx, ext)
+type releaseState string
+
+const (
+	stateNeedsInstall releaseState = "NeedsInstall"
+	stateNeedsUpgrade releaseState = "NeedsUpgrade"
+	stateUnchanged    releaseState = "Unchanged"
+	stateError        releaseState = "Error"
+)
+
+func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterface, obj metav1.Object, chrt *chart.Chart, values chartutil.Values, post *postrenderer) (*release.Release, releaseState, error) {
+	currentRelease, err := cl.Get(obj.GetName())
+	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
+		return nil, stateError, err
+	}
+	if errors.Is(err, driver.ErrReleaseNotFound) {
+		return nil, stateNeedsInstall, nil
+	}
+
+	desiredRelease, err := cl.Upgrade(obj.GetName(), r.ReleaseNamespace, chrt, values, func(upgrade *action.Upgrade) error {
+		upgrade.DryRun = true
+		return nil
+	}, helmclient.AppendUpgradePostRenderer(post))
+	if err != nil {
+		return currentRelease, stateError, err
+	}
+	if desiredRelease.Manifest != currentRelease.Manifest ||
+		currentRelease.Info.Status == release.StatusFailed ||
+		currentRelease.Info.Status == release.StatusSuperseded {
+		return currentRelease, stateNeedsUpgrade, nil
+	}
+	return currentRelease, stateUnchanged, nil
+}
+
+var GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+	cl, err := acg.ActionClientFor(ctx, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -704,39 +744,6 @@ func (r *ClusterExtensionReconciler) installedBundle(ctx context.Context, allBun
 	})
 
 	return resultSet[0], nil
-}
-
-type releaseState string
-
-const (
-	stateNeedsInstall releaseState = "NeedsInstall"
-	stateNeedsUpgrade releaseState = "NeedsUpgrade"
-	stateUnchanged    releaseState = "Unchanged"
-	stateError        releaseState = "Error"
-)
-
-func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterface, obj metav1.Object, chrt *chart.Chart, values chartutil.Values, post *postrenderer) (*release.Release, releaseState, error) {
-	currentRelease, err := cl.Get(obj.GetName())
-	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
-		return nil, stateError, err
-	}
-	if errors.Is(err, driver.ErrReleaseNotFound) {
-		return nil, stateNeedsInstall, nil
-	}
-
-	desiredRelease, err := cl.Upgrade(obj.GetName(), r.ReleaseNamespace, chrt, values, func(upgrade *action.Upgrade) error {
-		upgrade.DryRun = true
-		return nil
-	}, helmclient.AppendUpgradePostRenderer(post))
-	if err != nil {
-		return currentRelease, stateError, err
-	}
-	if desiredRelease.Manifest != currentRelease.Manifest ||
-		currentRelease.Info.Status == release.StatusFailed ||
-		currentRelease.Info.Status == release.StatusSuperseded {
-		return currentRelease, stateNeedsUpgrade, nil
-	}
-	return currentRelease, stateUnchanged, nil
 }
 
 type errRequiredResourceNotFound struct {

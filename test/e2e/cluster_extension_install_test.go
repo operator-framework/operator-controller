@@ -197,7 +197,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		InstallNamespace: "default",
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
-	t.Log("By eventually reporting a successful resolution")
+	t.Log("By eventually reporting a successful installation")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -207,6 +207,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
 		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.0", Version: "1.0.0"}, clusterExtension.Status.InstalledBundle)
 	}, pollDuration, pollInterval)
 
 	t.Log("It does not allow to upgrade the ClusterExtension to a non-successor version")

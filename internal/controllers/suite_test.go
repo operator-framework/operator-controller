@@ -17,31 +17,78 @@ limitations under the License.
 package controllers_test
 
 import (
-	"crypto/x509"
+	"context"
+	"io/fs"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	"github.com/operator-framework/rukpak/api/v1alpha2"
 	"github.com/operator-framework/rukpak/pkg/source"
-	"github.com/operator-framework/rukpak/pkg/util"
+	"github.com/operator-framework/rukpak/pkg/storage"
 
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
 	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
+// MockUnpacker is a mock of Unpacker interface
+type MockUnpacker struct {
+	mock.Mock
+}
+
+// Unpack mocks the Unpack method
+func (m *MockUnpacker) Unpack(ctx context.Context, bd *v1alpha2.BundleDeployment) (*source.Result, error) {
+	args := m.Called(ctx, bd)
+	return args.Get(0).(*source.Result), args.Error(1)
+}
+
+// MockStorage is a mock of Storage interface
+type MockStorage struct {
+	mock.Mock
+}
+
+func (m *MockStorage) Load(ctx context.Context, owner client.Object) (fs.FS, error) {
+	args := m.Called(ctx, owner)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(fs.FS), args.Error(1)
+}
+
+func (m *MockStorage) Delete(ctx context.Context, owner client.Object) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockStorage) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockStorage) URLFor(ctx context.Context, owner client.Object) (string, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (m *MockStorage) Store(ctx context.Context, owner client.Object, bundle fs.FS) error {
+	args := m.Called(ctx, owner, bundle)
+	return args.Error(0)
+}
+
 func newClient(t *testing.T) client.Client {
-	cl, err := client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	cl, err := client.New(config, client.Options{Scheme: scheme.Scheme})
 	require.NoError(t, err)
 	require.NotNil(t, cl)
 	return cl
@@ -53,16 +100,18 @@ func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterEx
 	reconciler := &controllers.ClusterExtensionReconciler{
 		Client:             cl,
 		BundleProvider:     &fakeCatalogClient,
-		ActionClientGetter: acg,
-		Unpacker:           unp,
+		ActionClientGetter: helmClientGetter,
+		Unpacker:           unpacker,
+		Storage:            store,
 	}
 	return cl, reconciler
 }
 
 var (
-	cfg *rest.Config
-	acg helmclient.ActionClientGetter
-	unp source.Unpacker
+	config           *rest.Config
+	helmClientGetter helmclient.ActionClientGetter
+	unpacker         source.Unpacker // Interface, will be initialized as a mock in TestMain
+	store            storage.Storage
 )
 
 func TestMain(m *testing.M) {
@@ -73,22 +122,20 @@ func TestMain(m *testing.M) {
 	}
 
 	var err error
-	cfg, err = testEnv.Start()
+	config, err = testEnv.Start()
 	utilruntime.Must(err)
-	if cfg == nil {
+	if config == nil {
 		log.Panic("expected cfg to not be nil")
 	}
 
 	rm := meta.NewDefaultRESTMapper(nil)
-	cfgGetter, err := helmclient.NewActionConfigGetter(cfg, rm)
+	cfgGetter, err := helmclient.NewActionConfigGetter(config, rm)
 	utilruntime.Must(err)
-	acg, err = helmclient.NewActionClientGetter(cfgGetter)
+	helmClientGetter, err = helmclient.NewActionClientGetter(cfgGetter)
 	utilruntime.Must(err)
 
-	mgr, err := manager.New(cfg, manager.Options{})
-	utilruntime.Must(err)
-	unp, err = source.NewDefaultUnpacker(mgr, util.DefaultSystemNamespace, util.DefaultUnpackImage, (*x509.CertPool)(nil))
-	utilruntime.Must(err)
+	unpacker = new(MockUnpacker)
+	store = new(MockStorage)
 
 	code := m.Run()
 	utilruntime.Must(testEnv.Stop())

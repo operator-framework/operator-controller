@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,9 +19,11 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
+	"github.com/operator-framework/rukpak/pkg/source"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
@@ -126,68 +129,14 @@ func TestClusterExtensionNonExistentVersion(t *testing.T) {
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
 
-func TestClusterExtensionBundleDeploymentDoesNotExist(t *testing.T) {
-	t.Skip("Skip and replace with e2e for BundleDeployment")
-	cl, reconciler := newClientAndReconciler(t)
-	ctx := context.Background()
-	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
-	const pkgName = "prometheus"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
-
-	t.Log("When the cluster extension specifies a valid available package")
-	t.Log("By initializing cluster state")
-	clusterExtension := &ocv1alpha1.ClusterExtension{
-		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
-		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			InstallNamespace: installNamespace,
-		},
-	}
-	require.NoError(t, cl.Create(ctx, clusterExtension))
-
-	t.Log("When the BundleDeployment does not exist")
-	t.Log("By running reconcile")
-	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
-	require.Equal(t, ctrl.Result{}, res)
-	require.NoError(t, err)
-
-	t.Log("By fetching updated cluster extension after reconcile")
-	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
-
-	t.Log("It results in the expected BundleDeployment")
-	bd := &rukpakv1alpha2.BundleDeployment{}
-	require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
-	require.Equal(t, "core-rukpak-io-registry", bd.Spec.ProvisionerClassName)
-	require.Equal(t, installNamespace, bd.Spec.InstallNamespace)
-	require.NotNil(t, bd.Spec.Source.Image)
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Source.Image.Ref)
-
-	t.Log("It sets the ResolvedBundle status field")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
-
-	t.Log("It sets the InstalledBundle status field")
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
-
-	t.Log("It sets the status on the cluster extension")
-	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionTrue, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, cond.Reason)
-	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\"", cond.Message)
-
-	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionUnknown, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "bundledeployment status is unknown", cond.Message)
-
-	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
-	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
-}
-
 func TestClusterExtensionChannelVersionExists(t *testing.T) {
-	t.Skip("Skip and replace with e2e for BundleDeployment")
 	cl, reconciler := newClientAndReconciler(t)
+	mockUnpacker := unpacker.(*MockUnpacker)
+	// Set up the Unpack method to return a result with StateUnpacked
+	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
+		State: source.StatePending,
+	}, nil)
+
 	ctx := context.Background()
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 
@@ -224,33 +173,29 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
-	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionTrue, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, cond.Reason)
-	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", cond.Message)
-	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionUnknown, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "bundledeployment status is unknown", cond.Message)
+	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+	require.NotNil(t, resolvedCond)
+	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
+	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
 
-	t.Log("By fetching the bundled deployment")
-	bd := &rukpakv1alpha2.BundleDeployment{}
-	require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
-	require.Equal(t, "core-rukpak-io-registry", bd.Spec.ProvisionerClassName)
-	require.Equal(t, installNamespace, bd.Spec.InstallNamespace)
-	require.Equal(t, rukpakv1alpha2.SourceTypeImage, bd.Spec.Source.Type)
-	require.NotNil(t, bd.Spec.Source.Image)
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake1.0.0", bd.Spec.Source.Image.Ref)
+	t.Log("By checking the expected unpacked conditions")
+	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, rukpakv1alpha2.TypeUnpacked)
+	require.NotNil(t, unpackedCond)
+	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
+	require.Equal(t, rukpakv1alpha2.ReasonUnpackPending, unpackedCond.Reason)
 
-	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
 
 func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
-	t.Skip("Skip and replace with e2e for BundleDeployment")
 	cl, reconciler := newClientAndReconciler(t)
+	mockUnpacker := unpacker.(*MockUnpacker)
+	// Set up the Unpack method to return a result with StateUnpacked
+	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
+		State: source.StatePending,
+	}, nil)
+
 	ctx := context.Background()
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 
@@ -269,13 +214,15 @@ func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
 			InstallNamespace: installNamespace,
 		},
 	}
-	require.NoError(t, cl.Create(ctx, clusterExtension))
+	err := cl.Create(ctx, clusterExtension)
+	require.NoError(t, err)
 
 	t.Log("It sets resolution success status")
 	t.Log("By running reconcile")
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
 	require.NoError(t, err)
+
 	t.Log("By fetching updated cluster extension after reconcile")
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
@@ -284,25 +231,17 @@ func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
 	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
-	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionTrue, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, cond.Reason)
-	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\"", cond.Message)
-	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionUnknown, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationStatusUnknown, cond.Reason)
-	require.Equal(t, "bundledeployment status is unknown", cond.Message)
+	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+	require.NotNil(t, resolvedCond)
+	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
+	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\"", resolvedCond.Message)
 
-	t.Log("By fetching the bundledeployment")
-	bd := &rukpakv1alpha2.BundleDeployment{}
-	require.NoError(t, cl.Get(ctx, types.NamespacedName{Name: extKey.Name}, bd))
-	require.Equal(t, "core-rukpak-io-registry", bd.Spec.ProvisionerClassName)
-	require.Equal(t, installNamespace, bd.Spec.InstallNamespace)
-	require.Equal(t, rukpakv1alpha2.SourceTypeImage, bd.Spec.Source.Type)
-	require.NotNil(t, bd.Spec.Source.Image)
-	require.Equal(t, "quay.io/operatorhubio/prometheus@fake2.0.0", bd.Spec.Source.Image.Ref)
+	t.Log("By checking the expected unpacked conditions")
+	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, rukpakv1alpha2.TypeUnpacked)
+	require.NotNil(t, unpackedCond)
+	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
+	require.Equal(t, rukpakv1alpha2.ReasonUnpackPending, unpackedCond.Reason)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -478,10 +417,19 @@ func verifyConditionsInvariants(t *testing.T, ext *ocv1alpha1.ClusterExtension) 
 
 func TestClusterExtensionUpgrade(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t)
+	mockUnpacker := unpacker.(*MockUnpacker)
+	// Set up the Unpack method to return a result with StateUnpackPending
+	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
+		State: source.StatePending,
+	}, nil)
 	ctx := context.Background()
+	defer func() {
+		controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+			return nil, nil
+		}
+	}()
 
 	t.Run("semver upgrade constraints enforcement of upgrades within major version", func(t *testing.T) {
-		t.Skip("Skip and replace with e2e for BundleDeployment")
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
 		defer func() {
 			require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -529,6 +477,22 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		err = cl.Update(ctx, clusterExtension)
 		require.NoError(t, err)
 
+		controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+			return &catalogmetadata.Bundle{
+				Bundle: declcfg.Bundle{
+					Name:    "operatorhub/prometheus/beta/1.0.0",
+					Package: "prometheus",
+					Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
+						{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+					},
+				},
+				CatalogName: "fake-catalog",
+				InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+			}, nil
+		}
+
 		// Run reconcile again
 		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 		require.Error(t, err)
@@ -547,7 +511,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NotNil(t, cond)
 		assert.Equal(t, metav1.ConditionFalse, cond.Status)
 		assert.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-		assert.Equal(t, "error upgrading from currently installed version \"1.0.0\": no package \"prometheus\" matching version \"2.0.0\" found in channel \"beta\"", cond.Message)
+		assert.Equal(t, "error upgrading from currently installed version \"1.0.0\": no package \"prometheus\" matching version \"2.0.0\" in channel \"beta\" found", cond.Message)
 
 		// Valid update skipping one version
 		clusterExtension.Spec.Version = "1.2.0"
@@ -575,7 +539,6 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 	})
 
 	t.Run("legacy semantics upgrade constraints enforcement", func(t *testing.T) {
-		t.Skip("Skip and replace with e2e for BundleDeployment")
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
 		defer func() {
 			require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -623,6 +586,22 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		err = cl.Update(ctx, clusterExtension)
 		require.NoError(t, err)
 
+		controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+			return &catalogmetadata.Bundle{
+				Bundle: declcfg.Bundle{
+					Name:    "operatorhub/prometheus/beta/1.0.0",
+					Package: "prometheus",
+					Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+					Properties: []property.Property{
+						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
+						{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+					},
+				},
+				CatalogName: "fake-catalog",
+				InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+			}, nil
+		}
+
 		// Run reconcile again
 		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 		require.Error(t, err)
@@ -641,7 +620,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NotNil(t, cond)
 		assert.Equal(t, metav1.ConditionFalse, cond.Status)
 		assert.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-		assert.Equal(t, "error upgrading from currently installed version \"1.0.0\": no package \"prometheus\" matching version \"1.2.0\" found in channel \"beta\"", cond.Message)
+		assert.Equal(t, "error upgrading from currently installed version \"1.0.0\": no package \"prometheus\" matching version \"1.2.0\" in channel \"beta\" found", cond.Message)
 
 		// Valid update skipping one version
 		clusterExtension.Spec.Version = "1.0.1"
@@ -669,7 +648,6 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 	})
 
 	t.Run("ignore upgrade constraints", func(t *testing.T) {
-		t.Skip("Skip and replace with e2e for BundleDeployment")
 		for _, tt := range []struct {
 			name      string
 			flagState bool
@@ -731,6 +709,22 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 				err = cl.Update(ctx, clusterExtension)
 				require.NoError(t, err)
 
+				controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+					return &catalogmetadata.Bundle{
+						Bundle: declcfg.Bundle{
+							Name:    "operatorhub/prometheus/beta/1.0.0",
+							Package: "prometheus",
+							Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+							Properties: []property.Property{
+								{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
+								{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+							},
+						},
+						CatalogName: "fake-catalog",
+						InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+					}, nil
+				}
+
 				// Run reconcile again
 				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 				require.NoError(t, err)
@@ -756,10 +750,19 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 
 func TestClusterExtensionDowngrade(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t)
+	mockUnpacker := unpacker.(*MockUnpacker)
+	// Set up the Unpack method to return a result with StateUnpacked
+	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
+		State: source.StatePending,
+	}, nil)
 	ctx := context.Background()
+	defer func() {
+		controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+			return nil, nil
+		}
+	}()
 
 	t.Run("enforce upgrade constraints", func(t *testing.T) {
-		t.Skip("Skip and replace with e2e for BundleDeployment")
 		for _, tt := range []struct {
 			name      string
 			flagState bool
@@ -818,6 +821,22 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				err = cl.Update(ctx, clusterExtension)
 				require.NoError(t, err)
 
+				controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+					return &catalogmetadata.Bundle{
+						Bundle: declcfg.Bundle{
+							Name:    "operatorhub/prometheus/beta/1.0.1",
+							Package: "prometheus",
+							Image:   "quay.io/operatorhubio/prometheus@fake1.0.1",
+							Properties: []property.Property{
+								{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.1"}`)},
+								{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+							},
+						},
+						CatalogName: "fake-catalog",
+						InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+					}, nil
+				}
+
 				// Run reconcile again
 				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 				require.Error(t, err)
@@ -836,13 +855,12 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				require.NotNil(t, cond)
 				assert.Equal(t, metav1.ConditionFalse, cond.Status)
 				assert.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-				assert.Equal(t, "error upgrading from currently installed version \"1.0.1\": no package \"prometheus\" matching version \"1.0.0\" found in channel \"beta\"", cond.Message)
+				assert.Equal(t, "error upgrading from currently installed version \"1.0.1\": no package \"prometheus\" matching version \"1.0.0\" in channel \"beta\" found", cond.Message)
 			})
 		}
 	})
 
 	t.Run("ignore upgrade constraints", func(t *testing.T) {
-		t.Skip("Skip and replace with e2e for BundleDeployment")
 		for _, tt := range []struct {
 			name      string
 			flagState bool
@@ -901,6 +919,22 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				clusterExtension.Spec.Version = "1.0.0"
 				err = cl.Update(ctx, clusterExtension)
 				require.NoError(t, err)
+
+				controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+					return &catalogmetadata.Bundle{
+						Bundle: declcfg.Bundle{
+							Name:    "operatorhub/prometheus/beta/2.0.0",
+							Package: "prometheus",
+							Image:   "quay.io/operatorhubio/prometheus@fake2.0.0",
+							Properties: []property.Property{
+								{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"2.0.0"}`)},
+								{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+							},
+						},
+						CatalogName: "fake-catalog",
+						InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+					}, nil
+				}
 
 				// Run reconcile again
 				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
