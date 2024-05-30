@@ -1,0 +1,47 @@
+name: Docs issue for epics
+description: Use this template for tracking doc impact for an epic.
+title: "Docs: [EPIC NAME]"
+labels: ["kind/documentation"]
+body:
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User story
+      description: Describe the user story or stories for this epic.
+    validations:
+      required: true
+  - type: textarea
+    id: issues-list
+    attributes:
+      label: List if issues
+      description: List the user-facing issues in the epic that require documentation.
+      placeholder: |
+        - Issue 1
+    validations:
+      required: true
+  - type: dropdown
+    id: new-or-update
+    attributes:
+      label: New content or update?
+      description: Does this epic require new content or updates to existing content?
+      options:
+        - Net-new content
+        - Update existing content
+    validations:
+      required: true
+  - type: dropdown
+    id: types-of-docs
+    attributes:
+      label: Types of documentation
+      description: What type of documentation is required for this epic?
+      options:
+        - Release note
+        - Concept
+        - Procedure
+        - Reference
+      multiple: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Is there prior art or reference materials that would help write the documentation?
