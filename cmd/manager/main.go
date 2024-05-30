@@ -181,13 +181,14 @@ func main() {
 	}
 
 	if err = (&controllers.ClusterExtensionReconciler{
-		Client:             cl,
-		ReleaseNamespace:   systemNamespace,
-		BundleProvider:     catalogClient,
-		ActionClientGetter: acg,
-		Unpacker:           unpacker,
-		Storage:            localStorage,
-		Handler:            handler.HandlerFunc(handler.HandleClusterExtension),
+		Client:                cl,
+		ReleaseNamespace:      systemNamespace,
+		BundleProvider:        catalogClient,
+		ActionClientGetter:    acg,
+		Unpacker:              unpacker,
+		Storage:               localStorage,
+		Handler:               handler.HandlerFunc(handler.HandleClusterExtension),
+		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)

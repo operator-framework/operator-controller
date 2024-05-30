@@ -38,6 +38,8 @@ import (
 	"github.com/operator-framework/rukpak/pkg/source"
 	"github.com/operator-framework/rukpak/pkg/storage"
 
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
 	testutil "github.com/operator-framework/operator-controller/test/util"
@@ -94,15 +96,32 @@ func newClient(t *testing.T) client.Client {
 	return cl
 }
 
-func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterExtensionReconciler) {
+type MockInstalledBundleGetter struct {
+	bundle *catalogmetadata.Bundle
+}
+
+func (m *MockInstalledBundleGetter) SetBundle(bundle *catalogmetadata.Bundle) {
+	m.bundle = bundle
+}
+
+func (m *MockInstalledBundleGetter) GetInstalledBundle(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+	return m.bundle, nil
+}
+
+func newClientAndReconciler(t *testing.T, bundle *catalogmetadata.Bundle) (client.Client, *controllers.ClusterExtensionReconciler) {
 	cl := newClient(t)
 	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
+
+	mockInstalledBundleGetter := &MockInstalledBundleGetter{}
+	mockInstalledBundleGetter.SetBundle(bundle)
+
 	reconciler := &controllers.ClusterExtensionReconciler{
-		Client:             cl,
-		BundleProvider:     &fakeCatalogClient,
-		ActionClientGetter: helmClientGetter,
-		Unpacker:           unpacker,
-		Storage:            store,
+		Client:                cl,
+		BundleProvider:        &fakeCatalogClient,
+		ActionClientGetter:    helmClientGetter,
+		Unpacker:              unpacker,
+		Storage:               store,
+		InstalledBundleGetter: mockInstalledBundleGetter,
 	}
 	return cl, reconciler
 }

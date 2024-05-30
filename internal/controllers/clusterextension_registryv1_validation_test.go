@@ -107,12 +107,16 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 			mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
 				State: source.StatePending,
 			}, nil)
+			// Create and configure the mock InstalledBundleGetter
+			mockInstalledBundleGetter := &MockInstalledBundleGetter{}
+			mockInstalledBundleGetter.SetBundle(tt.bundle)
 
 			reconciler := &controllers.ClusterExtensionReconciler{
-				Client:             cl,
-				BundleProvider:     &fakeCatalogClient,
-				ActionClientGetter: helmClientGetter,
-				Unpacker:           unpacker,
+				Client:                cl,
+				BundleProvider:        &fakeCatalogClient,
+				ActionClientGetter:    helmClientGetter,
+				Unpacker:              unpacker,
+				InstalledBundleGetter: mockInstalledBundleGetter,
 			}
 
 			installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
