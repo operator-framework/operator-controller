@@ -103,8 +103,6 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 			}()
 			fakeCatalogClient := testutil.NewFakeCatalogClient([]*catalogmetadata.Bundle{tt.bundle})
 			mockUnpacker := unpacker.(*MockUnpacker)
-			// Verify if mockUnpacker is correctly set
-			t.Log("MockUnpacker set to:", mockUnpacker)
 			// Set up the Unpack method to return a result with StatePending
 			mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
 				State: source.StatePending,
