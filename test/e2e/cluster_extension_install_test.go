@@ -37,7 +37,7 @@ const (
 var pollDuration = time.Minute
 var pollInterval = time.Second
 
-func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, string, *catalogd.Catalog) {
+func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.Catalog) {
 	var err error
 	extensionCatalog, err := createTestCatalog(context.Background(), testCatalogName, os.Getenv(testCatalogRefEnvVar))
 	require.NoError(t, err)
@@ -48,7 +48,7 @@ func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, string, *catalogd.Cat
 			Name: clusterExtensionName,
 		},
 	}
-	return clusterExtension, clusterExtensionName, extensionCatalog
+	return clusterExtension, extensionCatalog
 }
 
 func testCleanup(t *testing.T, cat *catalogd.Catalog, clusterExtension *ocv1alpha1.ClusterExtension) {
@@ -68,7 +68,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When the extension bundle format is registry+v1")
 
-	clusterExtension, clusterExtensionName, extensionCatalog := testInit(t)
+	clusterExtension, extensionCatalog := testInit(t)
 	defer testCleanup(t, extensionCatalog, clusterExtension)
 	defer getArtifactsOutput(t)
 
@@ -83,7 +83,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 	t.Log("By eventually reporting a successful resolution and bundle path")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		assert.Len(ct, clusterExtension.Status.Conditions, 6)
+		assert.Len(ct, clusterExtension.Status.Conditions, 8)
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
 		if !assert.NotNil(ct, cond) {
 			return
@@ -92,6 +92,18 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
 		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
+	}, pollDuration, pollInterval)
+
+	t.Log("By eventually reporting a successful unpacked")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, rukpakv1alpha2.TypeUnpacked)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, rukpakv1alpha2.ReasonUnpackSuccessful, cond.Reason)
+		assert.Contains(ct, cond.Message, "Successfully unpacked")
 	}, pollDuration, pollInterval)
 
 	t.Log("By eventually installing the package successfully")
@@ -103,21 +115,8 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
-		assert.Contains(ct, cond.Message, "installed from")
+		assert.Contains(ct, cond.Message, "Instantiated bundle")
 		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle)
-
-		bd := rukpakv1alpha2.BundleDeployment{}
-		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtensionName}, &bd))
-		isUnpackSuccessful := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha2.TypeUnpacked)
-		if !assert.NotNil(ct, isUnpackSuccessful) {
-			return
-		}
-		assert.Equal(ct, rukpakv1alpha2.ReasonUnpackSuccessful, isUnpackSuccessful.Reason)
-		installed := apimeta.FindStatusCondition(bd.Status.Conditions, rukpakv1alpha2.TypeInstalled)
-		if !assert.NotNil(ct, installed) {
-			return
-		}
-		assert.Equal(ct, rukpakv1alpha2.ReasonInstallationSucceeded, installed.Reason)
 	}, pollDuration, pollInterval)
 }
 
@@ -125,7 +124,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("It resolves again when a new catalog is available")
 
-	clusterExtension, _, extensionCatalog := testInit(t)
+	clusterExtension, extensionCatalog := testInit(t)
 	defer testCleanup(t, extensionCatalog, clusterExtension)
 	defer getArtifactsOutput(t)
 
@@ -154,7 +153,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 		}
 		assert.Equal(ct, metav1.ConditionFalse, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-		assert.Equal(ct, fmt.Sprintf("no package %q found", pkgName), cond.Message)
+		assert.Contains(ct, cond.Message, fmt.Sprintf("no package %q found", pkgName))
 	}, pollDuration, pollInterval)
 
 	t.Log("By creating an ClusterExtension catalog with the desired package")
@@ -187,7 +186,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
 
-	clusterExtension, _, extensionCatalog := testInit(t)
+	clusterExtension, extensionCatalog := testInit(t)
 	defer testCleanup(t, extensionCatalog, clusterExtension)
 	defer getArtifactsOutput(t)
 
@@ -198,7 +197,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		InstallNamespace: "default",
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
-	t.Log("By eventually reporting a successful resolution")
+	t.Log("By eventually reporting a successful installation")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -208,6 +207,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
 		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.0", Version: "1.0.0"}, clusterExtension.Status.InstalledBundle)
 	}, pollDuration, pollInterval)
 
 	t.Log("It does not allow to upgrade the ClusterExtension to a non-successor version")
@@ -232,7 +232,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
 
-	clusterExtension, _, extensionCatalog := testInit(t)
+	clusterExtension, extensionCatalog := testInit(t)
 	defer testCleanup(t, extensionCatalog, clusterExtension)
 	defer getArtifactsOutput(t)
 
@@ -277,7 +277,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
-	clusterExtension, _, extensionCatalog := testInit(t)
+	clusterExtension, extensionCatalog := testInit(t)
 	defer testCleanup(t, extensionCatalog, clusterExtension)
 	defer getArtifactsOutput(t)
 
@@ -323,7 +323,6 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 // - clusterextensions
 // - pods logs
 // - deployments
-// - bundledeployments
 // - catalogsources
 func getArtifactsOutput(t *testing.T) {
 	basePath := env.GetString("ARTIFACT_PATH", "")
@@ -380,23 +379,6 @@ func getArtifactsOutput(t *testing.T) {
 		}
 		if err := os.WriteFile(filepath.Join(artifactPath, catalogsource.Name+"-catalogsource.yaml"), catalogsourceYaml, 0600); err != nil {
 			fmt.Printf("Failed to write catalogsource to file: %v", err)
-		}
-	}
-
-	// Get all BundleDeployments in the namespace and save them to the artifact path.
-	bundleDeployments := rukpakv1alpha2.BundleDeploymentList{}
-	if err := c.List(context.Background(), &bundleDeployments, client.InNamespace("")); err != nil {
-		fmt.Printf("Failed to list bundleDeployments: %v", err)
-	}
-	for _, bundleDeployment := range bundleDeployments.Items {
-		// Save bundleDeployment to artifact path
-		bundleDeploymentYaml, err := yaml.Marshal(bundleDeployment)
-		if err != nil {
-			fmt.Printf("Failed to marshal bundleDeployment: %v", err)
-			continue
-		}
-		if err := os.WriteFile(filepath.Join(artifactPath, bundleDeployment.Name+"-bundleDeployment.yaml"), bundleDeploymentYaml, 0600); err != nil {
-			fmt.Printf("Failed to write bundleDeployment to file: %v", err)
 		}
 	}
 

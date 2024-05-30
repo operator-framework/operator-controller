@@ -16,6 +16,19 @@ builds:
     - arm64
     - ppc64le
     - s390x
+  - id: unpack
+    main: ./cmd/unpack/main.go  # Update this path to the actual location of your unpack source
+    binary: bin/unpack
+    asmflags: "{{ .Env.GO_BUILD_ASMFLAGS }}"
+    gcflags: "{{ .Env.GO_BUILD_GCFLAGS }}"
+    ldflags: "{{ .Env.GO_BUILD_LDFLAGS }}"
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+      - ppc64le
+      - s390x
 dockers:
 - image_templates:
   - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"

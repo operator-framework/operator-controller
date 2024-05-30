@@ -25,10 +25,10 @@ This ends up taking a fraction of the time, sometimes on the order of a few seco
 
 Follow Tilt's [instructions](https://docs.tilt.dev/install.html) for installation.
 
-## Installing rukpak and catalogd
+## Installing catalogd
 
-operator-controller requires [rukpak](https://github.com/operator-framework/rukpak) and 
-[catalogd](https://github.com/operator-framework/catalogd). Please make sure they're installed, either normally or via 
+operator-controller requires
+[catalogd](https://github.com/operator-framework/catalogd). Please make sure it's installed, either normally or via
 their own Tiltfiles, before proceeding. If you want to use Tilt, make sure you specify a unique `--port` flag to each
 `tilt up` invocation.
 

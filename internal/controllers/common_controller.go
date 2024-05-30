@@ -22,6 +22,9 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
+	"github.com/operator-framework/rukpak/pkg/source"
+
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
@@ -49,6 +52,17 @@ func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message 
 		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionUnknown,
 		Reason:             ocv1alpha1.ReasonInstallationStatusUnknown,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+// setHasValidBundleUnknown sets the installed status condition to unknown.
+func setHasValidBundleUnknown(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeHasValidBundle,
+		Status:             metav1.ConditionUnknown,
+		Reason:             ocv1alpha1.ReasonHasValidBundleUnknown,
 		Message:            message,
 		ObservedGeneration: generation,
 	})
@@ -105,4 +119,47 @@ func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message strin
 			ObservedGeneration: generation,
 		})
 	}
+}
+
+func updateStatusUnpackFailing(status *ocv1alpha1.ClusterExtensionStatus, err error) error {
+	status.InstalledBundle = nil
+	apimeta.SetStatusCondition(&status.Conditions, metav1.Condition{
+		Type:    rukpakv1alpha2.TypeUnpacked,
+		Status:  metav1.ConditionFalse,
+		Reason:  rukpakv1alpha2.ReasonUnpackFailed,
+		Message: err.Error(),
+	})
+	return err
+}
+
+// TODO: verify if we need to update the installBundle status or leave it as is.
+func updateStatusUnpackPending(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result, generation int64) {
+	status.InstalledBundle = nil
+	apimeta.SetStatusCondition(&status.Conditions, metav1.Condition{
+		Type:               rukpakv1alpha2.TypeUnpacked,
+		Status:             metav1.ConditionFalse,
+		Reason:             rukpakv1alpha2.ReasonUnpackPending,
+		Message:            result.Message,
+		ObservedGeneration: generation,
+	})
+}
+
+// TODO: verify if we need to update the installBundle status or leave it as is.
+func updateStatusUnpacking(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
+	status.InstalledBundle = nil
+	apimeta.SetStatusCondition(&status.Conditions, metav1.Condition{
+		Type:    rukpakv1alpha2.TypeUnpacked,
+		Status:  metav1.ConditionFalse,
+		Reason:  rukpakv1alpha2.ReasonUnpacking,
+		Message: result.Message,
+	})
+}
+
+func updateStatusUnpacked(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
+	apimeta.SetStatusCondition(&status.Conditions, metav1.Condition{
+		Type:    rukpakv1alpha2.TypeUnpacked,
+		Status:  metav1.ConditionTrue,
+		Reason:  rukpakv1alpha2.ReasonUnpackSuccessful,
+		Message: result.Message,
+	})
 }

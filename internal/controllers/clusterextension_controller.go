@@ -17,69 +17,111 @@ limitations under the License.
 package controllers
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
+	"sync"
+	"time"
 
 	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 	"github.com/go-logr/logr"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/postrender"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/utils/ptr"
+	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
+	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
+	crhandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
+	helmpredicate "github.com/operator-framework/rukpak/pkg/helm-operator-plugins/predicate"
+	rukpaksource "github.com/operator-framework/rukpak/pkg/source"
+	"github.com/operator-framework/rukpak/pkg/storage"
+	"github.com/operator-framework/rukpak/pkg/util"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
+	"github.com/operator-framework/operator-controller/internal/conditionsets"
+	"github.com/operator-framework/operator-controller/internal/handler"
+	"github.com/operator-framework/operator-controller/internal/labels"
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
-	BundleProvider BundleProvider
+	ReleaseNamespace   string
+	BundleProvider     BundleProvider
+	Unpacker           rukpaksource.Unpacker
+	ActionClientGetter helmclient.ActionClientGetter
+	Storage            storage.Storage
+	Handler            handler.Handler
+	dynamicWatchMutex  sync.RWMutex
+	dynamicWatchGVKs   map[schema.GroupVersionKind]struct{}
+	controller         crcontroller.Controller
+	cache              cache.Cache
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/finalizers,verbs=update
-
-//+kubebuilder:rbac:groups=core.rukpak.io,resources=bundledeployments,verbs=get;list;watch;create;update;patch
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=list;watch;create;delete
+//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=list;watch
+//+kubebuilder:rbac:groups=core,resources=pods/log,verbs=get
+//+kubebuilder:rbac:groups=*,resources=*,verbs=*
 
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
 
+// The operator controller needs to watch all the bundle objects and reconcile accordingly. Though not ideal, but these permissions are required.
+// This has been taken from rukpak, and an issue was created before to discuss it: https://github.com/operator-framework/rukpak/issues/800.
 func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("operator-controller")
 	l.V(1).Info("starting")
 	defer l.V(1).Info("ending")
 
 	var existingExt = &ocv1alpha1.ClusterExtension{}
-	if err := r.Get(ctx, req.NamespacedName, existingExt); err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+	if err := r.Client.Get(ctx, req.NamespacedName, existingExt); err != nil {
+		return ctrl.Result{}, utilerrors.NewAggregate([]error{client.IgnoreNotFound(err), nil})
 	}
 
 	reconciledExt := existingExt.DeepCopy()
 	res, reconcileErr := r.reconcile(ctx, reconciledExt)
+
+	var updateErrors []error
 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingExt.Status, reconciledExt.Status)
@@ -87,8 +129,8 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	unexpectedFieldsChanged := checkForUnexpectedFieldChange(*existingExt, *reconciledExt)
 
 	if updateStatus {
-		if updateErr := r.Status().Update(ctx, reconciledExt); updateErr != nil {
-			return res, utilerrors.NewAggregate([]error{reconcileErr, updateErr})
+		if updateErr := r.Client.Status().Update(ctx, reconciledExt); updateErr != nil {
+			updateErrors = append(updateErrors, updateErr)
 		}
 	}
 
@@ -97,12 +139,36 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	if updateFinalizers {
-		if updateErr := r.Update(ctx, reconciledExt); updateErr != nil {
-			return res, utilerrors.NewAggregate([]error{reconcileErr, updateErr})
+		if updateErr := r.Client.Update(ctx, reconciledExt); updateErr != nil {
+			updateErrors = append(updateErrors, updateErr)
 		}
 	}
 
-	return res, reconcileErr
+	if reconcileErr != nil {
+		updateErrors = append(updateErrors, reconcileErr)
+	}
+
+	return res, utilerrors.NewAggregate(updateErrors)
+}
+
+// ensureAllConditionsWithReason checks that all defined condition types exist in the given ClusterExtension,
+// and assigns a specified reason and custom message to any missing condition.
+func ensureAllConditionsWithReason(ext *ocv1alpha1.ClusterExtension, reason v1alpha1.ConditionReason, message string) {
+	for _, condType := range conditionsets.ConditionTypes {
+		cond := apimeta.FindStatusCondition(ext.Status.Conditions, condType)
+		if cond == nil {
+			// Create a new condition with a valid reason and add it
+			newCond := metav1.Condition{
+				Type:               condType,
+				Status:             metav1.ConditionFalse,
+				Reason:             string(reason),
+				Message:            message,
+				ObservedGeneration: ext.GetGeneration(),
+				LastTransitionTime: metav1.NewTime(time.Now()),
+			}
+			ext.Status.Conditions = append(ext.Status.Conditions, newCond)
+		}
+	}
 }
 
 // Compare resources - ignoring status & metadata.finalizers
@@ -112,87 +178,248 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 	return !equality.Semantic.DeepEqual(a, b)
 }
 
+func (r *ClusterExtensionReconciler) handleResolutionErrors(ext *ocv1alpha1.ClusterExtension, err error) (ctrl.Result, error) {
+	var aggErrs utilerrors.Aggregate
+	if errors.As(err, &aggErrs) {
+		for _, err := range aggErrs.Errors() {
+			errorMessage := err.Error()
+			if strings.Contains(errorMessage, "no package") {
+				// Handle no package found errors, potentially setting status conditions
+				setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
+				ensureAllConditionsWithReason(ext, "ResolutionFailed", errorMessage)
+			} else if strings.Contains(errorMessage, "invalid version range") {
+				// Handle invalid version range errors, potentially setting status conditions
+				setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
+				ensureAllConditionsWithReason(ext, "ResolutionFailed", errorMessage)
+			} else {
+				// General error handling
+				setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
+				ensureAllConditionsWithReason(ext, "InstallationStatusUnknown", "")
+			}
+		}
+	} else {
+		// If the error is not an aggregate, handle it as a general error
+		errorMessage := err.Error()
+		setResolvedStatusConditionFailed(&ext.Status.Conditions, errorMessage, ext.Generation)
+		ensureAllConditionsWithReason(ext, "InstallationStatusUnknown", "")
+	}
+	ext.Status.ResolvedBundle = nil
+	return ctrl.Result{}, err
+}
+
 // Helper function to do the actual reconcile
 //
 // Today we always return ctrl.Result{} and an error.
 // But in the future we might update this function
 // to return different results (e.g. requeue).
 //
+/* The reconcile functions performs the following major tasks:
+1. Resolution: Run the resolution to find the bundle from the catalog which needs to be installed.
+2. Validate: Ensure that the bundle returned from the resolution for install meets our requirements.
+3. Unpack: Unpack the contents from the bundle and store in a localdir in the pod.
+4. Install: The process of installing involves:
+4.1 Converting the CSV in the bundle into a set of plain k8s objects.
+4.2 Generating a chart from k8s objects.
+4.3 Apply the release on cluster.
+*/
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
-	// Lookup the bundle that corresponds to the ClusterExtension's desired package.
-	bundle, err := r.resolve(ctx, ext)
+	// run resolution
+	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as resolution failed", ext.GetGeneration())
-		ext.Status.ResolvedBundle = nil
-		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as resolution failed", ext.GetGeneration())
-		return ctrl.Result{}, err
+		return r.handleResolutionErrors(ext, err)
 	}
-
-	// Now we can set the Resolved Condition, and the resolvedBundleSource field to the bundle.Image value.
-	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
-	setResolvedStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), ext.GetGeneration())
-
-	// TODO: Question - Should we set the deprecation statuses after we have successfully resolved instead of after a successful installation?
 
 	if err := r.validateBundle(bundle); err != nil {
 		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
 		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
 		return ctrl.Result{}, err
 	}
-
-	// Assume all bundles are registry+v1 for now, since that's all we support.
-	// If the bundle is not a registry+v1 bundle, the conversion will fail.
-	bundleProvisioner := "core-rukpak-io-registry"
-
-	// Ensure a BundleDeployment exists with its bundle source from the bundle
-	// image we just looked up in the solution.
-	dep := r.GenerateExpectedBundleDeployment(*ext, bundle.Image, bundleProvisioner)
-	if err := r.ensureBundleDeployment(ctx, dep); err != nil {
-		// originally Reason: ocv1alpha1.ReasonInstallationFailed
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
-		return ctrl.Result{}, err
-	}
-
-	// convert existing unstructured object into bundleDeployment for easier mapping of status.
-	existingTypedBundleDeployment := &rukpakv1alpha2.BundleDeployment{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(dep.UnstructuredContent(), existingTypedBundleDeployment); err != nil {
-		// originally Reason: ocv1alpha1.ReasonInstallationStatusUnknown
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
-		return ctrl.Result{}, err
-	}
-
-	// Let's set the proper Installed condition and InstalledBundle field based on the
-	// existing BundleDeployment object status.
-	mapBDStatusToInstalledCondition(existingTypedBundleDeployment, ext, bundle)
-
+	// set deprecation status after _successful_ resolution
 	SetDeprecationStatus(ext, bundle)
 
-	// set the status of the cluster extension based on the respective bundle deployment status conditions.
+	bundleVersion, err := bundle.Version()
+	if err != nil {
+		ext.Status.ResolvedBundle = nil
+		ext.Status.InstalledBundle = nil
+		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.Generation)
+		return ctrl.Result{}, err
+	}
+
+	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
+	setResolvedStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), ext.GetGeneration())
+
+	// Generate a BundleDeployment from the ClusterExtension to Unpack.
+	// Note: The BundleDeployment here is not a k8s API, its a simple Go struct which
+	// necessary embedded values.
+	bd := r.generateBundleDeploymentForUnpack(bundle.Image, ext)
+	unpackResult, err := r.Unpacker.Unpack(ctx, bd)
+	if err != nil {
+		return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, err)
+	}
+
+	switch unpackResult.State {
+	case rukpaksource.StatePending:
+		updateStatusUnpackPending(&ext.Status, unpackResult, ext.GetGeneration())
+		// There must be a limit to number of entries if status is stuck at
+		// unpack pending.
+		setHasValidBundleUnknown(&ext.Status.Conditions, "unpack pending", ext.GetGeneration())
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as unpack is pending", ext.GetGeneration())
+
+		return ctrl.Result{}, nil
+	case rukpaksource.StateUnpacking:
+		updateStatusUnpacking(&ext.Status, unpackResult)
+		setHasValidBundleUnknown(&ext.Status.Conditions, "unpack pending", ext.GetGeneration())
+		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as unpack is pending", ext.GetGeneration())
+		return ctrl.Result{}, nil
+	case rukpaksource.StateUnpacked:
+		// TODO: Add finalizer to clean the stored bundles, after https://github.com/operator-framework/rukpak/pull/897
+		// merges.
+		if err := r.Storage.Store(ctx, ext, unpackResult.Bundle); err != nil {
+			return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, err)
+		}
+		updateStatusUnpacked(&ext.Status, unpackResult)
+	default:
+		return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, err)
+	}
+
+	bundleFS, err := r.Storage.Load(ctx, ext)
+	if err != nil {
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+			Type:    ocv1alpha1.TypeHasValidBundle,
+			Status:  metav1.ConditionFalse,
+			Reason:  ocv1alpha1.ReasonBundleLoadFailed,
+			Message: err.Error(),
+		})
+		return ctrl.Result{}, err
+	}
+
+	chrt, values, err := r.Handler.Handle(ctx, bundleFS, ext)
+	if err != nil {
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+			Type:    ocv1alpha1.TypeInstalled,
+			Status:  metav1.ConditionFalse,
+			Reason:  ocv1alpha1.ReasonInstallationFailed,
+			Message: err.Error(),
+		})
+		return ctrl.Result{}, err
+	}
+
+	ac, err := r.ActionClientGetter.ActionClientFor(ctx, ext)
+	if err != nil {
+		ext.Status.InstalledBundle = nil
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingClient, err), ext.Generation)
+		return ctrl.Result{}, err
+	}
+
+	post := &postrenderer{
+		labels: map[string]string{
+			labels.OwnerKindKey:     ocv1alpha1.ClusterExtensionKind,
+			labels.OwnerNameKey:     ext.GetName(),
+			labels.BundleNameKey:    bundle.Name,
+			labels.PackageNameKey:   bundle.Package,
+			labels.BundleVersionKey: bundleVersion.String(),
+		},
+	}
+
+	rel, state, err := r.getReleaseState(ac, ext, chrt, values, post)
+	if err != nil {
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", rukpakv1alpha2.ReasonErrorGettingReleaseState, err), ext.Generation)
+		return ctrl.Result{}, err
+	}
+
+	switch state {
+	case stateNeedsInstall:
+		rel, err = ac.Install(ext.GetName(), r.ReleaseNamespace, chrt, values, func(install *action.Install) error {
+			install.CreateNamespace = false
+			install.Labels = map[string]string{labels.BundleNameKey: bundle.Name, labels.PackageNameKey: bundle.Package, labels.BundleVersionKey: bundleVersion.String()}
+			return nil
+		}, helmclient.AppendInstallPostRenderer(post))
+		if err != nil {
+			if isResourceNotFoundErr(err) {
+				err = errRequiredResourceNotFound{err}
+			}
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err), ext.Generation)
+			return ctrl.Result{}, err
+		}
+	case stateNeedsUpgrade:
+		rel, err = ac.Upgrade(ext.GetName(), r.ReleaseNamespace, chrt, values, helmclient.AppendUpgradePostRenderer(post))
+		if err != nil {
+			if isResourceNotFoundErr(err) {
+				err = errRequiredResourceNotFound{err}
+			}
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err), ext.Generation)
+			return ctrl.Result{}, err
+		}
+	case stateUnchanged:
+		if err := ac.Reconcile(rel); err != nil {
+			if isResourceNotFoundErr(err) {
+				err = errRequiredResourceNotFound{err}
+			}
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonResolutionFailed, err), ext.Generation)
+			return ctrl.Result{}, err
+		}
+	default:
+		return ctrl.Result{}, fmt.Errorf("unexpected release state %q", state)
+	}
+
+	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
+	if err != nil {
+		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", rukpakv1alpha2.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+		return ctrl.Result{}, err
+	}
+
+	for _, obj := range relObjects {
+		uMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+		if err != nil {
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", rukpakv1alpha2.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+			return ctrl.Result{}, err
+		}
+
+		unstructuredObj := &unstructured.Unstructured{Object: uMap}
+		if err := func() error {
+			r.dynamicWatchMutex.Lock()
+			defer r.dynamicWatchMutex.Unlock()
+
+			_, isWatched := r.dynamicWatchGVKs[unstructuredObj.GroupVersionKind()]
+			if !isWatched {
+				if err := r.controller.Watch(
+					source.Kind(r.cache, unstructuredObj),
+					crhandler.EnqueueRequestForOwner(r.Scheme(), r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
+					helmpredicate.DependentPredicateFuncs()); err != nil {
+					return err
+				}
+				r.dynamicWatchGVKs[unstructuredObj.GroupVersionKind()] = struct{}{}
+			}
+			return nil
+		}(); err != nil {
+			ext.Status.InstalledBundle = nil
+			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", rukpakv1alpha2.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+			return ctrl.Result{}, err
+		}
+	}
+	ext.Status.InstalledBundle = bundleMetadataFor(bundle)
+	setInstalledStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("Instantiated bundle %s successfully", ext.GetName()), ext.Generation)
+
 	return ctrl.Result{}, nil
 }
 
-func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+// resolve returns a Bundle from the catalog that needs to get installed on the cluster.
+func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
 	allBundles, err := r.BundleProvider.Bundles(ctx)
 	if err != nil {
-		return nil, err
-	}
-
-	installedBundle, err := r.installedBundle(ctx, allBundles, ext)
-	if err != nil {
-		return nil, err
+		return nil, utilerrors.NewAggregate([]error{fmt.Errorf("error fetching bundles: %w", err)})
 	}
 
 	packageName := ext.Spec.PackageName
 	channelName := ext.Spec.Channel
 	versionRange := ext.Spec.Version
+
+	installedBundle, err := GetInstalledbundle(ctx, r.ActionClientGetter, allBundles, &ext)
+	if err != nil {
+		return nil, err
+	}
 
 	predicates := []catalogfilter.Predicate[catalogmetadata.Bundle]{
 		catalogfilter.WithPackageName(packageName),
@@ -205,7 +432,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext *ocv1alpha
 	if versionRange != "" {
 		vr, err := mmsemver.NewConstraint(versionRange)
 		if err != nil {
-			return nil, fmt.Errorf("invalid version range %q: %w", versionRange, err)
+			return nil, utilerrors.NewAggregate([]error{fmt.Errorf("invalid version range '%s': %w", versionRange, err)})
 		}
 		predicates = append(predicates, catalogfilter.InMastermindsSemverRange(vr))
 	}
@@ -230,17 +457,18 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext *ocv1alpha
 		upgradeErrorPrefix = fmt.Sprintf("error upgrading from currently installed version %q: ", installedBundleVersion.String())
 	}
 	if len(resultSet) == 0 {
-		if versionRange != "" && channelName != "" {
-			return nil, fmt.Errorf("%sno package %q matching version %q found in channel %q", upgradeErrorPrefix, packageName, versionRange, channelName)
-		}
-		if versionRange != "" {
+		switch {
+		case versionRange != "" && channelName != "":
+			return nil, fmt.Errorf("%sno package %q matching version %q in channel %q found", upgradeErrorPrefix, packageName, versionRange, channelName)
+		case versionRange != "":
 			return nil, fmt.Errorf("%sno package %q matching version %q found", upgradeErrorPrefix, packageName, versionRange)
+		case channelName != "":
+			return nil, fmt.Errorf("%sno package %q in channel %q found", upgradeErrorPrefix, packageName, channelName)
+		default:
+			return nil, fmt.Errorf("%sno package %q found", upgradeErrorPrefix, packageName)
 		}
-		if channelName != "" {
-			return nil, fmt.Errorf("%sno package %q found in channel %q", upgradeErrorPrefix, packageName, channelName)
-		}
-		return nil, fmt.Errorf("%sno package %q found", upgradeErrorPrefix, packageName)
 	}
+
 	sort.SliceStable(resultSet, func(i, j int) bool {
 		return catalogsort.ByVersion(resultSet[i], resultSet[j])
 	})
@@ -251,100 +479,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext *ocv1alpha
 	return resultSet[0], nil
 }
 
-func (r *ClusterExtensionReconciler) installedBundle(ctx context.Context, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
-	bd := &rukpakv1alpha2.BundleDeployment{}
-	err := r.Client.Get(ctx, types.NamespacedName{Name: ext.GetName()}, bd)
-	if client.IgnoreNotFound(err) != nil {
-		return nil, err
-	}
-
-	if bd.Spec.Source.Image == nil || bd.Spec.Source.Image.Ref == "" {
-		// Bundle not yet installed
-		return nil, nil
-	}
-
-	bundleImage := bd.Spec.Source.Image.Ref
-	// find corresponding bundle for the installed content
-	resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(
-		catalogfilter.WithPackageName(ext.Spec.PackageName),
-		catalogfilter.WithBundleImage(bundleImage),
-	))
-	if len(resultSet) == 0 {
-		return nil, fmt.Errorf("bundle with image %q for package %q not found in available catalogs but is currently installed via BundleDeployment %q", bundleImage, ext.Spec.PackageName, bd.Name)
-	}
-
-	sort.SliceStable(resultSet, func(i, j int) bool {
-		return catalogsort.ByVersion(resultSet[i], resultSet[j])
-	})
-
-	return resultSet[0], nil
-}
-
-func (r *ClusterExtensionReconciler) validateBundle(bundle *catalogmetadata.Bundle) error {
-	unsupportedProps := sets.New(
-		property.TypePackageRequired,
-		property.TypeGVKRequired,
-		property.TypeConstraint,
-	)
-	for i := range bundle.Properties {
-		if unsupportedProps.Has(bundle.Properties[i].Type) {
-			return fmt.Errorf(
-				"bundle %q has a dependency declared via property %q which is currently not supported",
-				bundle.Name,
-				bundle.Properties[i].Type,
-			)
-		}
-	}
-
-	return nil
-}
-
-func mapBDStatusToInstalledCondition(existingTypedBundleDeployment *rukpakv1alpha2.BundleDeployment, ext *ocv1alpha1.ClusterExtension, bundle *catalogmetadata.Bundle) {
-	bundleDeploymentReady := apimeta.FindStatusCondition(existingTypedBundleDeployment.Status.Conditions, rukpakv1alpha2.TypeInstalled)
-	if bundleDeploymentReady == nil {
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "bundledeployment status is unknown", ext.GetGeneration())
-		return
-	}
-
-	if bundleDeploymentReady.Status != metav1.ConditionTrue {
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionFailed(
-			&ext.Status.Conditions,
-			fmt.Sprintf("bundledeployment not ready: %s", bundleDeploymentReady.Message),
-			ext.GetGeneration(),
-		)
-		return
-	}
-
-	installedBundle := bundleMetadataFor(bundle)
-	bundleDeploymentSource := existingTypedBundleDeployment.Spec.Source
-	switch bundleDeploymentSource.Type {
-	case rukpakv1alpha2.SourceTypeImage:
-		ext.Status.InstalledBundle = installedBundle
-		setInstalledStatusConditionSuccess(
-			&ext.Status.Conditions,
-			fmt.Sprintf("installed from %q", bundleDeploymentSource.Image.Ref),
-			ext.GetGeneration(),
-		)
-	case rukpakv1alpha2.SourceTypeGit:
-		ext.Status.InstalledBundle = installedBundle
-		resource := bundleDeploymentSource.Git.Repository + "@" + bundleDeploymentSource.Git.Ref.Commit
-		setInstalledStatusConditionSuccess(
-			&ext.Status.Conditions,
-			fmt.Sprintf("installed from %q", resource),
-			ext.GetGeneration(),
-		)
-	default:
-		setInstalledStatusConditionUnknown(
-			&ext.Status.Conditions,
-			fmt.Sprintf("unknown bundledeployment source type %q", bundleDeploymentSource.Type),
-			ext.GetGeneration(),
-		)
-	}
-}
-
-// setDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
+// SetDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
 // based on the provided bundle
 func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetadata.Bundle) {
 	// reset conditions to false
@@ -426,52 +561,33 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetad
 	}
 }
 
-func (r *ClusterExtensionReconciler) GenerateExpectedBundleDeployment(o ocv1alpha1.ClusterExtension, bundlePath string, bundleProvisioner string) *unstructured.Unstructured {
-	// We use unstructured here to avoid problems of serializing default values when sending patches to the apiserver.
-	// If you use a typed object, any default values from that struct get serialized into the JSON patch, which could
-	// cause unrelated fields to be patched back to the default value even though that isn't the intention. Using an
-	// unstructured ensures that the patch contains only what is specified. Using unstructured like this is basically
-	// identical to "kubectl apply -f"
-
-	spec := map[string]interface{}{
-		"installNamespace":     o.Spec.InstallNamespace,
-		"provisionerClassName": bundleProvisioner,
-		"source": map[string]interface{}{
-			// TODO: Don't assume image type
-			"type": string(rukpakv1alpha2.SourceTypeImage),
-			"image": map[string]interface{}{
-				"ref": bundlePath,
+func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePath string, ce *ocv1alpha1.ClusterExtension) *rukpakv1alpha2.BundleDeployment {
+	return &rukpakv1alpha2.BundleDeployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       ce.Kind,
+			APIVersion: ce.APIVersion,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: ce.Name,
+			UID:  ce.UID,
+		},
+		Spec: rukpakv1alpha2.BundleDeploymentSpec{
+			Source: rukpakv1alpha2.BundleSource{
+				Type: rukpakv1alpha2.SourceTypeImage,
+				Image: &rukpakv1alpha2.ImageSource{
+					Ref: bundlePath,
+				},
 			},
 		},
 	}
-
-	bd := &unstructured.Unstructured{Object: map[string]interface{}{
-		"apiVersion": rukpakv1alpha2.GroupVersion.String(),
-		"kind":       rukpakv1alpha2.BundleDeploymentKind,
-		"metadata": map[string]interface{}{
-			"name": o.GetName(),
-		},
-		"spec": spec,
-	}}
-	bd.SetOwnerReferences([]metav1.OwnerReference{
-		{
-			APIVersion:         ocv1alpha1.GroupVersion.String(),
-			Kind:               "ClusterExtension",
-			Name:               o.Name,
-			UID:                o.UID,
-			Controller:         ptr.To(true),
-			BlockOwnerDeletion: ptr.To(true),
-		},
-	})
-	return bd
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	err := ctrl.NewControllerManagedBy(mgr).
+	controller, err := ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1alpha1.ClusterExtension{}).
 		Watches(&catalogd.Catalog{},
-			handler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
+			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
 		WithEventFilter(predicate.Funcs{
 			UpdateFunc: func(ue event.UpdateEvent) bool {
 				oldObject, isOldCatalog := ue.ObjectOld.(*catalogd.Catalog)
@@ -489,53 +605,56 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				return true
 			},
 		}).
-		Owns(&rukpakv1alpha2.BundleDeployment{}).
-		Complete(r)
+		Watches(&corev1.Pod{}, mapOwneeToOwnerHandler(mgr.GetClient(), mgr.GetLogger(), &ocv1alpha1.ClusterExtension{})).
+		Build(r)
 
 	if err != nil {
 		return err
 	}
+	r.controller = controller
+	r.cache = mgr.GetCache()
+	r.dynamicWatchGVKs = map[schema.GroupVersionKind]struct{}{}
 	return nil
 }
 
-func (r *ClusterExtensionReconciler) ensureBundleDeployment(ctx context.Context, desiredBundleDeployment *unstructured.Unstructured) error {
-	// TODO: what if there happens to be an unrelated BD with the same name as the ClusterExtension?
-	//   we should probably also check to see if there's an owner reference and/or a label set
-	//   that we expect only to ever be used by the operator-controller. That way, we don't
-	//   automatically and silently adopt and change a BD that the user doens't intend to be
-	//   owned by the ClusterExtension.
-	existingBundleDeployment, err := r.existingBundleDeploymentUnstructured(ctx, desiredBundleDeployment.GetName())
-	if client.IgnoreNotFound(err) != nil {
-		return err
-	}
+func mapOwneeToOwnerHandler(cl client.Client, log logr.Logger, owner client.Object) crhandler.EventHandler {
+	return crhandler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+		ownerGVK, err := apiutil.GVKForObject(owner, cl.Scheme())
+		if err != nil {
+			log.Error(err, "map ownee to owner: lookup GVK for owner")
+			return nil
+		}
 
-	// If the existing BD already has everything that the desired BD has, no need to contact the API server.
-	// Make sure the status of the existingBD from the server is as expected.
-	if equality.Semantic.DeepDerivative(desiredBundleDeployment, existingBundleDeployment) {
-		*desiredBundleDeployment = *existingBundleDeployment
-		return nil
-	}
+		type ownerInfo struct {
+			key types.NamespacedName
+			gvk schema.GroupVersionKind
+		}
+		var oi *ownerInfo
 
-	return r.Client.Patch(ctx, desiredBundleDeployment, client.Apply, client.ForceOwnership, client.FieldOwner("operator-controller"))
-}
-
-func (r *ClusterExtensionReconciler) existingBundleDeploymentUnstructured(ctx context.Context, name string) (*unstructured.Unstructured, error) {
-	existingBundleDeployment := &rukpakv1alpha2.BundleDeployment{}
-	err := r.Client.Get(ctx, types.NamespacedName{Name: name}, existingBundleDeployment)
-	if err != nil {
-		return nil, err
-	}
-	existingBundleDeployment.APIVersion = rukpakv1alpha2.GroupVersion.String()
-	existingBundleDeployment.Kind = rukpakv1alpha2.BundleDeploymentKind
-	unstrExistingBundleDeploymentObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(existingBundleDeployment)
-	if err != nil {
-		return nil, err
-	}
-	return &unstructured.Unstructured{Object: unstrExistingBundleDeploymentObj}, nil
+		for _, ref := range obj.GetOwnerReferences() {
+			gv, err := schema.ParseGroupVersion(ref.APIVersion)
+			if err != nil {
+				log.Error(err, fmt.Sprintf("map ownee to owner: parse ownee's owner reference group version %q", ref.APIVersion))
+				return nil
+			}
+			refGVK := gv.WithKind(ref.Kind)
+			if refGVK == ownerGVK && ref.Controller != nil && *ref.Controller {
+				oi = &ownerInfo{
+					key: types.NamespacedName{Name: ref.Name},
+					gvk: ownerGVK,
+				}
+				break
+			}
+		}
+		if oi == nil {
+			return nil
+		}
+		return []reconcile.Request{{NamespacedName: oi.key}}
+	})
 }
 
 // Generate reconcile requests for all cluster extensions affected by a catalog change
-func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) handler.MapFunc {
+func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crhandler.MapFunc {
 	return func(ctx context.Context, _ client.Object) []reconcile.Request {
 		// no way of associating an extension to a catalog so create reconcile requests for everything
 		clusterExtensions := ocv1alpha1.ClusterExtensionList{}
@@ -557,6 +676,137 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) han
 	}
 }
 
+type releaseState string
+
+const (
+	stateNeedsInstall releaseState = "NeedsInstall"
+	stateNeedsUpgrade releaseState = "NeedsUpgrade"
+	stateUnchanged    releaseState = "Unchanged"
+	stateError        releaseState = "Error"
+)
+
+func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterface, obj metav1.Object, chrt *chart.Chart, values chartutil.Values, post *postrenderer) (*release.Release, releaseState, error) {
+	currentRelease, err := cl.Get(obj.GetName())
+	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
+		return nil, stateError, err
+	}
+	if errors.Is(err, driver.ErrReleaseNotFound) {
+		return nil, stateNeedsInstall, nil
+	}
+
+	desiredRelease, err := cl.Upgrade(obj.GetName(), r.ReleaseNamespace, chrt, values, func(upgrade *action.Upgrade) error {
+		upgrade.DryRun = true
+		return nil
+	}, helmclient.AppendUpgradePostRenderer(post))
+	if err != nil {
+		return currentRelease, stateError, err
+	}
+	if desiredRelease.Manifest != currentRelease.Manifest ||
+		currentRelease.Info.Status == release.StatusFailed ||
+		currentRelease.Info.Status == release.StatusSuperseded {
+		return currentRelease, stateNeedsUpgrade, nil
+	}
+	return currentRelease, stateUnchanged, nil
+}
+
+var GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+	cl, err := acg.ActionClientFor(ctx, ext)
+	if err != nil {
+		return nil, err
+	}
+
+	release, err := cl.Get(ext.GetName())
+	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
+		return nil, err
+	}
+	if release == nil {
+		return nil, nil
+	}
+
+	// Bundle must match installed version exactly
+	vr, err := mmsemver.NewConstraint(release.Labels[labels.BundleVersionKey])
+	if err != nil {
+		return nil, err
+	}
+
+	// find corresponding bundle for the installed content
+	resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(
+		catalogfilter.WithPackageName(release.Labels[labels.PackageNameKey]),
+		catalogfilter.WithBundleName(release.Labels[labels.BundleNameKey]),
+		catalogfilter.InMastermindsSemverRange(vr),
+	))
+	if len(resultSet) == 0 {
+		return nil, fmt.Errorf("bundle %q for package %q not found in available catalogs but is currently installed in namespace %q", release.Labels[labels.BundleNameKey], ext.Spec.PackageName, release.Namespace)
+	}
+
+	sort.SliceStable(resultSet, func(i, j int) bool {
+		return catalogsort.ByVersion(resultSet[i], resultSet[j])
+	})
+
+	return resultSet[0], nil
+}
+
+type errRequiredResourceNotFound struct {
+	error
+}
+
+func (err errRequiredResourceNotFound) Error() string {
+	return fmt.Sprintf("required resource not found: %v", err.error)
+}
+
+func isResourceNotFoundErr(err error) bool {
+	var agg utilerrors.Aggregate
+	if errors.As(err, &agg) {
+		for _, err := range agg.Errors() {
+			return isResourceNotFoundErr(err)
+		}
+	}
+
+	nkme := &apimeta.NoKindMatchError{}
+	if errors.As(err, &nkme) {
+		return true
+	}
+	if apierrors.IsNotFound(err) {
+		return true
+	}
+
+	// TODO: improve NoKindMatchError matching
+	//   An error that is bubbled up from the k8s.io/cli-runtime library
+	//   does not wrap meta.NoKindMatchError, so we need to fallback to
+	//   the use of string comparisons for now.
+	return strings.Contains(err.Error(), "no matches for kind")
+}
+
+type postrenderer struct {
+	labels  map[string]string
+	cascade postrender.PostRenderer
+}
+
+func (p *postrenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
+	var buf bytes.Buffer
+	dec := apimachyaml.NewYAMLOrJSONDecoder(renderedManifests, 1024)
+	for {
+		obj := unstructured.Unstructured{}
+		err := dec.Decode(&obj)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		obj.SetLabels(util.MergeMaps(obj.GetLabels(), p.labels))
+		b, err := obj.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(b)
+	}
+	if p.cascade != nil {
+		return p.cascade.Run(&buf)
+	}
+	return &buf, nil
+}
+
 // bundleMetadataFor returns a BundleMetadata for the given bundle. If the provided bundle is nil,
 // this function panics. It is up to the caller to ensure that the bundle is non-nil.
 func bundleMetadataFor(bundle *catalogmetadata.Bundle) *ocv1alpha1.BundleMetadata {
@@ -571,4 +821,23 @@ func bundleMetadataFor(bundle *catalogmetadata.Bundle) *ocv1alpha1.BundleMetadat
 		Name:    bundle.Name,
 		Version: ver.String(),
 	}
+}
+
+func (r *ClusterExtensionReconciler) validateBundle(bundle *catalogmetadata.Bundle) error {
+	unsupportedProps := sets.New(
+		property.TypePackageRequired,
+		property.TypeGVKRequired,
+		property.TypeConstraint,
+	)
+	for i := range bundle.Properties {
+		if unsupportedProps.Has(bundle.Properties[i].Type) {
+			return fmt.Errorf(
+				"bundle %q has a dependency declared via property %q which is currently not supported",
+				bundle.Name,
+				bundle.Properties[i].Type,
+			)
+		}
+	}
+
+	return nil
 }

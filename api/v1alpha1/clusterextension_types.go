@@ -22,6 +22,11 @@ import (
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 )
 
+var (
+	ClusterExtensionGVK  = SchemeBuilder.GroupVersion.WithKind("ClusterExtension")
+	ClusterExtensionKind = ClusterExtensionGVK.Kind
+)
+
 type UpgradeConstraintPolicy string
 
 const (
@@ -77,24 +82,31 @@ type ClusterExtensionSpec struct {
 
 const (
 	// TODO(user): add more Types, here and into init()
-	TypeInstalled = "Installed"
-	TypeResolved  = "Resolved"
+	TypeInstalled      = "Installed"
+	TypeResolved       = "Resolved"
+	TypeHasValidBundle = "HasValidBundle"
+
 	// TypeDeprecated is a rollup condition that is present when
 	// any of the deprecated conditions are present.
 	TypeDeprecated        = "Deprecated"
 	TypePackageDeprecated = "PackageDeprecated"
 	TypeChannelDeprecated = "ChannelDeprecated"
 	TypeBundleDeprecated  = "BundleDeprecated"
+	TypeUnpacked          = "Unpacked"
 
-	ReasonBundleLookupFailed        = "BundleLookupFailed"
+	ReasonErrorGettingClient = "ErrorGettingClient"
+	ReasonBundleLoadFailed   = "BundleLoadFailed"
+
 	ReasonInstallationFailed        = "InstallationFailed"
 	ReasonInstallationStatusUnknown = "InstallationStatusUnknown"
 	ReasonInstallationSucceeded     = "InstallationSucceeded"
-	ReasonInvalidSpec               = "InvalidSpec"
 	ReasonResolutionFailed          = "ResolutionFailed"
-	ReasonResolutionUnknown         = "ResolutionUnknown"
-	ReasonSuccess                   = "Success"
-	ReasonDeprecated                = "Deprecated"
+
+	ReasonSuccess               = "Success"
+	ReasonDeprecated            = "Deprecated"
+	ReasonUpgradeFailed         = "UpgradeFailed"
+	ReasonHasValidBundleUnknown = "HasValidBundleUnknown"
+	ReasonUnpackPending         = "UnpackPending"
 )
 
 func init() {
@@ -102,22 +114,26 @@ func init() {
 	conditionsets.ConditionTypes = append(conditionsets.ConditionTypes,
 		TypeInstalled,
 		TypeResolved,
+		TypeHasValidBundle,
 		TypeDeprecated,
 		TypePackageDeprecated,
 		TypeChannelDeprecated,
 		TypeBundleDeprecated,
+		TypeUnpacked,
 	)
 	// TODO(user): add Reasons from above
 	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
 		ReasonInstallationSucceeded,
 		ReasonResolutionFailed,
-		ReasonResolutionUnknown,
-		ReasonBundleLookupFailed,
 		ReasonInstallationFailed,
-		ReasonInstallationStatusUnknown,
-		ReasonInvalidSpec,
 		ReasonSuccess,
 		ReasonDeprecated,
+		ReasonUpgradeFailed,
+		ReasonBundleLoadFailed,
+		ReasonErrorGettingClient,
+		ReasonInstallationStatusUnknown,
+		ReasonHasValidBundleUnknown,
+		ReasonUnpackPending,
 	)
 }
 
@@ -132,7 +148,6 @@ type ClusterExtensionStatus struct {
 	InstalledBundle *BundleMetadata `json:"installedBundle,omitempty"`
 	// +optional
 	ResolvedBundle *BundleMetadata `json:"resolvedBundle,omitempty"`
-
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +listType=map
