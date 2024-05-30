@@ -19,7 +19,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
@@ -34,7 +33,7 @@ import (
 
 // Describe: ClusterExtension Controller Test
 func TestClusterExtensionDoesNotExist(t *testing.T) {
-	_, reconciler := newClientAndReconciler(t)
+	_, reconciler := newClientAndReconciler(t, nil)
 
 	t.Log("When the cluster extension does not exist")
 	t.Log("It returns no error")
@@ -44,7 +43,7 @@ func TestClusterExtensionDoesNotExist(t *testing.T) {
 }
 
 func TestClusterExtensionNonExistentPackage(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
+	cl, reconciler := newClientAndReconciler(t, nil)
 	ctx := context.Background()
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 
@@ -85,7 +84,7 @@ func TestClusterExtensionNonExistentPackage(t *testing.T) {
 }
 
 func TestClusterExtensionNonExistentVersion(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
+	cl, reconciler := newClientAndReconciler(t, nil)
 	ctx := context.Background()
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 
@@ -130,7 +129,7 @@ func TestClusterExtensionNonExistentVersion(t *testing.T) {
 }
 
 func TestClusterExtensionChannelVersionExists(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
+	cl, reconciler := newClientAndReconciler(t, nil)
 	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpacked
 	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
@@ -189,7 +188,7 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 }
 
 func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
+	cl, reconciler := newClientAndReconciler(t, nil)
 	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpacked
 	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
@@ -248,7 +247,7 @@ func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
 }
 
 func TestClusterExtensionVersionNoChannel(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
+	cl, reconciler := newClientAndReconciler(t, nil)
 	ctx := context.Background()
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 
@@ -298,7 +297,7 @@ func TestClusterExtensionVersionNoChannel(t *testing.T) {
 }
 
 func TestClusterExtensionNoChannel(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
+	cl, reconciler := newClientAndReconciler(t, nil)
 	ctx := context.Background()
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 
@@ -345,7 +344,7 @@ func TestClusterExtensionNoChannel(t *testing.T) {
 }
 
 func TestClusterExtensionNoVersion(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
+	cl, reconciler := newClientAndReconciler(t, nil)
 	ctx := context.Background()
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 
@@ -416,18 +415,28 @@ func verifyConditionsInvariants(t *testing.T, ext *ocv1alpha1.ClusterExtension) 
 }
 
 func TestClusterExtensionUpgrade(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
+	bundle := &catalogmetadata.Bundle{
+		Bundle: declcfg.Bundle{
+			Name:    "operatorhub/prometheus/beta/1.0.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+			Properties: []property.Property{
+				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
+				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
+			},
+		},
+		CatalogName: "fake-catalog",
+		InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
+	}
+
+	cl, reconciler := newClientAndReconciler(t, bundle)
+
 	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpackPending
 	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
 		State: source.StatePending,
 	}, nil)
 	ctx := context.Background()
-	defer func() {
-		controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
-			return nil, nil
-		}
-	}()
 
 	t.Run("semver upgrade constraints enforcement of upgrades within major version", func(t *testing.T) {
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
@@ -477,22 +486,21 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		err = cl.Update(ctx, clusterExtension)
 		require.NoError(t, err)
 
-		controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
-			return &catalogmetadata.Bundle{
-				Bundle: declcfg.Bundle{
-					Name:    "operatorhub/prometheus/beta/1.0.0",
-					Package: "prometheus",
-					Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
-					Properties: []property.Property{
-						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
-						{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-					},
+		bundle := &catalogmetadata.Bundle{
+			Bundle: declcfg.Bundle{
+				Name:    "operatorhub/prometheus/beta/1.0.0",
+				Package: "prometheus",
+				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+				Properties: []property.Property{
+					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
+					{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 				},
-				CatalogName: "fake-catalog",
-				InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
-			}, nil
+			},
+			CatalogName: "fake-catalog",
+			InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
 		}
 
+		cl, reconciler := newClientAndReconciler(t, bundle)
 		// Run reconcile again
 		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 		require.Error(t, err)
@@ -586,21 +594,21 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		err = cl.Update(ctx, clusterExtension)
 		require.NoError(t, err)
 
-		controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
-			return &catalogmetadata.Bundle{
-				Bundle: declcfg.Bundle{
-					Name:    "operatorhub/prometheus/beta/1.0.0",
-					Package: "prometheus",
-					Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
-					Properties: []property.Property{
-						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
-						{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-					},
+		bundle := &catalogmetadata.Bundle{
+			Bundle: declcfg.Bundle{
+				Name:    "operatorhub/prometheus/beta/1.0.0",
+				Package: "prometheus",
+				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+				Properties: []property.Property{
+					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
+					{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 				},
-				CatalogName: "fake-catalog",
-				InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
-			}, nil
+			},
+			CatalogName: "fake-catalog",
+			InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
 		}
+
+		cl, reconciler := newClientAndReconciler(t, bundle)
 
 		// Run reconcile again
 		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
@@ -709,21 +717,21 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 				err = cl.Update(ctx, clusterExtension)
 				require.NoError(t, err)
 
-				controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
-					return &catalogmetadata.Bundle{
-						Bundle: declcfg.Bundle{
-							Name:    "operatorhub/prometheus/beta/1.0.0",
-							Package: "prometheus",
-							Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
-							Properties: []property.Property{
-								{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
-								{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-							},
+				bundle := &catalogmetadata.Bundle{
+					Bundle: declcfg.Bundle{
+						Name:    "operatorhub/prometheus/beta/1.0.0",
+						Package: "prometheus",
+						Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+						Properties: []property.Property{
+							{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
+							{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 						},
-						CatalogName: "fake-catalog",
-						InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
-					}, nil
+					},
+					CatalogName: "fake-catalog",
+					InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
 				}
+
+				cl, reconciler := newClientAndReconciler(t, bundle)
 
 				// Run reconcile again
 				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
@@ -749,18 +757,13 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 }
 
 func TestClusterExtensionDowngrade(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t)
+	cl, reconciler := newClientAndReconciler(t, nil)
 	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpacked
 	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
 		State: source.StatePending,
 	}, nil)
 	ctx := context.Background()
-	defer func() {
-		controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
-			return nil, nil
-		}
-	}()
 
 	t.Run("enforce upgrade constraints", func(t *testing.T) {
 		for _, tt := range []struct {
@@ -821,21 +824,21 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				err = cl.Update(ctx, clusterExtension)
 				require.NoError(t, err)
 
-				controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
-					return &catalogmetadata.Bundle{
-						Bundle: declcfg.Bundle{
-							Name:    "operatorhub/prometheus/beta/1.0.1",
-							Package: "prometheus",
-							Image:   "quay.io/operatorhubio/prometheus@fake1.0.1",
-							Properties: []property.Property{
-								{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.1"}`)},
-								{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-							},
+				bundle := &catalogmetadata.Bundle{
+					Bundle: declcfg.Bundle{
+						Name:    "operatorhub/prometheus/beta/1.0.1",
+						Package: "prometheus",
+						Image:   "quay.io/operatorhubio/prometheus@fake1.0.1",
+						Properties: []property.Property{
+							{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.1"}`)},
+							{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 						},
-						CatalogName: "fake-catalog",
-						InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
-					}, nil
+					},
+					CatalogName: "fake-catalog",
+					InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
 				}
+
+				cl, reconciler := newClientAndReconciler(t, bundle)
 
 				// Run reconcile again
 				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
@@ -920,21 +923,21 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				err = cl.Update(ctx, clusterExtension)
 				require.NoError(t, err)
 
-				controllers.GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
-					return &catalogmetadata.Bundle{
-						Bundle: declcfg.Bundle{
-							Name:    "operatorhub/prometheus/beta/2.0.0",
-							Package: "prometheus",
-							Image:   "quay.io/operatorhubio/prometheus@fake2.0.0",
-							Properties: []property.Property{
-								{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"2.0.0"}`)},
-								{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-							},
+				bundle := &catalogmetadata.Bundle{
+					Bundle: declcfg.Bundle{
+						Name:    "operatorhub/prometheus/beta/2.0.0",
+						Package: "prometheus",
+						Image:   "quay.io/operatorhubio/prometheus@fake2.0.0",
+						Properties: []property.Property{
+							{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"2.0.0"}`)},
+							{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
 						},
-						CatalogName: "fake-catalog",
-						InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
-					}, nil
+					},
+					CatalogName: "fake-catalog",
+					InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
 				}
+
+				cl, reconciler := newClientAndReconciler(t, bundle)
 
 				// Run reconcile again
 				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})

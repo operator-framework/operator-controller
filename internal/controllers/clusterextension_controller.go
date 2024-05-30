@@ -83,16 +83,21 @@ import (
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
-	ReleaseNamespace   string
-	BundleProvider     BundleProvider
-	Unpacker           rukpaksource.Unpacker
-	ActionClientGetter helmclient.ActionClientGetter
-	Storage            storage.Storage
-	Handler            handler.Handler
-	dynamicWatchMutex  sync.RWMutex
-	dynamicWatchGVKs   map[schema.GroupVersionKind]struct{}
-	controller         crcontroller.Controller
-	cache              cache.Cache
+	ReleaseNamespace      string
+	BundleProvider        BundleProvider
+	Unpacker              rukpaksource.Unpacker
+	ActionClientGetter    helmclient.ActionClientGetter
+	Storage               storage.Storage
+	Handler               handler.Handler
+	dynamicWatchMutex     sync.RWMutex
+	dynamicWatchGVKs      map[schema.GroupVersionKind]struct{}
+	controller            crcontroller.Controller
+	cache                 cache.Cache
+	InstalledBundleGetter InstalledBundleGetter
+}
+
+type InstalledBundleGetter interface {
+	GetInstalledBundle(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error)
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
@@ -416,7 +421,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 	channelName := ext.Spec.Channel
 	versionRange := ext.Spec.Version
 
-	installedBundle, err := GetInstalledbundle(ctx, r.ActionClientGetter, allBundles, &ext)
+	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, r.ActionClientGetter, allBundles, &ext)
 	if err != nil {
 		return nil, err
 	}
@@ -709,7 +714,9 @@ func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterfa
 	return currentRelease, stateUnchanged, nil
 }
 
-var GetInstalledbundle = func(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+type DefaultInstalledBundleGetter struct{}
+
+func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
 	cl, err := acg.ActionClientFor(ctx, ext)
 	if err != nil {
 		return nil, err
