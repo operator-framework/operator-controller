@@ -28,10 +28,16 @@ import (
 	"go.uber.org/zap/zapcore"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -44,6 +50,7 @@ import (
 	"github.com/operator-framework/rukpak/pkg/storage"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/authentication"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
@@ -159,19 +166,44 @@ func main() {
 	cl := mgr.GetClient()
 	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, httpClient))
 
-	installNamespaceMapper := helmclient.ObjectToStringMapper(func(obj client.Object) (string, error) {
-		ext := obj.(*ocv1alpha1.ClusterExtension)
+	saGetter, err := corev1client.NewForConfig(ctrl.GetConfigOrDie())
+	if err != nil {
+		setupLog.Error(err, "unable to create service account client")
+		os.Exit(1)
+	}
+
+	tg := authentication.NewTokenGetter(saGetter, 3600)
+	nsMapper := func(obj client.Object) (string, error) {
+		ext, ok := obj.(*ocv1alpha1.ClusterExtension)
+		if !ok {
+			return "", fmt.Errorf("cannot derive namespace from object of type %T", obj)
+		}
 		return ext.Spec.InstallNamespace, nil
-	})
+	}
+
+	rcm := func(ctx context.Context, obj client.Object, baseRestConfig *rest.Config) (*rest.Config, error) {
+		cfg := rest.AnonymousClientConfig(rest.CopyConfig(baseRestConfig))
+		ext, ok := obj.(*ocv1alpha1.ClusterExtension)
+		if !ok {
+			return cfg, nil
+		}
+		token, err := tg.Get(ctx, types.NamespacedName{Namespace: ext.Spec.InstallNamespace, Name: ext.Spec.ServiceAccountName})
+		if err != nil {
+			return nil, err
+		}
+		cfg.BearerToken = token
+		return cfg, nil
+	}
+
 	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
-		helmclient.StorageNamespaceMapper(installNamespaceMapper),
-		helmclient.ClientNamespaceMapper(installNamespaceMapper),
+		helmclient.ClientNamespaceMapper(nsMapper),
+		helmclient.StorageNamespaceMapper(nsMapper),
+		helmclient.RestConfigMapper(rcm),
 	)
 	if err != nil {
 		setupLog.Error(err, "unable to config for creating helm client")
 		os.Exit(1)
 	}
-
 	acg, err := helmclient.NewActionClientGetter(cfgGetter)
 	if err != nil {
 		setupLog.Error(err, "unable to create helm client")
@@ -217,6 +249,10 @@ func main() {
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Handler:               registryv1handler.HandlerFunc(registry.HandleBundleDeployment),
 		Finalizers:            clusterExtensionFinalizers,
+		InformerClientMap:     make(map[types.UID]kubernetes.Interface),
+		InformerFactoryMap:    make(map[types.UID]informers.SharedInformerFactory),
+		InformerMap:           make(map[string]informers.GenericInformer),
+		EventChannel:          make(chan event.GenericEvent),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)

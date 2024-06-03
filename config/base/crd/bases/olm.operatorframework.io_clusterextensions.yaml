@@ -56,6 +56,13 @@ spec:
                 maxLength: 48
                 pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
                 type: string
+              serviceAccountName:
+                description: |-
+                  ServiceAccountName is the name of the ServiceAccount to use to manage the resources in the bundle.
+                  The service account is expected to exist in the InstallNamespace.
+                maxLength: 253
+                pattern: ^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$
+                type: string
               upgradeConstraintPolicy:
                 default: Enforce
                 description: Defines the policy for how to handle upgrade constraints
@@ -77,6 +84,7 @@ spec:
             required:
             - installNamespace
             - packageName
+            - serviceAccountName
             type: object
           status:
             description: ClusterExtensionStatus defines the observed state of ClusterExtension

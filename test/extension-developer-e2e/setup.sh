@@ -158,6 +158,7 @@ EOF
 
 kubectl create configmap -n "${namespace}" --from-file="${TMP_ROOT}"/catalog.Dockerfile extension-dev-e2e.dockerfile
 kubectl create configmap -n "${namespace}" --from-file="${TMP_ROOT}"/catalog extension-dev-e2e.build-contents
+kubectl apply -f testdata/rbac/ext-dev-rbac.yaml -n default
 
 kubectl apply -f - << EOF
 apiVersion: batch/v1

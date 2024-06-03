@@ -30,6 +30,17 @@ import (
 	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
 	"github.com/go-logr/logr"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	"github.com/operator-framework/operator-controller/internal/authentication"
+	"github.com/operator-framework/operator-registry/alpha/declcfg"
+	"github.com/operator-framework/operator-registry/alpha/property"
+	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
+	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
+	rukpaksource "github.com/operator-framework/rukpak/pkg/source"
+	"github.com/operator-framework/rukpak/pkg/storage"
+	"github.com/operator-framework/rukpak/pkg/util"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -44,6 +55,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/rest"
+	clientgocache "k8s.io/client-go/tools/cache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -55,18 +71,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
-	"github.com/operator-framework/operator-registry/alpha/property"
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
-	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
-	helmpredicate "github.com/operator-framework/rukpak/pkg/helm-operator-plugins/predicate"
-	rukpaksource "github.com/operator-framework/rukpak/pkg/source"
-	"github.com/operator-framework/rukpak/pkg/storage"
-	"github.com/operator-framework/rukpak/pkg/util"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
@@ -90,6 +94,11 @@ type ClusterExtensionReconciler struct {
 	cache                 cache.Cache
 	InstalledBundleGetter InstalledBundleGetter
 	Finalizers            crfinalizer.Finalizers
+	InformerClientMap     map[types.UID]kubernetes.Interface
+	InformerFactoryMap    map[types.UID]informers.SharedInformerFactory
+	EventChannel          chan event.GenericEvent
+	InformerMap           map[string]informers.GenericInformer
+	watchCreated          bool
 }
 
 type InstalledBundleGetter interface {
@@ -100,11 +109,12 @@ const (
 	bundleConnectionAnnotation string = "bundle.connection.config/insecureSkipTLSVerify"
 )
 
-//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch;update
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=secrets,verbs=create;update;patch;delete;get;list;watch
-//+kubebuilder:rbac:groups=*,resources=*,verbs=*
+
+//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=list;watch
+//+kubebuilder:rbac:groups=core,resources=serviceaccounts/token,verbs=create
 
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
@@ -113,8 +123,8 @@ const (
 // This has been taken from rukpak, and an issue was created before to discuss it: https://github.com/operator-framework/rukpak/issues/800.
 func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("operator-controller")
-	l.V(1).Info("starting")
-	defer l.V(1).Info("ending")
+	l.V(1).Info(fmt.Sprintf("starting reconcile for %s", req.String()))
+	defer l.V(1).Info(fmt.Sprintf("ending reconcile for %s", req.String()))
 
 	var existingExt = &ocv1alpha1.ClusterExtension{}
 	if err := r.Client.Get(ctx, req.NamespacedName, existingExt); err != nil {
@@ -194,6 +204,7 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
 	finalizeResult, err := r.Finalizers.Finalize(ctx, ext)
+	logger := log.FromContext(ctx)
 	if err != nil {
 		// TODO: For now, this error handling follows the pattern of other error handling.
 		//  Namely: zero just about everything out, throw our hands up, and return an error.
@@ -346,31 +357,133 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
-	for _, obj := range relObjects {
-		if err := func() error {
-			r.dynamicWatchMutex.Lock()
-			defer r.dynamicWatchMutex.Unlock()
+	// build client with service account token
+	informerClient, clientSetExists := r.InformerClientMap[ext.UID]
+	if !clientSetExists {
+		saGetter, err := corev1client.NewForConfig(ctrl.GetConfigOrDie())
+		if err != nil {
+			logger.Error(err, "unable to create client to get service account")
+		}
+		tg := authentication.NewTokenGetter(saGetter, 0)
+		token, err := tg.Get(ctx, types.NamespacedName{Namespace: ext.Spec.InstallNamespace, Name: ext.Spec.ServiceAccountName})
+		if err != nil {
+			logger.Error(err, "unable to get service account token")
+		}
+		cfg := rest.AnonymousClientConfig(rest.CopyConfig(ctrl.GetConfigOrDie()))
+		cfg.BearerToken = token
+		informerClient, err = kubernetes.NewForConfig(cfg)
+		r.InformerClientMap[ext.UID] = informerClient
+		//TODO clean up client when extension is removed
+	}
 
-			_, isWatched := r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()]
-			if !isWatched {
-				if err := r.controller.Watch(
-					source.Kind(r.cache,
-						obj,
-						crhandler.EnqueueRequestForOwner(r.Scheme(), r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
-						helmpredicate.DependentPredicateFuncs[client.Object](),
-					),
-				); err != nil {
-					return err
-				}
-				r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()] = sets.Empty{}
+	// build informer factory with custom clientset
+	informerFactory, informerFactoryExists := r.InformerFactoryMap[ext.UID]
+	if !informerFactoryExists {
+		informerFactory = informers.NewSharedInformerFactoryWithOptions(informerClient, 0, informers.WithNamespace(ext.Spec.InstallNamespace))
+		r.InformerFactoryMap[ext.UID] = informerFactory
+		//TODO clean up informer factory when extension is removed
+	}
+
+	//setup informers for all bundle objects to emit events to channel
+	for _, obj := range relObjects {
+		logger.Info(fmt.Sprintf("processing release object %s/%s with gvk %s", obj.GetNamespace(), obj.GetName(), obj.GetObjectKind().GroupVersionKind().GroupKind()))
+		gvk := obj.GetObjectKind().GroupVersionKind()
+		mapping, err := r.RESTMapper().RESTMapping(gvk.GroupKind(), gvk.Version)
+		if err != nil {
+			logger.Error(err, "Unable to convert gvk to gvr", "gvr", gvk.String())
+			continue
+		}
+		objKey := obj.GetName() + obj.GetObjectKind().GroupVersionKind().Kind
+		genericInformer, infomerExists := r.InformerMap[objKey]
+		if !infomerExists {
+			logger.Info(fmt.Sprintf("Creating generic informer for %s", mapping.Resource.String()))
+			genericInformer, err = informerFactory.ForResource(mapping.Resource)
+			if err != nil {
+				logger.Error(err, fmt.Sprintf("Unable to create generic informer for %s", mapping.Resource.String()), "resource", mapping.Resource.String())
+				continue
 			}
-			return nil
-		}(); err != nil {
+			logger.Info(fmt.Sprintf("Adding event handler for %s", mapping.Resource.String()), "resource", mapping.Resource.String())
+			_, err = genericInformer.Informer().AddEventHandler(clientgocache.ResourceEventHandlerFuncs{
+				//AddFunc: func(obj interface{}) {
+				//	event := event.GenericEvent{
+				//		Object: obj.(client.Object),
+				//	}
+				//	logger.Info(fmt.Sprintf("got add event with name %s,and namespace %s", event.Object.GetName(), event.Object.GetNamespace()))
+				//	r.EventChannel <- event
+				//},
+				//UpdateFunc: func(oldObj, newObj interface{}) {
+				//	event := event.GenericEvent{
+				//		Object: oldObj.(client.Object),
+				//	}
+				//	logger.Info(fmt.Sprintf("got update event with name %s,and namespace %s", event.Object.GetName(), event.Object.GetNamespace()))
+				//	r.EventChannel <- event
+				//},
+				DeleteFunc: func(obj interface{}) {
+					event := event.GenericEvent{
+						Object: obj.(client.Object),
+					}
+					logger.Info(fmt.Sprintf("got delete event with name %s,and namespace %s", event.Object.GetName(), event.Object.GetNamespace()))
+					r.EventChannel <- event
+				},
+			})
+			if err != nil {
+				logger.Error(err, "Unable to add event handlers for informer with %v", mapping.Resource.String())
+			}
+			informerFactory.Start(ctx.Done())
+			synced := informerFactory.WaitForCacheSync(ctx.Done())
+			for v, ok := range synced {
+				if !ok {
+					logger.Error(fmt.Errorf("cache failed to sync %s with type %v", obj.GetName(), v), "Problem with informer setup")
+				} else {
+					logger.Info(fmt.Sprintf("Cache has synced for %s with type %v", obj.GetName(), v))
+				}
+			}
+			logger.Info(fmt.Sprintf("Saving informer for object with key %s", objKey))
+			r.InformerMap[objKey] = genericInformer
+			//TODO clean up informer factory when extension is removed
+		} else {
+			logger.Info(fmt.Sprintf("Informer already exists for %s", objKey))
+		}
+	}
+
+	// set up watch for channel so that we can trigger reconciles when bundle content changes
+	if !r.watchCreated {
+		err = r.controller.Watch(
+			source.Channel(r.EventChannel,
+				crhandler.EnqueueRequestForOwner(r.Scheme(), r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
+			))
+		if err != nil {
 			ext.Status.InstalledBundle = nil
 			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err))
 			return ctrl.Result{}, err
 		}
+		r.watchCreated = true
 	}
+
+	//for _, obj := range relObjects {
+	//	if err := func() error {
+	//		r.dynamicWatchMutex.Lock()
+	//		defer r.dynamicWatchMutex.Unlock()
+	//
+	//		_, isWatched := r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()]
+	//		if !isWatched {
+	//			if err := r.controller.Watch(
+	//				source.Kind(r.cache,
+	//					obj,
+	//					crhandler.EnqueueRequestForOwner(r.Scheme(), r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
+	//				),
+	//			); err != nil {
+	//				return err
+	//			}
+	//			r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()] = sets.Empty{}
+	//		}
+	//		return nil
+	//	}(); err != nil {
+	//		ext.Status.InstalledBundle = nil
+	//		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err))
+	//		return ctrl.Result{}, err
+	//	}
+	//}
 	ext.Status.InstalledBundle = bundleMetadataFor(bundle)
 	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Instantiated bundle %s successfully", ext.GetName()))
 

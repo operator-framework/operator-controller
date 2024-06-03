@@ -5,12 +5,6 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - '*'
-  resources:
-  - '*'
-  verbs:
-  - '*'
-- apiGroups:
   - catalogd.operatorframework.io
   resources:
   - catalogmetadata
@@ -27,15 +21,16 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - secrets
+  - configmaps
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts/token
   verbs:
   - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
 - apiGroups:
   - olm.operatorframework.io
   resources:
@@ -43,6 +38,7 @@ rules:
   verbs:
   - get
   - list
+  - update
   - watch
 - apiGroups:
   - olm.operatorframework.io

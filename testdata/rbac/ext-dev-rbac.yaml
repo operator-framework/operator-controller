@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ext-dev-sa
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ext-dev-clusterrole
+rules:
+- apiGroups: [""]
+  resources: ["secrets","serviceaccounts","services"]
+  verbs: ["list","get","create","delete"]
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get","create","delete"]
+- apiGroups: ["rbac.authorization.k8s.io"]
+  resources: ["clusterroles","clusterrolebindings"]
+  verbs: ["get","create","delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get","create","delete"]
+
+# Adding permissions from bundle in order to be able to create rbac for the extension
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get","list","watch","create","update","patch","delete"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create","patch"]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["get","list","watch","create","update","patch","delete"]
+- apiGroups: [ "authentication.k8s.io" ]
+  resources: [ "tokenreviews" ]
+  verbs: [ "create" ]
+- apiGroups: [ "authorization.k8s.io" ]
+  resources: [ "subjectaccessreviews" ]
+  verbs: [ "create" ]
+- apiGroups: ["oc-opdev-e2e.operatorframework.io.oc-opdev-e2e.operatorframework.io"]
+  resources: ["registries"]
+  verbs: ["get","list","watch","create","update","patch","delete"]
+- apiGroups: ["oc-opdev-e2e.operatorframework.io.oc-opdev-e2e.operatorframework.io"]
+  resources: ["registries/finalizers"]
+  verbs: ["update"]
+- apiGroups: ["oc-opdev-e2e.operatorframework.io.oc-opdev-e2e.operatorframework.io"]
+  resources: ["registries/status"]
+  verbs: ["get","update","patch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ext-dev-clusterrolebinding
+subjects:
+- kind: ServiceAccount
+  name: ext-dev-sa
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: ext-dev-clusterrole
+  apiGroup: rbac.authorization.k8s.io

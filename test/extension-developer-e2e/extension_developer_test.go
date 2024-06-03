@@ -40,8 +40,9 @@ func TestExtensionDeveloper(t *testing.T) {
 				},
 			},
 			Spec: ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      os.Getenv("REG_PKG_NAME"),
-				InstallNamespace: "default",
+				PackageName:        os.Getenv("REG_PKG_NAME"),
+				InstallNamespace:   "default",
+				ServiceAccountName: "ext-dev-sa",
 			},
 		},
 	}

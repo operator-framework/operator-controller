@@ -152,7 +152,7 @@ build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and pus
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
 test-e2e: GO_BUILD_FLAGS := -cover
-test-e2e: run image-registry build-push-e2e-catalog registry-load-bundles e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: run image-registry build-push-e2e-catalog registry-load-bundles apply-rbac e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e  #EXHELP Run extension-developer e2e on local kind cluster
@@ -192,6 +192,9 @@ registry-load-bundles: ## Load selected e2e testdata container images created in
 	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(REGISTRY_ROOT)/bundles/registry-v1/prometheus-operator:v1.0.1 prometheus-operator.v1.0.1 prometheus-operator.v1.0.0
 	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(REGISTRY_ROOT)/bundles/registry-v1/prometheus-operator:v1.2.0 prometheus-operator.v1.2.0 prometheus-operator.v1.0.0
 	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(REGISTRY_ROOT)/bundles/registry-v1/prometheus-operator:v2.0.0 prometheus-operator.v2.0.0 prometheus-operator.v1.0.0
+
+apply-rbac: ## Apply RBAC expected when using service account from spec
+	kubectl apply -f testdata/rbac/prometheus-operator-bundle-rbac.yaml -n default
 
 #SECTION Build
 
@@ -238,7 +241,7 @@ run: docker-build kind-cluster kind-load kind-deploy #HELP Build the operator-co
 
 .PHONY: docker-build
 docker-build: build-linux #EXHELP Build docker image for operator-controller with GOOS=linux and local GOARCH.
-	$(CONTAINER_RUNTIME) build -t $(IMG) -f Dockerfile ./bin/linux
+	$(CONTAINER_RUNTIME) build -t $(IMG) -f Dockerfile ./bin/linux --load
 
 #SECTION Release
 ifeq ($(origin ENABLE_RELEASE_PIPELINE), undefined)

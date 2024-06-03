@@ -4,5 +4,6 @@ metadata:
   name: clusterextension-sample
 spec:
   installNamespace: default
+  serviceAccountName: argocd-operator-bundle-sa
   packageName: argocd-operator
   version: 0.6.0
