@@ -122,6 +122,8 @@ e2e: #EXHELP Run the e2e tests.
 
 E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
+DNS_NAME           := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc.cluster.local
+
 export REG_PKG_NAME := registry-operator
 export CATALOG_IMG := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000/test-catalog:e2e
 .PHONY: test-ext-dev-e2e
@@ -150,7 +152,7 @@ build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and pus
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: KUSTOMIZE_BUILD_DIR := config/e2e
 test-e2e: GO_BUILD_FLAGS := -cover
-test-e2e: run image-registry build-push-e2e-catalog kind-load-test-artifacts e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: run image-registry build-push-e2e-catalog kind-load-test-artifacts registry-load-bundles e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e  #EXHELP Run extension-developer e2e on local kind cluster
@@ -199,6 +201,11 @@ kind-load-test-artifacts: $(KIND) #EXHELP Load the e2e testdata container images
 	$(CONTAINER_RUNTIME) build testdata/bundles/registry-v1/package-with-webhooks.v1.0.0 -t  localhost/testdata/bundles/registry-v1/package-with-webhooks:v1.0.0
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/package-with-webhooks:v1.0.0 --name $(KIND_CLUSTER_NAME)
 
+registry-load-bundles: ## Load selected e2e testdata container images created in kind-load-bundles into registry
+	testdata/bundles/registry-v1/prometheus-operator.v1.0.0/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v1.0.0
+	testdata/bundles/registry-v1/prometheus-operator.v1.0.0/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v1.0.1
+	testdata/bundles/registry-v1/prometheus-operator.v1.0.0/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v1.2.0
+	testdata/bundles/registry-v1/prometheus-operator.v1.0.0/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v2.0.0
 
 #SECTION Build
 
