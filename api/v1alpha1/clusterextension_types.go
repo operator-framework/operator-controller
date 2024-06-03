@@ -106,7 +106,14 @@ const (
 	ReasonDeprecated            = "Deprecated"
 	ReasonUpgradeFailed         = "UpgradeFailed"
 	ReasonHasValidBundleUnknown = "HasValidBundleUnknown"
-	ReasonUnpackPending         = "UnpackPending"
+
+	ReasonUnpackPending = "UnpackPending"
+	ReasonUnpackSuccess = "UnpackSuccess"
+	ReasonUnpackFailed  = "UnpackFailed"
+	ReasonUnpacking     = "Unpacking"
+
+	ReasonErrorGettingReleaseState = "ErrorGettingReleaseState"
+	ReasonCreateDynamicWatchFailed = "CreateDynamicWatchFailed"
 )
 
 func init() {
@@ -134,6 +141,11 @@ func init() {
 		ReasonInstallationStatusUnknown,
 		ReasonHasValidBundleUnknown,
 		ReasonUnpackPending,
+		ReasonUnpackSuccess,
+		ReasonUnpacking,
+		ReasonUnpackFailed,
+		ReasonErrorGettingReleaseState,
+		ReasonCreateDynamicWatchFailed,
 	)
 }
 

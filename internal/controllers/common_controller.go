@@ -22,9 +22,6 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
-	"github.com/operator-framework/rukpak/pkg/source"
-
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
@@ -36,84 +33,84 @@ type BundleProvider interface {
 }
 
 // setResolvedStatusConditionSuccess sets the resolved status condition to success.
-func setResolvedStatusConditionSuccess(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
+func setResolvedStatusConditionSuccess(ext *ocv1alpha1.ClusterExtension, message string) {
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeResolved,
 		Status:             metav1.ConditionTrue,
 		Reason:             ocv1alpha1.ReasonSuccess,
 		Message:            message,
-		ObservedGeneration: generation,
+		ObservedGeneration: ext.GetGeneration(),
 	})
 }
 
 // setInstalledStatusConditionUnknown sets the installed status condition to unknown.
-func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
+func setInstalledStatusConditionUnknown(ext *ocv1alpha1.ClusterExtension, message string) {
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionUnknown,
 		Reason:             ocv1alpha1.ReasonInstallationStatusUnknown,
 		Message:            message,
-		ObservedGeneration: generation,
+		ObservedGeneration: ext.GetGeneration(),
 	})
 }
 
 // setHasValidBundleUnknown sets the valid bundle condition to unknown.
-func setHasValidBundleUnknown(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
+func setHasValidBundleUnknown(ext *ocv1alpha1.ClusterExtension, message string) {
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeHasValidBundle,
 		Status:             metav1.ConditionUnknown,
 		Reason:             ocv1alpha1.ReasonHasValidBundleUnknown,
 		Message:            message,
-		ObservedGeneration: generation,
+		ObservedGeneration: ext.GetGeneration(),
 	})
 }
 
 // setHasValidBundleFalse sets the ivalid bundle condition to false
-func setHasValidBundleFailed(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
+func setHasValidBundleFailed(ext *ocv1alpha1.ClusterExtension, message string) {
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeHasValidBundle,
 		Status:             metav1.ConditionFalse,
 		Reason:             ocv1alpha1.ReasonBundleLoadFailed,
 		Message:            message,
-		ObservedGeneration: generation,
+		ObservedGeneration: ext.GetGeneration(),
 	})
 }
 
 // setResolvedStatusConditionFailed sets the resolved status condition to failed.
-func setResolvedStatusConditionFailed(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
+func setResolvedStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message string) {
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeResolved,
 		Status:             metav1.ConditionFalse,
 		Reason:             ocv1alpha1.ReasonResolutionFailed,
 		Message:            message,
-		ObservedGeneration: generation,
+		ObservedGeneration: ext.GetGeneration(),
 	})
 }
 
 // setInstalledStatusConditionSuccess sets the installed status condition to success.
-func setInstalledStatusConditionSuccess(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
+func setInstalledStatusConditionSuccess(ext *ocv1alpha1.ClusterExtension, message string) {
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionTrue,
 		Reason:             ocv1alpha1.ReasonSuccess,
 		Message:            message,
-		ObservedGeneration: generation,
+		ObservedGeneration: ext.GetGeneration(),
 	})
 }
 
 // setInstalledStatusConditionFailed sets the installed status condition to failed.
-func setInstalledStatusConditionFailed(conditions *[]metav1.Condition, message string, generation int64) {
-	apimeta.SetStatusCondition(conditions, metav1.Condition{
+func setInstalledStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message string) {
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionFalse,
 		Reason:             ocv1alpha1.ReasonInstallationFailed,
 		Message:            message,
-		ObservedGeneration: generation,
+		ObservedGeneration: ext.GetGeneration(),
 	})
 }
 
 // setDeprecationStatusesUnknown sets the deprecation status conditions to unknown.
-func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message string, generation int64) {
+func setDeprecationStatusesUnknown(ext *ocv1alpha1.ClusterExtension, message string) {
 	conditionTypes := []string{
 		ocv1alpha1.TypeDeprecated,
 		ocv1alpha1.TypePackageDeprecated,
@@ -122,55 +119,57 @@ func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message strin
 	}
 
 	for _, conditionType := range conditionTypes {
-		apimeta.SetStatusCondition(conditions, metav1.Condition{
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 			Type:               conditionType,
 			Reason:             ocv1alpha1.ReasonDeprecated,
 			Status:             metav1.ConditionUnknown,
 			Message:            message,
-			ObservedGeneration: generation,
+			ObservedGeneration: ext.GetGeneration(),
 		})
 	}
 }
 
-func updateStatusUnpackFailing(status *ocv1alpha1.ClusterExtensionStatus, err error) error {
-	status.InstalledBundle = nil
-	apimeta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha2.TypeUnpacked,
-		Status:  metav1.ConditionFalse,
-		Reason:  rukpakv1alpha2.ReasonUnpackFailed,
-		Message: err.Error(),
-	})
-	return err
-}
-
-// TODO: verify if we need to update the installBundle status or leave it as is.
-func updateStatusUnpackPending(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result, generation int64) {
-	status.InstalledBundle = nil
-	apimeta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:               rukpakv1alpha2.TypeUnpacked,
+func setStatusUnpackFailed(ext *ocv1alpha1.ClusterExtension, message string) {
+	ext.Status.InstalledBundle = nil
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeUnpacked,
 		Status:             metav1.ConditionFalse,
-		Reason:             rukpakv1alpha2.ReasonUnpackPending,
-		Message:            result.Message,
-		ObservedGeneration: generation,
+		Reason:             ocv1alpha1.ReasonUnpackFailed,
+		Message:            message,
+		ObservedGeneration: ext.GetGeneration(),
 	})
 }
 
 // TODO: verify if we need to update the installBundle status or leave it as is.
-func updateStatusUnpacking(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
-	status.InstalledBundle = nil
-	apimeta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha2.TypeUnpacked,
-		Status:  metav1.ConditionFalse,
-		Reason:  rukpakv1alpha2.ReasonUnpacking,
-		Message: result.Message,
+func setStatusUnpackPending(ext *ocv1alpha1.ClusterExtension, message string) {
+	ext.Status.InstalledBundle = nil
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeUnpacked,
+		Status:             metav1.ConditionFalse,
+		Reason:             ocv1alpha1.ReasonUnpackPending,
+		Message:            message,
+		ObservedGeneration: ext.GetGeneration(),
 	})
 }
 
-func updateStatusUnpacked(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
-	apimeta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha2.TypeUnpacked,
-		Status:  metav1.ConditionTrue,
-		Reason:  rukpakv1alpha2.ReasonUnpackSuccessful,
-		Message: result.Message,
+// TODO: verify if we need to update the installBundle status or leave it as is.
+func setStatusUnpacking(ext *ocv1alpha1.ClusterExtension, message string) {
+	ext.Status.InstalledBundle = nil
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeUnpacked,
+		Status:             metav1.ConditionFalse,
+		Reason:             ocv1alpha1.ReasonUnpacking,
+		Message:            message,
+		ObservedGeneration: ext.GetGeneration(),
+	})
+}
+
+func setStatusUnpacked(ext *ocv1alpha1.ClusterExtension, message string) {
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeUnpacked,
+		Status:             metav1.ConditionTrue,
+		Reason:             ocv1alpha1.ReasonUnpackSuccess,
+		Message:            message,
+		ObservedGeneration: ext.GetGeneration(),
 	})
 }
