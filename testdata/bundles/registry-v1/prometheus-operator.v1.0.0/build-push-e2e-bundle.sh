@@ -14,7 +14,7 @@ Argument Descriptions:
   - TAG is the full tag used to build and push the catalog image
 "
 
-if [[ "$#" -ne 2 ]]; then
+if [[ "$#" -ne 3 ]]; then
   echo "Illegal number of arguments passed"
   echo "${help}"
   exit 1
@@ -24,12 +24,16 @@ fi
 namespace=$1
 tag=$2
 bundle_dir="testdata/bundles/registry-v1/prometheus-operator.v1.0.0"
-bundle_name="prometheus-operator.v1.0.0"
+bundle_name=$3
 
 echo "${namespace}" "${tag}"
 
-kubectl create configmap -n "${namespace}" --from-file="${bundle_dir}/" operator-controller-e2e-${bundle_name}.root
-kubectl create configmap -n "${namespace}" --from-file="${bundle_dir}/manifests" operator-controller-${bundle_name}.manifests
+kubectl create configmap -n "${namespace}" --from-file="${bundle_dir}/Dockerfile" operator-controller-e2e-${bundle_name}.root
+
+tgz="${bundle_dir}/manifests.tgz"
+tar czf "${tgz}" -C "${bundle_dir}/" manifests metadata
+kubectl create configmap -n "${namespace}" --from-file="${tgz}" operator-controller-${bundle_name}.manifests
+rm "${tgz}"
 
 kubectl apply -f - << EOF
 apiVersion: batch/v1
@@ -53,7 +57,7 @@ spec:
       - name: kaniko
         image: gcr.io/kaniko-project/executor:latest
         args: ["--dockerfile=/workspace/Dockerfile",
-                "--context=/workspace/",
+                "--context=tar:///workspace/manifests/manifests.tgz",
                 "--destination=${tag}",
                 "--skip-tls-verify"]
         volumeMounts:
