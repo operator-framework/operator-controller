@@ -150,7 +150,7 @@ build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and pus
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: KUSTOMIZE_BUILD_DIR := config/e2e
 test-e2e: GO_BUILD_FLAGS := -cover
-test-e2e: run image-registry build-push-e2e-catalog kind-load-test-artifacts e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: run image-registry build-push-e2e-catalog kind-load-test-artifacts e2e e2e-coverage #HELP Run e2e test suite on local kind cluster
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e  #EXHELP Run extension-developer e2e on local kind cluster

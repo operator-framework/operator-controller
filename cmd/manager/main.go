@@ -89,7 +89,7 @@ func main() {
 	flag.StringVar(&cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
 	flag.BoolVar(&operatorControllerVersion, "version", false, "Prints operator-controller version information")
 	flag.StringVar(&systemNamespace, "system-namespace", "", "Configures the namespace that gets used to deploy system resources.")
-	flag.StringVar(&unpackImage, "unpack-image", defaultUnpackImage, "Configures the container image that gets used to unpack Bundle contents.")
+	flag.StringVar(&unpackImage, "unpack-image", defaultUnpackImage, "Configures the container image that gets used to unpack Bundle contents (deprecated).")
 	flag.StringVar(&provisionerStorageDirectory, "provisioner-storage-dir", storage.DefaultBundleCacheDir, "The directory that is used to store bundle contents.")
 	opts := zap.Options{
 		Development: true,
@@ -169,7 +169,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, unpackImage, (*x509.CertPool)(nil))
+	setupLog.Info("NewDefaultUnpacker", "namespace", systemNamespace, "cacheDir", cachePath)
+	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, cachePath, (*x509.CertPool)(nil))
 	if err != nil {
 		setupLog.Error(err, "unable to create unpacker")
 		os.Exit(1)

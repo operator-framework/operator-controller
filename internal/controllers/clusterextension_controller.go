@@ -229,6 +229,7 @@ func (r *ClusterExtensionReconciler) handleResolutionErrors(ext *ocv1alpha1.Clus
 */
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
+	l := log.FromContext(ctx).WithName("reconcile")
 	// run resolution
 	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
@@ -261,6 +262,9 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	bd := r.generateBundleDeploymentForUnpack(bundle.Image, ext)
 	unpackResult, err := r.Unpacker.Unpack(ctx, bd)
 	if err != nil {
+		l.Info(fmt.Sprintf("bundle %+v", bundle))
+		l.Info(fmt.Sprintf("bd: %+v", bd))
+		l.Info(fmt.Sprintf("Unpack error: %v", err))
 		return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, err)
 	}
 
@@ -580,7 +584,8 @@ func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePat
 			Source: rukpakv1alpha2.BundleSource{
 				Type: rukpakv1alpha2.SourceTypeImage,
 				Image: &rukpakv1alpha2.ImageSource{
-					Ref: bundlePath,
+					Ref:                   bundlePath,
+					InsecureSkipTLSVerify: true,
 				},
 			},
 		},
