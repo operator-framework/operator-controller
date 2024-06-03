@@ -33,11 +33,13 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	"github.com/operator-framework/rukpak/pkg/finalizer"
 	"github.com/operator-framework/rukpak/pkg/source"
 	"github.com/operator-framework/rukpak/pkg/storage"
 
@@ -54,7 +56,6 @@ import (
 
 var (
 	setupLog               = ctrl.Log.WithName("setup")
-	defaultUnpackImage     = "quay.io/operator-framework/operator-controller:latest"
 	defaultSystemNamespace = "operator-controller-system"
 )
 
@@ -78,7 +79,7 @@ func main() {
 		cachePath                   string
 		operatorControllerVersion   bool
 		systemNamespace             string
-		unpackImage                 string
+		unpackCacheDir              string
 		provisionerStorageDirectory string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
@@ -89,7 +90,7 @@ func main() {
 	flag.StringVar(&cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
 	flag.BoolVar(&operatorControllerVersion, "version", false, "Prints operator-controller version information")
 	flag.StringVar(&systemNamespace, "system-namespace", "", "Configures the namespace that gets used to deploy system resources.")
-	flag.StringVar(&unpackImage, "unpack-image", defaultUnpackImage, "Configures the container image that gets used to unpack Bundle contents.")
+	flag.StringVar(&unpackCacheDir, "unpack-cache-dir", "/var/cache/unpack", "Configures the directory that gets used to unpack and cache Bundle contents.")
 	flag.StringVar(&provisionerStorageDirectory, "provisioner-storage-dir", storage.DefaultBundleCacheDir, "The directory that is used to store bundle contents.")
 	opts := zap.Options{
 		Development: true,
@@ -169,15 +170,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, unpackImage, (*x509.CertPool)(nil))
+	bundleFinalizers := crfinalizer.NewFinalizers()
+	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, unpackCacheDir, (*x509.CertPool)(nil))
 	if err != nil {
 		setupLog.Error(err, "unable to create unpacker")
+		os.Exit(1)
+	}
+
+	if err := bundleFinalizers.Register(finalizer.CleanupUnpackCacheKey, &finalizer.CleanupUnpackCache{Unpacker: unpacker}); err != nil {
+		setupLog.Error(err, "unable to register finalizer", "finalizerKey", finalizer.CleanupUnpackCacheKey)
 		os.Exit(1)
 	}
 
 	localStorage := &storage.LocalDirectory{
 		RootDirectory: provisionerStorageDirectory,
 		URL:           url.URL{},
+	}
+
+	if err := bundleFinalizers.Register(finalizer.DeleteCachedBundleKey, &finalizer.DeleteCachedBundle{Storage: localStorage}); err != nil {
+		setupLog.Error(err, "unable to register finalizer", "finalizerKey", finalizer.DeleteCachedBundleKey)
+		os.Exit(1)
 	}
 
 	if err = (&controllers.ClusterExtensionReconciler{
@@ -205,7 +217,8 @@ func main() {
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	ctx := ctrl.SetupSignalHandler()
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}

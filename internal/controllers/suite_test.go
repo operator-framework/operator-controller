@@ -56,6 +56,11 @@ func (m *MockUnpacker) Unpack(ctx context.Context, bd *v1alpha2.BundleDeployment
 	return args.Get(0).(*source.Result), args.Error(1)
 }
 
+func (m *MockUnpacker) Cleanup(ctx context.Context, bundle *v1alpha2.BundleDeployment) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 // MockStorage is a mock of Storage interface
 type MockStorage struct {
 	mock.Mock

@@ -338,13 +338,18 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			_, isWatched := r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()]
 			if !isWatched {
 				if err := r.controller.Watch(
-					source.Kind(r.cache,
-						obj,
-						crhandler.EnqueueRequestForOwner(r.Scheme(), r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
-						helmpredicate.DependentPredicateFuncs())); err != nil {
+					source.Kind(
+						r.cache, unstructuredObj, crhandler.TypedEnqueueRequestForOwner[*unstructured.Unstructured](
+							r.Scheme(),
+							r.RESTMapper(),
+							ext,
+							crhandler.OnlyControllerOwner(),
+						),
+						helmpredicate.DependentPredicateFuncs[*unstructured.Unstructured](),
+					),
+				); err != nil {
 					return err
 				}
-				r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()] = struct{}{}
 			}
 			return nil
 		}(); err != nil {

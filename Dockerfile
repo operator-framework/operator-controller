@@ -14,7 +14,6 @@ COPY --from=builder /busybox/cp /cp
 WORKDIR /
 
 COPY manager manager
-COPY unpack unpack
 
 EXPOSE 8080
 

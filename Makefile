@@ -220,7 +220,7 @@ export GO_BUILD_FLAGS :=
 export GO_BUILD_LDFLAGS := -s -w \
     -X '$(VERSION_PATH).version=$(VERSION)' \
 
-BINARIES=manager unpack
+BINARIES=manager
 
 $(BINARIES):
 	go build $(GO_BUILD_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$@ ./cmd/$@
