@@ -75,11 +75,14 @@ reg_pkg_name="${REG_PKG_NAME}"
 (
   cd "${REG_DIR}" && \
   $operator_sdk init --domain="${DOMAIN}" && \
+  sed -i -e 's/CONTROLLER_TOOLS_VERSION ?= v0.14.0/CONTROLLER_TOOLS_VERSION ?= v0.15.0/' Makefile && \
+  sed -i -e 's/CONTROLLER_TOOLS_VERSION ?= v0.13.0/CONTROLLER_TOOLS_VERSION ?= v0.15.0/' Makefile && \
   $operator_sdk create api \
     --group="${DOMAIN}" \
     --version v1alpha1 \
     --kind Registry \
     --resource --controller && \
+  export OPERATOR_SDK="${operator_sdk}" && \
   make generate manifests && \
   make docker-build IMG="${reg_img}" && \
   sed -i -e 's/$(OPERATOR_SDK) generate kustomize manifests -q/$(OPERATOR_SDK) generate kustomize manifests -q --interactive=false/g' Makefile && \
