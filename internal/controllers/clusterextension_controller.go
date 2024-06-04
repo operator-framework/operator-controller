@@ -78,17 +78,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/labels"
 )
 
-// ResolutionError type
-// If a more specific error type needs to be distinguished,
-// add another type here
-type ResolutionError struct {
-	message string
-}
-
-func (e ResolutionError) Error() string {
-	return e.message
-}
-
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
@@ -207,15 +196,11 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// run resolution
 	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
+		// Note: We don't distinguish between resolution-specific errors and generic errors
 		ext.Status.ResolvedBundle = nil
 		ext.Status.InstalledBundle = nil
 		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		// TODO: indicate Progressing state based on whether error is ResolutionError or not
-		if errors.As(err, &ResolutionError{}) {
-			ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
-		} else {
-			ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonInstallationStatusUnknown, err.Error())
-		}
+		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -405,7 +390,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 	if versionRange != "" {
 		vr, err := mmsemver.NewConstraint(versionRange)
 		if err != nil {
-			return nil, ResolutionError{fmt.Sprintf("invalid version range %q: %v", versionRange, err)}
+			return nil, fmt.Errorf("invalid version range %q: %w", versionRange, err)
 		}
 		predicates = append(predicates, catalogfilter.InMastermindsSemverRange(vr))
 	}
@@ -432,13 +417,13 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 	if len(resultSet) == 0 {
 		switch {
 		case versionRange != "" && channelName != "":
-			return nil, ResolutionError{fmt.Sprintf("%sno package %q matching version %q in channel %q found", upgradeErrorPrefix, packageName, versionRange, channelName)}
+			return nil, fmt.Errorf("%sno package %q matching version %q in channel %q found", upgradeErrorPrefix, packageName, versionRange, channelName)
 		case versionRange != "":
-			return nil, ResolutionError{fmt.Sprintf("%sno package %q matching version %q found", upgradeErrorPrefix, packageName, versionRange)}
+			return nil, fmt.Errorf("%sno package %q matching version %q found", upgradeErrorPrefix, packageName, versionRange)
 		case channelName != "":
-			return nil, ResolutionError{fmt.Sprintf("%sno package %q in channel %q found", upgradeErrorPrefix, packageName, channelName)}
+			return nil, fmt.Errorf("%sno package %q in channel %q found", upgradeErrorPrefix, packageName, channelName)
 		default:
-			return nil, ResolutionError{fmt.Sprintf("%sno package %q found", upgradeErrorPrefix, packageName)}
+			return nil, fmt.Errorf("%sno package %q found", upgradeErrorPrefix, packageName)
 		}
 	}
 
