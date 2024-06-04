@@ -57,12 +57,23 @@ func setInstalledStatusConditionUnknown(conditions *[]metav1.Condition, message 
 	})
 }
 
-// setHasValidBundleUnknown sets the installed status condition to unknown.
+// setHasValidBundleUnknown sets the valid bundle condition to unknown.
 func setHasValidBundleUnknown(conditions *[]metav1.Condition, message string, generation int64) {
 	apimeta.SetStatusCondition(conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeHasValidBundle,
 		Status:             metav1.ConditionUnknown,
 		Reason:             ocv1alpha1.ReasonHasValidBundleUnknown,
+		Message:            message,
+		ObservedGeneration: generation,
+	})
+}
+
+// setHasValidBundleFalse sets the ivalid bundle condition to false
+func setHasValidBundleFailed(conditions *[]metav1.Condition, message string, generation int64) {
+	apimeta.SetStatusCondition(conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeHasValidBundle,
+		Status:             metav1.ConditionFalse,
+		Reason:             ocv1alpha1.ReasonBundleLoadFailed,
 		Message:            message,
 		ObservedGeneration: generation,
 	})
