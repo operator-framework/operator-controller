@@ -202,10 +202,11 @@ kind-load-test-artifacts: $(KIND) #EXHELP Load the e2e testdata container images
 	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/package-with-webhooks:v1.0.0 --name $(KIND_CLUSTER_NAME)
 
 registry-load-bundles: ## Load selected e2e testdata container images created in kind-load-bundles into registry
-	testdata/bundles/registry-v1/prometheus-operator.v1.0.0/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v1.0.0 prometheus-operator.v1.0.0
-	testdata/bundles/registry-v1/prometheus-operator.v1.0.0/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v1.0.1 prometheus-operator.v1.0.1
-	testdata/bundles/registry-v1/prometheus-operator.v1.0.0/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v1.2.0 prometheus-operator.v1.2.0
-	testdata/bundles/registry-v1/prometheus-operator.v1.0.0/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v2.0.0 prometheus-operator.v2.0.0
+	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v1.0.0 prometheus-operator.v1.0.0 prometheus-operator.v1.0.0
+	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v1.0.1 prometheus-operator.v1.0.1 prometheus-operator.v1.0.0
+	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v1.2.0 prometheus-operator.v1.2.0 prometheus-operator.v1.0.0
+	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v2.0.0 prometheus-operator.v2.0.0 prometheus-operator.v1.0.0
+	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-with-webhooks.v1.0.0 prometheus-with-webhooks.v1.0.0 package-with-webhooks.v1.0.0
 
 #SECTION Build
 

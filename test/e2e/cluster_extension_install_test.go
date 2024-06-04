@@ -102,7 +102,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonUnpackSuccess, cond.Reason)
-		assert.Contains(ct, cond.Message, "Successfully unpacked")
+		assert.Contains(ct, cond.Message, "unpack successful")
 	}, pollDuration, pollInterval)
 
 	t.Log("By eventually installing the package successfully")
