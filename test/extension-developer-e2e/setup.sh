@@ -72,14 +72,25 @@ reg_pkg_name="${REG_PKG_NAME}"
 # and build + load images
 ########################################
 
+# controller-gen v0.13.0 (scaffolded by operator-sdk) panics when run with
+# go 1.22, so pin to a more recent version.
+# NOTE: This is a rough edge that users will experience
+
+# The Makefile in the project scaffolded by operator-sdk uses an SDK binary
+# in the path path if it is present. Override via `export` to ensure we use
+# the same version that we scaffolded with.
+# NOTE: this is a rough edge that users will experience
+
 (
   cd "${REG_DIR}" && \
   $operator_sdk init --domain="${DOMAIN}" && \
+  sed -i -e 's/CONTROLLER_TOOLS_VERSION ?= v0.13.0/CONTROLLER_TOOLS_VERSION ?= v0.15.0/' Makefile && \
   $operator_sdk create api \
     --group="${DOMAIN}" \
     --version v1alpha1 \
     --kind Registry \
     --resource --controller && \
+  export OPERATOR_SDK="${operator_sdk}" && \
   make generate manifests && \
   make docker-build IMG="${reg_img}" && \
   sed -i -e 's/$(OPERATOR_SDK) generate kustomize manifests -q/$(OPERATOR_SDK) generate kustomize manifests -q --interactive=false/g' Makefile && \
