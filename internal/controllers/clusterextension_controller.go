@@ -199,7 +199,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		// Note: We don't distinguish between resolution-specific errors and generic errors
 		ext.Status.ResolvedBundle = nil
 		ext.Status.InstalledBundle = nil
-		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setResolvedStatusConditionFailed(ext, err.Error())
 		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
 		return ctrl.Result{}, err
 	}
@@ -207,9 +207,9 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	if err := r.validateBundle(bundle); err != nil {
 		ext.Status.ResolvedBundle = nil
 		ext.Status.InstalledBundle = nil
-		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setDeprecationStatusesUnknown(&ext.Status.Conditions, "deprecation checks have not been attempted as installation has failed", ext.GetGeneration())
+		setResolvedStatusConditionFailed(ext, err.Error())
+		setInstalledStatusConditionFailed(ext, err.Error())
+		setDeprecationStatusesUnknown(ext, "deprecation checks have not been attempted as installation has failed")
 		return ctrl.Result{}, err
 	}
 	// set deprecation status after _successful_ resolution
@@ -219,13 +219,13 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	if err != nil {
 		ext.Status.ResolvedBundle = nil
 		ext.Status.InstalledBundle = nil
-		setResolvedStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.Generation)
+		setResolvedStatusConditionFailed(ext, err.Error())
+		setInstalledStatusConditionFailed(ext, err.Error())
 		return ctrl.Result{}, err
 	}
 
 	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
-	setResolvedStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("resolved to %q", bundle.Image), ext.GetGeneration())
+	setResolvedStatusConditionSuccess(ext, fmt.Sprintf("resolved to %q", bundle.Image))
 
 	// Generate a BundleDeployment from the ClusterExtension to Unpack.
 	// Note: The BundleDeployment here is not a k8s API, its a simple Go struct which
@@ -233,50 +233,53 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	bd := r.generateBundleDeploymentForUnpack(bundle.Image, ext)
 	unpackResult, err := r.Unpacker.Unpack(ctx, bd)
 	if err != nil {
-		return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, err)
+		setStatusUnpackFailed(ext, err.Error())
+		return ctrl.Result{}, err
 	}
 
 	switch unpackResult.State {
 	case rukpaksource.StatePending:
-		updateStatusUnpackPending(&ext.Status, unpackResult, ext.GetGeneration())
+		setStatusUnpackPending(ext, unpackResult.Message)
 		// There must be a limit to number of entries if status is stuck at
 		// unpack pending.
-		setHasValidBundleUnknown(&ext.Status.Conditions, "unpack pending", ext.GetGeneration())
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as unpack is pending", ext.GetGeneration())
+		setHasValidBundleUnknown(ext, "unpack pending")
+		setInstalledStatusConditionUnknown(ext, "installation has not been attempted as unpack is pending")
 
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacking:
-		updateStatusUnpacking(&ext.Status, unpackResult)
-		setHasValidBundleUnknown(&ext.Status.Conditions, "unpack pending", ext.GetGeneration())
-		setInstalledStatusConditionUnknown(&ext.Status.Conditions, "installation has not been attempted as unpack is pending", ext.GetGeneration())
+		setStatusUnpacking(ext, unpackResult.Message)
+		setHasValidBundleUnknown(ext, "unpack pending")
+		setInstalledStatusConditionUnknown(ext, "installation has not been attempted as unpack is pending")
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacked:
 		// TODO: Add finalizer to clean the stored bundles, after https://github.com/operator-framework/rukpak/pull/897
 		// merges.
 		if err := r.Storage.Store(ctx, ext, unpackResult.Bundle); err != nil {
-			return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, err)
+			setStatusUnpackFailed(ext, err.Error())
+			return ctrl.Result{}, err
 		}
-		updateStatusUnpacked(&ext.Status, unpackResult)
+		setStatusUnpacked(ext, unpackResult.Message)
 	default:
-		return ctrl.Result{}, updateStatusUnpackFailing(&ext.Status, err)
+		setStatusUnpackFailed(ext, err.Error())
+		return ctrl.Result{}, err
 	}
 
 	bundleFS, err := r.Storage.Load(ctx, ext)
 	if err != nil {
-		setHasValidBundleFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setHasValidBundleFailed(ext, err.Error())
 		return ctrl.Result{}, err
 	}
 
 	chrt, values, err := r.Handler.Handle(ctx, bundleFS, ext)
 	if err != nil {
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, err.Error(), ext.GetGeneration())
+		setInstalledStatusConditionFailed(ext, err.Error())
 		return ctrl.Result{}, err
 	}
 
 	ac, err := r.ActionClientGetter.ActionClientFor(ctx, ext)
 	if err != nil {
 		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingClient, err), ext.Generation)
+		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingClient, err))
 		return ctrl.Result{}, err
 	}
 
@@ -292,7 +295,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	rel, state, err := r.getReleaseState(ac, ext, chrt, values, post)
 	if err != nil {
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", rukpakv1alpha2.ReasonErrorGettingReleaseState, err), ext.Generation)
+		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingReleaseState, err))
 		return ctrl.Result{}, err
 	}
 
@@ -304,18 +307,18 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			return nil
 		}, helmclient.AppendInstallPostRenderer(post))
 		if err != nil {
-			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err), ext.Generation)
+			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
 			return ctrl.Result{}, err
 		}
 	case stateNeedsUpgrade:
 		rel, err = ac.Upgrade(ext.GetName(), r.ReleaseNamespace, chrt, values, helmclient.AppendUpgradePostRenderer(post))
 		if err != nil {
-			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err), ext.Generation)
+			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err))
 			return ctrl.Result{}, err
 		}
 	case stateUnchanged:
 		if err := ac.Reconcile(rel); err != nil {
-			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonResolutionFailed, err), ext.Generation)
+			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonResolutionFailed, err))
 			return ctrl.Result{}, err
 		}
 	default:
@@ -324,14 +327,14 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
 	if err != nil {
-		setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", rukpakv1alpha2.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err))
 		return ctrl.Result{}, err
 	}
 
 	for _, obj := range relObjects {
 		uMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 		if err != nil {
-			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", rukpakv1alpha2.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err))
 			return ctrl.Result{}, err
 		}
 
@@ -353,12 +356,12 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			return nil
 		}(); err != nil {
 			ext.Status.InstalledBundle = nil
-			setInstalledStatusConditionFailed(&ext.Status.Conditions, fmt.Sprintf("%s:%v", rukpakv1alpha2.ReasonCreateDynamicWatchFailed, err), ext.Generation)
+			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err))
 			return ctrl.Result{}, err
 		}
 	}
 	ext.Status.InstalledBundle = bundleMetadataFor(bundle)
-	setInstalledStatusConditionSuccess(&ext.Status.Conditions, fmt.Sprintf("Instantiated bundle %s successfully", ext.GetName()), ext.Generation)
+	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Instantiated bundle %s successfully", ext.GetName()))
 
 	return ctrl.Result{}, nil
 }
