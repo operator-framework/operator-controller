@@ -22,7 +22,6 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"github.com/operator-framework/rukpak/pkg/source"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
@@ -135,9 +134,9 @@ func setDeprecationStatusesUnknown(conditions *[]metav1.Condition, message strin
 func updateStatusUnpackFailing(status *ocv1alpha1.ClusterExtensionStatus, err error) error {
 	status.InstalledBundle = nil
 	apimeta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha2.TypeUnpacked,
+		Type:    ocv1alpha1.TypeUnpacked,
 		Status:  metav1.ConditionFalse,
-		Reason:  rukpakv1alpha2.ReasonUnpackFailed,
+		Reason:  ocv1alpha1.ReasonBundleLoadFailed,
 		Message: err.Error(),
 	})
 	return err
@@ -147,9 +146,9 @@ func updateStatusUnpackFailing(status *ocv1alpha1.ClusterExtensionStatus, err er
 func updateStatusUnpackPending(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result, generation int64) {
 	status.InstalledBundle = nil
 	apimeta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:               rukpakv1alpha2.TypeUnpacked,
+		Type:               ocv1alpha1.TypeUnpacked,
 		Status:             metav1.ConditionFalse,
-		Reason:             rukpakv1alpha2.ReasonUnpackPending,
+		Reason:             ocv1alpha1.ReasonUnpackPending,
 		Message:            result.Message,
 		ObservedGeneration: generation,
 	})
@@ -159,18 +158,18 @@ func updateStatusUnpackPending(status *ocv1alpha1.ClusterExtensionStatus, result
 func updateStatusUnpacking(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
 	status.InstalledBundle = nil
 	apimeta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha2.TypeUnpacked,
+		Type:    ocv1alpha1.TypeUnpacked,
 		Status:  metav1.ConditionFalse,
-		Reason:  rukpakv1alpha2.ReasonUnpacking,
+		Reason:  ocv1alpha1.ReasonUnpackPending,
 		Message: result.Message,
 	})
 }
 
 func updateStatusUnpacked(status *ocv1alpha1.ClusterExtensionStatus, result *source.Result) {
 	apimeta.SetStatusCondition(&status.Conditions, metav1.Condition{
-		Type:    rukpakv1alpha2.TypeUnpacked,
+		Type:    ocv1alpha1.TypeUnpacked,
 		Status:  metav1.ConditionTrue,
-		Reason:  rukpakv1alpha2.ReasonUnpackSuccessful,
+		Reason:  ocv1alpha1.ReasonSuccess,
 		Message: result.Message,
 	})
 }
