@@ -41,7 +41,6 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -332,28 +331,17 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 
 	for _, obj := range relObjects {
-		uMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
-		if err != nil {
-			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err))
-			return ctrl.Result{}, err
-		}
-
-		unstructuredObj := &unstructured.Unstructured{Object: uMap}
 		if err := func() error {
 			r.dynamicWatchMutex.Lock()
 			defer r.dynamicWatchMutex.Unlock()
 
-			_, isWatched := r.dynamicWatchGVKs[unstructuredObj.GroupVersionKind()]
+			_, isWatched := r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()]
 			if !isWatched {
 				if err := r.controller.Watch(
-					source.Kind(
-						r.cache, unstructuredObj, crhandler.TypedEnqueueRequestForOwner[*unstructured.Unstructured](
-							r.Scheme(),
-							r.RESTMapper(),
-							ext,
-							crhandler.OnlyControllerOwner(),
-						),
-						helmpredicate.DependentPredicateFuncs[*unstructured.Unstructured](),
+					source.Kind(r.cache,
+						obj,
+						crhandler.EnqueueRequestForOwner(r.Scheme(), r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
+						helmpredicate.DependentPredicateFuncs[client.Object](),
 					),
 				); err != nil {
 					return err
