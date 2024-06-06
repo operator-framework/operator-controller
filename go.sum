@@ -391,8 +391,8 @@ github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQ
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
 github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE7dzrbT927iTk=
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/operator-framework/api v0.23.0 h1:kHymOwcHBpBVujT49SKOCd4EVG7Odwj4wl3NbOR2LLA=
-github.com/operator-framework/api v0.23.0/go.mod h1:oKcFOz+Xc1UhMi2Pzcp6qsO7wjS4r+yP7EQprQBXrfM=
+github.com/operator-framework/api v0.25.0 h1:pSQwFSoPmZaTIERadawxtCwicehLkC7i9n3w3+70SVI=
+github.com/operator-framework/api v0.25.0/go.mod h1:PvyCQb0x53ytIqdTECH5e+iqv+am3uZ0qGsZWmL35gQ=
 github.com/operator-framework/catalogd v0.12.0 h1:Cww+CyowkfTFugB9ZjUDpKvumh2vPe/TjCUpMHDmVBM=
 github.com/operator-framework/catalogd v0.12.0/go.mod h1:4lryGtBTVOdqlKR0MaVYnlsSOc7HiagVRVo3J4uIo7E=
 github.com/operator-framework/helm-operator-plugins v0.2.1 h1:xPD05rYpIYKlI9VXfQBQ3XG7LFF2fALqg72lqAyFF44=

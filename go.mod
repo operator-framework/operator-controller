@@ -9,7 +9,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/go-logr/logr v1.4.2
 	github.com/google/go-cmp v0.6.0
-	github.com/operator-framework/api v0.23.0
+	github.com/operator-framework/api v0.25.0
 	github.com/operator-framework/catalogd v0.12.0
 	github.com/operator-framework/helm-operator-plugins v0.2.1
 	github.com/operator-framework/operator-registry v1.40.0
