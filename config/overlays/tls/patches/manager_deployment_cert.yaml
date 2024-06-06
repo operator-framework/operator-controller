@@ -6,4 +6,4 @@
   value: {"name":"ca-certificate", "readOnly": true, "mountPath":"/var/certs"}
 - op: add
   path: /spec/template/spec/containers/0/args/-
-  value: "--tls-cert=/var/certs/tls.crt"
+  value: "--ca-cert=/var/certs/tls.crt"

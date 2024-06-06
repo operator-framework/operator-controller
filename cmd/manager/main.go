@@ -17,16 +17,12 @@ limitations under the License.
 package main
 
 import (
-	"crypto/tls"
 	"crypto/x509"
 	"flag"
 	"fmt"
-	"log"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
@@ -52,6 +48,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/version"
 	"github.com/operator-framework/operator-controller/pkg/features"
@@ -84,11 +81,11 @@ func main() {
 		operatorControllerVersion   bool
 		systemNamespace             string
 		provisionerStorageDirectory string
-		tlsCert                     string
+		caCert                      string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.StringVar(&tlsCert, "tls-cert", "", "The TLS certificate to use for verifying HTTPS connections to the Catalogd web server.")
+	flag.StringVar(&caCert, "ca-cert", "", "The TLS certificate to use for verifying HTTPS connections to the Catalogd web server.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -157,23 +154,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	httpClient := &http.Client{Timeout: 10 * time.Second}
-
-	if tlsCert != "" {
-		cert, err := os.ReadFile(tlsCert)
-		if err != nil {
-			log.Fatalf("Failed to read certificate file: %v", err)
-		}
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(cert)
-		tlsConfig := &tls.Config{
-			RootCAs:    caCertPool,
-			MinVersion: tls.VersionTLS12,
-		}
-		tlsTransport := &http.Transport{
-			TLSClientConfig: tlsConfig,
-		}
-		httpClient.Transport = tlsTransport
+	httpClient, err := httputil.BuildHTTPClient(caCert)
+	if err != nil {
+		setupLog.Error(err, "unable to create catalogd http client")
 	}
 
 	cl := mgr.GetClient()

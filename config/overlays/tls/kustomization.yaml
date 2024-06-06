@@ -6,15 +6,12 @@ namespace: operator-controller-system
 # "wordpress" becomes "alices-wordpress".
 # Note that it should also match with the prefix (text before '-') of the namespace
 # field above.
-namePrefix: operator-controller-
 
 # the following config is for teaching kustomize how to do var substitution
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- ../../base/crd
-- ../../base/rbac
-- ../../base/manager
+- ../../base
 
 patches:
 - target:
