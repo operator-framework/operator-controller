@@ -8,7 +8,6 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
@@ -18,7 +17,6 @@ var Scheme = runtime.NewScheme()
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(Scheme))
 	utilruntime.Must(ocv1alpha1.AddToScheme(Scheme))
-	utilruntime.Must(rukpakv1alpha2.AddToScheme(Scheme))
 	utilruntime.Must(catalogd.AddToScheme(Scheme))
 	utilruntime.Must(appsv1.AddToScheme(Scheme))
 	utilruntime.Must(corev1.AddToScheme(Scheme))

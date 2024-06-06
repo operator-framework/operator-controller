@@ -41,6 +41,7 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -257,10 +258,10 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			setStatusUnpackFailed(ext, err.Error())
 			return ctrl.Result{}, err
 		}
-		setStatusUnpacked(ext, unpackResult.Message)
+		setStatusUnpacked(ext, fmt.Sprintf("unpack successful: %v", unpackResult.Message))
 	default:
-		setStatusUnpackFailed(ext, err.Error())
-		return ctrl.Result{}, err
+		setStatusUnpackFailed(ext, fmt.Sprintf("unpack successful: %v", unpackResult.Message))
+		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", err)
 	}
 
 	bundleFS, err := r.Storage.Load(ctx, ext)
@@ -331,11 +332,18 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 
 	for _, obj := range relObjects {
+		uMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+		if err != nil {
+			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err))
+			return ctrl.Result{}, err
+		}
+
+		unstructuredObj := &unstructured.Unstructured{Object: uMap}
 		if err := func() error {
 			r.dynamicWatchMutex.Lock()
 			defer r.dynamicWatchMutex.Unlock()
 
-			_, isWatched := r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()]
+			_, isWatched := r.dynamicWatchGVKs[unstructuredObj.GroupVersionKind()]
 			if !isWatched {
 				if err := r.controller.Watch(
 					source.Kind(
@@ -350,6 +358,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 				); err != nil {
 					return err
 				}
+				r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()] = struct{}{}
 			}
 			return nil
 		}(); err != nil {
