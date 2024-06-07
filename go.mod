@@ -10,7 +10,7 @@ require (
 	github.com/go-logr/logr v1.4.2
 	github.com/google/go-cmp v0.6.0
 	github.com/operator-framework/api v0.25.0
-	github.com/operator-framework/catalogd v0.12.0
+	github.com/operator-framework/catalogd v0.13.0
 	github.com/operator-framework/helm-operator-plugins v0.2.1
 	github.com/operator-framework/operator-registry v1.43.1
 	github.com/operator-framework/rukpak v0.20.1-0.20240510194410-99faf1c1763f
