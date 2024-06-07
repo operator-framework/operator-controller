@@ -126,6 +126,7 @@ DNS_NAME           := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc.cluster
 
 export REG_PKG_NAME := registry-operator
 export CATALOG_IMG := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000/test-catalog:e2e
+export REGISTRY_ROOT := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000
 .PHONY: test-ext-dev-e2e
 test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
