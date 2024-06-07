@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -79,7 +80,6 @@ func main() {
 		cachePath                   string
 		operatorControllerVersion   bool
 		systemNamespace             string
-		unpackCacheDir              string
 		provisionerStorageDirectory string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
@@ -90,7 +90,6 @@ func main() {
 	flag.StringVar(&cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
 	flag.BoolVar(&operatorControllerVersion, "version", false, "Prints operator-controller version information")
 	flag.StringVar(&systemNamespace, "system-namespace", "", "Configures the namespace that gets used to deploy system resources.")
-	flag.StringVar(&unpackCacheDir, "unpack-cache-dir", "/var/cache/unpack", "Configures the directory that gets used to unpack and cache Bundle contents.")
 	flag.StringVar(&provisionerStorageDirectory, "provisioner-storage-dir", storage.DefaultBundleCacheDir, "The directory that is used to store bundle contents.")
 	opts := zap.Options{
 		Development: true,
@@ -171,7 +170,7 @@ func main() {
 	}
 
 	bundleFinalizers := crfinalizer.NewFinalizers()
-	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, unpackCacheDir, (*x509.CertPool)(nil))
+	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, filepath.Join(cachePath, "unpack"), (*x509.CertPool)(nil))
 	if err != nil {
 		setupLog.Error(err, "unable to create unpacker")
 		os.Exit(1)
