@@ -94,7 +94,7 @@ type ClusterExtensionReconciler struct {
 }
 
 type InstalledBundleGetter interface {
-	GetInstalledBundle(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error)
+	GetInstalledBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*ocv1alpha1.BundleMetadata, error)
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
@@ -370,7 +370,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 	channelName := ext.Spec.Channel
 	versionRange := ext.Spec.Version
 
-	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, r.ActionClientGetter, allBundles, &ext)
+	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, &ext)
 	if err != nil {
 		return nil, err
 	}
@@ -392,7 +392,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 	}
 
 	if ext.Spec.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicyIgnore && installedBundle != nil {
-		upgradePredicate, err := SuccessorsPredicate(installedBundle)
+		upgradePredicate, err := SuccessorsPredicate(ext.Spec.PackageName, installedBundle)
 		if err != nil {
 			return nil, err
 		}
@@ -404,7 +404,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 
 	var upgradeErrorPrefix string
 	if installedBundle != nil {
-		installedBundleVersion, err := installedBundle.Version()
+		installedBundleVersion, err := mmsemver.NewVersion(installedBundle.Version)
 		if err != nil {
 			return nil, err
 		}
@@ -568,6 +568,7 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.controller = controller
 	r.cache = mgr.GetCache()
 	r.dynamicWatchGVKs = map[schema.GroupVersionKind]struct{}{}
+
 	return nil
 }
 
@@ -663,10 +664,12 @@ func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterfa
 	return currentRelease, stateUnchanged, nil
 }
 
-type DefaultInstalledBundleGetter struct{}
+type DefaultInstalledBundleGetter struct {
+	helmclient.ActionClientGetter
+}
 
-func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
-	cl, err := acg.ActionClientFor(ctx, ext)
+func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*ocv1alpha1.BundleMetadata, error) {
+	cl, err := d.ActionClientFor(ctx, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -679,27 +682,10 @@ func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, a
 		return nil, nil
 	}
 
-	// Bundle must match installed version exactly
-	vr, err := mmsemver.NewConstraint(release.Labels[labels.BundleVersionKey])
-	if err != nil {
-		return nil, err
-	}
-
-	// find corresponding bundle for the installed content
-	resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(
-		catalogfilter.WithPackageName(release.Labels[labels.PackageNameKey]),
-		catalogfilter.WithBundleName(release.Labels[labels.BundleNameKey]),
-		catalogfilter.InMastermindsSemverRange(vr),
-	))
-	if len(resultSet) == 0 {
-		return nil, fmt.Errorf("bundle %q for package %q not found in available catalogs but is currently installed in namespace %q", release.Labels[labels.BundleNameKey], ext.Spec.PackageName, release.Namespace)
-	}
-
-	sort.SliceStable(resultSet, func(i, j int) bool {
-		return catalogsort.ByVersion(resultSet[i], resultSet[j])
-	})
-
-	return resultSet[0], nil
+	return &ocv1alpha1.BundleMetadata{
+		Name:    release.Labels[labels.BundleNameKey],
+		Version: release.Labels[labels.BundleVersionKey],
+	}, nil
 }
 
 type postrenderer struct {
@@ -749,7 +735,7 @@ func bundleMetadataFor(bundle *catalogmetadata.Bundle) *ocv1alpha1.BundleMetadat
 }
 
 func (r *ClusterExtensionReconciler) validateBundle(bundle *catalogmetadata.Bundle) error {
-	unsupportedProps := sets.New(
+	unsupportedProps := sets.New[string](
 		property.TypePackageRequired,
 		property.TypeGVKRequired,
 		property.TypeConstraint,

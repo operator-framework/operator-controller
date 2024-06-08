@@ -188,7 +188,7 @@ func main() {
 		Unpacker:              unpacker,
 		Storage:               localStorage,
 		Handler:               handler.HandlerFunc(handler.HandleClusterExtension),
-		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{},
+		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)

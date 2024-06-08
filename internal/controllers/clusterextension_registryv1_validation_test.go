@@ -109,7 +109,6 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 			}, nil)
 			// Create and configure the mock InstalledBundleGetter
 			mockInstalledBundleGetter := &MockInstalledBundleGetter{}
-			mockInstalledBundleGetter.SetBundle(tt.bundle)
 
 			reconciler := &controllers.ClusterExtensionReconciler{
 				Client:                cl,
