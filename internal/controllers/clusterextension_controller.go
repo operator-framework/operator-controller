@@ -531,7 +531,8 @@ func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePat
 			Source: rukpakv1alpha2.BundleSource{
 				Type: rukpakv1alpha2.SourceTypeImage,
 				Image: &rukpakv1alpha2.ImageSource{
-					Ref: bundlePath,
+					Ref:                   bundlePath,
+					InsecureSkipTLSVerify: true,
 				},
 			},
 		},
