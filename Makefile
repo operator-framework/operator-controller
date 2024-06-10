@@ -122,11 +122,11 @@ e2e: #EXHELP Run the e2e tests.
 
 E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
-DNS_NAME           := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc.cluster.local
+DNS_NAME := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc.cluster.local
 
 export REG_PKG_NAME := registry-operator
-export CATALOG_IMG := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000/test-catalog:e2e
 export REGISTRY_ROOT := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000
+export CATALOG_IMG := $(REGISTRY_ROOT)/test-catalog:e2e
 .PHONY: test-ext-dev-e2e
 test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
@@ -153,7 +153,7 @@ build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and pus
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: KUSTOMIZE_BUILD_DIR := config/e2e
 test-e2e: GO_BUILD_FLAGS := -cover
-test-e2e: run image-registry build-push-e2e-catalog kind-load-test-artifacts registry-load-bundles e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: run image-registry build-push-e2e-catalog registry-load-bundles e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e  #EXHELP Run extension-developer e2e on local kind cluster
@@ -188,19 +188,6 @@ kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
 .PHONY: kind-clean
 kind-clean: $(KIND) #EXHELP Delete the kind cluster.
 	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
-
-.PHONY: kind-load-test-artifacts
-kind-load-test-artifacts: $(KIND) #EXHELP Load the e2e testdata container images into a kind cluster.
-	$(CONTAINER_RUNTIME) build testdata/bundles/registry-v1/prometheus-operator.v1.0.0 -t  localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0
-	$(CONTAINER_RUNTIME) tag localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0 localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.1
-	$(CONTAINER_RUNTIME) tag localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0 localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0
-	$(CONTAINER_RUNTIME) tag localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0 localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0
-	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.0 --name $(KIND_CLUSTER_NAME)
-	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v1.0.1 --name $(KIND_CLUSTER_NAME)
-	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v1.2.0 --name $(KIND_CLUSTER_NAME)
-	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/prometheus-operator:v2.0.0 --name $(KIND_CLUSTER_NAME)
-	$(CONTAINER_RUNTIME) build testdata/bundles/registry-v1/package-with-webhooks.v1.0.0 -t  localhost/testdata/bundles/registry-v1/package-with-webhooks:v1.0.0
-	$(KIND) load docker-image localhost/testdata/bundles/registry-v1/package-with-webhooks:v1.0.0 --name $(KIND_CLUSTER_NAME)
 
 registry-load-bundles: ## Load selected e2e testdata container images created in kind-load-bundles into registry
 	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(DNS_NAME):5000/bundles/registry-v1/prometheus-operator:v1.0.0 prometheus-operator.v1.0.0 prometheus-operator.v1.0.0

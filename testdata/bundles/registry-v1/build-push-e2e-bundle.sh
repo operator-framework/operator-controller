@@ -36,11 +36,14 @@ tar czf "${tgz}" -C "${bundle_dir}/" manifests metadata
 kubectl create configmap -n "${namespace}" --from-file="${tgz}" operator-controller-${bundle_name}.manifests
 rm "${tgz}"
 
+# Remove periods from bundle name due to pod name issues
+job_name=${bundle_name//.}
+
 kubectl apply -f - << EOF
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "kaniko-${bundle_name}"
+  name: "kaniko-${job_name}"
   namespace: "${namespace}"
 spec:
   template:
@@ -78,4 +81,4 @@ spec:
             name: operator-controller-${bundle_name}.manifests
 EOF
 
-kubectl wait --for=condition=Complete -n "${namespace}" jobs/kaniko-${bundle_name} --timeout=60s
+kubectl wait --for=condition=Complete -n "${namespace}" jobs/kaniko-${job_name} --timeout=60s
