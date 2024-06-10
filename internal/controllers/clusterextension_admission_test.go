@@ -43,7 +43,12 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      tc.pkgName,
+				Source: ocv1alpha1.ClusterExtensionSource{
+					SourceType: ocv1alpha1.SourceTypePackage,
+					Package: &ocv1alpha1.ClusterExtensionSourcePackage{
+						Name: tc.pkgName,
+					},
+				},
 				InstallNamespace: "default",
 			}))
 			if tc.errMsg == "" {
@@ -131,8 +136,13 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      "package",
-				Version:          tc.version,
+				Source: ocv1alpha1.ClusterExtensionSource{
+					SourceType: ocv1alpha1.SourceTypePackage,
+					Package: &ocv1alpha1.ClusterExtensionSourcePackage{
+						Name:    "package",
+						Version: tc.version,
+					},
+				},
 				InstallNamespace: "default",
 			}))
 			if tc.errMsg == "" {
@@ -176,8 +186,13 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      "package",
-				Channel:          tc.channelName,
+				Source: ocv1alpha1.ClusterExtensionSource{
+					SourceType: ocv1alpha1.SourceTypePackage,
+					Package: &ocv1alpha1.ClusterExtensionSourcePackage{
+						Name:    "package",
+						Channel: tc.channelName,
+					},
+				},
 				InstallNamespace: "default",
 			}))
 			if tc.errMsg == "" {
@@ -222,7 +237,12 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      "package",
+				Source: ocv1alpha1.ClusterExtensionSource{
+					Package: &ocv1alpha1.ClusterExtensionSourcePackage{
+						Name: "package",
+					},
+					SourceType: ocv1alpha1.SourceTypePackage,
+				},
 				InstallNamespace: tc.installNamespace,
 			}))
 			if tc.errMsg == "" {

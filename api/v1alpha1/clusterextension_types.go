@@ -30,6 +30,10 @@ var (
 type UpgradeConstraintPolicy string
 
 const (
+	SourceTypePackage = "package"
+)
+
+const (
 	// The extension will only upgrade if the new version satisfies
 	// the upgrade constraints set by the package author.
 	UpgradeConstraintPolicyEnforce UpgradeConstraintPolicy = "Enforce"
@@ -43,11 +47,24 @@ const (
 	UpgradeConstraintPolicyIgnore UpgradeConstraintPolicy = "Ignore"
 )
 
-// ClusterExtensionSpec defines the desired state of ClusterExtension
-type ClusterExtensionSpec struct {
+// +kubebuilder:validation:XValidation:rule="self.sourceType=='package' && has(self.__package__)",message="sourceType must match populated union field"
+//
+// ClusterExtensionSource defines the source for this ClusterExtensionSource, right now, only a package is supported.
+type ClusterExtensionSource struct {
+	//+kubebuilder:validation:Enum:=package
+	//+kubebuilder:validation:Required
+	// sourceType is the discriminator for the source type
+	SourceType string `json:"sourceType"`
+
+	// package defines a reference for a bundle in a catalog defined by a name and a version and/or channel
+	Package *ClusterExtensionSourcePackage `json:"package,omitempty"`
+}
+
+type ClusterExtensionSourcePackage struct {
 	//+kubebuilder:validation:MaxLength:=48
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+(-[a-z0-9]+)*$
-	PackageName string `json:"packageName"`
+	// name specifies the name of the name of the package
+	Name string `json:"name"`
 
 	//+kubebuilder:validation:MaxLength:=64
 	//+kubebuilder:validation:Pattern=`^(\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\^)\s*(v?(0|[1-9]\d*|[x|X|\*])(\.(0|[1-9]\d*|x|X|\*]))?(\.(0|[1-9]\d*|x|X|\*))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)((?:\s+|,\s*|\s*\|\|\s*)(=||!=|>|<|>=|=>|<=|=<|~|~>|\^)\s*(v?(0|[1-9]\d*|x|X|\*])(\.(0|[1-9]\d*|x|X|\*))?(\.(0|[1-9]\d*|x|X|\*]))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)*$`
@@ -57,19 +74,33 @@ type ClusterExtensionSpec struct {
 	// Examples: 1.2.3, 1.0.0-alpha, 1.0.0-rc.1
 	//
 	// For more information on semver, please see https://semver.org/
+	// version constraint definition
 	Version string `json:"version,omitempty"`
 
 	//+kubebuilder:validation:MaxLength:=48
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
-	// Channel constraint definition
+	// channel constraint definition
 	Channel string `json:"channel,omitempty"`
 
 	//+kubebuilder:validation:Enum:=Enforce;Ignore
 	//+kubebuilder:default:=Enforce
 	//+kubebuilder:Optional
 	//
-	// Defines the policy for how to handle upgrade constraints
+	// upgradeConstraintPolicy Defines the policy for how to handle upgrade constraints
 	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
+
+	// InsecureSkipTLSVerify indicates that TLS certificate validation should be skipped.
+	// If this option is specified, the HTTPS protocol will still be used to
+	// fetch the specified image reference.
+	// This should not be used in a production environment.
+	// +optional
+	InsecureSkipTLSVerify bool `json:"insecureSkipTLSVerify,omitempty"`
+}
+
+// ClusterExtensionSpec defines the desired state of ClusterExtension
+type ClusterExtensionSpec struct {
+	// source of Extension to be installed
+	Source ClusterExtensionSource `json:"source"`
 
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
 	//+kubebuilder:validation:MaxLength:=63

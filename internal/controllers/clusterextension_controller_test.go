@@ -53,7 +53,12 @@ func TestClusterExtensionNonExistentPackage(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
+			Source: ocv1alpha1.ClusterExtensionSource{
+				Package: &ocv1alpha1.ClusterExtensionSourcePackage{
+					Name: pkgName,
+				},
+				SourceType: ocv1alpha1.SourceTypePackage,
+			},
 			InstallNamespace: "default",
 		},
 	}
@@ -94,8 +99,13 @@ func TestClusterExtensionNonExistentVersion(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          "0.50.0", // this version of the package does not exist
+			Source: ocv1alpha1.ClusterExtensionSource{
+				Package: &ocv1alpha1.ClusterExtensionSourcePackage{
+					Name:    pkgName,
+					Version: "0.50.0", // this version of the package does not exist
+				},
+				SourceType: ocv1alpha1.SourceTypePackage,
+			},
 			InstallNamespace: "default",
 		},
 	}
@@ -150,9 +160,14 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
+			Source: ocv1alpha1.ClusterExtensionSource{
+				Package: &ocv1alpha1.ClusterExtensionSourcePackage{
+					Name:    pkgName,
+					Version: pkgVer,
+					Channel: pkgChan,
+				},
+				SourceType: ocv1alpha1.SourceTypePackage,
+			},
 			InstallNamespace: installNamespace,
 		},
 	}
@@ -208,9 +223,14 @@ func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
+			Source: ocv1alpha1.ClusterExtensionSource{
+				SourceType: ocv1alpha1.SourceTypePackage,
+				Package: &ocv1alpha1.ClusterExtensionSourcePackage{
+					Name:    pkgName,
+					Version: pkgVer,
+					Channel: pkgChan,
+				},
+			},
 			InstallNamespace: installNamespace,
 		},
 	}
