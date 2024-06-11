@@ -97,6 +97,10 @@ type InstalledBundleGetter interface {
 	GetInstalledBundle(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error)
 }
 
+const (
+	bundleConnectionAnnotation string = "bundle.connection.config/insecureSkipTLSVerify"
+)
+
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/finalizers,verbs=update
@@ -532,11 +536,22 @@ func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePat
 				Type: rukpakv1alpha2.SourceTypeImage,
 				Image: &rukpakv1alpha2.ImageSource{
 					Ref:                   bundlePath,
-					InsecureSkipTLSVerify: true,
+					InsecureSkipTLSVerify: isInsecureSkipTLSVerifySet(ce),
 				},
 			},
 		},
 	}
+}
+
+func isInsecureSkipTLSVerifySet(ce *ocv1alpha1.ClusterExtension) bool {
+	if ce == nil {
+		return false
+	}
+	value, ok := ce.Annotations[bundleConnectionAnnotation]
+	if !ok {
+		return false
+	}
+	return value == "true"
 }
 
 // SetupWithManager sets up the controller with the Manager.
