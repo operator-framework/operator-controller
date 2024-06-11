@@ -8,7 +8,7 @@ spec:
   secretName: catalogd-catalogserver-cert
   dnsNames:
     - localhost
-    - catalogd-catalogserver.catalogd-system.svc
+    - catalogd-catalogserver.olmv1-system.svc
   issuerRef:
     kind: Issuer
     name: catalogd-catalogserver-ca-issuer

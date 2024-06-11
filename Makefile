@@ -33,7 +33,7 @@ endif
 # E2E configuration
 TESTDATA_DIR := testdata
 
-CATALOGD_NAMESPACE := catalogd-system
+CATALOGD_NAMESPACE := olmv1-system
 KIND_CLUSTER_IMAGE := kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e
 
 ##@ General

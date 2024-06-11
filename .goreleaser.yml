@@ -67,5 +67,5 @@ release:
     kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
     kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
     kubectl apply -f https://github.com/operator-framework/catalogd/releases/download/{{ .Tag }}/catalogd.yaml
-    kubectl wait --for=condition=Available --namespace=catalogd-system deployment/catalogd-controller-manager --timeout=60s
+    kubectl wait --for=condition=Available --namespace=olmv1-system deployment/catalogd-controller-manager --timeout=60s
     ```

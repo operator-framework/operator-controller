@@ -21,7 +21,7 @@ of a catalog can be read from:
       reason: UnpackSuccessful
       status: "True"
       type: Unpacked
-    contentURL: https://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json
+    contentURL: https://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json
     phase: Unpacked
     resolvedSource:
       image:
@@ -37,20 +37,20 @@ object.
 
 When making a request for the contents of the `operatorhubio` `ClusterCatalog` from within
 the cluster issue a HTTP `GET` request to 
-`https://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json`
+`https://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json`
 
 An example command to run a `Pod` to `curl` the catalog contents:
 ```sh
-kubectl run fetcher --image=curlimages/curl:latest -- curl https://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json
+kubectl run fetcher --image=curlimages/curl:latest -- curl https://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json
 ```
 
 ## Off cluster
 
 When making a request for the contents of the `operatorhubio` `ClusterCatalog` from outside
 the cluster, we have to perform an extra step:
-1. Port forward the `catalogd-catalogserver` service in the `catalogd-system` namespace:
+1. Port forward the `catalogd-catalogserver` service in the `olmv1-system` namespace:
 ```sh
-kubectl -n catalogd-system port-forward svc/catalogd-catalogserver 8080:443
+kubectl -n olmv1-system port-forward svc/catalogd-catalogserver 8080:443
 ```
 
 Once the service has been successfully forwarded to a localhost port, issue a HTTP `GET`
@@ -106,7 +106,7 @@ This section outlines a way of exposing the `Catalogd` Service's endpoints outsi
       kind: Ingress
       metadata:
         name: catalogd-nginx-ingress
-        namespace: catalogd-system
+        namespace: olmv1-system
       spec:
         ingressClassName: nginx
         rules:
@@ -123,7 +123,7 @@ This section outlines a way of exposing the `Catalogd` Service's endpoints outsi
     Let's verify that the `Ingress` object got created successfully from the sample by running the following command:
 
       ```sh
-        $ kubectl describe ingress/catalogd-ingress -n catalogd-system
+        $ kubectl describe ingress/catalogd-ingress -n olmv1-system
       ```
 
 1. Run the below example `curl` request to retrieve all of the catalog contents:
@@ -134,7 +134,7 @@ This section outlines a way of exposing the `Catalogd` Service's endpoints outsi
     
     To obtain `address` of the ingress object, you can run the below command and look for the value in the `ADDRESS` field from output: 
     ```sh
-      $ kubectl -n catalogd-system get ingress
+      $ kubectl -n olmv1-system get ingress
     ```
    
     You can further use the `curl` commands outlined in the [Catalogd README](https://github.com/operator-framework/catalogd/blob/main/README.md) to filter out the JSON content by list of bundles, channels & packages.
