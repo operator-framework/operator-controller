@@ -35,8 +35,8 @@ function kubectl_wait() {
 kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/${cert_mgr_version}/cert-manager.yaml"
 kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
 
-curl -L https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/catalogd.yaml | sed s/catalogd-system/operator-controller-system/g | kubectl apply -f -
-kubectl_wait "operator-controller-system" "deployment/catalogd-controller-manager" "60s"
+kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/catalogd.yaml"
+kubectl_wait "olmv1-system" "deployment/catalogd-controller-manager" "60s"
 
 kubectl apply -f "${operator_controller_manifest}"
-kubectl_wait "operator-controller-system" "deployment/operator-controller-controller-manager" "60s"
+kubectl_wait "olmv1-system" "deployment/operator-controller-controller-manager" "60s"

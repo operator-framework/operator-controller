@@ -4,7 +4,7 @@ set -euo pipefail
 
 COVERAGE_OUTPUT="${COVERAGE_OUTPUT:-e2e-cover.out}"
 
-OPERATOR_CONTROLLER_NAMESPACE="operator-controller-system"
+OPERATOR_CONTROLLER_NAMESPACE="olmv1-system"
 OPERATOR_CONTROLLER_MANAGER_DEPLOYMENT_NAME="operator-controller-controller-manager"
 COPY_POD_NAME="e2e-coverage-copy-pod"
 

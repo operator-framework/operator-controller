@@ -11,7 +11,7 @@ Then you can query the catalog by using `curl` commands and the `jq` CLI tool to
 1. Port forward the catalog server service:
 
     ``` terminal
-    $ kubectl -n catalogd-system port-forward svc/catalogd-catalogserver 8080:80
+    $ kubectl -n olmv1-system port-forward svc/catalogd-catalogserver 8080:80
     ```
 
 2. Return a list of all the extensions in a catalog:

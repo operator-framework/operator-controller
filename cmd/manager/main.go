@@ -57,7 +57,7 @@ import (
 
 var (
 	setupLog               = ctrl.Log.WithName("setup")
-	defaultSystemNamespace = "operator-controller-system"
+	defaultSystemNamespace = "olmv1-system"
 )
 
 // podNamespace checks whether the controller is running in a Pod vs.

@@ -1,4 +1,4 @@
-namespace: operator-controller-system
+namespace: olmv1-system
 
 resources:
 - ../../overlays/tls
