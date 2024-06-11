@@ -263,8 +263,9 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		}
 		setStatusUnpacked(ext, fmt.Sprintf("unpack successful: %v", unpackResult.Message))
 	default:
-		setStatusUnpackFailed(ext, fmt.Sprintf("unpack successful: %v", unpackResult.Message))
-		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", err)
+		setStatusUnpackFailed(ext, "unexpected unpack status")
+		// We previously exit with a failed status if error is not nil.
+		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", unpackResult.Message)
 	}
 
 	bundleFS, err := r.Storage.Load(ctx, ext)
