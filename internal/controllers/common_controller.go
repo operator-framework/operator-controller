@@ -152,18 +152,6 @@ func setStatusUnpackPending(ext *ocv1alpha1.ClusterExtension, message string) {
 	})
 }
 
-// TODO: verify if we need to update the installBundle status or leave it as is.
-func setStatusUnpacking(ext *ocv1alpha1.ClusterExtension, message string) {
-	ext.Status.InstalledBundle = nil
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeUnpacked,
-		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonUnpacking,
-		Message:            message,
-		ObservedGeneration: ext.GetGeneration(),
-	})
-}
-
 func setStatusUnpacked(ext *ocv1alpha1.ClusterExtension, message string) {
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeUnpacked,

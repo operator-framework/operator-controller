@@ -110,7 +110,6 @@ const (
 	ReasonUnpackPending = "UnpackPending"
 	ReasonUnpackSuccess = "UnpackSuccess"
 	ReasonUnpackFailed  = "UnpackFailed"
-	ReasonUnpacking     = "Unpacking"
 
 	ReasonErrorGettingReleaseState = "ErrorGettingReleaseState"
 	ReasonCreateDynamicWatchFailed = "CreateDynamicWatchFailed"
@@ -142,7 +141,6 @@ func init() {
 		ReasonHasValidBundleUnknown,
 		ReasonUnpackPending,
 		ReasonUnpackSuccess,
-		ReasonUnpacking,
 		ReasonUnpackFailed,
 		ReasonErrorGettingReleaseState,
 		ReasonCreateDynamicWatchFailed,
