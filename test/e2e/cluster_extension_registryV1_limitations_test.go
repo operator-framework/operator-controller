@@ -37,3 +37,29 @@ func TestClusterExtensionPackagesWithWebhooksAreNotAllowed(t *testing.T) {
 		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "package-with-webhooks.1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 	}, pollDuration, pollInterval)
 }
+
+func TestClusterExtensionPackagesWithUnsupportedInstallModesAreNotAllowed(t *testing.T) {
+	ctx := context.Background()
+	clusterExtension, catalog := testInit(t)
+	defer testCleanup(t, catalog, clusterExtension)
+	defer getArtifactsOutput(t)
+
+	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
+		PackageName:      "package-with-unsupported-install-modes",
+		Version:          "1.0.0",
+		InstallNamespace: "default",
+	}
+
+	require.NoError(t, c.Create(ctx, clusterExtension))
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(ctx, types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+		assert.Equal(ct, ocv1alpha1.ReasonInstallationFailed, cond.Reason)
+		assert.Contains(ct, cond.Message, "supported install modes [MultiNamespace OwnNamespace SingleNamespace] do not support target namespaces []")
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "package-with-unsupported-install-modes.1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+	}, pollDuration, pollInterval)
+}

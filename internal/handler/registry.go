@@ -10,6 +10,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -24,7 +25,7 @@ const (
 )
 
 func HandleClusterExtension(_ context.Context, fsys fs.FS, ext *ocv1alpha1.ClusterExtension) (*chart.Chart, chartutil.Values, error) {
-	plainFS, err := convert.RegistryV1ToPlain(fsys, ext.Spec.InstallNamespace, nil)
+	plainFS, err := convert.RegistryV1ToPlain(fsys, ext.Spec.InstallNamespace, []string{metav1.NamespaceAll})
 	if err != nil {
 		return nil, nil, fmt.Errorf("convert registry+v1 bundle to plain+v0 bundle: %v", err)
 	}

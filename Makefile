@@ -51,7 +51,7 @@ CONTAINER_RUNTIME := docker
 else ifneq (, $(shell command -v podman 2>/dev/null))
 CONTAINER_RUNTIME := podman
 else
-$(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!) 
+$(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!)
 endif
 
 KUSTOMIZE_BUILD_DIR := config/default
@@ -194,6 +194,7 @@ registry-load-bundles: ## Load selected e2e testdata container images created in
 	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(REGISTRY_ROOT)/bundles/registry-v1/prometheus-operator:v1.2.0 prometheus-operator.v1.2.0 prometheus-operator.v1.0.0
 	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(REGISTRY_ROOT)/bundles/registry-v1/prometheus-operator:v2.0.0 prometheus-operator.v2.0.0 prometheus-operator.v1.0.0
 	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(REGISTRY_ROOT)/bundles/registry-v1/package-with-webhooks:v1.0.0 package-with-webhooks.v1.0.0 package-with-webhooks.v1.0.0
+	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(REGISTRY_ROOT)/bundles/registry-v1/package-with-unsupported-install-modes:v1.0.0 package-with-unsupported-install-modes.v1.0.0 package-with-unsupported-install-modes.v1.0.0
 
 #SECTION Build
 

@@ -80,3 +80,24 @@ properties:
     value:
       packageName: package-with-webhooks
       version: 1.0.0
+
+---
+schema: olm.package
+name: package-with-unsupported-install-modes
+defaultChannel: beta
+---
+schema: olm.channel
+name: beta
+package: package-with-unsupported-install-modes
+entries:
+  - name: package-with-unsupported-install-modes.1.0.0
+---
+schema: olm.bundle
+name: package-with-unsupported-install-modes.1.0.0
+package: package-with-unsupported-install-modes
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/package-with-unsupported-install-modes:v1.0.0
+properties:
+  - type: olm.package
+    value:
+      packageName: package-with-unsupported-install-modes
+      version: 1.0.0
