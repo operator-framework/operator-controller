@@ -52,8 +52,6 @@ spec:
       - command:
         - /manager
         args:
-        # The unpack-image arg must remain at index 0 for the kustomize replacement to work
-        - "--unpack-image=UNPACK_IMAGE"
         - "--health-probe-bind-address=:8081"
         - "--metrics-bind-address=127.0.0.1:8080"
         - "--leader-elect"

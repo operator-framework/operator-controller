@@ -97,6 +97,10 @@ type InstalledBundleGetter interface {
 	GetInstalledBundle(ctx context.Context, acg helmclient.ActionClientGetter, allBundles []*catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error)
 }
 
+const (
+	bundleConnectionAnnotation string = "bundle.connection.config/insecureSkipTLSVerify"
+)
+
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/finalizers,verbs=update
@@ -257,10 +261,11 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			setStatusUnpackFailed(ext, err.Error())
 			return ctrl.Result{}, err
 		}
-		setStatusUnpacked(ext, unpackResult.Message)
+		setStatusUnpacked(ext, fmt.Sprintf("unpack successful: %v", unpackResult.Message))
 	default:
-		setStatusUnpackFailed(ext, err.Error())
-		return ctrl.Result{}, err
+		setStatusUnpackFailed(ext, "unexpected unpack status")
+		// We previously exit with a failed status if error is not nil.
+		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", unpackResult.Message)
 	}
 
 	bundleFS, err := r.Storage.Load(ctx, ext)
@@ -341,7 +346,9 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 					source.Kind(r.cache,
 						obj,
 						crhandler.EnqueueRequestForOwner(r.Scheme(), r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
-						helmpredicate.DependentPredicateFuncs())); err != nil {
+						helmpredicate.DependentPredicateFuncs[client.Object](),
+					),
+				); err != nil {
 					return err
 				}
 				r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()] = struct{}{}
@@ -529,11 +536,23 @@ func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePat
 			Source: rukpakv1alpha2.BundleSource{
 				Type: rukpakv1alpha2.SourceTypeImage,
 				Image: &rukpakv1alpha2.ImageSource{
-					Ref: bundlePath,
+					Ref:                   bundlePath,
+					InsecureSkipTLSVerify: isInsecureSkipTLSVerifySet(ce),
 				},
 			},
 		},
 	}
+}
+
+func isInsecureSkipTLSVerifySet(ce *ocv1alpha1.ClusterExtension) bool {
+	if ce == nil {
+		return false
+	}
+	value, ok := ce.Annotations[bundleConnectionAnnotation]
+	if !ok {
+		return false
+	}
+	return value == "true"
 }
 
 // SetupWithManager sets up the controller with the Manager.

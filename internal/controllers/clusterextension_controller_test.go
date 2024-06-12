@@ -21,7 +21,6 @@ import (
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	"github.com/operator-framework/rukpak/pkg/source"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
@@ -180,10 +179,10 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
 
 	t.Log("By checking the expected unpacked conditions")
-	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, rukpakv1alpha2.TypeUnpacked)
+	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
 	require.NotNil(t, unpackedCond)
 	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
-	require.Equal(t, rukpakv1alpha2.ReasonUnpackPending, unpackedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonUnpackPending, unpackedCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
@@ -238,10 +237,10 @@ func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
 	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake2.0.0\"", resolvedCond.Message)
 
 	t.Log("By checking the expected unpacked conditions")
-	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, rukpakv1alpha2.TypeUnpacked)
+	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
 	require.NotNil(t, unpackedCond)
 	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
-	require.Equal(t, rukpakv1alpha2.ReasonUnpackPending, unpackedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonUnpackPending, unpackedCond.Reason)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))

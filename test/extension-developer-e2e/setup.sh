@@ -13,6 +13,7 @@ a KinD cluster with the name specified in the arguments.
 The following environment variables are required for configuring this script:
 - \$CATALOG_IMG - the tag for the catalog image that contains the registry+v1 bundle.
 - \$REG_PKG_NAME - the name of the package for the extension that uses the registry+v1 bundle format.
+- \$REGISTRY_ROOT - hostname:port of the local docker-registry
 setup.sh also takes 5 arguments.
 
 Usage:
@@ -41,6 +42,12 @@ if [[ -z "${REG_PKG_NAME}" ]]; then
   exit 1
 fi
 
+if [[ -z "${REGISTRY_ROOT}" ]]; then
+  echo "\$REGISTRY_ROOT is required to be set"
+  echo "${help}"
+  exit 1
+fi
+
 ########################################
 # Setup temp dir and local variables
 ########################################
@@ -62,7 +69,7 @@ kcluster_name=$5
 namespace=$6
 
 reg_img="${DOMAIN}/registry:v0.0.1"
-reg_bundle_img="${DOMAIN}/registry-bundle:v0.0.1"
+reg_bundle_img="${REGISTRY_ROOT}/bundles/registry-v1/registry-bundle:v0.0.1"
 
 catalog_img="${CATALOG_IMG}"
 reg_pkg_name="${REG_PKG_NAME}"
@@ -97,9 +104,6 @@ reg_pkg_name="${REG_PKG_NAME}"
   make bundle IMG="${reg_img}" VERSION=0.0.1 && \
   make bundle-build BUNDLE_IMG="${reg_bundle_img}"
 )
-
-$kind load docker-image "${reg_img}" --name "${kcluster_name}"
-$kind load docker-image "${reg_bundle_img}" --name "${kcluster_name}"
 
 ###############################
 # Create the FBC that contains
@@ -197,3 +201,55 @@ kubectl wait --for=condition=Complete -n "${namespace}" jobs/kaniko --timeout=60
 # don't have write permissions so they can't be removed unless
 # we ensure they have the write permissions
 chmod -R +w "${REG_DIR}/bin"
+
+# Load the bundle image into the docker-registry
+
+kubectl create configmap -n "${namespace}" --from-file="${REG_DIR}/bundle.Dockerfile" operator-controller-e2e-${reg_pkg_name}.root
+
+tgz="${REG_DIR}/manifests.tgz"
+tar czf "${tgz}" -C "${REG_DIR}" bundle
+kubectl create configmap -n "${namespace}" --from-file="${tgz}" operator-controller-${reg_pkg_name}.manifests
+
+kubectl apply -f - << EOF
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "kaniko-${reg_pkg_name}"
+  namespace: "${namespace}"
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: copy-manifests
+          image: busybox
+          command: ['sh', '-c', 'cp /manifests-data/* /manifests']
+          volumeMounts:
+            - name: manifests
+              mountPath: /manifests
+            - name: manifests-data
+              mountPath: /manifests-data
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args: ["--dockerfile=/workspace/bundle.Dockerfile",
+                "--context=tar:///workspace/manifests/manifests.tgz",
+                "--destination=${reg_bundle_img}",
+                "--skip-tls-verify"]
+        volumeMounts:
+          - name: dockerfile
+            mountPath: /workspace/
+          - name: manifests
+            mountPath: /workspace/manifests/
+      restartPolicy: Never
+      volumes:
+        - name: dockerfile
+          configMap:
+            name: operator-controller-e2e-${reg_pkg_name}.root
+        - name: manifests
+          emptyDir: {}
+        - name: manifests-data
+          configMap:
+            name: operator-controller-${reg_pkg_name}.manifests
+EOF
+
+kubectl wait --for=condition=Complete -n "${namespace}" jobs/kaniko-${reg_pkg_name} --timeout=60s

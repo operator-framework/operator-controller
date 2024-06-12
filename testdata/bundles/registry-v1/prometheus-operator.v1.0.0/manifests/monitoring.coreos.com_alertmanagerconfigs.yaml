@@ -4418,9 +4418,9 @@ spec:
                       description: Matcher defines how to match on alert's labels.
                       properties:
                         matchType:
-                          description: Match operation available with AlertManager
+                          description: 'Match operation available with AlertManager
                             >= v0.22.0 and takes precedence over Regex (deprecated)
-                            if non-empty.
+                            if non-empty.'
                           enum:
                           - '!='
                           - =
