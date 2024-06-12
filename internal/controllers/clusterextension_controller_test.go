@@ -168,7 +168,7 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
@@ -226,7 +226,7 @@ func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
 	require.Empty(t, clusterExtension.Status.InstalledBundle)
 
 	t.Log("By checking the expected conditions")
@@ -417,22 +417,6 @@ func verifyConditionsInvariants(t *testing.T, ext *ocv1alpha1.ClusterExtension) 
 }
 
 func TestClusterExtensionUpgrade(t *testing.T) {
-	bundle := &catalogmetadata.Bundle{
-		Bundle: declcfg.Bundle{
-			Name:    "operatorhub/prometheus/beta/1.0.0",
-			Package: "prometheus",
-			Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
-			Properties: []property.Property{
-				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
-				{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-			},
-		},
-		CatalogName: "fake-catalog",
-		InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
-	}
-
-	cl, reconciler := newClientAndReconciler(t, bundle)
-
 	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpackPending
 	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
@@ -441,6 +425,13 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("semver upgrade constraints enforcement of upgrades within major version", func(t *testing.T) {
+		bundle := &ocv1alpha1.BundleMetadata{
+			Name:    "prometheus.v1.0.0",
+			Version: "1.0.0",
+		}
+
+		cl, reconciler := newClientAndReconciler(t, bundle)
+
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
 		defer func() {
 			require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -474,7 +465,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NoError(t, err)
 
 		// Checking the status fields
-		assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 
 		// checking the expected conditions
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -488,21 +479,6 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		err = cl.Update(ctx, clusterExtension)
 		require.NoError(t, err)
 
-		bundle := &catalogmetadata.Bundle{
-			Bundle: declcfg.Bundle{
-				Name:    "operatorhub/prometheus/beta/1.0.0",
-				Package: "prometheus",
-				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
-				Properties: []property.Property{
-					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
-					{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-				},
-			},
-			CatalogName: "fake-catalog",
-			InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
-		}
-
-		cl, reconciler := newClientAndReconciler(t, bundle)
 		// Run reconcile again
 		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 		require.Error(t, err)
@@ -538,7 +514,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NoError(t, err)
 
 		// Checking the status fields
-		assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
 
 		// checking the expected conditions
 		cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -549,6 +525,13 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 	})
 
 	t.Run("legacy semantics upgrade constraints enforcement", func(t *testing.T) {
+		bundle := &ocv1alpha1.BundleMetadata{
+			Name:    "prometheus.v1.0.0",
+			Version: "1.0.0",
+		}
+
+		cl, reconciler := newClientAndReconciler(t, bundle)
+
 		defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
 		defer func() {
 			require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -582,7 +565,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NoError(t, err)
 
 		// Checking the status fields
-		assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 
 		// checking the expected conditions
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -595,22 +578,6 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		clusterExtension.Spec.Version = "1.2.0"
 		err = cl.Update(ctx, clusterExtension)
 		require.NoError(t, err)
-
-		bundle := &catalogmetadata.Bundle{
-			Bundle: declcfg.Bundle{
-				Name:    "operatorhub/prometheus/beta/1.0.0",
-				Package: "prometheus",
-				Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
-				Properties: []property.Property{
-					{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
-					{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-				},
-			},
-			CatalogName: "fake-catalog",
-			InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
-		}
-
-		cl, reconciler := newClientAndReconciler(t, bundle)
 
 		// Run reconcile again
 		res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
@@ -647,7 +614,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		require.NoError(t, err)
 
 		// Checking the status fields
-		assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.1", Version: "1.0.1"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.1", Version: "1.0.1"}, clusterExtension.Status.ResolvedBundle)
 
 		// checking the expected conditions
 		cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -672,6 +639,13 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 			},
 		} {
 			t.Run(tt.name, func(t *testing.T) {
+				bundle := &ocv1alpha1.BundleMetadata{
+					Name:    "prometheus.v1.0.0",
+					Version: "1.0.0",
+				}
+
+				cl, reconciler := newClientAndReconciler(t, bundle)
+
 				defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, tt.flagState)()
 				defer func() {
 					require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -703,7 +677,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 				require.NoError(t, err)
 
 				// Checking the status fields
-				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 
 				// checking the expected conditions
 				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -719,22 +693,6 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 				err = cl.Update(ctx, clusterExtension)
 				require.NoError(t, err)
 
-				bundle := &catalogmetadata.Bundle{
-					Bundle: declcfg.Bundle{
-						Name:    "operatorhub/prometheus/beta/1.0.0",
-						Package: "prometheus",
-						Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
-						Properties: []property.Property{
-							{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.0"}`)},
-							{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-						},
-					},
-					CatalogName: "fake-catalog",
-					InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
-				}
-
-				cl, reconciler := newClientAndReconciler(t, bundle)
-
 				// Run reconcile again
 				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 				require.NoError(t, err)
@@ -745,7 +703,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 				require.NoError(t, err)
 
 				// Checking the status fields
-				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
+				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
 
 				// checking the expected conditions
 				cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -759,7 +717,6 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 }
 
 func TestClusterExtensionDowngrade(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, nil)
 	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpacked
 	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
@@ -782,6 +739,13 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 			},
 		} {
 			t.Run(tt.name, func(t *testing.T) {
+				bundle := &ocv1alpha1.BundleMetadata{
+					Name:    "prometheus.v1.0.1",
+					Version: "1.0.1",
+				}
+
+				cl, reconciler := newClientAndReconciler(t, bundle)
+
 				defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, tt.flagState)()
 				defer func() {
 					require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -812,7 +776,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				require.NoError(t, err)
 
 				// Checking the status fields
-				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.1", Version: "1.0.1"}, clusterExtension.Status.ResolvedBundle)
+				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.1", Version: "1.0.1"}, clusterExtension.Status.ResolvedBundle)
 
 				// checking the expected conditions
 				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -825,22 +789,6 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				clusterExtension.Spec.Version = "1.0.0"
 				err = cl.Update(ctx, clusterExtension)
 				require.NoError(t, err)
-
-				bundle := &catalogmetadata.Bundle{
-					Bundle: declcfg.Bundle{
-						Name:    "operatorhub/prometheus/beta/1.0.1",
-						Package: "prometheus",
-						Image:   "quay.io/operatorhubio/prometheus@fake1.0.1",
-						Properties: []property.Property{
-							{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"1.0.1"}`)},
-							{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-						},
-					},
-					CatalogName: "fake-catalog",
-					InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
-				}
-
-				cl, reconciler := newClientAndReconciler(t, bundle)
 
 				// Run reconcile again
 				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
@@ -880,6 +828,12 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 			},
 		} {
 			t.Run(tt.name, func(t *testing.T) {
+				bundle := &ocv1alpha1.BundleMetadata{
+					Name:    "prometheus.v2.0.0",
+					Version: "2.0.0",
+				}
+
+				cl, reconciler := newClientAndReconciler(t, bundle)
 				defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, tt.flagState)()
 				defer func() {
 					require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
@@ -911,7 +865,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				require.NoError(t, err)
 
 				// Checking the status fields
-				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
+				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
 
 				// checking the expected conditions
 				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -925,22 +879,6 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				err = cl.Update(ctx, clusterExtension)
 				require.NoError(t, err)
 
-				bundle := &catalogmetadata.Bundle{
-					Bundle: declcfg.Bundle{
-						Name:    "operatorhub/prometheus/beta/2.0.0",
-						Package: "prometheus",
-						Image:   "quay.io/operatorhubio/prometheus@fake2.0.0",
-						Properties: []property.Property{
-							{Type: property.TypePackage, Value: json.RawMessage(`{"packageName":"prometheus","version":"2.0.0"}`)},
-							{Type: property.TypeGVK, Value: json.RawMessage(`[]`)},
-						},
-					},
-					CatalogName: "fake-catalog",
-					InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
-				}
-
-				cl, reconciler := newClientAndReconciler(t, bundle)
-
 				// Run reconcile again
 				res, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 				require.NoError(t, err)
@@ -951,7 +889,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				require.NoError(t, err)
 
 				// Checking the status fields
-				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "operatorhub/prometheus/beta/1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+				assert.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 
 				// checking the expected conditions
 				cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -1421,19 +1359,19 @@ var (
 			Package: "prometheus",
 			Entries: []declcfg.ChannelEntry{
 				{
-					Name: "operatorhub/prometheus/beta/1.0.0",
+					Name: "prometheus.v1.0.0",
 				},
 				{
-					Name:     "operatorhub/prometheus/beta/1.0.1",
-					Replaces: "operatorhub/prometheus/beta/1.0.0",
+					Name:     "prometheus.v1.0.1",
+					Replaces: "prometheus.v1.0.0",
 				},
 				{
-					Name:     "operatorhub/prometheus/beta/1.2.0",
-					Replaces: "operatorhub/prometheus/beta/1.0.1",
+					Name:     "prometheus.v1.2.0",
+					Replaces: "prometheus.v1.0.1",
 				},
 				{
-					Name:     "operatorhub/prometheus/beta/2.0.0",
-					Replaces: "operatorhub/prometheus/beta/1.2.0",
+					Name:     "prometheus.v2.0.0",
+					Replaces: "prometheus.v1.2.0",
 				},
 			},
 		},
@@ -1443,7 +1381,7 @@ var (
 var testBundleList = []*catalogmetadata.Bundle{
 	{
 		Bundle: declcfg.Bundle{
-			Name:    "operatorhub/prometheus/alpha/0.37.0",
+			Name:    "prometheus.v0.37.0",
 			Package: "prometheus",
 			Image:   "quay.io/operatorhubio/prometheus@sha256:3e281e587de3d03011440685fc4fb782672beab044c1ebadc42788ce05a21c35",
 			Properties: []property.Property{
@@ -1456,7 +1394,7 @@ var testBundleList = []*catalogmetadata.Bundle{
 	},
 	{
 		Bundle: declcfg.Bundle{
-			Name:    "operatorhub/prometheus/beta/1.0.0",
+			Name:    "prometheus.v1.0.0",
 			Package: "prometheus",
 			Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
 			Properties: []property.Property{
@@ -1469,7 +1407,7 @@ var testBundleList = []*catalogmetadata.Bundle{
 	},
 	{
 		Bundle: declcfg.Bundle{
-			Name:    "operatorhub/prometheus/beta/1.0.1",
+			Name:    "prometheus.v1.0.1",
 			Package: "prometheus",
 			Image:   "quay.io/operatorhubio/prometheus@fake1.0.1",
 			Properties: []property.Property{
@@ -1482,7 +1420,7 @@ var testBundleList = []*catalogmetadata.Bundle{
 	},
 	{
 		Bundle: declcfg.Bundle{
-			Name:    "operatorhub/prometheus/beta/1.2.0",
+			Name:    "prometheus.v1.2.0",
 			Package: "prometheus",
 			Image:   "quay.io/operatorhubio/prometheus@fake1.2.0",
 			Properties: []property.Property{
@@ -1495,7 +1433,7 @@ var testBundleList = []*catalogmetadata.Bundle{
 	},
 	{
 		Bundle: declcfg.Bundle{
-			Name:    "operatorhub/prometheus/beta/2.0.0",
+			Name:    "prometheus.v2.0.0",
 			Package: "prometheus",
 			Image:   "quay.io/operatorhubio/prometheus@fake2.0.0",
 			Properties: []property.Property{

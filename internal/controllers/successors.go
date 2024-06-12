@@ -5,18 +5,19 @@ import (
 
 	mmsemver "github.com/Masterminds/semver/v3"
 
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	"github.com/operator-framework/operator-controller/pkg/features"
 )
 
-func SuccessorsPredicate(installedBundle *catalogmetadata.Bundle) (catalogfilter.Predicate[catalogmetadata.Bundle], error) {
+func SuccessorsPredicate(packageName string, installedBundle *ocv1alpha1.BundleMetadata) (catalogfilter.Predicate[catalogmetadata.Bundle], error) {
 	var successors successorsPredicateFunc = legacySemanticsSuccessorsPredicate
 	if features.OperatorControllerFeatureGate.Enabled(features.ForceSemverUpgradeConstraints) {
 		successors = semverSuccessorsPredicate
 	}
 
-	installedBundleVersion, err := installedBundle.Version()
+	installedBundleVersion, err := mmsemver.NewVersion(installedBundle.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +27,7 @@ func SuccessorsPredicate(installedBundle *catalogmetadata.Bundle) (catalogfilter
 		return nil, err
 	}
 
-	successorsPredicate, err := successors(installedBundle)
+	successorsPredicate, err := successors(packageName, installedBundle)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +36,7 @@ func SuccessorsPredicate(installedBundle *catalogmetadata.Bundle) (catalogfilter
 	return catalogfilter.Or(
 		successorsPredicate,
 		catalogfilter.And(
-			catalogfilter.WithPackageName(installedBundle.Package),
+			catalogfilter.WithPackageName(packageName),
 			catalogfilter.InMastermindsSemverRange(installedVersionConstraint),
 		),
 	), nil
@@ -43,14 +44,14 @@ func SuccessorsPredicate(installedBundle *catalogmetadata.Bundle) (catalogfilter
 
 // successorsPredicateFunc returns a predicate to find successors
 // for a bundle. Predicate must not include the current version.
-type successorsPredicateFunc func(bundle *catalogmetadata.Bundle) (catalogfilter.Predicate[catalogmetadata.Bundle], error)
+type successorsPredicateFunc func(packageName string, bundle *ocv1alpha1.BundleMetadata) (catalogfilter.Predicate[catalogmetadata.Bundle], error)
 
 // legacySemanticsSuccessorsPredicate returns a predicate to find successors
 // based on legacy OLMv0 semantics which rely on Replaces, Skips and skipRange.
-func legacySemanticsSuccessorsPredicate(bundle *catalogmetadata.Bundle) (catalogfilter.Predicate[catalogmetadata.Bundle], error) {
+func legacySemanticsSuccessorsPredicate(packageName string, bundle *ocv1alpha1.BundleMetadata) (catalogfilter.Predicate[catalogmetadata.Bundle], error) {
 	// find the bundles that replace, skip, or skipRange the bundle provided
 	return catalogfilter.And(
-		catalogfilter.WithPackageName(bundle.Package),
+		catalogfilter.WithPackageName(packageName),
 		catalogfilter.LegacySuccessor(bundle),
 	), nil
 }
@@ -58,8 +59,8 @@ func legacySemanticsSuccessorsPredicate(bundle *catalogmetadata.Bundle) (catalog
 // semverSuccessorsPredicate returns a predicate to find successors based on Semver.
 // Successors will not include versions outside the major version of the
 // installed bundle as major version is intended to indicate breaking changes.
-func semverSuccessorsPredicate(bundle *catalogmetadata.Bundle) (catalogfilter.Predicate[catalogmetadata.Bundle], error) {
-	currentVersion, err := bundle.Version()
+func semverSuccessorsPredicate(packageName string, bundle *ocv1alpha1.BundleMetadata) (catalogfilter.Predicate[catalogmetadata.Bundle], error) {
+	currentVersion, err := mmsemver.NewVersion(bundle.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +74,7 @@ func semverSuccessorsPredicate(bundle *catalogmetadata.Bundle) (catalogfilter.Pr
 	}
 
 	return catalogfilter.And(
-		catalogfilter.WithPackageName(bundle.Package),
+		catalogfilter.WithPackageName(packageName),
 		catalogfilter.InMastermindsSemverRange(wantedVersionRangeConstraint),
 	), nil
 }

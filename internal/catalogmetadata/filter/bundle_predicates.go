@@ -6,6 +6,7 @@ import (
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
 
@@ -66,7 +67,7 @@ func WithBundleName(bundleName string) Predicate[catalogmetadata.Bundle] {
 	}
 }
 
-func LegacySuccessor(installedBundle *catalogmetadata.Bundle) Predicate[catalogmetadata.Bundle] {
+func LegacySuccessor(installedBundle *ocv1alpha1.BundleMetadata) Predicate[catalogmetadata.Bundle] {
 	isSuccessor := func(candidateBundleEntry declcfg.ChannelEntry) bool {
 		if candidateBundleEntry.Replaces == installedBundle.Name {
 			return true
@@ -77,9 +78,9 @@ func LegacySuccessor(installedBundle *catalogmetadata.Bundle) Predicate[catalogm
 			}
 		}
 		if candidateBundleEntry.SkipRange != "" {
-			installedBundleVersion, _ := installedBundle.Version()
-			skipRange, _ := bsemver.ParseRange(candidateBundleEntry.SkipRange)
-			if installedBundleVersion != nil && skipRange != nil && skipRange(*installedBundleVersion) {
+			installedBundleVersion, vErr := bsemver.Parse(installedBundle.Version)
+			skipRange, srErr := bsemver.ParseRange(candidateBundleEntry.SkipRange)
+			if vErr == nil && srErr == nil && skipRange(installedBundleVersion) {
 				return true
 			}
 		}

@@ -11,6 +11,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 )
@@ -150,13 +151,9 @@ func TestLegacySuccessor(t *testing.T) {
 			},
 		},
 	}
-	installedBundle := &catalogmetadata.Bundle{
-		Bundle: declcfg.Bundle{
-			Name: "package1.v0.0.1",
-			Properties: []property.Property{
-				{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "package1", "version": "0.0.1"}`)},
-			},
-		},
+	installedBundle := &ocv1alpha1.BundleMetadata{
+		Name:    "package1.v0.0.1",
+		Version: "0.0.1",
 	}
 
 	b2 := &catalogmetadata.Bundle{

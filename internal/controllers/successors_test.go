@@ -14,6 +14,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
@@ -172,12 +173,12 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.
 
 	for _, tt := range []struct {
 		name            string
-		installedBundle *catalogmetadata.Bundle
+		installedBundle *ocv1alpha1.BundleMetadata
 		expectedResult  []*catalogmetadata.Bundle
 	}{
 		{
 			name:            "with non-zero major version",
-			installedBundle: bundleSet["test-package.v2.0.0"],
+			installedBundle: bundleMetadataFor(bundleSet["test-package.v2.0.0"]),
 			expectedResult: []*catalogmetadata.Bundle{
 				// Updates are allowed within the major version
 				bundleSet["test-package.v2.2.0"],
@@ -187,7 +188,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.
 		},
 		{
 			name:            "with zero major and zero minor version",
-			installedBundle: bundleSet["test-package.v0.0.1"],
+			installedBundle: bundleMetadataFor(bundleSet["test-package.v0.0.1"]),
 			expectedResult: []*catalogmetadata.Bundle{
 				// No updates are allowed in major version zero when minor version is also zero
 				bundleSet["test-package.v0.0.1"],
@@ -195,7 +196,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.
 		},
 		{
 			name:            "with zero major and non-zero minor version",
-			installedBundle: bundleSet["test-package.v0.1.0"],
+			installedBundle: bundleMetadataFor(bundleSet["test-package.v0.1.0"]),
 			expectedResult: []*catalogmetadata.Bundle{
 				// Patch version updates are allowed within the minor version
 				bundleSet["test-package.v0.1.2"],
@@ -205,22 +206,15 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.
 		},
 		{
 			name: "installed bundle not found",
-			installedBundle: &catalogmetadata.Bundle{
-				Bundle: declcfg.Bundle{
-					Name:    "test-package.v9.0.0",
-					Package: testPackageName,
-					Image:   "registry.io/repo/test-package@v9.0.0",
-					Properties: []property.Property{
-						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "9.0.0"}`)},
-					},
-				},
-				InChannels: []*catalogmetadata.Channel{&testPackageChannel},
+			installedBundle: &ocv1alpha1.BundleMetadata{
+				Name:    "test-package.v9.0.0",
+				Version: "9.0.0",
 			},
 			expectedResult: []*catalogmetadata.Bundle{},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			successors, err := controllers.SuccessorsPredicate(tt.installedBundle)
+			successors, err := controllers.SuccessorsPredicate("test-package", tt.installedBundle)
 			assert.NoError(t, err)
 			result := catalogfilter.Filter(allBundles, successors)
 
@@ -369,12 +363,12 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing
 
 	for _, tt := range []struct {
 		name            string
-		installedBundle *catalogmetadata.Bundle
+		installedBundle *ocv1alpha1.BundleMetadata
 		expectedResult  []*catalogmetadata.Bundle
 	}{
 		{
 			name:            "respect replaces directive from catalog",
-			installedBundle: bundleSet["test-package.v2.0.0"],
+			installedBundle: bundleMetadataFor(bundleSet["test-package.v2.0.0"]),
 			expectedResult: []*catalogmetadata.Bundle{
 				// Must only have two bundle:
 				// - the one which replaces the current version
@@ -385,7 +379,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing
 		},
 		{
 			name:            "respect skips directive from catalog",
-			installedBundle: bundleSet["test-package.v2.2.1"],
+			installedBundle: bundleMetadataFor(bundleSet["test-package.v2.2.1"]),
 			expectedResult: []*catalogmetadata.Bundle{
 				// Must only have two bundle:
 				// - the one which skips the current version
@@ -396,7 +390,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing
 		},
 		{
 			name:            "respect skipRange directive from catalog",
-			installedBundle: bundleSet["test-package.v2.3.0"],
+			installedBundle: bundleMetadataFor(bundleSet["test-package.v2.3.0"]),
 			expectedResult: []*catalogmetadata.Bundle{
 				// Must only have two bundle:
 				// - the one which is skipRanges the current version
@@ -407,22 +401,15 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing
 		},
 		{
 			name: "installed bundle not found",
-			installedBundle: &catalogmetadata.Bundle{
-				Bundle: declcfg.Bundle{
-					Name:    "test-package.v9.0.0",
-					Package: testPackageName,
-					Image:   "registry.io/repo/test-package@v9.0.0",
-					Properties: []property.Property{
-						{Type: property.TypePackage, Value: json.RawMessage(`{"packageName": "test-package", "version": "9.0.0"}`)},
-					},
-				},
-				InChannels: []*catalogmetadata.Channel{&testPackageChannel},
+			installedBundle: &ocv1alpha1.BundleMetadata{
+				Name:    "test-package.v9.0.0",
+				Version: "9.0.0",
 			},
 			expectedResult: []*catalogmetadata.Bundle{},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			successors, err := controllers.SuccessorsPredicate(tt.installedBundle)
+			successors, err := controllers.SuccessorsPredicate("test-package", tt.installedBundle)
 			assert.NoError(t, err)
 			result := catalogfilter.Filter(allBundles, successors)
 
@@ -436,5 +423,16 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing
 			}
 			require.Empty(t, cmp.Diff(result, tt.expectedResult, gocmpopts...))
 		})
+	}
+}
+
+func bundleMetadataFor(bundle *catalogmetadata.Bundle) *ocv1alpha1.BundleMetadata {
+	if bundle == nil {
+		return nil
+	}
+	v, _ := bundle.Version()
+	return &ocv1alpha1.BundleMetadata{
+		Name:    bundle.Name,
+		Version: v.String(),
 	}
 }
