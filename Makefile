@@ -121,7 +121,7 @@ e2e: #EXHELP Run the e2e tests.
 	go test -v ./test/e2e/...
 
 E2E_REGISTRY_NAME := docker-registry
-E2E_REGISTRY_NAMESPACE := operator-controller-e2e
+E2E_REGISTRY_NAMESPACE := operator-controller-system
 
 export REG_PKG_NAME := registry-operator
 export REGISTRY_ROOT := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000
