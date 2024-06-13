@@ -24,7 +24,7 @@ entries:
 schema: olm.bundle
 name: prometheus-operator.1.0.0
 package: prometheus
-image: docker-registry.operator-controller-system.svc.cluster.local:5000/bundles/registry-v1/prometheus-operator:v1.0.0
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/prometheus-operator:v1.0.0
 properties:
   - type: olm.package
     value:
@@ -34,7 +34,7 @@ properties:
 schema: olm.bundle
 name: prometheus-operator.1.0.1
 package: prometheus
-image: docker-registry.operator-controller-system.svc.cluster.local:5000/bundles/registry-v1/prometheus-operator:v1.0.1
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/prometheus-operator:v1.0.1
 properties:
   - type: olm.package
     value:
@@ -44,7 +44,7 @@ properties:
 schema: olm.bundle
 name: prometheus-operator.1.2.0
 package: prometheus
-image: docker-registry.operator-controller-system.svc.cluster.local:5000/bundles/registry-v1/prometheus-operator:v1.2.0
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/prometheus-operator:v1.2.0
 properties:
   - type: olm.package
     value:
@@ -54,7 +54,7 @@ properties:
 schema: olm.bundle
 name: prometheus-operator.2.0.0
 package: prometheus
-image: docker-registry.operator-controller-system.svc.cluster.local:5000/bundles/registry-v1/prometheus-operator:v2.0.0
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/prometheus-operator:v2.0.0
 properties:
   - type: olm.package
     value:
@@ -74,7 +74,7 @@ entries:
 schema: olm.bundle
 name: package-with-webhooks.1.0.0
 package: package-with-webhooks
-image: docker-registry.operator-controller-system.svc.cluster.local:5000/bundles/registry-v1/package-with-webhooks:v1.0.0
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/package-with-webhooks:v1.0.0
 properties:
   - type: olm.package
     value:
