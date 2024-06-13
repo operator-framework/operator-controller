@@ -13,7 +13,7 @@ require (
 	github.com/operator-framework/catalogd v0.12.0
 	github.com/operator-framework/helm-operator-plugins v0.2.2-0.20240520180534-f463c36fedf9
 	github.com/operator-framework/operator-registry v1.43.1
-	github.com/operator-framework/rukpak v0.22.0
+	github.com/operator-framework/rukpak v0.23.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
@@ -26,7 +26,6 @@ require (
 	k8s.io/component-base v0.30.1
 	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0
 	sigs.k8s.io/controller-runtime v0.18.3
-	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
@@ -248,4 +247,5 @@ require (
 	sigs.k8s.io/kustomize/api v0.15.0 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.15.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
+	sigs.k8s.io/yaml v1.4.0 // indirect
 )

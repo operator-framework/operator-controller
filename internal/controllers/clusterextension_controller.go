@@ -63,6 +63,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
+	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
 	helmpredicate "github.com/operator-framework/rukpak/pkg/helm-operator-plugins/predicate"
 	rukpaksource "github.com/operator-framework/rukpak/pkg/source"
 	"github.com/operator-framework/rukpak/pkg/storage"
@@ -73,7 +74,6 @@ import (
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
-	"github.com/operator-framework/operator-controller/internal/handler"
 	"github.com/operator-framework/operator-controller/internal/labels"
 )
 
@@ -85,7 +85,7 @@ type ClusterExtensionReconciler struct {
 	Unpacker              rukpaksource.Unpacker
 	ActionClientGetter    helmclient.ActionClientGetter
 	Storage               storage.Storage
-	Handler               handler.Handler
+	Handler               registryv1handler.Handler
 	dynamicWatchMutex     sync.RWMutex
 	dynamicWatchGVKs      map[schema.GroupVersionKind]struct{}
 	controller            crcontroller.Controller
@@ -249,11 +249,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setInstalledStatusConditionUnknown(ext, "installation has not been attempted as unpack is pending")
 
 		return ctrl.Result{}, nil
-	case rukpaksource.StateUnpacking:
-		setStatusUnpacking(ext, unpackResult.Message)
-		setHasValidBundleUnknown(ext, "unpack pending")
-		setInstalledStatusConditionUnknown(ext, "installation has not been attempted as unpack is pending")
-		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacked:
 		// TODO: Add finalizer to clean the stored bundles, after https://github.com/operator-framework/rukpak/pull/897
 		// merges.
@@ -274,7 +269,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
-	chrt, values, err := r.Handler.Handle(ctx, bundleFS, ext)
+	chrt, values, err := r.Handler.Handle(ctx, bundleFS, bd)
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, err.Error())
 		return ctrl.Result{}, err
@@ -533,6 +528,7 @@ func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePat
 			UID:  ce.UID,
 		},
 		Spec: rukpakv1alpha2.BundleDeploymentSpec{
+			InstallNamespace: ce.Spec.InstallNamespace,
 			Source: rukpakv1alpha2.BundleSource{
 				Type: rukpakv1alpha2.SourceTypeImage,
 				Image: &rukpakv1alpha2.ImageSource{

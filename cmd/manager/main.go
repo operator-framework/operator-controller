@@ -41,6 +41,8 @@ import (
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/rukpak/pkg/finalizer"
+	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
+	"github.com/operator-framework/rukpak/pkg/provisioner/registry"
 	"github.com/operator-framework/rukpak/pkg/source"
 	"github.com/operator-framework/rukpak/pkg/storage"
 
@@ -48,7 +50,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	"github.com/operator-framework/operator-controller/internal/handler"
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/version"
 	"github.com/operator-framework/operator-controller/pkg/features"
@@ -198,8 +199,8 @@ func main() {
 		ActionClientGetter:    acg,
 		Unpacker:              unpacker,
 		Storage:               localStorage,
-		Handler:               handler.HandlerFunc(handler.HandleClusterExtension),
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
+		Handler:               registryv1handler.HandlerFunc(registry.HandleBundleDeployment),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
