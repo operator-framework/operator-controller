@@ -36,7 +36,7 @@ const (
 var pollDuration = time.Minute
 var pollInterval = time.Second
 
-func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.Catalog) {
+func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCatalog) {
 	var err error
 	extensionCatalog, err := createTestCatalog(context.Background(), testCatalogName, os.Getenv(testCatalogRefEnvVar))
 	require.NoError(t, err)
@@ -53,10 +53,10 @@ func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.Catalog) {
 	return clusterExtension, extensionCatalog
 }
 
-func testCleanup(t *testing.T, cat *catalogd.Catalog, clusterExtension *ocv1alpha1.ClusterExtension) {
+func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *ocv1alpha1.ClusterExtension) {
 	require.NoError(t, c.Delete(context.Background(), cat))
 	require.Eventually(t, func() bool {
-		err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &catalogd.Catalog{})
+		err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &catalogd.ClusterCatalog{})
 		return errors.IsNotFound(err)
 	}, pollDuration, pollInterval)
 	require.NoError(t, c.Delete(context.Background(), clusterExtension))
@@ -139,7 +139,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	t.Log("By deleting the catalog first")
 	require.NoError(t, c.Delete(context.Background(), extensionCatalog))
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		err := c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.Name}, &catalogd.Catalog{})
+		err := c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.Name}, &catalogd.ClusterCatalog{})
 		assert.True(ct, errors.IsNotFound(err))
 	}, pollDuration, pollInterval)
 
@@ -368,7 +368,7 @@ func getArtifactsOutput(t *testing.T) {
 	}
 
 	// get all catalogsources save them to the artifact path.
-	catalogsources := catalogd.CatalogList{}
+	catalogsources := catalogd.ClusterCatalogList{}
 	if err := c.List(context.Background(), &catalogsources, client.InNamespace("")); err != nil {
 		fmt.Printf("Failed to list catalogsources: %v", err)
 	}

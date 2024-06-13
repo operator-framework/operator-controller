@@ -50,11 +50,11 @@ func TestExtensionDeveloper(t *testing.T) {
 		clusterExtension := ce
 		t.Run(clusterExtension.ObjectMeta.Name, func(t *testing.T) {
 			t.Parallel()
-			catalog := &catalogd.Catalog{
+			catalog := &catalogd.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: "catalog",
 				},
-				Spec: catalogd.CatalogSpec{
+				Spec: catalogd.ClusterCatalogSpec{
 					Source: catalogd.CatalogSource{
 						Type: catalogd.SourceTypeImage,
 						Image: &catalogd.ImageSource{

@@ -39,12 +39,12 @@ func TestMain(m *testing.M) {
 // createTestCatalog will create a new catalog on the test cluster, provided
 // the context, catalog name, and the image reference. It returns the created catalog
 // or an error if any errors occurred while creating the catalog.
-func createTestCatalog(ctx context.Context, name string, imageRef string) (*catalogd.Catalog, error) {
-	catalog := &catalogd.Catalog{
+func createTestCatalog(ctx context.Context, name string, imageRef string) (*catalogd.ClusterCatalog, error) {
+	catalog := &catalogd.ClusterCatalog{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
-		Spec: catalogd.CatalogSpec{
+		Spec: catalogd.ClusterCatalogSpec{
 			Source: catalogd.CatalogSource{
 				Type: catalogd.SourceTypeImage,
 				Image: &catalogd.ImageSource{
