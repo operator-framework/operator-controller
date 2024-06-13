@@ -87,7 +87,7 @@ type ClusterExtensionReconciler struct {
 	Storage               storage.Storage
 	Handler               registryv1handler.Handler
 	dynamicWatchMutex     sync.RWMutex
-	dynamicWatchGVKs      map[schema.GroupVersionKind]struct{}
+	dynamicWatchGVKs      sets.Set[schema.GroupVersionKind]
 	controller            crcontroller.Controller
 	cache                 cache.Cache
 	InstalledBundleGetter InstalledBundleGetter
@@ -346,7 +346,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 				); err != nil {
 					return err
 				}
-				r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()] = struct{}{}
+				r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()] = sets.Empty{}
 			}
 			return nil
 		}(); err != nil {
@@ -582,7 +582,7 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 	r.controller = controller
 	r.cache = mgr.GetCache()
-	r.dynamicWatchGVKs = map[schema.GroupVersionKind]struct{}{}
+	r.dynamicWatchGVKs = sets.New[schema.GroupVersionKind]()
 
 	return nil
 }
