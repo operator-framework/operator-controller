@@ -54,7 +54,7 @@ func TestCache(t *testing.T) {
 	t.Run("FetchCatalogContents", func(t *testing.T) {
 		type test struct {
 			name           string
-			catalog        *catalogd.Catalog
+			catalog        *catalogd.ClusterCatalog
 			contents       []byte
 			wantErr        bool
 			tripper        *MockTripper
@@ -64,11 +64,11 @@ func TestCache(t *testing.T) {
 		for _, tt := range []test{
 			{
 				name: "valid non-cached fetch",
-				catalog: &catalogd.Catalog{
+				catalog: &catalogd.ClusterCatalog{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-catalog",
 					},
-					Status: catalogd.CatalogStatus{
+					Status: catalogd.ClusterCatalogStatus{
 						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
 							Image: &catalogd.ResolvedImageSource{
@@ -82,11 +82,11 @@ func TestCache(t *testing.T) {
 			},
 			{
 				name: "valid cached fetch",
-				catalog: &catalogd.Catalog{
+				catalog: &catalogd.ClusterCatalog{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-catalog",
 					},
-					Status: catalogd.CatalogStatus{
+					Status: catalogd.ClusterCatalogStatus{
 						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
 							Image: &catalogd.ResolvedImageSource{
@@ -102,11 +102,11 @@ func TestCache(t *testing.T) {
 			},
 			{
 				name: "cached update fetch with changes",
-				catalog: &catalogd.Catalog{
+				catalog: &catalogd.ClusterCatalog{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-catalog",
 					},
-					Status: catalogd.CatalogStatus{
+					Status: catalogd.ClusterCatalogStatus{
 						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
 							Image: &catalogd.ResolvedImageSource{
@@ -122,11 +122,11 @@ func TestCache(t *testing.T) {
 			},
 			{
 				name: "fetch error",
-				catalog: &catalogd.Catalog{
+				catalog: &catalogd.ClusterCatalog{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-catalog",
 					},
-					Status: catalogd.CatalogStatus{
+					Status: catalogd.ClusterCatalogStatus{
 						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
 							Image: &catalogd.ResolvedImageSource{
@@ -141,11 +141,11 @@ func TestCache(t *testing.T) {
 			},
 			{
 				name: "fetch internal server error response",
-				catalog: &catalogd.Catalog{
+				catalog: &catalogd.ClusterCatalog{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-catalog",
 					},
-					Status: catalogd.CatalogStatus{
+					Status: catalogd.ClusterCatalogStatus{
 						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Type: catalogd.SourceTypeImage,
 							Image: &catalogd.ResolvedImageSource{
@@ -167,11 +167,11 @@ func TestCache(t *testing.T) {
 			},
 			{
 				name: "nil catalog.status.resolvedSource",
-				catalog: &catalogd.Catalog{
+				catalog: &catalogd.ClusterCatalog{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-catalog",
 					},
-					Status: catalogd.CatalogStatus{
+					Status: catalogd.ClusterCatalogStatus{
 						ResolvedSource: nil,
 					},
 				},
@@ -181,11 +181,11 @@ func TestCache(t *testing.T) {
 			},
 			{
 				name: "nil catalog.status.resolvedSource.image",
-				catalog: &catalogd.Catalog{
+				catalog: &catalogd.ClusterCatalog{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test-catalog",
 					},
-					Status: catalogd.CatalogStatus{
+					Status: catalogd.ClusterCatalogStatus{
 						ResolvedSource: &catalogd.ResolvedCatalogSource{
 							Image: nil,
 						},

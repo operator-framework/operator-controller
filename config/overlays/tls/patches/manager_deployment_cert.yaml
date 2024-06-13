@@ -1,0 +1,9 @@
+- op: add
+  path: /spec/template/spec/volumes/-
+  value: {"name":"ca-certificate", "secret":{"secretName":"catalogd-catalogserver-cert", "optional": false, "items": [{"key": "tls.crt", "path": "tls.crt"}]}}
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value: {"name":"ca-certificate", "readOnly": true, "mountPath":"/var/certs"}
+- op: add
+  path: /spec/template/spec/containers/0/args/-
+  value: "--ca-cert=/var/certs/tls.crt"

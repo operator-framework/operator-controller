@@ -20,11 +20,9 @@ import (
 	"crypto/x509"
 	"flag"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
@@ -50,6 +48,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/version"
 	"github.com/operator-framework/operator-controller/pkg/features"
@@ -58,7 +57,7 @@ import (
 
 var (
 	setupLog               = ctrl.Log.WithName("setup")
-	defaultSystemNamespace = "operator-controller-system"
+	defaultSystemNamespace = "olmv1-system"
 )
 
 // podNamespace checks whether the controller is running in a Pod vs.
@@ -82,9 +81,11 @@ func main() {
 		operatorControllerVersion   bool
 		systemNamespace             string
 		provisionerStorageDirectory string
+		caCert                      string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&caCert, "ca-cert", "", "The TLS certificate to use for verifying HTTPS connections to the Catalogd web server.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -153,8 +154,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	httpClient, err := httputil.BuildHTTPClient(caCert)
+	if err != nil {
+		setupLog.Error(err, "unable to create catalogd http client")
+	}
+
 	cl := mgr.GetClient()
-	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, &http.Client{Timeout: 10 * time.Second}))
+	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, httpClient))
 
 	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(), helmclient.StorageNamespaceMapper(func(o client.Object) (string, error) {
 		return systemNamespace, nil

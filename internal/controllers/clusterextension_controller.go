@@ -109,7 +109,7 @@ const (
 //+kubebuilder:rbac:groups=core,resources=pods/log,verbs=get
 //+kubebuilder:rbac:groups=*,resources=*,verbs=*
 
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogs,verbs=list;watch
+//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
 
 // The operator controller needs to watch all the bundle objects and reconcile accordingly. Though not ideal, but these permissions are required.
@@ -555,12 +555,12 @@ func isInsecureSkipTLSVerifySet(ce *ocv1alpha1.ClusterExtension) bool {
 func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1alpha1.ClusterExtension{}).
-		Watches(&catalogd.Catalog{},
+		Watches(&catalogd.ClusterCatalog{},
 			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
 		WithEventFilter(predicate.Funcs{
 			UpdateFunc: func(ue event.UpdateEvent) bool {
-				oldObject, isOldCatalog := ue.ObjectOld.(*catalogd.Catalog)
-				newObject, isNewCatalog := ue.ObjectNew.(*catalogd.Catalog)
+				oldObject, isOldCatalog := ue.ObjectOld.(*catalogd.ClusterCatalog)
+				newObject, isNewCatalog := ue.ObjectNew.(*catalogd.ClusterCatalog)
 
 				if !isOldCatalog || !isNewCatalog {
 					return true

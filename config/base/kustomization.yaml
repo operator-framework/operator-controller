@@ -1,5 +1,5 @@
 # Adds namespace to all resources.
-namespace: operator-controller-system
+namespace: olmv1-system
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named
@@ -15,9 +15,9 @@ namePrefix: operator-controller-
 #    someName: someValue
 
 resources:
-- ../crd
-- ../rbac
-- ../manager
+- crd
+- rbac
+- manager
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
 # crd/kustomization.yaml
 #- ../webhook

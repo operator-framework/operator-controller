@@ -20,7 +20,7 @@ rules:
 - apiGroups:
   - catalogd.operatorframework.io
   resources:
-  - catalogs
+  - clustercatalogs
   verbs:
   - list
   - watch

@@ -23,7 +23,7 @@ type Fetcher interface {
 	// server for the catalog provided. It returns an io.ReadCloser
 	// containing the FBC contents that the caller is expected to close.
 	// returns an error if any occur.
-	FetchCatalogContents(ctx context.Context, catalog *catalogd.Catalog) (io.ReadCloser, error)
+	FetchCatalogContents(ctx context.Context, catalog *catalogd.ClusterCatalog) (io.ReadCloser, error)
 }
 
 func New(cl client.Client, fetcher Fetcher) *Client {
@@ -46,7 +46,7 @@ type Client struct {
 func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error) {
 	var allBundles []*catalogmetadata.Bundle
 
-	var catalogList catalogd.CatalogList
+	var catalogList catalogd.ClusterCatalogList
 	if err := c.cl.List(ctx, &catalogList); err != nil {
 		return nil, err
 	}
