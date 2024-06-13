@@ -36,7 +36,7 @@ kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download
 kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
 
 kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/catalogd.yaml"
-kubectl_wait "catalogd-system" "deployment/catalogd-controller-manager" "60s"
+kubectl_wait "olmv1-system" "deployment/catalogd-controller-manager" "60s"
 
 kubectl apply -f "${operator_controller_manifest}"
 kubectl_wait "operator-controller-system" "deployment/operator-controller-controller-manager" "60s"

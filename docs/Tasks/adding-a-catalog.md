@@ -113,7 +113,7 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
             Reason:                UnpackSuccessful
             Status:                True
             Type:                  Unpacked
-          Content URL:             http://catalogd-catalogserver.catalogd-system.svc/catalogs/operatorhubio/all.json
+          Content URL:             http://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json
           Observed Generation:     2
           Phase:                   Unpacked
           Resolved Source:
