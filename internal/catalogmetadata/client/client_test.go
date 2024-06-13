@@ -105,7 +105,7 @@ func TestClient(t *testing.T) {
 				name: "skip catalog missing Unpacked status condition",
 				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
 					objs, bundles, catalogContentMap := defaultFakeCatalog()
-					objs = append(objs, &catalogd.Catalog{
+					objs = append(objs, &catalogd.ClusterCatalog{
 						ObjectMeta: metav1.ObjectMeta{
 							Name: "foobar",
 						},
@@ -220,11 +220,11 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle, map[strin
 	}`
 
 	objs := []client.Object{
-		&catalogd.Catalog{
+		&catalogd.ClusterCatalog{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "catalog-1",
 			},
-			Status: catalogd.CatalogStatus{
+			Status: catalogd.ClusterCatalogStatus{
 				Conditions: []metav1.Condition{
 					{
 						Type:   catalogd.TypeUnpacked,
@@ -234,11 +234,11 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle, map[strin
 				},
 			},
 		},
-		&catalogd.Catalog{
+		&catalogd.ClusterCatalog{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "catalog-2",
 			},
-			Status: catalogd.CatalogStatus{
+			Status: catalogd.ClusterCatalogStatus{
 				Conditions: []metav1.Condition{
 					{
 						Type:   catalogd.TypeUnpacked,
@@ -338,7 +338,7 @@ type MockFetcher struct {
 	shouldError bool
 }
 
-func (mc *MockFetcher) FetchCatalogContents(_ context.Context, catalog *catalogd.Catalog) (io.ReadCloser, error) {
+func (mc *MockFetcher) FetchCatalogContents(_ context.Context, catalog *catalogd.ClusterCatalog) (io.ReadCloser, error) {
 	if mc.shouldError {
 		return nil, errors.New("mock cache error")
 	}

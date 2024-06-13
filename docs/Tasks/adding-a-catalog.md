@@ -22,7 +22,7 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
 
     ``` yaml title="catalog_cr.yaml"
     apiVersion: catalogd.operatorframework.io/v1alpha1
-    kind: Catalog
+    kind: ClusterCatalog
     metadata:
       name: operatorhubio
     spec:
@@ -44,7 +44,7 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
 
     ``` yaml title="Example `operatorhubio.yaml` CR"
     apiVersion: catalogd.operatorframework.io/v1alpha1
-    kind: Catalog
+    kind: ClusterCatalog
     metadata:
       name: operatorhub
     spec:
