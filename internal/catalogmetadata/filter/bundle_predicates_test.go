@@ -92,7 +92,7 @@ func TestInBlangSemverRange(t *testing.T) {
 
 	vRange := bsemver.MustParseRange(">=1.0.0")
 
-	f := filter.InBlangSemverRange(vRange)
+	f := filter.InBlangSemverRange(vRange, ">=1.0.0")
 
 	assert.True(t, f(b1))
 	assert.False(t, f(b2))

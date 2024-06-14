@@ -402,7 +402,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 		predicates = append(predicates, upgradePredicate)
 	}
 
-	resultSet := catalogfilter.Filter(allBundles, catalogfilter.And(predicates...))
+	resultSet, errs := catalogfilter.Filter(allBundles, catalogfilter.And(predicates...))
 
 	var upgradeErrorPrefix string
 	if installedBundle != nil {
@@ -413,16 +413,17 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 		upgradeErrorPrefix = fmt.Sprintf("error upgrading from currently installed version %q: ", installedBundleVersion.String())
 	}
 	if len(resultSet) == 0 {
-		switch {
-		case versionRange != "" && channelName != "":
-			return nil, fmt.Errorf("%sno package %q matching version %q in channel %q found", upgradeErrorPrefix, packageName, versionRange, channelName)
-		case versionRange != "":
-			return nil, fmt.Errorf("%sno package %q matching version %q found", upgradeErrorPrefix, packageName, versionRange)
-		case channelName != "":
-			return nil, fmt.Errorf("%sno package %q in channel %q found", upgradeErrorPrefix, packageName, channelName)
-		default:
-			return nil, fmt.Errorf("%sno package %q found", upgradeErrorPrefix, packageName)
-		}
+		return nil, fmt.Errorf("%s %s", upgradeErrorPrefix, errs)
+		// switch {
+		// case versionRange != "" && channelName != "":
+		// 	return nil, fmt.Errorf("%sno package %q matching version %q in channel %q found", upgradeErrorPrefix, packageName, versionRange, channelName)
+		// case versionRange != "":
+		// 	return nil, fmt.Errorf("%sno package %q matching version %q found", upgradeErrorPrefix, packageName, versionRange)
+		// case channelName != "":
+		// 	return nil, fmt.Errorf("%sno package %q in channel %q found", upgradeErrorPrefix, packageName, channelName)
+		// default:
+		// 	return nil, fmt.Errorf("%sno package %q found", upgradeErrorPrefix, packageName)
+		// }
 	}
 
 	sort.SliceStable(resultSet, func(i, j int) bool {
