@@ -146,6 +146,10 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	t.Log("By creating the ClusterExtension resource")
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 
+	// TODO: this isn't a good precondition because a missing package results in
+	//  exponential backoff retries. So we can't be sure that the re-reconcile is a result of
+	//  the catalog becoming available because it could also be a retry of the initial failed
+	//  resolution.
 	t.Log("By failing to find ClusterExtension during resolution")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
@@ -257,13 +261,13 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
 	}, pollDuration, pollInterval)
 
-	t.Log("It does not allow to upgrade the ClusterExtension to a non-successor version")
+	t.Log("It allows to upgrade the ClusterExtension to a non-successor version")
 	t.Log("By updating the ClusterExtension resource to a non-successor version")
 	// 1.2.0 does not replace/skip/skipRange 1.0.0.
 	clusterExtension.Spec.Version = "1.2.0"
 	clusterExtension.Spec.UpgradeConstraintPolicy = ocv1alpha1.UpgradeConstraintPolicyIgnore
 	require.NoError(t, c.Update(context.Background(), clusterExtension))
-	t.Log("By eventually reporting an unsatisfiable resolution")
+	t.Log("By eventually reporting a satisfiable resolution")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)

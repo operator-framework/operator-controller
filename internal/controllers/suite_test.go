@@ -32,6 +32,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/rukpak/api/v1alpha2"
@@ -126,6 +127,7 @@ func newClientAndReconciler(t *testing.T, bundle *ocv1alpha1.BundleMetadata) (cl
 		Unpacker:              unpacker,
 		Storage:               store,
 		InstalledBundleGetter: mockInstalledBundleGetter,
+		Finalizers:            crfinalizer.NewFinalizers(),
 	}
 	return cl, reconciler
 }
