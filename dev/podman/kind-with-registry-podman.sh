@@ -22,10 +22,6 @@ fi
 cat <<EOF | kind create cluster --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-featureGates:
-  "ValidatingAdmissionPolicy": true
-runtimeConfig:
-  "admissionregistration.k8s.io/v1beta1": true
 containerdConfigPatches:
 - |-
   [plugins."io.containerd.grpc.v1.cri".registry]
