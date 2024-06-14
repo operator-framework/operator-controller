@@ -23,7 +23,29 @@ For a more complete overview of OLM v1 and how it differs from OLM v0, see our [
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
-**Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
+
+> [!NOTE] 
+> Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
+
+### Additional setup on Machintosh computers
+On Macintosh computers some additional setup is necessary to install and configure compatible tooling.
+
+#### Install Homebrew and tools
+Follow the instructions to [installing Homebrew](https://docs.brew.sh/Installation) and then execute the following to install tools:
+
+```sh
+brew install bash gnu-tar gsed
+```
+
+#### Configure your shell
+Modify your login shell's `PATH` to prefer the new tools over those in the existing environment.  This example should work either with `zsh` (in $HOME/.zshrc) or `bash` (in $HOME/.bashrc):
+
+```sh
+for bindir in `find $(brew --prefix)/opt -type d -follow -name gnubin -print`
+do
+  export PATH=$bindir:$PATH
+done
+```
 
 ### Running on the cluster
 1. Install Instances of Custom Resources:
