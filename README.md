@@ -27,7 +27,7 @@ You’ll need a Kubernetes cluster to run against. You can use [KIND](https://si
 > [!NOTE] 
 > Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
 
-### Additional setup on Machintosh computers
+### Additional setup on Macintosh computers
 On Macintosh computers some additional setup is necessary to install and configure compatible tooling.
 
 #### Install Homebrew and tools
