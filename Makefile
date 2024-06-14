@@ -51,7 +51,7 @@ CONTAINER_RUNTIME := docker
 else ifneq (, $(shell command -v podman 2>/dev/null))
 CONTAINER_RUNTIME := podman
 else
-$(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!) 
+$(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!)
 endif
 
 KUSTOMIZE_BUILD_DIR := config/overlays/tls
@@ -180,8 +180,7 @@ kind-redeploy: generate docker-build kind-load kind-deploy #EXHELP Redeploy newl
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
 	-$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
-	# kind-config.yaml can be deleted after upgrading to Kubernetes 1.30
-	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --image $(KIND_CLUSTER_IMAGE) --config ./kind-config.yaml
+	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --image $(KIND_CLUSTER_IMAGE)
 	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-clean
