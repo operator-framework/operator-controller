@@ -14,7 +14,7 @@ OLM’s purpose is to provide APIs, controllers, and tooling that support the pa
 
 OLM v1 is the follow-up to OLM v0, located [here](https://github.com/operator-framework/operator-lifecycle-manager).
 
-OLM v1 consists of four different components:
+OLM v1 consists of three different components:
 * operator-controller (this repository)
 * [deppy](https://github.com/operator-framework/deppy)
 * [catalogd](https://github.com/operator-framework/catalogd)
@@ -90,7 +90,7 @@ More information can be found via the [Kubebuilder Documentation](https://book.k
 
 ## License
 
-Copyright 2022-2023.
+Copyright 2022-2024.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

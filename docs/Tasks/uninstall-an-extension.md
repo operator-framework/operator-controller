@@ -11,7 +11,7 @@ You can uninstall a Kubernetes extension and its associated custom resource defi
 * Delete the extension's CR:
 
     ``` terminal
-    $ kubectl delete clusterextensions <extension_name>
+    kubectl delete clusterextensions <extension_name>
     ```
 
     `extension_name`
@@ -26,7 +26,7 @@ You can uninstall a Kubernetes extension and its associated custom resource defi
 * Verify that the Kubernetes extension is deleted:
 
     ``` terminal
-    $ kubectl get clusterextension.olm.operatorframework.io
+    kubectl get clusterextension.olm.operatorframework.io
     ```
 
     ``` text title="Example output"
