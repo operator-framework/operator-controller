@@ -51,7 +51,7 @@ CONTAINER_RUNTIME := docker
 else ifneq (, $(shell command -v podman 2>/dev/null))
 CONTAINER_RUNTIME := podman
 else
-$(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!) 
+$(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!)
 endif
 
 KUSTOMIZE_BUILD_DIR := config/overlays/tls
@@ -95,7 +95,7 @@ tidy: #HELP Update dependencies.
 
 .PHONY: manifests
 manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
