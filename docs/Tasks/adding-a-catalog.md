@@ -1,9 +1,9 @@
 # Adding a catalog of extensions to a cluster
 
 Extension authors can publish their products in catalogs.
-Catalogs are curated collections of Kubernetes extensions, such as Operators.
-Cluster administrators can add these catalogs to their cluster.
-Cluster administrators can enable polling to get over-the-air updates to catalogs when extension authors publish changes such as bug fixes and new features.
+ClusterCatalogs are curated collections of Kubernetes extensions, such as Operators.
+Cluster administrators can add these ClusterCatalogs to their cluster.
+Cluster administrators can enable polling to get over-the-air updates to ClusterCatalogs when extension authors publish changes such as bug fixes and new features.
 
 For example, the [Kubernetes community Operators catalog](https://github.com/k8s-operatorhub/community-operators) is a catalog of curated extensions that is developed by the Kubernetes community.
 You can see the available extensions at [Operatorhub.io](https://operatorhub.io).
@@ -20,9 +20,9 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
 
 1. Create a catalog custom resource (CR):
 
-    ``` yaml title="catalog_cr.yaml"
+    ``` yaml title="clustercatalog_cr.yaml"
     apiVersion: catalogd.operatorframework.io/v1alpha1
-    kind: Catalog
+    kind: ClusterCatalog
     metadata:
       name: operatorhubio
     spec:
@@ -44,7 +44,7 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
 
     ``` yaml title="Example `operatorhubio.yaml` CR"
     apiVersion: catalogd.operatorframework.io/v1alpha1
-    kind: Catalog
+    kind: ClusterCatalog
     metadata:
       name: operatorhub
     spec:
@@ -55,14 +55,14 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
           pollInterval: 1h
     ```
 
-2. Apply the catalog CR:
+2. Apply the ClusterCatalog CR:
 
     ``` terminal
-    $ kubectl apply -f <catalog_cr>.yaml
+    kubectl apply -f <clustercatalog_cr>.yaml
     ```
 
     ``` text title="Example output"
-    catalog.catalogd.operatorframework.io/redhat-operators created
+    clustercatalog.catalogd.operatorframework.io/operatorhubio created
     ```
 
 ### Verification
@@ -72,7 +72,7 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
     * Check if your catalog is available on the cluster:
 
         ``` terminal
-        $ kubectl get catalog
+        kubectl get clustercatalog
         ```
 
         ``` terminal title="Example output"
@@ -83,7 +83,7 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
     * Check the status of your catalog:
 
         ``` terminal
-        $ kubectl describe catalog
+        kubectl describe clustercatalog
         ```
 
         ``` terminal title="Example output"
@@ -92,7 +92,7 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
         Labels:       <none>
         Annotations:  <none>
         API Version:  catalogd.operatorframework.io/v1alpha1
-        Kind:         Catalog
+        Kind:         ClusterCatalog
         Metadata:
           Creation Timestamp:  2024-03-12T19:34:50Z
           Finalizers:
@@ -113,7 +113,7 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
             Reason:                UnpackSuccessful
             Status:                True
             Type:                  Unpacked
-          Content URL:             http://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json
+          Content URL:             https://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json
           Observed Generation:     2
           Phase:                   Unpacked
           Resolved Source:

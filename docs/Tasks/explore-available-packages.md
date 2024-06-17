@@ -3,20 +3,23 @@ Then you can query the catalog by using `curl` commands and the `jq` CLI tool to
 
 ## Prerequisites
 
-* You have added a catalog of extensions, such as [OperatorHub.io](https://operatorhub.io), to your cluster.
+* You have added a ClusterCatalog of extensions, such as [OperatorHub.io](https://operatorhub.io), to your cluster.
 * You have installed the `jq` CLI tool.
+
+**Note:** By default, Catalogd is installed with TLS enabled for the catalog webserver.
+The following examples will show this default behavior, but for simplicity's sake will ignore TLS verification in the curl commands using the `-k` flag.
 
 ## Procedure
 
 1. Port forward the catalog server service:
 
     ``` terminal
-    $ kubectl -n olmv1-system port-forward svc/catalogd-catalogserver 8080:80
+    kubectl -n olmv1-system port-forward svc/catalogd-catalogserver 8443:443
     ```
 
 2. Return a list of all the extensions in a catalog:
     ``` terminal
-    $ curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.package") | .name'
+    curl -k https://localhost:8443/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.package") | .name'
     ```
 
     ??? success
@@ -86,7 +89,7 @@ Then you can query the catalog by using `curl` commands and the `jq` CLI tool to
     * Return list of packages that support `AllNamespaces` install mode and do not use webhooks:
 
         ``` terminal
-        $ curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -c 'select(.schema == "olm.bundle") | {"package":.package, "version":.properties[] | select(.type == "olm.bundle.object").value.data | @base64d | fromjson | select(.kind == "ClusterServiceVersion" and (.spec.installModes[] | select(.type == "AllNamespaces" and .supported == true) != null) and .spec.webhookdefinitions == null).spec.version}'
+        curl -k https://localhost:8443/catalogs/operatorhubio/all.json | jq -c 'select(.schema == "olm.bundle") | {"package":.package, "version":.properties[] | select(.type == "olm.bundle.object").value.data | @base64d | fromjson | select(.kind == "ClusterServiceVersion" and (.spec.installModes[] | select(.type == "AllNamespaces" and .supported == true) != null) and .spec.webhookdefinitions == null).spec.version}'
         ```
 
         ??? success
@@ -117,7 +120,7 @@ Then you can query the catalog by using `curl` commands and the `jq` CLI tool to
 3. Inspect the contents of an extension's metadata:
 
     ``` terminal
-    $ curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select( .schema == "olm.package") | select( .name == "<package_name>")'
+    curl -k https://localhost:8443/catalogs/operatorhubio/all.json | jq -s '.[] | select( .schema == "olm.package") | select( .name == "<package_name>")'
     ```
 
     `package_name`

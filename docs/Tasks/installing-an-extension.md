@@ -54,7 +54,7 @@ After you add a catalog to your cluster, you can install an extension by creatin
 2. Apply the CR to the cluster:
 
     ``` terminal
-    $ kubectl apply -f <cr_name>.yaml
+    kubectl apply -f <cr_name>.yaml
     ```
 
     ??? success
@@ -67,7 +67,7 @@ After you add a catalog to your cluster, you can install an extension by creatin
 * Describe the installed extension:
 
     ``` terminal
-    $ kubectl describe clusterextensions
+    kubectl describe clusterextensions
     ```
 
     ??? success
