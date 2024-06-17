@@ -36,7 +36,6 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,9 +47,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	crhandler "sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -80,7 +79,6 @@ import (
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
-	ReleaseNamespace      string
 	BundleProvider        BundleProvider
 	Unpacker              rukpaksource.Unpacker
 	ActionClientGetter    helmclient.ActionClientGetter
@@ -91,6 +89,7 @@ type ClusterExtensionReconciler struct {
 	controller            crcontroller.Controller
 	cache                 cache.Cache
 	InstalledBundleGetter InstalledBundleGetter
+	Finalizers            crfinalizer.Finalizers
 }
 
 type InstalledBundleGetter interface {
@@ -104,9 +103,7 @@ const (
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=list;watch;create;delete
-//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=list;watch
-//+kubebuilder:rbac:groups=core,resources=pods/log,verbs=get
+//+kubebuilder:rbac:groups=core,resources=secrets,verbs=create;update;patch;delete;get;list;watch
 //+kubebuilder:rbac:groups=*,resources=*,verbs=*
 
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs,verbs=list;watch
@@ -196,6 +193,25 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 */
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
+	finalizeResult, err := r.Finalizers.Finalize(ctx, ext)
+	if err != nil {
+		// TODO: For now, this error handling follows the pattern of other error handling.
+		//  Namely: zero just about everything out, throw our hands up, and return an error.
+		//  This is not ideal, and we should consider a more nuanced approach that resolves
+		//  as much status as possible before returning, or at least keeps previous state if
+		//  it is properly labeled with its observed generation.
+		ext.Status.ResolvedBundle = nil
+		ext.Status.InstalledBundle = nil
+		setResolvedStatusConditionFailed(ext, err.Error())
+		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
+		return ctrl.Result{}, err
+	}
+	if finalizeResult.Updated || finalizeResult.StatusUpdated {
+		// On create: make sure the finalizer is applied before we do anything
+		// On delete: make sure we do nothing after the finalizer is removed
+		return ctrl.Result{}, nil
+	}
+
 	// run resolution
 	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
@@ -300,7 +316,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	switch state {
 	case stateNeedsInstall:
-		rel, err = ac.Install(ext.GetName(), r.ReleaseNamespace, chrt, values, func(install *action.Install) error {
+		rel, err = ac.Install(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(install *action.Install) error {
 			install.CreateNamespace = false
 			install.Labels = map[string]string{labels.BundleNameKey: bundle.Name, labels.PackageNameKey: bundle.Package, labels.BundleVersionKey: bundleVersion.String()}
 			return nil
@@ -310,7 +326,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			return ctrl.Result{}, err
 		}
 	case stateNeedsUpgrade:
-		rel, err = ac.Upgrade(ext.GetName(), r.ReleaseNamespace, chrt, values, helmclient.AppendUpgradePostRenderer(post))
+		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, helmclient.AppendUpgradePostRenderer(post))
 		if err != nil {
 			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err))
 			return ctrl.Result{}, err
@@ -574,7 +590,6 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				return true
 			},
 		}).
-		Watches(&corev1.Pod{}, mapOwneeToOwnerHandler(mgr.GetClient(), mgr.GetLogger(), &ocv1alpha1.ClusterExtension{})).
 		Build(r)
 
 	if err != nil {
@@ -587,47 +602,12 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return nil
 }
 
-func mapOwneeToOwnerHandler(cl client.Client, log logr.Logger, owner client.Object) crhandler.EventHandler {
-	return crhandler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-		ownerGVK, err := apiutil.GVKForObject(owner, cl.Scheme())
-		if err != nil {
-			log.Error(err, "map ownee to owner: lookup GVK for owner")
-			return nil
-		}
-
-		type ownerInfo struct {
-			key types.NamespacedName
-			gvk schema.GroupVersionKind
-		}
-		var oi *ownerInfo
-
-		for _, ref := range obj.GetOwnerReferences() {
-			gv, err := schema.ParseGroupVersion(ref.APIVersion)
-			if err != nil {
-				log.Error(err, fmt.Sprintf("map ownee to owner: parse ownee's owner reference group version %q", ref.APIVersion))
-				return nil
-			}
-			refGVK := gv.WithKind(ref.Kind)
-			if refGVK == ownerGVK && ref.Controller != nil && *ref.Controller {
-				oi = &ownerInfo{
-					key: types.NamespacedName{Name: ref.Name},
-					gvk: ownerGVK,
-				}
-				break
-			}
-		}
-		if oi == nil {
-			return nil
-		}
-		return []reconcile.Request{{NamespacedName: oi.key}}
-	})
-}
-
 // Generate reconcile requests for all cluster extensions affected by a catalog change
 func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crhandler.MapFunc {
 	return func(ctx context.Context, _ client.Object) []reconcile.Request {
 		// no way of associating an extension to a catalog so create reconcile requests for everything
-		clusterExtensions := ocv1alpha1.ClusterExtensionList{}
+		clusterExtensions := metav1.PartialObjectMetadataList{}
+		clusterExtensions.SetGroupVersionKind(ocv1alpha1.GroupVersion.WithKind("ClusterExtensionList"))
 		err := c.List(ctx, &clusterExtensions)
 		if err != nil {
 			logger.Error(err, "unable to enqueue cluster extensions for catalog reconcile")
@@ -655,8 +635,8 @@ const (
 	stateError        releaseState = "Error"
 )
 
-func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterface, obj metav1.Object, chrt *chart.Chart, values chartutil.Values, post *postrenderer) (*release.Release, releaseState, error) {
-	currentRelease, err := cl.Get(obj.GetName())
+func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterface, ext *ocv1alpha1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post *postrenderer) (*release.Release, releaseState, error) {
+	currentRelease, err := cl.Get(ext.GetName())
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil, stateError, err
 	}
@@ -664,7 +644,7 @@ func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterfa
 		return nil, stateNeedsInstall, nil
 	}
 
-	desiredRelease, err := cl.Upgrade(obj.GetName(), r.ReleaseNamespace, chrt, values, func(upgrade *action.Upgrade) error {
+	desiredRelease, err := cl.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(upgrade *action.Upgrade) error {
 		upgrade.DryRun = true
 		return nil
 	}, helmclient.AppendUpgradePostRenderer(post))

@@ -17,7 +17,7 @@ limitations under the License.
 package main
 
 import (
-	"crypto/x509"
+	"context"
 	"flag"
 	"fmt"
 	"net/url"
@@ -38,13 +38,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-	"github.com/operator-framework/rukpak/pkg/finalizer"
 	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
 	"github.com/operator-framework/rukpak/pkg/provisioner/registry"
 	"github.com/operator-framework/rukpak/pkg/source"
 	"github.com/operator-framework/rukpak/pkg/storage"
 
-	"github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
@@ -74,14 +73,13 @@ func podNamespace() string {
 
 func main() {
 	var (
-		metricsAddr                 string
-		enableLeaderElection        bool
-		probeAddr                   string
-		cachePath                   string
-		operatorControllerVersion   bool
-		systemNamespace             string
-		provisionerStorageDirectory string
-		caCert                      string
+		metricsAddr               string
+		enableLeaderElection      bool
+		probeAddr                 string
+		cachePath                 string
+		operatorControllerVersion bool
+		systemNamespace           string
+		caCert                    string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -92,7 +90,6 @@ func main() {
 	flag.StringVar(&cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
 	flag.BoolVar(&operatorControllerVersion, "version", false, "Prints operator-controller version information")
 	flag.StringVar(&systemNamespace, "system-namespace", "", "Configures the namespace that gets used to deploy system resources.")
-	flag.StringVar(&provisionerStorageDirectory, "provisioner-storage-dir", storage.DefaultBundleCacheDir, "The directory that is used to store bundle contents.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -114,7 +111,7 @@ func main() {
 		systemNamespace = podNamespace()
 	}
 
-	dependentRequirement, err := k8slabels.NewRequirement(labels.OwnerKindKey, selection.In, []string{v1alpha1.ClusterExtensionKind})
+	dependentRequirement, err := k8slabels.NewRequirement(labels.OwnerKindKey, selection.In, []string{ocv1alpha1.ClusterExtensionKind})
 	if err != nil {
 		setupLog.Error(err, "unable to create dependent label selector for cache")
 		os.Exit(1)
@@ -130,7 +127,7 @@ func main() {
 		LeaderElectionID:       "9c4404e7.operatorframework.io",
 		Cache: crcache.Options{
 			ByObject: map[client.Object]crcache.ByObject{
-				&v1alpha1.ClusterExtension{}: {},
+				&ocv1alpha1.ClusterExtension{}: {},
 			},
 			DefaultNamespaces: map[string]crcache.Config{
 				systemNamespace:       {},
@@ -162,9 +159,14 @@ func main() {
 	cl := mgr.GetClient()
 	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, httpClient))
 
-	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(), helmclient.StorageNamespaceMapper(func(o client.Object) (string, error) {
-		return systemNamespace, nil
-	}))
+	installNamespaceMapper := helmclient.ObjectToStringMapper(func(obj client.Object) (string, error) {
+		ext := obj.(*ocv1alpha1.ClusterExtension)
+		return ext.Spec.InstallNamespace, nil
+	})
+	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
+		helmclient.StorageNamespaceMapper(installNamespaceMapper),
+		helmclient.ClientNamespaceMapper(installNamespaceMapper),
+	)
 	if err != nil {
 		setupLog.Error(err, "unable to config for creating helm client")
 		os.Exit(1)
@@ -176,37 +178,45 @@ func main() {
 		os.Exit(1)
 	}
 
-	bundleFinalizers := crfinalizer.NewFinalizers()
-	unpacker, err := source.NewDefaultUnpacker(mgr, systemNamespace, filepath.Join(cachePath, "unpack"), (*x509.CertPool)(nil))
-	if err != nil {
-		setupLog.Error(err, "unable to create unpacker")
-		os.Exit(1)
+	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
+	unpacker := &source.ImageRegistry{
+		BaseCachePath: filepath.Join(cachePath, "unpack"),
+		// TODO: This needs to be derived per extension via ext.Spec.InstallNamespace
+		AuthNamespace: systemNamespace,
 	}
 
-	if err := bundleFinalizers.Register(finalizer.CleanupUnpackCacheKey, &finalizer.CleanupUnpackCache{Unpacker: unpacker}); err != nil {
-		setupLog.Error(err, "unable to register finalizer", "finalizerKey", finalizer.CleanupUnpackCacheKey)
+	domain := ocv1alpha1.GroupVersion.Group
+	cleanupUnpackCacheKey := fmt.Sprintf("%s/cleanup-unpack-cache", domain)
+	deleteCachedBundleKey := fmt.Sprintf("%s/delete-cached-bundle", domain)
+	if err := clusterExtensionFinalizers.Register(cleanupUnpackCacheKey, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+		ext := obj.(*ocv1alpha1.ClusterExtension)
+		return crfinalizer.Result{}, os.RemoveAll(filepath.Join(unpacker.BaseCachePath, ext.GetName()))
+	})); err != nil {
+		setupLog.Error(err, "unable to register finalizer", "finalizerKey", cleanupUnpackCacheKey)
 		os.Exit(1)
 	}
 
 	localStorage := &storage.LocalDirectory{
-		RootDirectory: provisionerStorageDirectory,
+		RootDirectory: filepath.Join(cachePath, "bundles"),
 		URL:           url.URL{},
 	}
-
-	if err := bundleFinalizers.Register(finalizer.DeleteCachedBundleKey, &finalizer.DeleteCachedBundle{Storage: localStorage}); err != nil {
-		setupLog.Error(err, "unable to register finalizer", "finalizerKey", finalizer.DeleteCachedBundleKey)
+	if err := clusterExtensionFinalizers.Register(deleteCachedBundleKey, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+		ext := obj.(*ocv1alpha1.ClusterExtension)
+		return crfinalizer.Result{}, localStorage.Delete(ctx, ext)
+	})); err != nil {
+		setupLog.Error(err, "unable to register finalizer", "finalizerKey", deleteCachedBundleKey)
 		os.Exit(1)
 	}
 
 	if err = (&controllers.ClusterExtensionReconciler{
 		Client:                cl,
-		ReleaseNamespace:      systemNamespace,
 		BundleProvider:        catalogClient,
 		ActionClientGetter:    acg,
 		Unpacker:              unpacker,
 		Storage:               localStorage,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Handler:               registryv1handler.HandlerFunc(registry.HandleBundleDeployment),
+		Finalizers:            clusterExtensionFinalizers,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
@@ -228,4 +238,10 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+type finalizerFunc func(ctx context.Context, obj client.Object) (crfinalizer.Result, error)
+
+func (f finalizerFunc) Finalize(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+	return f(ctx, obj)
 }
