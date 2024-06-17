@@ -1,0 +1,8 @@
+namespace: olmv1-system
+
+resources:
+- ../../overlays/tls
+- manager_cert.yaml
+
+patches:
+- path: manager_cert_patch.yaml

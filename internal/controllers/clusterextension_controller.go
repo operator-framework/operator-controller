@@ -73,6 +73,7 @@ import (
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
+	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
 )
 
@@ -90,15 +91,12 @@ type ClusterExtensionReconciler struct {
 	cache                 cache.Cache
 	InstalledBundleGetter InstalledBundleGetter
 	Finalizers            crfinalizer.Finalizers
+	CaCertDir             string
 }
 
 type InstalledBundleGetter interface {
 	GetInstalledBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*ocv1alpha1.BundleMetadata, error)
 }
-
-const (
-	bundleConnectionAnnotation string = "bundle.connection.config/insecureSkipTLSVerify"
-)
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/status,verbs=update;patch
@@ -249,7 +247,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// Generate a BundleDeployment from the ClusterExtension to Unpack.
 	// Note: The BundleDeployment here is not a k8s API, its a simple Go struct which
 	// necessary embedded values.
-	bd := r.generateBundleDeploymentForUnpack(bundle.Image, ext)
+	bd := r.generateBundleDeploymentForUnpack(ctx, bundle.Image, ext)
 	unpackResult, err := r.Unpacker.Unpack(ctx, bd)
 	if err != nil {
 		setStatusUnpackFailed(ext, err.Error())
@@ -533,7 +531,11 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetad
 	}
 }
 
-func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePath string, ce *ocv1alpha1.ClusterExtension) *rukpakv1alpha2.BundleDeployment {
+func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(ctx context.Context, bundlePath string, ce *ocv1alpha1.ClusterExtension) *rukpakv1alpha2.BundleDeployment {
+	certData, err := httputil.LoadCerts(r.CaCertDir)
+	if err != nil {
+		log.FromContext(ctx).WithName("operator-controller").WithValues("cluster-extension", ce.GetName()).Error(err, "unable to get TLS certificate")
+	}
 	return &rukpakv1alpha2.BundleDeployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       ce.Kind,
@@ -549,22 +551,12 @@ func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePat
 				Type: rukpakv1alpha2.SourceTypeImage,
 				Image: &rukpakv1alpha2.ImageSource{
 					Ref:                   bundlePath,
-					InsecureSkipTLSVerify: isInsecureSkipTLSVerifySet(ce),
+					InsecureSkipTLSVerify: false,
+					CertificateData:       certData,
 				},
 			},
 		},
 	}
-}
-
-func isInsecureSkipTLSVerifySet(ce *ocv1alpha1.ClusterExtension) bool {
-	if ce == nil {
-		return false
-	}
-	value, ok := ce.Annotations[bundleConnectionAnnotation]
-	if !ok {
-		return false
-	}
-	return value == "true"
 }
 
 // SetupWithManager sets up the controller with the Manager.

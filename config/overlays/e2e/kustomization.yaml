@@ -1,7 +1,7 @@
 namespace: olmv1-system
 
 resources:
-- ../../overlays/tls
+- ../../overlays/certs
 - manager_e2e_coverage_pvc.yaml
 - manager_e2e_coverage_copy_pod.yaml
 
