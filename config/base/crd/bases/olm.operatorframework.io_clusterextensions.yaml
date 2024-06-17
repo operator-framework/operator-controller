@@ -56,6 +56,30 @@ spec:
                 maxLength: 48
                 pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
                 type: string
+              registryTLS:
+                description: RegistryTLS defines the connection parameters to retrieve
+                  an image from a registry
+                properties:
+                  certificateSecretRef:
+                    description: |-
+                      CertificateSecretRef references a Secret that contains the tls.crt certificate that
+                      can verify the server certificate.
+                      This fits the definition of NamespacedName (but that doesn't have json tags)
+                    properties:
+                      name:
+                        description: Name of the secret
+                        type: string
+                      namespace:
+                        description: Namespace of the secret
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  insecureSkipTLSVerify:
+                    description: InsecureSkipTLSVerify allows the HTTPS client to
+                      ignore the server certificate
+                    type: boolean
+                type: object
               upgradeConstraintPolicy:
                 default: Enforce
                 description: Defines the policy for how to handle upgrade constraints

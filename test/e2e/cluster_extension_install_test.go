@@ -45,12 +45,17 @@ func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCata
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterExtensionName,
-			Annotations: map[string]string{
-				"bundle.connection.config/insecureSkipTLSVerify": "true",
-			},
 		},
 	}
 	return clusterExtension, extensionCatalog
+}
+func addCertToSpec(ce *ocv1alpha1.ClusterExtension) {
+	ce.Spec.RegistryTLS = &ocv1alpha1.ClusterExtensionTLS{
+		CertificateSecretRef: &ocv1alpha1.ClusterExtensionSecretRef{
+			Name:      "operator-controller-e2e-registry",
+			Namespace: "operator-controller-e2e",
+		},
+	}
 }
 
 func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *ocv1alpha1.ClusterExtension) {
@@ -78,6 +83,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 		PackageName:      "prometheus",
 		InstallNamespace: "default",
 	}
+	addCertToSpec(clusterExtension)
 	t.Log("It resolves the specified package with correct bundle path")
 	t.Log("By creating the ClusterExtension resource")
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
@@ -135,6 +141,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 		PackageName:      pkgName,
 		InstallNamespace: "default",
 	}
+	addCertToSpec(clusterExtension)
 
 	t.Log("By deleting the catalog first")
 	require.NoError(t, c.Delete(context.Background(), extensionCatalog))
@@ -202,6 +209,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		Version:          "1.0.0",
 		InstallNamespace: "default",
 	}
+	addCertToSpec(clusterExtension)
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful installation")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -248,6 +256,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 		Version:          "1.0.0",
 		InstallNamespace: "default",
 	}
+	addCertToSpec(clusterExtension)
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -293,6 +302,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		Version:          "1.0.0",
 		InstallNamespace: "default",
 	}
+	addCertToSpec(clusterExtension)
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {

@@ -150,7 +150,6 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
-
 	httpClient, err := httputil.BuildHTTPClient(caCert)
 	if err != nil {
 		setupLog.Error(err, "unable to create catalogd http client")
@@ -210,6 +209,7 @@ func main() {
 
 	if err = (&controllers.ClusterExtensionReconciler{
 		Client:                cl,
+		Reader:                mgr.GetAPIReader(),
 		BundleProvider:        catalogClient,
 		ActionClientGetter:    acg,
 		Unpacker:              unpacker,

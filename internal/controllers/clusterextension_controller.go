@@ -36,6 +36,7 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,6 +80,7 @@ import (
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
+	client.Reader
 	BundleProvider        BundleProvider
 	Unpacker              rukpaksource.Unpacker
 	ActionClientGetter    helmclient.ActionClientGetter
@@ -95,10 +97,6 @@ type ClusterExtensionReconciler struct {
 type InstalledBundleGetter interface {
 	GetInstalledBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*ocv1alpha1.BundleMetadata, error)
 }
-
-const (
-	bundleConnectionAnnotation string = "bundle.connection.config/insecureSkipTLSVerify"
-)
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/status,verbs=update;patch
@@ -249,7 +247,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// Generate a BundleDeployment from the ClusterExtension to Unpack.
 	// Note: The BundleDeployment here is not a k8s API, its a simple Go struct which
 	// necessary embedded values.
-	bd := r.generateBundleDeploymentForUnpack(bundle.Image, ext)
+	bd := r.generateBundleDeploymentForUnpack(ctx, bundle.Image, ext)
 	unpackResult, err := r.Unpacker.Unpack(ctx, bd)
 	if err != nil {
 		setStatusUnpackFailed(ext, err.Error())
@@ -533,7 +531,11 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetad
 	}
 }
 
-func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePath string, ce *ocv1alpha1.ClusterExtension) *rukpakv1alpha2.BundleDeployment {
+func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(ctx context.Context, bundlePath string, ce *ocv1alpha1.ClusterExtension) *rukpakv1alpha2.BundleDeployment {
+	certData, err := r.getCertificateData(ctx, ce)
+	if err != nil {
+		log.FromContext(ctx).WithName("operator-controller").WithValues("cluster-extension", ce.GetName()).Error(err, "unable to get TLS certificate")
+	}
 	return &rukpakv1alpha2.BundleDeployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       ce.Kind,
@@ -550,6 +552,7 @@ func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePat
 				Image: &rukpakv1alpha2.ImageSource{
 					Ref:                   bundlePath,
 					InsecureSkipTLSVerify: isInsecureSkipTLSVerifySet(ce),
+					CertificateData:       certData,
 				},
 			},
 		},
@@ -557,14 +560,46 @@ func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePat
 }
 
 func isInsecureSkipTLSVerifySet(ce *ocv1alpha1.ClusterExtension) bool {
-	if ce == nil {
+	if ce == nil || ce.Spec.RegistryTLS == nil {
 		return false
 	}
-	value, ok := ce.Annotations[bundleConnectionAnnotation]
-	if !ok {
-		return false
+	return ce.Spec.RegistryTLS.InsecureSkipTLSVerify
+}
+
+func (r *ClusterExtensionReconciler) getCertificateData(ctx context.Context, ce *ocv1alpha1.ClusterExtension) (string, error) {
+	if ce == nil || ce.Spec.RegistryTLS == nil || ce.Spec.RegistryTLS.CertificateSecretRef == nil {
+		return "", nil
 	}
-	return value == "true"
+	secretName := getNamespacedName(*ce.Spec.RegistryTLS.CertificateSecretRef)
+	var secret = &corev1.Secret{}
+	if err := r.Reader.Get(ctx, secretName, secret); err != nil {
+		return "", fmt.Errorf("unable to get secret %v: %w", secretName, err)
+	}
+	if secret.Type != corev1.SecretTypeTLS {
+		return "", fmt.Errorf("invalid type in secret %v: %v", secretName, secret.Type)
+	}
+	var certs []string
+	// Get any 'ca.crt'
+	data, ok := secret.Data[corev1.ServiceAccountRootCAKey]
+	if ok && len(data) > 0 {
+		certs = append(certs, string(data[:]))
+	}
+	// Get any 'tls.crt'
+	data, ok = secret.Data[corev1.TLSCertKey]
+	if ok && len(data) > 0 {
+		certs = append(certs, string(data[:]))
+	}
+	if len(certs) == 0 {
+		return "", fmt.Errorf("no data found in secret: %v", secretName)
+	}
+	return strings.Join(certs, "\n"), nil
+}
+
+func getNamespacedName(name ocv1alpha1.ClusterExtensionSecretRef) types.NamespacedName {
+	if name.Namespace == "" {
+		return types.NamespacedName{Namespace: "default", Name: name.Name}
+	}
+	return types.NamespacedName{Namespace: name.Namespace, Name: name.Name}
 }
 
 // SetupWithManager sets up the controller with the Manager.

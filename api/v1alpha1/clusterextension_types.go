@@ -43,6 +43,25 @@ const (
 	UpgradeConstraintPolicyIgnore UpgradeConstraintPolicy = "Ignore"
 )
 
+// Similar to NamespacedName, but with json
+type ClusterExtensionSecretRef struct {
+	// Name of the secret
+	Name string `json:"name"`
+	// Namespace of the secret
+	Namespace string `json:"namespace,omitempty"`
+}
+
+type ClusterExtensionTLS struct {
+	//+optional
+	// InsecureSkipTLSVerify allows the HTTPS client to ignore the server certificate
+	InsecureSkipTLSVerify bool `json:"insecureSkipTLSVerify,omitempty"`
+	// +optional
+	// CertificateSecretRef references a Secret that contains the tls.crt certificate that
+	// can verify the server certificate.
+	// This fits the definition of NamespacedName (but that doesn't have json tags)
+	CertificateSecretRef *ClusterExtensionSecretRef `json:"certificateSecretRef,omitempty"`
+}
+
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpec struct {
 	//+kubebuilder:validation:MaxLength:=48
@@ -78,6 +97,10 @@ type ClusterExtensionSpec struct {
 	// the bundle may contain resources that are cluster-scoped or that are
 	// installed in a different namespace. This namespace is expected to exist.
 	InstallNamespace string `json:"installNamespace"`
+
+	//+optional
+	// RegistryTLS defines the connection parameters to retrieve an image from a registry
+	RegistryTLS *ClusterExtensionTLS `json:"registryTLS,omitempty"`
 }
 
 const (
