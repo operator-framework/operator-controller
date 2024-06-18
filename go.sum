@@ -483,8 +483,8 @@ github.com/operator-framework/operator-lib v0.14.0 h1:er+BgZymZD1im2wytLJiPLZpGA
 github.com/operator-framework/operator-lib v0.14.0/go.mod h1:wUu4Xb9xzXnIpglvaZ3yucTMSlqGXHIoUEH9+5gWiu0=
 github.com/operator-framework/operator-registry v1.43.1 h1:ACahVHGIL/hINBXd3RKWqSFR5SmSM6L5/n9xXqpR51s=
 github.com/operator-framework/operator-registry v1.43.1/go.mod h1:qhssAIYWXDIW+nTg0C5i4iD9zpMtiXtfXqGUuUmGz5c=
-github.com/operator-framework/rukpak v0.23.2-0.20240618133950-e1d8b0e32344 h1:L2jGtjx9g3EgXUTDiVNgoqyBrP4m4RCyQspDjoDIFjg=
-github.com/operator-framework/rukpak v0.23.2-0.20240618133950-e1d8b0e32344/go.mod h1:peTAGzf4gmU+in2RJen84ZQ8lkdB3m6qy+nfNiVv0RY=
+github.com/operator-framework/rukpak v0.24.0 h1:zxLyk931w4isFiTPox4soXxh/eQJr5sjq15gHcb6dlE=
+github.com/operator-framework/rukpak v0.24.0/go.mod h1:peTAGzf4gmU+in2RJen84ZQ8lkdB3m6qy+nfNiVv0RY=
 github.com/otiai10/copy v1.14.0 h1:dCI/t1iTdYGtkvCuBG2BgR6KZa83PTclw4U5n2wAllU=
 github.com/otiai10/copy v1.14.0/go.mod h1:ECfuL02W+/FkTWZWgQqXPWZgW9oeKCSQ5qVfSc4qc4w=
 github.com/otiai10/mint v1.5.1 h1:XaPLeE+9vGbuyEHem1JNk3bYc7KKqyI/na0/mLd/Kks=

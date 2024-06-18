@@ -582,12 +582,12 @@ func (r *ClusterExtensionReconciler) getCertificateData(ctx context.Context, ce 
 	// Get any 'ca.crt'
 	data, ok := secret.Data[corev1.ServiceAccountRootCAKey]
 	if ok && len(data) > 0 {
-		certs = append(certs, string(data[:]))
+		certs = append(certs, string(data))
 	}
 	// Get any 'tls.crt'
 	data, ok = secret.Data[corev1.TLSCertKey]
 	if ok && len(data) > 0 {
-		certs = append(certs, string(data[:]))
+		certs = append(certs, string(data))
 	}
 	if len(certs) == 0 {
 		return "", fmt.Errorf("no data found in secret: %v", secretName)

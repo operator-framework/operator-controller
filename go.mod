@@ -13,7 +13,7 @@ require (
 	github.com/operator-framework/catalogd v0.14.0
 	github.com/operator-framework/helm-operator-plugins v0.2.2-0.20240520180534-f463c36fedf9
 	github.com/operator-framework/operator-registry v1.43.1
-	github.com/operator-framework/rukpak v0.23.2-0.20240618133950-e1d8b0e32344
+	github.com/operator-framework/rukpak v0.24.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
