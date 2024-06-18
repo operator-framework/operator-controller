@@ -38,7 +38,7 @@ jobs:
 
       - uses: codecov/codecov-action@v4
         with:
+          disable_search: true
           files: e2e-cover.out
           flags: e2e
-          functionalities: fixes
           token: ${{ secrets.CODECOV_TOKEN }}
