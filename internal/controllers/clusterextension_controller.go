@@ -45,6 +45,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crcontroller "sigs.k8s.io/controller-runtime/pkg/controller"
@@ -63,7 +64,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
-	helmpredicate "github.com/operator-framework/rukpak/pkg/helm-operator-plugins/predicate"
 	rukpaksource "github.com/operator-framework/rukpak/pkg/source"
 	"github.com/operator-framework/rukpak/pkg/storage"
 	"github.com/operator-framework/rukpak/pkg/util"
@@ -357,7 +357,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 					source.Kind(r.cache,
 						obj,
 						crhandler.EnqueueRequestForOwner(r.Scheme(), r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
-						helmpredicate.DependentPredicateFuncs[client.Object](),
 					),
 				); err != nil {
 					return err
@@ -572,24 +571,24 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		For(&ocv1alpha1.ClusterExtension{}).
 		Watches(&catalogd.ClusterCatalog{},
-			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger()))).
-		WithEventFilter(predicate.Funcs{
-			UpdateFunc: func(ue event.UpdateEvent) bool {
-				oldObject, isOldCatalog := ue.ObjectOld.(*catalogd.ClusterCatalog)
-				newObject, isNewCatalog := ue.ObjectNew.(*catalogd.ClusterCatalog)
+			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger())),
+			builder.WithPredicates(predicate.Funcs{
+				UpdateFunc: func(ue event.UpdateEvent) bool {
+					oldObject, isOldCatalog := ue.ObjectOld.(*catalogd.ClusterCatalog)
+					newObject, isNewCatalog := ue.ObjectNew.(*catalogd.ClusterCatalog)
 
-				if !isOldCatalog || !isNewCatalog {
-					return true
-				}
-
-				if oldObject.Status.ResolvedSource != nil && newObject.Status.ResolvedSource != nil {
-					if oldObject.Status.ResolvedSource.Image != nil && newObject.Status.ResolvedSource.Image != nil {
-						return oldObject.Status.ResolvedSource.Image.ResolvedRef != newObject.Status.ResolvedSource.Image.ResolvedRef
+					if !isOldCatalog || !isNewCatalog {
+						return true
 					}
-				}
-				return true
-			},
-		}).
+
+					if oldObject.Status.ResolvedSource != nil && newObject.Status.ResolvedSource != nil {
+						if oldObject.Status.ResolvedSource.Image != nil && newObject.Status.ResolvedSource.Image != nil {
+							return oldObject.Status.ResolvedSource.Image.ResolvedRef != newObject.Status.ResolvedSource.Image.ResolvedRef
+						}
+					}
+					return true
+				},
+			})).
 		Build(r)
 
 	if err != nil {
