@@ -198,8 +198,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	localStorageRoot := filepath.Join(cachePath, "bundles")
+	if err := os.MkdirAll(localStorageRoot, 0755); err != nil {
+		setupLog.Error(err, "unable to create local storage root directory", "root", localStorageRoot)
+		os.Exit(1)
+	}
 	localStorage := &storage.LocalDirectory{
-		RootDirectory: filepath.Join(cachePath, "bundles"),
+		RootDirectory: localStorageRoot,
 		URL:           url.URL{},
 	}
 	if err := clusterExtensionFinalizers.Register(deleteCachedBundleKey, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
