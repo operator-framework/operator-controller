@@ -1,7 +1,7 @@
 if not os.path.exists('../tilt-support'):
     fail('Please clone https://github.com/operator-framework/tilt-support to ../tilt-support')
 
-load('../tilt-support/Tiltfile', 'deploy_repo')
+load('../tilt-support/Tiltfile', 'deploy_repo', 'process_yaml')
 
 config.define_string_list('repos', args=True)
 cfg = config.parse()
@@ -15,6 +15,8 @@ repo = {
     },
     'starting_debug_port': 30000,
 }
+
+process_yaml("testdata/certs/issuers.yaml")
 
 for r in repos:
     if r == 'operator-controller':
