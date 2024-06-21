@@ -20,6 +20,6 @@ jobs:
 
       - uses: codecov/codecov-action@v4
         with:
+          disable_search: true
           files: cover.out
-          functionalities: fixes
           token: ${{ secrets.CODECOV_TOKEN }}
