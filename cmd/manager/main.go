@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
 	"github.com/operator-framework/rukpak/pkg/provisioner/registry"
@@ -127,12 +128,13 @@ func main() {
 		LeaderElectionID:       "9c4404e7.operatorframework.io",
 		Cache: crcache.Options{
 			ByObject: map[client.Object]crcache.ByObject{
-				&ocv1alpha1.ClusterExtension{}: {},
+				&ocv1alpha1.ClusterExtension{}: {Label: k8slabels.Everything()},
+				&catalogd.ClusterCatalog{}:     {Label: k8slabels.Everything()},
 			},
 			DefaultNamespaces: map[string]crcache.Config{
-				systemNamespace:       {},
-				crcache.AllNamespaces: {LabelSelector: dependentSelector},
+				systemNamespace: {LabelSelector: k8slabels.Everything()},
 			},
+			DefaultLabelSelector: dependentSelector,
 		},
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
