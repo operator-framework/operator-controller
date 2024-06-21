@@ -1,10 +1,14 @@
 package client
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
+	"io/fs"
+	"slices"
+	"sync"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +27,7 @@ type Fetcher interface {
 	// server for the catalog provided. It returns an io.ReadCloser
 	// containing the FBC contents that the caller is expected to close.
 	// returns an error if any occur.
-	FetchCatalogContents(ctx context.Context, catalog *catalogd.ClusterCatalog) (io.ReadCloser, error)
+	FetchCatalogContents(ctx context.Context, catalog *catalogd.ClusterCatalog) (fs.FS, error)
 }
 
 func New(cl client.Client, fetcher Fetcher) *Client {
@@ -43,65 +47,92 @@ type Client struct {
 	fetcher Fetcher
 }
 
-func (c *Client) Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error) {
+func (c *Client) Bundles(ctx context.Context, packageName string) ([]*catalogmetadata.Bundle, error) {
 	var allBundles []*catalogmetadata.Bundle
 
 	var catalogList catalogd.ClusterCatalogList
 	if err := c.cl.List(ctx, &catalogList); err != nil {
 		return nil, err
 	}
+
+	var errs []error
 	for _, catalog := range catalogList.Items {
-		// if the catalog has not been successfully unpacked, skip it
+		// if the catalog has not been successfully unpacked, report an error. This ensures that our
+		// reconciles are deterministic and wait for all desired catalogs to be ready.
 		if !meta.IsStatusConditionPresentAndEqual(catalog.Status.Conditions, catalogd.TypeUnpacked, metav1.ConditionTrue) {
+			errs = append(errs, fmt.Errorf("catalog %q is not unpacked", catalog.Name))
 			continue
 		}
 		channels := []*catalogmetadata.Channel{}
 		bundles := []*catalogmetadata.Bundle{}
 		deprecations := []*catalogmetadata.Deprecation{}
 
-		rc, err := c.fetcher.FetchCatalogContents(ctx, catalog.DeepCopy())
+		catalogFS, err := c.fetcher.FetchCatalogContents(ctx, catalog.DeepCopy())
 		if err != nil {
-			return nil, fmt.Errorf("error fetching catalog contents: %s", err)
+			errs = append(errs, fmt.Errorf("error fetching catalog %q contents: %v", catalog.Name, err))
+			continue
 		}
-		defer rc.Close()
 
-		err = declcfg.WalkMetasReader(rc, func(meta *declcfg.Meta, err error) error {
+		packageFS, err := fs.Sub(catalogFS, packageName)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("error reading package subdirectory %q from catalog %q filesystem: %v", packageName, catalog.Name, err))
+			continue
+		}
+
+		var (
+			channelsMu     sync.Mutex
+			bundlesMu      sync.Mutex
+			deprecationsMu sync.Mutex
+		)
+
+		if err := declcfg.WalkMetasFS(ctx, packageFS, func(_ string, meta *declcfg.Meta, err error) error {
 			if err != nil {
-				return fmt.Errorf("error was provided to the WalkMetasReaderFunc: %s", err)
+				return fmt.Errorf("error parsing package metadata: %v", err)
 			}
 			switch meta.Schema {
 			case declcfg.SchemaChannel:
 				var content catalogmetadata.Channel
 				if err := json.Unmarshal(meta.Blob, &content); err != nil {
-					return fmt.Errorf("error unmarshalling channel from catalog metadata: %s", err)
+					return fmt.Errorf("error unmarshalling channel from catalog metadata: %v", err)
 				}
+				channelsMu.Lock()
+				defer channelsMu.Unlock()
 				channels = append(channels, &content)
 			case declcfg.SchemaBundle:
 				var content catalogmetadata.Bundle
 				if err := json.Unmarshal(meta.Blob, &content); err != nil {
-					return fmt.Errorf("error unmarshalling bundle from catalog metadata: %s", err)
+					return fmt.Errorf("error unmarshalling bundle from catalog metadata: %v", err)
 				}
+				bundlesMu.Lock()
+				defer bundlesMu.Unlock()
 				bundles = append(bundles, &content)
 			case declcfg.SchemaDeprecation:
 				var content catalogmetadata.Deprecation
 				if err := json.Unmarshal(meta.Blob, &content); err != nil {
-					return fmt.Errorf("error unmarshalling deprecation from catalog metadata: %s", err)
+					return fmt.Errorf("error unmarshalling deprecation from catalog metadata: %v", err)
 				}
+				deprecationsMu.Lock()
+				defer deprecationsMu.Unlock()
 				deprecations = append(deprecations, &content)
 			}
-
 			return nil
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error processing response: %s", err)
+		}); err != nil {
+			if !errors.Is(err, fs.ErrNotExist) {
+				errs = append(errs, fmt.Errorf("error reading package %q from catalog %q: %v", packageName, catalog.Name, err))
+			}
+			continue
 		}
 
 		bundles, err = PopulateExtraFields(catalog.Name, channels, bundles, deprecations)
 		if err != nil {
-			return nil, err
+			errs = append(errs, err)
+			continue
 		}
 
 		allBundles = append(allBundles, bundles...)
+	}
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
 	}
 
 	return allBundles, nil
@@ -126,6 +157,16 @@ func PopulateExtraFields(catalogName string, channels []*catalogmetadata.Channel
 
 			bundle.InChannels = append(bundle.InChannels, ch)
 		}
+	}
+
+	// We sort the channels here because the order that channels appear in this list is non-deterministic.
+	// They are non-deterministic because they are originally read from the cache in a concurrent manner that
+	// provides no ordering guarantees.
+	//
+	// This sort isn't strictly necessary for correctness, but it makes the output consistent and easier to
+	// reason about.
+	for _, bundle := range bundles {
+		slices.SortFunc(bundle.InChannels, func(a, b *catalogmetadata.Channel) int { return cmp.Compare(a.Name, b.Name) })
 	}
 
 	// According to https://docs.google.com/document/d/1EzefSzoGZL2ipBt-eCQwqqNwlpOIt7wuwjG6_8ZCi5s/edit?usp=sharing

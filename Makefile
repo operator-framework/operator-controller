@@ -135,7 +135,7 @@ test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension creat
 ENVTEST_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/)
 test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && go test -count=1 -short $(UNIT_TEST_DIRS) -coverprofile cover.out
+	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && CGO_ENABLED=1 go test -count=1 -race -short $(UNIT_TEST_DIRS) -coverprofile cover.out
 
 image-registry: ## Setup in-cluster image registry
 	./test/tools/image-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME)

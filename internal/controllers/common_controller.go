@@ -29,7 +29,7 @@ import (
 // BundleProvider provides the way to retrieve a list of Bundles from a source,
 // generally from a catalog client of some kind.
 type BundleProvider interface {
-	Bundles(ctx context.Context) ([]*catalogmetadata.Bundle, error)
+	Bundles(ctx context.Context, packageName string) ([]*catalogmetadata.Bundle, error)
 }
 
 // setResolvedStatusConditionSuccess sets the resolved status condition to success.

@@ -28,8 +28,8 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/internal/testutil"
 	"github.com/operator-framework/operator-controller/pkg/features"
-	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
 // Describe: ClusterExtension Controller Test

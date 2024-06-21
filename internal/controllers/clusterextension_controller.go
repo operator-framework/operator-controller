@@ -378,14 +378,14 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 // resolve returns a Bundle from the catalog that needs to get installed on the cluster.
 func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
-	allBundles, err := r.BundleProvider.Bundles(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching bundles: %w", err)
-	}
-
 	packageName := ext.Spec.PackageName
 	channelName := ext.Spec.Channel
 	versionRange := ext.Spec.Version
+
+	allBundles, err := r.BundleProvider.Bundles(ctx, packageName)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching bundles: %w", err)
+	}
 
 	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, &ext)
 	if err != nil {

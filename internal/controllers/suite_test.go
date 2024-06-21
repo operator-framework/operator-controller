@@ -41,8 +41,8 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/internal/testutil"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
-	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
 // MockUnpacker is a mock of Unpacker interface

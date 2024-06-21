@@ -23,7 +23,7 @@ import (
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	testutil "github.com/operator-framework/operator-controller/test/util"
+	"github.com/operator-framework/operator-controller/internal/testutil"
 )
 
 func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
