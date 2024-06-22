@@ -21,7 +21,7 @@ func LoadCerts(caDir string) (string, error) {
 			return err
 		}
 		if info.IsDir() {
-			return nil
+			return filepath.SkipDir
 		}
 		data, err := os.ReadFile(path)
 		if err != nil {

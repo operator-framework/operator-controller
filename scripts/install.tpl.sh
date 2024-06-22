@@ -35,7 +35,41 @@ function kubectl_wait() {
 kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/${cert_mgr_version}/cert-manager.yaml"
 kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
 
-kubectl apply -f testdata/certs/issuers.yaml
+# Create a self-signed ClusterIssuer
+kubectl apply -f - <<EOF
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: self-sign-issuer
+  namespace: cert-manager
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: olmv1-ca
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: olmv1-ca
+  secretName: olmv1-ca
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: self-sign-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: olmv1-ca
+spec:
+  ca:
+    secretName: olmv1-ca
+EOF
 
 kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/catalogd.yaml"
 kubectl_wait "olmv1-system" "deployment/catalogd-controller-manager" "60s"
