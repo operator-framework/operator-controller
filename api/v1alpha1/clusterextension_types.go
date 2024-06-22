@@ -73,6 +73,7 @@ type ClusterExtensionSpec struct {
 
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
 	//+kubebuilder:validation:MaxLength:=63
+	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="installNamespace is immutable"
 	//
 	// installNamespace is the namespace where the bundle should be installed. However, note that
 	// the bundle may contain resources that are cluster-scoped or that are
