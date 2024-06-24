@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -28,6 +29,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/pkg/features"
+	testutil "github.com/operator-framework/operator-controller/test/util"
 )
 
 // Describe: ClusterExtension Controller Test
@@ -1444,4 +1446,48 @@ var testBundleList = []*catalogmetadata.Bundle{
 		CatalogName: "fake-catalog",
 		InChannels:  []*catalogmetadata.Channel{&prometheusBetaChannel},
 	},
+}
+
+func TestClusterExtensionErrorGettingBundles(t *testing.T) {
+	ctx := context.Background()
+	fakeBundleProvider := testutil.NewFakeCatalogClientWithError(errors.New("fake-test-error"))
+	cl, reconciler := newClientAndReconciler(t, nil)
+	reconciler.BundleProvider = &fakeBundleProvider
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	t.Log("Creating a test cluster extension object")
+	clusterExtension := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName:      "prometheus",
+			InstallNamespace: "default",
+		},
+	}
+	require.NoError(t, cl.Create(ctx, clusterExtension))
+	defer func() {
+		require.NoError(t, cl.Delete(ctx, &ocv1alpha1.ClusterExtension{
+			ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		}))
+	}()
+
+	t.Log("Running reconcile")
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.ErrorContains(t, err, "error fetching bundles: fake-test-error")
+
+	t.Log("Fetching updated cluster extension after reconcile")
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
+	t.Log("Checking the status fields")
+	require.Empty(t, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
+
+	t.Log("Checking the expected conditions")
+	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+	require.NotNil(t, cond)
+	require.Equal(t, metav1.ConditionFalse, cond.Status)
+	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
+	require.Contains(t, cond.Message, "error fetching bundles: fake-test-error")
+
+	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
 }
