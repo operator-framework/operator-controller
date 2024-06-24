@@ -80,11 +80,11 @@ func main() {
 		cachePath                 string
 		operatorControllerVersion bool
 		systemNamespace           string
-		caCert                    string
+		caCertDir                 string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.StringVar(&caCert, "ca-cert", "", "The TLS certificate to use for verifying HTTPS connections to the Catalogd web server.")
+	flag.StringVar(&caCertDir, "ca-certs-dir", "", "The directory of TLS certificate to use for verifying HTTPS connections to the Catalogd and docker-registry web servers.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -153,7 +153,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	httpClient, err := httputil.BuildHTTPClient(caCert)
+	httpClient, err := httputil.BuildHTTPClient(caCertDir)
 	if err != nil {
 		setupLog.Error(err, "unable to create catalogd http client")
 	}
@@ -224,6 +224,7 @@ func main() {
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Handler:               registryv1handler.HandlerFunc(registry.HandleBundleDeployment),
 		Finalizers:            clusterExtensionFinalizers,
+		CaCertDir:             caCertDir,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)

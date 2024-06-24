@@ -35,9 +35,6 @@ func TestExtensionDeveloper(t *testing.T) {
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "registryv1",
-				Annotations: map[string]string{
-					"bundle.connection.config/insecureSkipTLSVerify": "true",
-				},
 			},
 			Spec: ocv1alpha1.ClusterExtensionSpec{
 				PackageName:      os.Getenv("REG_PKG_NAME"),

@@ -45,9 +45,6 @@ func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCata
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterExtensionName,
-			Annotations: map[string]string{
-				"bundle.connection.config/insecureSkipTLSVerify": "true",
-			},
 		},
 	}
 	return clusterExtension, extensionCatalog
