@@ -1,13 +1,12 @@
 package client_test
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
-	"strings"
+	"io/fs"
 	"testing"
+	"testing/fstest"
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,30 +23,30 @@ import (
 )
 
 func TestClient(t *testing.T) {
-	t.Run("Bundles", func(t *testing.T) {
-		for _, tt := range []struct {
-			name        string
-			fakeCatalog func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte)
-			wantErr     string
-			fetcher     *MockFetcher
-		}{
-			{
-				name:        "valid catalog",
-				fakeCatalog: defaultFakeCatalog,
-				fetcher:     &MockFetcher{},
-			},
-			{
-				name:        "cache error",
-				fakeCatalog: defaultFakeCatalog,
-				fetcher:     &MockFetcher{shouldError: true},
-				wantErr:     "error fetching catalog contents: mock cache error",
-			},
-			{
-				name: "channel has a ref to a missing bundle",
-				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
-					objs, _, catalogContentMap := defaultFakeCatalog()
+	for _, tt := range []struct {
+		name        string
+		fakeCatalog func() ([]client.Object, []*catalogmetadata.Bundle, map[string]fstest.MapFS)
+		wantErr     string
+		fetcher     *MockFetcher
+	}{
+		{
+			name:        "valid catalog",
+			fakeCatalog: defaultFakeCatalog,
+			fetcher:     &MockFetcher{},
+		},
+		{
+			name:        "cache error",
+			fakeCatalog: defaultFakeCatalog,
+			fetcher:     &MockFetcher{shouldError: true},
+			wantErr: `error fetching catalog "catalog-1" contents: mock cache error
+error fetching catalog "catalog-2" contents: mock cache error`,
+		},
+		{
+			name: "channel has a ref to a missing bundle",
+			fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string]fstest.MapFS) {
+				objs, _, catalogContentMap := defaultFakeCatalog()
 
-					catalogContentMap["catalog-1"] = append(catalogContentMap["catalog-1"], []byte(`{
+				catalogContentMap["catalog-1"]["fake1/olm.channel/bad-channel-entry.json"] = &fstest.MapFile{Data: []byte(`{
 								"schema": "olm.channel",
 								"name": "channel-with-missing-bundle",
 								"package": "fake1",
@@ -56,129 +55,130 @@ func TestClient(t *testing.T) {
 										"name": "fake1.v9.9.9"
 									}
 								]
-							}`)...)
+							}`)}
 
-					return objs, nil, catalogContentMap
-				},
-				wantErr: `bundle "fake1.v9.9.9" not found in catalog "catalog-1" (package "fake1", channel "channel-with-missing-bundle")`,
-				fetcher: &MockFetcher{},
+				return objs, nil, catalogContentMap
 			},
-			{
-				name: "invalid meta",
-				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
-					objs, _, catalogContentMap := defaultFakeCatalog()
+			wantErr: `bundle "fake1.v9.9.9" not found in catalog "catalog-1" (package "fake1", channel "channel-with-missing-bundle")`,
+			fetcher: &MockFetcher{},
+		},
+		{
+			name: "invalid meta",
+			fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string]fstest.MapFS) {
+				objs, _, catalogContentMap := defaultFakeCatalog()
 
-					catalogContentMap["catalog-1"] = append(catalogContentMap["catalog-1"], []byte(`{"schema": "olm.bundle", "name":123123123}`)...)
+				catalogContentMap["catalog-1"]["fake1/olm.bundle/invalid-meta.json"] = &fstest.MapFile{Data: []byte(`{"schema": "olm.bundle", "package":"fake1", "name":123123123}`)}
 
-					return objs, nil, catalogContentMap
-				},
-				wantErr: `error processing response: error was provided to the WalkMetasReaderFunc: expected value for key "name" to be a string, got %!t(float64=1.23123123e+08): 1.23123123e+08`,
-				fetcher: &MockFetcher{},
+				return objs, nil, catalogContentMap
 			},
-			{
-				name: "invalid bundle",
-				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
-					objs, _, catalogContentMap := defaultFakeCatalog()
+			wantErr: `expected value for key "name" to be a string, got %!t(float64=1.23123123e+08): 1.23123123e+08`,
+			fetcher: &MockFetcher{},
+		},
+		{
+			name: "invalid bundle",
+			fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string]fstest.MapFS) {
+				objs, _, catalogContentMap := defaultFakeCatalog()
 
-					catalogContentMap["catalog-1"] = append(catalogContentMap["catalog-1"],
-						[]byte(`{"schema": "olm.bundle", "name":"foo", "package":"bar", "image":123123123}`)...)
+				catalogContentMap["catalog-1"]["fake1/olm.bundle/invalid-bundle.json"] = &fstest.MapFile{Data: []byte(`{"schema": "olm.bundle", "name":"foo", "package":"fake1", "image":123123123}`)}
 
-					return objs, nil, catalogContentMap
-				},
-				wantErr: "error processing response: error unmarshalling bundle from catalog metadata: json: cannot unmarshal number into Go struct field Bundle.image of type string",
-				fetcher: &MockFetcher{},
+				return objs, nil, catalogContentMap
 			},
-			{
-				name: "invalid channel",
-				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
-					objs, _, catalogContentMap := defaultFakeCatalog()
+			wantErr: "error unmarshalling bundle from catalog metadata: json: cannot unmarshal number into Go struct field Bundle.image of type string",
+			fetcher: &MockFetcher{},
+		},
+		{
+			name: "invalid channel",
+			fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string]fstest.MapFS) {
+				objs, _, catalogContentMap := defaultFakeCatalog()
 
-					catalogContentMap["catalog-1"] = append(catalogContentMap["catalog-1"],
-						[]byte(`{"schema": "olm.channel", "name":"foo", "package":"bar", "entries":[{"name":123123123}]}`)...)
-
-					return objs, nil, catalogContentMap
-				},
-				wantErr: "error processing response: error unmarshalling channel from catalog metadata: json: cannot unmarshal number into Go struct field ChannelEntry.entries.name of type string",
-				fetcher: &MockFetcher{},
-			},
-			{
-				name: "skip catalog missing Unpacked status condition",
-				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
-					objs, bundles, catalogContentMap := defaultFakeCatalog()
-					objs = append(objs, &catalogd.ClusterCatalog{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: "foobar",
-						},
-					})
-					catalogContentMap["foobar"] = catalogContentMap["catalog-1"]
-
-					return objs, bundles, catalogContentMap
-				},
-				fetcher: &MockFetcher{},
-			},
-			{
-				name: "deprecated at the package, channel, and bundle level",
-				fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
-					objs, bundles, catalogContentMap := defaultFakeCatalog()
-
-					catalogContentMap["catalog-1"] = append(catalogContentMap["catalog-1"],
-						[]byte(`{"schema": "olm.deprecations", "package":"fake1", "entries":[{"message": "fake1 is deprecated", "reference": {"schema": "olm.package"}}, {"message":"channel stable is deprecated", "reference": {"schema": "olm.channel", "name": "stable"}}, {"message": "bundle fake1.v1.0.0 is deprecated", "reference":{"schema":"olm.bundle", "name":"fake1.v1.0.0"}}]}`)...)
-
-					for i := range bundles {
-						if bundles[i].Package == "fake1" && bundles[i].CatalogName == "catalog-1" && bundles[i].Name == "fake1.v1.0.0" {
-							bundles[i].Deprecations = append(bundles[i].Deprecations, declcfg.DeprecationEntry{
-								Reference: declcfg.PackageScopedReference{
-									Schema: "olm.package",
-								},
-								Message: "fake1 is deprecated",
-							})
-
-							bundles[i].Deprecations = append(bundles[i].Deprecations, declcfg.DeprecationEntry{
-								Reference: declcfg.PackageScopedReference{
-									Schema: "olm.channel",
-									Name:   "stable",
-								},
-								Message: "channel stable is deprecated",
-							})
-
-							bundles[i].Deprecations = append(bundles[i].Deprecations, declcfg.DeprecationEntry{
-								Reference: declcfg.PackageScopedReference{
-									Schema: "olm.bundle",
-									Name:   "fake1.v1.0.0",
-								},
-								Message: "bundle fake1.v1.0.0 is deprecated",
-							})
-						}
-					}
-
-					return objs, bundles, catalogContentMap
-				},
-				fetcher: &MockFetcher{},
-			},
-		} {
-			t.Run(tt.name, func(t *testing.T) {
-				ctx := context.Background()
-				objs, expectedBundles, catalogContentMap := tt.fakeCatalog()
-				tt.fetcher.contentMap = catalogContentMap
-
-				fakeCatalogClient := catalogClient.New(
-					fake.NewClientBuilder().WithScheme(scheme.Scheme).WithObjects(objs...).Build(),
-					tt.fetcher,
-				)
-
-				bundles, err := fakeCatalogClient.Bundles(ctx)
-				if tt.wantErr == "" {
-					assert.NoError(t, err)
-					assert.Equal(t, expectedBundles, bundles)
-				} else {
-					assert.EqualError(t, err, tt.wantErr)
+				catalogContentMap["catalog-1"]["fake1/olm.channel/invalid-channel.json"] = &fstest.MapFile{
+					Data: []byte(`{"schema": "olm.channel", "name":"foo", "package":"fake1", "entries":[{"name":123123123}]}`),
 				}
-			})
-		}
-	})
+
+				return objs, nil, catalogContentMap
+			},
+			wantErr: "error unmarshalling channel from catalog metadata: json: cannot unmarshal number into Go struct field ChannelEntry.entries.name of type string",
+			fetcher: &MockFetcher{},
+		},
+		{
+			name: "error on catalog missing Unpacked status condition",
+			fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string]fstest.MapFS) {
+				objs, bundles, catalogContentMap := defaultFakeCatalog()
+				objs = append(objs, &catalogd.ClusterCatalog{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foobar",
+					},
+				})
+				catalogContentMap["foobar"] = catalogContentMap["catalog-1"]
+
+				return objs, bundles, catalogContentMap
+			},
+			wantErr: `catalog "foobar" is not unpacked`,
+			fetcher: &MockFetcher{},
+		},
+		{
+			name: "deprecated at the package, channel, and bundle level",
+			fakeCatalog: func() ([]client.Object, []*catalogmetadata.Bundle, map[string]fstest.MapFS) {
+				objs, bundles, catalogContentMap := defaultFakeCatalog()
+
+				catalogContentMap["catalog-1"]["fake1/olm.deprecations/olm.deprecations.json"] = &fstest.MapFile{
+					Data: []byte(`{"schema": "olm.deprecations", "package":"fake1", "entries":[{"message": "fake1 is deprecated", "reference": {"schema": "olm.package"}}, {"message":"channel stable is deprecated", "reference": {"schema": "olm.channel", "name": "stable"}}, {"message": "bundle fake1.v1.0.0 is deprecated", "reference":{"schema":"olm.bundle", "name":"fake1.v1.0.0"}}]}`),
+				}
+
+				for i := range bundles {
+					if bundles[i].Package == "fake1" && bundles[i].CatalogName == "catalog-1" && bundles[i].Name == "fake1.v1.0.0" {
+						bundles[i].Deprecations = append(bundles[i].Deprecations, declcfg.DeprecationEntry{
+							Reference: declcfg.PackageScopedReference{
+								Schema: "olm.package",
+							},
+							Message: "fake1 is deprecated",
+						})
+
+						bundles[i].Deprecations = append(bundles[i].Deprecations, declcfg.DeprecationEntry{
+							Reference: declcfg.PackageScopedReference{
+								Schema: "olm.channel",
+								Name:   "stable",
+							},
+							Message: "channel stable is deprecated",
+						})
+
+						bundles[i].Deprecations = append(bundles[i].Deprecations, declcfg.DeprecationEntry{
+							Reference: declcfg.PackageScopedReference{
+								Schema: "olm.bundle",
+								Name:   "fake1.v1.0.0",
+							},
+							Message: "bundle fake1.v1.0.0 is deprecated",
+						})
+					}
+				}
+
+				return objs, bundles, catalogContentMap
+			},
+			fetcher: &MockFetcher{},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			objs, expectedBundles, catalogContentMap := tt.fakeCatalog()
+			tt.fetcher.contentMap = catalogContentMap
+
+			fakeCatalogClient := catalogClient.New(
+				fake.NewClientBuilder().WithScheme(scheme.Scheme).WithObjects(objs...).Build(),
+				tt.fetcher,
+			)
+
+			bundles, err := fakeCatalogClient.Bundles(ctx, "fake1")
+			if tt.wantErr == "" {
+				assert.NoError(t, err)
+				assert.Equal(t, expectedBundles, bundles)
+			} else {
+				assert.ErrorContains(t, err, tt.wantErr)
+			}
+		})
+	}
 }
 
-func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle, map[string][]byte) {
+func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle, map[string]fstest.MapFS) {
 	package1 := `{
 		"schema": "olm.package",
 		"name": "fake1"
@@ -269,7 +269,7 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle, map[strin
 				{
 					Channel: declcfg.Channel{
 						Schema:  declcfg.SchemaChannel,
-						Name:    "stable",
+						Name:    "beta",
 						Package: "fake1",
 						Entries: []declcfg.ChannelEntry{
 							{
@@ -281,7 +281,7 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle, map[strin
 				{
 					Channel: declcfg.Channel{
 						Schema:  declcfg.SchemaChannel,
-						Name:    "beta",
+						Name:    "stable",
 						Package: "fake1",
 						Entries: []declcfg.ChannelEntry{
 							{
@@ -323,9 +323,21 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle, map[strin
 		},
 	}
 
-	catalogContents := map[string][]byte{
-		"catalog-1": []byte(strings.Join([]string{package1, bundle1, stableChannel, betaChannel}, "\n")),
-		"catalog-2": []byte(strings.Join([]string{package1, bundle1, stableChannel}, "\n")),
+	catalog1FS := fstest.MapFS{
+		"fake1/olm.package/fake1.json":       &fstest.MapFile{Data: []byte(package1)},
+		"fake1/olm.bundle/fake1.v1.0.0.json": &fstest.MapFile{Data: []byte(bundle1)},
+		"fake1/olm.channel/stable.json":      &fstest.MapFile{Data: []byte(stableChannel)},
+		"fake1/olm.channel/beta.json":        &fstest.MapFile{Data: []byte(betaChannel)},
+	}
+	catalog2FS := fstest.MapFS{
+		"fake1/olm.package/fake1.json":       &fstest.MapFile{Data: []byte(package1)},
+		"fake1/olm.bundle/fake1.v1.0.0.json": &fstest.MapFile{Data: []byte(bundle1)},
+		"fake1/olm.channel/stable.json":      &fstest.MapFile{Data: []byte(stableChannel)},
+	}
+
+	catalogContents := map[string]fstest.MapFS{
+		"catalog-1": catalog1FS,
+		"catalog-2": catalog2FS,
 	}
 
 	return objs, expectedBundles, catalogContents
@@ -334,15 +346,15 @@ func defaultFakeCatalog() ([]client.Object, []*catalogmetadata.Bundle, map[strin
 var _ catalogClient.Fetcher = &MockFetcher{}
 
 type MockFetcher struct {
-	contentMap  map[string][]byte
+	contentMap  map[string]fstest.MapFS
 	shouldError bool
 }
 
-func (mc *MockFetcher) FetchCatalogContents(_ context.Context, catalog *catalogd.ClusterCatalog) (io.ReadCloser, error) {
+func (mc *MockFetcher) FetchCatalogContents(_ context.Context, catalog *catalogd.ClusterCatalog) (fs.FS, error) {
 	if mc.shouldError {
 		return nil, errors.New("mock cache error")
 	}
 
 	data := mc.contentMap[catalog.Name]
-	return io.NopCloser(bytes.NewReader(data)), nil
+	return data, nil
 }

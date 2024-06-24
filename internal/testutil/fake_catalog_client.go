@@ -23,9 +23,16 @@ func NewFakeCatalogClientWithError(e error) FakeCatalogClient {
 	}
 }
 
-func (c *FakeCatalogClient) Bundles(_ context.Context) ([]*catalogmetadata.Bundle, error) {
+func (c *FakeCatalogClient) Bundles(_ context.Context, packageName string) ([]*catalogmetadata.Bundle, error) {
 	if c.err != nil {
 		return nil, c.err
 	}
-	return c.bundles, nil
+
+	var out []*catalogmetadata.Bundle
+	for _, b := range c.bundles {
+		if b.Package == packageName {
+			out = append(out, b)
+		}
+	}
+	return out, nil
 }
