@@ -54,7 +54,7 @@ else
 $(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!)
 endif
 
-KUSTOMIZE_BUILD_DIR := config/overlays/tls
+KUSTOMIZE_BUILD_DIR := config/secure
 
 # Disable -j flag for make
 .NOTPARALLEL:
@@ -150,11 +150,12 @@ build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and pus
 # for example: ARTIFACT_PATH=/tmp/artifacts make test-e2e
 .PHONY: test-e2e
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
-test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
+test-e2e: KUSTOMIZE_BUILD_DIR := config/e2e
 test-e2e: GO_BUILD_FLAGS := -cover
 test-e2e: run image-registry build-push-e2e-catalog registry-load-bundles e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: extension-developer-e2e
+extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/secure
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e  #EXHELP Run extension-developer e2e on local kind cluster
 extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean
 

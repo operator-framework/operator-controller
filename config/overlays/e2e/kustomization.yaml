@@ -1,9 +1,0 @@
-namespace: olmv1-system
-
-resources:
-- ../../overlays/tls
-- manager_e2e_coverage_pvc.yaml
-- manager_e2e_coverage_copy_pod.yaml
-
-patches:
-- path: manager_e2e_coverage_patch.yaml
