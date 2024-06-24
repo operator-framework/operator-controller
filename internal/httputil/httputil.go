@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -16,22 +15,19 @@ func LoadCerts(caDir string) (string, error) {
 	}
 
 	var certs []string
-	err := filepath.Walk(caDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		certs = append(certs, string(data))
-		return nil
-	})
+	dirEntries, err := os.ReadDir(caDir)
 	if err != nil {
 		return "", err
+	}
+	for _, e := range dirEntries {
+		if e.IsDir() {
+			continue
+		}
+		data, err := os.ReadFile(e.Name())
+		if err != nil {
+			return "", err
+		}
+		certs = append(certs, string(data))
 	}
 	return strings.Join(certs, "\n"), nil
 }

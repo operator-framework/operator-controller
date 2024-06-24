@@ -6,4 +6,4 @@
   value: {"name":"catalogd-certificate", "readOnly": true, "mountPath":"/var/certs/catalogd.crt", "subPath":"catalogd.crt"}
 - op: add
   path: /spec/template/spec/containers/0/args/-
-  value: "--ca-cert-dir=/var/certs"
+  value: "--ca-certs-dir=/var/certs"
