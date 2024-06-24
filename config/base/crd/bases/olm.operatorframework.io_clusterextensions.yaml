@@ -52,6 +52,9 @@ spec:
                 maxLength: 63
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
+                x-kubernetes-validations:
+                - message: installNamespace is immutable
+                  rule: self == oldSelf
               packageName:
                 maxLength: 48
                 pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
