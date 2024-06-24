@@ -94,7 +94,11 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			// the ProxyGet() call below needs an explicit port value, so if
 			// value from url.Port() is empty, we assume port 443.
 			if port == "" {
-				port = "443"
+				if url.Scheme == "https" {
+					port = "443"
+				} else {
+					port = "80"
+				}
 			}
 			resp := kubeClient.CoreV1().Services(ns).ProxyGet(url.Scheme, name, port, url.Path, map[string]string{})
 			rc, err := resp.Stream(ctx)
