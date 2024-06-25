@@ -59,6 +59,19 @@ spec:
                 maxLength: 48
                 pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
                 type: string
+              preflight:
+                description: Preflight defines the configuration of preflight checks.
+                properties:
+                  crdUpgradeSafety:
+                    description: CRDUpgradeSafety holds necessary configuration for
+                      the CRD Upgrade Safety preflight checks.
+                    properties:
+                      disabled:
+                        description: Disabled represents the state of the CRD upgrade
+                          safety preflight check being disabled/enabled.
+                        type: boolean
+                    type: object
+                type: object
               upgradeConstraintPolicy:
                 default: Enforce
                 description: Defines the policy for how to handle upgrade constraints

@@ -64,6 +64,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/property"
 	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
 	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
+	crdupgradesafety "github.com/operator-framework/rukpak/pkg/preflights/crdupgradesafety"
 	rukpaksource "github.com/operator-framework/rukpak/pkg/source"
 	"github.com/operator-framework/rukpak/pkg/storage"
 	"github.com/operator-framework/rukpak/pkg/util"
@@ -92,10 +93,26 @@ type ClusterExtensionReconciler struct {
 	InstalledBundleGetter InstalledBundleGetter
 	Finalizers            crfinalizer.Finalizers
 	CaCertDir             string
+	Preflights            []Preflight
 }
 
 type InstalledBundleGetter interface {
 	GetInstalledBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*ocv1alpha1.BundleMetadata, error)
+}
+
+// Preflight is a check that should be run before making any changes to the cluster
+type Preflight interface {
+	// Install runs checks that should be successful prior
+	// to installing the Helm release. It is provided
+	// a Helm release and returns an error if the
+	// check is unsuccessful
+	Install(context.Context, *release.Release) error
+
+	// Upgrade runs checks that should be successful prior
+	// to upgrading the Helm release. It is provided
+	// a Helm release and returns an error if the
+	// check is unsuccessful
+	Upgrade(context.Context, *release.Release) error
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch
@@ -304,10 +321,34 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		},
 	}
 
-	rel, state, err := r.getReleaseState(ac, ext, chrt, values, post)
+	rel, desiredRel, state, err := r.getReleaseState(ac, ext, chrt, values, post)
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingReleaseState, err))
 		return ctrl.Result{}, err
+	}
+
+	for _, preflight := range r.Preflights {
+		if ext.Spec.Preflight != nil {
+			if _, ok := preflight.(*crdupgradesafety.Preflight); ok && ext.Spec.Preflight.CRDUpgradeSafety.Disabled {
+				// Skip this preflight check because it is of type *crdupgradesafety.Preflight and the CRD Upgrade Safety
+				// preflight check has been disabled
+				continue
+			}
+		}
+		switch state {
+		case stateNeedsInstall:
+			err := preflight.Install(ctx, desiredRel)
+			if err != nil {
+				setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
+				return ctrl.Result{}, err
+			}
+		case stateNeedsUpgrade:
+			err := preflight.Upgrade(ctx, desiredRel)
+			if err != nil {
+				setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
+				return ctrl.Result{}, err
+			}
+		}
 	}
 
 	switch state {
@@ -623,28 +664,39 @@ const (
 	stateError        releaseState = "Error"
 )
 
-func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterface, ext *ocv1alpha1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post *postrenderer) (*release.Release, releaseState, error) {
+func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterface, ext *ocv1alpha1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post *postrenderer) (*release.Release, *release.Release, releaseState, error) {
 	currentRelease, err := cl.Get(ext.GetName())
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
-		return nil, stateError, err
+		return nil, nil, stateError, err
 	}
 	if errors.Is(err, driver.ErrReleaseNotFound) {
-		return nil, stateNeedsInstall, nil
+		return nil, nil, stateNeedsInstall, nil
 	}
 
+	if errors.Is(err, driver.ErrReleaseNotFound) {
+		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(i *action.Install) error {
+			i.DryRun = true
+			return nil
+		}, helmclient.AppendInstallPostRenderer(post))
+		if err != nil {
+			return nil, nil, stateError, err
+		}
+		return nil, desiredRelease, stateNeedsInstall, nil
+	}
 	desiredRelease, err := cl.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(upgrade *action.Upgrade) error {
 		upgrade.DryRun = true
 		return nil
 	}, helmclient.AppendUpgradePostRenderer(post))
 	if err != nil {
-		return currentRelease, stateError, err
+		return currentRelease, nil, stateError, err
 	}
+	relState := stateUnchanged
 	if desiredRelease.Manifest != currentRelease.Manifest ||
 		currentRelease.Info.Status == release.StatusFailed ||
 		currentRelease.Info.Status == release.StatusSuperseded {
-		return currentRelease, stateNeedsUpgrade, nil
+		relState = stateNeedsUpgrade
 	}
-	return currentRelease, stateUnchanged, nil
+	return currentRelease, desiredRelease, relState, nil
 }
 
 type DefaultInstalledBundleGetter struct {

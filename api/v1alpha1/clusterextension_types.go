@@ -79,6 +79,24 @@ type ClusterExtensionSpec struct {
 	// the bundle may contain resources that are cluster-scoped or that are
 	// installed in a different namespace. This namespace is expected to exist.
 	InstallNamespace string `json:"installNamespace"`
+
+	//+kubebuilder:Optional
+	// Preflight defines the configuration of preflight checks.
+	Preflight *PreflightConfig `json:"preflight,omitempty"`
+}
+
+// PreflightConfig holds the configuration for the preflight checks.
+type PreflightConfig struct {
+	//+kubebuilder:Required
+	// CRDUpgradeSafety holds necessary configuration for the CRD Upgrade Safety preflight checks.
+	CRDUpgradeSafety *CRDUpgradeSafetyPreflightConfig `json:"crdUpgradeSafety,omitempty"`
+}
+
+// CRDUpgradeSafetyPreflightConfig is the configuration for CRD upgrade safety preflight check.
+type CRDUpgradeSafetyPreflightConfig struct {
+	//+kubebuilder:Required
+	// Disabled represents the state of the CRD upgrade safety preflight check being disabled/enabled.
+	Disabled bool `json:"disabled,omitempty"`
 }
 
 const (
