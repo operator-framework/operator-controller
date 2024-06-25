@@ -4,5 +4,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - ../base
-- ../overlays/tls
-- ../overlays/ca
+components:
+- ../components/tls
+# ca must be last or tls will overwrite the namespaces
+- ../components/ca

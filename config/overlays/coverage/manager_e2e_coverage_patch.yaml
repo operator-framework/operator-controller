@@ -1,9 +1,0 @@
-- op: add
-  path: /spec/template/spec/volumes/-
-  value: {"name":"e2e-coverage-volume", "persistentVolumeClaim:":{"claimName":"e2e-coverage"}}
-- op: add
-  path: /spec/template/spec/containers/0/env/-
-  value: {"name":"GOCOVERDIR", "value":"/e2e-coverage"}
-- op: add
-  path: /spec/template/spec/containers/0/volumeMounts/-
-  value: {"name":"e2e-coverage-volume", "mountPath":"/e2e-coverage"}

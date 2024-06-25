@@ -4,6 +4,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - ../base
-- ../overlays/tls
-- ../overlays/ca
-- ../overlays/coverage
+components:
+- ../components/tls
+- ../components/coverage
+# ca must be last or (tls|coverage) will overwrite the namespaces
+- ../components/ca

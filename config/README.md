@@ -25,26 +25,28 @@ This provides additional configuration support for end-to-end testing, including
 
 This configuration requires cert-manager.
 
-## Overlays
+## Components
 
-###  config/overlays/tls
+Each of the `kustomization.yaml` files specify a `Component`, rather than an overlay.
+
+### config/components/tls
 
 This provides a basic configuration of operator-controller with TLS support for catalogd.
 
-This configuration specifies the `olmv1-system` namespace.
+This component specifies the `olmv1-system` namespace.
 
-This configuration requires cert-manager.
+This component requires cert-manager.
 
-### config/overlays/coverage
+### config/components/coverage
 
 Provides configuration for code coverage.
 
-This configuration specifies the `olmv1-system` namespace.
+This component specifies the `olmv1-system` namespace.
 
-### config/overlays/ca
+### config/components/ca
 
 Procides a CA for operator-controller operation.
 
-This configuration specifies the the `cert-manager` namespace for the CA components.
+This component _does not_ specify a namespace, and must be included last.
 
-This configuration requires cert-manager.
+This component requires cert-manager.
