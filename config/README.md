@@ -10,8 +10,8 @@ This configuration specifies a namespace of `olmv1-system`.
 
 This includes support for a secure (i.e. with TLS) configuration of operator-controller. This configuration uses:
 * config/base
-* config/overlays/tls
-* config/overlays/ca
+* config/components/tls
+* config/components/ca
 
 This configuration requires cert-manager.
 
@@ -19,9 +19,9 @@ This configuration requires cert-manager.
 
 This provides additional configuration support for end-to-end testing, including code coverage. This configuration uses:
 * config/base
-* config/overlays/tls
-* config/overlays/ca
-* config/overlays/coverage
+* config/components/tls
+* config/components/ca
+* config/components/coverage
 
 This configuration requires cert-manager.
 
