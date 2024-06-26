@@ -257,8 +257,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	switch unpackResult.State {
 	case rukpaksource.StatePending:
 		setStatusUnpackPending(ext, unpackResult.Message)
-		// There must be a limit to number of entries if status is stuck at
-		// unpack pending.
 		setHasValidBundleUnknown(ext, "unpack pending")
 		setInstalledStatusConditionUnknown(ext, "installation has not been attempted as unpack is pending")
 
