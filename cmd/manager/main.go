@@ -47,7 +47,8 @@ import (
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
-	crdupgradesafety "github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
+	"github.com/operator-framework/operator-controller/internal/resolve"
+	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 	"github.com/operator-framework/operator-controller/internal/version"
 	"github.com/operator-framework/operator-controller/pkg/features"
@@ -153,25 +154,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	certPool, err := httputil.NewCertPool(caCertDir)
-	if err != nil {
-		setupLog.Error(err, "unable to create CA certificate pool")
-		os.Exit(1)
-	}
-
-	httpClient, err := httputil.BuildHTTPClient(certPool)
-	if err != nil {
-		setupLog.Error(err, "unable to create catalogd http client")
-	}
-
-	cl := mgr.GetClient()
-	catalogsCachePath := filepath.Join(cachePath, "catalogs")
-	if err := os.MkdirAll(catalogsCachePath, 0700); err != nil {
-		setupLog.Error(err, "unable to create catalogs cache directory")
-		os.Exit(1)
-	}
-	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(catalogsCachePath, httpClient))
-
 	installNamespaceMapper := helmclient.ObjectToStringMapper(func(obj client.Object) (string, error) {
 		ext := obj.(*ocv1alpha1.ClusterExtension)
 		return ext.Spec.InstallNamespace, nil
@@ -194,7 +176,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
+	certPool, err := httputil.NewCertPool(caCertDir)
+	if err != nil {
+		setupLog.Error(err, "unable to create CA certificate pool")
+		os.Exit(1)
+	}
 	unpacker := &source.ImageRegistry{
 		BaseCachePath: filepath.Join(cachePath, "unpack"),
 		// TODO: This needs to be derived per extension via ext.Spec.InstallNamespace
@@ -202,6 +188,7 @@ func main() {
 		CaCertPool:    certPool,
 	}
 
+	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
 	domain := ocv1alpha1.GroupVersion.Group
 	cleanupUnpackCacheKey := fmt.Sprintf("%s/cleanup-unpack-cache", domain)
 	if err := clusterExtensionFinalizers.Register(cleanupUnpackCacheKey, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
@@ -222,9 +209,36 @@ func main() {
 		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
 	}
 
+	cl := mgr.GetClient()
+	httpClient, err := httputil.BuildHTTPClient(certPool)
+	if err != nil {
+		setupLog.Error(err, "unable to create catalogd http client")
+		os.Exit(1)
+	}
+
+	catalogsCachePath := filepath.Join(cachePath, "catalogs")
+	if err := os.MkdirAll(catalogsCachePath, 0700); err != nil {
+		setupLog.Error(err, "unable to create catalogs cache directory")
+		os.Exit(1)
+	}
+	catalogClient := catalogclient.New(cache.NewFilesystemCache(catalogsCachePath, httpClient))
+
+	resolver := &resolve.CatalogResolver{
+		WalkCatalogsFunc: resolve.CatalogWalker(
+			func(ctx context.Context, option ...client.ListOption) ([]catalogd.ClusterCatalog, error) {
+				var catalogs catalogd.ClusterCatalogList
+				if err := cl.List(ctx, &catalogs, option...); err != nil {
+					return nil, err
+				}
+				return catalogs.Items, nil
+			},
+			catalogClient.GetPackage,
+		),
+	}
+
 	if err = (&controllers.ClusterExtensionReconciler{
 		Client:                cl,
-		BundleProvider:        catalogClient,
+		Resolver:              resolver,
 		ActionClientGetter:    acg,
 		Unpacker:              unpacker,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},

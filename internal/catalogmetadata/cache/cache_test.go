@@ -68,7 +68,7 @@ func TestFilesystemCache(t *testing.T) {
 		catalog        *catalogd.ClusterCatalog
 		contents       fstest.MapFS
 		wantErr        bool
-		tripper        *MockTripper
+		tripper        *mockTripper
 		testCaching    bool
 		shouldHitCache bool
 	}
@@ -89,7 +89,7 @@ func TestFilesystemCache(t *testing.T) {
 				},
 			},
 			contents: defaultFS,
-			tripper:  &MockTripper{},
+			tripper:  &mockTripper{},
 		},
 		{
 			name: "valid cached fetch",
@@ -107,7 +107,7 @@ func TestFilesystemCache(t *testing.T) {
 				},
 			},
 			contents:       defaultFS,
-			tripper:        &MockTripper{},
+			tripper:        &mockTripper{},
 			testCaching:    true,
 			shouldHitCache: true,
 		},
@@ -127,7 +127,7 @@ func TestFilesystemCache(t *testing.T) {
 				},
 			},
 			contents:       defaultFS,
-			tripper:        &MockTripper{},
+			tripper:        &mockTripper{},
 			testCaching:    true,
 			shouldHitCache: false,
 		},
@@ -147,7 +147,7 @@ func TestFilesystemCache(t *testing.T) {
 				},
 			},
 			contents: defaultFS,
-			tripper:  &MockTripper{shouldError: true},
+			tripper:  &mockTripper{shouldError: true},
 			wantErr:  true,
 		},
 		{
@@ -166,14 +166,14 @@ func TestFilesystemCache(t *testing.T) {
 				},
 			},
 			contents: defaultFS,
-			tripper:  &MockTripper{serverError: true},
+			tripper:  &mockTripper{serverError: true},
 			wantErr:  true,
 		},
 		{
 			name:     "nil catalog",
 			catalog:  nil,
 			contents: defaultFS,
-			tripper:  &MockTripper{serverError: true},
+			tripper:  &mockTripper{serverError: true},
 			wantErr:  true,
 		},
 		{
@@ -187,7 +187,7 @@ func TestFilesystemCache(t *testing.T) {
 				},
 			},
 			contents: defaultFS,
-			tripper:  &MockTripper{serverError: true},
+			tripper:  &mockTripper{serverError: true},
 			wantErr:  true,
 		},
 		{
@@ -203,7 +203,7 @@ func TestFilesystemCache(t *testing.T) {
 				},
 			},
 			contents: defaultFS,
-			tripper:  &MockTripper{serverError: true},
+			tripper:  &mockTripper{serverError: true},
 			wantErr:  true,
 		},
 	} {
@@ -242,15 +242,15 @@ func TestFilesystemCache(t *testing.T) {
 	}
 }
 
-var _ http.RoundTripper = &MockTripper{}
+var _ http.RoundTripper = &mockTripper{}
 
-type MockTripper struct {
+type mockTripper struct {
 	content     fstest.MapFS
 	shouldError bool
 	serverError bool
 }
 
-func (mt *MockTripper) RoundTrip(_ *http.Request) (*http.Response, error) {
+func (mt *mockTripper) RoundTrip(_ *http.Request) (*http.Response, error) {
 	if mt.shouldError {
 		return nil, errors.New("mock tripper error")
 	}

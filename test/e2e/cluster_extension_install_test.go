@@ -119,7 +119,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
-		assert.Contains(ct, cond.Message, "Instantiated bundle")
+		assert.Contains(ct, cond.Message, "Installed bundle")
 		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle)
 	}, pollDuration, pollInterval)
 }

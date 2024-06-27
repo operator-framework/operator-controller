@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,8 +39,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	bd "github.com/operator-framework/operator-controller/internal/rukpak/bundledeployment"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
-	"github.com/operator-framework/operator-controller/internal/testutil"
-	"github.com/operator-framework/operator-controller/pkg/scheme"
 )
 
 // MockUnpacker is a mock of Unpacker interface
@@ -59,7 +58,11 @@ func (m *MockUnpacker) Cleanup(ctx context.Context, bundle *bd.BundleDeployment)
 }
 
 func newClient(t *testing.T) client.Client {
-	cl, err := client.New(config, client.Options{Scheme: scheme.Scheme})
+	// TODO: this is a live client, which behaves differently than a cache client.
+	//  We may want to use a caching client instead to get closer to real behavior.
+	sch := runtime.NewScheme()
+	require.NoError(t, ocv1alpha1.AddToScheme(sch))
+	cl, err := client.New(config, client.Options{Scheme: sch})
 	require.NoError(t, err)
 	require.NotNil(t, cl)
 	return cl
@@ -79,17 +82,12 @@ func (m *MockInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext 
 
 func newClientAndReconciler(t *testing.T, bundle *ocv1alpha1.BundleMetadata) (client.Client, *controllers.ClusterExtensionReconciler) {
 	cl := newClient(t)
-	fakeCatalogClient := testutil.NewFakeCatalogClient(testBundleList)
-
-	mockInstalledBundleGetter := &MockInstalledBundleGetter{}
-	mockInstalledBundleGetter.SetBundle(bundle)
 
 	reconciler := &controllers.ClusterExtensionReconciler{
 		Client:                cl,
-		BundleProvider:        &fakeCatalogClient,
 		ActionClientGetter:    helmClientGetter,
 		Unpacker:              unpacker,
-		InstalledBundleGetter: mockInstalledBundleGetter,
+		InstalledBundleGetter: &MockInstalledBundleGetter{bundle},
 		Finalizers:            crfinalizer.NewFinalizers(),
 	}
 	return cl, reconciler
