@@ -328,7 +328,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 
 	for _, preflight := range r.Preflights {
-		if ext.Spec.Preflight != nil {
+		if ext.Spec.Preflight != nil && ext.Spec.Preflight.CRDUpgradeSafety != nil {
 			if _, ok := preflight.(*crdupgradesafety.Preflight); ok && ext.Spec.Preflight.CRDUpgradeSafety.Disabled {
 				// Skip this preflight check because it is of type *crdupgradesafety.Preflight and the CRD Upgrade Safety
 				// preflight check has been disabled
