@@ -26,6 +26,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
+	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -40,6 +41,7 @@ import (
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
+	crdupgradesafety "github.com/operator-framework/rukpak/pkg/preflights/crdupgradesafety"
 	"github.com/operator-framework/rukpak/pkg/provisioner/registry"
 	"github.com/operator-framework/rukpak/pkg/source"
 	"github.com/operator-framework/rukpak/pkg/storage"
@@ -215,6 +217,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	aeClient, err := apiextensionsv1client.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		setupLog.Error(err, "unable to create apiextensions client")
+		os.Exit(1)
+	}
+
+	preflights := []controllers.Preflight{
+		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
+	}
+
 	if err = (&controllers.ClusterExtensionReconciler{
 		Client:                cl,
 		BundleProvider:        catalogClient,
@@ -225,6 +237,7 @@ func main() {
 		Handler:               registryv1handler.HandlerFunc(registry.HandleBundleDeployment),
 		Finalizers:            clusterExtensionFinalizers,
 		CaCertDir:             caCertDir,
+		Preflights:            preflights,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
