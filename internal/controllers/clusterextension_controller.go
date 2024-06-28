@@ -274,7 +274,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	switch unpackResult.State {
 	case rukpaksource.StatePending:
 		setStatusUnpackPending(ext, unpackResult.Message)
-		setHasValidBundleUnknown(ext, "unpack pending")
 		setInstalledStatusConditionUnknown(ext, "installation has not been attempted as unpack is pending")
 
 		return ctrl.Result{}, nil
@@ -294,7 +293,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	bundleFS, err := r.Storage.Load(ctx, ext)
 	if err != nil {
-		setHasValidBundleFailed(ext, err.Error())
+		setInstalledStatusConditionFailed(ext, err.Error())
 		return ctrl.Result{}, err
 	}
 
