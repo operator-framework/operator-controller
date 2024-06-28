@@ -54,28 +54,6 @@ func setInstalledStatusConditionUnknown(ext *ocv1alpha1.ClusterExtension, messag
 	})
 }
 
-// setHasValidBundleUnknown sets the valid bundle condition to unknown.
-func setHasValidBundleUnknown(ext *ocv1alpha1.ClusterExtension, message string) {
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeHasValidBundle,
-		Status:             metav1.ConditionUnknown,
-		Reason:             ocv1alpha1.ReasonHasValidBundleUnknown,
-		Message:            message,
-		ObservedGeneration: ext.GetGeneration(),
-	})
-}
-
-// setHasValidBundleFalse sets the ivalid bundle condition to false
-func setHasValidBundleFailed(ext *ocv1alpha1.ClusterExtension, message string) {
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeHasValidBundle,
-		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonBundleLoadFailed,
-		Message:            message,
-		ObservedGeneration: ext.GetGeneration(),
-	})
-}
-
 // setResolvedStatusConditionFailed sets the resolved status condition to failed.
 func setResolvedStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message string) {
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{

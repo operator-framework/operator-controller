@@ -101,9 +101,8 @@ type CRDUpgradeSafetyPreflightConfig struct {
 
 const (
 	// TODO(user): add more Types, here and into init()
-	TypeInstalled      = "Installed"
-	TypeResolved       = "Resolved"
-	TypeHasValidBundle = "HasValidBundle"
+	TypeInstalled = "Installed"
+	TypeResolved  = "Resolved"
 
 	// TypeDeprecated is a rollup condition that is present when
 	// any of the deprecated conditions are present.
@@ -121,10 +120,9 @@ const (
 	ReasonInstallationSucceeded     = "InstallationSucceeded"
 	ReasonResolutionFailed          = "ResolutionFailed"
 
-	ReasonSuccess               = "Success"
-	ReasonDeprecated            = "Deprecated"
-	ReasonUpgradeFailed         = "UpgradeFailed"
-	ReasonHasValidBundleUnknown = "HasValidBundleUnknown"
+	ReasonSuccess       = "Success"
+	ReasonDeprecated    = "Deprecated"
+	ReasonUpgradeFailed = "UpgradeFailed"
 
 	ReasonUnpackPending = "UnpackPending"
 	ReasonUnpackSuccess = "UnpackSuccess"
@@ -139,7 +137,6 @@ func init() {
 	conditionsets.ConditionTypes = append(conditionsets.ConditionTypes,
 		TypeInstalled,
 		TypeResolved,
-		TypeHasValidBundle,
 		TypeDeprecated,
 		TypePackageDeprecated,
 		TypeChannelDeprecated,
@@ -157,7 +154,6 @@ func init() {
 		ReasonBundleLoadFailed,
 		ReasonErrorGettingClient,
 		ReasonInstallationStatusUnknown,
-		ReasonHasValidBundleUnknown,
 		ReasonUnpackPending,
 		ReasonUnpackSuccess,
 		ReasonUnpackFailed,
