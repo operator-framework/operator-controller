@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
@@ -132,6 +133,16 @@ var _ = Describe("LocalDir Server Handler tests", func() {
 		Expect(os.WriteFile(filepath.Join(store.RootDir, "test-catalog", "foo.txt"), expectedContent, 0600)).To(Succeed())
 		expectFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/foo.txt"), expectedContent)
 	})
+	It("ignores accept-encoding for the path /catalogs/test-catalog/all.json with size < 1400 bytes", func() {
+		expectedContent := []byte("bar")
+		Expect(os.WriteFile(filepath.Join(store.RootDir, "test-catalog", "all.json"), expectedContent, 0600)).To(Succeed())
+		expectFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/all.json"), expectedContent)
+	})
+	It("provides gzipped content for the path /catalogs/test-catalog/all.json with size > 1400 bytes", func() {
+		expectedContent := []byte(testCompressablePackage)
+		Expect(os.WriteFile(filepath.Join(store.RootDir, "test-catalog", "all.json"), expectedContent, 0600)).To(Succeed())
+		expectFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/all.json"), expectedContent)
+	})
 	AfterEach(func() {
 		testServer.Close()
 	})
@@ -145,11 +156,27 @@ func expectNotFound(url string) {
 }
 
 func expectFound(url string, expectedContent []byte) {
-	resp, err := http.Get(url) //nolint:gosec
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	Expect(err).To(Not(HaveOccurred()))
+	req.Header.Set("Accept-Encoding", "gzip")
+	resp, err := http.DefaultClient.Do(req)
 	Expect(err).To(Not(HaveOccurred()))
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	actualContent, err := io.ReadAll(resp.Body)
-	Expect(err).To(Not(HaveOccurred()))
+
+	var actualContent []byte
+	switch resp.Header.Get("Content-Encoding") {
+	case "gzip":
+		Expect(len(expectedContent)).To(BeNumerically(">", 1400))
+		gz, err := gzip.NewReader(resp.Body)
+		Expect(err).To(Not(HaveOccurred()))
+		actualContent, err = io.ReadAll(gz)
+		Expect(err).To(Not(HaveOccurred()))
+	default:
+		Expect(len(expectedContent)).To(BeNumerically("<", 1400))
+		actualContent, err = io.ReadAll(resp.Body)
+		Expect(err).To(Not(HaveOccurred()))
+	}
+
 	Expect(actualContent).To(Equal(expectedContent))
 	Expect(resp.Body.Close()).To(Succeed())
 }
@@ -183,4 +210,148 @@ package: %s
 name: %s
 entries:
   - name: %s
+`
+
+// by default the compressor will only trigger for files larger than 1400 bytes
+const testCompressablePackage = `{
+  "schema": "olm.package",
+  "name": "cockroachdb",
+  "defaultChannel": "stable-v6.x",
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-5.x",
+  "package": "cockroachdb",
+  "entries": [
+    {
+      "name": "cockroachdb.v5.0.3"
+    },
+    {
+      "name": "cockroachdb.v5.0.4",
+      "replaces": "cockroachdb.v5.0.3"
+    }
+  ]
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-v6.x",
+  "package": "cockroachdb",
+  "entries": [
+    {
+      "name": "cockroachdb.v6.0.0",
+      "skipRange": "<6.0.0"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "cockroachdb.v5.0.3",
+  "package": "cockroachdb",
+  "image": "quay.io/openshift-community-operators/cockroachdb@sha256:a5d4f4467250074216eb1ba1c36e06a3ab797d81c431427fc2aca97ecaf4e9d8",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "charts.operatorhub.io",
+        "kind": "Cockroachdb",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "cockroachdb",
+        "version": "5.0.3"
+      }
+    }
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0"
+    },
+    {
+      "name": "",
+      "image": "quay.io/helmoperators/cockroachdb:v5.0.3"
+    },
+    {
+      "name": "",
+      "image": "quay.io/openshift-community-operators/cockroachdb@sha256:a5d4f4467250074216eb1ba1c36e06a3ab797d81c431427fc2aca97ecaf4e9d8"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "cockroachdb.v5.0.4",
+  "package": "cockroachdb",
+  "image": "quay.io/openshift-community-operators/cockroachdb@sha256:f42337e7b85a46d83c94694638e2312e10ca16a03542399a65ba783c94a32b63",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "charts.operatorhub.io",
+        "kind": "Cockroachdb",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "cockroachdb",
+        "version": "5.0.4"
+      }
+    },
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0"
+    },
+    {
+      "name": "",
+      "image": "quay.io/helmoperators/cockroachdb:v5.0.4"
+    },
+    {
+      "name": "",
+      "image": "quay.io/openshift-community-operators/cockroachdb@sha256:f42337e7b85a46d83c94694638e2312e10ca16a03542399a65ba783c94a32b63"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "cockroachdb.v6.0.0",
+  "package": "cockroachdb",
+  "image": "quay.io/openshift-community-operators/cockroachdb@sha256:d3016b1507515fc7712f9c47fd9082baf9ccb070aaab58ed0ef6e5abdedde8ba",
+  "properties": [
+    {
+      "type": "olm.gvk",
+      "value": {
+        "group": "charts.operatorhub.io",
+        "kind": "Cockroachdb",
+        "version": "v1alpha1"
+      }
+    },
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "cockroachdb",
+        "version": "6.0.0"
+      }
+    },
+  ],
+  "relatedImages": [
+    {
+      "name": "",
+      "image": "gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0"
+    },
+    {
+      "name": "",
+      "image": "quay.io/cockroachdb/cockroach-helm-operator:6.0.0"
+    },
+    {
+      "name": "",
+      "image": "quay.io/openshift-community-operators/cockroachdb@sha256:d3016b1507515fc7712f9c47fd9082baf9ccb070aaab58ed0ef6e5abdedde8ba"
+    }
+  ]
+}
 `

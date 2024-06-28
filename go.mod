@@ -3,6 +3,7 @@ module github.com/operator-framework/catalogd
 go 1.22.0
 
 require (
+	github.com/NYTimes/gziphandler v1.1.1
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/containerd v1.7.18
 	github.com/go-logr/logr v1.4.1

@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NYTimes/gziphandler"
+
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
 
@@ -56,7 +58,7 @@ func (s LocalDir) ContentURL(catalog string) string {
 
 func (s LocalDir) StorageServerHandler() http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle(s.BaseURL.Path, http.StripPrefix(s.BaseURL.Path, http.FileServer(http.FS(&filesOnlyFilesystem{os.DirFS(s.RootDir)}))))
+	mux.Handle(s.BaseURL.Path, gziphandler.GzipHandler(http.StripPrefix(s.BaseURL.Path, http.FileServer(http.FS(&filesOnlyFilesystem{os.DirFS(s.RootDir)})))))
 	return mux
 }
 
