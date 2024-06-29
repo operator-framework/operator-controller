@@ -125,7 +125,10 @@ E2E_REGISTRY_NAMESPACE := operator-controller-e2e
 
 export REG_PKG_NAME := registry-operator
 export REGISTRY_ROOT := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000
-export CATALOG_IMG := $(REGISTRY_ROOT)/test-catalog:e2e
+export CATALOG_IMG_TAG := v1
+export UPDATED_CATALOG_IMG_TAG := v2
+export CATALOG_IMG := $(REGISTRY_ROOT)/test-catalog:$(CATALOG_IMG_TAG)
+export UPDATED_CATALOG_IMG :=  $(REGISTRY_ROOT)/test-catalog:$(UPDATED_CATALOG_IMG_TAG)
 .PHONY: test-ext-dev-e2e
 test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
@@ -141,7 +144,8 @@ image-registry: ## Setup in-cluster image registry
 	./test/tools/image-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME)
 
 build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and push it to the image registry
-	./test/tools/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(CATALOG_IMG)
+	./test/tools/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(CATALOG_IMG) $(CATALOG_IMG_TAG)
+	./test/tools/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(UPDATED_CATALOG_IMG) $(UPDATED_CATALOG_IMG_TAG)
 
 # When running the e2e suite, you can set the ARTIFACT_PATH variable to the absolute path
 # of the directory for the operator-controller e2e tests to store the artifacts, which
