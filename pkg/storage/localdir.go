@@ -62,6 +62,18 @@ func (s LocalDir) StorageServerHandler() http.Handler {
 	return mux
 }
 
+func (s LocalDir) ContentExists(catalog string) bool {
+	file, err := os.Stat(filepath.Join(s.RootDir, catalog, "all.json"))
+	if err != nil {
+		return false
+	}
+	if !file.Mode().IsRegular() {
+		// path is not valid content
+		return false
+	}
+	return true
+}
+
 // filesOnlyFilesystem is a file system that can open only regular
 // files from the underlying filesystem. All other file types result
 // in os.ErrNotExists

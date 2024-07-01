@@ -78,6 +78,9 @@ var _ = Describe("LocalDir Storage Test", func() {
 		It("should form the content URL correctly", func() {
 			Expect(store.ContentURL(catalog)).To(Equal(fmt.Sprintf("%s%s/all.json", baseURL, catalog)))
 		})
+		It("should report content exists", func() {
+			Expect(store.ContentExists(catalog)).To(BeTrue())
+		})
 		When("The stored content is deleted", func() {
 			BeforeEach(func() {
 				err := store.Delete(catalog)
@@ -88,6 +91,9 @@ var _ = Describe("LocalDir Storage Test", func() {
 				_, err := os.Stat(fbcFile)
 				Expect(err).To(HaveOccurred())
 				Expect(os.IsNotExist(err)).To(BeTrue())
+			})
+			It("should report content does not exist", func() {
+				Expect(store.ContentExists(catalog)).To(BeFalse())
 			})
 		})
 	})

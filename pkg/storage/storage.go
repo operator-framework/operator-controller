@@ -15,4 +15,5 @@ type Instance interface {
 	Delete(catalog string) error
 	ContentURL(catalog string) string
 	StorageServerHandler() http.Handler
+	ContentExists(catalog string) bool
 }

@@ -75,6 +75,10 @@ func (m MockStore) StorageServerHandler() http.Handler {
 	panic("not needed")
 }
 
+func (m MockStore) ContentExists(_ string) bool {
+	return true
+}
+
 func TestCatalogdControllerReconcile(t *testing.T) {
 	for _, tt := range []struct {
 		name            string
