@@ -9,6 +9,19 @@ on:
       - main
 
 jobs:
+  extension-developer-e2e:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    - name: Run the extension developer e2e test
+      run: |
+        make extension-developer-e2e
+
   e2e-kind:
     runs-on: ubuntu-latest
     steps:
@@ -21,14 +34,7 @@ jobs:
           go-version-file: go.mod
 
       - name: Run e2e tests
-        run: |
-          # By default make stops building on first non-zero exit code which
-          # in case of E2E tests will mean that code coverage will only be
-          # collected on successful runs. We want to collect coverage even
-          # after failing tests.
-          # With -k flag make will continue the build, but will return non-zero
-          # exit code in case of any errors.
-          ARTIFACT_PATH=/tmp/artifacts make test-e2e
+        run: ARTIFACT_PATH=/tmp/artifacts make test-e2e
 
       - uses: cytopia/upload-artifact-retry-action@v0.1.7
         if: failure()
