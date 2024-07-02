@@ -1,0 +1,11 @@
+# kustomization file for all the e2e's
+# DO NOT ADD A NAMESPACE HERE
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../base
+components:
+- ../components/tls
+- ../components/coverage
+# ca must be last or (tls|coverage) will overwrite the namespaces
+- ../components/ca
