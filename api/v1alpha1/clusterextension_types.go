@@ -117,7 +117,6 @@ const (
 
 	ReasonInstallationFailed        = "InstallationFailed"
 	ReasonInstallationStatusUnknown = "InstallationStatusUnknown"
-	ReasonInstallationSucceeded     = "InstallationSucceeded"
 	ReasonResolutionFailed          = "ResolutionFailed"
 
 	ReasonSuccess       = "Success"
@@ -144,7 +143,6 @@ func init() {
 	)
 	// TODO(user): add Reasons from above
 	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
-		ReasonInstallationSucceeded,
 		ReasonResolutionFailed,
 		ReasonInstallationFailed,
 		ReasonSuccess,
