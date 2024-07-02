@@ -158,6 +158,14 @@ test-e2e: run image-registry build-push-e2e-catalog registry-load-bundles e2e e2
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e  #EXHELP Run extension-developer e2e on local kind cluster
 extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean
 
+.PHONY: run-latest-release
+run-latest-release:
+	curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh | bash -s
+
+.PHONY: test-upgrade-e2e
+test-upgrade-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-e2e
+test-upgrade-e2e: kind-cluster run-latest-release image-registry build-push-e2e-catalog registry-load-bundles docker-build kind-load kind-deploy kind-clean #HELP Run upgrade e2e tests on a local kind cluster
+
 .PHONY: e2e-coverage
 e2e-coverage:
 	COVERAGE_OUTPUT=./e2e-cover.out ./hack/e2e-coverage.sh
