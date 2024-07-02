@@ -172,11 +172,6 @@ kind-deploy: manifests $(KUSTOMIZE) #EXHELP Install controller and dependencies 
 	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) > operator-controller.yaml
 	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
-.PHONY: kind-redeploy
-kind-redeploy: generate docker-build kind-load kind-deploy #EXHELP Redeploy newly built executables
-	kubectl delete pod -l control-plane=controller-manager -n $(OPERATOR_CONTROLLER_NAMESPACE)
-	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$MANIFEST' < scripts/install.tpl.sh | bash -s
-
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
 	-$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
