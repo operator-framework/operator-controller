@@ -115,15 +115,13 @@ const (
 	ReasonErrorGettingClient = "ErrorGettingClient"
 	ReasonBundleLoadFailed   = "BundleLoadFailed"
 
-	ReasonInstallationFailed        = "InstallationFailed"
-	ReasonInstallationStatusUnknown = "InstallationStatusUnknown"
-	ReasonResolutionFailed          = "ResolutionFailed"
+	ReasonInstallationFailed = "InstallationFailed"
+	ReasonResolutionFailed   = "ResolutionFailed"
 
 	ReasonSuccess       = "Success"
 	ReasonDeprecated    = "Deprecated"
 	ReasonUpgradeFailed = "UpgradeFailed"
 
-	ReasonUnpackPending = "UnpackPending"
 	ReasonUnpackSuccess = "UnpackSuccess"
 	ReasonUnpackFailed  = "UnpackFailed"
 
@@ -150,8 +148,6 @@ func init() {
 		ReasonUpgradeFailed,
 		ReasonBundleLoadFailed,
 		ReasonErrorGettingClient,
-		ReasonInstallationStatusUnknown,
-		ReasonUnpackPending,
 		ReasonUnpackSuccess,
 		ReasonUnpackFailed,
 		ReasonErrorGettingReleaseState,
