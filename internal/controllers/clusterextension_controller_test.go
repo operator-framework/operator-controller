@@ -151,7 +151,7 @@ func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
 	require.NotNil(t, unpackedCond)
 	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonUnpackPending, unpackedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonUnpackFailed, unpackedCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
