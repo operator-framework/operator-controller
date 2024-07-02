@@ -83,6 +83,11 @@ type ClusterExtensionSpec struct {
 	//+kubebuilder:Optional
 	// Preflight defines the configuration of preflight checks.
 	Preflight *PreflightConfig `json:"preflight,omitempty"`
+
+	//+kubebuilder:validation:MaxLength:=48
+	//+kubebuilder:validation:Pattern:=^[a-z0-9]+(-[a-z0-9]+)*$
+	// ServiceAccount is used to install and manage content
+	ServiceAccount string `json:"serviceAccount"`
 }
 
 // PreflightConfig holds the configuration for the preflight checks.
