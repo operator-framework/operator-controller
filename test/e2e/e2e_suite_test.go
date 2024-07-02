@@ -22,8 +22,9 @@ var (
 )
 
 const (
-	testCatalogRefEnvVar = "CATALOG_IMG"
-	testCatalogName      = "test-catalog"
+	testCatalogRefEnvVar        = "CATALOG_IMG"
+	testUpdatedCatalogRefEnvVar = "UPDATED_CATALOG_IMG"
+	testCatalogName             = "test-catalog"
 )
 
 func TestMain(m *testing.M) {
@@ -56,5 +57,25 @@ func createTestCatalog(ctx context.Context, name string, imageRef string) (*cata
 	}
 
 	err := c.Create(ctx, catalog)
+	return catalog, err
+}
+
+func patchCatalogImageRef(ctx context.Context, name string, newImageRef string) (*catalogd.ClusterCatalog, error) {
+	// Fetch the existing ClusterCatalog
+	catalog := &catalogd.ClusterCatalog{}
+	err := c.Get(ctx, client.ObjectKey{Name: name}, catalog)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the ImageRef
+	catalog.Spec.Source.Image.Ref = newImageRef
+
+	// Patch the ClusterCatalog
+	err = c.Update(ctx, catalog)
+	if err != nil {
+		return nil, err
+	}
+
 	return catalog, err
 }

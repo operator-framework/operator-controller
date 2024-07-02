@@ -1,0 +1,31 @@
+---
+schema: olm.package
+name: prometheus
+defaultChannel: beta
+---
+schema: olm.channel
+name: beta
+package: prometheus
+entries:
+  - name: prometheus-operator.2.0.0
+    replaces: prometheus-operator.1.2.0
+---
+schema: olm.bundle
+name: prometheus-operator.1.2.0
+package: prometheus
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/prometheus-operator:v1.2.0
+properties:
+  - type: olm.package
+    value:
+      packageName: prometheus
+      version: 1.2.0
+---
+schema: olm.bundle
+name: prometheus-operator.2.0.0
+package: prometheus
+image: docker-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/prometheus-operator:v2.0.0
+properties:
+  - type: olm.package
+    value:
+      packageName: prometheus
+      version: 2.0.0

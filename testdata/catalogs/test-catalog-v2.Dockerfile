@@ -1,5 +1,5 @@
 FROM scratch
-ADD test-catalog /configs
+ADD test-catalog-v2 /configs
 
 # Set DC-specific label for the location of the DC root directory
 # in the image
