@@ -142,7 +142,6 @@ const (
 	ReasonUnpackFailed  = "UnpackFailed"
 
 	ReasonErrorGettingReleaseState = "ErrorGettingReleaseState"
-	ReasonCreateDynamicWatchFailed = "CreateDynamicWatchFailed"
 )
 
 func init() {
@@ -171,7 +170,6 @@ func init() {
 		ReasonUnpackSuccess,
 		ReasonUnpackFailed,
 		ReasonErrorGettingReleaseState,
-		ReasonCreateDynamicWatchFailed,
 	)
 }
 
