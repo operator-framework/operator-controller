@@ -34,12 +34,12 @@ func setResolvedStatusConditionSuccess(ext *ocv1alpha1.ClusterExtension, message
 	})
 }
 
-// setInstalledStatusConditionUnknown sets the installed status condition to unknown.
-func setInstalledStatusConditionUnknown(ext *ocv1alpha1.ClusterExtension, message string) {
+// setInstalledStatusConditionInstalledFalse sets the installed status condition to unknown.
+func setInstalledStatusConditionInstalledFalse(ext *ocv1alpha1.ClusterExtension, message string) {
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeInstalled,
-		Status:             metav1.ConditionUnknown,
-		Reason:             ocv1alpha1.ReasonInstallationStatusUnknown,
+		Status:             metav1.ConditionFalse,
+		Reason:             ocv1alpha1.ReasonInstallationFailed,
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
 	})
