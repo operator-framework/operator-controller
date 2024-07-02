@@ -115,21 +115,17 @@ const (
 	ReasonErrorGettingClient = "ErrorGettingClient"
 	ReasonBundleLoadFailed   = "BundleLoadFailed"
 
-	ReasonInstallationFailed        = "InstallationFailed"
-	ReasonInstallationStatusUnknown = "InstallationStatusUnknown"
-	ReasonInstallationSucceeded     = "InstallationSucceeded"
-	ReasonResolutionFailed          = "ResolutionFailed"
+	ReasonInstallationFailed = "InstallationFailed"
+	ReasonResolutionFailed   = "ResolutionFailed"
 
 	ReasonSuccess       = "Success"
 	ReasonDeprecated    = "Deprecated"
 	ReasonUpgradeFailed = "UpgradeFailed"
 
-	ReasonUnpackPending = "UnpackPending"
 	ReasonUnpackSuccess = "UnpackSuccess"
 	ReasonUnpackFailed  = "UnpackFailed"
 
 	ReasonErrorGettingReleaseState = "ErrorGettingReleaseState"
-	ReasonCreateDynamicWatchFailed = "CreateDynamicWatchFailed"
 )
 
 func init() {
@@ -145,7 +141,6 @@ func init() {
 	)
 	// TODO(user): add Reasons from above
 	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
-		ReasonInstallationSucceeded,
 		ReasonResolutionFailed,
 		ReasonInstallationFailed,
 		ReasonSuccess,
@@ -153,12 +148,9 @@ func init() {
 		ReasonUpgradeFailed,
 		ReasonBundleLoadFailed,
 		ReasonErrorGettingClient,
-		ReasonInstallationStatusUnknown,
-		ReasonUnpackPending,
 		ReasonUnpackSuccess,
 		ReasonUnpackFailed,
 		ReasonErrorGettingReleaseState,
-		ReasonCreateDynamicWatchFailed,
 	)
 }
 
