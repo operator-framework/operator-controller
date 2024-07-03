@@ -1,28 +1,9 @@
-# Adds namespace to all resources.
-namespace: olmv1-system
-
-# Value of this field is prepended to the
-# names of all resources, e.g. a deployment named
-# "wordpress" becomes "alices-wordpress".
-# Note that it should also match with the prefix (text before '-') of the namespace
-# field above.
-namePrefix: catalogd-
-
-# the following config is for teaching kustomize how to do var substitution
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 - ../../base/crd
 - ../../base/rbac
 - ../../base/manager
-- resources
-
-patches:
-- target:
-    kind: Service
-    name: catalogserver
-  path: patches/catalogserver_service_port.yaml
-- target:
-    kind: Deployment
-    name: controller-manager
-  path: patches/manager_deployment_certs.yaml
+components:
+- ../../components/tls
+- ../../components/ca

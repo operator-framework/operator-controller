@@ -9,6 +9,11 @@ spec:
   dnsNames:
     - localhost
     - catalogd-catalogserver.olmv1-system.svc
+    - catalogd-catalogserver.olmv1-system.svc.cluster.local
+  privateKey:
+    algorithm: ECDSA
+    size: 256
   issuerRef:
-    kind: Issuer
-    name: catalogd-catalogserver-ca-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+    name: olmv1-ca

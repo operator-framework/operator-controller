@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+namespace: olmv1-system
+namePrefix: catalogd-
+resources:
+- resources/certificate.yaml
+patches:
+- target:
+    kind: Service
+    name: catalogserver
+  path: patches/catalogserver_service_port.yaml
+- target:
+    kind: Deployment
+    name: controller-manager
+  path: patches/manager_deployment_certs.yaml
