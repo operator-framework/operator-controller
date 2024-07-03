@@ -5,7 +5,7 @@ go 1.22.0
 require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/blang/semver/v4 v4.0.0
-	github.com/containerd/containerd v1.7.18
+	github.com/containerd/containerd v1.7.19
 	github.com/go-logr/logr v1.4.2
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.19.2
