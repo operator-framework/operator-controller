@@ -118,7 +118,6 @@ func setStatusUnpackFailed(ext *ocv1alpha1.ClusterExtension, message string) {
 	})
 }
 
-// TODO: verify if we need to update the installBundle status or leave it as is.
 func setStatusInstallFalseUnpackFailed(ext *ocv1alpha1.ClusterExtension, message string) {
 	ext.Status.InstalledBundle = nil
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{

@@ -282,8 +282,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacked:
-		// TODO: Add finalizer to clean the stored bundles, after https://github.com/operator-framework/rukpak/pull/897
-		// merges.
+		// TODO: https://github.com/operator-framework/rukpak/pull/897 merged, add finalizer to clean the stored bundles
 		if err := r.Storage.Store(ctx, ext, unpackResult.Bundle); err != nil {
 			setStatusUnpackFailed(ext, err.Error())
 			return ctrl.Result{}, err
