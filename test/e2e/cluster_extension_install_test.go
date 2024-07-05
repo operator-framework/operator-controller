@@ -75,6 +75,9 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
 		PackageName:      "prometheus",
 		InstallNamespace: "default",
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: "default",
+		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
 	t.Log("By creating the ClusterExtension resource")
@@ -132,6 +135,9 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
 		PackageName:      pkgName,
 		InstallNamespace: "default",
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: "default",
+		},
 	}
 
 	t.Log("By deleting the catalog first")
@@ -199,6 +205,9 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		PackageName:      "prometheus",
 		Version:          "1.0.0",
 		InstallNamespace: "default",
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: "default",
+		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful installation")
@@ -245,6 +254,9 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 		PackageName:      "prometheus",
 		Version:          "1.0.0",
 		InstallNamespace: "default",
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: "default",
+		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution")
@@ -290,6 +302,9 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		PackageName:      "prometheus",
 		Version:          "1.0.0",
 		InstallNamespace: "default",
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: "default",
+		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution")

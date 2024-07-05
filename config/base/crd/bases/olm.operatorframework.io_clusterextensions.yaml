@@ -73,10 +73,22 @@ spec:
                     type: object
                 type: object
               serviceAccount:
-                description: ServiceAccount is used to install and manage content
-                maxLength: 48
-                pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
-                type: string
+                description: |-
+                  ServiceAccount is used to install and manage resources.
+                  The service account is expected to exist in the InstallNamespace.
+                properties:
+                  name:
+                    description: name is the metadata.name of the referenced serviceAccount
+                      object.
+                    maxLength: 253
+                    pattern: ^[a-z0-9]+([.|-][a-z0-9]+)*$
+                    type: string
+                    x-kubernetes-validations:
+                    - message: name is immutable
+                      rule: self == oldSelf
+                required:
+                - name
+                type: object
               upgradeConstraintPolicy:
                 default: Enforce
                 description: Defines the policy for how to handle upgrade constraints
