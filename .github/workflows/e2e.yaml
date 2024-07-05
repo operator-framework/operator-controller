@@ -19,8 +19,7 @@ jobs:
         go-version-file: go.mod
 
     - name: Run the extension developer e2e test
-      run: |
-        make extension-developer-e2e
+      run: make extension-developer-e2e
 
   e2e-kind:
     runs-on: ubuntu-latest
@@ -48,3 +47,15 @@ jobs:
           files: e2e-cover.out
           flags: e2e
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  upgrade-e2e:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+
+    - name: Run the upgrade e2e test
+      run: make test-upgrade-e2e
