@@ -40,7 +40,7 @@ func TestTokenGetterGet(t *testing.T) {
 			if act.Name == "test-service-account-3" {
 				tokenRequest.Status = authenticationv1.TokenRequestStatus{
 					Token:               "test-token-3",
-					ExpirationTimestamp: metav1.NewTime(metav1.Now().Add(-DefaultRemoveAfterExpiredDuration)),
+					ExpirationTimestamp: metav1.NewTime(metav1.Now().Add(-10 * time.Second)),
 				}
 			}
 			if act.Name == "test-service-account-4" {
@@ -51,8 +51,7 @@ func TestTokenGetterGet(t *testing.T) {
 		})
 
 	tg := NewTokenGetter(fakeClient.CoreV1(),
-		WithExpirationDuration(DefaultExpirationDuration),
-		WithRemoveAfterExpiredDuration(DefaultRemoveAfterExpiredDuration))
+		WithExpirationDuration(DefaultExpirationDuration))
 
 	tests := []struct {
 		testName           string
@@ -67,9 +66,9 @@ func TestTokenGetterGet(t *testing.T) {
 			"test-namespace-1", "test-token-1", "failed to get token"},
 		{"Testing getting short lived token from fake client", "test-service-account-2",
 			"test-namespace-2", "test-token-2", "failed to get token"},
-		{"Testing getting expired token from cache", "test-service-account-2",
+		{"Testing getting nearly expired token from cache", "test-service-account-2",
 			"test-namespace-2", "test-token-2", "failed to refresh token"},
-		{"Testing token that expired 90 minutes ago", "test-service-account-3",
+		{"Testing token that expired 10 seconds ago", "test-service-account-3",
 			"test-namespace-3", "test-token-3", "failed to get token"},
 		{"Testing error when getting token from fake client", "test-service-account-4",
 			"test-namespace-4", "error when fetching token", "error when fetching token"},
