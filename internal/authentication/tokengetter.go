@@ -13,19 +13,17 @@ import (
 )
 
 type TokenGetter struct {
-	client                     corev1.ServiceAccountsGetter
-	expirationDuration         time.Duration
-	removeAfterExpiredDuration time.Duration
-	tokens                     map[types.NamespacedName]*authenticationv1.TokenRequestStatus
-	mu                         sync.RWMutex
+	client             corev1.ServiceAccountsGetter
+	expirationDuration time.Duration
+	tokens             map[types.NamespacedName]*authenticationv1.TokenRequestStatus
+	mu                 sync.RWMutex
 }
 
 type TokenGetterOption func(*TokenGetter)
 
 const (
-	RotationThresholdPercentage       = 10
-	DefaultExpirationDuration         = 5 * time.Minute
-	DefaultRemoveAfterExpiredDuration = 90 * time.Minute
+	rotationThresholdFraction = 0.1
+	DefaultExpirationDuration = 5 * time.Minute
 )
 
 // Returns a token getter that can fetch tokens given a service account.
@@ -33,10 +31,9 @@ const (
 // In case a cached token is expiring a fresh token is created.
 func NewTokenGetter(client corev1.ServiceAccountsGetter, options ...TokenGetterOption) *TokenGetter {
 	tokenGetter := &TokenGetter{
-		client:                     client,
-		expirationDuration:         DefaultExpirationDuration,
-		removeAfterExpiredDuration: DefaultRemoveAfterExpiredDuration,
-		tokens:                     map[types.NamespacedName]*authenticationv1.TokenRequestStatus{},
+		client:             client,
+		expirationDuration: DefaultExpirationDuration,
+		tokens:             map[types.NamespacedName]*authenticationv1.TokenRequestStatus{},
 	}
 
 	for _, opt := range options {
@@ -52,12 +49,6 @@ func WithExpirationDuration(expirationDuration time.Duration) TokenGetterOption 
 	}
 }
 
-func WithRemoveAfterExpiredDuration(removeAfterExpiredDuration time.Duration) TokenGetterOption {
-	return func(tg *TokenGetter) {
-		tg.removeAfterExpiredDuration = removeAfterExpiredDuration
-	}
-}
-
 // Get returns a token from the cache if available and not expiring, otherwise creates a new token
 func (t *TokenGetter) Get(ctx context.Context, key types.NamespacedName) (string, error) {
 	t.mu.RLock()
@@ -69,8 +60,8 @@ func (t *TokenGetter) Get(ctx context.Context, key types.NamespacedName) (string
 		expireTime = token.ExpirationTimestamp.Time
 	}
 
-	// Create a new token if the cached token expires within DurationPercentage of expirationDuration from now
-	rotationThresholdAfterNow := metav1.Now().Add(t.expirationDuration * (RotationThresholdPercentage / 100))
+	// Create a new token if the cached token expires within rotationThresholdFraction of expirationDuration from now
+	rotationThresholdAfterNow := metav1.Now().Add(time.Duration(float64(t.expirationDuration) * (rotationThresholdFraction)))
 	if expireTime.Before(rotationThresholdAfterNow) {
 		var err error
 		token, err = t.getToken(ctx, key)
@@ -82,8 +73,8 @@ func (t *TokenGetter) Get(ctx context.Context, key types.NamespacedName) (string
 		t.mu.Unlock()
 	}
 
-	// Delete tokens that have been expired for more than ExpiredDuration
-	t.reapExpiredTokens(t.removeAfterExpiredDuration)
+	// Delete tokens that have expired
+	t.reapExpiredTokens()
 
 	return token.Token, nil
 }
@@ -92,7 +83,7 @@ func (t *TokenGetter) getToken(ctx context.Context, key types.NamespacedName) (*
 	req, err := t.client.ServiceAccounts(key.Namespace).CreateToken(ctx,
 		key.Name,
 		&authenticationv1.TokenRequest{
-			Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: ptr.To[int64](int64(t.expirationDuration))},
+			Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: ptr.To[int64](int64(t.expirationDuration / time.Second))},
 		}, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
@@ -100,11 +91,11 @@ func (t *TokenGetter) getToken(ctx context.Context, key types.NamespacedName) (*
 	return &req.Status, nil
 }
 
-func (t *TokenGetter) reapExpiredTokens(expiredDuration time.Duration) {
+func (t *TokenGetter) reapExpiredTokens() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	for key, token := range t.tokens {
-		if metav1.Now().Sub(token.ExpirationTimestamp.Time) > expiredDuration {
+		if metav1.Now().Sub(token.ExpirationTimestamp.Time) > 0 {
 			delete(t.tokens, key)
 		}
 	}
