@@ -362,7 +362,10 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			return ctrl.Result{}, err
 		}
 	case stateNeedsUpgrade:
-		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, helmclient.AppendUpgradePostRenderer(post))
+		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(upgrade *action.Upgrade) error {
+			upgrade.Labels = map[string]string{labels.BundleNameKey: bundle.Name, labels.PackageNameKey: bundle.Package, labels.BundleVersionKey: bundleVersion.String()}
+			return nil
+		}, helmclient.AppendUpgradePostRenderer(post))
 		if err != nil {
 			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err))
 			return ctrl.Result{}, err
