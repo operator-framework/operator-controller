@@ -183,6 +183,9 @@ type ClusterExtensionStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:scope=Cluster
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Installed Version",type=string,JSONPath=`.status.installedBundle.version`
+//+kubebuilder:printcolumn:name="Resolved Version",type=string,JSONPath=`.status.resolvedBundle.version`
+//+kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
 // ClusterExtension is the Schema for the clusterextensions API
 type ClusterExtension struct {

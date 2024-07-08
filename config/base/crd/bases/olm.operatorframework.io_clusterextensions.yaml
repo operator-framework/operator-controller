@@ -14,7 +14,17 @@ spec:
     singular: clusterextension
   scope: Cluster
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.installedBundle.version
+      name: Installed Version
+      type: string
+    - jsonPath: .status.resolvedBundle.version
+      name: Resolved Version
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: ClusterExtension is the Schema for the clusterextensions API
