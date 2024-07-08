@@ -278,8 +278,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	switch unpackResult.State {
 	case rukpaksource.StatePending:
 		setStatusInstallFalseUnpackFailed(ext, unpackResult.Message)
-		setInstalledStatusConditionInstalledFalse(ext, "installation has not been attempted as unpack is pending")
-
+		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonUnpackFailed, "unpack pending")
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacked:
 		// TODO: https://github.com/operator-framework/rukpak/pull/897 merged, add finalizer to clean the stored bundles
