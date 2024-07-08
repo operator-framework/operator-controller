@@ -606,8 +606,8 @@ github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11 h1:eT
 github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11/go.mod h1:EmVJt97N+pfWFsli/ipXTBZqSG5F5KGQhm3c3IsGq1o=
 github.com/operator-framework/api v0.26.0 h1:YVntU2NkVl5zSLLwK5kFcH6P3oSvN9QDgTsY9mb4yUM=
 github.com/operator-framework/api v0.26.0/go.mod h1:3IxOwzVUeGxYlzfwKCcfCyS+q3EEhWA/4kv7UehbeyM=
-github.com/operator-framework/catalogd v0.16.0 h1:9J3Kg5ey5NptXReZ7J0ZAarXEz6RsWanfeWhurDtVh0=
-github.com/operator-framework/catalogd v0.16.0/go.mod h1:7zVv39zlmvJvRePtRzdMRqn8s/WRH4ALXMJCKNQMKmc=
+github.com/operator-framework/catalogd v0.17.0 h1:Vsl32qKf2nKbAnKNfJ6eREOkirx5+oxpUuSwMxGS/dc=
+github.com/operator-framework/catalogd v0.17.0/go.mod h1:7zVv39zlmvJvRePtRzdMRqn8s/WRH4ALXMJCKNQMKmc=
 github.com/operator-framework/helm-operator-plugins v0.2.2-0.20240520180534-f463c36fedf9 h1:f7/TMBpuIZEQ3JbD9UyP1L1ZCSLLWdR2aPN+A+dOHFY=
 github.com/operator-framework/helm-operator-plugins v0.2.2-0.20240520180534-f463c36fedf9/go.mod h1:ly6Bd9rSzmt37Wy6WtZHmA+IY9zG958MryJFLcVpCXw=
 github.com/operator-framework/operator-lib v0.14.0 h1:er+BgZymZD1im2wytLJiPLZpGALAX6N0gXaHx3PKbO4=
