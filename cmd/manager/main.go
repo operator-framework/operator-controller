@@ -176,7 +176,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	acg, err := helmclient.NewActionClientGetter(cfgGetter)
+	acg, err := helmclient.NewActionClientGetter(cfgGetter,
+		helmclient.WithFailureRollbacks(false),
+	)
 	if err != nil {
 		setupLog.Error(err, "unable to create helm client")
 		os.Exit(1)
