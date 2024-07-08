@@ -173,8 +173,10 @@ type BundleMetadata struct {
 }
 
 // ClusterExtensionStatus defines the observed state of ClusterExtension.
-// InstalledBundle should only be modified when a new bundle is successfully installed. This ensures that if you've previously successfully installed a bundle before, and an upgrade fails, it is still appropriately communicated to you that there is still a bundle that is currently installed and owned by the ClusterExtension.
 type ClusterExtensionStatus struct {
+	// InstalledBundle should only be modified when a new bundle is successfully installed. This ensures that if there
+	//  is a previously successfully installed a bundle, and an upgrade fails, it is still communicated that there is
+	//  still a bundle that is currently installed and owned by the ClusterExtension.
 	// +optional
 	InstalledBundle *BundleMetadata `json:"installedBundle,omitempty"`
 	// +optional
