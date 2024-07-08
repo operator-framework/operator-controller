@@ -41,6 +41,7 @@ import (
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/action"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
@@ -184,9 +185,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	acg, err := helmclient.NewActionClientGetter(cfgGetter,
+	acg, err := action.NewWrappedActionClientGetter(cfgGetter,
 		helmclient.WithFailureRollbacks(false),
 	)
+
 	if err != nil {
 		setupLog.Error(err, "unable to create helm client")
 		os.Exit(1)
