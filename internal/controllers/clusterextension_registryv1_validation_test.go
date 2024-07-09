@@ -121,12 +121,16 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 			}
 
 			installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+			serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 			extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 			clusterExtension := &ocv1alpha1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
 					PackageName:      tt.bundle.Package,
 					InstallNamespace: installNamespace,
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: serviceAccount,
+					},
 				},
 			}
 			require.NoError(t, cl.Create(ctx, clusterExtension))

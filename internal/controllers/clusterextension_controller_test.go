@@ -56,6 +56,9 @@ func TestClusterExtensionNonExistentPackage(t *testing.T) {
 		Spec: ocv1alpha1.ClusterExtensionSpec{
 			PackageName:      pkgName,
 			InstallNamespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: "default",
+			},
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -98,6 +101,9 @@ func TestClusterExtensionNonExistentVersion(t *testing.T) {
 			PackageName:      pkgName,
 			Version:          "0.50.0", // this version of the package does not exist
 			InstallNamespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: "default",
+			},
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -147,6 +153,7 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
 	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -155,6 +162,9 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 			Version:          pkgVer,
 			Channel:          pkgChan,
 			InstallNamespace: installNamespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
+			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -206,6 +216,8 @@ func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
 	pkgVer := ""
 	pkgChan := "beta"
 	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
+
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
@@ -213,6 +225,9 @@ func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
 			Version:          pkgVer,
 			Channel:          pkgChan,
 			InstallNamespace: installNamespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
+			},
 		},
 	}
 	err := cl.Create(ctx, clusterExtension)
@@ -265,6 +280,9 @@ func TestClusterExtensionVersionNoChannel(t *testing.T) {
 			Version:          pkgVer,
 			Channel:          pkgChan,
 			InstallNamespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: "default",
+			},
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -313,6 +331,9 @@ func TestClusterExtensionNoChannel(t *testing.T) {
 			PackageName:      pkgName,
 			Channel:          pkgChan,
 			InstallNamespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: "default",
+			},
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -363,6 +384,9 @@ func TestClusterExtensionNoVersion(t *testing.T) {
 			Version:          pkgVer,
 			Channel:          pkgChan,
 			InstallNamespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: "default",
+			},
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))
@@ -443,6 +467,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		pkgVer := "1.0.0"
 		pkgChan := "beta"
 		installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+		serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 		extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 		clusterExtension := &ocv1alpha1.ClusterExtension{
 			ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -451,6 +476,9 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 				Version:          pkgVer,
 				Channel:          pkgChan,
 				InstallNamespace: installNamespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		}
 		// Create a cluster extension
@@ -543,6 +571,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 		pkgVer := "1.0.0"
 		pkgChan := "beta"
 		installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+		serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 		extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 		clusterExtension := &ocv1alpha1.ClusterExtension{
 			ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -551,6 +580,9 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 				Version:          pkgVer,
 				Channel:          pkgChan,
 				InstallNamespace: installNamespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		}
 		// Create a cluster extension
@@ -654,6 +686,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 				}()
 
 				installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+				serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 				extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 				clusterExtension := &ocv1alpha1.ClusterExtension{
 					ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -663,6 +696,9 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 						Channel:                 "beta",
 						UpgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyIgnore,
 						InstallNamespace:        installNamespace,
+						ServiceAccount: ocv1alpha1.ServiceAccountReference{
+							Name: serviceAccount,
+						},
 					},
 				}
 				// Create a cluster extension
@@ -754,6 +790,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				}()
 
 				installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+				serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 				extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 				clusterExtension := &ocv1alpha1.ClusterExtension{
 					ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -762,6 +799,9 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 						Version:          "1.0.1",
 						Channel:          "beta",
 						InstallNamespace: installNamespace,
+						ServiceAccount: ocv1alpha1.ServiceAccountReference{
+							Name: serviceAccount,
+						},
 					},
 				}
 				// Create a cluster extension
@@ -842,6 +882,7 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 				}()
 
 				installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+				serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 				extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
 				clusterExtension := &ocv1alpha1.ClusterExtension{
 					ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
@@ -851,6 +892,9 @@ func TestClusterExtensionDowngrade(t *testing.T) {
 						Channel:                 "beta",
 						UpgradeConstraintPolicy: ocv1alpha1.UpgradeConstraintPolicyIgnore,
 						InstallNamespace:        installNamespace,
+						ServiceAccount: ocv1alpha1.ServiceAccountReference{
+							Name: serviceAccount,
+						},
 					},
 				}
 				// Create a cluster extension
@@ -1461,6 +1505,9 @@ func TestClusterExtensionErrorGettingBundles(t *testing.T) {
 		Spec: ocv1alpha1.ClusterExtensionSpec{
 			PackageName:      "prometheus",
 			InstallNamespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: "default",
+			},
 		},
 	}
 	require.NoError(t, cl.Create(ctx, clusterExtension))

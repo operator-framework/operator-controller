@@ -83,6 +83,19 @@ type ClusterExtensionSpec struct {
 	//+kubebuilder:Optional
 	// Preflight defines the configuration of preflight checks.
 	Preflight *PreflightConfig `json:"preflight,omitempty"`
+
+	// ServiceAccount is used to install and manage resources.
+	// The service account is expected to exist in the InstallNamespace.
+	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
+}
+
+// ServiceAccountReference references a serviceAccount.
+type ServiceAccountReference struct {
+	// name is the metadata.name of the referenced serviceAccount object.
+	//+kubebuilder:validation:MaxLength:=253
+	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([.|-][a-z0-9]+)*$
+	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
+	Name string `json:"name"`
 }
 
 // PreflightConfig holds the configuration for the preflight checks.
