@@ -90,8 +90,11 @@ spec:
   selector:
     app: registry
   ports:
-  - port: 5000
+  - name: http
+    port: 5000
     targetPort: 5000
+    nodePort: 30000
+  type: NodePort
 EOF
 
 kubectl wait --for=condition=Available -n "${namespace}" "deploy/${name}" --timeout=60s
