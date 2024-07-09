@@ -98,16 +98,6 @@ func setStatusUnpackFailed(ext *ocv1alpha1.ClusterExtension, message string) {
 	})
 }
 
-func setStatusInstallFalseUnpackFailed(ext *ocv1alpha1.ClusterExtension, message string) {
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeUnpacked,
-		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonUnpackFailed,
-		Message:            message,
-		ObservedGeneration: ext.GetGeneration(),
-	})
-}
-
 func setStatusUnpacked(ext *ocv1alpha1.ClusterExtension, message string) {
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeUnpacked,
