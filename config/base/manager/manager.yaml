@@ -101,7 +101,7 @@ spec:
           periodSeconds: 10
         resources:
           requests:
-            cpu: 1000m
+            cpu: 100m
             memory: 200Mi
         imagePullPolicy: IfNotPresent
         terminationMessagePolicy: FallbackToLogsOnError
