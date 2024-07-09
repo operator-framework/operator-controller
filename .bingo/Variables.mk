@@ -47,6 +47,12 @@ $(KIND): $(BINGO_DIR)/kind.mod
 	@echo "(re)installing $(GOBIN)/kind-v0.22.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kind.mod -o=$(GOBIN)/kind-v0.22.0 "sigs.k8s.io/kind"
 
+KUBEFWD := $(GOBIN)/kubefwd-v1.22.3
+$(KUBEFWD): $(BINGO_DIR)/kubefwd.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/kubefwd-v1.22.3"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kubefwd.mod -o=$(GOBIN)/kubefwd-v1.22.3 "github.com/txn2/kubefwd/cmd/kubefwd"
+
 KUSTOMIZE := $(GOBIN)/kustomize-v4.5.7
 $(KUSTOMIZE): $(BINGO_DIR)/kustomize.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
