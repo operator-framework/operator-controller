@@ -12,10 +12,6 @@ set -e
 # Usage:
 # registry.sh
 
-# Install cert-manager
-kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/v1.13.1/cert-manager.yaml"
-kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
-
 # create the image registry with all the certs
 kubectl apply -f test/tools/imageregistry/imgreg.yaml
 kubectl wait -n catalogd-e2e --for=condition=Available deployment/docker-registry --timeout=60s
