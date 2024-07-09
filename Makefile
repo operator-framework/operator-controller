@@ -126,6 +126,7 @@ E2E_REGISTRY_NAMESPACE := operator-controller-e2e
 export REG_PKG_NAME := registry-operator
 export REGISTRY_ROOT := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000
 export CATALOG_IMG := $(REGISTRY_ROOT)/e2e/test-catalog:e2e
+export OPERATOR_CONTROLLER_NAMESPACE ?= olmv1-system
 .PHONY: test-ext-dev-e2e
 test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
