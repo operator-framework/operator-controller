@@ -78,6 +78,10 @@ import (
 	"github.com/operator-framework/operator-controller/internal/labels"
 )
 
+const (
+	maxHelmReleaseHistory = 10
+)
+
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
@@ -362,7 +366,11 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			return ctrl.Result{}, err
 		}
 	case stateNeedsUpgrade:
-		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, helmclient.AppendUpgradePostRenderer(post))
+		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(upgrade *action.Upgrade) error {
+			upgrade.MaxHistory = maxHelmReleaseHistory
+			upgrade.Labels = map[string]string{labels.BundleNameKey: bundle.Name, labels.PackageNameKey: bundle.Package, labels.BundleVersionKey: bundleVersion.String()}
+			return nil
+		}, helmclient.AppendUpgradePostRenderer(post))
 		if err != nil {
 			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err))
 			return ctrl.Result{}, err
@@ -675,6 +683,7 @@ func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterfa
 	if errors.Is(err, driver.ErrReleaseNotFound) {
 		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(i *action.Install) error {
 			i.DryRun = true
+			i.DryRunOption = "server"
 			return nil
 		}, helmclient.AppendInstallPostRenderer(post))
 		if err != nil {
@@ -683,7 +692,9 @@ func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterfa
 		return nil, desiredRelease, stateNeedsInstall, nil
 	}
 	desiredRelease, err := cl.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(upgrade *action.Upgrade) error {
+		upgrade.MaxHistory = maxHelmReleaseHistory
 		upgrade.DryRun = true
+		upgrade.DryRunOption = "server"
 		return nil
 	}, helmclient.AppendUpgradePostRenderer(post))
 	if err != nil {

@@ -39,6 +39,9 @@ func TestExtensionDeveloper(t *testing.T) {
 			Spec: ocv1alpha1.ClusterExtensionSpec{
 				PackageName:      os.Getenv("REG_PKG_NAME"),
 				InstallNamespace: "default",
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: "default",
+				},
 			},
 		},
 	}

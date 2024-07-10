@@ -11,7 +11,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/operator-framework/api v0.26.0
 	github.com/operator-framework/catalogd v0.17.0
-	github.com/operator-framework/helm-operator-plugins v0.2.2-0.20240520180534-f463c36fedf9
+	github.com/operator-framework/helm-operator-plugins v0.3.0
 	github.com/operator-framework/operator-registry v1.44.0
 	github.com/operator-framework/rukpak v0.24.0
 	github.com/spf13/pflag v1.0.5
@@ -241,7 +241,7 @@ require (
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240318140521-94a12d6c2237 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda // indirect
-	google.golang.org/grpc v1.64.0 // indirect
+	google.golang.org/grpc v1.64.1 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/evanphx/json-patch.v5 v5.6.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

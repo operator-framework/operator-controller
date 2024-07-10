@@ -6,3 +6,5 @@ spec:
   installNamespace: default
   packageName: argocd-operator
   version: 0.6.0
+  serviceAccount:
+    name: argocd-installer

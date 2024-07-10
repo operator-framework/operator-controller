@@ -45,6 +45,9 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
 				PackageName:      tc.pkgName,
 				InstallNamespace: "default",
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: "default",
+				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for package name %q: %w", tc.pkgName, err)
@@ -134,6 +137,9 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 				PackageName:      "package",
 				Version:          tc.version,
 				InstallNamespace: "default",
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: "default",
+				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for version %q: %w", tc.version, err)
@@ -179,6 +185,9 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 				PackageName:      "package",
 				Channel:          tc.channelName,
 				InstallNamespace: "default",
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: "default",
+				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for channel %q: %w", tc.channelName, err)
@@ -224,9 +233,60 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
 				PackageName:      "package",
 				InstallNamespace: tc.installNamespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: "default",
+				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for installNamespace %q: %w", tc.installNamespace, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errMsg)
+			}
+		})
+	}
+}
+
+func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
+	tooLongError := "spec.serviceAccount.name: Too long: may not be longer than 253"
+	regexMismatchError := "spec.serviceAccount.name in body should match"
+
+	testCases := []struct {
+		name           string
+		serviceAccount string
+		errMsg         string
+	}{
+		{"just alphanumeric", "justalphanumeric1", ""},
+		{"hypen-separated", "hyphenated-name", ""},
+		{"dot-separated", "dotted.name", ""},
+		{"longest valid service account name", strings.Repeat("x", 253), ""},
+		{"too long service account name", strings.Repeat("x", 254), tooLongError},
+		{"no service account name", "", regexMismatchError},
+		{"spaces", "spaces spaces", regexMismatchError},
+		{"capitalized", "Capitalized", regexMismatchError},
+		{"camel case", "camelCase", regexMismatchError},
+		{"invalid characters", "many/invalid$characters+in_name", regexMismatchError},
+		{"starts with hyphen", "-start-with-hyphen", regexMismatchError},
+		{"ends with hyphen", "end-with-hyphen-", regexMismatchError},
+		{"starts with period", ".start-with-period", regexMismatchError},
+		{"ends with period", "end-with-period.", regexMismatchError},
+	}
+
+	t.Parallel()
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
+				PackageName:      "package",
+				InstallNamespace: "default",
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: tc.serviceAccount,
+				},
+			}))
+			if tc.errMsg == "" {
+				require.NoError(t, err, "unexpected error for service account name %q: %w", tc.serviceAccount, err)
 			} else {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errMsg)
