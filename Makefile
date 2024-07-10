@@ -170,13 +170,13 @@ kind-load: $(KIND) #EXHELP Loads the currently constructed image onto the cluste
 .PHONY: kind-deploy
 kind-deploy: export MANIFEST="./operator-controller.yaml"
 kind-deploy: manifests $(KUSTOMIZE) #EXHELP Install controller and dependencies onto the kind cluster.
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) > operator-controller.yaml
+	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) > $(MANIFEST)
 	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: kind-redeploy
+kind-redeploy: OPERATOR_CONTROLLER_NAMESPACE ?= olmv1-system
 kind-redeploy: generate docker-build kind-load kind-deploy #EXHELP Redeploy newly built executables
 	kubectl delete pod -l control-plane=controller-manager -n $(OPERATOR_CONTROLLER_NAMESPACE)
-	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
