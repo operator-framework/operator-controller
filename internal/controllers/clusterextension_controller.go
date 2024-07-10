@@ -62,12 +62,6 @@ import (
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
-	rukpakv1alpha2 "github.com/operator-framework/rukpak/api/v1alpha2"
-	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
-	crdupgradesafety "github.com/operator-framework/rukpak/pkg/preflights/crdupgradesafety"
-	rukpaksource "github.com/operator-framework/rukpak/pkg/source"
-	"github.com/operator-framework/rukpak/pkg/storage"
-	"github.com/operator-framework/rukpak/pkg/util"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
@@ -76,6 +70,12 @@ import (
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
+	"github.com/operator-framework/operator-controller/internal/rukpak/bundledeployment"
+	registryv1handler "github.com/operator-framework/operator-controller/internal/rukpak/handler"
+	crdupgradesafety "github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
+	rukpaksource "github.com/operator-framework/operator-controller/internal/rukpak/source"
+	"github.com/operator-framework/operator-controller/internal/rukpak/storage"
+	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 )
 
 const (
@@ -284,7 +284,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	case rukpaksource.StateUnpacked:
 		// TODO: Add finalizer to clean the stored bundles, after https://github.com/operator-framework/rukpak/pull/897
 		// merges.
-		if err := r.Storage.Store(ctx, ext, unpackResult.Bundle); err != nil {
+		if err := r.Storage.Store(ctx, ext.GetName(), unpackResult.Bundle); err != nil {
 			setStatusUnpackFailed(ext, err.Error())
 			return ctrl.Result{}, err
 		}
@@ -295,7 +295,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", unpackResult.Message)
 	}
 
-	bundleFS, err := r.Storage.Load(ctx, ext)
+	bundleFS, err := r.Storage.Load(ctx, ext.GetName())
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, err.Error())
 		return ctrl.Result{}, err
@@ -576,25 +576,18 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetad
 	}
 }
 
-func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(ctx context.Context, bundlePath string, ce *ocv1alpha1.ClusterExtension) *rukpakv1alpha2.BundleDeployment {
+func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(ctx context.Context, bundlePath string, ce *ocv1alpha1.ClusterExtension) *bundledeployment.BundleDeployment {
 	certData, err := httputil.LoadCerts(r.CaCertDir)
 	if err != nil {
 		log.FromContext(ctx).WithName("operator-controller").WithValues("cluster-extension", ce.GetName()).Error(err, "unable to get TLS certificate")
 	}
-	return &rukpakv1alpha2.BundleDeployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       ce.Kind,
-			APIVersion: ce.APIVersion,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: ce.Name,
-			UID:  ce.UID,
-		},
-		Spec: rukpakv1alpha2.BundleDeploymentSpec{
+	return &bundledeployment.BundleDeployment{
+		Name: ce.Name,
+		Spec: bundledeployment.BundleDeploymentSpec{
 			InstallNamespace: ce.Spec.InstallNamespace,
-			Source: rukpakv1alpha2.BundleSource{
-				Type: rukpakv1alpha2.SourceTypeImage,
-				Image: &rukpakv1alpha2.ImageSource{
+			Source: bundledeployment.BundleSource{
+				Type: bundledeployment.SourceTypeImage,
+				Image: &bundledeployment.ImageSource{
 					Ref:             bundlePath,
 					CertificateData: certData,
 				},

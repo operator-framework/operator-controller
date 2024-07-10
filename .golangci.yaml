@@ -5,7 +5,6 @@
 #    - operator-framework/kubectl-operator
 #    - operator-framework/catalogd
 #    - operator-framework/operator-controller
-#    - operator-framework/rukpak
 #
 #  If you are making a change, please make it in ALL
 #  of the above repositories!
@@ -67,8 +66,6 @@ linters-settings:
       alias: $1$2
     - pkg: sigs.k8s.io/controller-runtime
       alias: ctrl
-    - pkg: github.com/operator-framework/rukpak/api/v1alpha2
-      alias: rukpakv1alpha2
     - pkg: github.com/blang/semver/v4
       alias: bsemver
 

@@ -22,12 +22,12 @@ import (
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
-	"github.com/operator-framework/rukpak/pkg/source"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 	"github.com/operator-framework/operator-controller/internal/testutil"
 	"github.com/operator-framework/operator-controller/pkg/features"
 )
@@ -140,7 +140,7 @@ func TestClusterExtensionChannelVersionExists(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t, nil)
 	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpacked
-	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
+	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*bundledeployment.BundleDeployment")).Return(&source.Result{
 		State: source.StatePending,
 	}, nil)
 
@@ -203,7 +203,7 @@ func TestClusterExtensionChannelExistsNoVersion(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t, nil)
 	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpacked
-	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
+	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*bundledeployment.BundleDeployment")).Return(&source.Result{
 		State: source.StatePending,
 	}, nil)
 
@@ -445,7 +445,7 @@ func verifyConditionsInvariants(t *testing.T, ext *ocv1alpha1.ClusterExtension) 
 func TestClusterExtensionUpgrade(t *testing.T) {
 	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpackPending
-	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
+	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*bundledeployment.BundleDeployment")).Return(&source.Result{
 		State: source.StatePending,
 	}, nil)
 	ctx := context.Background()
@@ -757,7 +757,7 @@ func TestClusterExtensionUpgrade(t *testing.T) {
 func TestClusterExtensionDowngrade(t *testing.T) {
 	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpacked
-	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
+	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*bundledeployment.BundleDeployment")).Return(&source.Result{
 		State: source.StatePending,
 	}, nil)
 	ctx := context.Background()
