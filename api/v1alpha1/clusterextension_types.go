@@ -176,7 +176,7 @@ type BundleMetadata struct {
 	Version string `json:"version"`
 }
 
-// ClusterExtensionStatus defines the observed state of ClusterExtension.
+// ClusterExtensionStatus defines the observed state of ClusterExtension
 type ClusterExtensionStatus struct {
 	// InstalledBundle should only be modified when a new bundle is successfully installed. This ensures that if there
 	//  is a previously successfully installed a bundle, and an upgrade fails, it is still communicated that there is

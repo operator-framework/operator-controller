@@ -113,7 +113,7 @@ spec:
             - serviceAccount
             type: object
           status:
-            description: ClusterExtensionStatus defines the observed state of ClusterExtension.
+            description: ClusterExtensionStatus defines the observed state of ClusterExtension
             properties:
               conditions:
                 items:
