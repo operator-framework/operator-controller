@@ -54,6 +54,22 @@ func setResolvedStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message 
 	})
 }
 
+// setInstalledStatusConditionProgressing sets the installed status condition to progressing.
+func setInstalledStatusConditionProgressing(ext *ocv1alpha1.ClusterExtension, message string) {
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeProgressing, // Use the new condition type
+		Status:             metav1.ConditionTrue,       // Set to True to indicate in progress
+		Reason:             ocv1alpha1.ReasonInstallationInProgress,
+		Message:            message,
+		ObservedGeneration: ext.GetGeneration(),
+	})
+}
+
+// clearInstalledStatusConditionProgressing clears the progressing condition.
+func clearInstalledStatusConditionProgressing(ext *ocv1alpha1.ClusterExtension) {
+	apimeta.RemoveStatusCondition(&ext.Status.Conditions, ocv1alpha1.TypeProgressing)
+}
+
 // setInstalledStatusConditionSuccess sets the installed status condition to success.
 func setInstalledStatusConditionSuccess(ext *ocv1alpha1.ClusterExtension, message string) {
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{

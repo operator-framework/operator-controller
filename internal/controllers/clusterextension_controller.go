@@ -212,47 +212,30 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 */
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
-	finalizeResult, err := r.Finalizers.Finalize(ctx, ext)
-	if err != nil {
-		// TODO: For now, this error handling follows the pattern of other error handling.
-		//  Namely: zero just about everything out, throw our hands up, and return an error.
-		//  This is not ideal, and we should consider a more nuanced approach that resolves
-		//  as much status as possible before returning, or at least keeps previous state if
-		//  it is properly labeled with its observed generation.
-		ext.Status.ResolvedBundle = nil
-		ext.Status.InstalledBundle = nil
-		setResolvedStatusConditionFailed(ext, err.Error())
-		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
-		return ctrl.Result{}, err
-	}
-	if finalizeResult.Updated || finalizeResult.StatusUpdated {
-		// On create: make sure the finalizer is applied before we do anything
-		// On delete: make sure we do nothing after the finalizer is removed
-		return ctrl.Result{}, nil
+	log := log.FromContext(ctx)
+
+	// 1. Handle Finalization
+	if result, err := r.handleFinalization(ctx, ext); err != nil || result.Requeue {
+		return result, err
 	}
 
-	// run resolution
-	bundle, err := r.resolve(ctx, *ext)
+	// 2. Resolve Bundle
+	bundle, err := r.resolveBundle(ctx, ext)
 	if err != nil {
-		// Note: We don't distinguish between resolution-specific errors and generic errors
-		ext.Status.ResolvedBundle = nil
-		ext.Status.InstalledBundle = nil
 		setResolvedStatusConditionFailed(ext, err.Error())
 		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
 		return ctrl.Result{}, err
 	}
 
-	if err := r.validateBundle(bundle); err != nil {
-		ext.Status.ResolvedBundle = nil
-		ext.Status.InstalledBundle = nil
+	// 3. Validate and Check Deprecation
+	if err := r.validateAndCheckDeprecation(bundle, ext); err != nil {
 		setResolvedStatusConditionFailed(ext, err.Error())
 		setInstalledStatusConditionFailed(ext, err.Error())
 		setDeprecationStatusesUnknown(ext, "deprecation checks have not been attempted as installation has failed")
 		return ctrl.Result{}, err
 	}
-	// set deprecation status after _successful_ resolution
-	SetDeprecationStatus(ext, bundle)
 
+	// 4. Get Bundle Version
 	bundleVersion, err := bundle.Version()
 	if err != nil {
 		ext.Status.ResolvedBundle = nil
@@ -262,43 +245,30 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
+	// 5. Get Installed Bundle
+	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, ext)
+	if err != nil {
+		log.Error(err, "Error determining installed bundle, continuing reconciliation")
+	}
+
+	// 6. Update Resolved Bundle Status
 	ext.Status.ResolvedBundle = bundleMetadataFor(bundle)
 	setResolvedStatusConditionSuccess(ext, fmt.Sprintf("resolved to %q", bundle.Image))
 
-	// Generate a BundleDeployment from the ClusterExtension to Unpack.
-	// Note: The BundleDeployment here is not a k8s API, its a simple Go struct which
-	// necessary embedded values.
-	bd := r.generateBundleDeploymentForUnpack(ctx, bundle.Image, ext)
-	unpackResult, err := r.Unpacker.Unpack(ctx, bd)
-	if err != nil {
-		setStatusUnpackFailed(ext, err.Error())
-		return ctrl.Result{}, err
+	// 7. Unpack Bundle
+	if result, err := r.unpackBundle(ctx, ext, bundle); err != nil || result.Requeue {
+		return result, err
 	}
 
-	switch unpackResult.State {
-	case rukpaksource.StatePending:
-		setStatusUnpackFailed(ext, unpackResult.Message)
-		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonUnpackFailed, "unpack pending")
-		return ctrl.Result{}, nil
-	case rukpaksource.StateUnpacked:
-		// TODO: https://github.com/operator-framework/rukpak/pull/897 merged, add finalizer to clean the stored bundles
-		if err := r.Storage.Store(ctx, ext, unpackResult.Bundle); err != nil {
-			setStatusUnpackFailed(ext, err.Error())
-			return ctrl.Result{}, err
-		}
-		setStatusUnpacked(ext, fmt.Sprintf("unpack successful: %v", unpackResult.Message))
-	default:
-		setStatusUnpackFailed(ext, "unexpected unpack status")
-		// We previously exit with a failed status if error is not nil.
-		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", unpackResult.Message)
-	}
-
+	// 8. Load Bundle from Storage
 	bundleFS, err := r.Storage.Load(ctx, ext)
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, err.Error())
 		return ctrl.Result{}, err
 	}
 
+	// 9. Handle Bundle and Get Action Client
+	bd := r.generateBundleDeploymentForUnpack(ctx, bundle.Image, ext)
 	chrt, values, err := r.Handler.Handle(ctx, bundleFS, bd)
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, err.Error())
@@ -312,6 +282,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
+	// 10. Set up postrenderer
 	post := &postrenderer{
 		labels: map[string]string{
 			labels.OwnerKindKey:     ocv1alpha1.ClusterExtensionKind,
@@ -322,104 +293,71 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		},
 	}
 
+	// 11. Determine Release State and Handle Progressing Status
 	rel, desiredRel, state, err := r.getReleaseState(ac, ext, chrt, values, post)
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingReleaseState, err))
 		return ctrl.Result{}, err
 	}
 
-	for _, preflight := range r.Preflights {
-		if ext.Spec.Preflight != nil && ext.Spec.Preflight.CRDUpgradeSafety != nil {
-			if _, ok := preflight.(*crdupgradesafety.Preflight); ok && ext.Spec.Preflight.CRDUpgradeSafety.Disabled {
-				// Skip this preflight check because it is of type *crdupgradesafety.Preflight and the CRD Upgrade Safety
-				// preflight check has been disabled
-				continue
-			}
-		}
-		switch state {
-		case stateNeedsInstall:
-			err := preflight.Install(ctx, desiredRel)
-			if err != nil {
-				setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
-				return ctrl.Result{}, err
-			}
-		case stateNeedsUpgrade:
-			err := preflight.Upgrade(ctx, desiredRel)
-			if err != nil {
-				setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
-				return ctrl.Result{}, err
-			}
-		}
+	// Check if the resolved bundle is different from the installed bundle
+	if installedBundle != nil && bundleVersion.String() != installedBundle.Version {
+		setInstalledStatusConditionProgressing(ext, "New version resolved, installation in progress")
+		ext.Status.InstalledBundle = installedBundle // Keep the old bundle in status
+	} else {
+		// If they are the same, or no bundle is installed, update the status and clear Progressing
+		ext.Status.InstalledBundle = bundleMetadataFor(bundle)
+		clearInstalledStatusConditionProgressing(ext) // Clear the Progressing condition
 	}
 
-	switch state {
-	case stateNeedsInstall:
-		rel, err = ac.Install(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(install *action.Install) error {
-			install.CreateNamespace = false
-			install.Labels = map[string]string{labels.BundleNameKey: bundle.Name, labels.PackageNameKey: bundle.Package, labels.BundleVersionKey: bundleVersion.String()}
-			return nil
-		}, helmclient.AppendInstallPostRenderer(post))
-		if err != nil {
-			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
-			return ctrl.Result{}, err
-		}
-	case stateNeedsUpgrade:
-		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(upgrade *action.Upgrade) error {
-			upgrade.MaxHistory = maxHelmReleaseHistory
-			upgrade.Labels = map[string]string{labels.BundleNameKey: bundle.Name, labels.PackageNameKey: bundle.Package, labels.BundleVersionKey: bundleVersion.String()}
-			return nil
-		}, helmclient.AppendUpgradePostRenderer(post))
-		if err != nil {
-			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err))
-			return ctrl.Result{}, err
-		}
-	case stateUnchanged:
-		if err := ac.Reconcile(rel); err != nil {
-			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonResolutionFailed, err))
-			return ctrl.Result{}, err
-		}
-	default:
-		return ctrl.Result{}, fmt.Errorf("unexpected release state %q", state)
+	// 12. Preflight Checks
+	if err := r.runPreflightChecks(ctx, ext, state, desiredRel); err != nil {
+		return ctrl.Result{}, err
 	}
 
-	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
+	// 13. Install or Upgrade
+	rel, err = r.installOrUpgrade(state, ac, ext, chrt, values, post, rel)
 	if err != nil {
+		setInstalledStatusConditionFailed(ext, err.Error()) // Set detailed error message
+		return ctrl.Result{}, err
+	}
+
+	// 14. Reconcile Release
+	if err := ac.Reconcile(rel); err != nil {
+		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonResolutionFailed, err))
+		return ctrl.Result{}, err
+	}
+
+	// 15. Watch Dynamically Created Resources
+	if err := r.watchDynamicResources(ctx, ext, rel); err != nil {
 		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
 		return ctrl.Result{}, err
 	}
 
-	for _, obj := range relObjects {
-		if err := func() error {
-			r.dynamicWatchMutex.Lock()
-			defer r.dynamicWatchMutex.Unlock()
-
-			_, isWatched := r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()]
-			if !isWatched {
-				if err := r.controller.Watch(
-					source.Kind(r.cache,
-						obj,
-						crhandler.EnqueueRequestForOwner(r.Scheme(), r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
-					),
-				); err != nil {
-					return err
-				}
-				r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()] = sets.Empty{}
-			}
-			return nil
-		}(); err != nil {
-			ext.Status.InstalledBundle = nil
-			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
-			return ctrl.Result{}, err
-		}
-	}
-	ext.Status.InstalledBundle = bundleMetadataFor(bundle)
+	// 16. Final Status Update
 	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Instantiated bundle %s successfully", ext.GetName()))
 
 	return ctrl.Result{}, nil
 }
 
-// resolve returns a Bundle from the catalog that needs to get installed on the cluster.
-func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
+// handleFinalization manages finalizer logic.
+func (r *ClusterExtensionReconciler) handleFinalization(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
+	finalizeResult, err := r.Finalizers.Finalize(ctx, ext)
+	if err != nil {
+		ext.Status.ResolvedBundle = nil
+		ext.Status.InstalledBundle = nil
+		setResolvedStatusConditionFailed(ext, err.Error())
+		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
+		return ctrl.Result{}, err
+	}
+	if finalizeResult.Updated || finalizeResult.StatusUpdated {
+		return ctrl.Result{}, nil // Exit early if finalizer was changed
+	}
+	return ctrl.Result{}, nil
+}
+
+// resolveBundle resolves the bundle based on the ClusterExtension spec.
+func (r *ClusterExtensionReconciler) resolveBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*catalogmetadata.Bundle, error) {
 	packageName := ext.Spec.PackageName
 	channelName := ext.Spec.Channel
 	versionRange := ext.Spec.Version
@@ -429,7 +367,7 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 		return nil, fmt.Errorf("error fetching bundles: %w", err)
 	}
 
-	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, &ext)
+	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -490,6 +428,99 @@ func (r *ClusterExtensionReconciler) resolve(ctx context.Context, ext ocv1alpha1
 	})
 
 	return resultSet[0], nil
+}
+
+// validateAndCheckDeprecation validates the bundle and checks for deprecation.
+func (r *ClusterExtensionReconciler) validateAndCheckDeprecation(bundle *catalogmetadata.Bundle, ext *ocv1alpha1.ClusterExtension) error {
+	if err := r.validateBundle(bundle); err != nil {
+		return err
+	}
+	SetDeprecationStatus(ext, bundle)
+	return nil
+}
+
+func (r *ClusterExtensionReconciler) unpackBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension, bundle *catalogmetadata.Bundle) (ctrl.Result, error) {
+	// Generate a BundleDeployment from the ClusterExtension to Unpack
+	bd := r.generateBundleDeploymentForUnpack(ctx, bundle.Image, ext)
+	unpackResult, err := r.Unpacker.Unpack(ctx, bd)
+	if err != nil {
+		setStatusUnpackFailed(ext, err.Error())
+		return ctrl.Result{}, err
+	}
+
+	switch unpackResult.State {
+	case rukpaksource.StatePending:
+		setStatusUnpackFailed(ext, unpackResult.Message)
+		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonUnpackFailed, "unpack pending")
+		return ctrl.Result{}, nil // Don't requeue immediately if pending
+	case rukpaksource.StateUnpacked:
+		// TODO: Add finalizer to clean the stored bundles after https://github.com/operator-framework/rukpak/pull/897 is merged
+		if err := r.Storage.Store(ctx, ext, unpackResult.Bundle); err != nil {
+			setStatusUnpackFailed(ext, err.Error())
+			return ctrl.Result{}, err
+		}
+		setStatusUnpacked(ext, fmt.Sprintf("unpack successful: %v", unpackResult.Message))
+	default:
+		setStatusUnpackFailed(ext, "unexpected unpack status")
+		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", unpackResult.Message)
+	}
+
+	return ctrl.Result{}, nil // Successfully unpacked
+}
+
+// runPreflightChecks performs preflight checks based on the installation state.
+func (r *ClusterExtensionReconciler) runPreflightChecks(ctx context.Context, ext *ocv1alpha1.ClusterExtension, state releaseState, desiredRel *release.Release) error {
+	for _, preflight := range r.Preflights {
+		// Skip CRD Upgrade Safety preflight check if disabled
+		if ext.Spec.Preflight != nil && ext.Spec.Preflight.CRDUpgradeSafety != nil {
+			if _, ok := preflight.(*crdupgradesafety.Preflight); ok && ext.Spec.Preflight.CRDUpgradeSafety.Disabled {
+				continue
+			}
+		}
+
+		switch state {
+		case stateNeedsInstall:
+			if err := preflight.Install(ctx, desiredRel); err != nil {
+				setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
+				return err
+			}
+		case stateNeedsUpgrade:
+			if err := preflight.Upgrade(ctx, desiredRel); err != nil {
+				setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err))
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// installOrUpgrade installs or upgrades the Helm release based on the release state.
+func (r *ClusterExtensionReconciler) installOrUpgrade(state releaseState, ac helmclient.ActionInterface, ext *ocv1alpha1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post *postrenderer, rel *release.Release) (*release.Release, error) {
+	switch state {
+	case stateNeedsInstall:
+		rel, err := ac.Install(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(install *action.Install) error {
+			install.CreateNamespace = false
+			install.Labels = post.labels
+			return nil
+		}, helmclient.AppendInstallPostRenderer(post))
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", ocv1alpha1.ReasonInstallationFailed, err)
+		}
+		return rel, nil
+
+	case stateNeedsUpgrade:
+		rel, err := ac.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, helmclient.AppendUpgradePostRenderer(post))
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", ocv1alpha1.ReasonUpgradeFailed, err)
+		}
+		return rel, nil
+
+	case stateUnchanged:
+		return rel, nil // No changes needed
+
+	default:
+		return nil, fmt.Errorf("unexpected release state %q", state)
+	}
 }
 
 // SetDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
@@ -793,5 +824,35 @@ func (r *ClusterExtensionReconciler) validateBundle(bundle *catalogmetadata.Bund
 		}
 	}
 
+	return nil
+}
+
+// watchDynamicResources watches dynamically created resources from the Helm release.
+func (r *ClusterExtensionReconciler) watchDynamicResources(ctx context.Context, ext *ocv1alpha1.ClusterExtension, rel *release.Release) error {
+	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
+	if err != nil {
+		return fmt.Errorf("failed to parse manifest objects: %w", err)
+	}
+
+	for _, obj := range relObjects {
+		if err := func() error {
+			r.dynamicWatchMutex.Lock()
+			defer r.dynamicWatchMutex.Unlock()
+
+			gvk := obj.GetObjectKind().GroupVersionKind()
+			_, isWatched := r.dynamicWatchGVKs[gvk]
+			if !isWatched {
+				if err := r.controller.Watch(
+					source.Kind(r.cache, obj, crhandler.EnqueueRequestForOwner(r.Scheme(), r.RESTMapper(), ext, crhandler.OnlyControllerOwner())),
+				); err != nil {
+					return err
+				}
+				r.dynamicWatchGVKs[gvk] = sets.Empty{}
+			}
+			return nil
+		}(); err != nil {
+			return err // Return error from the inner function
+		}
+	}
 	return nil
 }

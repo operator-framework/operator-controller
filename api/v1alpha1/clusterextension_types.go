@@ -124,12 +124,14 @@ const (
 	TypeChannelDeprecated = "ChannelDeprecated"
 	TypeBundleDeprecated  = "BundleDeprecated"
 	TypeUnpacked          = "Unpacked"
+	TypeProgressing       = "Progressing"
 
 	ReasonErrorGettingClient = "ErrorGettingClient"
 	ReasonBundleLoadFailed   = "BundleLoadFailed"
 
-	ReasonInstallationFailed = "InstallationFailed"
-	ReasonResolutionFailed   = "ResolutionFailed"
+	ReasonInstallationFailed     = "InstallationFailed"
+	ReasonInstallationInProgress = "InstallationInProgress"
+	ReasonResolutionFailed       = "ResolutionFailed"
 
 	ReasonSuccess       = "Success"
 	ReasonDeprecated    = "Deprecated"
@@ -151,6 +153,7 @@ func init() {
 		TypeChannelDeprecated,
 		TypeBundleDeprecated,
 		TypeUnpacked,
+		TypeProgressing,
 	)
 	// TODO(user): add Reasons from above
 	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
@@ -164,6 +167,7 @@ func init() {
 		ReasonUnpackSuccess,
 		ReasonUnpackFailed,
 		ReasonErrorGettingReleaseState,
+		ReasonInstallationInProgress,
 	)
 }
 
