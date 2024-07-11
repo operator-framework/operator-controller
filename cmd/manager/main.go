@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
@@ -39,9 +40,17 @@ import (
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
+	crdupgradesafety "github.com/operator-framework/rukpak/pkg/preflights/crdupgradesafety"
+	"github.com/operator-framework/rukpak/pkg/provisioner/registry"
+	"github.com/operator-framework/rukpak/pkg/source"
+	"github.com/operator-framework/rukpak/pkg/storage"
+	"k8s.io/apimachinery/pkg/types"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/rest"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/action"
+	"github.com/operator-framework/operator-controller/internal/authentication"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
@@ -158,9 +167,34 @@ func main() {
 		ext := obj.(*ocv1alpha1.ClusterExtension)
 		return ext.Spec.InstallNamespace, nil
 	})
+	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		setupLog.Error(err, "unable to create core client")
+		os.Exit(1)
+	}
+	tokenGetter := authentication.NewTokenGetter(coreClient, authentication.WithExpirationDuration(1*time.Hour))
+
+	restConfigMapper := func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
+		cExt, ok := o.(*ocv1alpha1.ClusterExtension)
+		if !ok {
+			return c, nil
+		}
+		namespacedName := types.NamespacedName{
+			Name:      cExt.Spec.ServiceAccount.Name,
+			Namespace: cExt.Spec.InstallNamespace,
+		}
+		token, err := tokenGetter.Get(ctx, namespacedName)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to extract SA token, %w", err)
+		}
+		tempConfig := rest.CopyConfig(c)
+		tempConfig.BearerToken = token
+		return tempConfig, nil
+	}
 	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
 		helmclient.StorageNamespaceMapper(installNamespaceMapper),
 		helmclient.ClientNamespaceMapper(installNamespaceMapper),
+		helmclient.RestConfigMapper(restConfigMapper),
 	)
 	if err != nil {
 		setupLog.Error(err, "unable to config for creating helm client")
