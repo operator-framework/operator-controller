@@ -187,7 +187,7 @@ func main() {
 		if err != nil {
 			return nil, fmt.Errorf("Failed to extract SA token, %w", err)
 		}
-		tempConfig := rest.CopyConfig(c)
+		tempConfig := rest.AnonymousClientConfig(c)
 		tempConfig.BearerToken = token
 		return tempConfig, nil
 	}
