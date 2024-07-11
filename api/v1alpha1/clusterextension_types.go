@@ -124,25 +124,23 @@ const (
 	TypeChannelDeprecated = "ChannelDeprecated"
 	TypeBundleDeprecated  = "BundleDeprecated"
 	TypeUnpacked          = "Unpacked"
+	TypeProgressing       = "Progressing"
 
 	ReasonErrorGettingClient = "ErrorGettingClient"
 	ReasonBundleLoadFailed   = "BundleLoadFailed"
 
-	ReasonInstallationFailed        = "InstallationFailed"
-	ReasonInstallationStatusUnknown = "InstallationStatusUnknown"
-	ReasonInstallationSucceeded     = "InstallationSucceeded"
-	ReasonResolutionFailed          = "ResolutionFailed"
+	ReasonInstallationFailed     = "InstallationFailed"
+	ReasonInstallationInProgress = "InstallationInProgress"
+	ReasonResolutionFailed       = "ResolutionFailed"
 
 	ReasonSuccess       = "Success"
 	ReasonDeprecated    = "Deprecated"
 	ReasonUpgradeFailed = "UpgradeFailed"
 
-	ReasonUnpackPending = "UnpackPending"
 	ReasonUnpackSuccess = "UnpackSuccess"
 	ReasonUnpackFailed  = "UnpackFailed"
 
 	ReasonErrorGettingReleaseState = "ErrorGettingReleaseState"
-	ReasonCreateDynamicWatchFailed = "CreateDynamicWatchFailed"
 )
 
 func init() {
@@ -155,10 +153,10 @@ func init() {
 		TypeChannelDeprecated,
 		TypeBundleDeprecated,
 		TypeUnpacked,
+		TypeProgressing,
 	)
 	// TODO(user): add Reasons from above
 	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
-		ReasonInstallationSucceeded,
 		ReasonResolutionFailed,
 		ReasonInstallationFailed,
 		ReasonSuccess,
@@ -166,12 +164,10 @@ func init() {
 		ReasonUpgradeFailed,
 		ReasonBundleLoadFailed,
 		ReasonErrorGettingClient,
-		ReasonInstallationStatusUnknown,
-		ReasonUnpackPending,
 		ReasonUnpackSuccess,
 		ReasonUnpackFailed,
 		ReasonErrorGettingReleaseState,
-		ReasonCreateDynamicWatchFailed,
+		ReasonInstallationInProgress,
 	)
 }
 
@@ -182,6 +178,9 @@ type BundleMetadata struct {
 
 // ClusterExtensionStatus defines the observed state of ClusterExtension
 type ClusterExtensionStatus struct {
+	// InstalledBundle should only be modified when a new bundle is successfully installed. This ensures that if there
+	//  is a previously successfully installed a bundle, and an upgrade fails, it is still communicated that there is
+	//  still a bundle that is currently installed and owned by the ClusterExtension.
 	// +optional
 	InstalledBundle *BundleMetadata `json:"installedBundle,omitempty"`
 	// +optional
