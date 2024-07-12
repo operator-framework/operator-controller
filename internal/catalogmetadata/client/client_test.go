@@ -19,7 +19,7 @@ import (
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogClient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
-	"github.com/operator-framework/operator-controller/pkg/scheme"
+	"github.com/operator-framework/operator-controller/internal/scheme"
 )
 
 func TestClient(t *testing.T) {

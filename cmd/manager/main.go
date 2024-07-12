@@ -50,11 +50,11 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	"github.com/operator-framework/operator-controller/internal/features"
 	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
+	"github.com/operator-framework/operator-controller/internal/scheme"
 	"github.com/operator-framework/operator-controller/internal/version"
-	"github.com/operator-framework/operator-controller/pkg/features"
-	"github.com/operator-framework/operator-controller/pkg/scheme"
 )
 
 var (

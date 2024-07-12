@@ -19,7 +19,7 @@ import (
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	"github.com/operator-framework/operator-controller/pkg/features"
+	"github.com/operator-framework/operator-controller/internal/features"
 )
 
 func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.T) {

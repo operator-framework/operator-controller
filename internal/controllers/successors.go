@@ -8,7 +8,7 @@ import (
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
-	"github.com/operator-framework/operator-controller/pkg/features"
+	"github.com/operator-framework/operator-controller/internal/features"
 )
 
 func SuccessorsPredicate(packageName string, installedBundle *ocv1alpha1.BundleMetadata) (catalogfilter.Predicate[catalogmetadata.Bundle], error) {
