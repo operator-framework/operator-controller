@@ -40,11 +40,6 @@ import (
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
-	crdupgradesafety "github.com/operator-framework/rukpak/pkg/preflights/crdupgradesafety"
-	"github.com/operator-framework/rukpak/pkg/provisioner/registry"
-	"github.com/operator-framework/rukpak/pkg/source"
-	"github.com/operator-framework/rukpak/pkg/storage"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
@@ -52,6 +47,11 @@ import (
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
+	registryv1handler "github.com/operator-framework/operator-controller/internal/rukpak/handler"
+	crdupgradesafety "github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
+	"github.com/operator-framework/operator-controller/internal/rukpak/provisioner/registry"
+	"github.com/operator-framework/operator-controller/internal/rukpak/source"
+	"github.com/operator-framework/operator-controller/internal/rukpak/storage"
 	"github.com/operator-framework/operator-controller/internal/version"
 	"github.com/operator-framework/operator-controller/pkg/features"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
@@ -213,7 +213,7 @@ func main() {
 	}
 	if err := clusterExtensionFinalizers.Register(deleteCachedBundleKey, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		ext := obj.(*ocv1alpha1.ClusterExtension)
-		return crfinalizer.Result{}, localStorage.Delete(ctx, ext)
+		return crfinalizer.Result{}, localStorage.Delete(ctx, ext.GetName())
 	})); err != nil {
 		setupLog.Error(err, "unable to register finalizer", "finalizerKey", deleteCachedBundleKey)
 		os.Exit(1)

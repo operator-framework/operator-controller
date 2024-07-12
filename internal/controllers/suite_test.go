@@ -35,12 +35,12 @@ import (
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-	"github.com/operator-framework/rukpak/api/v1alpha2"
-	"github.com/operator-framework/rukpak/pkg/source"
-	"github.com/operator-framework/rukpak/pkg/storage"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers"
+	bd "github.com/operator-framework/operator-controller/internal/rukpak/bundledeployment"
+	"github.com/operator-framework/operator-controller/internal/rukpak/source"
+	"github.com/operator-framework/operator-controller/internal/rukpak/storage"
 	"github.com/operator-framework/operator-controller/internal/testutil"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
 )
@@ -51,12 +51,12 @@ type MockUnpacker struct {
 }
 
 // Unpack mocks the Unpack method
-func (m *MockUnpacker) Unpack(ctx context.Context, bd *v1alpha2.BundleDeployment) (*source.Result, error) {
+func (m *MockUnpacker) Unpack(ctx context.Context, bd *bd.BundleDeployment) (*source.Result, error) {
 	args := m.Called(ctx, bd)
 	return args.Get(0).(*source.Result), args.Error(1)
 }
 
-func (m *MockUnpacker) Cleanup(ctx context.Context, bundle *v1alpha2.BundleDeployment) error {
+func (m *MockUnpacker) Cleanup(ctx context.Context, bundle *bd.BundleDeployment) error {
 	//TODO implement me
 	panic("implement me")
 }
@@ -66,7 +66,7 @@ type MockStorage struct {
 	mock.Mock
 }
 
-func (m *MockStorage) Load(ctx context.Context, owner client.Object) (fs.FS, error) {
+func (m *MockStorage) Load(ctx context.Context, owner string) (fs.FS, error) {
 	args := m.Called(ctx, owner)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -74,7 +74,7 @@ func (m *MockStorage) Load(ctx context.Context, owner client.Object) (fs.FS, err
 	return args.Get(0).(fs.FS), args.Error(1)
 }
 
-func (m *MockStorage) Delete(ctx context.Context, owner client.Object) error {
+func (m *MockStorage) Delete(ctx context.Context, owner string) error {
 	//TODO implement me
 	panic("implement me")
 }
@@ -84,12 +84,12 @@ func (m *MockStorage) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 	panic("implement me")
 }
 
-func (m *MockStorage) URLFor(ctx context.Context, owner client.Object) (string, error) {
+func (m *MockStorage) URLFor(ctx context.Context, owner string) (string, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (m *MockStorage) Store(ctx context.Context, owner client.Object, bundle fs.FS) error {
+func (m *MockStorage) Store(ctx context.Context, owner string, bundle fs.FS) error {
 	args := m.Called(ctx, owner, bundle)
 	return args.Error(0)
 }
