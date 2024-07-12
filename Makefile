@@ -159,6 +159,24 @@ extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
 extension-developer-e2e: KIND_CLUSTER_NAME := operator-controller-ext-dev-e2e  #EXHELP Run extension-developer e2e on local kind cluster
 extension-developer-e2e: run image-registry test-ext-dev-e2e kind-clean
 
+.PHONY: run-latest-release
+run-latest-release:
+	curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh | bash -s
+
+.PHONY: pre-upgrade-setup
+pre-upgrade-setup:
+	./hack/pre-upgrade-setup.sh $(CATALOG_IMG) $(TEST_CLUSTER_CATALOG_NAME) $(TEST_CLUSTER_EXTENSION_NAME)
+
+.PHONY: post-upgrade-checks
+post-upgrade-checks:
+	go test -count=1 -v ./test/upgrade-e2e/...
+
+.PHONY: test-upgrade-e2e
+test-upgrade-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-e2e
+test-upgrade-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
+test-upgrade-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
+test-upgrade-e2e: kind-cluster run-latest-release image-registry build-push-e2e-catalog registry-load-bundles pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean #HELP Run upgrade e2e tests on a local kind cluster
+
 .PHONY: e2e-coverage
 e2e-coverage:
 	COVERAGE_OUTPUT=./e2e-cover.out ./hack/e2e-coverage.sh
