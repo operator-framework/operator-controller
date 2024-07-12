@@ -141,7 +141,7 @@ func (fsc *filesystemCache) FetchCatalogContents(ctx context.Context, catalog *c
 		if err := os.MkdirAll(filepath.Dir(metaPath), os.ModePerm); err != nil {
 			return fmt.Errorf("error creating directory for catalog metadata: %v", err)
 		}
-		if err := os.WriteFile(metaPath, meta.Blob, os.ModePerm); err != nil {
+		if err := os.WriteFile(metaPath, meta.Blob, 0600); err != nil {
 			return fmt.Errorf("error writing catalog metadata to file: %v", err)
 		}
 		return nil
