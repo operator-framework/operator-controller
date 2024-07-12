@@ -43,10 +43,7 @@ linters-settings:
       - dot
       - default
       - prefix(github.com/operator-framework)
-
-      # TODO: change this to `localmodule` when golangci-lint
-      # is updated to 1.58+
-      - prefix(github.com/operator-framework/operator-controller)
+      - localmodule
     custom-order: true
 
   errorlint:

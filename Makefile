@@ -106,8 +106,8 @@ verify: tidy fmt vet generate manifests #HELP Verify all generated code is up-to
 	git diff --exit-code
 
 .PHONY: fmt
-fmt: #EXHELP Run go fmt against code.
-	go fmt ./...
+fmt: $(GOLANGCI_LINT) #EXHELP Formats code
+	go fmt ./... && $(GOLANGCI_LINT) run --fix $(GOLANGCI_LINT_ARGS)
 
 .PHONY: vet
 vet: #EXHELP Run go vet against code.
