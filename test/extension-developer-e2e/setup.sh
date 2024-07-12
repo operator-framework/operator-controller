@@ -13,7 +13,7 @@ a KinD cluster with the name specified in the arguments.
 The following environment variables are required for configuring this script:
 - \$CATALOG_IMG - the tag for the catalog image that contains the registry+v1 bundle.
 - \$REG_PKG_NAME - the name of the package for the extension that uses the registry+v1 bundle format.
-- \$REGISTRY_ROOT - hostname:port of the local docker-registry
+- \$LOCAL_REGISTRY_HOST - hostname:port of the local docker-registry
 setup.sh also takes 5 arguments.
 
 Usage:
@@ -42,8 +42,8 @@ if [[ -z "${REG_PKG_NAME}" ]]; then
   exit 1
 fi
 
-if [[ -z "${REGISTRY_ROOT}" ]]; then
-  echo "\$REGISTRY_ROOT is required to be set"
+if [[ -z "${LOCAL_REGISTRY_HOST}" ]]; then
+  echo "\$LOCAL_REGISTRY_HOST is required to be set"
   echo "${help}"
   exit 1
 fi
@@ -69,7 +69,7 @@ kcluster_name=$5
 namespace=$6
 
 reg_img="${DOMAIN}/registry:v0.0.1"
-reg_bundle_img="${REGISTRY_ROOT}/bundles/registry-v1/registry-bundle:v0.0.1"
+reg_bundle_img="${LOCAL_REGISTRY_HOST}/bundles/registry-v1/registry-bundle:v0.0.1"
 
 catalog_img="${CATALOG_IMG}"
 reg_pkg_name="${REG_PKG_NAME}"
