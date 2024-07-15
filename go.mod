@@ -3,7 +3,6 @@ module github.com/operator-framework/catalogd
 go 1.22.0
 
 require (
-	github.com/NYTimes/gziphandler v1.1.1
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/containerd v1.7.19
 	github.com/go-logr/logr v1.4.2
@@ -11,6 +10,7 @@ require (
 	github.com/google/go-containerregistry v0.20.0
 	github.com/google/go-containerregistry/pkg/authn/k8schain v0.0.0-20240505154900-ff385a972813
 	github.com/google/go-containerregistry/pkg/authn/kubernetes v0.0.0-20240505154900-ff385a972813
+	github.com/klauspost/compress v1.17.8
 	github.com/onsi/ginkgo/v2 v2.19.0
 	github.com/onsi/gomega v1.33.1
 	github.com/operator-framework/operator-registry v1.44.0
@@ -99,7 +99,6 @@ require (
 	github.com/joelanford/ignore v0.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/moby/sys/sequential v0.5.0 // indirect
