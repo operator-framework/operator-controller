@@ -55,8 +55,11 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	// Make sure that after we upgrade OLM itself we can still reconcile old objects without any changes
 	logCtx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
-	substring := fmt.Sprintf(`"ClusterExtension": {"name":"%s"}`, testClusterExtensionName)
-	found, err := watchPodLogsForSubstring(logCtx, &managerPods.Items[0], "manager", substring)
+	substrings := []string{
+		"reconcile ending",
+		fmt.Sprintf(`"ClusterExtension": {"name":"%s"}`, testClusterExtensionName),
+	}
+	found, err := watchPodLogsForSubstring(logCtx, &managerPods.Items[0], "manager", substrings...)
 	require.NoError(t, err)
 	require.True(t, found)
 
@@ -109,7 +112,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	}, time.Minute, time.Second)
 }
 
-func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, container, substring string) (bool, error) {
+func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, container string, substrings ...string) (bool, error) {
 	podLogOpts := corev1.PodLogOptions{
 		Follow:    true,
 		Container: container,
@@ -126,7 +129,13 @@ func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, container, s
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if strings.Contains(line, substring) {
+		foundCount := 0
+		for _, substring := range substrings {
+			if strings.Contains(line, substring) {
+				foundCount++
+			}
+		}
+		if foundCount == len(substrings) {
 			return true, nil
 		}
 	}

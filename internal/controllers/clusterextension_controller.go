@@ -132,8 +132,8 @@ type Preflight interface {
 // This has been taken from rukpak, and an issue was created before to discuss it: https://github.com/operator-framework/rukpak/issues/800.
 func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("operator-controller")
-	l.V(1).Info("starting")
-	defer l.V(1).Info("ending")
+	l.V(1).Info("reconcile starting")
+	defer l.V(1).Info("reconcile ending")
 
 	var existingExt = &ocv1alpha1.ClusterExtension{}
 	if err := r.Client.Get(ctx, req.NamespacedName, existingExt); err != nil {
