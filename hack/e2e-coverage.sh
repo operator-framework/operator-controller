@@ -2,20 +2,15 @@
 
 set -euo pipefail
 
-COVERAGE_OUTPUT="${COVERAGE_OUTPUT:-e2e-cover.out}"
+COVERAGE_OUTPUT="${COVERAGE_OUTPUT:-${ROOT_DIR}/coverage/e2e.out}"
 
 OPERATOR_CONTROLLER_NAMESPACE="olmv1-system"
 OPERATOR_CONTROLLER_MANAGER_DEPLOYMENT_NAME="operator-controller-controller-manager"
 COPY_POD_NAME="e2e-coverage-copy-pod"
 
 # Create a temporary directory for coverage
-COVERAGE_DIR=$(mktemp -d)
-
-# Trap to cleanup temporary directory on script exit
-function cleanup {
-    rm -rf "$COVERAGE_DIR"
-}
-trap cleanup EXIT
+COVERAGE_DIR=${ROOT_DIR}/coverage/e2e
+rm -rf ${COVERAGE_DIR} && mkdir -p ${COVERAGE_DIR}
 
 # Coverage-instrumented binary produces coverage on termination,
 # so we scale down the manager before gathering the coverage

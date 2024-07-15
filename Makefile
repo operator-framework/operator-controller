@@ -5,6 +5,7 @@
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL := /usr/bin/env bash -o pipefail
 .SHELLFLAGS := -ec
+export ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 # Image URL to use all building/pushing image targets
 ifeq ($(origin IMAGE_REPO), undefined)
@@ -134,8 +135,10 @@ test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension creat
 .PHONY: test-unit
 ENVTEST_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/)
+COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
 test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && CGO_ENABLED=1 go test -count=1 -race -short $(UNIT_TEST_DIRS) -coverprofile cover.out
+	rm -rf $(COVERAGE_UNIT_DIR) && mkdir -p $(COVERAGE_UNIT_DIR)
+	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && CGO_ENABLED=1 go test -count=1 -race -short $(UNIT_TEST_DIRS) -cover -coverprofile ${ROOT_DIR}/coverage/unit.out -test.gocoverdir=$(ROOT_DIR)/coverage/unit
 
 image-registry: ## Setup in-cluster image registry
 	./test/tools/image-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME)
@@ -179,7 +182,7 @@ test-upgrade-e2e: kind-cluster run-latest-release image-registry build-push-e2e-
 
 .PHONY: e2e-coverage
 e2e-coverage:
-	COVERAGE_OUTPUT=./e2e-cover.out ./hack/e2e-coverage.sh
+	COVERAGE_OUTPUT=./coverage/e2e.out ./hack/e2e-coverage.sh
 
 .PHONY: kind-load
 kind-load: $(KIND) #EXHELP Loads the currently constructed image onto the cluster.
