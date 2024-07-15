@@ -86,8 +86,9 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "Instantiated bundle")
-		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle)
-		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle.Version)
+		if assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle) {
+			assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle.Version)
+		}
 	}, time.Minute, time.Second)
 
 	previousVersion := clusterExtension.Status.InstalledBundle.Version
