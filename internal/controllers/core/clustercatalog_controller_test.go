@@ -17,7 +17,7 @@ import (
 
 	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/catalogd/internal/source"
-	"github.com/operator-framework/catalogd/pkg/storage"
+	"github.com/operator-framework/catalogd/internal/storage"
 )
 
 var _ source.Unpacker = &MockSource{}

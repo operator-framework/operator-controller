@@ -21,8 +21,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogderrors "github.com/operator-framework/catalogd/internal/errors"
 	"github.com/operator-framework/catalogd/internal/source"
-	catalogderrors "github.com/operator-framework/catalogd/pkg/errors"
 )
 
 func TestImageRegistry(t *testing.T) {

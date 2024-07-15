@@ -37,14 +37,14 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
+	corecontrollers "github.com/operator-framework/catalogd/internal/controllers/core"
+	"github.com/operator-framework/catalogd/internal/features"
 	"github.com/operator-framework/catalogd/internal/garbagecollection"
+	catalogdmetrics "github.com/operator-framework/catalogd/internal/metrics"
 	"github.com/operator-framework/catalogd/internal/serverutil"
 	"github.com/operator-framework/catalogd/internal/source"
+	"github.com/operator-framework/catalogd/internal/storage"
 	"github.com/operator-framework/catalogd/internal/version"
-	corecontrollers "github.com/operator-framework/catalogd/pkg/controllers/core"
-	"github.com/operator-framework/catalogd/pkg/features"
-	catalogdmetrics "github.com/operator-framework/catalogd/pkg/metrics"
-	"github.com/operator-framework/catalogd/pkg/storage"
 )
 
 var (

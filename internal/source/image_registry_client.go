@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	catalogderrors "github.com/operator-framework/catalogd/pkg/errors"
+	catalogderrors "github.com/operator-framework/catalogd/internal/errors"
 )
 
 // TODO: Make asynchronous

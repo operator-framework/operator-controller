@@ -34,9 +34,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogderrors "github.com/operator-framework/catalogd/internal/errors"
 	"github.com/operator-framework/catalogd/internal/source"
-	catalogderrors "github.com/operator-framework/catalogd/pkg/errors"
-	"github.com/operator-framework/catalogd/pkg/storage"
+	"github.com/operator-framework/catalogd/internal/storage"
 )
 
 const (
