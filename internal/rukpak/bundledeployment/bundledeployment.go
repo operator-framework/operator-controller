@@ -80,6 +80,4 @@ type ImageSource struct {
 	// fetch the specified image reference.
 	// This should not be used in a production environment.
 	InsecureSkipTLSVerify bool
-	// CertificateData contains the PEM data of the certificate that is to be used for the TLS connection
-	CertificateData string
 }

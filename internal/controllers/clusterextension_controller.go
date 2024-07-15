@@ -19,6 +19,7 @@ package controllers
 import (
 	"bytes"
 	"context"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
@@ -69,7 +70,6 @@ import (
 	catalogfilter "github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 	catalogsort "github.com/operator-framework/operator-controller/internal/catalogmetadata/sort"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
-	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/rukpak/bundledeployment"
 	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
@@ -94,7 +94,7 @@ type ClusterExtensionReconciler struct {
 	cache                 cache.Cache
 	InstalledBundleGetter InstalledBundleGetter
 	Finalizers            crfinalizer.Finalizers
-	CaCertDir             string
+	CaCertPool            *x509.CertPool
 	Preflights            []Preflight
 }
 
@@ -273,7 +273,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// Generate a BundleDeployment from the ClusterExtension to Unpack.
 	// Note: The BundleDeployment here is not a k8s API, its a simple Go struct which
 	// necessary embedded values.
-	bd := r.generateBundleDeploymentForUnpack(ctx, bundle.Image, ext)
+	bd := r.generateBundleDeploymentForUnpack(bundle.Image, ext)
 	l.V(1).Info("unpacking resolved bundle")
 	unpackResult, err := r.Unpacker.Unpack(ctx, bd)
 	if err != nil {
@@ -577,11 +577,7 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundle *catalogmetad
 	}
 }
 
-func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(ctx context.Context, bundlePath string, ce *ocv1alpha1.ClusterExtension) *bundledeployment.BundleDeployment {
-	certData, err := httputil.LoadCerts(r.CaCertDir)
-	if err != nil {
-		log.FromContext(ctx).WithName("operator-controller").WithValues("cluster-extension", ce.GetName()).Error(err, "unable to get TLS certificate")
-	}
+func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePath string, ce *ocv1alpha1.ClusterExtension) *bundledeployment.BundleDeployment {
 	return &bundledeployment.BundleDeployment{
 		Name: ce.Name,
 		Spec: bundledeployment.BundleDeploymentSpec{
@@ -589,8 +585,7 @@ func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(ctx conte
 			Source: bundledeployment.BundleSource{
 				Type: bundledeployment.SourceTypeImage,
 				Image: &bundledeployment.ImageSource{
-					Ref:             bundlePath,
-					CertificateData: certData,
+					Ref: bundlePath,
 				},
 			},
 		},

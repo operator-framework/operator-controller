@@ -152,7 +152,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	httpClient, err := httputil.BuildHTTPClient(caCertDir)
+	certPool, err := httputil.NewCertPool(caCertDir)
+	if err != nil {
+		setupLog.Error(err, "unable to create CA certificate pool")
+		os.Exit(1)
+	}
+
+	httpClient, err := httputil.BuildHTTPClient(certPool)
 	if err != nil {
 		setupLog.Error(err, "unable to create catalogd http client")
 	}
@@ -191,6 +197,7 @@ func main() {
 		BaseCachePath: filepath.Join(cachePath, "unpack"),
 		// TODO: This needs to be derived per extension via ext.Spec.InstallNamespace
 		AuthNamespace: systemNamespace,
+		CaCertPool:    certPool,
 	}
 
 	domain := ocv1alpha1.GroupVersion.Group
@@ -220,7 +227,7 @@ func main() {
 		Unpacker:              unpacker,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
-		CaCertDir:             caCertDir,
+		CaCertPool:            certPool,
 		Preflights:            preflights,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")

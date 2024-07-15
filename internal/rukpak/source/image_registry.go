@@ -40,6 +40,7 @@ func NewUnrecoverable(err error) *Unrecoverable {
 type ImageRegistry struct {
 	BaseCachePath string
 	AuthNamespace string
+	CaCertPool    *x509.CertPool
 }
 
 func (i *ImageRegistry) Unpack(ctx context.Context, bundle *bd.BundleDeployment) (*Result, error) {
@@ -85,13 +86,8 @@ func (i *ImageRegistry) Unpack(ctx context.Context, bundle *bd.BundleDeployment)
 	if bundle.Spec.Source.Image.InsecureSkipTLSVerify {
 		transport.TLSClientConfig.InsecureSkipVerify = true // nolint:gosec
 	}
-	if bundle.Spec.Source.Image.CertificateData != "" {
-		pool, err := x509.SystemCertPool()
-		if err != nil || pool == nil {
-			pool = x509.NewCertPool()
-		}
-		transport.TLSClientConfig.RootCAs = pool
-		transport.TLSClientConfig.RootCAs.AppendCertsFromPEM([]byte(bundle.Spec.Source.Image.CertificateData))
+	if i.CaCertPool != nil {
+		transport.TLSClientConfig.RootCAs = i.CaCertPool
 	}
 	remoteOpts = append(remoteOpts, remote.WithTransport(transport))
 
@@ -163,7 +159,6 @@ func unpackedResult(fsys fs.FS, bundle *bd.BundleDeployment, ref string) *Result
 				Ref:                   ref,
 				ImagePullSecretName:   bundle.Spec.Source.Image.ImagePullSecretName,
 				InsecureSkipTLSVerify: bundle.Spec.Source.Image.InsecureSkipTLSVerify,
-				CertificateData:       bundle.Spec.Source.Image.CertificateData,
 			},
 		},
 		State: StateUnpacked,
