@@ -36,6 +36,7 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -71,10 +72,9 @@ import (
 	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/rukpak/bundledeployment"
-	registryv1handler "github.com/operator-framework/operator-controller/internal/rukpak/handler"
+	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
 	crdupgradesafety "github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	rukpaksource "github.com/operator-framework/operator-controller/internal/rukpak/source"
-	"github.com/operator-framework/operator-controller/internal/rukpak/storage"
 	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 )
 
@@ -88,8 +88,6 @@ type ClusterExtensionReconciler struct {
 	BundleProvider        BundleProvider
 	Unpacker              rukpaksource.Unpacker
 	ActionClientGetter    helmclient.ActionClientGetter
-	Storage               storage.Storage
-	Handler               registryv1handler.Handler
 	dynamicWatchMutex     sync.RWMutex
 	dynamicWatchGVKs      sets.Set[schema.GroupVersionKind]
 	controller            crcontroller.Controller
@@ -132,6 +130,8 @@ type Preflight interface {
 // This has been taken from rukpak, and an issue was created before to discuss it: https://github.com/operator-framework/rukpak/issues/800.
 func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("operator-controller")
+	ctx = log.IntoContext(ctx, l)
+
 	l.V(1).Info("reconcile starting")
 	defer l.V(1).Info("reconcile ending")
 
@@ -212,6 +212,9 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 */
 //nolint:unparam
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
+	l := log.FromContext(ctx)
+
+	l.V(1).Info("handling finalizers")
 	finalizeResult, err := r.Finalizers.Finalize(ctx, ext)
 	if err != nil {
 		// TODO: For now, this error handling follows the pattern of other error handling.
@@ -232,6 +235,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 
 	// run resolution
+	l.V(1).Info("resolving bundle")
 	bundle, err := r.resolve(ctx, *ext)
 	if err != nil {
 		// Note: We don't distinguish between resolution-specific errors and generic errors
@@ -242,6 +246,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
+	l.V(1).Info("validating bundle")
 	if err := r.validateBundle(bundle); err != nil {
 		ext.Status.ResolvedBundle = nil
 		ext.Status.InstalledBundle = nil
@@ -269,6 +274,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// Note: The BundleDeployment here is not a k8s API, its a simple Go struct which
 	// necessary embedded values.
 	bd := r.generateBundleDeploymentForUnpack(ctx, bundle.Image, ext)
+	l.V(1).Info("unpacking resolved bundle")
 	unpackResult, err := r.Unpacker.Unpack(ctx, bd)
 	if err != nil {
 		setStatusUnpackFailed(ext, err.Error())
@@ -282,12 +288,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacked:
-		// TODO: Add finalizer to clean the stored bundles, after https://github.com/operator-framework/rukpak/pull/897
-		// merges.
-		if err := r.Storage.Store(ctx, ext.GetName(), unpackResult.Bundle); err != nil {
-			setStatusUnpackFailed(ext, err.Error())
-			return ctrl.Result{}, err
-		}
 		setStatusUnpacked(ext, fmt.Sprintf("unpack successful: %v", unpackResult.Message))
 	default:
 		setStatusUnpackFailed(ext, "unexpected unpack status")
@@ -295,18 +295,15 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", unpackResult.Message)
 	}
 
-	bundleFS, err := r.Storage.Load(ctx, ext.GetName())
+	l.V(1).Info("converting bundle to helm chart")
+	chrt, err := convert.RegistryV1ToHelmChart(ctx, unpackResult.Bundle, ext.Spec.InstallNamespace, []string{corev1.NamespaceAll})
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, err.Error())
 		return ctrl.Result{}, err
 	}
+	values := chartutil.Values{}
 
-	chrt, values, err := r.Handler.Handle(ctx, bundleFS, bd)
-	if err != nil {
-		setInstalledStatusConditionFailed(ext, err.Error())
-		return ctrl.Result{}, err
-	}
-
+	l.V(1).Info("getting helm client")
 	ac, err := r.ActionClientGetter.ActionClientFor(ctx, ext)
 	if err != nil {
 		ext.Status.InstalledBundle = nil
@@ -324,12 +321,14 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		},
 	}
 
+	l.V(1).Info("getting current state of helm release")
 	rel, desiredRel, state, err := r.getReleaseState(ac, ext, chrt, values, post)
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingReleaseState, err))
 		return ctrl.Result{}, err
 	}
 
+	l.V(1).Info("running preflight checks")
 	for _, preflight := range r.Preflights {
 		if ext.Spec.Preflight != nil && ext.Spec.Preflight.CRDUpgradeSafety != nil {
 			if _, ok := preflight.(*crdupgradesafety.Preflight); ok && ext.Spec.Preflight.CRDUpgradeSafety.Disabled {
@@ -354,6 +353,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		}
 	}
 
+	l.V(1).Info("reconciling helm release changes")
 	switch state {
 	case stateNeedsInstall:
 		rel, err = ac.Install(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(install *action.Install) error {
@@ -384,6 +384,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, fmt.Errorf("unexpected release state %q", state)
 	}
 
+	l.V(1).Info("configuring watches for release objects")
 	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err))
