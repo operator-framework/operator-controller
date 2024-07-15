@@ -18,9 +18,7 @@ package controllers_test
 
 import (
 	"context"
-	"io/fs"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -40,7 +38,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	bd "github.com/operator-framework/operator-controller/internal/rukpak/bundledeployment"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
-	"github.com/operator-framework/operator-controller/internal/rukpak/storage"
 	"github.com/operator-framework/operator-controller/internal/testutil"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
 )
@@ -59,39 +56,6 @@ func (m *MockUnpacker) Unpack(ctx context.Context, bd *bd.BundleDeployment) (*so
 func (m *MockUnpacker) Cleanup(ctx context.Context, bundle *bd.BundleDeployment) error {
 	//TODO implement me
 	panic("implement me")
-}
-
-// MockStorage is a mock of Storage interface
-type MockStorage struct {
-	mock.Mock
-}
-
-func (m *MockStorage) Load(ctx context.Context, owner string) (fs.FS, error) {
-	args := m.Called(ctx, owner)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(fs.FS), args.Error(1)
-}
-
-func (m *MockStorage) Delete(ctx context.Context, owner string) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (m *MockStorage) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (m *MockStorage) URLFor(ctx context.Context, owner string) (string, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (m *MockStorage) Store(ctx context.Context, owner string, bundle fs.FS) error {
-	args := m.Called(ctx, owner, bundle)
-	return args.Error(0)
 }
 
 func newClient(t *testing.T) client.Client {
@@ -125,7 +89,6 @@ func newClientAndReconciler(t *testing.T, bundle *ocv1alpha1.BundleMetadata) (cl
 		BundleProvider:        &fakeCatalogClient,
 		ActionClientGetter:    helmClientGetter,
 		Unpacker:              unpacker,
-		Storage:               store,
 		InstalledBundleGetter: mockInstalledBundleGetter,
 		Finalizers:            crfinalizer.NewFinalizers(),
 	}
@@ -136,7 +99,6 @@ var (
 	config           *rest.Config
 	helmClientGetter helmclient.ActionClientGetter
 	unpacker         source.Unpacker // Interface, will be initialized as a mock in TestMain
-	store            storage.Storage
 )
 
 func TestMain(m *testing.M) {
@@ -160,7 +122,6 @@ func TestMain(m *testing.M) {
 	utilruntime.Must(err)
 
 	unpacker = new(MockUnpacker)
-	store = new(MockStorage)
 
 	code := m.Run()
 	utilruntime.Must(testEnv.Stop())

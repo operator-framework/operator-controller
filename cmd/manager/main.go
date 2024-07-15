@@ -20,7 +20,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 
@@ -47,11 +46,8 @@ import (
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
-	registryv1handler "github.com/operator-framework/operator-controller/internal/rukpak/handler"
 	crdupgradesafety "github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
-	"github.com/operator-framework/operator-controller/internal/rukpak/provisioner/registry"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
-	"github.com/operator-framework/operator-controller/internal/rukpak/storage"
 	"github.com/operator-framework/operator-controller/internal/version"
 	"github.com/operator-framework/operator-controller/pkg/features"
 	"github.com/operator-framework/operator-controller/pkg/scheme"
@@ -95,6 +91,7 @@ func main() {
 	flag.StringVar(&systemNamespace, "system-namespace", "", "Configures the namespace that gets used to deploy system resources.")
 	opts := zap.Options{
 		Development: true,
+		TimeEncoder: zapcore.RFC3339NanoTimeEncoder,
 	}
 	opts.BindFlags(flag.CommandLine)
 
@@ -161,7 +158,12 @@ func main() {
 	}
 
 	cl := mgr.GetClient()
-	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(cachePath, httpClient))
+	catalogsCachePath := filepath.Join(cachePath, "catalogs")
+	if err := os.MkdirAll(catalogsCachePath, 0700); err != nil {
+		setupLog.Error(err, "unable to create catalogs cache directory")
+		os.Exit(1)
+	}
+	catalogClient := catalogclient.New(cl, cache.NewFilesystemCache(catalogsCachePath, httpClient))
 
 	installNamespaceMapper := helmclient.ObjectToStringMapper(func(obj client.Object) (string, error) {
 		ext := obj.(*ocv1alpha1.ClusterExtension)
@@ -193,29 +195,11 @@ func main() {
 
 	domain := ocv1alpha1.GroupVersion.Group
 	cleanupUnpackCacheKey := fmt.Sprintf("%s/cleanup-unpack-cache", domain)
-	deleteCachedBundleKey := fmt.Sprintf("%s/delete-cached-bundle", domain)
 	if err := clusterExtensionFinalizers.Register(cleanupUnpackCacheKey, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		ext := obj.(*ocv1alpha1.ClusterExtension)
 		return crfinalizer.Result{}, os.RemoveAll(filepath.Join(unpacker.BaseCachePath, ext.GetName()))
 	})); err != nil {
 		setupLog.Error(err, "unable to register finalizer", "finalizerKey", cleanupUnpackCacheKey)
-		os.Exit(1)
-	}
-
-	localStorageRoot := filepath.Join(cachePath, "bundles")
-	if err := os.MkdirAll(localStorageRoot, 0755); err != nil {
-		setupLog.Error(err, "unable to create local storage root directory", "root", localStorageRoot)
-		os.Exit(1)
-	}
-	localStorage := &storage.LocalDirectory{
-		RootDirectory: localStorageRoot,
-		URL:           url.URL{},
-	}
-	if err := clusterExtensionFinalizers.Register(deleteCachedBundleKey, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		ext := obj.(*ocv1alpha1.ClusterExtension)
-		return crfinalizer.Result{}, localStorage.Delete(ctx, ext.GetName())
-	})); err != nil {
-		setupLog.Error(err, "unable to register finalizer", "finalizerKey", deleteCachedBundleKey)
 		os.Exit(1)
 	}
 
@@ -234,9 +218,7 @@ func main() {
 		BundleProvider:        catalogClient,
 		ActionClientGetter:    acg,
 		Unpacker:              unpacker,
-		Storage:               localStorage,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
-		Handler:               registryv1handler.HandlerFunc(registry.HandleBundleDeployment),
 		Finalizers:            clusterExtensionFinalizers,
 		CaCertDir:             caCertDir,
 		Preflights:            preflights,

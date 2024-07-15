@@ -1,26 +1,25 @@
 package convert
 
 import (
-	"bytes"
-	"errors"
+	"context"
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
-	"io"
 	"io/fs"
 	"path/filepath"
 	"strings"
-	"testing/fstest"
-	"time"
 
+	"helm.sh/helm/v3/pkg/chart"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
-	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/cli-runtime/pkg/resource"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -33,7 +32,6 @@ import (
 type RegistryV1 struct {
 	PackageName string
 	CSV         v1alpha1.ClusterServiceVersion
-	CRDs        []apiextensionsv1.CustomResourceDefinition
 	Others      []unstructured.Unstructured
 }
 
@@ -41,7 +39,9 @@ type Plain struct {
 	Objects []client.Object
 }
 
-func RegistryV1ToPlain(rv1 fs.FS, installNamespace string, watchNamespaces []string) (fs.FS, error) {
+func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace string, watchNamespaces []string) (*chart.Chart, error) {
+	l := log.FromContext(ctx)
+
 	reg := RegistryV1{}
 	fileData, err := fs.ReadFile(rv1, filepath.Join("metadata", "annotations.yaml"))
 	if err != nil {
@@ -53,54 +53,52 @@ func RegistryV1ToPlain(rv1 fs.FS, installNamespace string, watchNamespaces []str
 	}
 	reg.PackageName = annotationsFile.Annotations.PackageName
 
-	var objects []*unstructured.Unstructured
 	const manifestsDir = "manifests"
-
-	entries, err := fs.ReadDir(rv1, manifestsDir)
-	if err != nil {
-		return nil, err
-	}
-	for _, e := range entries {
-		if e.IsDir() {
-			return nil, fmt.Errorf("subdirectories are not allowed within the %q directory of the bundle image filesystem: found %q", manifestsDir, filepath.Join(manifestsDir, e.Name()))
-		}
-		fileData, err := fs.ReadFile(rv1, filepath.Join(manifestsDir, e.Name()))
+	if err := fs.WalkDir(rv1, manifestsDir, func(path string, e fs.DirEntry, err error) error {
 		if err != nil {
-			return nil, err
+			return err
 		}
-
-		dec := apimachyaml.NewYAMLOrJSONDecoder(bytes.NewReader(fileData), 1024)
-		for {
-			obj := unstructured.Unstructured{}
-			err := dec.Decode(&obj)
-			if errors.Is(err, io.EOF) {
-				break
+		if e.IsDir() {
+			if path == manifestsDir {
+				return nil
 			}
+			return fmt.Errorf("subdirectories are not allowed within the %q directory of the bundle image filesystem: found %q", manifestsDir, path)
+		}
+		manifestFile, err := rv1.Open(path)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err := manifestFile.Close(); err != nil {
+				l.Error(err, "error closing file", "path", path)
+			}
+		}()
+
+		result := resource.NewLocalBuilder().Unstructured().Flatten().Stream(manifestFile, path).Do()
+		if err := result.Err(); err != nil {
+			return err
+		}
+		if err := result.Visit(func(info *resource.Info, err error) error {
 			if err != nil {
-				return nil, fmt.Errorf("read %q: %v", e.Name(), err)
+				return err
 			}
-			objects = append(objects, &obj)
+			switch info.Object.GetObjectKind().GroupVersionKind().Kind {
+			case "ClusterServiceVersion":
+				csv := v1alpha1.ClusterServiceVersion{}
+				if err := runtime.DefaultUnstructuredConverter.FromUnstructured(info.Object.(*unstructured.Unstructured).Object, &csv); err != nil {
+					return err
+				}
+				reg.CSV = csv
+			default:
+				reg.Others = append(reg.Others, *info.Object.(*unstructured.Unstructured))
+			}
+			return nil
+		}); err != nil {
+			return fmt.Errorf("error parsing objects in %q: %v", path, err)
 		}
-	}
-
-	for _, obj := range objects {
-		obj := obj
-		switch obj.GetObjectKind().GroupVersionKind().Kind {
-		case "ClusterServiceVersion":
-			csv := v1alpha1.ClusterServiceVersion{}
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &csv); err != nil {
-				return nil, err
-			}
-			reg.CSV = csv
-		case "CustomResourceDefinition":
-			crd := apiextensionsv1.CustomResourceDefinition{}
-			if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &crd); err != nil {
-				return nil, err
-			}
-			reg.CRDs = append(reg.CRDs, crd)
-		default:
-			reg.Others = append(reg.Others, *obj)
-		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	plain, err := Convert(reg, installNamespace, watchNamespaces)
@@ -108,37 +106,20 @@ func RegistryV1ToPlain(rv1 fs.FS, installNamespace string, watchNamespaces []str
 		return nil, err
 	}
 
-	var manifest bytes.Buffer
+	chrt := &chart.Chart{Metadata: &chart.Metadata{}}
 	for _, obj := range plain.Objects {
-		yamlData, err := yaml.Marshal(obj)
+		jsonData, err := json.Marshal(obj)
 		if err != nil {
 			return nil, err
 		}
-		if _, err := fmt.Fprintf(&manifest, "---\n%s\n", string(yamlData)); err != nil {
-			return nil, err
-		}
+		hash := sha256.Sum256(jsonData)
+		chrt.Templates = append(chrt.Templates, &chart.File{
+			Name: fmt.Sprintf("object-%x.json", hash[0:8]),
+			Data: jsonData,
+		})
 	}
 
-	now := time.Now()
-	plainFS := fstest.MapFS{
-		".": &fstest.MapFile{
-			Data:    nil,
-			Mode:    fs.ModeDir | 0755,
-			ModTime: now,
-		},
-		"manifests": &fstest.MapFile{
-			Data:    nil,
-			Mode:    fs.ModeDir | 0755,
-			ModTime: now,
-		},
-		"manifests/manifest.yaml": &fstest.MapFile{
-			Data:    manifest.Bytes(),
-			Mode:    0644,
-			ModTime: now,
-		},
-	}
-
-	return plainFS, nil
+	return chrt, nil
 }
 
 func validateTargetNamespaces(supportedInstallModes sets.Set[string], installNamespace string, targetNamespaces []string) error {
@@ -308,10 +289,6 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 		objs = append(objs, &obj)
 	}
 	for _, obj := range clusterRoleBindings {
-		obj := obj
-		objs = append(objs, &obj)
-	}
-	for _, obj := range in.CRDs {
 		obj := obj
 		objs = append(objs, &obj)
 	}
