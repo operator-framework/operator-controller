@@ -21,45 +21,46 @@ if [[ "$#" -ne 2 ]]; then
 fi
 
 namespace=$1
-tag=$2
+image=$2
+tag=${image##*:}
 
-echo "${namespace}" "${tag}"
+echo "${namespace}" "${image}"  "${tag}"
 
-kubectl create configmap -n "${namespace}" --from-file=testdata/catalogs/test-catalog.Dockerfile operator-controller-e2e.dockerfile
-kubectl create configmap -n "${namespace}" --from-file=testdata/catalogs/test-catalog operator-controller-e2e.build-contents
+kubectl create configmap -n "${namespace}" --from-file=testdata/catalogs/test-catalog-${tag}.Dockerfile operator-controller-e2e-${tag}.dockerfile
+kubectl create configmap -n "${namespace}" --from-file=testdata/catalogs/test-catalog-${tag} operator-controller-e2e-${tag}.build-contents
 
 kubectl apply -f - << EOF
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: kaniko
+  name: "kaniko-${tag}"
   namespace: "${namespace}"
 spec:
   template:
     spec:
       containers:
-      - name: kaniko
+      - name: kaniko-${tag}
         image: gcr.io/kaniko-project/executor:latest
-        args: ["--dockerfile=/workspace/test-catalog.Dockerfile",
+        args: ["--dockerfile=/workspace/test-catalog-${tag}.Dockerfile",
                 "--context=/workspace/",
-                "--destination=${tag}",
+                "--destination=${image}",
                 "--skip-tls-verify"]
         volumeMounts:
           - name: dockerfile
             mountPath: /workspace/
           - name: build-contents
-            mountPath: /workspace/test-catalog/
+            mountPath: /workspace/test-catalog-${tag}/
       restartPolicy: Never
       volumes:
         - name: dockerfile
           configMap:
-            name: operator-controller-e2e.dockerfile
+            name: operator-controller-e2e-${tag}.dockerfile
             items:
-              - key: test-catalog.Dockerfile
-                path: test-catalog.Dockerfile
+              - key: test-catalog-${tag}.Dockerfile
+                path: test-catalog-${tag}.Dockerfile
         - name: build-contents
           configMap:
-            name: operator-controller-e2e.build-contents
+            name: operator-controller-e2e-${tag}.build-contents
 EOF
 
-kubectl wait --for=condition=Complete -n "${namespace}" jobs/kaniko --timeout=60s
+kubectl wait --for=condition=Complete -n "${namespace}" jobs/kaniko-${tag} --timeout=60s

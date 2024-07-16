@@ -129,8 +129,11 @@ E2E_REGISTRY_NAME := docker-registry
 E2E_REGISTRY_NAMESPACE := operator-controller-e2e
 
 export REG_PKG_NAME := registry-operator
-export REGISTRY_ROOT := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000
-export CATALOG_IMG := $(REGISTRY_ROOT)/e2e/test-catalog:e2e
+export LOCAL_REGISTRY_HOST := $(E2E_REGISTRY_NAME).$(E2E_REGISTRY_NAMESPACE).svc:5000
+export CLUSTER_REGISTRY_HOST := localhost:30000
+export E2E_TEST_CATALOG_V1 := e2e/test-catalog:v1
+export E2E_TEST_CATALOG_V2 := e2e/test-catalog:v2
+export CATALOG_IMG := $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
 .PHONY: test-ext-dev-e2e
 test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
@@ -148,7 +151,8 @@ image-registry: ## Setup in-cluster image registry
 	./test/tools/image-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME)
 
 build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and push it to the image registry
-	./test/tools/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(CATALOG_IMG)
+	./test/tools/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
+	./test/tools/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V2)
 
 # When running the e2e suite, you can set the ARTIFACT_PATH variable to the absolute path
 # of the directory for the operator-controller e2e tests to store the artifacts, which
@@ -209,10 +213,10 @@ kind-clean: $(KIND) #EXHELP Delete the kind cluster.
 	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
 
 registry-load-bundles: ## Load selected e2e testdata container images created in kind-load-bundles into registry
-	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(REGISTRY_ROOT)/bundles/registry-v1/prometheus-operator:v1.0.0 prometheus-operator.v1.0.0 prometheus-operator.v1.0.0
-	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(REGISTRY_ROOT)/bundles/registry-v1/prometheus-operator:v1.0.1 prometheus-operator.v1.0.1 prometheus-operator.v1.0.0
-	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(REGISTRY_ROOT)/bundles/registry-v1/prometheus-operator:v1.2.0 prometheus-operator.v1.2.0 prometheus-operator.v1.0.0
-	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(REGISTRY_ROOT)/bundles/registry-v1/prometheus-operator:v2.0.0 prometheus-operator.v2.0.0 prometheus-operator.v1.0.0
+	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(LOCAL_REGISTRY_HOST)/bundles/registry-v1/prometheus-operator:v1.0.0 prometheus-operator.v1.0.0 prometheus-operator.v1.0.0
+	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(LOCAL_REGISTRY_HOST)/bundles/registry-v1/prometheus-operator:v1.0.1 prometheus-operator.v1.0.1 prometheus-operator.v1.0.0
+	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(LOCAL_REGISTRY_HOST)/bundles/registry-v1/prometheus-operator:v1.2.0 prometheus-operator.v1.2.0 prometheus-operator.v1.0.0
+	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(LOCAL_REGISTRY_HOST)/bundles/registry-v1/prometheus-operator:v2.0.0 prometheus-operator.v2.0.0 prometheus-operator.v1.0.0
 
 #SECTION Build
 

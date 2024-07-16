@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -24,6 +25,7 @@ var (
 const (
 	testCatalogRefEnvVar = "CATALOG_IMG"
 	testCatalogName      = "test-catalog"
+	latestImageTag       = "latest"
 )
 
 func TestMain(m *testing.M) {
@@ -50,6 +52,7 @@ func createTestCatalog(ctx context.Context, name string, imageRef string) (*cata
 				Image: &catalogd.ImageSource{
 					Ref:                   imageRef,
 					InsecureSkipTLSVerify: true,
+					PollInterval:          &metav1.Duration{Duration: time.Second},
 				},
 			},
 		},
