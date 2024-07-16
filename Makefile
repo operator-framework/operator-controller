@@ -106,9 +106,13 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 verify: tidy fmt vet generate manifests #HELP Verify all generated code is up-to-date.
 	git diff --exit-code
 
+.PHONY: fix-lint
+fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
+	$(GOLANGCI_LINT) run --fix $(GOLANGCI_LINT_ARGS)
+
 .PHONY: fmt
-fmt: $(GOLANGCI_LINT) #EXHELP Formats code
-	go fmt ./... && $(GOLANGCI_LINT) run --fix $(GOLANGCI_LINT_ARGS)
+fmt: #EXHELP Formats code
+	go fmt ./...
 
 .PHONY: vet
 vet: #EXHELP Run go vet against code.
