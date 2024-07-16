@@ -22,11 +22,15 @@ func TestNewCertPool(t *testing.T) {
 		msg string
 	}{
 		{"../../testdata/certs/good", ""},
-		{"../../testdata/certs/bad", "unable to PEM decode cert 1"},
-		{"../../testdata/certs/ugly", ""},
+		{"../../testdata/certs/bad", `error adding cert file "../../testdata/certs/bad/Amazon_Root_CA_2.pem": unable to PEM decode cert 1`},
+		{"../../testdata/certs/ugly", `error adding cert file "../../testdata/certs/ugly/Amazon_Root_CA.pem": unable to PEM decode cert 2`},
+		{"../../testdata/certs/ugly2", `error adding cert file "../../testdata/certs/ugly2/Amazon_Root_CA_1.pem": unable to PEM decode cert 1`},
+		{"../../testdata/certs/ugly3", `error adding cert file "../../testdata/certs/ugly3/not_a_cert.pem": unable to PEM decode cert 1`},
+		{"../../testdata/certs/empty", `error adding cert file "../../testdata/certs/empty/empty.pem": unable to parse cert 1: x509: malformed certificate`},
 	}
 
 	for _, caDir := range caDirs {
+		t.Logf("Loading certs from %q", caDir.dir)
 		pool, err := httputil.NewCertPool(caDir.dir)
 		if caDir.msg == "" {
 			require.NoError(t, err)
