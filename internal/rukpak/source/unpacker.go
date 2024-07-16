@@ -6,8 +6,6 @@ import (
 	"io/fs"
 
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-
-	bd "github.com/operator-framework/operator-controller/internal/rukpak/bundledeployment"
 )
 
 // Unpacker unpacks bundle content, either synchronously or asynchronously and
@@ -25,8 +23,8 @@ import (
 // specifications. A source should treat a bundle root directory as an opaque
 // file tree and delegate bundle format concerns to bundle parsers.
 type Unpacker interface {
-	Unpack(context.Context, *bd.BundleDeployment) (*Result, error)
-	Cleanup(context.Context, *bd.BundleDeployment) error
+	Unpack(context.Context, *BundleSource) (*Result, error)
+	Cleanup(context.Context, *BundleSource) error
 }
 
 // Result conveys progress information about unpacking bundle content.
@@ -43,7 +41,7 @@ type Result struct {
 	// For example, resolved image sources should reference a container image
 	// digest rather than an image tag, and git sources should reference a
 	// commit hash rather than a branch or tag.
-	ResolvedSource *bd.BundleSource
+	ResolvedSource *BundleSource
 
 	// State is the current state of unpacking the bundle content.
 	State State
@@ -69,28 +67,38 @@ const (
 	StateUnpacked State = "Unpacked"
 )
 
+type SourceType string
+
+type BundleSource struct {
+	Name string
+	// Type defines the kind of Bundle content being sourced.
+	Type SourceType
+	// Image is the bundle image that backs the content of this bundle.
+	Image *ImageSource
+}
+
 type unpacker struct {
-	sources map[bd.SourceType]Unpacker
+	sources map[SourceType]Unpacker
 }
 
 // NewUnpacker returns a new composite Source that unpacks bundles using the source
 // mapping provided by the configured sources.
-func NewUnpacker(sources map[bd.SourceType]Unpacker) Unpacker {
+func NewUnpacker(sources map[SourceType]Unpacker) Unpacker {
 	return &unpacker{sources: sources}
 }
 
-func (s *unpacker) Unpack(ctx context.Context, bundle *bd.BundleDeployment) (*Result, error) {
-	source, ok := s.sources[bundle.Spec.Source.Type]
+func (s *unpacker) Unpack(ctx context.Context, bundle *BundleSource) (*Result, error) {
+	source, ok := s.sources[bundle.Type]
 	if !ok {
-		return nil, fmt.Errorf("source type %q not supported", bundle.Spec.Source.Type)
+		return nil, fmt.Errorf("source type %q not supported", bundle.Type)
 	}
 	return source.Unpack(ctx, bundle)
 }
 
-func (s *unpacker) Cleanup(ctx context.Context, bundle *bd.BundleDeployment) error {
-	source, ok := s.sources[bundle.Spec.Source.Type]
+func (s *unpacker) Cleanup(ctx context.Context, bundle *BundleSource) error {
+	source, ok := s.sources[bundle.Type]
 	if !ok {
-		return fmt.Errorf("source type %q not supported", bundle.Spec.Source.Type)
+		return fmt.Errorf("source type %q not supported", bundle.Type)
 	}
 	return source.Cleanup(ctx, bundle)
 }
@@ -99,8 +107,8 @@ func (s *unpacker) Cleanup(ctx context.Context, bundle *bd.BundleDeployment) err
 // a default source mapping with built-in implementations of all of the supported
 // source types.
 func NewDefaultUnpacker(mgr manager.Manager, namespace, cacheDir string) (Unpacker, error) {
-	return NewUnpacker(map[bd.SourceType]Unpacker{
-		bd.SourceTypeImage: &ImageRegistry{
+	return NewUnpacker(map[SourceType]Unpacker{
+		SourceTypeImage: &ImageRegistry{
 			BaseCachePath: cacheDir,
 			AuthNamespace: namespace,
 		},

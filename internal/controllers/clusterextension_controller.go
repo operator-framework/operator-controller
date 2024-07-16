@@ -67,7 +67,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/resolve"
-	"github.com/operator-framework/operator-controller/internal/rukpak/bundledeployment"
 	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	rukpaksource "github.com/operator-framework/operator-controller/internal/rukpak/source"
@@ -278,12 +277,14 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	ext.Status.ResolvedBundle = bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion)
 	setResolvedStatusConditionSuccess(ext, fmt.Sprintf("resolved to %q", resolvedBundle.Image))
 
-	// Generate a BundleDeployment from the ClusterExtension to Unpack.
-	// Note: The BundleDeployment here is not a k8s API, its a simple Go struct which
-	// necessary embedded values.
-	bd := r.generateBundleDeploymentForUnpack(resolvedBundle.Image, ext)
+	bundleSource := &rukpaksource.BundleSource{
+		Type: rukpaksource.SourceTypeImage,
+		Image: &rukpaksource.ImageSource{
+			Ref: resolvedBundle.Image,
+		},
+	}
 	l.V(1).Info("unpacking resolved bundle")
-	unpackResult, err := r.Unpacker.Unpack(ctx, bd)
+	unpackResult, err := r.Unpacker.Unpack(ctx, bundleSource)
 	if err != nil {
 		setStatusUnpackFailed(ext, err.Error())
 		return ctrl.Result{}, err
@@ -502,21 +503,6 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, d
 			Message:            message,
 			ObservedGeneration: ext.Generation,
 		})
-	}
-}
-
-func (r *ClusterExtensionReconciler) generateBundleDeploymentForUnpack(bundlePath string, ce *ocv1alpha1.ClusterExtension) *bundledeployment.BundleDeployment {
-	return &bundledeployment.BundleDeployment{
-		Name: ce.Name,
-		Spec: bundledeployment.BundleDeploymentSpec{
-			InstallNamespace: ce.Spec.InstallNamespace,
-			Source: bundledeployment.BundleSource{
-				Type: bundledeployment.SourceTypeImage,
-				Image: &bundledeployment.ImageSource{
-					Ref: bundlePath,
-				},
-			},
-		},
 	}
 }
 
