@@ -269,6 +269,68 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 	}, pollDuration, pollInterval)
 }
 
+func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
+	t.Log("When a cluster extension is installed from a catalog")
+	t.Log("It resolves again when a catalog is patched with new ImageRef")
+	clusterExtension, extensionCatalog := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension)
+	defer getArtifactsOutput(t)
+
+	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
+		PackageName:      "prometheus",
+		InstallNamespace: "default",
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: "default",
+		},
+	}
+	t.Log("It resolves the specified package with correct bundle path")
+	t.Log("By creating the ClusterExtension resource")
+	require.NoError(t, c.Create(context.Background(), clusterExtension))
+
+	t.Log("By reporting a successful resolution and bundle path")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		assert.Len(ct, clusterExtension.Status.Conditions, len(conditionsets.ConditionTypes))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "resolved to")
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
+	}, pollDuration, pollInterval)
+
+	// patch imageRef tag on test-catalog image with v2 image
+	t.Log("By patching the catalog ImageRef to point to the v2 catalog")
+	updatedCatalogImage := fmt.Sprintf("%s/e2e/test-catalog:v2", os.Getenv("LOCAL_REGISTRY_HOST"))
+	err := patchTestCatalog(context.Background(), testCatalogName, updatedCatalogImage)
+	require.NoError(t, err)
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.Name}, extensionCatalog))
+		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, catalogd.TypeUnpacked)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, catalogd.ReasonUnpackSuccessful, cond.Reason)
+	}, pollDuration, pollInterval)
+
+	t.Log("By eventually reporting a successful resolution and bundle path")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		assert.Len(ct, clusterExtension.Status.Conditions, len(conditionsets.ConditionTypes))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "resolved to")
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
+	}, pollDuration, pollInterval)
+}
+
 func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("It resolves again when a new catalog is available")
