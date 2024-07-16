@@ -61,3 +61,26 @@ func createTestCatalog(ctx context.Context, name string, imageRef string) (*cata
 	err := c.Create(ctx, catalog)
 	return catalog, err
 }
+
+// patchTestCatalog will patch the existing clusterCatalog on the test cluster, provided
+// the context, catalog name, and the image reference. It returns an error
+// if any errors occurred while updating the catalog.
+func patchTestCatalog(ctx context.Context, name string, newImageRef string) error {
+	// Fetch the existing ClusterCatalog
+	catalog := &catalogd.ClusterCatalog{}
+	err := c.Get(ctx, client.ObjectKey{Name: name}, catalog)
+	if err != nil {
+		return err
+	}
+
+	// Update the ImageRef
+	catalog.Spec.Source.Image.Ref = newImageRef
+
+	// Patch the ClusterCatalog
+	err = c.Update(ctx, catalog)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
