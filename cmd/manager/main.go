@@ -40,16 +40,13 @@ import (
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-	registryv1handler "github.com/operator-framework/rukpak/pkg/handler"
-	crdupgradesafety "github.com/operator-framework/rukpak/pkg/preflights/crdupgradesafety"
-	"github.com/operator-framework/rukpak/pkg/provisioner/registry"
-	"github.com/operator-framework/rukpak/pkg/source"
-	"github.com/operator-framework/rukpak/pkg/storage"
+
 	"k8s.io/apimachinery/pkg/types"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/action"
 	"github.com/operator-framework/operator-controller/internal/authentication"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
