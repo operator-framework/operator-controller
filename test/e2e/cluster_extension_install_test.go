@@ -29,6 +29,8 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
+
+	rbacv1 "k8s.io/api/rbac/v1"
 )
 
 const (
@@ -38,7 +40,65 @@ const (
 var pollDuration = time.Minute
 var pollInterval = time.Second
 
-func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCatalog) {
+func createServiceAccount(ctx context.Context, name types.NamespacedName) (*corev1.ServiceAccount, error) {
+	sa := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name.Name,
+			Namespace: name.Namespace,
+		},
+	}
+	err := c.Create(ctx, sa)
+	if err != nil {
+		return nil, err
+	}
+	cr := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name.Name,
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{
+					"*",
+				},
+				Resources: []string{
+					"*",
+				},
+				Verbs: []string{
+					"*",
+				},
+			},
+		},
+	}
+	err = c.Create(ctx, cr)
+	if err != nil {
+		return nil, err
+	}
+	crb := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name.Name,
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      name.Name,
+				Namespace: name.Namespace,
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     name.Name,
+		},
+	}
+	err = c.Create(ctx, crb)
+	if err != nil {
+		return nil, err
+	}
+
+	return sa, nil
+}
+
+func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCatalog, *corev1.ServiceAccount) {
 	var err error
 	extensionCatalog, err := createTestCatalog(context.Background(), testCatalogName, os.Getenv(testCatalogRefEnvVar))
 	require.NoError(t, err)
@@ -49,10 +109,18 @@ func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCata
 			Name: clusterExtensionName,
 		},
 	}
-	return clusterExtension, extensionCatalog
+
+	defaultNamespace := types.NamespacedName{
+		Name:      clusterExtensionName,
+		Namespace: "default",
+	}
+
+	sa, err := createServiceAccount(context.Background(), defaultNamespace)
+	require.NoError(t, err)
+	return clusterExtension, extensionCatalog, sa
 }
 
-func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *ocv1alpha1.ClusterExtension) {
+func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *ocv1alpha1.ClusterExtension, sa *corev1.ServiceAccount) {
 	require.NoError(t, c.Delete(context.Background(), cat))
 	require.Eventually(t, func() bool {
 		err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &catalogd.ClusterCatalog{})
@@ -63,21 +131,26 @@ func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *o
 		err := c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, &ocv1alpha1.ClusterExtension{})
 		return errors.IsNotFound(err)
 	}, pollDuration, pollInterval)
+	require.NoError(t, c.Delete(context.Background(), sa))
+	require.Eventually(t, func() bool {
+		err := c.Get(context.Background(), types.NamespacedName{Name: sa.Name, Namespace: sa.Namespace}, &corev1.ServiceAccount{})
+		return errors.IsNotFound(err)
+	}, pollDuration, pollInterval)
 }
 
 func TestClusterExtensionInstallRegistry(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When the extension bundle format is registry+v1")
 
-	clusterExtension, extensionCatalog := testInit(t)
-	defer testCleanup(t, extensionCatalog, clusterExtension)
+	clusterExtension, extensionCatalog, sa := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
 		PackageName:      "prometheus",
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: "default",
+			Name: sa.Name,
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
@@ -128,8 +201,8 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
 
-	clusterExtension, extensionCatalog := testInit(t)
-	defer testCleanup(t, extensionCatalog, clusterExtension)
+	clusterExtension, extensionCatalog, sa := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
 	defer getArtifactsOutput(t)
 
 	t.Log("By creating an ClusterExtension at a specified version")
@@ -138,7 +211,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		Version:          "1.0.0",
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: "default",
+			Name: sa.Name,
 		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
@@ -177,8 +250,8 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
 
-	clusterExtension, extensionCatalog := testInit(t)
-	defer testCleanup(t, extensionCatalog, clusterExtension)
+	clusterExtension, extensionCatalog, sa := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
 	defer getArtifactsOutput(t)
 
 	t.Log("By creating an ClusterExtension at a specified version")
@@ -187,7 +260,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 		Version:          "1.0.0",
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: "default",
+			Name: sa.Name,
 		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
@@ -225,8 +298,8 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
-	clusterExtension, extensionCatalog := testInit(t)
-	defer testCleanup(t, extensionCatalog, clusterExtension)
+	clusterExtension, extensionCatalog, sa := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
 	defer getArtifactsOutput(t)
 
 	t.Log("By creating an ClusterExtension at a specified version")
@@ -235,7 +308,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		Version:          "1.0.0",
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: "default",
+			Name: sa.Name,
 		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
@@ -272,15 +345,15 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("It resolves again when a catalog is patched with new ImageRef")
-	clusterExtension, extensionCatalog := testInit(t)
-	defer testCleanup(t, extensionCatalog, clusterExtension)
+	clusterExtension, extensionCatalog, sa := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
 		PackageName:      "prometheus",
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: "default",
+			Name: sa.Name,
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
@@ -351,14 +424,16 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 			Name: clusterExtensionName,
 		},
 	}
-	defer testCleanup(t, extensionCatalog, clusterExtension)
+	sa, err := createServiceAccount(context.Background(), types.NamespacedName{Name: clusterExtensionName, Namespace: "default"})
+	require.NoError(t, err)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
 		PackageName:      "prometheus",
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: "default",
+			Name: sa.Name,
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
