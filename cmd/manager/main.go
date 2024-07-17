@@ -29,7 +29,10 @@ import (
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/types"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -40,10 +43,6 @@ import (
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-
-	"k8s.io/apimachinery/pkg/types"
-	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/rest"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/action"
@@ -182,7 +181,7 @@ func main() {
 		}
 		token, err := tokenGetter.Get(ctx, namespacedName)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to extract SA token, %w", err)
+			return nil, fmt.Errorf("failed to extract SA token, %w", err)
 		}
 		tempConfig := rest.AnonymousClientConfig(c)
 		tempConfig.BearerToken = token
