@@ -5,43 +5,54 @@ import (
 )
 
 // Predicate returns true if the object should be kept when filtering
-type Predicate[T catalogmetadata.Schemas] func(entity *T) bool
+type Predicate[T catalogmetadata.Schemas] func(entity *T) (bool, []string)
 
 // Filter filters a slice accordingly to
-func Filter[T catalogmetadata.Schemas](in []*T, test Predicate[T]) []*T {
+func Filter[T catalogmetadata.Schemas](in []*T, test Predicate[T]) ([]*T, []string) {
 	out := []*T{}
+	var errs []string
 	for i := range in {
-		if test(in[i]) {
+		res, e := test(in[i])
+		if res {
 			out = append(out, in[i])
+		} else {
+			errs = append(errs, e...)
 		}
 	}
-	return out
+	return out, errs
 }
 
 func And[T catalogmetadata.Schemas](predicates ...Predicate[T]) Predicate[T] {
-	return func(obj *T) bool {
+	return func(obj *T) (bool, []string) {
 		for _, predicate := range predicates {
-			if !predicate(obj) {
-				return false
+			if res, errs := predicate(obj); !res {
+				return false, errs
 			}
 		}
-		return true
+		return true, nil
 	}
 }
 
 func Or[T catalogmetadata.Schemas](predicates ...Predicate[T]) Predicate[T] {
-	return func(obj *T) bool {
+	return func(obj *T) (bool, []string) {
+		var errs []string
 		for _, predicate := range predicates {
-			if predicate(obj) {
-				return true
+			if res, e := predicate(obj); !res {
+				errs = append(errs, e...)
+			} else {
+				return true, nil
 			}
 		}
-		return false
+		return false, errs
 	}
 }
 
 func Not[T catalogmetadata.Schemas](predicate Predicate[T]) Predicate[T] {
-	return func(obj *T) bool {
-		return !predicate(obj)
+	return func(obj *T) (bool, []string) {
+		predicateTrue, errs := predicate(obj)
+		if predicateTrue {
+			return false, errs
+		}
+		return true, nil
 	}
 }
