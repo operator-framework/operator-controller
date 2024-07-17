@@ -3,7 +3,7 @@
   value: {"name":"olmv1-certificate", "secret":{"secretName":"olmv1-cert", "optional": false, "items": [{"key": "ca.crt", "path": "olm-ca.crt"}]}}
 - op: add
   path: /spec/template/spec/containers/0/volumeMounts/-
-  value: {"name":"olmv1-certificate", "readOnly": true, "mountPath":"/var/certs/olm-ca.crt", "subPath":"olm-ca.crt"}
+  value: {"name":"olmv1-certificate", "readOnly": true, "mountPath":"/var/certs/"}
 - op: add
   path: /spec/template/spec/containers/0/args/-
   value: "--ca-certs-dir=/var/certs"

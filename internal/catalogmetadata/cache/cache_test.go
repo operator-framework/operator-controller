@@ -214,7 +214,9 @@ func TestFilesystemCache(t *testing.T) {
 			maps.Copy(tt.tripper.content, tt.contents)
 			httpClient := http.DefaultClient
 			httpClient.Transport = tt.tripper
-			c := cache.NewFilesystemCache(cacheDir, httpClient)
+			c := cache.NewFilesystemCache(cacheDir, func() (*http.Client, error) {
+				return httpClient, nil
+			})
 
 			actualFS, err := c.FetchCatalogContents(ctx, tt.catalog)
 			if !tt.wantErr {

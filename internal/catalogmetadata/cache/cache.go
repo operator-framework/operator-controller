@@ -25,11 +25,11 @@ var _ client.Fetcher = &filesystemCache{}
 //   - IF cached it will verify the cache is up to date. If it is up to date it will return
 //     the cached contents, if not it will fetch the new contents from the catalogd HTTP
 //     server and update the cached contents.
-func NewFilesystemCache(cachePath string, client *http.Client) client.Fetcher {
+func NewFilesystemCache(cachePath string, clientFunc func() (*http.Client, error)) client.Fetcher {
 	return &filesystemCache{
 		cachePath:              cachePath,
 		mutex:                  sync.RWMutex{},
-		client:                 client,
+		getClient:              clientFunc,
 		cacheDataByCatalogName: map[string]cacheData{},
 	}
 }
@@ -50,7 +50,7 @@ type cacheData struct {
 type filesystemCache struct {
 	mutex                  sync.RWMutex
 	cachePath              string
-	client                 *http.Client
+	getClient              func() (*http.Client, error)
 	cacheDataByCatalogName map[string]cacheData
 }
 
@@ -95,7 +95,11 @@ func (fsc *filesystemCache) FetchCatalogContents(ctx context.Context, catalog *c
 		return nil, fmt.Errorf("error forming request: %v", err)
 	}
 
-	resp, err := fsc.client.Do(req)
+	client, err := fsc.getClient()
+	if err != nil {
+		return nil, fmt.Errorf("error getting HTTP client: %w", err)
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error performing request: %v", err)
 	}

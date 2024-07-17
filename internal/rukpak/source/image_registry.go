@@ -53,7 +53,7 @@ func NewUnrecoverable(err error) *Unrecoverable {
 type ImageRegistry struct {
 	BaseCachePath string
 	AuthNamespace string
-	CaCertPool    *x509.CertPool
+	GetCaCertPool func() (*x509.CertPool, error)
 }
 
 func (i *ImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Result, error) {
@@ -99,8 +99,12 @@ func (i *ImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Resu
 	if bundle.Image.InsecureSkipTLSVerify {
 		transport.TLSClientConfig.InsecureSkipVerify = true // nolint:gosec
 	}
-	if i.CaCertPool != nil {
-		transport.TLSClientConfig.RootCAs = i.CaCertPool
+	if i.GetCaCertPool != nil {
+		pool, err := i.GetCaCertPool()
+		if err != nil {
+			return nil, err
+		}
+		transport.TLSClientConfig.RootCAs = pool
 	}
 	remoteOpts = append(remoteOpts, remote.WithTransport(transport))
 

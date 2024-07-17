@@ -2,12 +2,17 @@ package httputil
 
 import (
 	"bytes"
+	"context"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/go-logr/logr"
 )
 
 var pemStart = []byte("\n-----BEGIN ")
@@ -157,7 +162,7 @@ func pemDecode(data []byte) (*pem.Block, []byte) {
 }
 
 // This version of (*x509.CertPool).AppendCertsFromPEM() will error out if parsing fails
-func appendCertsFromPEM(s *x509.CertPool, pemCerts []byte) error {
+func appendCertsFromPEM(s *x509.CertPool, pemCerts []byte, firstExpiration *time.Time) error {
 	n := 1
 	for len(pemCerts) > 0 {
 		var block *pem.Block
@@ -179,15 +184,25 @@ func appendCertsFromPEM(s *x509.CertPool, pemCerts []byte) error {
 		if err != nil {
 			return fmt.Errorf("unable to parse cert %d: %w", n, err)
 		}
-		// no return values - panics or always succeeds
-		s.AddCert(cert)
+		if firstExpiration.IsZero() || firstExpiration.After(cert.NotAfter) {
+			*firstExpiration = cert.NotAfter
+		}
+		now := time.Now()
+		if now.Before(cert.NotBefore) {
+			return fmt.Errorf("not yet valid cert %d: %q", n, cert.NotBefore.Format(time.RFC3339))
+		} else if now.After(cert.NotAfter) {
+			return fmt.Errorf("expired cert %d: %q", n, cert.NotAfter.Format(time.RFC3339))
+		} else {
+			// no return values - panics or always succeeds
+			s.AddCert(cert)
+		}
 		n++
 	}
 
 	return nil
 }
 
-func NewCertPool(caDir string) (*x509.CertPool, error) {
+func NewCertPool(caDir string, log logr.Logger) (*x509.CertPool, error) {
 	caCertPool, err := x509.SystemCertPool()
 	if err != nil {
 		return nil, err
@@ -200,20 +215,79 @@ func NewCertPool(caDir string) (*x509.CertPool, error) {
 	if err != nil {
 		return nil, err
 	}
+	count := 0
+	firstExpiration := time.Time{}
+
 	for _, e := range dirEntries {
-		if e.IsDir() {
+		file := filepath.Join(caDir, e.Name())
+		// These might be symlinks pointing to directories, so use Stat() to resolve
+		fi, err := os.Stat(file)
+		if err != nil {
+			return nil, err
+		}
+		if fi.IsDir() {
+			log.Info("skip directory", "name", e.Name())
 			continue
 		}
-		file := filepath.Join(caDir, e.Name())
+		log.Info("load certificate", "name", e.Name())
 		data, err := os.ReadFile(file)
 		if err != nil {
 			return nil, fmt.Errorf("error reading cert file %q: %w", file, err)
 		}
-		err = appendCertsFromPEM(caCertPool, data)
+		err = appendCertsFromPEM(caCertPool, data, &firstExpiration)
 		if err != nil {
 			return nil, fmt.Errorf("error adding cert file %q: %w", file, err)
 		}
+		count++
 	}
 
+	// Found no certs!
+	if count == 0 {
+		return nil, fmt.Errorf("no certificates found in %q", caDir)
+	}
+
+	log.Info("first expiration", "time", firstExpiration.Format(time.RFC3339))
 	return caCertPool, nil
+}
+
+func AddCertWatch(caDir string, update func() error) error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+	if err = watcher.Add(caDir); err != nil {
+		return err
+	}
+	go func() {
+		for {
+			select {
+			case <-watcher.Events:
+				// drain as many events as possible before doing anything
+				func() {
+					for {
+						time.Sleep(time.Millisecond * 100)
+						select {
+						case <-watcher.Events:
+						default:
+							return
+						}
+					}
+				}()
+				if err := update(); err != nil {
+					log, err2 := logr.FromContext(context.Background())
+					if err2 == nil {
+						log.WithName("cert-pool").Error(err, "error updating cert-pool")
+					}
+					os.Exit(1)
+				}
+			case err = <-watcher.Errors:
+				log, err2 := logr.FromContext(context.Background())
+				if err2 == nil {
+					log.WithName("cert-pool").Error(err, "error watching certificate dir")
+				}
+				os.Exit(1)
+			}
+		}
+	}()
+	return nil
 }

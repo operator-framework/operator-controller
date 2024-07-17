@@ -188,6 +188,15 @@ test-upgrade-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-upgrade-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
 test-upgrade-e2e: kind-cluster run-latest-release image-registry build-push-e2e-catalog registry-load-bundles pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean #HELP Run upgrade e2e tests on a local kind cluster
 
+.PHONY: run-cert-e2e
+run-cert-e2e:
+	./hack/test/cert-e2e.sh
+
+.PHONY: test-cert-e2e
+test-cert-e2e: KIND_CLUSTER_NAME := operator-controller-cert-e2e
+test-cert-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
+test-cert-e2e: run run-cert-e2e kind-clean #HELP Run certificate e2e tests on a local kind cluster
+
 .PHONY: e2e-coverage
 e2e-coverage:
 	COVERAGE_OUTPUT=./coverage/e2e.out ./hack/test/e2e-coverage.sh
