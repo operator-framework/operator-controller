@@ -38,5 +38,8 @@ kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
 kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/catalogd.yaml"
 kubectl_wait "olmv1-system" "deployment/catalogd-controller-manager" "60s"
 
+kubectl apply -f "https://raw.githubusercontent.com/operator-framework/operator-controller/main/config/samples/catalogd_operatorcatalog.yaml"
+kubectl wait --for=condition=Unpacked "clustercatalog/operatorhubio" --timeout="60s"
+
 kubectl apply -f "${operator_controller_manifest}"
 kubectl_wait "olmv1-system" "deployment/operator-controller-controller-manager" "60s"
