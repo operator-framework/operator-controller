@@ -17,20 +17,11 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
-
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/catalogmetadata"
 )
-
-// BundleProvider provides the way to retrieve a list of Bundles from a source,
-// generally from a catalog client of some kind.
-type BundleProvider interface {
-	Bundles(ctx context.Context, packageName string) ([]*catalogmetadata.Bundle, error)
-}
 
 // setResolvedStatusConditionSuccess sets the resolved status condition to success.
 func setResolvedStatusConditionSuccess(ext *ocv1alpha1.ClusterExtension, message string) {
