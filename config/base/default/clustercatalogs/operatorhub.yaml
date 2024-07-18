@@ -1,0 +1,10 @@
+apiVersion: catalogd.operatorframework.io/v1alpha1
+kind: ClusterCatalog
+metadata:
+  name: operatorhubio
+  namespace: olmv1-system
+spec:
+  source:
+    type: image
+    image:
+      ref: quay.io/operatorhubio/catalog:latest

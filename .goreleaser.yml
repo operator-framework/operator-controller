@@ -61,6 +61,7 @@ release:
   disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
   extra_files:
   - glob: 'catalogd.yaml'
+  - glob: './config/base/default/clustercatalogs/operatorhub.yaml'
   header: |
     ## Installation
     ```bash
@@ -68,4 +69,9 @@ release:
     kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
     kubectl apply -f https://github.com/operator-framework/catalogd/releases/download/{{ .Tag }}/catalogd.yaml
     kubectl wait --for=condition=Available --namespace=olmv1-system deployment/catalogd-controller-manager --timeout=60s
+    ```
+    ## Optional OperatorHub.io Catalog Installation
+    ```
+    kubectl apply -f https://github.com/operator-framework/catalogd/releases/download/{{ .Tag }}/operatorhub.yaml
+    kubectl wait --for=condition=Unpacked clustercatalog/operatorhubio --timeout=60s
     ```
