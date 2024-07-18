@@ -2,7 +2,6 @@ package httputil
 
 import (
 	"bytes"
-	"context"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
@@ -11,7 +10,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/go-logr/logr"
 )
 
@@ -248,46 +246,4 @@ func NewCertPool(caDir string, log logr.Logger) (*x509.CertPool, error) {
 
 	log.Info("first expiration", "time", firstExpiration.Format(time.RFC3339))
 	return caCertPool, nil
-}
-
-func AddCertWatch(caDir string, update func() error) error {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return err
-	}
-	if err = watcher.Add(caDir); err != nil {
-		return err
-	}
-	go func() {
-		for {
-			select {
-			case <-watcher.Events:
-				// drain as many events as possible before doing anything
-				func() {
-					for {
-						time.Sleep(time.Millisecond * 100)
-						select {
-						case <-watcher.Events:
-						default:
-							return
-						}
-					}
-				}()
-				if err := update(); err != nil {
-					log, err2 := logr.FromContext(context.Background())
-					if err2 == nil {
-						log.WithName("cert-pool").Error(err, "error updating cert-pool")
-					}
-					os.Exit(1)
-				}
-			case err = <-watcher.Errors:
-				log, err2 := logr.FromContext(context.Background())
-				if err2 == nil {
-					log.WithName("cert-pool").Error(err, "error watching certificate dir")
-				}
-				os.Exit(1)
-			}
-		}
-	}()
-	return nil
 }

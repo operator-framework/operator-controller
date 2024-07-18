@@ -18,7 +18,7 @@ kubectl wait --for=condition=Available --namespace=olmv1-system "deployment/oper
 
 # and then search through the previous logs
 function check_logs() {
-    kubectl logs -c manager -n olmv1-system -l control-plane=controller-manager | grep "reloading certificate pool" >& /dev/null
+    kubectl logs -c manager -n olmv1-system -l control-plane=controller-manager | grep "updating certificate pool" >& /dev/null
 }
 
 WAIT_TIME=0

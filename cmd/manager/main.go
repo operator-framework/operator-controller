@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"crypto/x509"
 	"flag"
 	"fmt"
 	"net/http"
@@ -178,23 +177,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	certPool, err := httputil.NewCertPool(caCertDir, ctrl.Log.WithName("cert-pool"))
+	certPoolWatcher, err := httputil.NewCertPoolWatcher(caCertDir, ctrl.Log.WithName("cert-pool"))
 	if err != nil {
 		setupLog.Error(err, "unable to create CA certificate pool")
 		os.Exit(1)
 	}
-
-	ceRecon := &controllers.ClusterExtensionReconciler{}
-
 	unpacker := &source.ImageRegistry{
 		BaseCachePath: filepath.Join(cachePath, "unpack"),
 		// TODO: This needs to be derived per extension via ext.Spec.InstallNamespace
-		AuthNamespace: systemNamespace,
-		GetCaCertPool: func() (*x509.CertPool, error) {
-			ceRecon.CaMutex.RLock()
-			defer ceRecon.CaMutex.RUnlock()
-			return ceRecon.CaCertPool.Clone(), nil
-		},
+		AuthNamespace:   systemNamespace,
+		CertPoolWatcher: certPoolWatcher,
 	}
 
 	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
@@ -226,9 +218,7 @@ func main() {
 		os.Exit(1)
 	}
 	catalogClient := catalogclient.New(cache.NewFilesystemCache(catalogsCachePath, func() (*http.Client, error) {
-		ceRecon.CaMutex.RLock()
-		defer ceRecon.CaMutex.RUnlock()
-		return httputil.BuildHTTPClient(ceRecon.CaCertPool.Clone())
+		return httputil.BuildHTTPClient(certPoolWatcher)
 	}))
 
 	resolver := &resolve.CatalogResolver{
@@ -243,17 +233,16 @@ func main() {
 			catalogClient.GetPackage,
 		),
 	}
-	ceRecon = &controllers.ClusterExtensionReconciler{
+
+	if err = (&controllers.ClusterExtensionReconciler{
 		Client:                cl,
 		Resolver:              resolver,
 		ActionClientGetter:    acg,
 		Unpacker:              unpacker,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
-		CaCertPool:            certPool,
 		Preflights:            preflights,
-	}
-	if err = ceRecon.SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
 	}
@@ -265,21 +254,6 @@ func main() {
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
-	}
-	setupLog.Info("adding certificate watch", "directory", caCertDir)
-	if err := httputil.AddCertWatch(caCertDir, func() error {
-		ctrl.Log.WithName("cert-pool").Info("reloading certificate pool")
-		certPool, err := httputil.NewCertPool(caCertDir, ctrl.Log.WithName("cert-pool"))
-		if err != nil {
-			return err
-		}
-		ceRecon.CaMutex.Lock()
-		defer ceRecon.CaMutex.Unlock()
-		ceRecon.CaCertPool = certPool
-		return nil
-	}); err != nil {
-		setupLog.Error(err, "unable to add CA certificate watch")
 		os.Exit(1)
 	}
 
