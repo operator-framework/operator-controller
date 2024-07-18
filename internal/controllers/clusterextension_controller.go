@@ -118,6 +118,7 @@ type Preflight interface {
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=secrets,verbs=create;update;patch;delete;get;list;watch
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts/token,verbs=create
+//+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get
 
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
