@@ -47,6 +47,7 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/action"
+	"github.com/operator-framework/operator-controller/internal/applier"
 	"github.com/operator-framework/operator-controller/internal/authentication"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
@@ -191,6 +192,7 @@ func main() {
 		}
 		return tempConfig, nil
 	}
+
 	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
 		helmclient.StorageNamespaceMapper(installNamespaceMapper),
 		helmclient.ClientNamespaceMapper(installNamespaceMapper),
@@ -232,16 +234,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	aeClient, err := apiextensionsv1client.NewForConfig(mgr.GetConfig())
-	if err != nil {
-		setupLog.Error(err, "unable to create apiextensions client")
-		os.Exit(1)
-	}
-
-	preflights := []controllers.Preflight{
-		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
-	}
-
 	cl := mgr.GetClient()
 
 	catalogsCachePath := filepath.Join(cachePath, "catalogs")
@@ -264,17 +256,35 @@ func main() {
 			},
 			catalogClient.GetPackage,
 		),
+		Validations: []resolve.ValidationFunc{
+			resolve.NoDependencyValidation,
+		},
+	}
+
+	aeClient, err := apiextensionsv1client.NewForConfig(mgr.GetConfig())
+	if err != nil {
+		setupLog.Error(err, "unable to create apiextensions client")
+		os.Exit(1)
+	}
+
+	preflights := []applier.Preflight{
+		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
+	}
+
+	applier := &applier.Helm{
+		ActionClientGetter: acg,
+		Preflights:         preflights,
 	}
 
 	if err = (&controllers.ClusterExtensionReconciler{
 		Client:                cl,
 		Resolver:              resolver,
-		ActionClientGetter:    acg,
 		Unpacker:              unpacker,
+		Applier:               applier,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
-		Preflights:            preflights,
 		Watcher:               contentmanager.New(restConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper()),
+		CaCertPool:            certPool,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)

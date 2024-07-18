@@ -2,6 +2,7 @@ package resolve
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -79,6 +80,26 @@ func TestPackageExists(t *testing.T) {
 	assert.Equal(t, genBundle(pkgName, "2.0.0"), *gotBundle)
 	assert.Equal(t, bsemver.MustParse("2.0.0"), *gotVersion)
 	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
+}
+
+func TestValidationFailed(t *testing.T) {
+	pkgName := randPkg()
+	w := staticCatalogWalker{
+		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
+		"b": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
+		"c": func() (*declcfg.DeclarativeConfig, error) { return genPackage(pkgName), nil },
+	}
+	r := CatalogResolver{
+		WalkCatalogsFunc: w.WalkCatalogs,
+		Validations: []ValidationFunc{
+			func(b *declcfg.Bundle) error {
+				return errors.New("fail")
+			},
+		},
+	}
+	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+    _, _, _, err := r.Resolve(context.Background(), ce, nil)
+	require.Error(t, err)
 }
 
 func TestVersionDoesNotExist(t *testing.T) {
@@ -360,6 +381,7 @@ func TestUpgradeFoundSemver(t *testing.T) {
 	assert.Equal(t, bsemver.MustParse("1.0.2"), *gotVersion)
 	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
 }
+
 func TestUpgradeNotFoundSemver(t *testing.T) {
 	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
 	pkgName := randPkg()
