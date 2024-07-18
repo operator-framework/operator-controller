@@ -1,5 +1,50 @@
+# `ClusterCatalog` Interface
+`catalogd` serves catalog content via an HTTP(S) endpoint as a [JSON Lines](https://jsonlines.org/) stream of File-Based Catalog (FBC) [Meta](https://olm.operatorframework.io/docs/reference/file-based-catalogs/#schema) objects delimited by newlines.
+
+## Example
+For an example JSON-encoded FBC snippet
+```json
+{
+  "schema": "olm.package",
+  "name": "cockroachdb",
+  "defaultChannel": "stable-v6.x",
+}
+{
+  "schema": "olm.channel",
+  "name": "stable-v6.x",
+  "package": "cockroachdb",
+  "entries": [
+    {
+      "name": "cockroachdb.v6.0.0",
+      "skipRange": "<6.0.0"
+    }
+  ]
+}
+{
+  "schema": "olm.bundle",
+  "name": "cockroachdb.v6.0.0",
+  "package": "cockroachdb",
+  "image": "quay.io/openshift-community-operators/cockroachdb@sha256:d3016b1507515fc7712f9c47fd9082baf9ccb070aaab58ed0ef6e5abdedde8ba",
+  "properties": [
+    {
+      "type": "olm.package",
+      "value": {
+        "packageName": "cockroachdb",
+        "version": "6.0.0"
+      }
+    },
+  ],
+}
+```
+the corresponding JSON Lines formatted response would be
+```json
+{"schema":"olm.package","name":"cockroachdb","defaultChannel":"stable-v6.x"}
+{"schema":"olm.channel","name":"stable-v6.x","package":"cockroachdb","entries":[{"name":"cockroachdb.v6.0.0","skipRange":"<6.0.0"}]}
+{"schema":"olm.bundle","name":"cockroachdb.v6.0.0","package":"cockroachdb","image":"quay.io/openshift-community-operators/cockroachdb@sha256:d3016b1507515fc7712f9c47fd9082baf9ccb070aaab58ed0ef6e5abdedde8ba","properties":[{"type":"olm.package","value":{"packageName":"cockroachdb","version":"6.0.0"}}]}
+```
+
 # Fetching `ClusterCatalog` contents from the Catalogd HTTP Server
-This document covers how to fetch the contents for a `ClusterCatalog` from the
+This section covers how to fetch the contents for a `ClusterCatalog` from the
 Catalogd HTTP(S) Server.
 
 For example purposes we make the following assumption:
@@ -28,9 +73,6 @@ of a catalog can be read from:
         ref: quay.io/operatorhubio/catalog@sha256:e53267559addc85227c2a7901ca54b980bc900276fc24d3f4db0549cb38ecf76
       type: image
 ```
-
-All responses will be a JSON stream where each JSON object is a File-Based Catalog (FBC)
-object.
 
 
 ## On cluster
