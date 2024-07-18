@@ -108,6 +108,48 @@ func TestWatch(t *testing.T) {
 	}
 }
 
+func BenchmarkWatch(b *testing.B) {
+	rcm := func(_ context.Context, _ client.Object, cfg *rest.Config) (*rest.Config, error) {
+		return cfg, nil
+	}
+	config := &rest.Config{}
+
+	ce := &v1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-cluster-extension",
+		},
+	}
+	objs := []client.Object{
+		&corev1.Pod{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Pod",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "webserver",
+			},
+		},
+	}
+
+	for n := 0; n < b.N; n++ {
+		mgr, _ := manager.New(config, manager.Options{})
+		ctrl, err := controller.New("test-controller", mgr, controller.Options{
+			Reconciler: reconcile.Func(func(context.Context, reconcile.Request) (reconcile.Result, error) {
+				return reconcile.Result{}, nil
+			}),
+		})
+		if err != nil {
+			b.Logf("creating controller; %v", err)
+		}
+
+		instance := New(rcm, config, mgr.GetRESTMapper())
+		err = instance.Watch(context.Background(), ctrl, ce, objs)
+		if err != nil {
+			b.Logf("setup watcher; %v", err)
+		}
+	}
+}
+
 func TestBuildScheme(t *testing.T) {
 	type validation struct {
 		gvks  []schema.GroupVersionKind
@@ -203,5 +245,29 @@ func TestBuildScheme(t *testing.T) {
 				assert.Equal(t, got, tc.want.valid)
 			}
 		})
+	}
+}
+
+func BenchmarkBuildScheme(b *testing.B) {
+	objects := []client.Object{
+		&appsv1.Deployment{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "webserver",
+			},
+		},
+	}
+
+	gvk := appsv1.SchemeGroupVersion.WithKind("Deployment")
+
+	for n := 0; n < b.N; n++ {
+		scheme, err := buildScheme(objects)
+		if err != nil {
+			b.Logf("failed creating scheme; %v", err)
+		}
+		_ = scheme.Recognizes(gvk)
 	}
 }
