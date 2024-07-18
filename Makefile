@@ -148,11 +148,11 @@ test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
 	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && CGO_ENABLED=1 go test -count=1 -race -short $(UNIT_TEST_DIRS) -cover -coverprofile ${ROOT_DIR}/coverage/unit.out -test.gocoverdir=$(ROOT_DIR)/coverage/unit
 
 image-registry: ## Setup in-cluster image registry
-	./test/tools/image-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME)
+	./hack/test/image-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME)
 
 build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and push it to the image registry
-	./test/tools/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
-	./test/tools/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V2)
+	./hack/test/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
+	./hack/test/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V2)
 
 # When running the e2e suite, you can set the ARTIFACT_PATH variable to the absolute path
 # of the directory for the operator-controller e2e tests to store the artifacts, which
@@ -176,7 +176,7 @@ run-latest-release:
 
 .PHONY: pre-upgrade-setup
 pre-upgrade-setup:
-	./hack/pre-upgrade-setup.sh $(CATALOG_IMG) $(TEST_CLUSTER_CATALOG_NAME) $(TEST_CLUSTER_EXTENSION_NAME)
+	./hack/test/pre-upgrade-setup.sh $(CATALOG_IMG) $(TEST_CLUSTER_CATALOG_NAME) $(TEST_CLUSTER_EXTENSION_NAME)
 
 .PHONY: post-upgrade-checks
 post-upgrade-checks:
@@ -190,7 +190,7 @@ test-upgrade-e2e: kind-cluster run-latest-release image-registry build-push-e2e-
 
 .PHONY: e2e-coverage
 e2e-coverage:
-	COVERAGE_OUTPUT=./coverage/e2e.out ./hack/e2e-coverage.sh
+	COVERAGE_OUTPUT=./coverage/e2e.out ./hack/test/e2e-coverage.sh
 
 .PHONY: kind-load
 kind-load: $(KIND) #EXHELP Loads the currently constructed image onto the cluster.
