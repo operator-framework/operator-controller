@@ -284,7 +284,6 @@ func main() {
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
 		Watcher:               contentmanager.New(restConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper()),
-		CaCertPool:            certPool,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)

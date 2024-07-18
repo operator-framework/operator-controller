@@ -2,14 +2,15 @@ package controllers_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
+	"testing/fstest"
 
 	bsemver "github.com/blang/semver/v4"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -87,11 +88,11 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 
 func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t, nil)
-	mockUnpacker := unpacker.(*MockUnpacker)
-	// Set up the Unpack method to return a result with StateUnpacked
-	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*source.BundleSource")).Return(&source.Result{
-		State: source.StatePending,
-	}, nil)
+	reconciler.Unpacker = &MockUnpacker{
+		result: &source.Result{
+			State: source.StatePending,
+		},
+	}
 
 	ctx := context.Background()
 	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
@@ -152,6 +153,468 @@ func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 	require.NotNil(t, unpackedCond)
 	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
 	require.Equal(t, ocv1alpha1.ReasonUnpackFailed, unpackedCond.Reason)
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
+}
+
+func TestClusterExtensionUnpackFails(t *testing.T) {
+	cl, reconciler := newClientAndReconciler(t, nil)
+	reconciler.Unpacker = &MockUnpacker{
+		err: errors.New("unpack failure"),
+	}
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	t.Log("When the cluster extension specifies a channel with version that exist")
+	t.Log("By initializing cluster state")
+	pkgName := "prometheus"
+	pkgVer := "1.0.0"
+	pkgChan := "beta"
+	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
+
+	clusterExtension := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName:      pkgName,
+			Version:          pkgVer,
+			Channel:          pkgChan,
+			InstallNamespace: installNamespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
+			},
+		},
+	}
+	err := cl.Create(ctx, clusterExtension)
+	require.NoError(t, err)
+
+	t.Log("It sets resolution success status")
+	t.Log("By running reconcile")
+	reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1alpha1.ClusterExtension, _ *ocv1alpha1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		v := bsemver.MustParse("1.0.0")
+		return &declcfg.Bundle{
+			Name:    "prometheus.v1.0.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+		}, &v, nil, nil
+	})
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.Error(t, err)
+
+	t.Log("By fetching updated cluster extension after reconcile")
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
+	t.Log("By checking the status fields")
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
+
+	t.Log("By checking the expected conditions")
+	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+	require.NotNil(t, resolvedCond)
+	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
+	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
+
+	t.Log("By checking the expected unpacked conditions")
+	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
+	require.NotNil(t, unpackedCond)
+	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonUnpackFailed, unpackedCond.Reason)
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
+}
+
+func TestClusterExtensionUnpackUnexpectedState(t *testing.T) {
+	cl, reconciler := newClientAndReconciler(t, nil)
+	reconciler.Unpacker = &MockUnpacker{
+		result: &source.Result{
+			State: "unexpected",
+		},
+	}
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	t.Log("When the cluster extension specifies a channel with version that exist")
+	t.Log("By initializing cluster state")
+	pkgName := "prometheus"
+	pkgVer := "1.0.0"
+	pkgChan := "beta"
+	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
+
+	clusterExtension := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName:      pkgName,
+			Version:          pkgVer,
+			Channel:          pkgChan,
+			InstallNamespace: installNamespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
+			},
+		},
+	}
+	err := cl.Create(ctx, clusterExtension)
+	require.NoError(t, err)
+
+	t.Log("It sets resolution success status")
+	t.Log("By running reconcile")
+	reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1alpha1.ClusterExtension, _ *ocv1alpha1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		v := bsemver.MustParse("1.0.0")
+		return &declcfg.Bundle{
+			Name:    "prometheus.v1.0.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+		}, &v, nil, nil
+	})
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.Error(t, err)
+
+	t.Log("By fetching updated cluster extension after reconcile")
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
+	t.Log("By checking the status fields")
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
+
+	t.Log("By checking the expected conditions")
+	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+	require.NotNil(t, resolvedCond)
+	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
+	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
+
+	t.Log("By checking the expected unpacked conditions")
+	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
+	require.NotNil(t, unpackedCond)
+	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonUnpackFailed, unpackedCond.Reason)
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
+}
+
+func TestClusterExtensionUnpackSucceeds(t *testing.T) {
+	cl, reconciler := newClientAndReconciler(t, nil)
+	reconciler.Unpacker = &MockUnpacker{
+		result: &source.Result{
+			State:  source.StateUnpacked,
+			Bundle: fstest.MapFS{},
+		},
+	}
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	t.Log("When the cluster extension specifies a channel with version that exist")
+	t.Log("By initializing cluster state")
+	pkgName := "prometheus"
+	pkgVer := "1.0.0"
+	pkgChan := "beta"
+	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
+
+	clusterExtension := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName:      pkgName,
+			Version:          pkgVer,
+			Channel:          pkgChan,
+			InstallNamespace: installNamespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
+			},
+		},
+	}
+	err := cl.Create(ctx, clusterExtension)
+	require.NoError(t, err)
+
+	t.Log("It sets resolution success status")
+	t.Log("By running reconcile")
+	reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1alpha1.ClusterExtension, _ *ocv1alpha1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		v := bsemver.MustParse("1.0.0")
+		return &declcfg.Bundle{
+			Name:    "prometheus.v1.0.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+		}, &v, nil, nil
+	})
+	reconciler.Applier = &MockApplier{
+		err: errors.New("apply failure"),
+	}
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.Error(t, err)
+
+	t.Log("By fetching updated cluster extension after reconcile")
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
+	t.Log("By checking the status fields")
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
+
+	t.Log("By checking the expected resolution conditions")
+	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+	require.NotNil(t, resolvedCond)
+	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
+	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
+
+	t.Log("By checking the expected unpacked conditions")
+	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
+	require.NotNil(t, unpackedCond)
+	require.Equal(t, metav1.ConditionTrue, unpackedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonUnpackSuccess, unpackedCond.Reason)
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
+}
+
+func TestClusterExtensionInstallationFailedApplierFails(t *testing.T) {
+	cl, reconciler := newClientAndReconciler(t, nil)
+	reconciler.Unpacker = &MockUnpacker{
+		result: &source.Result{
+			State:  source.StateUnpacked,
+			Bundle: fstest.MapFS{},
+		},
+	}
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	t.Log("When the cluster extension specifies a channel with version that exist")
+	t.Log("By initializing cluster state")
+	pkgName := "prometheus"
+	pkgVer := "1.0.0"
+	pkgChan := "beta"
+	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
+
+	clusterExtension := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName:      pkgName,
+			Version:          pkgVer,
+			Channel:          pkgChan,
+			InstallNamespace: installNamespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
+			},
+		},
+	}
+	err := cl.Create(ctx, clusterExtension)
+	require.NoError(t, err)
+
+	t.Log("It sets resolution success status")
+	t.Log("By running reconcile")
+	reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1alpha1.ClusterExtension, _ *ocv1alpha1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		v := bsemver.MustParse("1.0.0")
+		return &declcfg.Bundle{
+			Name:    "prometheus.v1.0.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+		}, &v, nil, nil
+	})
+	reconciler.Applier = &MockApplier{
+		err: errors.New("apply failure"),
+	}
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.Error(t, err)
+
+	t.Log("By fetching updated cluster extension after reconcile")
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
+	t.Log("By checking the status fields")
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
+
+	t.Log("By checking the expected resolution conditions")
+	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+	require.NotNil(t, resolvedCond)
+	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
+	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
+
+	t.Log("By checking the expected unpacked conditions")
+	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
+	require.NotNil(t, unpackedCond)
+	require.Equal(t, metav1.ConditionTrue, unpackedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonUnpackSuccess, unpackedCond.Reason)
+
+	t.Log("By checking the expected installed conditions")
+	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+	require.NotNil(t, installedCond)
+	require.Equal(t, metav1.ConditionFalse, installedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonInstallationFailed, installedCond.Reason)
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
+}
+
+func TestClusterExtensionInstallationFailedWatcherFailed(t *testing.T) {
+	cl, reconciler := newClientAndReconciler(t, nil)
+	reconciler.Unpacker = &MockUnpacker{
+		result: &source.Result{
+			State:  source.StateUnpacked,
+			Bundle: fstest.MapFS{},
+		},
+	}
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	t.Log("When the cluster extension specifies a channel with version that exist")
+	t.Log("By initializing cluster state")
+	pkgName := "prometheus"
+	pkgVer := "1.0.0"
+	pkgChan := "beta"
+	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
+
+	clusterExtension := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName:      pkgName,
+			Version:          pkgVer,
+			Channel:          pkgChan,
+			InstallNamespace: installNamespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
+			},
+		},
+	}
+	err := cl.Create(ctx, clusterExtension)
+	require.NoError(t, err)
+
+	t.Log("It sets resolution success status")
+	t.Log("By running reconcile")
+	reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1alpha1.ClusterExtension, _ *ocv1alpha1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		v := bsemver.MustParse("1.0.0")
+		return &declcfg.Bundle{
+			Name:    "prometheus.v1.0.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+		}, &v, nil, nil
+	})
+	reconciler.Applier = &MockApplier{
+		objs: []client.Object{},
+	}
+	reconciler.Watcher = &MockWatcher{
+		err: errors.New("watcher fail"),
+	}
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.Error(t, err)
+
+	t.Log("By fetching updated cluster extension after reconcile")
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
+	t.Log("By checking the status fields")
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Empty(t, clusterExtension.Status.InstalledBundle)
+
+	t.Log("By checking the expected resolution conditions")
+	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+	require.NotNil(t, resolvedCond)
+	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
+	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
+
+	t.Log("By checking the expected unpacked conditions")
+	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
+	require.NotNil(t, unpackedCond)
+	require.Equal(t, metav1.ConditionTrue, unpackedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonUnpackSuccess, unpackedCond.Reason)
+
+	t.Log("By checking the expected installed conditions")
+	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+	require.NotNil(t, installedCond)
+	require.Equal(t, metav1.ConditionFalse, installedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonInstallationFailed, installedCond.Reason)
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
+}
+
+func TestClusterExtensionInstallationSucceeds(t *testing.T) {
+	cl, reconciler := newClientAndReconciler(t, nil)
+	reconciler.Unpacker = &MockUnpacker{
+		result: &source.Result{
+			State:  source.StateUnpacked,
+			Bundle: fstest.MapFS{},
+		},
+	}
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	t.Log("When the cluster extension specifies a channel with version that exist")
+	t.Log("By initializing cluster state")
+	pkgName := "prometheus"
+	pkgVer := "1.0.0"
+	pkgChan := "beta"
+	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
+
+	clusterExtension := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName:      pkgName,
+			Version:          pkgVer,
+			Channel:          pkgChan,
+			InstallNamespace: installNamespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
+			},
+		},
+	}
+	err := cl.Create(ctx, clusterExtension)
+	require.NoError(t, err)
+
+	t.Log("It sets resolution success status")
+	t.Log("By running reconcile")
+	reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1alpha1.ClusterExtension, _ *ocv1alpha1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		v := bsemver.MustParse("1.0.0")
+		return &declcfg.Bundle{
+			Name:    "prometheus.v1.0.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+		}, &v, nil, nil
+	})
+	reconciler.Applier = &MockApplier{
+		objs: []client.Object{},
+	}
+	reconciler.Watcher = &MockWatcher{}
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.NoError(t, err)
+
+	t.Log("By fetching updated cluster extension after reconcile")
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
+	t.Log("By checking the status fields")
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.InstalledBundle)
+
+	t.Log("By checking the expected resolution conditions")
+	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+	require.NotNil(t, resolvedCond)
+	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
+	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
+
+	t.Log("By checking the expected unpacked conditions")
+	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
+	require.NotNil(t, unpackedCond)
+	require.Equal(t, metav1.ConditionTrue, unpackedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonUnpackSuccess, unpackedCond.Reason)
+
+	t.Log("By checking the expected installed conditions")
+	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+	require.NotNil(t, installedCond)
+	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, installedCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }

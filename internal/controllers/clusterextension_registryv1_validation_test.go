@@ -8,7 +8,6 @@ import (
 
 	bsemver "github.com/blang/semver/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -98,16 +97,15 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 				}
 				return &tt.bundle, v, nil, nil
 			})
-			mockUnpacker := unpacker.(*MockUnpacker)
-			// Set up the Unpack method to return a result with StatePending
-			mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*source.BundleSource")).Return(&source.Result{
-				State: source.StatePending,
-			}, nil)
+			unpacker := &MockUnpacker{
+				result: &source.Result{
+					State: source.StatePending,
+				},
+			}
 
 			reconciler := &controllers.ClusterExtensionReconciler{
 				Client:                cl,
 				Resolver:              resolver,
-				ActionClientGetter:    helmClientGetter,
 				Unpacker:              unpacker,
 				InstalledBundleGetter: &MockInstalledBundleGetter{},
 				Finalizers:            crfinalizer.NewFinalizers(),

@@ -98,7 +98,7 @@ func TestValidationFailed(t *testing.T) {
 		},
 	}
 	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
-    _, _, _, err := r.Resolve(context.Background(), ce, nil)
+	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	require.Error(t, err)
 }
 
