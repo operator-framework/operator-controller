@@ -89,7 +89,7 @@ func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t, nil)
 	mockUnpacker := unpacker.(*MockUnpacker)
 	// Set up the Unpack method to return a result with StateUnpacked
-	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*bundledeployment.BundleDeployment")).Return(&source.Result{
+	mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*source.BundleSource")).Return(&source.Result{
 		State: source.StatePending,
 	}, nil)
 

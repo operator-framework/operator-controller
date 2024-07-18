@@ -100,7 +100,7 @@ func TestClusterExtensionRegistryV1DisallowDependencies(t *testing.T) {
 			})
 			mockUnpacker := unpacker.(*MockUnpacker)
 			// Set up the Unpack method to return a result with StatePending
-			mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*v1alpha2.BundleDeployment")).Return(&source.Result{
+			mockUnpacker.On("Unpack", mock.Anything, mock.AnythingOfType("*source.BundleSource")).Return(&source.Result{
 				State: source.StatePending,
 			}, nil)
 

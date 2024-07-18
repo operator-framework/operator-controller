@@ -20,9 +20,22 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	apimacherrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	bd "github.com/operator-framework/operator-controller/internal/rukpak/bundledeployment"
 )
+
+// SourceTypeImage is the identifier for image-type bundle sources
+const SourceTypeImage SourceType = "image"
+
+type ImageSource struct {
+	// Ref contains the reference to a container image containing Bundle contents.
+	Ref string
+	// ImagePullSecretName contains the name of the image pull secret in the namespace that the provisioner is deployed.
+	ImagePullSecretName string
+	// InsecureSkipTLSVerify indicates that TLS certificate validation should be skipped.
+	// If this option is specified, the HTTPS protocol will still be used to
+	// fetch the specified image reference.
+	// This should not be used in a production environment.
+	InsecureSkipTLSVerify bool
+}
 
 // Unrecoverable represents an error that can not be recovered
 // from without user intervention. When this error is returned
@@ -43,25 +56,25 @@ type ImageRegistry struct {
 	CaCertPool    *x509.CertPool
 }
 
-func (i *ImageRegistry) Unpack(ctx context.Context, bundle *bd.BundleDeployment) (*Result, error) {
+func (i *ImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Result, error) {
 	l := log.FromContext(ctx)
-	if bundle.Spec.Source.Type != bd.SourceTypeImage {
-		panic(fmt.Sprintf("programmer error: source type %q is unable to handle specified bundle source type %q", bd.SourceTypeImage, bundle.Spec.Source.Type))
+	if bundle.Type != SourceTypeImage {
+		panic(fmt.Sprintf("programmer error: source type %q is unable to handle specified bundle source type %q", SourceTypeImage, bundle.Type))
 	}
 
-	if bundle.Spec.Source.Image == nil {
+	if bundle.Image == nil {
 		return nil, NewUnrecoverable(fmt.Errorf("error parsing bundle, bundle %s has a nil image source", bundle.Name))
 	}
 
-	imgRef, err := name.ParseReference(bundle.Spec.Source.Image.Ref)
+	imgRef, err := name.ParseReference(bundle.Image.Ref)
 	if err != nil {
 		return nil, NewUnrecoverable(fmt.Errorf("error parsing image reference: %w", err))
 	}
 
 	remoteOpts := []remote.Option{}
-	if bundle.Spec.Source.Image.ImagePullSecretName != "" {
+	if bundle.Image.ImagePullSecretName != "" {
 		chainOpts := k8schain.Options{
-			ImagePullSecrets: []string{bundle.Spec.Source.Image.ImagePullSecretName},
+			ImagePullSecrets: []string{bundle.Image.ImagePullSecretName},
 			Namespace:        i.AuthNamespace,
 			// TODO: Do we want to use any secrets that are included in the rukpak service account?
 			// If so, we will need to add the permission to get service accounts and specify
@@ -83,7 +96,7 @@ func (i *ImageRegistry) Unpack(ctx context.Context, bundle *bd.BundleDeployment)
 			MinVersion:         tls.VersionTLS12,
 		} // nolint:gosec
 	}
-	if bundle.Spec.Source.Image.InsecureSkipTLSVerify {
+	if bundle.Image.InsecureSkipTLSVerify {
 		transport.TLSClientConfig.InsecureSkipVerify = true // nolint:gosec
 	}
 	if i.CaCertPool != nil {
@@ -146,19 +159,19 @@ func wrapUnrecoverable(err error, isUnrecoverable bool) error {
 	return err
 }
 
-func (i *ImageRegistry) Cleanup(_ context.Context, bundle *bd.BundleDeployment) error {
+func (i *ImageRegistry) Cleanup(_ context.Context, bundle *BundleSource) error {
 	return os.RemoveAll(filepath.Join(i.BaseCachePath, bundle.Name))
 }
 
-func unpackedResult(fsys fs.FS, bundle *bd.BundleDeployment, ref string) *Result {
+func unpackedResult(fsys fs.FS, bundle *BundleSource, ref string) *Result {
 	return &Result{
 		Bundle: fsys,
-		ResolvedSource: &bd.BundleSource{
-			Type: bd.SourceTypeImage,
-			Image: &bd.ImageSource{
+		ResolvedSource: &BundleSource{
+			Type: SourceTypeImage,
+			Image: &ImageSource{
 				Ref:                   ref,
-				ImagePullSecretName:   bundle.Spec.Source.Image.ImagePullSecretName,
-				InsecureSkipTLSVerify: bundle.Spec.Source.Image.InsecureSkipTLSVerify,
+				ImagePullSecretName:   bundle.Image.ImagePullSecretName,
+				InsecureSkipTLSVerify: bundle.Image.InsecureSkipTLSVerify,
 			},
 		},
 		State: StateUnpacked,

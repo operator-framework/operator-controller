@@ -37,7 +37,6 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/controllers"
-	bd "github.com/operator-framework/operator-controller/internal/rukpak/bundledeployment"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 )
 
@@ -47,12 +46,12 @@ type MockUnpacker struct {
 }
 
 // Unpack mocks the Unpack method
-func (m *MockUnpacker) Unpack(ctx context.Context, bd *bd.BundleDeployment) (*source.Result, error) {
-	args := m.Called(ctx, bd)
+func (m *MockUnpacker) Unpack(ctx context.Context, bundle *source.BundleSource) (*source.Result, error) {
+	args := m.Called(ctx, bundle)
 	return args.Get(0).(*source.Result), args.Error(1)
 }
 
-func (m *MockUnpacker) Cleanup(ctx context.Context, bundle *bd.BundleDeployment) error {
+func (m *MockUnpacker) Cleanup(ctx context.Context, bundle *source.BundleSource) error {
 	//TODO implement me
 	panic("implement me")
 }
