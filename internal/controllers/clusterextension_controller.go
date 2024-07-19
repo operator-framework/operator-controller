@@ -119,6 +119,9 @@ type Preflight interface {
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts/token,verbs=create
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get
 
+// TODO: Remove these permissions as part of resolving https://github.com/operator-framework/operator-controller/issues/975
+//+kubebuilder:rbac:groups=*,resources=*,verbs=*
+
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
 
