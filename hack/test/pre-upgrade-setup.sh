@@ -33,42 +33,6 @@ spec:
       insecureSkipTLSVerify: true
 EOF
 
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: upgrade-e2e
-  namespace: default
-EOF
-
-kubectl apply -f - <<EOF
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: upgrade-e2e
-rules:
-  - apiGroups:
-    - "*"
-    resources:
-    - "*"
-    verbs:
-    - "*"
-EOF
-
-kubectl apply -f - <<EOF
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: upgrade-e2e
-subjects:
-  - kind: ServiceAccount
-    name: upgrade-e2e
-    namespace: default
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: upgrade-e2e
-EOF
 
 kubectl apply -f - << EOF
 apiVersion: olm.operatorframework.io/v1alpha1
@@ -80,7 +44,7 @@ spec:
   packageName: prometheus
   version: 1.0.0
   serviceAccount:
-    name: upgrade-e2e
+    name: default
 EOF
 
 kubectl wait --for=condition=Unpacked --timeout=60s ClusterCatalog $TEST_CLUSTER_CATALOG_NAME
