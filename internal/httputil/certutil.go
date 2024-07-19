@@ -190,10 +190,9 @@ func appendCertsFromPEM(s *x509.CertPool, pemCerts []byte, firstExpiration *time
 			return fmt.Errorf("not yet valid cert %d: %q", n, cert.NotBefore.Format(time.RFC3339))
 		} else if now.After(cert.NotAfter) {
 			return fmt.Errorf("expired cert %d: %q", n, cert.NotAfter.Format(time.RFC3339))
-		} else {
-			// no return values - panics or always succeeds
-			s.AddCert(cert)
 		}
+		// no return values - panics or always succeeds
+		s.AddCert(cert)
 		n++
 	}
 

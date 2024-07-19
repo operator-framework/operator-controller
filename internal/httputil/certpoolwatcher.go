@@ -12,47 +12,27 @@ import (
 )
 
 type CertPoolWatcher struct {
-	dir     string
-	mx      sync.RWMutex
-	pool    *x509.CertPool
-	log     logr.Logger
-	watcher *fsnotify.Watcher
+	generation int
+	dir        string
+	mx         sync.RWMutex
+	pool       *x509.CertPool
+	log        logr.Logger
+	watcher    *fsnotify.Watcher
+	done       chan bool
 }
 
-func (cpw *CertPoolWatcher) Get() (*x509.CertPool, error) {
-	if cpw.pool == nil {
-		return nil, fmt.Errorf("no certificate pool available")
-	}
+// Returns the current CertPool and the generation number
+func (cpw *CertPoolWatcher) Get() (*x509.CertPool, int, error) {
 	cpw.mx.RLock()
 	defer cpw.mx.RUnlock()
-	return cpw.pool.Clone(), nil
+	if cpw.pool == nil {
+		return nil, 0, fmt.Errorf("no certificate pool available")
+	}
+	return cpw.pool.Clone(), cpw.generation, nil
 }
 
-func (cpw *CertPoolWatcher) update() {
-	cpw.log.Info("updating certificate pool")
-	pool, err := NewCertPool(cpw.dir, cpw.log)
-	if err != nil {
-		cpw.log.Error(err, "error updating certificate pool")
-		os.Exit(1)
-	}
-	cpw.mx.Lock()
-	defer cpw.mx.Unlock()
-	cpw.pool = pool
-}
-
-// Drain as many events as possible before doing anything
-// Otherwise, we will be hit with an event for _every_ entry in the
-// directory, and end up doing an update for each one
-func (cpw *CertPoolWatcher) drainEvents() {
-	for {
-		// sleep to let events accumulate
-		time.Sleep(time.Millisecond * 50)
-		select {
-		case <-cpw.watcher.Events:
-		default:
-			return
-		}
-	}
+func (cpw *CertPoolWatcher) Done() {
+	cpw.done <- true
 }
 
 func NewCertPoolWatcher(caDir string, log logr.Logger) (*CertPoolWatcher, error) {
@@ -67,11 +47,14 @@ func NewCertPoolWatcher(caDir string, log logr.Logger) (*CertPoolWatcher, error)
 	if err = watcher.Add(caDir); err != nil {
 		return nil, err
 	}
+
 	cpw := &CertPoolWatcher{
-		dir:     caDir,
-		pool:    pool,
-		log:     log,
-		watcher: watcher,
+		generation: 1,
+		dir:        caDir,
+		pool:       pool,
+		log:        log,
+		watcher:    watcher,
+		done:       make(chan bool),
 	}
 	go func() {
 		for {
@@ -79,11 +62,47 @@ func NewCertPoolWatcher(caDir string, log logr.Logger) (*CertPoolWatcher, error)
 			case <-watcher.Events:
 				cpw.drainEvents()
 				cpw.update()
-			case err = <-watcher.Errors:
+			case err := <-watcher.Errors:
 				log.Error(err, "error watching certificate dir")
 				os.Exit(1)
+			case <-cpw.done:
+				err := watcher.Close()
+				if err != nil {
+					log.Error(err, "error closing watcher")
+				}
+				return
 			}
 		}
 	}()
 	return cpw, nil
+}
+
+func (cpw *CertPoolWatcher) update() {
+	cpw.log.Info("updating certificate pool")
+	pool, err := NewCertPool(cpw.dir, cpw.log)
+	if err != nil {
+		cpw.log.Error(err, "error updating certificate pool")
+		os.Exit(1)
+	}
+	cpw.mx.Lock()
+	defer cpw.mx.Unlock()
+	cpw.pool = pool
+	cpw.generation++
+}
+
+// Drain as many events as possible before doing anything
+// Otherwise, we will be hit with an event for _every_ entry in the
+// directory, and end up doing an update for each one
+func (cpw *CertPoolWatcher) drainEvents() {
+	for {
+		drainTimer := time.NewTimer(time.Millisecond * 50)
+		select {
+		case <-drainTimer.C:
+			return
+		case <-cpw.watcher.Events:
+		}
+		if !drainTimer.Stop() {
+			<-drainTimer.C
+		}
+	}
 }

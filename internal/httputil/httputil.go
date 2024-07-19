@@ -9,7 +9,7 @@ import (
 func BuildHTTPClient(cpw *CertPoolWatcher) (*http.Client, error) {
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 
-	pool, err := cpw.Get()
+	pool, _, err := cpw.Get()
 	if err != nil {
 		return nil, err
 	}

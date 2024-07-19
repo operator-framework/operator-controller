@@ -101,7 +101,7 @@ func (i *ImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Resu
 		transport.TLSClientConfig.InsecureSkipVerify = true // nolint:gosec
 	}
 	if i.CertPoolWatcher != nil {
-		pool, err := i.CertPoolWatcher.Get()
+		pool, _, err := i.CertPoolWatcher.Get()
 		if err != nil {
 			return nil, err
 		}
