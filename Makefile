@@ -194,7 +194,6 @@ run-cert-e2e:
 
 .PHONY: test-cert-e2e
 test-cert-e2e: KIND_CLUSTER_NAME := operator-controller-cert-e2e
-test-cert-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
 test-cert-e2e: run run-cert-e2e kind-clean #HELP Run certificate e2e tests on a local kind cluster
 
 .PHONY: e2e-coverage
