@@ -81,7 +81,7 @@ type InstalledBundleGetter interface {
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch;update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/status,verbs=update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=secrets,verbs=create;update;patch;delete;get;list;watch
+//+kubebuilder:rbac:namespace=system,groups=core,resources=secrets,verbs=create;update;patch;delete;deletecollection;get;list;watch
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts/token,verbs=create
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get
 
@@ -196,6 +196,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, nil
 	}
 
+	l.V(1).Info("getting installed bundle")
 	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, ext)
 	if err != nil {
 		ext.Status.InstalledBundle = nil

@@ -30,10 +30,8 @@ import (
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/apimachinery/pkg/types"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -162,41 +160,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	installNamespaceMapper := helmclient.ObjectToStringMapper(func(obj client.Object) (string, error) {
-		ext := obj.(*ocv1alpha1.ClusterExtension)
-		return ext.Spec.InstallNamespace, nil
-	})
 	coreClient, err := corev1client.NewForConfig(mgr.GetConfig())
 	if err != nil {
 		setupLog.Error(err, "unable to create core client")
 		os.Exit(1)
 	}
 	tokenGetter := authentication.NewTokenGetter(coreClient, authentication.WithExpirationDuration(1*time.Hour))
-
-	restConfigMapper := func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
-		cExt, ok := o.(*ocv1alpha1.ClusterExtension)
-		if !ok {
-			return c, nil
-		}
-		namespacedName := types.NamespacedName{
-			Name:      cExt.Spec.ServiceAccount.Name,
-			Namespace: cExt.Spec.InstallNamespace,
-		}
-		tempConfig := rest.AnonymousClientConfig(c)
-		tempConfig.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
-			return &authentication.TokenInjectingRoundTripper{
-				Tripper:     rt,
-				TokenGetter: tokenGetter,
-				Key:         namespacedName,
-			}
-		}
-		return tempConfig, nil
-	}
+	clientRestConfigMapper := action.ServiceAccountRestConfigMapper(tokenGetter)
 
 	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
-		helmclient.StorageNamespaceMapper(installNamespaceMapper),
-		helmclient.ClientNamespaceMapper(installNamespaceMapper),
-		helmclient.RestConfigMapper(restConfigMapper),
+		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), systemNamespace)),
+		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
+			ext := obj.(*ocv1alpha1.ClusterExtension)
+			return ext.Spec.InstallNamespace, nil
+		}),
+		helmclient.ClientRestConfigMapper(clientRestConfigMapper),
 	)
 	if err != nil {
 		setupLog.Error(err, "unable to config for creating helm client")
@@ -283,7 +261,7 @@ func main() {
 		Applier:               applier,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
-		Watcher:               contentmanager.New(restConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper()),
+		Watcher:               contentmanager.New(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
