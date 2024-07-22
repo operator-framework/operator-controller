@@ -296,9 +296,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	switch unpackResult.State {
 	case rukpaksource.StatePending:
-		setStatusUnpackPending(ext, unpackResult.Message)
-		setInstalledStatusConditionUnknown(ext, "installation has not been attempted as unpack is pending")
-
+		setStatusUnpackFailed(ext, unpackResult.Message)
+		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonUnpackFailed, "unpack pending")
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacked:
 		setStatusUnpacked(ext, fmt.Sprintf("unpack successful: %v", unpackResult.Message))
@@ -400,7 +399,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	l.V(1).Info("configuring watches for release objects")
 	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
 	if err != nil {
-		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err))
+		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
 		return ctrl.Result{}, err
 	}
 
@@ -430,7 +429,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			return nil
 		}(); err != nil {
 			ext.Status.InstalledBundle = nil
-			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonCreateDynamicWatchFailed, err))
+			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
 			return ctrl.Result{}, err
 		}
 	}
