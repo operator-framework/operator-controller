@@ -22,11 +22,6 @@ func (tt *TokenInjectingRoundTripper) RoundTrip(req *http.Request) (*http.Respon
 		tt.TokenGetter.Delete(tt.Key)
 		resp, err = tt.do(req)
 	}
-	// RoundTrip must always close the response body even on errors.
-	// For more information see https://pkg.go.dev/net/http#RoundTripper
-	if resp != nil {
-		resp.Body.Close()
-	}
 	return resp, err
 }
 
