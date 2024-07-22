@@ -20,6 +20,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -206,7 +207,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	certPool, err := httputil.NewCertPool(caCertDir)
+	certPoolWatcher, err := httputil.NewCertPoolWatcher(caCertDir, ctrl.Log.WithName("cert-pool"))
 	if err != nil {
 		setupLog.Error(err, "unable to create CA certificate pool")
 		os.Exit(1)
@@ -214,8 +215,8 @@ func main() {
 	unpacker := &source.ImageRegistry{
 		BaseCachePath: filepath.Join(cachePath, "unpack"),
 		// TODO: This needs to be derived per extension via ext.Spec.InstallNamespace
-		AuthNamespace: systemNamespace,
-		CaCertPool:    certPool,
+		AuthNamespace:   systemNamespace,
+		CertPoolWatcher: certPoolWatcher,
 	}
 
 	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
@@ -240,18 +241,15 @@ func main() {
 	}
 
 	cl := mgr.GetClient()
-	httpClient, err := httputil.BuildHTTPClient(certPool)
-	if err != nil {
-		setupLog.Error(err, "unable to create catalogd http client")
-		os.Exit(1)
-	}
 
 	catalogsCachePath := filepath.Join(cachePath, "catalogs")
 	if err := os.MkdirAll(catalogsCachePath, 0700); err != nil {
 		setupLog.Error(err, "unable to create catalogs cache directory")
 		os.Exit(1)
 	}
-	catalogClient := catalogclient.New(cache.NewFilesystemCache(catalogsCachePath, httpClient))
+	catalogClient := catalogclient.New(cache.NewFilesystemCache(catalogsCachePath, func() (*http.Client, error) {
+		return httputil.BuildHTTPClient(certPoolWatcher)
+	}))
 
 	resolver := &resolve.CatalogResolver{
 		WalkCatalogsFunc: resolve.CatalogWalker(
@@ -273,7 +271,6 @@ func main() {
 		Unpacker:              unpacker,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
-		CaCertPool:            certPool,
 		Preflights:            preflights,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")

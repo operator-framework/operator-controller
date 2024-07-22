@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"context"
 	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -20,6 +19,8 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	apimacherrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/operator-framework/operator-controller/internal/httputil"
 )
 
 // SourceTypeImage is the identifier for image-type bundle sources
@@ -51,9 +52,9 @@ func NewUnrecoverable(err error) *Unrecoverable {
 // TODO: Make asynchronous
 
 type ImageRegistry struct {
-	BaseCachePath string
-	AuthNamespace string
-	CaCertPool    *x509.CertPool
+	BaseCachePath   string
+	AuthNamespace   string
+	CertPoolWatcher *httputil.CertPoolWatcher
 }
 
 func (i *ImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Result, error) {
@@ -99,8 +100,12 @@ func (i *ImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Resu
 	if bundle.Image.InsecureSkipTLSVerify {
 		transport.TLSClientConfig.InsecureSkipVerify = true // nolint:gosec
 	}
-	if i.CaCertPool != nil {
-		transport.TLSClientConfig.RootCAs = i.CaCertPool
+	if i.CertPoolWatcher != nil {
+		pool, _, err := i.CertPoolWatcher.Get()
+		if err != nil {
+			return nil, err
+		}
+		transport.TLSClientConfig.RootCAs = pool
 	}
 	remoteOpts = append(remoteOpts, remote.WithTransport(transport))
 

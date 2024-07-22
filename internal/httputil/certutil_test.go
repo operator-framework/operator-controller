@@ -1,8 +1,10 @@
 package httputil_test
 
 import (
+	"context"
 	"testing"
 
+	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/require"
 
 	"github.com/operator-framework/operator-controller/internal/httputil"
@@ -21,17 +23,20 @@ func TestNewCertPool(t *testing.T) {
 		dir string
 		msg string
 	}{
+		{"../../testdata/certs/", `no certificates found in "../../testdata/certs/"`},
 		{"../../testdata/certs/good", ""},
 		{"../../testdata/certs/bad", `error adding cert file "../../testdata/certs/bad/Amazon_Root_CA_2.pem": unable to PEM decode cert 1`},
 		{"../../testdata/certs/ugly", `error adding cert file "../../testdata/certs/ugly/Amazon_Root_CA.pem": unable to PEM decode cert 2`},
 		{"../../testdata/certs/ugly2", `error adding cert file "../../testdata/certs/ugly2/Amazon_Root_CA_1.pem": unable to PEM decode cert 1`},
 		{"../../testdata/certs/ugly3", `error adding cert file "../../testdata/certs/ugly3/not_a_cert.pem": unable to PEM decode cert 1`},
 		{"../../testdata/certs/empty", `error adding cert file "../../testdata/certs/empty/empty.pem": unable to parse cert 1: x509: malformed certificate`},
+		{"../../testdata/certs/expired", `error adding cert file "../../testdata/certs/expired/expired.pem": expired cert 1: "2024-01-02T15:00:00Z"`},
 	}
 
+	log, _ := logr.FromContext(context.Background())
 	for _, caDir := range caDirs {
 		t.Logf("Loading certs from %q", caDir.dir)
-		pool, err := httputil.NewCertPool(caDir.dir)
+		pool, err := httputil.NewCertPool(caDir.dir, log)
 		if caDir.msg == "" {
 			require.NoError(t, err)
 			require.NotNil(t, pool)

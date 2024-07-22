@@ -2,16 +2,20 @@ package httputil
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"net/http"
 	"time"
 )
 
-func BuildHTTPClient(caCertPool *x509.CertPool) (*http.Client, error) {
+func BuildHTTPClient(cpw *CertPoolWatcher) (*http.Client, error) {
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 
+	pool, _, err := cpw.Get()
+	if err != nil {
+		return nil, err
+	}
+
 	tlsConfig := &tls.Config{
-		RootCAs:    caCertPool,
+		RootCAs:    pool,
 		MinVersion: tls.VersionTLS12,
 	}
 	tlsTransport := &http.Transport{

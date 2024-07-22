@@ -19,7 +19,6 @@ package controllers
 import (
 	"bytes"
 	"context"
-	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
@@ -89,7 +88,6 @@ type ClusterExtensionReconciler struct {
 	cache                 cache.Cache
 	InstalledBundleGetter InstalledBundleGetter
 	Finalizers            crfinalizer.Finalizers
-	CaCertPool            *x509.CertPool
 	Preflights            []Preflight
 }
 
