@@ -15,7 +15,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/operator-controller/api/v1alpha1"
@@ -156,7 +158,14 @@ func (i *instance) Watch(ctx context.Context, ctrl controller.Controller, ce *v1
 					scheme,
 					i.mapper,
 					ce,
+					handler.OnlyControllerOwner(),
 				),
+				predicate.Funcs{
+					CreateFunc:  func(tce event.TypedCreateEvent[client.Object]) bool { return false },
+					UpdateFunc:  func(tue event.TypedUpdateEvent[client.Object]) bool { return true },
+					DeleteFunc:  func(tde event.TypedDeleteEvent[client.Object]) bool { return true },
+					GenericFunc: func(tge event.TypedGenericEvent[client.Object]) bool { return true },
+				},
 			),
 		)
 		if err != nil {

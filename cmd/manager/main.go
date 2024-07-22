@@ -50,6 +50,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/authentication"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 	catalogclient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
+	"github.com/operator-framework/operator-controller/internal/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
@@ -180,12 +181,14 @@ func main() {
 			Name:      cExt.Spec.ServiceAccount.Name,
 			Namespace: cExt.Spec.InstallNamespace,
 		}
-		token, err := tokenGetter.Get(ctx, namespacedName)
-		if err != nil {
-			return nil, fmt.Errorf("failed to extract SA token, %w", err)
-		}
 		tempConfig := rest.AnonymousClientConfig(c)
-		tempConfig.BearerToken = token
+		tempConfig.WrapTransport = func(rt http.RoundTripper) http.RoundTripper {
+			return &authentication.TokenInjectingRoundTripper{
+				Tripper:     rt,
+				TokenGetter: tokenGetter,
+				Key:         namespacedName,
+			}
+		}
 		return tempConfig, nil
 	}
 	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
@@ -201,7 +204,6 @@ func main() {
 	acg, err := action.NewWrappedActionClientGetter(cfgGetter,
 		helmclient.WithFailureRollbacks(false),
 	)
-
 	if err != nil {
 		setupLog.Error(err, "unable to create helm client")
 		os.Exit(1)
@@ -272,6 +274,7 @@ func main() {
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
 		Preflights:            preflights,
+		Watcher:               contentmanager.New(restConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)

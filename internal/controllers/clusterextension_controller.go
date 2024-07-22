@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -38,7 +37,6 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
@@ -53,7 +51,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
@@ -64,6 +61,7 @@ import (
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
+	"github.com/operator-framework/operator-controller/internal/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/resolve"
 	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
@@ -82,8 +80,7 @@ type ClusterExtensionReconciler struct {
 	Resolver              resolve.Resolver
 	Unpacker              rukpaksource.Unpacker
 	ActionClientGetter    helmclient.ActionClientGetter
-	dynamicWatchMutex     sync.RWMutex
-	dynamicWatchGVKs      sets.Set[schema.GroupVersionKind]
+	Watcher               contentmanager.Watcher
 	controller            crcontroller.Controller
 	cache                 cache.Cache
 	InstalledBundleGetter InstalledBundleGetter
@@ -117,9 +114,6 @@ type Preflight interface {
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts/token,verbs=create
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get
 
-// TODO: Remove these permissions as part of resolving https://github.com/operator-framework/operator-controller/issues/975
-//+kubebuilder:rbac:groups=*,resources=*,verbs=*
-
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs,verbs=list;watch
 //+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
 
@@ -132,7 +126,7 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	l.V(1).Info("reconcile starting")
 	defer l.V(1).Info("reconcile ending")
 
-	var existingExt = &ocv1alpha1.ClusterExtension{}
+	existingExt := &ocv1alpha1.ClusterExtension{}
 	if err := r.Client.Get(ctx, req.NamespacedName, existingExt); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -401,36 +395,17 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
-	for _, obj := range relObjects {
-		if err := func() error {
-			r.dynamicWatchMutex.Lock()
-			defer r.dynamicWatchMutex.Unlock()
-
-			_, isWatched := r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()]
-			if !isWatched {
-				if err := r.controller.Watch(
-					source.Kind(r.cache,
-						obj,
-						crhandler.EnqueueRequestForOwner(r.Scheme(), r.RESTMapper(), ext, crhandler.OnlyControllerOwner()),
-						predicate.Funcs{
-							CreateFunc:  func(ce event.CreateEvent) bool { return false },
-							UpdateFunc:  func(ue event.UpdateEvent) bool { return true },
-							DeleteFunc:  func(de event.DeleteEvent) bool { return true },
-							GenericFunc: func(ge event.GenericEvent) bool { return true },
-						},
-					),
-				); err != nil {
-					return err
-				}
-				r.dynamicWatchGVKs[obj.GetObjectKind().GroupVersionKind()] = sets.Empty{}
-			}
-			return nil
-		}(); err != nil {
+	// Only attempt to watch resources if we are
+	// installing / upgrading. Otherwise we may restart
+	// watches that have already been established
+	if state != stateUnchanged {
+		if err := r.Watcher.Watch(ctx, r.controller, ext, relObjects); err != nil {
 			ext.Status.InstalledBundle = nil
 			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
 			return ctrl.Result{}, err
 		}
 	}
+
 	ext.Status.InstalledBundle = bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion)
 	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", resolvedBundle.Image))
 
@@ -531,13 +506,11 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				},
 			})).
 		Build(r)
-
 	if err != nil {
 		return err
 	}
 	r.controller = controller
 	r.cache = mgr.GetCache()
-	r.dynamicWatchGVKs = sets.New[schema.GroupVersionKind]()
 
 	return nil
 }

@@ -100,3 +100,9 @@ func (t *TokenGetter) reapExpiredTokens() {
 		}
 	}
 }
+
+func (t *TokenGetter) Delete(key types.NamespacedName) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	delete(t.tokens, key)
+}
