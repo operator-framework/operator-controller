@@ -48,11 +48,60 @@ metadata:
   name: upgrade-e2e
 rules:
   - apiGroups:
-    - "*"
+    - ""
     resources:
-    - "*"
+    - "secrets"
+    - "services"
+    - "serviceaccounts"
     verbs:
-    - "*"
+    - "create"
+    - "update"
+    - "patch"
+    - "delete"
+    - "get"
+    - "list"
+    - "watch"
+  - apiGroups:
+    - "apps"
+    resources:
+    - "deployments"
+    verbs:
+    - "create"
+    - "update"
+    - "patch"
+    - "delete"
+    - "get"
+    - "list"
+    - "watch"
+  - apiGroups:
+    - "apiextensions.k8s.io"
+    resources:
+    - "customresourcedefinitions"
+    verbs:
+    - "create"
+    - "update"
+    - "patch"
+    - "delete"
+    - "get"
+    - "list"
+    - "watch"
+  - apiGroups:
+    - "rbac.authorization.k8s.io"
+    resources:
+    - "clusterroles"
+    - "clusterrolebindings"
+    - "roles"
+    - "rolebindings"
+    verbs:
+    - "create"
+    - "update"
+    - "patch"
+    - "delete"
+    - "get"
+    - "list"
+    - "watch"
+    - "bind"
+    - "escalate"
 EOF
 
 kubectl apply -f - <<EOF

@@ -57,13 +57,77 @@ func createServiceAccount(ctx context.Context, name types.NamespacedName) (*core
 		Rules: []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{
-					"*",
+					"",
 				},
 				Resources: []string{
-					"*",
+					"secrets", // for helm
+					"services",
+					"serviceaccounts",
 				},
 				Verbs: []string{
-					"*",
+					"create",
+					"update",
+					"delete",
+					"patch",
+					"get",
+					"list",
+					"watch",
+				},
+			},
+			{
+				APIGroups: []string{
+					"apiextensions.k8s.io",
+				},
+				Resources: []string{
+					"customresourcedefinitions",
+				},
+				Verbs: []string{
+					"create",
+					"update",
+					"delete",
+					"patch",
+					"get",
+					"list",
+					"watch",
+				},
+			},
+			{
+				APIGroups: []string{
+					"apps",
+				},
+				Resources: []string{
+					"deployments",
+				},
+				Verbs: []string{
+					"create",
+					"update",
+					"delete",
+					"patch",
+					"get",
+					"list",
+					"watch",
+				},
+			},
+			{
+				APIGroups: []string{
+					"rbac.authorization.k8s.io",
+				},
+				Resources: []string{
+					"clusterroles",
+					"roles",
+					"clusterrolebindings",
+					"rolebindings",
+				},
+				Verbs: []string{
+					"create",
+					"update",
+					"delete",
+					"patch",
+					"get",
+					"list",
+					"watch",
+					"bind",
+					"escalate",
 				},
 			},
 		},
@@ -480,6 +544,52 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
 		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
+	}, pollDuration, pollInterval)
+}
+
+func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T) {
+	t.Log("When a cluster extension is installed from a catalog")
+	t.Log("It resolves again when managed content is changed")
+	clusterExtension, extensionCatalog, sa := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+	defer getArtifactsOutput(t)
+
+	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
+		PackageName:      "prometheus",
+		InstallNamespace: "default",
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: sa.Name,
+		},
+	}
+	t.Log("It installs the specified package with correct bundle path")
+	t.Log("By creating the ClusterExtension resource")
+	require.NoError(t, c.Create(context.Background(), clusterExtension))
+
+	t.Log("By reporting a successful installation")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		assert.Len(ct, clusterExtension.Status.Conditions, len(conditionsets.ConditionTypes))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.2.0", Version: "1.2.0"}, clusterExtension.Status.InstalledBundle)
+	}, pollDuration, pollInterval)
+
+	t.Log("By deleting a managed resource")
+	prometheusService := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "prometheus-operator",
+			Namespace: clusterExtension.Spec.InstallNamespace,
+		},
+	}
+	require.NoError(t, c.Delete(context.Background(), prometheusService))
+
+	t.Log("By eventually re-creating the managed resource")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: prometheusService.Name, Namespace: prometheusService.Namespace}, prometheusService))
 	}, pollDuration, pollInterval)
 }
 

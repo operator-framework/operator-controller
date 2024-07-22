@@ -60,13 +60,77 @@ func TestExtensionDeveloper(t *testing.T) {
 		Rules: []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{
-					"*",
+					"",
 				},
 				Resources: []string{
-					"*",
+					"secrets", // for helm
+					"services",
+					"serviceaccounts",
 				},
 				Verbs: []string{
-					"*",
+					"create",
+					"update",
+					"delete",
+					"patch",
+					"get",
+					"list",
+					"watch",
+				},
+			},
+			{
+				APIGroups: []string{
+					"apiextensions.k8s.io",
+				},
+				Resources: []string{
+					"customresourcedefinitions",
+				},
+				Verbs: []string{
+					"create",
+					"update",
+					"delete",
+					"patch",
+					"get",
+					"list",
+					"watch",
+				},
+			},
+			{
+				APIGroups: []string{
+					"apps",
+				},
+				Resources: []string{
+					"deployments",
+				},
+				Verbs: []string{
+					"create",
+					"update",
+					"delete",
+					"patch",
+					"get",
+					"list",
+					"watch",
+				},
+			},
+			{
+				APIGroups: []string{
+					"rbac.authorization.k8s.io",
+				},
+				Resources: []string{
+					"clusterroles",
+					"roles",
+					"clusterrolebindings",
+					"rolebindings",
+				},
+				Verbs: []string{
+					"create",
+					"update",
+					"delete",
+					"patch",
+					"get",
+					"list",
+					"watch",
+					"bind",
+					"escalate",
 				},
 			},
 		},
@@ -92,7 +156,7 @@ func TestExtensionDeveloper(t *testing.T) {
 	}
 	require.NoError(t, c.Create(ctx, crb))
 
-	var clusterExtensions = []*ocv1alpha1.ClusterExtension{
+	clusterExtensions := []*ocv1alpha1.ClusterExtension{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "registryv1",
