@@ -2,10 +2,7 @@ package e2e
 
 import (
 	"context"
-	"io"
-	"net/url"
 	"os"
-	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -80,35 +77,10 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			}).Should(Succeed())
 
 			By("Making sure the catalog content is available via the http server")
-			err = c.Get(ctx, types.NamespacedName{Name: catalog.Name}, catalog)
-			url, err := url.Parse(catalog.Status.ContentURL)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(url).NotTo(BeNil())
-			// url is expected to be in the format of
-			// http://{service_name}.{namespace}.svc/{catalog_name}/all.json
-			// so to get the namespace and name of the service we grab only
-			// the hostname and split it on the '.' character
-			ns := strings.Split(url.Hostname(), ".")[1]
-			name := strings.Split(url.Hostname(), ".")[0]
-			port := url.Port()
-			// the ProxyGet() call below needs an explicit port value, so if
-			// value from url.Port() is empty, we assume port 443.
-			if port == "" {
-				if url.Scheme == "https" {
-					port = "443"
-				} else {
-					port = "80"
-				}
-			}
-			resp := kubeClient.CoreV1().Services(ns).ProxyGet(url.Scheme, name, port, url.Path, map[string]string{})
-			rc, err := resp.Stream(ctx)
-			Expect(err).NotTo(HaveOccurred())
-			defer rc.Close()
-
-			expectedFBC, err := os.ReadFile("../../testdata/catalogs/test-catalog/expected_all.json")
+			actualFBC, err := ReadTestCatalogServerContents(ctx, catalog, c, kubeClient)
 			Expect(err).To(Not(HaveOccurred()))
 
-			actualFBC, err := io.ReadAll(rc)
+			expectedFBC, err := os.ReadFile("../../testdata/catalogs/test-catalog/expected_all.json")
 			Expect(err).To(Not(HaveOccurred()))
 			Expect(cmp.Diff(expectedFBC, actualFBC)).To(BeEmpty())
 		})

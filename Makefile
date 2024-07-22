@@ -79,7 +79,7 @@ vet: ## Run go vet against code.
 
 .PHONY: test-unit
 test-unit: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && go test $(shell go list ./... | grep -v /test/e2e) -coverprofile cover.out
+	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && go test $(shell go list ./... | grep -v /test/e2e | grep -v /test/upgrade) -coverprofile cover.out
 
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 ifeq ($(origin E2E_FLAGS), undefined)
@@ -105,6 +105,23 @@ verify: tidy fmt vet generate ## Verify the current code generation and lint
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Run golangci linter.
 	$(GOLANGCI_LINT) run $(GOLANGCI_LINT_ARGS)
+
+.PHONY: test-upgrade-e2e
+test-upgrade-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
+test-upgrade-e2e: export TEST_CLUSTER_CATALOG_IMAGE := docker-registry.catalogd-e2e.svc:5000/test-catalog:e2e
+test-upgrade-e2e: kind-cluster cert-manager build-container kind-load image-registry run-latest-release pre-upgrade-setup deploy wait post-upgrade-checks kind-cluster-cleanup ## Run upgrade e2e tests on a local kind cluster
+
+pre-upgrade-setup:
+	./test/tools/imageregistry/pre-upgrade-setup.sh ${TEST_CLUSTER_CATALOG_IMAGE} ${TEST_CLUSTER_CATALOG_NAME}
+
+.PHONY: run-latest-release
+run-latest-release:
+	kubectl apply -f https://github.com/operator-framework/catalogd/releases/latest/download/catalogd.yaml
+	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
+
+.PHONY: post-upgrade-checks
+post-upgrade-checks: $(GINKGO)
+	$(GINKGO) $(E2E_FLAGS) -trace -vv $(FOCUS) test/upgrade
 
 ##@ Build
 
@@ -185,6 +202,8 @@ undeploy: $(KUSTOMIZE) ## Undeploy Catalogd from the K8s cluster specified in ~/
 
 wait:
 	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
+	kubectl wait --for=condition=Ready --namespace=$(CATALOGD_NAMESPACE) certificate/catalogd-catalogserver-cert # Avoid upgrade test flakes when reissuing cert
+
 
 .PHONY: cert-manager
 cert-manager:
