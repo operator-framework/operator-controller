@@ -53,7 +53,9 @@ jobs:
           echo IMAGE_TAG="$(git describe --tags --always)" >> $GITHUB_ENV
         fi
     - name: Create release manifests
-      run: make quickstart
+      run: |
+        echo VERSION="${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        make quickstart
 
     - name: Run goreleaser
       run: make release

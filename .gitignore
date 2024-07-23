@@ -11,6 +11,10 @@ vendor/
 bin/
 dist/
 cover.out
+
+# Release output
 catalogd.yaml
+install.sh
 
 .tiltbuild/
+.vscode

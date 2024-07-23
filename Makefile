@@ -129,6 +129,11 @@ BINARIES=manager
 LINUX_BINARIES=$(join $(addprefix linux/,$(BINARIES)), )
 
 # Build info
+ifeq ($(origin VERSION), undefined)
+VERSION := $(shell git describe --tags --always --dirty)
+endif
+export VERSION
+
 export VERSION_PKG     := $(shell go list -m)/internal/version
 
 export GIT_COMMIT      := $(shell git rev-parse HEAD)
@@ -192,9 +197,12 @@ kind-load: $(KIND) ## Load the built images onto the local cluster
 install: build-container kind-load cert-manager deploy wait ## Install local catalogd
 
 .PHONY: deploy
+deploy: export MANIFEST="./catalogd.yaml"
+deploy: export DEFAULT_CATALOGS="./config/base/default/clustercatalogs/default-catalogs.yaml"
 deploy: $(KUSTOMIZE) ## Deploy Catalogd to the K8s cluster specified in ~/.kube/config.
-	cd config/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
-	$(KUSTOMIZE) build config/overlays/cert-manager | kubectl apply -f -
+	cd config/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE) && cd ../../..
+	$(KUSTOMIZE) build config/overlays/cert-manager > catalogd.yaml
+	envsubst '$$CERT_MGR_VERSION,$$MANIFEST,$$DEFAULT_CATALOGS' < scripts/install.tpl.sh | bash -s
 
 .PHONY: undeploy
 undeploy: $(KUSTOMIZE) ## Undeploy Catalogd from the K8s cluster specified in ~/.kube/config.
@@ -224,8 +232,11 @@ endif
 release: $(GORELEASER) ## Runs goreleaser for catalogd. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)
 
+quickstart: export MANIFEST := https://github.com/operator-framework/catalogd/releases/download/$(VERSION)/catalogd.yaml
+quickstart: export DEFAULT_CATALOGS := https://github.com/operator-framework/catalogd/releases/download/$(VERSION)/default-catalogs.yaml
 quickstart: $(KUSTOMIZE) generate ## Generate the installation release manifests and scripts
 	$(KUSTOMIZE) build config/overlays/cert-manager | sed "s/:devel/:$(GIT_VERSION)/g" > catalogd.yaml
+	envsubst '$$CERT_MGR_VERSION,$$MANIFEST,$$DEFAULT_CATALOGS' < scripts/install.tpl.sh > install.sh
 
 .PHONY: demo-update
 demo-update:
