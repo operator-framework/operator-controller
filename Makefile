@@ -117,15 +117,14 @@ lint: $(GOLANGCI_LINT) ## Run golangci linter.
 .PHONY: test-upgrade-e2e
 test-upgrade-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-upgrade-e2e: export TEST_CLUSTER_CATALOG_IMAGE := docker-registry.catalogd-e2e.svc:5000/test-catalog:e2e
-test-upgrade-e2e: kind-cluster cert-manager build-container kind-load image-registry run-latest-release pre-upgrade-setup deploy wait post-upgrade-checks kind-cluster-cleanup ## Run upgrade e2e tests on a local kind cluster
+test-upgrade-e2e: kind-cluster build-container kind-load image-registry run-latest-release pre-upgrade-setup deploy wait post-upgrade-checks kind-cluster-cleanup ## Run upgrade e2e tests on a local kind cluster
 
 pre-upgrade-setup:
 	./test/tools/imageregistry/pre-upgrade-setup.sh ${TEST_CLUSTER_CATALOG_IMAGE} ${TEST_CLUSTER_CATALOG_NAME}
 
 .PHONY: run-latest-release
 run-latest-release:
-	kubectl apply -f https://github.com/operator-framework/catalogd/releases/latest/download/catalogd.yaml
-	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
+	curl -L -s https://github.com/operator-framework/catalogd/releases/latest/download/install.sh | bash -s
 
 .PHONY: post-upgrade-checks
 post-upgrade-checks: $(GINKGO)
