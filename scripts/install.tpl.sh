@@ -11,6 +11,7 @@ fi
 
 catalogd_version=$CATALOGD_VERSION
 cert_mgr_version=$CERT_MGR_VERSION
+install_default_catalogs=$INSTALL_DEFAULT_CATALOGS
 
 if [[ -z "$catalogd_version" || -z "$cert_mgr_version" ]]; then
     err="Error: Missing component version(s) for: "
@@ -37,6 +38,11 @@ kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
 
 kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/catalogd.yaml"
 kubectl_wait "olmv1-system" "deployment/catalogd-controller-manager" "60s"
+
+if [[ "${install_default_catalogs,,}" != "false" ]]; then
+    kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/default-catalogs.yaml"
+    kubectl wait --for=condition=Unpacked "clustercatalog/operatorhubio" --timeout="60s"
+fi
 
 kubectl apply -f "${operator_controller_manifest}"
 kubectl_wait "olmv1-system" "deployment/operator-controller-controller-manager" "60s"
