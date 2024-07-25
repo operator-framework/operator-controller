@@ -1,6 +1,7 @@
 package convert
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -13,9 +14,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 )
 
 func TestRegistryV1Converter(t *testing.T) {
@@ -450,4 +455,35 @@ func containsObject(obj unstructured.Unstructured, result []client.Object) clien
 		}
 	}
 	return nil
+}
+
+func BenchmarkRegistryV1ToHelmChart(b *testing.B) {
+	b.StopTimer()
+	cacheDir := b.TempDir()
+	mgr, _ := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{})
+	unpacker, _ := source.NewDefaultUnpacker(mgr, "default", cacheDir)
+
+	logger := zap.New(
+		zap.UseFlagOptions(
+			&zap.Options{
+				Development: true,
+			},
+		),
+	)
+
+	ctx := log.IntoContext(context.Background(), logger)
+
+	bundleSource := &source.BundleSource{
+		Type: source.SourceTypeImage,
+		Image: &source.ImageSource{
+			Ref: "quay.io/eochieng/litmus-edge-operator-bundle@sha256:104b294fa1f4c2e45aa0eac32437a51de32dce0eff923eced44a0dddcb7f363f",
+		},
+	}
+
+	unpacked, _ := unpacker.Unpack(ctx, bundleSource)
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = RegistryV1ToHelmChart(ctx, unpacked.Bundle, "default", []string{corev1.NamespaceAll})
+	}
 }
