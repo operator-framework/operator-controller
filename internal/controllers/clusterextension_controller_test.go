@@ -30,7 +30,7 @@ import (
 
 // Describe: ClusterExtension Controller Test
 func TestClusterExtensionDoesNotExist(t *testing.T) {
-	_, reconciler := newClientAndReconciler(t, nil)
+	_, reconciler := newClientAndReconciler(t)
 
 	t.Log("When the cluster extension does not exist")
 	t.Log("It returns no error")
@@ -41,7 +41,7 @@ func TestClusterExtensionDoesNotExist(t *testing.T) {
 
 func TestClusterExtensionResolutionFails(t *testing.T) {
 	pkgName := fmt.Sprintf("non-existent-%s", rand.String(6))
-	cl, reconciler := newClientAndReconciler(t, nil)
+	cl, reconciler := newClientAndReconciler(t)
 	reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1alpha1.ClusterExtension, _ *ocv1alpha1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
 		return nil, nil, nil, fmt.Errorf("no package %q found", pkgName)
 	})
@@ -87,7 +87,7 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 }
 
 func TestClusterExtensionResolutionSucceeds(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, nil)
+	cl, reconciler := newClientAndReconciler(t)
 	reconciler.Unpacker = &MockUnpacker{
 		result: &source.Result{
 			State: source.StatePending,
@@ -158,7 +158,7 @@ func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 }
 
 func TestClusterExtensionUnpackFails(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, nil)
+	cl, reconciler := newClientAndReconciler(t)
 	reconciler.Unpacker = &MockUnpacker{
 		err: errors.New("unpack failure"),
 	}
@@ -227,7 +227,7 @@ func TestClusterExtensionUnpackFails(t *testing.T) {
 }
 
 func TestClusterExtensionUnpackUnexpectedState(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, nil)
+	cl, reconciler := newClientAndReconciler(t)
 	reconciler.Unpacker = &MockUnpacker{
 		result: &source.Result{
 			State: "unexpected",
@@ -298,7 +298,7 @@ func TestClusterExtensionUnpackUnexpectedState(t *testing.T) {
 }
 
 func TestClusterExtensionUnpackSucceeds(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, nil)
+	cl, reconciler := newClientAndReconciler(t)
 	reconciler.Unpacker = &MockUnpacker{
 		result: &source.Result{
 			State:  source.StateUnpacked,
@@ -373,7 +373,7 @@ func TestClusterExtensionUnpackSucceeds(t *testing.T) {
 }
 
 func TestClusterExtensionInstallationFailedApplierFails(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, nil)
+	cl, reconciler := newClientAndReconciler(t)
 	reconciler.Unpacker = &MockUnpacker{
 		result: &source.Result{
 			State:  source.StateUnpacked,
@@ -454,7 +454,7 @@ func TestClusterExtensionInstallationFailedApplierFails(t *testing.T) {
 }
 
 func TestClusterExtensionInstallationFailedWatcherFailed(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, nil)
+	cl, reconciler := newClientAndReconciler(t)
 	reconciler.Unpacker = &MockUnpacker{
 		result: &source.Result{
 			State:  source.StateUnpacked,
@@ -538,7 +538,7 @@ func TestClusterExtensionInstallationFailedWatcherFailed(t *testing.T) {
 }
 
 func TestClusterExtensionInstallationSucceeds(t *testing.T) {
-	cl, reconciler := newClientAndReconciler(t, nil)
+	cl, reconciler := newClientAndReconciler(t)
 	reconciler.Unpacker = &MockUnpacker{
 		result: &source.Result{
 			State:  source.StateUnpacked,

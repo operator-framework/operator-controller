@@ -88,9 +88,9 @@ func (m *MockInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext 
 var _ controllers.Applier = (*MockApplier)(nil)
 
 type MockApplier struct {
-	err  error
-	objs []client.Object
-    state string
+	err   error
+	objs  []client.Object
+	state string
 }
 
 func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1alpha1.ClusterExtension, _ postrender.PostRenderer) ([]client.Object, string, error) {
@@ -113,12 +113,12 @@ func (m *MockWatcher) Watch(_ context.Context, _ controller.Controller, _ *ocv1a
 
 func (m *MockWatcher) Unwatch(_ *ocv1alpha1.ClusterExtension) {}
 
-func newClientAndReconciler(t *testing.T, bundle *ocv1alpha1.BundleMetadata) (client.Client, *controllers.ClusterExtensionReconciler) {
+func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterExtensionReconciler) {
 	cl := newClient(t)
 
 	reconciler := &controllers.ClusterExtensionReconciler{
 		Client:                cl,
-		InstalledBundleGetter: &MockInstalledBundleGetter{bundle},
+		InstalledBundleGetter: &MockInstalledBundleGetter{},
 		Finalizers:            crfinalizer.NewFinalizers(),
 	}
 	return cl, reconciler

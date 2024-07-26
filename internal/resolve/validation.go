@@ -3,9 +3,10 @@ package resolve
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/util/sets"
+
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
-	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 func NoDependencyValidation(bundle *declcfg.Bundle) error {

@@ -7,11 +7,6 @@ import (
 	"io/fs"
 	"strings"
 
-	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
-	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
-	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -20,6 +15,13 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
+	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
+	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 )
 
 const (
