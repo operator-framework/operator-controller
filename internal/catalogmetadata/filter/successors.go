@@ -20,7 +20,7 @@ func SuccessorsOf(installedBundle *ocv1alpha1.BundleMetadata, channels ...declcf
 
 	installedBundleVersion, err := mmsemver.NewVersion(installedBundle.Version)
 	if err != nil {
-		return nil, fmt.Errorf("parsing installed bundle version %q: %w | installedBundle %v", installedBundle.Version, err, installedBundle)
+		return nil, fmt.Errorf("parsing installed bundle %q version %q: %w", installedBundle.Name, installedBundle.Version, err)
 	}
 
 	installedVersionConstraint, err := mmsemver.NewConstraint(installedBundleVersion.String())
