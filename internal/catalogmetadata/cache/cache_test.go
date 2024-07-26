@@ -342,3 +342,36 @@ func equalFilesystems(expected, actual fs.FS) error {
 	}
 	return errors.Join(cmpErrs...)
 }
+
+func BenchmarkFilesystemCache(b *testing.B) {
+	b.StopTimer()
+	catalog := &catalogd.ClusterCatalog{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-catalog",
+		},
+		Status: catalogd.ClusterCatalogStatus{
+			ResolvedSource: &catalogd.ResolvedCatalogSource{
+				Type: catalogd.SourceTypeImage,
+				Image: &catalogd.ResolvedImageSource{
+					ResolvedRef: "fake/catalog@sha256:fakesha",
+				},
+			},
+		},
+	}
+
+	cacheDir := b.TempDir()
+
+	tripper := &mockTripper{}
+	tripper.content = make(fstest.MapFS)
+	maps.Copy(tripper.content, defaultFS)
+	httpClient := http.DefaultClient
+	httpClient.Transport = tripper
+	b.StartTimer()
+
+	for i := 0; i < b.N; i++ {
+		c := cache.NewFilesystemCache(cacheDir, func() (*http.Client, error) {
+			return httpClient, nil
+		})
+		_, _ = c.FetchCatalogContents(context.Background(), catalog)
+	}
+}
