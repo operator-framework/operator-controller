@@ -10,7 +10,6 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
-	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
@@ -52,7 +51,7 @@ type Helm struct {
 	Preflights         []Preflight
 }
 
-func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.ClusterExtension, post postrender.PostRenderer) ([]client.Object, string, error) {
+func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.ClusterExtension, labels map[string]string) ([]client.Object, string, error) {
 	chrt, err := convert.RegistryV1ToHelmChart(ctx, contentFS, ext.Spec.InstallNamespace, []string{corev1.NamespaceAll})
 	if err != nil {
 		return nil, "", err
@@ -64,7 +63,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 		return nil, "", err
 	}
 
-	rel, desiredRel, state, err := h.getReleaseState(ac, ext, chrt, values, post)
+	rel, desiredRel, state, err := h.getReleaseState(ac, ext, chrt, values, labels)
 	if err != nil {
 		return nil, "", err
 	}
@@ -95,16 +94,18 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 	case StateNeedsInstall:
 		rel, err = ac.Install(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(install *action.Install) error {
 			install.CreateNamespace = false
+			install.Labels = labels
 			return nil
-		}, helmclient.AppendInstallPostRenderer(post))
+		})
 		if err != nil {
 			return nil, state, err
 		}
 	case StateNeedsUpgrade:
 		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(upgrade *action.Upgrade) error {
 			upgrade.MaxHistory = maxHelmReleaseHistory
+			upgrade.Labels = labels
 			return nil
-		}, helmclient.AppendUpgradePostRenderer(post))
+		})
 		if err != nil {
 			return nil, state, err
 		}
@@ -124,7 +125,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 	return relObjects, state, nil
 }
 
-func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1alpha1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
+func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1alpha1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, labels map[string]string) (*release.Release, *release.Release, string, error) {
 	currentRelease, err := cl.Get(ext.GetName())
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil, nil, StateError, err
@@ -137,8 +138,9 @@ func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1alpha1.Cl
 		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(i *action.Install) error {
 			i.DryRun = true
 			i.DryRunOption = "server"
+			i.Labels = labels
 			return nil
-		}, helmclient.AppendInstallPostRenderer(post))
+		})
 		if err != nil {
 			return nil, nil, StateError, err
 		}
@@ -148,8 +150,9 @@ func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1alpha1.Cl
 		upgrade.MaxHistory = maxHelmReleaseHistory
 		upgrade.DryRun = true
 		upgrade.DryRunOption = "server"
+		upgrade.Labels = labels
 		return nil
-	}, helmclient.AppendUpgradePostRenderer(post))
+	})
 	if err != nil {
 		return currentRelease, nil, StateError, err
 	}

@@ -20,17 +20,17 @@ func SuccessorsOf(installedBundle *ocv1alpha1.BundleMetadata, channels ...declcf
 
 	installedBundleVersion, err := mmsemver.NewVersion(installedBundle.Version)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing installed bundle version %q: %w | installedBundle %v", installedBundle.Version, err, installedBundle)
 	}
 
 	installedVersionConstraint, err := mmsemver.NewConstraint(installedBundleVersion.String())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing installed version constraint %q: %w", installedBundleVersion.String(), err)
 	}
 
 	successorsPredicate, err := successors(installedBundle, channels...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting successorsPredicate: %w", err)
 	}
 
 	// We need either successors or current version (no upgrade)

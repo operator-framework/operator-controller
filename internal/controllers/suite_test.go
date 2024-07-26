@@ -25,7 +25,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"helm.sh/helm/v3/pkg/postrender"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -93,7 +92,7 @@ type MockApplier struct {
 	state string
 }
 
-func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1alpha1.ClusterExtension, _ postrender.PostRenderer) ([]client.Object, string, error) {
+func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1alpha1.ClusterExtension, _ map[string]string) ([]client.Object, string, error) {
 	if m.err != nil {
 		return nil, m.state, m.err
 	}

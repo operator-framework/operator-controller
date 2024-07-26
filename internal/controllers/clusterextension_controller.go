@@ -17,24 +17,19 @@ limitations under the License.
 package controllers
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
-	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -60,7 +55,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/resolve"
 	rukpaksource "github.com/operator-framework/operator-controller/internal/rukpak/source"
-	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
@@ -77,7 +71,7 @@ type ClusterExtensionReconciler struct {
 }
 
 type Applier interface {
-	Apply(context.Context, fs.FS, *ocv1alpha1.ClusterExtension, postrender.PostRenderer) ([]client.Object, string, error)
+	Apply(context.Context, fs.FS, *ocv1alpha1.ClusterExtension, map[string]string) ([]client.Object, string, error)
 }
 
 type InstalledBundleGetter interface {
@@ -267,18 +261,16 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", unpackResult.Message)
 	}
 
-	post := &postrenderer{
-		labels: map[string]string{
-			labels.OwnerKindKey:     ocv1alpha1.ClusterExtensionKind,
-			labels.OwnerNameKey:     ext.GetName(),
-			labels.BundleNameKey:    resolvedBundle.Name,
-			labels.PackageNameKey:   resolvedBundle.Package,
-			labels.BundleVersionKey: resolvedBundleVersion.String(),
-		},
+	lbls := map[string]string{
+		labels.OwnerKindKey:     ocv1alpha1.ClusterExtensionKind,
+		labels.OwnerNameKey:     ext.GetName(),
+		labels.BundleNameKey:    resolvedBundle.Name,
+		labels.PackageNameKey:   resolvedBundle.Package,
+		labels.BundleVersionKey: resolvedBundleVersion.String(),
 	}
 
 	l.V(1).Info("applying bundle contents")
-	managedObjs, state, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, post)
+	managedObjs, state, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, lbls)
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, err.Error())
 		return ctrl.Result{}, err
@@ -452,34 +444,4 @@ func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, e
 		Name:    release.Labels[labels.BundleNameKey],
 		Version: release.Labels[labels.BundleVersionKey],
 	}, nil
-}
-
-type postrenderer struct {
-	labels  map[string]string
-	cascade postrender.PostRenderer
-}
-
-func (p *postrenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
-	var buf bytes.Buffer
-	dec := apimachyaml.NewYAMLOrJSONDecoder(renderedManifests, 1024)
-	for {
-		obj := unstructured.Unstructured{}
-		err := dec.Decode(&obj)
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		obj.SetLabels(util.MergeMaps(obj.GetLabels(), p.labels))
-		b, err := obj.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		buf.Write(b)
-	}
-	if p.cascade != nil {
-		return p.cascade.Run(&buf)
-	}
-	return &buf, nil
 }
