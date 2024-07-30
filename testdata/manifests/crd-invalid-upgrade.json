@@ -1,0 +1,82 @@
+{
+    "apiVersion": "apiextensions.k8s.io/v1",
+    "kind": "CustomResourceDefinition",
+    "metadata": {
+        "name": "crontabs.stable.example.com"
+    },
+    "spec": {
+        "group": "stable.example.com",
+        "versions": [
+            {
+                "name": "v2",
+                "served": true,
+                "storage": true,
+                "schema": {
+                    "openAPIV3Schema": {
+                        "type": "object",
+                        "maxProperties": 20,
+                        "minProperties": 1,
+                        "properties": {
+                            "spec": {
+                                "type": "object",
+                                "properties": {
+                                    "removedField": {
+                                        "type":"integer"
+                                    },
+                                    "enum": {
+                                        "type":"integer",
+                                        "enum":[
+                                            1,
+                                            2
+                                        ]
+                                    },
+                                    "minMaxValue": {
+                                        "type":"integer",
+                                        "minimum": 2,
+                                        "maximum": 3
+                                    },
+                                    "required": {
+                                        "type":"integer"
+                                    },
+                                    "minMaxItems": {
+                                        "type":"array",
+                                        "minItems": 1,
+                                        "maxItems": 2,
+                                        "items": {
+                                            "type":"string"
+                                        }
+                                    },
+                                    "minMaxLength": {
+                                        "type":"string",
+                                        "minLength": 1,
+                                        "maxLength": 10
+                                    },
+                                    "defaultVal": {
+                                        "type":"string",
+                                        "default":"foo"
+                                    },
+                                    "requiredVal": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "required": [
+                            "requiredVal",
+                            "requiredAdded"
+                        ]
+                    }
+                }
+            }
+        ],
+        "scope": "Namespaced",
+        "names": {
+            "plural": "crontabs",
+            "singular": "crontab",
+            "kind": "CronTab",
+            "shortNames": [
+                "ct"
+            ]
+        }
+    }
+}
