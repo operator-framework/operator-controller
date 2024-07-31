@@ -18,6 +18,7 @@ nav:
     - Deleting an extension: 'Tasks/uninstall-an-extension.md'
   - References:
     - Catalog queries: 'refs/catalog-queries.md'
+    - CRD Upgrade Safety: 'refs/crd-upgrade-safety.md'
 
 markdown_extensions:
   - pymdownx.highlight:

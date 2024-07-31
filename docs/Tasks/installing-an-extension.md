@@ -45,7 +45,7 @@ After you add a catalog to your cluster, you can install an extension by creatin
     !!! warning
         Currently, the following limitations affect the installation of extensions:
 
-        * If mulitple catalogs are added to a cluster, you cannot specify a catalog when you install an extension.
+        * If multiple catalogs are added to a cluster, you cannot specify a catalog when you install an extension.
         * OLM 1.0 requires that all of the extensions have unique bundle and package names for dependency resolution.
 
         As a result, if two catalogs have an extension with the same name, the installation might fail or lead to an unintended outcome.
