@@ -59,11 +59,11 @@ jobs:
         with:
           python-version: '3:12'
 
-    - name: Download benchstats result
-      uses: actions/download-artifact@v4
-      with:
-        name: benchstat-results
-        path: stats.csv
+      - name: Download benchstats result
+        uses: actions/download-artifact@v4
+        with:
+          name: benchstat-results
+          path: stats.csv
 
       - name: Install dependencies
         run: |
@@ -76,7 +76,8 @@ jobs:
           script: |
             import pandas as pd
 
-            df = pd.read_csv('stats.csv', names=['name','reference','secs/op','benchmark','_secs/op','change','P'])
+            df = pd.read_csv('stats.csv',
+              names=['name','reference','secs/op','benchmark','_secs/op','change','P'])
             df.change = df.change.replace("~", "0")
             df.change = df.change.str.rstrip("%")
             print(df.loc[df.change > 20, ['name','change','P']])
