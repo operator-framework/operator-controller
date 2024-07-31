@@ -17,30 +17,66 @@ jobs:
     - name: Install dependencies
       run: go get .
 
-    - name: Run golang benchmarks
-      run: go test -run="^$" -bench=. ./internal/...
+    - name: Set Golang binaries path
+      run: echo "`go env GOPATH`/bin" >> $GITHUB_PATH
 
     - name: Install benchstat
       run: go install golang.org/x/perf/cmd/benchstat@latest
 
-    - name: Set Golang binaries path
-      run: echo "`go env GOPATH`/bin" >> $GITHUB_PATH
+    - name: Run golang benchmarks
+      run: go test -run="^$" -bench=. -count=10 ./internal/... > benchmark.txt
 
-    - name: Download previous benchmarks
+    - name: Download baseline benchmark
       id: download
       uses: actions/download-artifact@v4
       with:
-        name: benchmark-results
+        name: baseline-benchmark
         path: stats/benchmark.txt
       continue-on-error: true
 
-    - name: Compare benchmark results
-      if: steps.download.outcome == 'success'
-      run: benchstat benchmark.txt stats/benchmark.txt
+    - name: Use current benchmark as reference
+      if: steps.download.outcome != 'success'
+      run: |
+        mkdir stats
+        cp benchmark.txt stats/benchmark.txt
 
-    - name: Upload artifacts
+    - name: Compare benchmark results
+      run: |
+        benchstat -table col -row .name -format=csv stats/benchmark.txt benchmark.txt | grep '^[A-Z]' > stats.csv
+
+    - name: Upload benchstat results
       uses: actions/upload-artifact@v4
       with:
-        name: benchmark-results
-        path: benchmark.txt
+        name: benchstat-results
+        path: stats.csv
         overwrite: true
+
+  parse-results:
+    runs-on: ubuntu-latest
+    needs: [benchmark]
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3:12'
+
+    - name: Download benchstats result
+      uses: actions/download-artifact@v4
+      with:
+        name: benchstat-results
+        path: stats.csv
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pandas
+
+      - name: Evaluate the results
+        uses: jannekem/run-python-script-action@v1
+        with:
+          script: |
+            import pandas as pd
+
+            df = pd.read_csv('stats.csv', names=['name','reference','secs/op','benchmark','_secs/op','change','P'])
+            df.change = df.change.replace("~", "0")
+            df.change = df.change.str.rstrip("%")
+            print(df.loc[df.change > 20, ['name','change','P']])
