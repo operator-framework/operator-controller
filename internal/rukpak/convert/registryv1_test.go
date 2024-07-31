@@ -459,6 +459,7 @@ func containsObject(obj unstructured.Unstructured, result []client.Object) clien
 
 func BenchmarkRegistryV1ToHelmChart(b *testing.B) {
 	b.StopTimer()
+
 	cacheDir := b.TempDir()
 	mgr, _ := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{})
 	unpacker, _ := source.NewDefaultUnpacker(mgr, "default", cacheDir)
@@ -471,6 +472,7 @@ func BenchmarkRegistryV1ToHelmChart(b *testing.B) {
 		),
 	)
 
+	log.SetLogger(logger)
 	ctx := log.IntoContext(context.Background(), logger)
 
 	bundleSource := &source.BundleSource{
