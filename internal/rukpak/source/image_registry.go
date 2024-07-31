@@ -84,6 +84,7 @@ func (i *ImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Resu
 		}
 		authChain, err := k8schain.NewInCluster(ctx, chainOpts)
 		if err != nil {
+			l.Error(err, "we encountered an issue getting auth keychain")
 			return nil, fmt.Errorf("error getting auth keychain: %w", err)
 		}
 
@@ -114,7 +115,6 @@ func (i *ImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Resu
 		hexVal := strings.TrimPrefix(digest.DigestStr(), "sha256:")
 		unpackPath := filepath.Join(i.BaseCachePath, bundle.Name, hexVal)
 		if stat, err := os.Stat(unpackPath); err == nil && stat.IsDir() {
-			l.V(1).Info("found image in filesystem cache", "digest", hexVal)
 			return unpackedResult(os.DirFS(unpackPath), bundle, digest.String()), nil
 		}
 	}
@@ -122,9 +122,9 @@ func (i *ImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Resu
 	// always fetch the hash
 	imgDesc, err := remote.Head(imgRef, remoteOpts...)
 	if err != nil {
+		l.Error(err, "failed fetching image descriptor")
 		return nil, fmt.Errorf("error fetching image descriptor: %w", err)
 	}
-	l.V(1).Info("resolved image descriptor", "digest", imgDesc.Digest.String())
 
 	unpackPath := filepath.Join(i.BaseCachePath, bundle.Name, imgDesc.Digest.Hex)
 	if _, err = os.Stat(unpackPath); errors.Is(err, os.ErrNotExist) { //nolint: nestif
