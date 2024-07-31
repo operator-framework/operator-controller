@@ -553,9 +553,6 @@ func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterfa
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil, nil, stateError, err
 	}
-	if errors.Is(err, driver.ErrReleaseNotFound) {
-		return nil, nil, stateNeedsInstall, nil
-	}
 
 	if errors.Is(err, driver.ErrReleaseNotFound) {
 		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(i *action.Install) error {
