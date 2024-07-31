@@ -1,3 +1,4 @@
+---
 name: performance
 
 on:
@@ -8,48 +9,49 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - uses: actions/setup-go@v5
-      with:
-        go-version-file: go.mod
-    
-    - name: Install dependencies
-      run: go get .
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
 
-    - name: Set Golang binaries path
-      run: echo "`go env GOPATH`/bin" >> $GITHUB_PATH
+      - name: Install dependencies
+        run: go get .
 
-    - name: Install benchstat
-      run: go install golang.org/x/perf/cmd/benchstat@latest
+      - name: Set Golang binaries path
+        run: echo "`go env GOPATH`/bin" >> $GITHUB_PATH
 
-    - name: Run golang benchmarks
-      run: go test -run="^$" -bench=. -count=10 ./internal/... > benchmark.txt
+      - name: Install benchstat
+        run: go install golang.org/x/perf/cmd/benchstat@latest
 
-    - name: Download baseline benchmark
-      id: download
-      uses: actions/download-artifact@v4
-      with:
-        name: baseline-benchmark
-        path: stats/benchmark.txt
-      continue-on-error: true
+      - name: Run golang benchmarks
+        run: go test -run="^$" -bench=. -count=10 ./internal/... > benchmark.txt
 
-    - name: Use current benchmark as reference
-      if: steps.download.outcome != 'success'
-      run: |
-        mkdir stats
-        cp benchmark.txt stats/benchmark.txt
+      - name: Download baseline benchmark
+        id: download
+        uses: actions/download-artifact@v4
+        with:
+          name: baseline-benchmark
+          path: stats/benchmark.txt
+        continue-on-error: true
 
-    - name: Compare benchmark results
-      run: |
-        benchstat -table col -row .name -format=csv stats/benchmark.txt benchmark.txt | grep '^[A-Z]' > stats.csv
+      - name: Use current benchmark as reference
+        if: steps.download.outcome != 'success'
+        run: |
+          mkdir stats
+          cp benchmark.txt stats/benchmark.txt
 
-    - name: Upload benchstat results
-      uses: actions/upload-artifact@v4
-      with:
-        name: benchstat-results
-        path: stats.csv
-        overwrite: true
+      - name: Compare benchmark results
+        run: |
+          benchstat -table col -row .name -format=csv stats/benchmark.txt \
+          benchmark.txt | grep '^[A-Z]' > stats.csv
+
+      - name: Upload benchstat results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchstat-results
+          path: stats.csv
+          overwrite: true
 
   parse-results:
     runs-on: ubuntu-latest
