@@ -421,7 +421,6 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 	}
 }
 
-
 type DefaultInstalledBundleGetter struct {
 	helmclient.ActionClientGetter
 }
