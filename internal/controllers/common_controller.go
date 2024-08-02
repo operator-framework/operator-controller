@@ -67,26 +67,6 @@ func setInstalledStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message
 	})
 }
 
-// setDeprecationStatusesUnknown sets the deprecation status conditions to unknown.
-func setDeprecationStatusesUnknown(ext *ocv1alpha1.ClusterExtension, message string) {
-	conditionTypes := []string{
-		ocv1alpha1.TypeDeprecated,
-		ocv1alpha1.TypePackageDeprecated,
-		ocv1alpha1.TypeChannelDeprecated,
-		ocv1alpha1.TypeBundleDeprecated,
-	}
-
-	for _, conditionType := range conditionTypes {
-		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               conditionType,
-			Reason:             ocv1alpha1.ReasonDeprecated,
-			Status:             metav1.ConditionUnknown,
-			Message:            message,
-			ObservedGeneration: ext.GetGeneration(),
-		})
-	}
-}
-
 func setStatusUnpackFailed(ext *ocv1alpha1.ClusterExtension, message string) {
 	ext.Status.InstalledBundle = nil
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{

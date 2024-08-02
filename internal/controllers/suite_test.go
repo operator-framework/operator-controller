@@ -18,41 +18,46 @@ package controllers_test
 
 import (
 	"context"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 )
 
 // MockUnpacker is a mock of Unpacker interface
 type MockUnpacker struct {
-	mock.Mock
+	err    error
+	result *source.Result
 }
 
 // Unpack mocks the Unpack method
-func (m *MockUnpacker) Unpack(ctx context.Context, bundle *source.BundleSource) (*source.Result, error) {
-	args := m.Called(ctx, bundle)
-	return args.Get(0).(*source.Result), args.Error(1)
+func (m *MockUnpacker) Unpack(_ context.Context, _ *source.BundleSource) (*source.Result, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	return m.result, nil
 }
 
-func (m *MockUnpacker) Cleanup(ctx context.Context, bundle *source.BundleSource) error {
-	//TODO implement me
+func (m *MockUnpacker) Cleanup(_ context.Context, _ *source.BundleSource) error {
+	// TODO implement me
 	panic("implement me")
 }
 
@@ -79,14 +84,40 @@ func (m *MockInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext 
 	return m.bundle, nil
 }
 
-func newClientAndReconciler(t *testing.T, bundle *ocv1alpha1.BundleMetadata) (client.Client, *controllers.ClusterExtensionReconciler) {
+var _ controllers.Applier = (*MockApplier)(nil)
+
+type MockApplier struct {
+	err   error
+	objs  []client.Object
+	state string
+}
+
+func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1alpha1.ClusterExtension, _ map[string]string) ([]client.Object, string, error) {
+	if m.err != nil {
+		return nil, m.state, m.err
+	}
+
+	return m.objs, m.state, nil
+}
+
+var _ contentmanager.Watcher = (*MockWatcher)(nil)
+
+type MockWatcher struct {
+	err error
+}
+
+func (m *MockWatcher) Watch(_ context.Context, _ controller.Controller, _ *ocv1alpha1.ClusterExtension, _ []client.Object) error {
+	return m.err
+}
+
+func (m *MockWatcher) Unwatch(_ *ocv1alpha1.ClusterExtension) {}
+
+func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterExtensionReconciler) {
 	cl := newClient(t)
 
 	reconciler := &controllers.ClusterExtensionReconciler{
 		Client:                cl,
-		ActionClientGetter:    helmClientGetter,
-		Unpacker:              unpacker,
-		InstalledBundleGetter: &MockInstalledBundleGetter{bundle},
+		InstalledBundleGetter: &MockInstalledBundleGetter{},
 		Finalizers:            crfinalizer.NewFinalizers(),
 	}
 	return cl, reconciler
@@ -95,13 +126,13 @@ func newClientAndReconciler(t *testing.T, bundle *ocv1alpha1.BundleMetadata) (cl
 var (
 	config           *rest.Config
 	helmClientGetter helmclient.ActionClientGetter
-	unpacker         source.Unpacker // Interface, will be initialized as a mock in TestMain
 )
 
 func TestMain(m *testing.M) {
 	testEnv := &envtest.Environment{
 		CRDDirectoryPaths: []string{
-			filepath.Join("..", "..", "config", "base", "crd", "bases")},
+			filepath.Join("..", "..", "config", "base", "crd", "bases"),
+		},
 		ErrorIfCRDPathMissing: true,
 	}
 
@@ -117,8 +148,6 @@ func TestMain(m *testing.M) {
 	utilruntime.Must(err)
 	helmClientGetter, err = helmclient.NewActionClientGetter(cfgGetter)
 	utilruntime.Must(err)
-
-	unpacker = new(MockUnpacker)
 
 	code := m.Run()
 	utilruntime.Must(testEnv.Stop())

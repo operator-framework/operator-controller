@@ -17,29 +17,19 @@ limitations under the License.
 package controllers
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
+	"io/fs"
 	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/chartutil"
-	"helm.sh/helm/v3/pkg/postrender"
-	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/sets"
-	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -56,22 +46,15 @@ import (
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
-	"github.com/operator-framework/operator-registry/alpha/property"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/applier"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/resolve"
-	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
-	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	rukpaksource "github.com/operator-framework/operator-controller/internal/rukpak/source"
-	"github.com/operator-framework/operator-controller/internal/rukpak/util"
-)
-
-const (
-	maxHelmReleaseHistory = 10
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
@@ -79,32 +62,20 @@ type ClusterExtensionReconciler struct {
 	client.Client
 	Resolver              resolve.Resolver
 	Unpacker              rukpaksource.Unpacker
-	ActionClientGetter    helmclient.ActionClientGetter
+	Applier               Applier
 	Watcher               contentmanager.Watcher
 	controller            crcontroller.Controller
 	cache                 cache.Cache
 	InstalledBundleGetter InstalledBundleGetter
 	Finalizers            crfinalizer.Finalizers
-	Preflights            []Preflight
+}
+
+type Applier interface {
+	Apply(context.Context, fs.FS, *ocv1alpha1.ClusterExtension, map[string]string) ([]client.Object, string, error)
 }
 
 type InstalledBundleGetter interface {
 	GetInstalledBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*ocv1alpha1.BundleMetadata, error)
-}
-
-// Preflight is a check that should be run before making any changes to the cluster
-type Preflight interface {
-	// Install runs checks that should be successful prior
-	// to installing the Helm release. It is provided
-	// a Helm release and returns an error if the
-	// check is unsuccessful
-	Install(context.Context, *release.Release) error
-
-	// Upgrade runs checks that should be successful prior
-	// to upgrading the Helm release. It is provided
-	// a Helm release and returns an error if the
-	// check is unsuccessful
-	Upgrade(context.Context, *release.Release) error
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch;update;patch
@@ -245,15 +216,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
-	l.V(1).Info("validating bundle")
-	if err := r.validateBundle(resolvedBundle); err != nil {
-		ext.Status.ResolvedBundle = nil
-		ext.Status.InstalledBundle = nil
-		setResolvedStatusConditionFailed(ext, err.Error())
-		setInstalledStatusConditionFailed(ext, err.Error())
-		setDeprecationStatusesUnknown(ext, "deprecation checks have not been attempted as installation has failed")
-		return ctrl.Result{}, err
-	}
 	// set deprecation status after _successful_ resolution
 	// TODO:
 	//  1. It seems like deprecation status should reflect the currently installed bundle, not the resolved
@@ -299,107 +261,27 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", unpackResult.Message)
 	}
 
-	l.V(1).Info("converting bundle to helm chart")
-	chrt, err := convert.RegistryV1ToHelmChart(ctx, unpackResult.Bundle, ext.Spec.InstallNamespace, []string{corev1.NamespaceAll})
+	lbls := map[string]string{
+		labels.OwnerKindKey:     ocv1alpha1.ClusterExtensionKind,
+		labels.OwnerNameKey:     ext.GetName(),
+		labels.BundleNameKey:    resolvedBundle.Name,
+		labels.PackageNameKey:   resolvedBundle.Package,
+		labels.BundleVersionKey: resolvedBundleVersion.String(),
+	}
+
+	l.V(1).Info("applying bundle contents")
+	managedObjs, state, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, lbls)
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, err.Error())
-		return ctrl.Result{}, err
-	}
-	values := chartutil.Values{}
-
-	l.V(1).Info("getting helm client")
-	ac, err := r.ActionClientGetter.ActionClientFor(ctx, ext)
-	if err != nil {
-		ext.Status.InstalledBundle = nil
-		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingClient, err))
-		return ctrl.Result{}, err
-	}
-
-	post := &postrenderer{
-		labels: map[string]string{
-			labels.OwnerKindKey:     ocv1alpha1.ClusterExtensionKind,
-			labels.OwnerNameKey:     ext.GetName(),
-			labels.BundleNameKey:    resolvedBundle.Name,
-			labels.PackageNameKey:   resolvedBundle.Package,
-			labels.BundleVersionKey: resolvedBundleVersion.String(),
-		},
-	}
-
-	l.V(1).Info("getting current state of helm release")
-	rel, desiredRel, state, err := r.getReleaseState(ac, ext, chrt, values, post)
-	if err != nil {
-		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonErrorGettingReleaseState, err))
-		return ctrl.Result{}, err
-	}
-
-	l.V(1).Info("running preflight checks")
-	for _, preflight := range r.Preflights {
-		if ext.Spec.Preflight != nil && ext.Spec.Preflight.CRDUpgradeSafety != nil {
-			if _, ok := preflight.(*crdupgradesafety.Preflight); ok && ext.Spec.Preflight.CRDUpgradeSafety.Disabled {
-				// Skip this preflight check because it is of type *crdupgradesafety.Preflight and the CRD Upgrade Safety
-				// preflight check has been disabled
-				continue
-			}
-		}
-		switch state {
-		case stateNeedsInstall:
-			err := preflight.Install(ctx, desiredRel)
-			if err != nil {
-				setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
-				return ctrl.Result{}, err
-			}
-		case stateNeedsUpgrade:
-			err := preflight.Upgrade(ctx, desiredRel)
-			if err != nil {
-				setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
-				return ctrl.Result{}, err
-			}
-		}
-	}
-
-	l.V(1).Info("reconciling helm release changes")
-	switch state {
-	case stateNeedsInstall:
-		rel, err = ac.Install(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(install *action.Install) error {
-			install.CreateNamespace = false
-			install.Labels = map[string]string{labels.BundleNameKey: resolvedBundle.Name, labels.PackageNameKey: resolvedBundle.Package, labels.BundleVersionKey: resolvedBundleVersion.String()}
-			return nil
-		}, helmclient.AppendInstallPostRenderer(post))
-		if err != nil {
-			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
-			return ctrl.Result{}, err
-		}
-	case stateNeedsUpgrade:
-		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(upgrade *action.Upgrade) error {
-			upgrade.MaxHistory = maxHelmReleaseHistory
-			upgrade.Labels = map[string]string{labels.BundleNameKey: resolvedBundle.Name, labels.PackageNameKey: resolvedBundle.Package, labels.BundleVersionKey: resolvedBundleVersion.String()}
-			return nil
-		}, helmclient.AppendUpgradePostRenderer(post))
-		if err != nil {
-			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonUpgradeFailed, err))
-			return ctrl.Result{}, err
-		}
-	case stateUnchanged:
-		if err := ac.Reconcile(rel); err != nil {
-			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonResolutionFailed, err))
-			return ctrl.Result{}, err
-		}
-	default:
-		return ctrl.Result{}, fmt.Errorf("unexpected release state %q", state)
-	}
-
-	l.V(1).Info("configuring watches for release objects")
-	relObjects, err := util.ManifestObjects(strings.NewReader(rel.Manifest), fmt.Sprintf("%s-release-manifest", rel.Name))
-	if err != nil {
-		setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
 		return ctrl.Result{}, err
 	}
 
 	// Only attempt to watch resources if we are
 	// installing / upgrading. Otherwise we may restart
 	// watches that have already been established
-	if state != stateUnchanged {
-		if err := r.Watcher.Watch(ctx, r.controller, ext, relObjects); err != nil {
+	if state != applier.StateUnchanged {
+		l.V(1).Info("watching managed objects")
+		if err := r.Watcher.Watch(ctx, r.controller, ext, managedObjs); err != nil {
 			ext.Status.InstalledBundle = nil
 			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
 			return ctrl.Result{}, err
@@ -539,50 +421,6 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 	}
 }
 
-type releaseState string
-
-const (
-	stateNeedsInstall releaseState = "NeedsInstall"
-	stateNeedsUpgrade releaseState = "NeedsUpgrade"
-	stateUnchanged    releaseState = "Unchanged"
-	stateError        releaseState = "Error"
-)
-
-func (r *ClusterExtensionReconciler) getReleaseState(cl helmclient.ActionInterface, ext *ocv1alpha1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post *postrenderer) (*release.Release, *release.Release, releaseState, error) {
-	currentRelease, err := cl.Get(ext.GetName())
-	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
-		return nil, nil, stateError, err
-	}
-
-	if errors.Is(err, driver.ErrReleaseNotFound) {
-		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(i *action.Install) error {
-			i.DryRun = true
-			i.DryRunOption = "server"
-			return nil
-		}, helmclient.AppendInstallPostRenderer(post))
-		if err != nil {
-			return nil, nil, stateError, err
-		}
-		return nil, desiredRelease, stateNeedsInstall, nil
-	}
-	desiredRelease, err := cl.Upgrade(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(upgrade *action.Upgrade) error {
-		upgrade.MaxHistory = maxHelmReleaseHistory
-		upgrade.DryRun = true
-		upgrade.DryRunOption = "server"
-		return nil
-	}, helmclient.AppendUpgradePostRenderer(post))
-	if err != nil {
-		return currentRelease, nil, stateError, err
-	}
-	relState := stateUnchanged
-	if desiredRelease.Manifest != currentRelease.Manifest ||
-		currentRelease.Info.Status == release.StatusFailed ||
-		currentRelease.Info.Status == release.StatusSuperseded {
-		relState = stateNeedsUpgrade
-	}
-	return currentRelease, desiredRelease, relState, nil
-}
-
 type DefaultInstalledBundleGetter struct {
 	helmclient.ActionClientGetter
 }
@@ -605,53 +443,4 @@ func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, e
 		Name:    release.Labels[labels.BundleNameKey],
 		Version: release.Labels[labels.BundleVersionKey],
 	}, nil
-}
-
-type postrenderer struct {
-	labels  map[string]string
-	cascade postrender.PostRenderer
-}
-
-func (p *postrenderer) Run(renderedManifests *bytes.Buffer) (*bytes.Buffer, error) {
-	var buf bytes.Buffer
-	dec := apimachyaml.NewYAMLOrJSONDecoder(renderedManifests, 1024)
-	for {
-		obj := unstructured.Unstructured{}
-		err := dec.Decode(&obj)
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-		obj.SetLabels(util.MergeMaps(obj.GetLabels(), p.labels))
-		b, err := obj.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		buf.Write(b)
-	}
-	if p.cascade != nil {
-		return p.cascade.Run(&buf)
-	}
-	return &buf, nil
-}
-
-func (r *ClusterExtensionReconciler) validateBundle(bundle *declcfg.Bundle) error {
-	unsupportedProps := sets.New[string](
-		property.TypePackageRequired,
-		property.TypeGVKRequired,
-		property.TypeConstraint,
-	)
-	for i := range bundle.Properties {
-		if unsupportedProps.Has(bundle.Properties[i].Type) {
-			return fmt.Errorf(
-				"bundle %q has a dependency declared via property %q which is currently not supported",
-				bundle.Name,
-				bundle.Properties[i].Type,
-			)
-		}
-	}
-
-	return nil
 }

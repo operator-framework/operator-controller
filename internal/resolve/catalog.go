@@ -18,8 +18,11 @@ import (
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
 )
 
+type ValidationFunc func(*declcfg.Bundle) error
+
 type CatalogResolver struct {
 	WalkCatalogsFunc func(context.Context, string, CatalogWalkFunc, ...client.ListOption) error
+	Validations      []ValidationFunc
 }
 
 // Resolve returns a Bundle from a catalog that needs to get installed on the cluster.
@@ -132,6 +135,15 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error getting resolved bundle version for bundle %q: %w", resolvedBundle.Name, err)
 	}
+
+	// Run validations against the resolved bundle to ensure only valid resolved bundles are being returned
+	// Open Question: Should we grab the first valid bundle earlier?
+	for _, validation := range r.Validations {
+		if err := validation(resolvedBundle); err != nil {
+			return nil, nil, nil, fmt.Errorf("validating bundle %q: %w", resolvedBundle.Name, err)
+		}
+	}
+
 	return resolvedBundle, resolvedBundleVersion, resolvedDeprecation, nil
 }
 
