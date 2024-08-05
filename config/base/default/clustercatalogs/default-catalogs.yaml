@@ -8,3 +8,4 @@ spec:
     type: image
     image:
       ref: quay.io/operatorhubio/catalog:latest
+      pollInterval: 10m
