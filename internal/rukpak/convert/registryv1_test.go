@@ -1,6 +1,7 @@
 package convert
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -16,6 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-registry/alpha/property"
 )
 
 func TestRegistryV1Converter(t *testing.T) {
@@ -173,6 +175,9 @@ var _ = Describe("RegistryV1 Suite", func() {
 				csv = v1alpha1.ClusterServiceVersion{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "testCSV",
+						Annotations: map[string]string{
+							"olm.properties": fmt.Sprintf("[{\"type\": %s, \"value\": \"%s\"}]", property.TypeConstraint, "value"),
+						},
 					},
 					Spec: v1alpha1.ClusterServiceVersionSpec{
 						InstallModes: []v1alpha1.InstallMode{{Type: v1alpha1.InstallModeTypeMultiNamespace, Supported: true}},
@@ -379,6 +384,22 @@ var _ = Describe("RegistryV1 Suite", func() {
 				plainBundle, err := Convert(registryv1Bundle, installNamespace, watchNamespaces)
 				Expect(err).To(HaveOccurred())
 				Expect(plainBundle).To(BeNil())
+			})
+
+			It("should propagate csv annotations to chart metadata annotation", func() {
+				By("creating a registry v1 bundle")
+				watchNamespaces = []string{"testWatchNs1", "testWatchNs2"}
+				unstructuredSvc := convertToUnstructured(svc)
+				registryv1Bundle = RegistryV1{
+					PackageName: "testPkg",
+					CSV:         csv,
+					Others:      []unstructured.Unstructured{unstructuredSvc},
+				}
+
+				By("converting to helm")
+				chrt, err := toChart(registryv1Bundle, installNamespace, watchNamespaces)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(chrt.Metadata.Annotations["olm.properties"]).NotTo(BeNil())
 			})
 		})
 
