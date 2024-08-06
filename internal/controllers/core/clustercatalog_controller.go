@@ -165,7 +165,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alp
 		var requeueAfter time.Duration
 		switch catalog.Spec.Source.Type {
 		case v1alpha1.SourceTypeImage:
-			if catalog.Spec.Source.Image.PollInterval != nil {
+			if catalog.Spec.Source.Image != nil && catalog.Spec.Source.Image.PollInterval != nil {
 				requeueAfter = wait.Jitter(catalog.Spec.Source.Image.PollInterval.Duration, requeueJitterMaxFactor)
 			}
 		}
@@ -253,6 +253,10 @@ func (r *ClusterCatalogReconciler) needsUnpacking(catalog *v1alpha1.ClusterCatal
 	}
 	if !r.Storage.ContentExists(catalog.Name) {
 		return true
+	}
+	// if there is no spec.Source.Image, don't unpack again
+	if catalog.Spec.Source.Image == nil {
+		return false
 	}
 	// if the spec.Source.Image.Ref was changed, unpack the new ref
 	if catalog.Spec.Source.Image.Ref != catalog.Status.ResolvedSource.Image.Ref {
