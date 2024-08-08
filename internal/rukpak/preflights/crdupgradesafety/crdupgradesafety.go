@@ -10,6 +10,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -64,11 +65,15 @@ func NewPreflight(crdCli apiextensionsv1client.CustomResourceDefinitionInterface
 	return p
 }
 
-func (p *Preflight) Install(_ context.Context, _ *release.Release) error {
-	return nil
+func (p *Preflight) Install(ctx context.Context, rel *release.Release) error {
+	return p.runPreflight(ctx, rel)
 }
 
 func (p *Preflight) Upgrade(ctx context.Context, rel *release.Release) error {
+	return p.runPreflight(ctx, rel)
+}
+
+func (p *Preflight) runPreflight(ctx context.Context, rel *release.Release) error {
 	if rel == nil {
 		return nil
 	}
@@ -96,6 +101,11 @@ func (p *Preflight) Upgrade(ctx context.Context, rel *release.Release) error {
 
 		oldCrd, err := p.crdClient.Get(ctx, newCrd.Name, metav1.GetOptions{})
 		if err != nil {
+			// if there is no existing CRD, there is nothing to break
+			// so it is immediately successful.
+			if apierrors.IsNotFound(err) {
+				return nil
+			}
 			return fmt.Errorf("getting existing resource for CRD %q: %w", newCrd.Name, err)
 		}
 

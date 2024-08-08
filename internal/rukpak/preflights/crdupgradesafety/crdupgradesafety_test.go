@@ -12,8 +12,10 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/rukpak/util"
@@ -71,8 +73,140 @@ func getManifestString(t *testing.T, crdFile string) string {
 // TestInstall exists only for completeness as Install() is currently a no-op. It can be used as
 // a template for real tests in the future if the func is implemented.
 func TestInstall(t *testing.T) {
-	preflight := newMockPreflight(nil, nil, nil)
-	require.Nil(t, preflight.Install(context.Background(), nil))
+	tests := []struct {
+		name          string
+		oldCrdPath    string
+		validator     *kappcus.Validator
+		release       *release.Release
+		wantErrMsgs   []string
+		wantCrdGetErr error
+	}{
+		{
+			name: "nil release",
+		},
+		{
+			name: "release with no objects",
+			release: &release.Release{
+				Name: "test-release",
+			},
+		},
+		{
+			name: "release with invalid manifest",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: "abcd",
+			},
+			wantErrMsgs: []string{"json: cannot unmarshal string into Go value of type unstructured.detector"},
+		},
+		{
+			name: "release with no CRD objects",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "no-crds.json"),
+			},
+		},
+		{
+			name: "fail to get old crd other than not found error",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-valid-upgrade.json"),
+			},
+			wantCrdGetErr: fmt.Errorf("error!"),
+			wantErrMsgs:   []string{"error!"},
+		},
+		{
+			name: "fail to get old crd, not found error",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-valid-upgrade.json"),
+			},
+			wantCrdGetErr: apierrors.NewNotFound(schema.GroupResource{Group: apiextensionsv1.SchemeGroupVersion.Group, Resource: "customresourcedefinitions"}, "not found"),
+		},
+		{
+			name: "invalid crd manifest file",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-invalid"),
+			},
+			wantErrMsgs: []string{"json: cannot unmarshal"},
+		},
+		{
+			name:       "custom validator",
+			oldCrdPath: "old-crd.json",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "old-crd.json"),
+			},
+			validator: &kappcus.Validator{
+				Validations: []kappcus.Validation{
+					kappcus.NewValidationFunc("test", func(old, new apiextensionsv1.CustomResourceDefinition) error {
+						return fmt.Errorf("custom validation error!!")
+					}),
+				},
+			},
+			wantErrMsgs: []string{"custom validation error!!"},
+		},
+		{
+			name:       "valid upgrade",
+			oldCrdPath: "old-crd.json",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-valid-upgrade.json"),
+			},
+		},
+		{
+			name: "new crd validation failures (all except existing field removal)",
+			// Not really intended to test kapp validators, although it does anyway to a large extent.
+			// This test is primarily meant to ensure that we are actually using all of them.
+			oldCrdPath: "old-crd.json",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-invalid-upgrade.json"),
+			},
+			wantErrMsgs: []string{
+				`"NoScopeChange"`,
+				`"NoStoredVersionRemoved"`,
+				`enums added`,
+				`new required fields added`,
+				`maximum constraint added when one did not exist previously`,
+				`maximum items constraint added`,
+				`maximum length constraint added`,
+				`maximum properties constraint added`,
+				`minimum constraint added when one did not exist previously`,
+				`minimum items constraint added`,
+				`minimum length constraint added`,
+				`minimum properties constraint added`,
+				`new value added as default`,
+			},
+		},
+		{
+			name: "new crd validation failure for existing field removal",
+			// Separate test from above as this error will cause the validator to
+			// return early and skip some of the above validations.
+			oldCrdPath: "old-crd.json",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-field-removed.json"),
+			},
+			wantErrMsgs: []string{
+				`"NoExistingFieldRemoved"`,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			preflight := newMockPreflight(getCrdFromManifestFile(t, tc.oldCrdPath), tc.wantCrdGetErr, tc.validator)
+			err := preflight.Install(context.Background(), tc.release)
+			if len(tc.wantErrMsgs) != 0 {
+				for _, expectedErrMsg := range tc.wantErrMsgs {
+					require.ErrorContainsf(t, err, expectedErrMsg, "")
+				}
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestUpgrade(t *testing.T) {
@@ -109,13 +243,21 @@ func TestUpgrade(t *testing.T) {
 			},
 		},
 		{
-			name: "fail to get old crd",
+			name: "fail to get old crd, other than not found error",
 			release: &release.Release{
 				Name:     "test-release",
 				Manifest: getManifestString(t, "crd-valid-upgrade.json"),
 			},
 			wantCrdGetErr: fmt.Errorf("error!"),
 			wantErrMsgs:   []string{"error!"},
+		},
+		{
+			name: "fail to get old crd, not found error",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-valid-upgrade.json"),
+			},
+			wantCrdGetErr: apierrors.NewNotFound(schema.GroupResource{Group: apiextensionsv1.SchemeGroupVersion.Group, Resource: "customresourcedefinitions"}, "not found"),
 		},
 		{
 			name: "invalid crd manifest file",
