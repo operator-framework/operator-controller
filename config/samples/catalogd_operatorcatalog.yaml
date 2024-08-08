@@ -7,4 +7,4 @@ spec:
     type: image
     image:
       ref: quay.io/operatorhubio/catalog:latest
-      pollInterval: 24h
+      pollInterval: 10m
