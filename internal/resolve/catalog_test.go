@@ -589,3 +589,23 @@ func genPackage(pkg string) *declcfg.DeclarativeConfig {
 		Deprecations: []declcfg.Deprecation{packageDeprecation(pkg)},
 	}
 }
+
+func BenchmarkResolve(b *testing.B) {
+	defer featuregatetesting.SetFeatureGateDuringTest(b, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
+	pkgName := randPkg()
+	w := staticCatalogWalker{
+		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
+		"b": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
+		"c": func() (*declcfg.DeclarativeConfig, error) { return genPackage(pkgName), nil },
+	}
+	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
+	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	installedBundle := &ocv1alpha1.BundleMetadata{
+		Name:    bundleName(pkgName, "1.0.0"),
+		Version: "1.0.0",
+	}
+
+	for i := 0; i < b.N; i++ {
+		_, _, _, _ = r.Resolve(context.Background(), ce, installedBundle)
+	}
+}
