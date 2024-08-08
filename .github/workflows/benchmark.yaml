@@ -16,13 +16,10 @@ jobs:
           go-version-file: go.mod
 
       - name: Install dependencies
-        run: go get .
+        run: go mod download
 
       - name: Set Golang binaries path
         run: echo "`go env GOPATH`/bin" >> $GITHUB_PATH
-
-      - name: Install benchstat
-        run: go install golang.org/x/perf/cmd/benchstat@latest
 
       - name: Run golang benchmarks
         run: go test -run="^$" -bench=. -count=10 ./internal/... > benchmark.txt
@@ -40,6 +37,9 @@ jobs:
         run: |
           mkdir stats
           cp benchmark.txt stats/benchmark.txt
+
+      - name: Install benchstat
+        run: go install golang.org/x/perf/cmd/benchstat@latest
 
       - name: Compare benchmark results
         run: |
@@ -59,7 +59,7 @@ jobs:
     steps:
       - uses: actions/setup-python@v5
         with:
-          python-version: '3:12'
+          python-version: '3.12'
 
       - name: Download benchstats result
         uses: actions/download-artifact@v4
@@ -70,16 +70,49 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install pandas
+          pip install pandas numpy tabulate
 
-      - name: Evaluate the results
-        uses: jannekem/run-python-script-action@v1
-        with:
-          script: |
-            import pandas as pd
+      - name: Review the results
+        id: results
+        run: |
+          import pandas as pd
+          import os
 
-            df = pd.read_csv('stats.csv',
-              names=['name','reference','secs/op','benchmark','_secs/op','change','P'])
-            df.change = df.change.replace("~", "0")
-            df.change = df.change.str.rstrip("%")
-            print(df.loc[df.change > 20, ['name','change','P']])
+          # Threshold for increase in compute resource utilization
+          threshold: int = 10
+          df = pd.read_csv('stats.csv',
+            names=['name','reference','secs/op','benchmark','_secs/op','vs_base','P'])
+
+          # Render the benchstat output to markdown
+          out = df.to_markdown()
+
+          s1 = df.vs_base.str.replace('~','0')
+          s1 = pd.to_numeric(s1.str.rstrip('%'))
+          breach = "true" if len(s1[s1 > threshold]) > 0 else "false"
+
+          gh_output = os.environ['GITHUB_OUTPUT']
+          with open(gh_output, 'a') as f:
+            # vs_base captures change in compute resource utilization
+            print(f'breach={breach}', file=f)
+            # capture benchstat results in markdown
+            print(f'report={out}', file=f)
+        shell: python
+
+      - name: Post results
+        uses: actions/github-script@v7
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: ${{ steps.results.output.report }}
+          })
+
+      - name: Parse 'vs base' results
+        run: |
+          if [ "${{ steps.results.output.breach }}" == "true" ]
+          then
+            exit 1
+          else
+            exit 0
+        shell: bash
