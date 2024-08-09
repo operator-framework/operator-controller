@@ -104,7 +104,7 @@ func (p *Preflight) runPreflight(ctx context.Context, rel *release.Release) erro
 			// if there is no existing CRD, there is nothing to break
 			// so it is immediately successful.
 			if apierrors.IsNotFound(err) {
-				return nil
+				continue
 			}
 			return fmt.Errorf("getting existing resource for CRD %q: %w", newCrd.Name, err)
 		}
