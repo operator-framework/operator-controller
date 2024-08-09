@@ -43,6 +43,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 	var (
 		resolvedBundle      *declcfg.Bundle
 		resolvedDeprecation *declcfg.Deprecation
+		oldBundle           *declcfg.Bundle
 	)
 
 	if err := r.WalkCatalogsFunc(ctx, packageName, func(ctx context.Context, cat *catalogd.ClusterCatalog, packageFBC *declcfg.DeclarativeConfig, err error) error {
@@ -104,6 +105,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 				return nil
 			}
 			if compare.ByVersion(*resolvedBundle, thisBundle) < 0 {
+				oldBundle = &thisBundle
 				return nil
 			}
 		}
@@ -119,15 +121,26 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 		if installedBundle != nil {
 			errPrefix = fmt.Sprintf("error upgrading from currently installed version %q: ", installedBundle.Version)
 		}
-		switch {
-		case versionRange != "" && channelName != "":
-			return nil, nil, nil, fmt.Errorf("%sno package %q matching version %q in channel %q found", errPrefix, packageName, versionRange, channelName)
-		case versionRange != "":
-			return nil, nil, nil, fmt.Errorf("%sno package %q matching version %q found", errPrefix, packageName, versionRange)
-		case channelName != "":
-			return nil, nil, nil, fmt.Errorf("%sno package %q in channel %q found", errPrefix, packageName, channelName)
-		default:
-			return nil, nil, nil, fmt.Errorf("%sno package %q found", errPrefix, packageName)
+		if oldBundle == nil {
+			switch {
+			case versionRange != "" && channelName != "":
+				return nil, nil, nil, fmt.Errorf("%sno package %q matching version %q in channel %q found", errPrefix, packageName, versionRange, channelName)
+			case versionRange != "":
+				return nil, nil, nil, fmt.Errorf("%sno package %q matching version %q found", errPrefix, packageName, versionRange)
+			case channelName != "":
+				return nil, nil, nil, fmt.Errorf("%sno package %q in channel %q found", errPrefix, packageName, channelName)
+			default:
+				return nil, nil, nil, fmt.Errorf("%sno package %q found", errPrefix, packageName)
+			}
+		} else {
+			switch {
+			case versionRange != "" && channelName != "":
+				return nil, nil, nil, fmt.Errorf("%sdesired package %q with version %q in channel %q does not match any successor of %q", errPrefix, packageName, versionRange, channelName, installedBundle.Version)
+			case versionRange != "":
+				return nil, nil, nil, fmt.Errorf("%sdesired package %q with version %q does not match any successors of %q", errPrefix, packageName, versionRange, installedBundle.Version)
+			default:
+				return nil, nil, nil, fmt.Errorf("%sno package %q found", errPrefix, packageName)
+			}
 		}
 	}
 
