@@ -8,3 +8,9 @@ nodes:
         hostPort: 30000
         listenAddress: "127.0.0.1"
         protocol: tcp
+    kubeadmConfigPatches:
+      - |
+        kind: ClusterConfiguration
+        apiServer:
+            extraArgs:
+              enable-admission-plugins: OwnerReferencesPermissionEnforcement
