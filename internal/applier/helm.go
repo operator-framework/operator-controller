@@ -90,6 +90,11 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 		}
 	}
 
+    // NOTE: We need to be cautious of eating errors here.
+    // We should always return any error that occurs during an
+    // attempt to install/upgrade/reconcile. Only when there is
+    // a verifiable reason to eat the error (i.e it is recoverable)
+    // should an exception be made.
 	switch state {
 	case StateNeedsInstall:
 		rel, err = ac.Install(ext.GetName(), ext.Spec.InstallNamespace, chrt, values, func(install *action.Install) error {
