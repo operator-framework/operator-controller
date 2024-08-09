@@ -680,10 +680,10 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 	t.Log("By fixing the ServiceAccount permissions")
 	require.NoError(t, createClusterRoleAndBindingForSA(context.Background(), name, sa))
 
-    // NOTE: In order to ensure predictable results we need to ensure we have a single
-    // known failure with a singular fix operation. Additionally, due to the exponential
-    // backoff of this eventually check we MUST ensure we do not touch the ClusterExtension
-    // after creating and binding the needed permissions to the ServiceAccount.
+	// NOTE: In order to ensure predictable results we need to ensure we have a single
+	// known failure with a singular fix operation. Additionally, due to the exponential
+	// backoff of this eventually check we MUST ensure we do not touch the ClusterExtension
+	// after creating and binding the needed permissions to the ServiceAccount.
 	t.Log("By eventually installing the package successfully")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
