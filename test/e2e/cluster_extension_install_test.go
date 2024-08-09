@@ -39,7 +39,7 @@ const (
 var pollDuration = time.Minute
 var pollInterval = time.Second
 
-func createServiceAccount(ctx context.Context, name types.NamespacedName) (*corev1.ServiceAccount, error) {
+func createServiceAccount(ctx context.Context, name types.NamespacedName, clusterExtensionName string) (*corev1.ServiceAccount, error) {
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name.Name,
@@ -55,6 +55,18 @@ func createServiceAccount(ctx context.Context, name types.NamespacedName) (*core
 			Name: name.Name,
 		},
 		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{
+					"olm.operatorframework.io",
+				},
+				Resources: []string{
+					"clusterextensions/finalizers",
+				},
+				Verbs: []string{
+					"update",
+				},
+				ResourceNames: []string{clusterExtensionName},
+			},
 			{
 				APIGroups: []string{
 					"",
@@ -178,7 +190,7 @@ func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCata
 		Namespace: "default",
 	}
 
-	sa, err := createServiceAccount(context.Background(), defaultNamespace)
+	sa, err := createServiceAccount(context.Background(), defaultNamespace, clusterExtensionName)
 	require.NoError(t, err)
 	return clusterExtension, extensionCatalog, sa
 }
@@ -487,7 +499,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 			Name: clusterExtensionName,
 		},
 	}
-	sa, err := createServiceAccount(context.Background(), types.NamespacedName{Name: clusterExtensionName, Namespace: "default"})
+	sa, err := createServiceAccount(context.Background(), types.NamespacedName{Name: clusterExtensionName, Namespace: "default"}, clusterExtensionName)
 	require.NoError(t, err)
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
 	defer getArtifactsOutput(t)

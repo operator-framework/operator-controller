@@ -28,7 +28,12 @@ kind: ClusterRole
 metadata:
   name: argocd-installer-clusterrole
 rules:
-# Manage ArgoCD CRDs 
+# Allow ClusterExtension to set blockOwnerDeletion ownerReferences
+- apiGroups: [olm.operatorframework.io]
+  resources: [clusterextensions/finalizers]
+  verbs: [update]
+  resourceNames: [argocd]
+# Manage ArgoCD CRDs
 - apiGroups: [apiextensions.k8s.io]
   resources: [customresourcedefinitions]
   verbs: [create]
@@ -221,32 +226,32 @@ metadata:
 rules:
 - apiGroups: [""]
   resources: [serviceaccounts]
-  verbs: [get, list, watch, create, update, patch, delete]
-  resourceNames: [argocd-operator-controller-manager]
+  verbs: [create]
 - apiGroups: [""]
   resources: [serviceaccounts]
+  verbs: [get, list, watch, update, patch, delete]
+  resourceNames: [argocd-operator-controller-manager]
+- apiGroups: [""]
+  resources: [configmaps]
   verbs: [create]
 - apiGroups: [""]
   resources: [configmaps]
-  verbs: [get, list, watch, create, update, patch, delete]
+  verbs: [get, list, watch, update, patch, delete]
   resourceNames: [argocd-operator-manager-config]
 - apiGroups: [""]
-  resources: [configmaps]
+  resources: [services]
   verbs: [create]
 - apiGroups: [""]
   resources: [services]
-  verbs: [get, list, watch, create, update, patch, delete]
+  verbs: [get, list, watch, update, patch, delete]
   resourceNames: [argocd-operator-controller-manager-metrics-service]
-- apiGroups: [""]
-  resources: [services]
+- apiGroups: [apps]
+  resources: [deployments]
   verbs: [create]
 - apiGroups: [apps]
   resources: [deployments]
-  verbs: [get, list, watch, create, update, patch, delete]
+  verbs: [get, list, watch, update, patch, delete]
   resourceNames: [argocd-operator-controller-manager]
-- apiGroups: [apps]
-  resources: [deployments]
-  verbs: [create]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
