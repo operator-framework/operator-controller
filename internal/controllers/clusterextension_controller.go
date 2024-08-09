@@ -271,11 +271,11 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 
 	l.V(1).Info("applying bundle contents")
-    // NOTE: We need to be cautious of eating errors here.
-    // We should always return any error that occurs during an
-    // attempt to apply content to the cluster. Only when there is
-    // a verifiable reason to eat the error (i.e it is recoverable)
-    // should an exception be made.
+	// NOTE: We need to be cautious of eating errors here.
+	// We should always return any error that occurs during an
+	// attempt to apply content to the cluster. Only when there is
+	// a verifiable reason to eat the error (i.e it is recoverable)
+	// should an exception be made.
 	managedObjs, state, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, lbls)
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, err.Error())
