@@ -276,6 +276,10 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// attempt to apply content to the cluster. Only when there is
 	// a verifiable reason to eat the error (i.e it is recoverable)
 	// should an exception be made.
+	// The following kinds of errors should be returned up the stack
+	// to ensure exponential backoff can occur:
+	//   - Permission errors (it is not possible to watch changes to permissions.
+	//     The only way to eventually recover from permission errors is to keep retrying).
 	managedObjs, state, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, lbls)
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, err.Error())
