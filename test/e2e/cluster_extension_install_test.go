@@ -51,10 +51,10 @@ func createServiceAccount(ctx context.Context, name types.NamespacedName, cluste
 		return nil, err
 	}
 
-	return sa, createClusterRoleAndBindingForSA(ctx, name.Name, sa)
+	return sa, createClusterRoleAndBindingForSA(ctx, name.Name, sa, clusterExtensionName)
 }
 
-func createClusterRoleAndBindingForSA(ctx context.Context, name string, sa *corev1.ServiceAccount) error {
+func createClusterRoleAndBindingForSA(ctx context.Context, name string, sa *corev1.ServiceAccount, clusterExtensionName string) error {
 	cr := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -678,7 +678,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 	}, pollDuration, pollInterval)
 
 	t.Log("By fixing the ServiceAccount permissions")
-	require.NoError(t, createClusterRoleAndBindingForSA(context.Background(), name, sa))
+	require.NoError(t, createClusterRoleAndBindingForSA(context.Background(), name, sa, clusterExtension.Name))
 
 	// NOTE: In order to ensure predictable results we need to ensure we have a single
 	// known failure with a singular fix operation. Additionally, due to the exponential
