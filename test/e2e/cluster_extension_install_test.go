@@ -50,9 +50,14 @@ func createServiceAccount(ctx context.Context, name types.NamespacedName, cluste
 	if err != nil {
 		return nil, err
 	}
+
+	return sa, createClusterRoleAndBindingForSA(ctx, name.Name, sa, clusterExtensionName)
+}
+
+func createClusterRoleAndBindingForSA(ctx context.Context, name string, sa *corev1.ServiceAccount, clusterExtensionName string) error {
 	cr := &rbacv1.ClusterRole{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name.Name,
+			Name: name,
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
@@ -144,33 +149,33 @@ func createServiceAccount(ctx context.Context, name types.NamespacedName, cluste
 			},
 		},
 	}
-	err = c.Create(ctx, cr)
+	err := c.Create(ctx, cr)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	crb := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name.Name,
+			Name: name,
 		},
 		Subjects: []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      name.Name,
-				Namespace: name.Namespace,
+				Name:      sa.Name,
+				Namespace: sa.Namespace,
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     "ClusterRole",
-			Name:     name.Name,
+			Name:     name,
 		},
 	}
 	err = c.Create(ctx, crb)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return sa, nil
+	return nil
 }
 
 func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCatalog, *corev1.ServiceAccount) {
@@ -602,6 +607,94 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 	t.Log("By eventually re-creating the managed resource")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: prometheusService.Name, Namespace: prometheusService.Namespace}, prometheusService))
+	}, pollDuration, pollInterval)
+}
+
+func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *testing.T) {
+	t.Log("When a cluster extension is installed from a catalog")
+	t.Log("When the extension bundle format is registry+v1")
+
+	clusterExtension, extensionCatalog, _ := testInit(t)
+	name := rand.String(10)
+	sa := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: "default",
+		},
+	}
+	err := c.Create(context.Background(), sa)
+	require.NoError(t, err)
+
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+	defer getArtifactsOutput(t)
+
+	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
+		PackageName:      "prometheus",
+		InstallNamespace: "default",
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: sa.Name,
+		},
+	}
+	t.Log("It resolves the specified package with correct bundle path")
+	t.Log("By creating the ClusterExtension resource")
+	require.NoError(t, c.Create(context.Background(), clusterExtension))
+
+	t.Log("By eventually reporting a successful resolution and bundle path")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		assert.Len(ct, clusterExtension.Status.Conditions, len(conditionsets.ConditionTypes))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "resolved to")
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
+	}, pollDuration, pollInterval)
+
+	t.Log("By eventually reporting a successful unpacked")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, ocv1alpha1.ReasonUnpackSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "unpack successful")
+	}, pollDuration, pollInterval)
+
+	t.Log("By eventually failing to install the package successfully due to insufficient ServiceAccount permissions")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+		assert.Equal(ct, ocv1alpha1.ReasonInstallationFailed, cond.Reason)
+		assert.Contains(ct, cond.Message, "forbidden")
+	}, pollDuration, pollInterval)
+
+	t.Log("By fixing the ServiceAccount permissions")
+	require.NoError(t, createClusterRoleAndBindingForSA(context.Background(), name, sa, clusterExtension.Name))
+
+	// NOTE: In order to ensure predictable results we need to ensure we have a single
+	// known failure with a singular fix operation. Additionally, due to the exponential
+	// backoff of this eventually check we MUST ensure we do not touch the ClusterExtension
+	// after creating and binding the needed permissions to the ServiceAccount.
+	t.Log("By eventually installing the package successfully")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "Installed bundle")
+		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle)
 	}, pollDuration, pollInterval)
 }
 
