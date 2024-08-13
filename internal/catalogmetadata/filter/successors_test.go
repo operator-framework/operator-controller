@@ -17,7 +17,7 @@ import (
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/compare"
-	"github.com/operator-framework/operator-controller/pkg/features"
+	"github.com/operator-framework/operator-controller/internal/features"
 )
 
 func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.T) {
