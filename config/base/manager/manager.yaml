@@ -2,7 +2,6 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    control-plane: controller-manager
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/enforce-version: latest
   name: system
@@ -15,18 +14,18 @@ metadata:
   annotations:
     kubectl.kubernetes.io/default-logs-container: manager
   labels:
-    control-plane: controller-manager
+    control-plane: operator-controller-controller-manager
 spec:
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: operator-controller-controller-manager
   replicas: 1
   template:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
       labels:
-        control-plane: controller-manager
+        control-plane: operator-controller-controller-manager
     spec:
       affinity:
         nodeAffinity:
@@ -106,7 +105,7 @@ spec:
             cpu: 5m
             memory: 64Mi
         terminationMessagePolicy: FallbackToLogsOnError
-      serviceAccountName: controller-manager
+      serviceAccountName: operator-controller-controller-manager
       terminationGracePeriodSeconds: 10
       volumes:
         - name: cache
