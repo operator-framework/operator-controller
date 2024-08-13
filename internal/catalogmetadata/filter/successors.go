@@ -9,7 +9,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/pkg/features"
+	"github.com/operator-framework/operator-controller/internal/features"
 )
 
 func SuccessorsOf(installedBundle *ocv1alpha1.BundleMetadata, channels ...declcfg.Channel) (Predicate[declcfg.Bundle], error) {

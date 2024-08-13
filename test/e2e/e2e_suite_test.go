@@ -14,7 +14,7 @@ import (
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 
-	"github.com/operator-framework/operator-controller/pkg/scheme"
+	"github.com/operator-framework/operator-controller/internal/scheme"
 )
 
 var (
