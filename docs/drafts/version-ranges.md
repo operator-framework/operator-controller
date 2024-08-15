@@ -11,8 +11,6 @@ The resolved version is the latest version of the extension that satisfies the d
 Extension updates within the specified range are automatically installed if they can be resolved successfully.
 Updates are not installed if they are outside of the specified range or if they cannot be resolved successfully.
 
-For more information about dependency and constraint resolution in OLM 1.0, see the [Deppy introduction](https://github.com/operator-framework/deppy#introductionhttps://github.com/operator-framework/deppy#introductionhttps://github.com/operator-framework/deppy#introduction)
-
 ### Comparisons
 
 You define a version range by adding a comparison string to the `spec.version` field. A comparison string is composed of a list of comma or space separated values and one or more comparison operators. You can add an additional comparison string by including an OR (`||`) operator between the strings.
