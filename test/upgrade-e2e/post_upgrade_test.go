@@ -27,7 +27,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	t.Log("Starting checks after OLM upgrade")
 	ctx := context.Background()
 
-	managerLabelSelector := labels.Set{"control-plane": "controller-manager"}
+	managerLabelSelector := labels.Set{"control-plane": "operator-controller-controller-manager"}
 
 	t.Log("Checking that the controller-manager deployment is updated")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
