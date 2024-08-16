@@ -102,6 +102,14 @@ rules:
     - "watch"
     - "bind"
     - "escalate"
+  - apiGroups:
+    - "olm.operatorframework.io"
+    resources:
+    - "clusterextensions/finalizers"
+    verbs:
+    - "update"
+    resourceNames:
+    - "${TEST_CLUSTER_EXTENSION_NAME}"
 EOF
 
 kubectl apply -f - <<EOF
