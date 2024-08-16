@@ -41,7 +41,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	helmclient "github.com/operator-framework/operator-controller/internal/helm/client"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/action"
@@ -52,6 +51,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/features"
+	helmclient "github.com/operator-framework/operator-controller/internal/helm/client"
 	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/resolve"

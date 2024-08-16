@@ -4,9 +4,6 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/operator-framework/operator-controller/internal/controllerutil"
-	"github.com/operator-framework/operator-controller/internal/manifestutil"
-	sdkhandler "github.com/operator-framework/operator-lib/handler"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/postrender"
@@ -17,6 +14,11 @@ import (
 	"k8s.io/cli-runtime/pkg/resource"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
+
+	sdkhandler "github.com/operator-framework/operator-lib/handler"
+
+	"github.com/operator-framework/operator-controller/internal/controllerutil"
+	"github.com/operator-framework/operator-controller/internal/manifestutil"
 )
 
 // PostRendererProvider is a function that returns a post-renderer for a given object.
