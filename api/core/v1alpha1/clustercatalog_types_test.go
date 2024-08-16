@@ -20,7 +20,7 @@ import (
 )
 
 func TestPollIntervalCELValidationRules(t *testing.T) {
-	validators := fieldValidatorsFromFile(t, "../../../config/base/crd/bases/catalogd.operatorframework.io_clustercatalogs.yaml")
+	validators := fieldValidatorsFromFile(t, "../../../config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml")
 	pth := "openAPIV3Schema.properties.spec"
 	validator, found := validators["v1alpha1"][pth]
 	assert.True(t, found)

@@ -18,7 +18,7 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
 
     ```sh
     $ kubectl apply -f - << EOF
-    apiVersion: catalogd.operatorframework.io/v1alpha1
+    apiVersion: olm.operatorframework.io/v1alpha1
     kind: ClusterCatalog
     metadata:
       name: operatorhubio
@@ -42,13 +42,13 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
     Namespace:    
     Labels:       <none>
     Annotations:  <none>
-    API Version:  catalogd.operatorframework.io/v1alpha1
+    API Version:  olm.operatorframework.io/v1alpha1
     Kind:         ClusterCatalog
     Metadata:
       Creation Timestamp:  2023-06-23T18:35:13Z
       Generation:          1
       Managed Fields:
-        API Version:  catalogd.operatorframework.io/v1alpha1
+        API Version:  olm.operatorframework.io/v1alpha1
         Fields Type:  FieldsV1
         fieldsV1:
           f:metadata:
@@ -66,7 +66,7 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
         Manager:      kubectl-client-side-apply
         Operation:    Update
         Time:         2023-06-23T18:35:13Z
-        API Version:  catalogd.operatorframework.io/v1alpha1
+        API Version:  olm.operatorframework.io/v1alpha1
         Fields Type:  FieldsV1
         fieldsV1:
           f:status:

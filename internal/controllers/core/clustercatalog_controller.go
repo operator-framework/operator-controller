@@ -40,7 +40,7 @@ import (
 )
 
 const (
-	fbcDeletionFinalizer = "catalogd.operatorframework.io/delete-server-cache"
+	fbcDeletionFinalizer = "olm.operatorframework.io/delete-server-cache"
 	// CatalogSources are polled if PollInterval is mentioned, in intervals of wait.Jitter(pollDuration, maxFactor)
 	// wait.Jitter returns a time.Duration between pollDuration and pollDuration + maxFactor * pollDuration.
 	requeueJitterMaxFactor = 0.01
@@ -53,9 +53,9 @@ type ClusterCatalogReconciler struct {
 	Storage  storage.Instance
 }
 
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs/finalizers,verbs=update
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=create;update;patch;delete;get;list;watch
 //+kubebuilder:rbac:groups=core,resources=pods/log,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,namespace=system,resources=secrets,verbs=get;

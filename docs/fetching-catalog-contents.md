@@ -147,7 +147,7 @@ This section outlines a way of exposing the `Catalogd` Service's endpoints outsi
 
     ```sh
       $ kubectl apply -f - << EOF
-      apiVersion: catalogd.operatorframework.io/v1alpha1
+      apiVersion: olm.operatorframework.io/v1alpha1
       kind: ClusterCatalog
         metadata:
           name: operatorhubio

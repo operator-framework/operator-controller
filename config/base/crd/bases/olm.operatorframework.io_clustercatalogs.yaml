@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.15.0
-  name: clustercatalogs.catalogd.operatorframework.io
+  name: clustercatalogs.olm.operatorframework.io
 spec:
-  group: catalogd.operatorframework.io
+  group: olm.operatorframework.io
   names:
     kind: ClusterCatalog
     listKind: ClusterCatalogList

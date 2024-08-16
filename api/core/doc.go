@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 // +k8s:deepcopy-gen=package,register
-// +groupName=catalogd.operatorframework.io
+// +groupName=olm.operatorframework.io
 
 // Package api is the internal version of the API.
 package core
