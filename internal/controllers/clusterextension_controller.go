@@ -44,7 +44,7 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	helmclient "github.com/operator-framework/operator-controller/internal/helm/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"

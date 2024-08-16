@@ -34,7 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 
-	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	helmclient "github.com/operator-framework/operator-controller/internal/helm/client"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/contentmanager"

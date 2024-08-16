@@ -590,8 +590,6 @@ github.com/operator-framework/api v0.26.0 h1:YVntU2NkVl5zSLLwK5kFcH6P3oSvN9QDgTs
 github.com/operator-framework/api v0.26.0/go.mod h1:3IxOwzVUeGxYlzfwKCcfCyS+q3EEhWA/4kv7UehbeyM=
 github.com/operator-framework/catalogd v0.20.0 h1:m5ugxf9fjEUaNHy81lSu6jFzTEt0XpEo44+T7g9On+U=
 github.com/operator-framework/catalogd v0.20.0/go.mod h1:F4KehkAI/bpDI4IVXNxQ7dlWtVBYvc2qkxSa7mIFGRk=
-github.com/operator-framework/helm-operator-plugins v0.4.0 h1:JuN4u7+8XbyK7nnwj5A4eQwpnA9q3DmlZGGFJr7nBDk=
-github.com/operator-framework/helm-operator-plugins v0.4.0/go.mod h1:v+6lqkG1vNg64y4WwEpnLn+b/Sr0gLfrWPIjsHci+E8=
 github.com/operator-framework/operator-lib v0.14.0 h1:er+BgZymZD1im2wytLJiPLZpGALAX6N0gXaHx3PKbO4=
 github.com/operator-framework/operator-lib v0.14.0/go.mod h1:wUu4Xb9xzXnIpglvaZ3yucTMSlqGXHIoUEH9+5gWiu0=
 github.com/operator-framework/operator-registry v1.45.0 h1:9c5NshWjPncdZtWEY0cfMnAjx3pShVnjw5UmZXp/xNE=

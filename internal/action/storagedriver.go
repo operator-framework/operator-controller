@@ -15,8 +15,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-	"github.com/operator-framework/helm-operator-plugins/pkg/storage"
+	helmclient "github.com/operator-framework/operator-controller/internal/helm/client"
+	"github.com/operator-framework/operator-controller/internal/storage"
 )
 
 func ChunkedStorageDriverMapper(secretsGetter clientcorev1.SecretsGetter, reader client.Reader, namespace string) helmclient.ObjectToStorageDriverMapper {

@@ -12,7 +12,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	actionclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	actionclient "github.com/operator-framework/operator-controller/internal/helm/client"
 )
 
 var _ actionclient.ActionInterface = &mockActionClient{}

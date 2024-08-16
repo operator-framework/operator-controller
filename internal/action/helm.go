@@ -7,7 +7,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	actionclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	actionclient "github.com/operator-framework/operator-controller/internal/helm/client"
 
 	olmv1error "github.com/operator-framework/operator-controller/internal/action/error"
 )

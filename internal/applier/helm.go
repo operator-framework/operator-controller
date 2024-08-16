@@ -15,7 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	helmclient "github.com/operator-framework/operator-controller/internal/helm/client"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
