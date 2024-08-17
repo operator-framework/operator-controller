@@ -3,7 +3,6 @@ kind: Namespace
 metadata:
   labels:
     app.kubernetes.io/part-of: olm
-    app.kubernetes.io/name: catalogd
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/enforce-version: latest
   name: system
