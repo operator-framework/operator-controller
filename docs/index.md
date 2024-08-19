@@ -10,7 +10,7 @@ or [CustomResourceDefinitions](https://kubernetes.io/docs/concepts/extend-kubern
 
 OLM helped define lifecycles for these extensions: from packaging and distribution to installation, configuration, upgrade, and removal.
 
-The first iteration of OLM, termed v0, included several concepts and features targeting the stability, security, and supportability of the life-cycled applications, for instance:
+The first iteration of OLM, termed OLM v0, included several concepts and features targeting the stability, security, and supportability of the life-cycled applications, for instance:
 * A dependency model that enabled cluster extensions to focus on their primary purpose by delegating out of scope behavior to dependencies
 * A constraint model that allowed cluster extension developers to define support limitations such as conflicting extensions, and minimum kubernetes versions
 * A namespace-based multi-tenancy model in lieu of namespace-scoped CRDs
