@@ -1,4 +1,4 @@
-# What Operator Lifecycle Manager (OLM)?
+# What is Operator Lifecycle Manager (OLM)?
 
 Operator Lifecycle Manager (OLM) is an open-source [CNCF](https://www.cncf.io/) project with the mission to manage the 
 lifecycle of cluster extensions centrally and declaratively on Kubernetes clusters. Its purpose is to make installing, 
