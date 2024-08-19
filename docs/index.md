@@ -5,8 +5,9 @@ lifecycle of cluster extensions centrally and declaratively on Kubernetes cluste
 running, and updating functional extensions to the cluster easy, safe, and reproducible for cluster administrators and PaaS administrators.
 
 Previously, OLM was focused on a particular type of cluster extension: [Operators](https://operatorhub.io/what-is-an-operator#:~:text=is%20an%20Operator-,What%20is%20an%20Operator%20after%20all%3F,or%20automation%20software%20like%20Ansible.). 
-An Operator is a Kubernetes application composed of one or more controllers and one, or more, API extensions, 
-or [CustomResourceDefinitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs).
+Operators are a method of packaging, deploying, and managing a Kubernetes application. An Operator is composed of one or more controllers paired with one or both of the following objects:
+* One or more API extensions 
+* One or more [CustomResourceDefinitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs).
 
 OLM helped define lifecycles for these extensions: from packaging and distribution to installation, configuration, upgrade, and removal.
 
