@@ -64,6 +64,11 @@ type ClusterExtensionSpec struct {
 	// Channel constraint definition
 	Channel string `json:"channel,omitempty"`
 
+	//+kubebuilder:optional
+	// +optional
+	// CatalogSelector by label
+	CatalogSelector metav1.LabelSelector `json:"catalogSelector,omitempty"`
+
 	//+kubebuilder:validation:Enum:=Enforce;Ignore
 	//+kubebuilder:default:=Enforce
 	//+kubebuilder:Optional
