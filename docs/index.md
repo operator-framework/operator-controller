@@ -21,7 +21,7 @@ is a popular destination for discovering Operators, and boasts over 300 packages
 
 # Why are we building OLM v1?
 
-OLM (v0) has been in production for over 5 years, and the community to leverage this experience and question the initial
+OLM v0 has been in production for over 5 years, and the community to leverage this experience and question the initial
 goals and assumptions of the project. OLM v1 is a complete redesign and rewrite of OLM taking into account this accumulated experience. 
 Compared to its predecessor, amongst other things, OLM v1 aims to provide:
 * A simpler API surface and mental model
