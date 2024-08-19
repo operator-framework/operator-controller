@@ -4,7 +4,7 @@ Operator Lifecycle Manager (OLM) is an open-source [CNCF](https://www.cncf.io/) 
 lifecycle of cluster extensions centrally and declaratively on Kubernetes clusters. Its purpose is to make installing, 
 running, and updating functional extensions to the cluster easy, safe, and reproducible for cluster administrators and PaaS administrators.
 
-OLM was focused on a particular type of cluster extension: [Operators](https://operatorhub.io/what-is-an-operator#:~:text=is%20an%20Operator-,What%20is%20an%20Operator%20after%20all%3F,or%20automation%20software%20like%20Ansible.). 
+Previously, OLM was focused on a particular type of cluster extension: [Operators](https://operatorhub.io/what-is-an-operator#:~:text=is%20an%20Operator-,What%20is%20an%20Operator%20after%20all%3F,or%20automation%20software%20like%20Ansible.). 
 An Operator is a Kubernetes application composed of one or more controllers and one, or more, API extensions, 
 or [CustomResourceDefinitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs).
 
