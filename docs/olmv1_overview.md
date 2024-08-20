@@ -1,4 +1,4 @@
-# OLMv1 Overview
+# OLM v1 Overview
 
 ## What won't OLMv1 do that OLMv0 did?
 
