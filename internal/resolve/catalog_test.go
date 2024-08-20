@@ -589,3 +589,65 @@ func genPackage(pkg string) *declcfg.DeclarativeConfig {
 		Deprecations: []declcfg.Deprecation{packageDeprecation(pkg)},
 	}
 }
+
+func TestInvalidClusterExtensionCatalogMatchExpressions(t *testing.T) {
+	r := CatalogResolver{}
+	ce := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "foo",
+		},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName: "foo",
+			CatalogSelector: metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "name",
+						Operator: metav1.LabelSelectorOperator("bad"),
+						Values:   []string{"value"},
+					},
+				},
+			},
+		},
+	}
+	_, _, _, err := r.Resolve(context.Background(), ce, nil)
+	assert.EqualError(t, err, "desired catalog selector is invalid: \"bad\" is not a valid label selector operator")
+}
+
+func TestInvalidClusterExtensionCatalogMatchLabelsName(t *testing.T) {
+	w := staticCatalogWalker{
+		"a": func() (*declcfg.DeclarativeConfig, error) { return genPackage("foo"), nil },
+	}
+	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
+	ce := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "foo",
+		},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName: "foo",
+			CatalogSelector: metav1.LabelSelector{
+				MatchLabels: map[string]string{"": "value"},
+			},
+		},
+	}
+	_, _, _, err := r.Resolve(context.Background(), ce, nil)
+	assert.EqualError(t, err, "desired catalog selector is invalid: key: Invalid value: \"\": name part must be non-empty; name part must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'MyName',  or 'my.name',  or '123-abc', regex used for validation is '([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]')")
+}
+func TestInvalidClusterExtensionCatalogMatchLabelsValue(t *testing.T) {
+	w := staticCatalogWalker{
+		"a": func() (*declcfg.DeclarativeConfig, error) { return genPackage("foo"), nil },
+	}
+	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
+	ce := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "foo",
+		},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName: "foo",
+			CatalogSelector: metav1.LabelSelector{
+				MatchLabels: map[string]string{"name": "&value"},
+			},
+		},
+	}
+	_, _, _, err := r.Resolve(context.Background(), ce, nil)
+	assert.EqualError(t, err, "desired catalog selector is invalid: values[0][name]: Invalid value: \"&value\": a valid label must be an empty string or consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'MyValue',  or 'my_value',  or '12345', regex used for validation is '(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?')")
+}

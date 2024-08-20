@@ -44,7 +44,8 @@ func TestMain(m *testing.M) {
 func createTestCatalog(ctx context.Context, name string, imageRef string) (*catalogd.ClusterCatalog, error) {
 	catalog := &catalogd.ClusterCatalog{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name:   name,
+			Labels: map[string]string{"olm.operatorframework.io/name": name},
 		},
 		Spec: catalogd.ClusterCatalogSpec{
 			Source: catalogd.CatalogSource{

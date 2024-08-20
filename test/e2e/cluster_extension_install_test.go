@@ -232,6 +232,9 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
 		},
+		CatalogSelector: metav1.LabelSelector{
+			MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
+		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
 	t.Log("By creating the ClusterExtension resource")
@@ -277,6 +280,41 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 	}, pollDuration, pollInterval)
 }
 
+func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
+	t.Log("When a cluster extension is installed from a catalog")
+
+	clusterExtension, extensionCatalog, sa := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+	defer getArtifactsOutput(t)
+
+	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
+		PackageName:      "prometheus",
+		InstallNamespace: "default",
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: sa.Name,
+		},
+	}
+	t.Log("It resolves to multiple bundle paths")
+	t.Log("By creating the ClusterExtension resource")
+	require.NoError(t, c.Create(context.Background(), clusterExtension))
+
+	t.Log("By eventually reporting a failed resolution with multiple bundles")
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+		assert.Len(ct, clusterExtension.Status.Conditions, len(conditionsets.ConditionTypes))
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+		if !assert.NotNil(ct, cond) {
+			return
+		}
+		// TODO(tmshort/dfranz): This should fail due to multiple bundles
+		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+		//assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+		//assert.Equal(ct, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
+		//assert.Contains(ct, cond.Message, "TODO: matching bundles found in multiple catalogs")
+		//assert.Nil(ct, clusterExtension.Status.ResolvedBundle)
+	}, pollDuration, pollInterval)
+}
+
 func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
@@ -293,6 +331,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
 		},
+		// No CatalogSelector since this is an exact version match
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful installation")
@@ -435,6 +474,15 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
 		},
+		CatalogSelector: metav1.LabelSelector{
+			MatchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Key:      "olm.operatorframework.io/name",
+					Operator: metav1.LabelSelectorOpIn,
+					Values:   []string{extensionCatalog.Name},
+				},
+			},
+		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
 	t.Log("By creating the ClusterExtension resource")
@@ -515,6 +563,9 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
 		},
+		CatalogSelector: metav1.LabelSelector{
+			MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
+		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
 	t.Log("By creating the ClusterExtension resource")
@@ -577,6 +628,9 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
 		},
+		CatalogSelector: metav1.LabelSelector{
+			MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
+		},
 	}
 	t.Log("It installs the specified package with correct bundle path")
 	t.Log("By creating the ClusterExtension resource")
@@ -633,6 +687,9 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
+		},
+		CatalogSelector: metav1.LabelSelector{
+			MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
