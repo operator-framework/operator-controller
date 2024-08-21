@@ -46,59 +46,264 @@ const (
 
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpec struct {
+	// packageName is a reference to the name of the package to be installed
+	// and is used to filter the content from catalogs.
+	//
+	// This field is required, immutable and follows the DNS label standard as defined in RFC
+	// 1123, with a deviation in the maximum length being no more than 48
+	// characters. This means that valid values:
+	//   - Contain no more than 48 characters
+	//   - Contain only lowercase alphanumeric characters or '-'
+	//   - Start with an alphanumeric character
+	//   - End with an alphanumeric character
+	//
+	// Some examples of valid values are:
+	//   - some-package
+	//   - 123-package
+	//   - 1-package-2
+	//   - somepackage
+	//
+	// Some examples of invalid values are:
+	//   - -some-package
+	//   - some-package-
+	//   - thisisareallylongpackagenamethatisgreaterthanthemaximumlength
+	//   - some.package
+	//
 	//+kubebuilder:validation:MaxLength:=48
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+(-[a-z0-9]+)*$
 	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="packageName is immutable"
 	PackageName string `json:"packageName"`
 
-	//+kubebuilder:validation:MaxLength:=64
-	//+kubebuilder:validation:Pattern=`^(\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\^)\s*(v?(0|[1-9]\d*|[x|X|\*])(\.(0|[1-9]\d*|x|X|\*]))?(\.(0|[1-9]\d*|x|X|\*))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)((?:\s+|,\s*|\s*\|\|\s*)(=||!=|>|<|>=|=>|<=|=<|~|~>|\^)\s*(v?(0|[1-9]\d*|x|X|\*])(\.(0|[1-9]\d*|x|X|\*))?(\.(0|[1-9]\d*|x|X|\*]))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)*$`
-	//+kubebuilder:Optional
-	// Version is an optional semver constraint on the package version. If not specified, the latest version available of the package will be installed.
-	// If specified, the specific version of the package will be installed so long as it is available in any of the content sources available.
-	// Examples: 1.2.3, 1.0.0-alpha, 1.0.0-rc.1
+	// version is an optional semver constraint (a specific version or range of versions). When unspecified, the latest version available will be installed.
+	//
+	// Acceptable version ranges are no longer than 64 characters.
+	// Version ranges are composed of comma- or space-delimited values and one or
+	// more comparison operators, known as comparison strings. Additional
+	// comparison strings can be added using the OR operator (||).
+	//
+	// # Range Comparisons
+	//
+	// To specify a version range, you can use a comparison string like ">=3.0,
+	// <3.6". When specifying a range, automatic updates will occur within that
+	// range. The example comparison string means "install any version greater than
+	// or equal to 3.0.0 but less than 3.6.0.". It also states intent that if any
+	// upgrades are available within the version range after initial installation,
+	// those upgrades should be automatically performed.
+	//
+	// # Pinned Versions
+	//
+	// To specify an exact version to install you can use a version range that
+	// "pins" to a specific version. When pinning to a specific version, no
+	// automatic updates will occur. An example of a pinned version range is
+	// "0.6.0", which means "only install version 0.6.0 and never
+	// upgrade from this version".
+	//
+	// # Basic Comparison Operators
+	//
+	// The basic comparison operators and their meanings are:
+	//   - "=", equal (not aliased to an operator)
+	//   - "!=", not equal
+	//   - "<", less than
+	//   - ">", greater than
+	//   - ">=", greater than OR equal to
+	//   - "<=", less than OR equal to
+	//
+	// # Wildcard Comparisons
+	//
+	// You can use the "x", "X", and "*" characters as wildcard characters in all
+	// comparison operations. Some examples of using the wildcard characters:
+	//   - "1.2.x", "1.2.X", and "1.2.*" is equivalent to ">=1.2.0, < 1.3.0"
+	//   - ">= 1.2.x", ">= 1.2.X", and ">= 1.2.*" is equivalent to ">= 1.2.0"
+	//   - "<= 2.x", "<= 2.X", and "<= 2.*" is equivalent to "< 3"
+	//   - "x", "X", and "*" is equivalent to ">= 0.0.0"
+	//
+	// # Patch Release Comparisons
+	//
+	// When you want to specify a minor version up to the next major version you
+	// can use the "~" character to perform patch comparisons. Some examples:
+	//   - "~1.2.3" is equivalent to ">=1.2.3, <1.3.0"
+	//   - "~1" and "~1.x" is equivalent to ">=1, <2"
+	//   - "~2.3" is equivalent to ">=2.3, <2.4"
+	//   - "~1.2.x" is equivalent to ">=1.2.0, <1.3.0"
+	//
+	// # Major Release Comparisons
+	//
+	// You can use the "^" character to make major release comparisons after a
+	// stable 1.0.0 version is published. If there is no stable version published, // minor versions define the stability level. Some examples:
+	//   - "^1.2.3" is equivalent to ">=1.2.3, <2.0.0"
+	//   - "^1.2.x" is equivalent to ">=1.2.0, <2.0.0"
+	//   - "^2.3" is equivalent to ">=2.3, <3"
+	//   - "^2.x" is equivalent to ">=2.0.0, <3"
+	//   - "^0.2.3" is equivalent to ">=0.2.3, <0.3.0"
+	//   - "^0.2" is equivalent to ">=0.2.0, <0.3.0"
+	//   - "^0.0.3" is equvalent to ">=0.0.3, <0.0.4"
+	//   - "^0.0" is equivalent to ">=0.0.0, <0.1.0"
+	//   - "^0" is equivalent to ">=0.0.0, <1.0.0"
+	//
+	// # OR Comparisons
+	// You can use the "||" character to represent an OR operation in the version
+	// range. Some examples:
+	//   - ">=1.2.3, <2.0.0 || >3.0.0"
+	//   - "^0 || ^3 || ^5"
 	//
 	// For more information on semver, please see https://semver.org/
+	//
+	//+kubebuilder:validation:MaxLength:=64
+	//+kubebuilder:validation:Pattern=`^(\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\^)\s*(v?(0|[1-9]\d*|[x|X|\*])(\.(0|[1-9]\d*|x|X|\*]))?(\.(0|[1-9]\d*|x|X|\*))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)((?:\s+|,\s*|\s*\|\|\s*)(=||!=|>|<|>=|=>|<=|=<|~|~>|\^)\s*(v?(0|[1-9]\d*|x|X|\*])(\.(0|[1-9]\d*|x|X|\*))?(\.(0|[1-9]\d*|x|X|\*]))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)*$`
+	//+optional
 	Version string `json:"version,omitempty"`
 
+	// channel is an optional reference to a channel belonging to
+	// the package specified in the packageName field.
+	//
+	// A "channel" is a package author defined stream of updates for an extension.
+	//
+	// When specified, it is used to constrain the set of installable bundles and
+	// the automated upgrade path. This constraint is an AND operation with the
+	// version field. For example:
+	//   - Given channel is set to "foo"
+	//   - Given version is set to ">=1.0.0, <1.5.0"
+	//   - Only bundles that exist in channel "foo" AND satisfy the version range comparison will be considered installable
+	//   - Automatic upgrades will be constrained to upgrade edges defined by the selected channel
+	//
+	// When unspecified, upgrade edges across all channels will be used to identify valid automatic upgrade paths.
+	//
+	// This field follows the DNS subdomain name standard as defined in RFC
+	// 1123, with a deviation in the maximum length being no more than 48
+	// characters. This means that valid values:
+	//   - Contain no more than 48 characters
+	//   - Contain only lowercase alphanumeric characters, '-', or '.'
+	//   - Start with an alphanumeric character
+	//   - End with an alphanumeric character
+	//
+	// Some examples of valid values are:
+	//   - 1.1.x
+	//   - alpha
+	//   - stable
+	//   - stable-v1
+	//   - v1-stable
+	//   - dev-preview
+	//   - preview
+	//   - community
+	//
+	// Some examples of invalid values are:
+	//   - -some-channel
+	//   - some-channel-
+	//   - thisisareallylongchannelnamethatisgreaterthanthemaximumlength
+	//
 	//+kubebuilder:validation:MaxLength:=48
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
-	// Channel constraint definition
+	//+optional
 	Channel string `json:"channel,omitempty"`
 
-	//+kubebuilder:optional
-	// +optional
-	// CatalogSelector by label
+	// catalogSelector is an optional field that can be used
+	// to filter the set of ClusterCatalogs used in the bundle
+	// selection process.
+	//
+	// When unspecified, all ClusterCatalogs will be used in
+	// the bundle selection process.
+	//
+	//+optional
 	CatalogSelector metav1.LabelSelector `json:"catalogSelector,omitempty"`
 
+	// upgradeConstraintPolicy is an optional field that controls whether
+	// the upgrade path(s) defined in the catalog are enforced for the package
+	// referenced in the packageName field.
+	//
+	// Allowed values are: ["Enforce", "Ignore"].
+	//
+	// When this field is set to "Enforce", automatic upgrades will only occur
+	// when upgrade constraints specified by the package author are met.
+	//
+	// When this field is set to "Ignore", the upgrade constraints specified by
+	// the package author are ignored. This allows for upgrades and downgrades to
+	// any version of the package. This is considered a dangerous operation as it
+	// can lead to unknown and potentially disastrous outcomes, such as data
+	// loss. It is assumed that users have independently verified changes when
+	// using this option.
+	//
+	// If unspecified, the default value is "Enforce".
+	//
 	//+kubebuilder:validation:Enum:=Enforce;Ignore
 	//+kubebuilder:default:=Enforce
-	//+kubebuilder:Optional
-	//
-	// Defines the policy for how to handle upgrade constraints
+	//+optional
 	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 
+	// installNamespace is a reference to the Namespace in which the bundle of
+	// content for the package referenced in the packageName field will be applied.
+	// The bundle may contain cluster-scoped resources or resources that are
+	// applied to other Namespaces. This Namespace is expected to exist.
+	//
+	// installNamespace is required, immutable, and follows the DNS label standard
+	// as defined in RFC 1123. This means that valid values:
+	//   - Contain no more than 63 characters
+	//   - Contain only lowercase alphanumeric characters or '-'
+	//   - Start with an alphanumeric character
+	//   - End with an alphanumeric character
+	//
+	// Some examples of valid values are:
+	//   - some-namespace
+	//   - 123-namespace
+	//   - 1-namespace-2
+	//   - somenamespace
+	//
+	// Some examples of invalid values are:
+	//   - -some-namespace
+	//   - some-namespace-
+	//   - thisisareallylongnamespacenamethatisgreaterthanthemaximumlength
+	//   - some.namespace
+	//
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
 	//+kubebuilder:validation:MaxLength:=63
 	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="installNamespace is immutable"
-	//
-	// installNamespace is the namespace where the bundle should be installed. However, note that
-	// the bundle may contain resources that are cluster-scoped or that are
-	// installed in a different namespace. This namespace is expected to exist.
 	InstallNamespace string `json:"installNamespace"`
 
-	//+kubebuilder:Optional
-	// Preflight defines the configuration of preflight checks.
+	// preflight is an optional field that can be used to configure the preflight checks run before installation or upgrade of the content for the package specified in the packageName field.
+	//
+	// When specified, it overrides the default configuration of the preflight checks that are required to execute successfully during an install/upgrade operation.
+	//
+	// When not specified, the default configuration for each preflight check will be used.
+	//
+	//+optional
 	Preflight *PreflightConfig `json:"preflight,omitempty"`
 
-	// ServiceAccount is used to install and manage resources.
-	// The service account is expected to exist in the InstallNamespace.
+	// serviceAccount is a required reference to a ServiceAccount that exists
+	// in the installNamespace. The provided ServiceAccount is used to install and
+	// manage the content for the package specified in the packageName field.
+	//
+	// In order to successfully install and manage the content for the package,
+	// the ServiceAccount provided via this field should be configured with the
+	// appropriate permissions to perform the neccessary operations on all the
+	// resources that are included in the bundle of content being applied.
 	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
 }
 
 // ServiceAccountReference references a serviceAccount.
 type ServiceAccountReference struct {
-	// name is the metadata.name of the referenced serviceAccount object.
+	// name is a required, immutable reference to the name of the ServiceAccount
+	// to be used for installation and management of the content for the package
+	// specified in the packageName field.
+	//
+	// This ServiceAccount is expected to exist in the installNamespace.
+	//
+	// This field follows the DNS subdomain name standard as defined in RFC
+	// 1123. This means that valid values:
+	//   - Contain no more than 253 characters
+	//   - Contain only lowercase alphanumeric characters, '-', or '.'
+	//   - Start with an alphanumeric character
+	//   - End with an alphanumeric character
+	//
+	// Some examples of valid values are:
+	//   - some-serviceaccount
+	//   - 123-serviceaccount
+	//   - 1-serviceaccount-2
+	//   - someserviceaccount
+	//   - some.serviceaccount
+	//
+	// Some examples of invalid values are:
+	//   - -some-serviceaccount
+	//   - some-serviceaccount-
+	//
 	//+kubebuilder:validation:MaxLength:=253
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([.|-][a-z0-9]+)*$
 	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
@@ -107,17 +312,34 @@ type ServiceAccountReference struct {
 
 // PreflightConfig holds the configuration for the preflight checks.
 type PreflightConfig struct {
-	//+kubebuilder:Required
-	// CRDUpgradeSafety holds necessary configuration for the CRD Upgrade Safety preflight checks.
+	// crdUpgradeSafety is used to configure the CRD Upgrade Safety pre-flight
+	// checks that run prior to upgrades of installed content.
+	//
+	// The CRD Upgrade Safety pre-flight check safeguards from unintended
+	// consequences of upgrading a CRD, such as data loss.
+	//
+	// This field is required if the spec.preflight field is specified.
 	CRDUpgradeSafety *CRDUpgradeSafetyPreflightConfig `json:"crdUpgradeSafety"`
 }
 
 // CRDUpgradeSafetyPreflightConfig is the configuration for CRD upgrade safety preflight check.
 type CRDUpgradeSafetyPreflightConfig struct {
-	//+kubebuilder:Required
+	// policy is used to configure the state of the CRD Upgrade Safety pre-flight check.
+	//
+	// This field is required when the spec.preflight.crdUpgradeSafety field is
+	// specified.
+    //
+    // Allowed values are ["Enabled", "Disabled"]. The default value is "Enabled".
+	//
+	// When set to "Disabled", the CRD Upgrade Safety pre-flight check will be skipped
+	// when performing an upgrade operation. This should be used with caution as
+	// unintended consequences such as data loss can occur.
+	//
+	// When set to "Enabled", the CRD Upgrade Safety pre-flight check will be run when
+	// performing an upgrade operation.
+    //
 	//+kubebuilder:validation:Enum:="Enabled";"Disabled"
 	//+kubebuilder:default:=Enabled
-	// policy represents the state of the CRD upgrade safety preflight check. Allowed values are "Enabled", and Disabled".
 	Policy CRDUpgradeSafetyPolicy `json:"policy"`
 }
 
@@ -180,19 +402,60 @@ func init() {
 }
 
 type BundleMetadata struct {
-	Name    string `json:"name"`
+	// name is a required field and is a reference
+	// to the name of a bundle
+	Name string `json:"name"`
+	// version is a required field and is a reference
+	// to the version that this bundle represents
 	Version string `json:"version"`
 }
 
 // ClusterExtensionStatus defines the observed state of ClusterExtension.
 type ClusterExtensionStatus struct {
-	// InstalledBundle should only be modified when a new bundle is successfully installed. This ensures that if there
-	//  is a previously successfully installed a bundle, and an upgrade fails, it is still communicated that there is
-	//  still a bundle that is currently installed and owned by the ClusterExtension.
-	// +optional
+	// installedBundle is a representation of the currently installed bundle.
+	//
+	// A "bundle" is a versioned set of content that represents the resources that
+	// need to be applied to a cluster to install a package.
+	//
+	// This field is only updated once a bundle has been successfully installed and
+	// once set will only be updated when a new version of the bundle has
+	// successfully replaced the currently installed version.
+	//
+	//+optional
 	InstalledBundle *BundleMetadata `json:"installedBundle,omitempty"`
-	// +optional
+
+	// resolvedBundle is a representation of the bundle that was identified during
+	// resolution to meet all installation/upgrade constraints and is slated to be
+	// installed or upgraded to.
+	//
+	//+optional
 	ResolvedBundle *BundleMetadata `json:"resolvedBundle,omitempty"`
+
+	// conditions is a represention of the current state for this ClusterExtension.
+	// The status is represented by a set of "conditions".
+	//
+	// Each condition is generally structured in the following format:
+	//   - Type: a string representation of the condition type. More or less the condition "name".
+	//   - Status: a string representation of the state of the condition. Can be one of ["True", "False", "Unknown"].
+	//   - Reason: a string representation of the reason for the current state of the condition. Typically useful for building automation around particular Type+Reason combinations.
+	//   - Message: a human readable message that further elaborates on the state of the condition
+	//
+	// The current set of condition types are:
+	//   - "Installed", represents whether or not the package referenced in the spec.packageName field has been installed
+	//   - "Resolved", represents whether or not a bundle was found that satisfies the selection criteria outlined in the spec
+	//   - "Deprecated", represents an aggregation of the PackageDeprecated, ChannelDeprecated, and BundleDeprecated condition types.
+	//   - "PackageDeprecated", represents whether or not the package specified in the spec.packageName field has been deprecated
+	//   - "ChannelDeprecated", represents whether or not the channel specified in spec.channel has been deprecated
+	//   - "BundleDeprecated", represents whether or not the bundle installed is deprecated
+	//   - "Unpacked", represents whether or not the bundle contents have been successfully unpacked
+	//
+	// The current set of reasons are:
+	//   - "ResolutionFailed", this reason is set on the "Resolved" condition when an error has occurred during resolution.
+	//   - "InstallationFailed", this reason is set on the "Installed" condition when an error has occurred during installation
+	//   - "Success", this reason is set on the "Resolved" and "Installed" conditions when resolution and installation/upgrading is successful
+	//   - "UnpackSuccess", this reason is set on the "Unpacked" condition when unpacking a bundle's content is successful
+	//   - "UnpackFailed", this reason is set on the "Unpacked" condition when an error has been encountered while unpacking the contents of a bundle
+	//
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +listType=map
