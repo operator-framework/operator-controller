@@ -51,8 +51,9 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 	}
 
 	var (
-		resolvedBundle      *declcfg.Bundle
-		resolvedDeprecation *declcfg.Deprecation
+		resolvedBundles  []*declcfg.Bundle
+		matchedCatalogs  []string
+		priorDeprecation *declcfg.Deprecation
 	)
 
 	listOptions := []client.ListOption{
@@ -109,30 +110,39 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 		})
 
 		thisBundle := packageFBC.Bundles[0]
-		if resolvedBundle != nil {
-			// Cases where we stick with `resolvedBundle`:
-			//  1. If `thisBundle` is deprecated and `resolvedBundle` is not
-			//  2. If `thisBundle` and `resolvedBundle` have the same deprecation status AND `resolvedBundle` is a higher version
-			if isDeprecated(thisBundle, thisDeprecation) && !isDeprecated(*resolvedBundle, resolvedDeprecation) {
+
+		if len(resolvedBundles) != 0 {
+			// We've already found one or more package candidates
+			currentIsDeprecated := isDeprecated(thisBundle, thisDeprecation)
+			priorIsDeprecated := isDeprecated(*resolvedBundles[0], priorDeprecation) // Slice index doesn't matter; the whole slice is either deprecated or not
+			if currentIsDeprecated && !priorIsDeprecated {
+				// Skip this deprecated package and retain the non-deprecated package(s)
 				return nil
-			}
-			if compare.ByVersion(*resolvedBundle, thisBundle) < 0 {
-				return nil
+			} else if !currentIsDeprecated && priorIsDeprecated {
+				// Our package candidates so far were deprecated and this one is not; clear the lists
+				resolvedBundles = []*declcfg.Bundle{}
+				matchedCatalogs = []string{}
 			}
 		}
-		resolvedBundle = &thisBundle
-		resolvedDeprecation = thisDeprecation
+		// The current bundle shares deprecation status with prior bundles or
+		// there are no prior bundles. Add it to the list.
+		resolvedBundles = append(resolvedBundles, &thisBundle)
+		matchedCatalogs = append(matchedCatalogs, cat.GetName())
+		priorDeprecation = thisDeprecation
 		return nil
 	}, listOptions...); err != nil {
 		return nil, nil, nil, fmt.Errorf("error walking catalogs: %w", err)
 	}
 
-	if resolvedBundle == nil {
+	if len(resolvedBundles) != 1 {
 		errPrefix := ""
 		if installedBundle != nil {
 			errPrefix = fmt.Sprintf("error upgrading from currently installed version %q: ", installedBundle.Version)
 		}
 		switch {
+		case len(resolvedBundles) > 1:
+			slices.Sort(matchedCatalogs) // sort for consistent error message
+			return nil, nil, nil, fmt.Errorf("%smatching packages found in multiple catalogs: %v", errPrefix, matchedCatalogs)
 		case versionRange != "" && channelName != "":
 			return nil, nil, nil, fmt.Errorf("%sno package %q matching version %q in channel %q found", errPrefix, packageName, versionRange, channelName)
 		case versionRange != "":
@@ -143,7 +153,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 			return nil, nil, nil, fmt.Errorf("%sno package %q found", errPrefix, packageName)
 		}
 	}
-
+	resolvedBundle := resolvedBundles[0]
 	resolvedBundleVersion, err := bundleutil.GetVersion(*resolvedBundle)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error getting resolved bundle version for bundle %q: %w", resolvedBundle.Name, err)
@@ -157,7 +167,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 		}
 	}
 
-	return resolvedBundle, resolvedBundleVersion, resolvedDeprecation, nil
+	return resolvedBundle, resolvedBundleVersion, priorDeprecation, nil
 }
 
 func isDeprecated(bundle declcfg.Bundle, deprecation *declcfg.Deprecation) bool {
