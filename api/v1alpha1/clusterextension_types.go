@@ -28,6 +28,7 @@ var (
 )
 
 type UpgradeConstraintPolicy string
+type CRDUpgradeSafetyPolicy string
 
 const (
 	// The extension will only upgrade if the new version satisfies
@@ -108,14 +109,16 @@ type ServiceAccountReference struct {
 type PreflightConfig struct {
 	//+kubebuilder:Required
 	// CRDUpgradeSafety holds necessary configuration for the CRD Upgrade Safety preflight checks.
-	CRDUpgradeSafety *CRDUpgradeSafetyPreflightConfig `json:"crdUpgradeSafety,omitempty"`
+	CRDUpgradeSafety *CRDUpgradeSafetyPreflightConfig `json:"crdUpgradeSafety"`
 }
 
 // CRDUpgradeSafetyPreflightConfig is the configuration for CRD upgrade safety preflight check.
 type CRDUpgradeSafetyPreflightConfig struct {
 	//+kubebuilder:Required
-	// Disabled represents the state of the CRD upgrade safety preflight check being disabled/enabled.
-	Disabled bool `json:"disabled,omitempty"`
+	//+kubebuilder:validation:Enum:="Enabled";"Disabled"
+	//+kubebuilder:default:=Enabled
+	// policy represents the state of the CRD upgrade safety preflight check. Allowed values are "Enabled", and Disabled".
+	Policy CRDUpgradeSafetyPolicy `json:"policy"`
 }
 
 const (
@@ -145,6 +148,9 @@ const (
 	ReasonUnpackFailed  = "UnpackFailed"
 
 	ReasonErrorGettingReleaseState = "ErrorGettingReleaseState"
+
+	CRDUpgradeSafetyPolicyEnabled  CRDUpgradeSafetyPolicy = "Enabled"
+	CRDUpgradeSafetyPolicyDisabled CRDUpgradeSafetyPolicy = "Disabled"
 )
 
 func init() {
