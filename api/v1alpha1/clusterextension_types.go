@@ -328,8 +328,8 @@ type CRDUpgradeSafetyPreflightConfig struct {
 	//
 	// This field is required when the spec.preflight.crdUpgradeSafety field is
 	// specified.
-    //
-    // Allowed values are ["Enabled", "Disabled"]. The default value is "Enabled".
+	//
+	// Allowed values are ["Enabled", "Disabled"]. The default value is "Enabled".
 	//
 	// When set to "Disabled", the CRD Upgrade Safety pre-flight check will be skipped
 	// when performing an upgrade operation. This should be used with caution as
@@ -337,7 +337,7 @@ type CRDUpgradeSafetyPreflightConfig struct {
 	//
 	// When set to "Enabled", the CRD Upgrade Safety pre-flight check will be run when
 	// performing an upgrade operation.
-    //
+	//
 	//+kubebuilder:validation:Enum:="Enabled";"Disabled"
 	//+kubebuilder:default:=Enabled
 	Policy CRDUpgradeSafetyPolicy `json:"policy"`
