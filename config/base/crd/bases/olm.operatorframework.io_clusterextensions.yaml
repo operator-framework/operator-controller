@@ -112,11 +112,20 @@ spec:
                     description: CRDUpgradeSafety holds necessary configuration for
                       the CRD Upgrade Safety preflight checks.
                     properties:
-                      disabled:
-                        description: Disabled represents the state of the CRD upgrade
-                          safety preflight check being disabled/enabled.
-                        type: boolean
+                      policy:
+                        default: Enabled
+                        description: policy represents the state of the CRD upgrade
+                          safety preflight check. Allowed values are "Enabled", and
+                          Disabled".
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
+                    required:
+                    - policy
                     type: object
+                required:
+                - crdUpgradeSafety
                 type: object
               serviceAccount:
                 description: |-
