@@ -47,6 +47,7 @@ const (
 type ClusterExtensionSpec struct {
 	//+kubebuilder:validation:MaxLength:=48
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]+(-[a-z0-9]+)*$
+	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="packageName is immutable"
 	PackageName string `json:"packageName"`
 
 	//+kubebuilder:validation:MaxLength:=64

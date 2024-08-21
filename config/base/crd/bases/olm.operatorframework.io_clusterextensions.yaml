@@ -105,6 +105,9 @@ spec:
                 maxLength: 48
                 pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
                 type: string
+                x-kubernetes-validations:
+                - message: packageName is immutable
+                  rule: self == oldSelf
               preflight:
                 description: Preflight defines the configuration of preflight checks.
                 properties:
