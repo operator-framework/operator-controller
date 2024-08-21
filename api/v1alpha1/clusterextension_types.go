@@ -273,7 +273,7 @@ type ClusterExtensionSpec struct {
 	//
 	// In order to successfully install and manage the content for the package,
 	// the ServiceAccount provided via this field should be configured with the
-	// appropriate permissions to perform the neccessary operations on all the
+	// appropriate permissions to perform the necessary operations on all the
 	// resources that are included in the bundle of content being applied.
 	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
 }
@@ -431,7 +431,7 @@ type ClusterExtensionStatus struct {
 	//+optional
 	ResolvedBundle *BundleMetadata `json:"resolvedBundle,omitempty"`
 
-	// conditions is a represention of the current state for this ClusterExtension.
+	// conditions is a representation of the current state for this ClusterExtension.
 	// The status is represented by a set of "conditions".
 	//
 	// Each condition is generally structured in the following format:
