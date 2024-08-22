@@ -73,7 +73,6 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 			// Skip this preflight check because it is of type *crdupgradesafety.Preflight and the CRD Upgrade Safety
 			// preflight check has been disabled
 			continue
-
 		}
 		switch state {
 		case StateNeedsInstall:

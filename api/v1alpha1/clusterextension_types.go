@@ -319,7 +319,7 @@ type PreflightConfig struct {
 	// consequences of upgrading a CRD, such as data loss.
 	//
 	// This field is required if the spec.preflight field is specified.
-	CRDUpgradeSafety CRDUpgradeSafetyPreflightConfig `json:"crdUpgradeSafety"`
+	CRDUpgradeSafety CRDUpgradeSafetyPreflightConfig `json:"crdUpgradeSafety,omitempty"`
 }
 
 // CRDUpgradeSafetyPreflightConfig is the configuration for CRD upgrade safety preflight check.
@@ -340,7 +340,7 @@ type CRDUpgradeSafetyPreflightConfig struct {
 	//
 	//+kubebuilder:validation:Enum:="Enabled";"Disabled"
 	//+kubebuilder:default:=Enabled
-	Policy CRDUpgradeSafetyPolicy `json:"policy"`
+	Policy CRDUpgradeSafetyPolicy `json:"policy,omitempty"`
 }
 
 const (

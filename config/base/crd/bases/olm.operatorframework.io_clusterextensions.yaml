@@ -253,11 +253,7 @@ spec:
                         - Enabled
                         - Disabled
                         type: string
-                    required:
-                    - policy
                     type: object
-                required:
-                - crdUpgradeSafety
                 type: object
               serviceAccount:
                 description: |-
