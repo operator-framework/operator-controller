@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/sets"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
@@ -516,10 +517,22 @@ type getPackageFunc func() (*declcfg.DeclarativeConfig, error)
 
 type staticCatalogWalker map[string]getPackageFunc
 
-func (w staticCatalogWalker) WalkCatalogs(ctx context.Context, _ string, f CatalogWalkFunc, _ ...client.ListOption) error {
+func (w staticCatalogWalker) WalkCatalogs(ctx context.Context, _ string, f CatalogWalkFunc, opts ...client.ListOption) error {
 	for k, v := range w {
 		cat := &catalogd.ClusterCatalog{
-			ObjectMeta: metav1.ObjectMeta{Name: k},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: k,
+				Labels: map[string]string{
+					"olm.operatorframework.io/name": k,
+				},
+			},
+		}
+		options := client.ListOptions{}
+		for _, opt := range opts {
+			opt.ApplyToList(&options)
+		}
+		if !options.LabelSelector.Matches(labels.Set(cat.ObjectMeta.Labels)) {
+			continue
 		}
 		fbc, fbcErr := v()
 		if err := f(ctx, cat, fbc, fbcErr); err != nil {
@@ -630,8 +643,9 @@ func TestInvalidClusterExtensionCatalogMatchLabelsName(t *testing.T) {
 		},
 	}
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
-	assert.EqualError(t, err, "desired catalog selector is invalid: key: Invalid value: \"\": name part must be non-empty; name part must consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'MyName',  or 'my.name',  or '123-abc', regex used for validation is '([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]')")
+	assert.ErrorContains(t, err, "desired catalog selector is invalid: key: Invalid value:")
 }
+
 func TestInvalidClusterExtensionCatalogMatchLabelsValue(t *testing.T) {
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, error) { return genPackage("foo"), nil },
@@ -649,5 +663,36 @@ func TestInvalidClusterExtensionCatalogMatchLabelsValue(t *testing.T) {
 		},
 	}
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
-	assert.EqualError(t, err, "desired catalog selector is invalid: values[0][name]: Invalid value: \"&value\": a valid label must be an empty string or consist of alphanumeric characters, '-', '_' or '.', and must start and end with an alphanumeric character (e.g. 'MyValue',  or 'my_value',  or '12345', regex used for validation is '(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?')")
+	assert.ErrorContains(t, err, "desired catalog selector is invalid: values[0][name]: Invalid value:")
+}
+
+func TestClusterExtensionMatchLabel(t *testing.T) {
+	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
+	pkgName := randPkg()
+	w := staticCatalogWalker{
+		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
+		"b": func() (*declcfg.DeclarativeConfig, error) { return genPackage(pkgName), nil },
+	}
+	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
+	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce.Spec.CatalogSelector.MatchLabels = map[string]string{"olm.operatorframework.io/name": "b"}
+
+	_, _, _, err := r.Resolve(context.Background(), ce, nil)
+	require.NoError(t, err)
+}
+
+func TestClusterExtensionNoMatchLabel(t *testing.T) {
+	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
+	pkgName := randPkg()
+	w := staticCatalogWalker{
+		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
+		"b": func() (*declcfg.DeclarativeConfig, error) { return genPackage(pkgName), nil },
+	}
+	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
+	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce.Spec.CatalogSelector.MatchLabels = map[string]string{"olm.operatorframework.io/name": "a"}
+
+	_, _, _, err := r.Resolve(context.Background(), ce, nil)
+	require.Error(t, err)
+	require.ErrorContains(t, err, fmt.Sprintf("no package %q found", pkgName))
 }

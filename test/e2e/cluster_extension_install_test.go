@@ -306,7 +306,7 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 		if !assert.NotNil(ct, cond) {
 			return
 		}
-		// TODO(tmshort/dfranz): This should fail due to multiple bundles
+		// TODO(tmshort/dtfranz): This should fail due to multiple bundles
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		//assert.Equal(ct, metav1.ConditionFalse, cond.Status)
 		//assert.Equal(ct, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
