@@ -18,6 +18,9 @@ spec:
     - jsonPath: .status.phase
       name: Phase
       type: string
+    - jsonPath: .status.LastUnpacked
+      name: LastUnpacked
+      type: date
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -174,6 +177,12 @@ spec:
                   contentURL is a cluster-internal address that on-cluster components
                   can read the content of a catalog from
                 type: string
+              lastUnpacked:
+                description: |-
+                  LastUnpacked represents the time when the
+                  ClusterCatalog object was last unpacked.
+                format: date-time
+                type: string
               observedGeneration:
                 description: |-
                   observedGeneration is the most recent generation observed for this ClusterCatalog. It corresponds to the
@@ -198,6 +207,11 @@ spec:
                           was last polled for new content.
                         format: date-time
                         type: string
+                      lastUnpacked:
+                        description: LastUnpacked is the time when the catalog contents
+                          were successfully unpacked.
+                        format: date-time
+                        type: string
                       ref:
                         description: ref contains the reference to a container image
                           containing Catalog contents.
@@ -208,6 +222,7 @@ spec:
                         type: string
                     required:
                     - lastPollAttempt
+                    - lastUnpacked
                     - ref
                     - resolvedRef
                     type: object

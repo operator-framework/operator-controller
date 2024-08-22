@@ -83,7 +83,7 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Cl
 		unpackPath := filepath.Join(i.BaseCachePath, catalog.Name, hexVal)
 		if stat, err := os.Stat(unpackPath); err == nil && stat.IsDir() {
 			l.V(1).Info("found image in filesystem cache", "digest", hexVal)
-			return unpackedResult(os.DirFS(unpackPath), catalog, digest.String()), nil
+			return unpackedResult(os.DirFS(unpackPath), catalog, digest.String(), metav1.Time{Time: time.Now()}), nil
 		}
 	}
 
@@ -122,7 +122,7 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Cl
 	}
 
 	resolvedRef := fmt.Sprintf("%s@sha256:%s", imgRef.Context().Name(), imgDesc.Digest.Hex)
-	return unpackedResult(os.DirFS(unpackPath), catalog, resolvedRef), nil
+	return unpackedResult(os.DirFS(unpackPath), catalog, resolvedRef, metav1.Time{Time: time.Now()}), nil
 }
 
 func wrapUnrecoverable(err error, isUnrecoverable bool) error {
@@ -136,7 +136,7 @@ func (i *ImageRegistry) Cleanup(_ context.Context, catalog *catalogdv1alpha1.Clu
 	return os.RemoveAll(filepath.Join(i.BaseCachePath, catalog.Name))
 }
 
-func unpackedResult(fsys fs.FS, catalog *catalogdv1alpha1.ClusterCatalog, ref string) *Result {
+func unpackedResult(fsys fs.FS, catalog *catalogdv1alpha1.ClusterCatalog, ref string, lastUnpacked metav1.Time) *Result {
 	return &Result{
 		FS: fsys,
 		ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
@@ -145,6 +145,7 @@ func unpackedResult(fsys fs.FS, catalog *catalogdv1alpha1.ClusterCatalog, ref st
 				Ref:             catalog.Spec.Source.Image.Ref,
 				ResolvedRef:     ref,
 				LastPollAttempt: metav1.Time{Time: time.Now()},
+				LastUnpacked:    lastUnpacked,
 			},
 		},
 		State: StateUnpacked,

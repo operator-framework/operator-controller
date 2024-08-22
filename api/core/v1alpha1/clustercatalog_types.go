@@ -46,6 +46,7 @@ const (
 //+kubebuilder:resource:scope=Cluster
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
+//+kubebuilder:printcolumn:name=LastUnpacked,type=date,JSONPath=`.status.LastUnpacked`
 //+kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
 // ClusterCatalog is the Schema for the ClusterCatalogs API
@@ -97,6 +98,11 @@ type ClusterCatalogStatus struct {
 	// ClusterCatalog's generation, which is updated on mutation by the API Server.
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// LastUnpacked represents the time when the
+	// ClusterCatalog object was last unpacked.
+	// +optional
+	LastUnpacked metav1.Time `json:"lastUnpacked,omitempty"`
 }
 
 // CatalogSource contains the sourcing information for a Catalog
@@ -130,6 +136,8 @@ type ResolvedImageSource struct {
 	ResolvedRef string `json:"resolvedRef"`
 	// lastPollAtempt is the time when the source resolved was last polled for new content.
 	LastPollAttempt metav1.Time `json:"lastPollAttempt"`
+	// LastUnpacked is the time when the catalog contents were successfully unpacked.
+	LastUnpacked metav1.Time `json:"lastUnpacked"`
 }
 
 // ImageSource contains information required for sourcing a Catalog from an OCI image
