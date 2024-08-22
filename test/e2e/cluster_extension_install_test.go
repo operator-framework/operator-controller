@@ -306,12 +306,10 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 		if !assert.NotNil(ct, cond) {
 			return
 		}
-		// TODO(tmshort/dtfranz): This should fail due to multiple bundles
-		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		//assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-		//assert.Equal(ct, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
-		//assert.Contains(ct, cond.Message, "TODO: matching bundles found in multiple catalogs")
-		//assert.Nil(ct, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+		assert.Equal(ct, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
+		assert.Contains(ct, cond.Message, "matching packages found in multiple catalogs")
+		assert.Nil(ct, clusterExtension.Status.ResolvedBundle)
 	}, pollDuration, pollInterval)
 }
 
