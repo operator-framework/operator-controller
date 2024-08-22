@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/sets"
 	featuregatetesting "k8s.io/component-base/featuregate/testing"
@@ -516,10 +517,22 @@ type getPackageFunc func() (*declcfg.DeclarativeConfig, error)
 
 type staticCatalogWalker map[string]getPackageFunc
 
-func (w staticCatalogWalker) WalkCatalogs(ctx context.Context, _ string, f CatalogWalkFunc, _ ...client.ListOption) error {
+func (w staticCatalogWalker) WalkCatalogs(ctx context.Context, _ string, f CatalogWalkFunc, opts ...client.ListOption) error {
 	for k, v := range w {
 		cat := &catalogd.ClusterCatalog{
-			ObjectMeta: metav1.ObjectMeta{Name: k},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: k,
+				Labels: map[string]string{
+					"olm.operatorframework.io/name": k,
+				},
+			},
+		}
+		options := client.ListOptions{}
+		for _, opt := range opts {
+			opt.ApplyToList(&options)
+		}
+		if !options.LabelSelector.Matches(labels.Set(cat.ObjectMeta.Labels)) {
+			continue
 		}
 		fbc, fbcErr := v()
 		if err := f(ctx, cat, fbc, fbcErr); err != nil {
@@ -588,4 +601,98 @@ func genPackage(pkg string) *declcfg.DeclarativeConfig {
 		},
 		Deprecations: []declcfg.Deprecation{packageDeprecation(pkg)},
 	}
+}
+
+func TestInvalidClusterExtensionCatalogMatchExpressions(t *testing.T) {
+	r := CatalogResolver{}
+	ce := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "foo",
+		},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName: "foo",
+			CatalogSelector: metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "name",
+						Operator: metav1.LabelSelectorOperator("bad"),
+						Values:   []string{"value"},
+					},
+				},
+			},
+		},
+	}
+	_, _, _, err := r.Resolve(context.Background(), ce, nil)
+	assert.EqualError(t, err, "desired catalog selector is invalid: \"bad\" is not a valid label selector operator")
+}
+
+func TestInvalidClusterExtensionCatalogMatchLabelsName(t *testing.T) {
+	w := staticCatalogWalker{
+		"a": func() (*declcfg.DeclarativeConfig, error) { return genPackage("foo"), nil },
+	}
+	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
+	ce := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "foo",
+		},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName: "foo",
+			CatalogSelector: metav1.LabelSelector{
+				MatchLabels: map[string]string{"": "value"},
+			},
+		},
+	}
+	_, _, _, err := r.Resolve(context.Background(), ce, nil)
+	assert.ErrorContains(t, err, "desired catalog selector is invalid: key: Invalid value:")
+}
+
+func TestInvalidClusterExtensionCatalogMatchLabelsValue(t *testing.T) {
+	w := staticCatalogWalker{
+		"a": func() (*declcfg.DeclarativeConfig, error) { return genPackage("foo"), nil },
+	}
+	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
+	ce := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "foo",
+		},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			PackageName: "foo",
+			CatalogSelector: metav1.LabelSelector{
+				MatchLabels: map[string]string{"name": "&value"},
+			},
+		},
+	}
+	_, _, _, err := r.Resolve(context.Background(), ce, nil)
+	assert.ErrorContains(t, err, "desired catalog selector is invalid: values[0][name]: Invalid value:")
+}
+
+func TestClusterExtensionMatchLabel(t *testing.T) {
+	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
+	pkgName := randPkg()
+	w := staticCatalogWalker{
+		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
+		"b": func() (*declcfg.DeclarativeConfig, error) { return genPackage(pkgName), nil },
+	}
+	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
+	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce.Spec.CatalogSelector.MatchLabels = map[string]string{"olm.operatorframework.io/name": "b"}
+
+	_, _, _, err := r.Resolve(context.Background(), ce, nil)
+	require.NoError(t, err)
+}
+
+func TestClusterExtensionNoMatchLabel(t *testing.T) {
+	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
+	pkgName := randPkg()
+	w := staticCatalogWalker{
+		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
+		"b": func() (*declcfg.DeclarativeConfig, error) { return genPackage(pkgName), nil },
+	}
+	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
+	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce.Spec.CatalogSelector.MatchLabels = map[string]string{"olm.operatorframework.io/name": "a"}
+
+	_, _, _, err := r.Resolve(context.Background(), ce, nil)
+	require.Error(t, err)
+	require.ErrorContains(t, err, fmt.Sprintf("no package %q found", pkgName))
 }

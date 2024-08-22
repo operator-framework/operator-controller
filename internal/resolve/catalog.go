@@ -7,6 +7,8 @@ import (
 
 	mmsemver "github.com/Masterminds/semver/v3"
 	bsemver "github.com/blang/semver/v4"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
@@ -31,9 +33,17 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 	versionRange := ext.Spec.Version
 	channelName := ext.Spec.Channel
 
+	selector, err := metav1.LabelSelectorAsSelector(&ext.Spec.CatalogSelector)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("desired catalog selector is invalid: %w", err)
+	}
+	// A nothing (empty) seletor selects everything
+	if selector == labels.Nothing() {
+		selector = labels.Everything()
+	}
+
 	var versionRangeConstraints *mmsemver.Constraints
 	if versionRange != "" {
-		var err error
 		versionRangeConstraints, err = mmsemver.NewConstraint(versionRange)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("desired version range %q is invalid: %w", versionRange, err)
@@ -45,6 +55,9 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 		resolvedDeprecation *declcfg.Deprecation
 	)
 
+	listOptions := []client.ListOption{
+		client.MatchingLabelsSelector{Selector: selector},
+	}
 	if err := r.WalkCatalogsFunc(ctx, packageName, func(ctx context.Context, cat *catalogd.ClusterCatalog, packageFBC *declcfg.DeclarativeConfig, err error) error {
 		if err != nil {
 			return fmt.Errorf("error getting package %q from catalog %q: %w", packageName, cat.Name, err)
@@ -110,7 +123,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 		resolvedBundle = &thisBundle
 		resolvedDeprecation = thisDeprecation
 		return nil
-	}); err != nil {
+	}, listOptions...); err != nil {
 		return nil, nil, nil, fmt.Errorf("error walking catalogs: %w", err)
 	}
 
