@@ -265,7 +265,7 @@ type ClusterExtensionSpec struct {
 	// When not specified, the default configuration for each preflight check will be used.
 	//
 	//+optional
-	Preflight *PreflightConfig `json:"preflight,omitempty"`
+	Preflight PreflightConfig `json:"preflight,omitempty"`
 
 	// serviceAccount is a required reference to a ServiceAccount that exists
 	// in the installNamespace. The provided ServiceAccount is used to install and
@@ -319,7 +319,7 @@ type PreflightConfig struct {
 	// consequences of upgrading a CRD, such as data loss.
 	//
 	// This field is required if the spec.preflight field is specified.
-	CRDUpgradeSafety *CRDUpgradeSafetyPreflightConfig `json:"crdUpgradeSafety"`
+	CRDUpgradeSafety CRDUpgradeSafetyPreflightConfig `json:"crdUpgradeSafety"`
 }
 
 // CRDUpgradeSafetyPreflightConfig is the configuration for CRD upgrade safety preflight check.
