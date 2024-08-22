@@ -273,7 +273,10 @@ metadata:
   name: argocd
 spec:
   installNamespace: argocd
-  packageName: argocd-operator
-  version: 0.6.0
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      version: 0.6.0
   serviceAccount:
     name: argocd-installer

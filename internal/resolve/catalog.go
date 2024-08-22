@@ -29,11 +29,11 @@ type CatalogResolver struct {
 
 // Resolve returns a Bundle from a catalog that needs to get installed on the cluster.
 func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterExtension, installedBundle *ocv1alpha1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
-	packageName := ext.Spec.PackageName
-	versionRange := ext.Spec.Version
-	channelName := ext.Spec.Channel
+	packageName := ext.Spec.Source.Catalog.PackageName
+	versionRange := ext.Spec.Source.Catalog.Version
+	channelName := ext.Spec.Source.Catalog.Channel
 
-	selector, err := metav1.LabelSelectorAsSelector(&ext.Spec.CatalogSelector)
+	selector, err := metav1.LabelSelectorAsSelector(&ext.Spec.Source.Catalog.Selector)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("desired catalog selector is invalid: %w", err)
 	}
@@ -76,7 +76,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 			predicates = append(predicates, filter.InMastermindsSemverRange(versionRangeConstraints))
 		}
 
-		if ext.Spec.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicyIgnore && installedBundle != nil {
+		if ext.Spec.Source.Catalog.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicyIgnore && installedBundle != nil {
 			successorPredicate, err := filter.SuccessorsOf(installedBundle, packageFBC.Channels...)
 			if err != nil {
 				return fmt.Errorf("error finding upgrade edges: %w", err)

@@ -61,7 +61,10 @@ kind: ClusterExtension
 metadata:
   name: extension-sample
 spec:
-  packageName: argocd-operator
-  version: 0.6.0
-  upgradeConstraintPolicy: Ignore
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      version: 0.6.0
+      upgradeConstraintPolicy: Ignore
 ```

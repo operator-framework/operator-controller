@@ -24,9 +24,12 @@ After you add a catalog to your cluster, you can install an extension by creatin
     metadata:
       name: <extension_name>
     spec:
-      packageName: <package_name>
-      channel: <channel>
-      version: "<version>"
+      source:
+        sourceType: Catalog
+        catalog:
+          packageName: <package_name>
+          channel: <channel>
+          version: "<version>"
     ```
 
      `extension_name`

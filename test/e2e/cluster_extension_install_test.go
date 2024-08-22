@@ -227,13 +227,18 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName:      "prometheus",
+		Source: ocv1alpha1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1alpha1.CatalogSource{
+				PackageName: "prometheus",
+				Selector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
+				},
+			},
+		},
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
-		},
-		CatalogSelector: metav1.LabelSelector{
-			MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
@@ -288,7 +293,12 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName:      "prometheus",
+		Source: ocv1alpha1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1alpha1.CatalogSource{
+				PackageName: "prometheus",
+			},
+		},
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
@@ -323,13 +333,18 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 
 	t.Log("By creating an ClusterExtension at a specified version")
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName:      "prometheus",
-		Version:          "1.0.0",
+		Source: ocv1alpha1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1alpha1.CatalogSource{
+				PackageName: "prometheus",
+				Version:     "1.0.0",
+				// No Selector since this is an exact version match
+			},
+		},
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
 		},
-		// No CatalogSelector since this is an exact version match
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful installation")
@@ -348,7 +363,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("It does not allow to upgrade the ClusterExtension to a non-successor version")
 	t.Log("By updating the ClusterExtension resource to a non-successor version")
 	// 1.2.0 does not replace/skip/skipRange 1.0.0.
-	clusterExtension.Spec.Version = "1.2.0"
+	clusterExtension.Spec.Source.Catalog.Version = "1.2.0"
 	require.NoError(t, c.Update(context.Background(), clusterExtension))
 	t.Log("By eventually reporting an unsatisfiable resolution")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -373,8 +388,13 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 
 	t.Log("By creating an ClusterExtension at a specified version")
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName:      "prometheus",
-		Version:          "1.0.0",
+		Source: ocv1alpha1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1alpha1.CatalogSource{
+				PackageName: "prometheus",
+				Version:     "1.0.0",
+			},
+		},
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
@@ -396,8 +416,8 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("It allows to upgrade the ClusterExtension to a non-successor version")
 	t.Log("By updating the ClusterExtension resource to a non-successor version")
 	// 1.2.0 does not replace/skip/skipRange 1.0.0.
-	clusterExtension.Spec.Version = "1.2.0"
-	clusterExtension.Spec.UpgradeConstraintPolicy = ocv1alpha1.UpgradeConstraintPolicyIgnore
+	clusterExtension.Spec.Source.Catalog.Version = "1.2.0"
+	clusterExtension.Spec.Source.Catalog.UpgradeConstraintPolicy = ocv1alpha1.UpgradeConstraintPolicyIgnore
 	require.NoError(t, c.Update(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a satisfiable resolution")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -421,8 +441,13 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 
 	t.Log("By creating an ClusterExtension at a specified version")
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName:      "prometheus",
-		Version:          "1.0.0",
+		Source: ocv1alpha1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1alpha1.CatalogSource{
+				PackageName: "prometheus",
+				Version:     "1.0.0",
+			},
+		},
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
@@ -444,7 +469,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 	t.Log("It does allow to upgrade the ClusterExtension to any of the successor versions within non-zero major version")
 	t.Log("By updating the ClusterExtension resource by skipping versions")
 	// 1.0.1 replaces 1.0.0 in the test catalog
-	clusterExtension.Spec.Version = "1.0.1"
+	clusterExtension.Spec.Source.Catalog.Version = "1.0.1"
 	require.NoError(t, c.Update(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a successful resolution and bundle path")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
@@ -467,19 +492,24 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName:      "prometheus",
+		Source: ocv1alpha1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1alpha1.CatalogSource{
+				PackageName: "prometheus",
+				Selector: metav1.LabelSelector{
+					MatchExpressions: []metav1.LabelSelectorRequirement{
+						{
+							Key:      "olm.operatorframework.io/name",
+							Operator: metav1.LabelSelectorOpIn,
+							Values:   []string{extensionCatalog.Name},
+						},
+					},
+				},
+			},
+		},
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
-		},
-		CatalogSelector: metav1.LabelSelector{
-			MatchExpressions: []metav1.LabelSelectorRequirement{
-				{
-					Key:      "olm.operatorframework.io/name",
-					Operator: metav1.LabelSelectorOpIn,
-					Values:   []string{extensionCatalog.Name},
-				},
-			},
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
@@ -556,13 +586,18 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName:      "prometheus",
+		Source: ocv1alpha1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1alpha1.CatalogSource{
+				PackageName: "prometheus",
+				Selector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
+				},
+			},
+		},
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
-		},
-		CatalogSelector: metav1.LabelSelector{
-			MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
@@ -621,13 +656,18 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName:      "prometheus",
+		Source: ocv1alpha1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1alpha1.CatalogSource{
+				PackageName: "prometheus",
+				Selector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
+				},
+			},
+		},
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
-		},
-		CatalogSelector: metav1.LabelSelector{
-			MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
 		},
 	}
 	t.Log("It installs the specified package with correct bundle path")
@@ -681,13 +721,18 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		PackageName:      "prometheus",
+		Source: ocv1alpha1.SourceConfig{
+			SourceType: "Catalog",
+			Catalog: &ocv1alpha1.CatalogSource{
+				PackageName: "prometheus",
+				Selector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
+				},
+			},
+		},
 		InstallNamespace: "default",
 		ServiceAccount: ocv1alpha1.ServiceAccountReference{
 			Name: sa.Name,
-		},
-		CatalogSelector: metav1.LabelSelector{
-			MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")

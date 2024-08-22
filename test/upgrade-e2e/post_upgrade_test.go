@@ -95,7 +95,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 
 	t.Log("Updating the ClusterExtension to change version")
 	// Make sure that after we upgrade OLM itself we can still reconcile old objects if we change them
-	clusterExtension.Spec.Version = "1.0.1"
+	clusterExtension.Spec.Source.Catalog.Version = "1.0.1"
 	require.NoError(t, c.Update(ctx, &clusterExtension))
 
 	t.Log("Checking that the ClusterExtension installs successfully")
