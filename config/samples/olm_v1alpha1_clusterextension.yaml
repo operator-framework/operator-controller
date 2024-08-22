@@ -49,20 +49,20 @@ rules:
 # Manage ArgoCD ClusterRoles and ClusterRoleBindings
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterroles]
-  verbs: [create]
+  verbs: [create, list, watch]
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterroles]
-  verbs: [get, list, watch, update, patch, delete]
+  verbs: [get, update, patch, delete]
   resourceNames:
   - argocd-operator.v0-1dhiybrldl1gyksid1dk2dqjsc72psdybc7iyvse5gpx
   - argocd-operator-metrics-reader
   - argocd-operator.v0-22gmilmgp91wu25is5i2ec598hni8owq3l71bbkl7iz3
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterrolebindings]
-  verbs: [create]
+  verbs: [create, list, watch]
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterrolebindings]
-  verbs: [get, list, watch, update, patch, delete]
+  verbs: [get, update, patch, delete]
   resourceNames:
   - argocd-operator.v0-1dhiybrldl1gyksid1dk2dqjsc72psdybc7iyvse5gpx
   - argocd-operator.v0-22gmilmgp91wu25is5i2ec598hni8owq3l71bbkl7iz3
@@ -226,31 +226,31 @@ metadata:
 rules:
 - apiGroups: [""]
   resources: [serviceaccounts]
-  verbs: [create]
+  verbs: [create, list, watch]
 - apiGroups: [""]
   resources: [serviceaccounts]
-  verbs: [get, list, watch, update, patch, delete]
+  verbs: [get, update, patch, delete]
   resourceNames: [argocd-operator-controller-manager]
 - apiGroups: [""]
   resources: [configmaps]
-  verbs: [create]
+  verbs: [create, list, watch]
 - apiGroups: [""]
   resources: [configmaps]
-  verbs: [get, list, watch, update, patch, delete]
+  verbs: [get, update, patch, delete]
   resourceNames: [argocd-operator-manager-config]
 - apiGroups: [""]
   resources: [services]
-  verbs: [create]
+  verbs: [create, list, watch]
 - apiGroups: [""]
   resources: [services]
-  verbs: [get, list, watch, update, patch, delete]
+  verbs: [get, update, patch, delete]
   resourceNames: [argocd-operator-controller-manager-metrics-service]
 - apiGroups: [apps]
   resources: [deployments]
-  verbs: [create]
+  verbs: [create, list, watch]
 - apiGroups: [apps]
   resources: [deployments]
-  verbs: [get, list, watch, update, patch, delete]
+  verbs: [get, update, patch, delete]
   resourceNames: [argocd-operator-controller-manager]
 ---
 apiVersion: rbac.authorization.k8s.io/v1

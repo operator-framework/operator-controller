@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/containers/image/v5/types"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
@@ -194,14 +195,18 @@ func main() {
 		setupLog.Error(err, "unable to create CA certificate pool")
 		os.Exit(1)
 	}
-	unpacker := &source.ImageRegistry{
-		BaseCachePath:   filepath.Join(cachePath, "unpack"),
-		CertPoolWatcher: certPoolWatcher,
+
+	unpacker := &source.ContainersImageRegistry{
+		BaseCachePath: filepath.Join(cachePath, "unpack"),
+		SourceContext: &types.SystemContext{
+			DockerCertPath: caCertDir,
+			OCICertPath:    caCertDir,
+		},
 	}
 
 	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
 	if err := clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupUnpackCacheFinalizer, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		return crfinalizer.Result{}, os.RemoveAll(filepath.Join(unpacker.BaseCachePath, obj.GetName()))
+		return crfinalizer.Result{}, unpacker.Cleanup(ctx, &source.BundleSource{Name: obj.GetName()})
 	})); err != nil {
 		setupLog.Error(err, "unable to register finalizer", "finalizerKey", controllers.ClusterExtensionCleanupUnpackCacheFinalizer)
 		os.Exit(1)

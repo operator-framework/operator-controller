@@ -266,7 +266,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonFailed, "unpack pending")
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacked:
-		setStatusUnpacked(ext, fmt.Sprintf("unpack successful: %v", unpackResult.Message))
+		setStatusUnpacked(ext, unpackResult.Message)
 	default:
 		setStatusUnpackFailed(ext, "unexpected unpack status")
 		// We previously exit with a failed status if error is not nil.

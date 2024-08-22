@@ -91,7 +91,7 @@ help-extended: #HELP Display extended help.
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT) #HELP Run golangci linter.
-	$(GOLANGCI_LINT) run $(GOLANGCI_LINT_ARGS)
+	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
 .PHONY: tidy
 tidy: #HELP Update dependencies.
@@ -111,7 +111,7 @@ verify: tidy fmt vet generate manifests crd-ref-docs #HELP Verify all generated 
 
 .PHONY: fix-lint
 fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
-	$(GOLANGCI_LINT) run --fix $(GOLANGCI_LINT_ARGS)
+	$(GOLANGCI_LINT) run --fix --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
 .PHONY: fmt
 fmt: #EXHELP Formats code
@@ -119,7 +119,7 @@ fmt: #EXHELP Formats code
 
 .PHONY: vet
 vet: #EXHELP Run go vet against code.
-	go vet ./...
+	go vet -tags '$(GO_BUILD_TAGS)' ./...
 
 .PHONY: bingo-upgrade
 bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
@@ -155,7 +155,13 @@ UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/)
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
 test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
 	rm -rf $(COVERAGE_UNIT_DIR) && mkdir -p $(COVERAGE_UNIT_DIR)
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && CGO_ENABLED=1 go test -count=1 -race -short $(UNIT_TEST_DIRS) -cover -coverprofile ${ROOT_DIR}/coverage/unit.out -test.gocoverdir=$(ROOT_DIR)/coverage/unit
+	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && \
+            CGO_ENABLED=1 go test \
+                -tags '$(GO_BUILD_TAGS)' \
+                -cover -coverprofile ${ROOT_DIR}/coverage/unit.out \
+                -count=1 -race -short \
+                $(UNIT_TEST_DIRS) \
+                -test.gocoverdir=$(ROOT_DIR)/coverage/unit
 
 image-registry: ## Setup in-cluster image registry
 	./hack/test/image-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME)
@@ -243,6 +249,7 @@ export CGO_ENABLED
 
 export GIT_REPO := $(shell go list -m)
 export VERSION_PATH := ${GIT_REPO}/internal/version
+export GO_BUILD_TAGS := containers_image_openpgp
 export GO_BUILD_ASMFLAGS := all=-trimpath=$(PWD)
 export GO_BUILD_GCFLAGS := all=-trimpath=$(PWD)
 export GO_BUILD_FLAGS :=

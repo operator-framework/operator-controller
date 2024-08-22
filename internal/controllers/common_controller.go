@@ -79,6 +79,9 @@ func setStatusUnpackFailed(ext *ocv1alpha1.ClusterExtension, message string) {
 }
 
 func setStatusUnpacked(ext *ocv1alpha1.ClusterExtension, message string) {
+	if message == "" {
+		message = "unpack successful"
+	}
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeUnpacked,
 		Status:             metav1.ConditionTrue,
