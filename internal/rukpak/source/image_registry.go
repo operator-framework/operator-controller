@@ -13,9 +13,11 @@ import (
 	"strings"
 
 	"github.com/containerd/containerd/archive"
+	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	"github.com/google/go-containerregistry/pkg/authn/k8schain"
 	gcrkube "github.com/google/go-containerregistry/pkg/authn/kubernetes"
 	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	apimacherrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -185,10 +187,26 @@ func unpackedResult(fsys fs.FS, bundle *BundleSource, ref string) *Result {
 
 // unpackImage unpacks a bundle image reference to the provided unpackPath,
 // returning an error if any errors are encountered along the way.
-func unpackImage(ctx context.Context, imgRef name.Reference, unpackPath string, remoteOpts ...remote.Option) error {
-	img, err := remote.Image(imgRef, remoteOpts...)
+func unpackImage(ctx context.Context, sourceImageRef name.Reference, unpackPath string, remoteOpts ...remote.Option) error {
+	tryImageRefs, err := getImageRefsToTry(nil, sourceImageRef)
 	if err != nil {
-		return fmt.Errorf("error fetching remote image %q: %w", imgRef.Name(), err)
+		return fmt.Errorf("error getting image references to try: %w", err)
+	}
+
+	var (
+		img        v1.Image
+		pullErrors []error
+	)
+	for _, imgRef := range tryImageRefs {
+		img, err = remote.Image(imgRef, remoteOpts...)
+		if err == nil {
+			pullErrors = nil
+			break
+		}
+		pullErrors = append(pullErrors, fmt.Errorf("error fetching remote image %q: %w", imgRef.Name(), err))
+	}
+	if len(pullErrors) > 0 {
+		return errors.Join(pullErrors...)
 	}
 
 	layers, err := img.Layers()
@@ -216,4 +234,35 @@ func unpackImage(ctx context.Context, imgRef name.Reference, unpackPath string, 
 	}
 
 	return nil
+}
+
+func getImageRefsToTry(ctx *sysregistriesv2.V2RegistriesConf, sourceImgRef name.Reference) ([]name.Reference, error) {
+	// Passing a nil context to FindRegistry will use the default context, which searches for the registries.conf file
+	// in the default locations:
+	//   - $HOME/.config/containers/registries.conf
+	//   - $HOME/.config/containers/registries.conf.d
+	//   - /etc/containers/registries.conf
+	//   - /etc/containers/registries.conf.d
+	reg, err := sysregistriesv2.FindRegistry(nil, sourceImgRef.String())
+	if err != nil {
+		return nil, fmt.Errorf("error finding registry configuration for image %q: %w", sourceImgRef.Name(), err)
+	}
+	if reg == nil {
+		return []name.Reference{sourceImgRef}, nil
+	}
+
+	pullSources, err := reg.PullSourcesFromReference(sourceImgRef)
+	if err != nil {
+		return nil, fmt.Errorf("error getting pull sources from registry configuration: %w", err)
+	}
+
+	refs := make([]name.Reference, 0, len(pullSources))
+	for _, pullSource := range pullSources {
+		nameRef, err := name.ParseReference(pullSource.Reference.String(), name.StrictValidation)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing reference %q: %w", pullSource.Reference, err)
+		}
+		refs = append(refs, nameRef)
+	}
+	return refs, nil
 }

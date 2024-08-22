@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/containers/storage/pkg/reexec"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
@@ -79,6 +80,10 @@ func podNamespace() string {
 }
 
 func main() {
+	if reexec.Init() {
+		return
+	}
+
 	var (
 		metricsAddr               string
 		enableLeaderElection      bool
@@ -194,11 +199,10 @@ func main() {
 		setupLog.Error(err, "unable to create CA certificate pool")
 		os.Exit(1)
 	}
-	unpacker := &source.ImageRegistry{
-		BaseCachePath: filepath.Join(cachePath, "unpack"),
-		// TODO: This needs to be derived per extension via ext.Spec.InstallNamespace
-		AuthNamespace:   systemNamespace,
-		CertPoolWatcher: certPoolWatcher,
+	unpacker := &source.OpenShiftImageRegistry{
+		Client:                   mgr.GetClient(),
+		RegistriesConfigFilePath: "/etc/containers/registries.conf",
+		StorageRootPath:          filepath.Join(cachePath, "layout"),
 	}
 
 	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
@@ -206,7 +210,7 @@ func main() {
 	cleanupUnpackCacheKey := fmt.Sprintf("%s/cleanup-unpack-cache", domain)
 	if err := clusterExtensionFinalizers.Register(cleanupUnpackCacheKey, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		ext := obj.(*ocv1alpha1.ClusterExtension)
-		return crfinalizer.Result{}, os.RemoveAll(filepath.Join(unpacker.BaseCachePath, ext.GetName()))
+		return crfinalizer.Result{}, os.RemoveAll(filepath.Join(unpacker.StorageRootPath, ext.GetName()))
 	})); err != nil {
 		setupLog.Error(err, "unable to register finalizer", "finalizerKey", cleanupUnpackCacheKey)
 		os.Exit(1)

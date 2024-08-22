@@ -119,7 +119,7 @@ fmt: #EXHELP Formats code
 
 .PHONY: vet
 vet: #EXHELP Run go vet against code.
-	go vet ./...
+	go vet -tags '$(GO_BUILD_TAGS)' ./...
 
 .PHONY: test
 test: manifests generate fmt vet test-unit test-e2e #HELP Run all tests.
@@ -236,6 +236,7 @@ export CGO_ENABLED
 
 export GIT_REPO := $(shell go list -m)
 export VERSION_PATH := ${GIT_REPO}/internal/version
+export GO_BUILD_TAGS := containers_image_openpgp
 export GO_BUILD_ASMFLAGS := all=-trimpath=$(PWD)
 export GO_BUILD_GCFLAGS := all=-trimpath=$(PWD)
 export GO_BUILD_FLAGS :=
