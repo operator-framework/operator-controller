@@ -114,7 +114,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 		if len(resolvedBundles) != 0 {
 			// We've already found one or more package candidates
 			currentIsDeprecated := isDeprecated(thisBundle, thisDeprecation)
-			priorIsDeprecated := isDeprecated(*resolvedBundles[0], priorDeprecation) // Slice index doesn't matter; the whole slice is either deprecated or not
+			priorIsDeprecated := isDeprecated(*resolvedBundles[len(resolvedBundles)-1], priorDeprecation)
 			if currentIsDeprecated && !priorIsDeprecated {
 				// Skip this deprecated package and retain the non-deprecated package(s)
 				return nil
