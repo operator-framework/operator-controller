@@ -15,5 +15,5 @@ jobs:
         with:
           project-url: https://github.com/orgs/operator-framework/projects/8
           github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
-          labeled: epic
+          labeled: epic, v1.0, v1.x
           label-operator: OR
