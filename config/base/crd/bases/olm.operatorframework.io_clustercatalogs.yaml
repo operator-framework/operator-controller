@@ -49,6 +49,12 @@ spec:
           spec:
             description: ClusterCatalogSpec defines the desired state of ClusterCatalog
             properties:
+              priority:
+                default: 0
+                description: priority is used as the tie-breaker between bundles selected
+                  from different catalogs; a higher number means higher priority.
+                format: int32
+                type: integer
               source:
                 description: |-
                   source is the source of a Catalog that contains catalog metadata in the FBC format

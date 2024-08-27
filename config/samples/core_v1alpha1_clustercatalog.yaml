@@ -3,6 +3,7 @@ kind: ClusterCatalog
 metadata:
   name: operatorhubio
 spec:
+  priority: 0
   source:
     type: image
     image:

@@ -75,6 +75,11 @@ type ClusterCatalogSpec struct {
 	// source is the source of a Catalog that contains catalog metadata in the FBC format
 	// https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
 	Source CatalogSource `json:"source"`
+
+	// priority is used as the tie-breaker between bundles selected from different catalogs; a higher number means higher priority.
+	// +kubebuilder:default:=0
+	// +optional
+	Priority int32 `json:"priority,omitempty"`
 }
 
 // ClusterCatalogStatus defines the observed state of ClusterCatalog
