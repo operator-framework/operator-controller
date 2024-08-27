@@ -236,49 +236,116 @@ func TestAcceptDeprecated(t *testing.T) {
 
 func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 	pkgName := randPkg()
-	genImgRef := func(catalog, name string) string {
-		return fmt.Sprintf("%s/%s", catalog, name)
-	}
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
 		"b": func() (*declcfg.DeclarativeConfig, error) {
-			fbc := genPackage(pkgName)
-			fbc.Bundles = append(fbc.Bundles, genBundle(pkgName, "1.0.3"))
-			for i := range fbc.Bundles {
-				fbc.Bundles[i].Image = genImgRef("catalog-b", fbc.Bundles[i].Name)
+			fbc := &declcfg.DeclarativeConfig{
+				Packages: []declcfg.Package{{Name: pkgName}},
+				Bundles:  []declcfg.Bundle{genBundle(pkgName, "1.0.0")},
+				Deprecations: []declcfg.Deprecation{{
+					Package: pkgName,
+					Entries: []declcfg.DeprecationEntry{
+						{
+							Reference: declcfg.PackageScopedReference{Schema: declcfg.SchemaBundle, Name: bundleName(pkgName, "1.0.0")},
+							Message:   fmt.Sprintf("bundle %s is deprecated", bundleName(pkgName, "1.0.0")),
+						},
+					},
+				}},
 			}
 			return fbc, nil
 		},
 		"c": func() (*declcfg.DeclarativeConfig, error) {
-			fbc := genPackage(pkgName)
-			fbc.Bundles = append(fbc.Bundles, genBundle(pkgName, "0.1.1"))
-			fbc.Deprecations = nil
-			for i := range fbc.Bundles {
-				fbc.Bundles[i].Image = genImgRef("catalog-c", fbc.Bundles[i].Name)
+			fbc := &declcfg.DeclarativeConfig{
+				Packages: []declcfg.Package{{Name: pkgName}},
+				Bundles:  []declcfg.Bundle{genBundle(pkgName, "1.0.1")},
+				Deprecations: []declcfg.Deprecation{{
+					Package: pkgName,
+					Entries: []declcfg.DeprecationEntry{
+						{
+							Reference: declcfg.PackageScopedReference{Schema: declcfg.SchemaBundle, Name: bundleName(pkgName, "1.0.1")},
+							Message:   fmt.Sprintf("bundle %s is deprecated", bundleName(pkgName, "1.0.1")),
+						},
+					},
+				}},
+			}
+			return fbc, nil
+		},
+		"d": func() (*declcfg.DeclarativeConfig, error) {
+			fbc := &declcfg.DeclarativeConfig{
+				Packages: []declcfg.Package{{Name: pkgName}},
+				Bundles:  []declcfg.Bundle{genBundle(pkgName, "1.0.2")},
+			}
+			return fbc, nil
+		},
+		"e": func() (*declcfg.DeclarativeConfig, error) {
+			fbc := &declcfg.DeclarativeConfig{
+				Packages: []declcfg.Package{{Name: pkgName}},
+				Bundles:  []declcfg.Bundle{genBundle(pkgName, "1.0.3")},
+				Deprecations: []declcfg.Deprecation{{
+					Package: pkgName,
+					Entries: []declcfg.DeprecationEntry{
+						{
+							Reference: declcfg.PackageScopedReference{Schema: declcfg.SchemaBundle, Name: bundleName(pkgName, "1.0.3")},
+							Message:   fmt.Sprintf("bundle %s is deprecated", bundleName(pkgName, "1.0.3")),
+						},
+					},
+				}},
+			}
+			return fbc, nil
+		},
+		"f": func() (*declcfg.DeclarativeConfig, error) {
+			fbc := &declcfg.DeclarativeConfig{
+				Packages: []declcfg.Package{{Name: pkgName}},
+				Bundles: []declcfg.Bundle{
+					genBundle(pkgName, "1.0.4"),
+					genBundle(pkgName, "1.0.5"),
+				},
 			}
 			return fbc, nil
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 
-	t.Run("when catalog b has a newer version that matches the range", func(t *testing.T) {
+	t.Run("when bundle candidates for a package are deprecated in all but one catalog", func(t *testing.T) {
 		ce := buildFooClusterExtension(pkgName, "", ">=1.0.0 <=1.0.3", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 		gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
+		require.NoError(t, err)
+		// We choose the only non-deprecated package
+		assert.Equal(t, genBundle(pkgName, "1.0.2").Name, gotBundle.Name)
+		assert.Equal(t, bsemver.MustParse("1.0.2"), *gotVersion)
+		assert.Equal(t, (*declcfg.Deprecation)(nil), gotDeprecation)
+	})
+
+	t.Run("when bundle candidates are found and deprecated in multiple catalogs", func(t *testing.T) {
+		ce := buildFooClusterExtension(pkgName, "", ">=1.0.0 <=1.0.1", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+		gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 		require.Error(t, err)
+		// We will not make a decision on which catalog to use
 		assert.ErrorContains(t, err, "found in multiple catalogs: [b c]")
 		assert.Nil(t, gotBundle)
 		assert.Nil(t, gotVersion)
 		assert.Nil(t, gotDeprecation)
 	})
 
-	t.Run("when catalog c has a newer version that matches the range", func(t *testing.T) {
-		ce := buildFooClusterExtension(pkgName, "", ">=0.1.0 <1.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	t.Run("when bundle candidates are found and not deprecated in multiple catalogs", func(t *testing.T) {
+		ce := buildFooClusterExtension(pkgName, "", ">=1.0.0 <=1.0.4", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 		gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "found in multiple catalogs: [b c]")
+		// We will not make a decision on which catalog to use
+		assert.ErrorContains(t, err, "found in multiple catalogs: [d f]")
 		assert.Nil(t, gotBundle)
 		assert.Nil(t, gotVersion)
 		assert.Nil(t, gotDeprecation)
+	})
+
+	t.Run("highest semver bundle is chosen when candidates are all from the same catalog", func(t *testing.T) {
+		ce := buildFooClusterExtension(pkgName, "", ">=1.0.4 <=1.0.5", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+		gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
+		require.NoError(t, err)
+		// Bundles within one catalog for a package will be sorted by semver and deprecation and the best is returned
+		assert.Equal(t, genBundle(pkgName, "1.0.5").Name, gotBundle.Name)
+		assert.Equal(t, bsemver.MustParse("1.0.5"), *gotVersion)
+		assert.Equal(t, (*declcfg.Deprecation)(nil), gotDeprecation)
 	})
 }
 
