@@ -65,9 +65,9 @@ $(OPM): $(BINGO_DIR)/opm.mod
 	@echo "(re)installing $(GOBIN)/opm-v1.28.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=opm.mod -o=$(GOBIN)/opm-v1.28.0 "github.com/operator-framework/operator-registry/cmd/opm"
 
-SETUP_ENVTEST := $(GOBIN)/setup-envtest-v0.0.0-20230606045100-e54088c8c7da
+SETUP_ENVTEST := $(GOBIN)/setup-envtest-v0.0.0-20240820183333-e6c3d139d2b6
 $(SETUP_ENVTEST): $(BINGO_DIR)/setup-envtest.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/setup-envtest-v0.0.0-20230606045100-e54088c8c7da"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=setup-envtest.mod -o=$(GOBIN)/setup-envtest-v0.0.0-20230606045100-e54088c8c7da "sigs.k8s.io/controller-runtime/tools/setup-envtest"
+	@echo "(re)installing $(GOBIN)/setup-envtest-v0.0.0-20240820183333-e6c3d139d2b6"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=setup-envtest.mod -o=$(GOBIN)/setup-envtest-v0.0.0-20240820183333-e6c3d139d2b6 "sigs.k8s.io/controller-runtime/tools/setup-envtest"
 
