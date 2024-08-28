@@ -350,7 +350,7 @@ func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 }
 
 func TestUpgradeFoundLegacy(t *testing.T) {
-	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
@@ -372,7 +372,7 @@ func TestUpgradeFoundLegacy(t *testing.T) {
 }
 
 func TestUpgradeNotFoundLegacy(t *testing.T) {
-	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
@@ -391,7 +391,7 @@ func TestUpgradeNotFoundLegacy(t *testing.T) {
 }
 
 func TestUpgradeFoundSemver(t *testing.T) {
-	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
@@ -415,7 +415,7 @@ func TestUpgradeFoundSemver(t *testing.T) {
 }
 
 func TestUpgradeNotFoundSemver(t *testing.T) {
-	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
@@ -698,7 +698,7 @@ func TestInvalidClusterExtensionCatalogMatchLabelsValue(t *testing.T) {
 }
 
 func TestClusterExtensionMatchLabel(t *testing.T) {
-	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },
@@ -713,7 +713,7 @@ func TestClusterExtensionMatchLabel(t *testing.T) {
 }
 
 func TestClusterExtensionNoMatchLabel(t *testing.T) {
-	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, error) { return &declcfg.DeclarativeConfig{}, nil },

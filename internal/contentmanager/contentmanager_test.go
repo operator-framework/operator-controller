@@ -3,6 +3,7 @@ package contentmanager
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -91,10 +92,10 @@ func TestWatch(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tests {
+	for i, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			mgr, _ := manager.New(tc.config, manager.Options{})
-			ctrl, err := controller.New("test-controller", mgr, controller.Options{
+			ctrl, err := controller.New(fmt.Sprintf("test-controller-%v", i), mgr, controller.Options{
 				Reconciler: reconcile.Func(func(context.Context, reconcile.Request) (reconcile.Result, error) {
 					return reconcile.Result{}, nil
 				}),
