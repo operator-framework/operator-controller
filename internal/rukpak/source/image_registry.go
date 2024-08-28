@@ -13,8 +13,6 @@ import (
 	"strings"
 
 	"github.com/containerd/containerd/archive"
-	"github.com/google/go-containerregistry/pkg/authn/k8schain"
-	gcrkube "github.com/google/go-containerregistry/pkg/authn/kubernetes"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	apimacherrors "k8s.io/apimachinery/pkg/util/errors"
@@ -29,8 +27,6 @@ const SourceTypeImage SourceType = "image"
 type ImageSource struct {
 	// Ref contains the reference to a container image containing Bundle contents.
 	Ref string
-	// ImagePullSecretName contains the name of the image pull secret in the namespace that the provisioner is deployed.
-	ImagePullSecretName string
 	// InsecureSkipTLSVerify indicates that TLS certificate validation should be skipped.
 	// If this option is specified, the HTTPS protocol will still be used to
 	// fetch the specified image reference.
@@ -53,7 +49,6 @@ func NewUnrecoverable(err error) *Unrecoverable {
 
 type ImageRegistry struct {
 	BaseCachePath   string
-	AuthNamespace   string
 	CertPoolWatcher *httputil.CertPoolWatcher
 }
 
@@ -70,24 +65,6 @@ func (i *ImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Resu
 	imgRef, err := name.ParseReference(bundle.Image.Ref)
 	if err != nil {
 		return nil, NewUnrecoverable(fmt.Errorf("error parsing image reference: %w", err))
-	}
-
-	remoteOpts := []remote.Option{}
-	if bundle.Image.ImagePullSecretName != "" {
-		chainOpts := k8schain.Options{
-			ImagePullSecrets: []string{bundle.Image.ImagePullSecretName},
-			Namespace:        i.AuthNamespace,
-			// TODO: Do we want to use any secrets that are included in the rukpak service account?
-			// If so, we will need to add the permission to get service accounts and specify
-			// the rukpak service account name here.
-			ServiceAccountName: gcrkube.NoServiceAccount,
-		}
-		authChain, err := k8schain.NewInCluster(ctx, chainOpts)
-		if err != nil {
-			return nil, fmt.Errorf("error getting auth keychain: %w", err)
-		}
-
-		remoteOpts = append(remoteOpts, remote.WithAuthFromKeychain(authChain))
 	}
 
 	transport := remote.DefaultTransport.(*http.Transport).Clone()
@@ -107,6 +84,8 @@ func (i *ImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Resu
 		}
 		transport.TLSClientConfig.RootCAs = pool
 	}
+
+	remoteOpts := []remote.Option{}
 	remoteOpts = append(remoteOpts, remote.WithTransport(transport))
 
 	digest, isDigest := imgRef.(name.Digest)
@@ -175,7 +154,6 @@ func unpackedResult(fsys fs.FS, bundle *BundleSource, ref string) *Result {
 			Type: SourceTypeImage,
 			Image: &ImageSource{
 				Ref:                   ref,
-				ImagePullSecretName:   bundle.Image.ImagePullSecretName,
 				InsecureSkipTLSVerify: bundle.Image.InsecureSkipTLSVerify,
 			},
 		},
