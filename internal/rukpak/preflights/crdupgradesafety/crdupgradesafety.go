@@ -31,6 +31,19 @@ type Preflight struct {
 }
 
 func NewPreflight(crdCli apiextensionsv1client.CustomResourceDefinitionInterface, opts ...Option) *Preflight {
+	changeValidations := []kappcus.ChangeValidation{
+		kappcus.EnumChangeValidation,
+		kappcus.RequiredFieldChangeValidation,
+		kappcus.MaximumChangeValidation,
+		kappcus.MaximumItemsChangeValidation,
+		kappcus.MaximumLengthChangeValidation,
+		kappcus.MaximumPropertiesChangeValidation,
+		kappcus.MinimumChangeValidation,
+		kappcus.MinimumItemsChangeValidation,
+		kappcus.MinimumLengthChangeValidation,
+		kappcus.MinimumPropertiesChangeValidation,
+		kappcus.DefaultValueChangeValidation,
+	}
 	p := &Preflight{
 		crdClient: crdCli,
 		// create a default validator. Can be overridden via the options
@@ -39,21 +52,8 @@ func NewPreflight(crdCli apiextensionsv1client.CustomResourceDefinitionInterface
 				kappcus.NewValidationFunc("NoScopeChange", kappcus.NoScopeChange),
 				kappcus.NewValidationFunc("NoStoredVersionRemoved", kappcus.NoStoredVersionRemoved),
 				kappcus.NewValidationFunc("NoExistingFieldRemoved", kappcus.NoExistingFieldRemoved),
-				&kappcus.ChangeValidator{
-					Validations: []kappcus.ChangeValidation{
-						kappcus.EnumChangeValidation,
-						kappcus.RequiredFieldChangeValidation,
-						kappcus.MaximumChangeValidation,
-						kappcus.MaximumItemsChangeValidation,
-						kappcus.MaximumLengthChangeValidation,
-						kappcus.MaximumPropertiesChangeValidation,
-						kappcus.MinimumChangeValidation,
-						kappcus.MinimumItemsChangeValidation,
-						kappcus.MinimumLengthChangeValidation,
-						kappcus.MinimumPropertiesChangeValidation,
-						kappcus.DefaultValueChangeValidation,
-					},
-				},
+				&ServedVersionValidator{Validations: changeValidations},
+				&kappcus.ChangeValidator{Validations: changeValidations},
 			},
 		},
 	}

@@ -15,7 +15,42 @@
                     "openAPIV3Schema": {
                         "type": "object",
                         "properties": {
-                        }
+                            "spec": {
+                                "type": "object",
+                                "properties": {
+                                    "removedField": {
+                                        "type":"integer"
+                                    },
+                                    "enum": {
+                                        "type":"integer"
+                                    },
+                                    "minMaxValue": {
+                                        "type":"integer"
+                                    },
+                                    "required": {
+                                        "type":"integer"
+                                    },
+                                    "minMaxItems": {
+                                        "type":"array",
+                                        "items": {
+                                            "type":"string"
+                                        }
+                                    },
+                                    "minMaxLength": {
+                                        "type":"string"
+                                    },
+                                    "defaultVal": {
+                                        "type": "string"
+                                    },
+                                    "requiredVal": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "required": [
+                            "requiredVal"
+                        ]
                     }
                 }
             },
