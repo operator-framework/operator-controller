@@ -195,9 +195,7 @@ func main() {
 		os.Exit(1)
 	}
 	unpacker := &source.ImageRegistry{
-		BaseCachePath: filepath.Join(cachePath, "unpack"),
-		// TODO: This needs to be derived per extension via ext.Spec.InstallNamespace
-		AuthNamespace:   systemNamespace,
+		BaseCachePath:   filepath.Join(cachePath, "unpack"),
 		CertPoolWatcher: certPoolWatcher,
 	}
 

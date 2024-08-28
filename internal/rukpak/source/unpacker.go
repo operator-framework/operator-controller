@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // Unpacker unpacks bundle content, either synchronously or asynchronously and
@@ -101,16 +99,4 @@ func (s *unpacker) Cleanup(ctx context.Context, bundle *BundleSource) error {
 		return fmt.Errorf("source type %q not supported", bundle.Type)
 	}
 	return source.Cleanup(ctx, bundle)
-}
-
-// NewDefaultUnpacker returns a new composite Source that unpacks bundles using
-// a default source mapping with built-in implementations of all of the supported
-// source types.
-func NewDefaultUnpacker(mgr manager.Manager, namespace, cacheDir string) (Unpacker, error) {
-	return NewUnpacker(map[SourceType]Unpacker{
-		SourceTypeImage: &ImageRegistry{
-			BaseCachePath: cacheDir,
-			AuthNamespace: namespace,
-		},
-	}), nil
 }
