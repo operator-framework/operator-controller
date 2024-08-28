@@ -14,7 +14,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.20.1
 	github.com/onsi/gomega v1.34.1
 	github.com/operator-framework/api v0.27.0
-	github.com/operator-framework/catalogd v0.20.0
+	github.com/operator-framework/catalogd v0.21.0
 	github.com/operator-framework/helm-operator-plugins v0.5.0
 	github.com/operator-framework/operator-registry v1.46.0
 	github.com/spf13/pflag v1.0.5
