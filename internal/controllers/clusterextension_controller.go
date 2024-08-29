@@ -314,7 +314,7 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, d
 			case declcfg.SchemaPackage:
 				deprecations[ocv1alpha1.TypePackageDeprecated] = entry
 			case declcfg.SchemaChannel:
-				if ext.Spec.Channel != entry.Reference.Name {
+				if ext.Spec.Source.Catalog.Channel != entry.Reference.Name {
 					continue
 				}
 				deprecations[ocv1alpha1.TypeChannelDeprecated] = entry

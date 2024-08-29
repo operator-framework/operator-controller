@@ -53,7 +53,12 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+				},
+			},
 			InstallNamespace: "default",
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: "default",
@@ -108,9 +113,14 @@ func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channel:     pkgChan,
+				},
+			},
 			InstallNamespace: installNamespace,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: serviceAccount,
@@ -177,9 +187,14 @@ func TestClusterExtensionUnpackFails(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channel:     pkgChan,
+				},
+			},
 			InstallNamespace: installNamespace,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: serviceAccount,
@@ -248,9 +263,14 @@ func TestClusterExtensionUnpackUnexpectedState(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channel:     pkgChan,
+				},
+			},
 			InstallNamespace: installNamespace,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: serviceAccount,
@@ -320,9 +340,14 @@ func TestClusterExtensionUnpackSucceeds(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channel:     pkgChan,
+				},
+			},
 			InstallNamespace: installNamespace,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: serviceAccount,
@@ -395,9 +420,14 @@ func TestClusterExtensionInstallationFailedApplierFails(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channel:     pkgChan,
+				},
+			},
 			InstallNamespace: installNamespace,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: serviceAccount,
@@ -476,9 +506,14 @@ func TestClusterExtensionInstallationFailedWatcherFailed(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channel:     pkgChan,
+				},
+			},
 			InstallNamespace: installNamespace,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: serviceAccount,
@@ -560,9 +595,14 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channel:     pkgChan,
+				},
+			},
 			InstallNamespace: installNamespace,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: serviceAccount,
@@ -701,6 +741,14 @@ func TestSetDeprecationStatus(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
 				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channel: "",
+						},
+					},
+				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
 				},
@@ -708,6 +756,14 @@ func TestSetDeprecationStatus(t *testing.T) {
 			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channel: "",
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -755,7 +811,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "nondeprecated",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channel: "nondeprecated",
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -766,7 +827,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "nondeprecated",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channel: "nondeprecated",
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -816,7 +882,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channel: "badchannel",
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -827,7 +898,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channel: "badchannel",
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -878,7 +954,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channel: "badchannel",
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -889,7 +970,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channel: "badchannel",
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -953,7 +1039,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channel: "badchannel",
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -964,7 +1055,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channel: "badchannel",
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -1022,7 +1118,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channel: "badchannel",
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -1033,7 +1134,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channel: "badchannel",
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{

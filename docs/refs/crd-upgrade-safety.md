@@ -62,8 +62,11 @@ metadata:
     name: clusterextension-sample
 spec:
     installNamespace: default
-    packageName: argocd-operator
-    version: 0.6.0
+    source:
+      sourceType: Catalog
+      catalog:
+        packageName: argocd-operator
+        version: 0.6.0
     preflight:
         crdUpgradeSafety:
             disabled: true
@@ -176,9 +179,9 @@ In this example, the existing stored version, `v1alpha1`, has been removed:
     ```
     validating upgrade for CRD "test.example.com" failed: CustomResourceDefinition test.example.com failed upgrade safety validation. "NoStoredVersionRemoved" validation failed: stored version "v1alpha1" removed
     ```
-    
+
 ### Removing an existing field
-    
+
 In this example, the `pollInterval` field has been removed from `v1alpha1`:
 
 ??? example

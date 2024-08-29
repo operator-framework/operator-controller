@@ -46,6 +46,97 @@ const (
 
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpec struct {
+	// source is a required field which selects the installation source of content
+	// for this ClusterExtension. Selection is performed by setting the sourceType.
+	//
+	// Catalog is currently the only implemented sourceType, and setting the
+	// sourcetype to "Catalog" requires the catalog field to also be defined.
+	//
+	// Below is a minimal example of a source definition (in yaml):
+	//
+	// source:
+	//   sourceType: Catalog
+	//   catalog:
+	//     packageName: example-package
+	//
+	Source SourceConfig `json:"source"`
+
+	// installNamespace is a reference to the Namespace in which the bundle of
+	// content for the package referenced in the packageName field will be applied.
+	// The bundle may contain cluster-scoped resources or resources that are
+	// applied to other Namespaces. This Namespace is expected to exist.
+	//
+	// installNamespace is required, immutable, and follows the DNS label standard
+	// as defined in RFC 1123. This means that valid values:
+	//   - Contain no more than 63 characters
+	//   - Contain only lowercase alphanumeric characters or '-'
+	//   - Start with an alphanumeric character
+	//   - End with an alphanumeric character
+	//
+	// Some examples of valid values are:
+	//   - some-namespace
+	//   - 123-namespace
+	//   - 1-namespace-2
+	//   - somenamespace
+	//
+	// Some examples of invalid values are:
+	//   - -some-namespace
+	//   - some-namespace-
+	//   - thisisareallylongnamespacenamethatisgreaterthanthemaximumlength
+	//   - some.namespace
+	//
+	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+	//+kubebuilder:validation:MaxLength:=63
+	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="installNamespace is immutable"
+	InstallNamespace string `json:"installNamespace"`
+
+	// preflight is an optional field that can be used to configure the preflight checks run before installation or upgrade of the content for the package specified in the packageName field.
+	//
+	// When specified, it overrides the default configuration of the preflight checks that are required to execute successfully during an install/upgrade operation.
+	//
+	// When not specified, the default configuration for each preflight check will be used.
+	//
+	//+optional
+	Preflight *PreflightConfig `json:"preflight,omitempty"`
+
+	// serviceAccount is a required reference to a ServiceAccount that exists
+	// in the installNamespace. The provided ServiceAccount is used to install and
+	// manage the content for the package specified in the packageName field.
+	//
+	// In order to successfully install and manage the content for the package,
+	// the ServiceAccount provided via this field should be configured with the
+	// appropriate permissions to perform the necessary operations on all the
+	// resources that are included in the bundle of content being applied.
+	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
+}
+
+const SourceTypeCatalog = "Catalog"
+
+// SourceConfig is a discriminated union which selects the installation source.
+// +union
+// +kubebuilder:validation:XValidation:rule="self.sourceType == 'Catalog' && has(self.catalog)",message="sourceType Catalog requires catalog field"
+type SourceConfig struct {
+	// sourceType is a required reference to the type of install source.
+	//
+	// Allowed values are ["Catalog"]
+	//
+	// When this field is set to "Catalog", information for determining the appropriate
+	// bundle of content to install will be fetched from ClusterCatalog resources existing
+	// on the cluster. When using the Catalog sourceType, the catalog field must also be set.
+	//
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="Catalog"
+	SourceType string `json:"sourceType"`
+
+	// catalog is used to configure how information is sourced from a catalog. This field must be defined when sourceType is set to "Catalog",
+	// and must be the only field defined for this sourceType.
+	//
+	// +optional.
+	Catalog *CatalogSource `json:"catalog,omitempty"`
+}
+
+// CatalogSource defines the required fields for catalog source.
+type CatalogSource struct {
 	// packageName is a reference to the name of the package to be installed
 	// and is used to filter the content from catalogs.
 	//
@@ -196,7 +287,7 @@ type ClusterExtensionSpec struct {
 	//+optional
 	Channel string `json:"channel,omitempty"`
 
-	// catalogSelector is an optional field that can be used
+	// selector is an optional field that can be used
 	// to filter the set of ClusterCatalogs used in the bundle
 	// selection process.
 	//
@@ -204,7 +295,7 @@ type ClusterExtensionSpec struct {
 	// the bundle selection process.
 	//
 	//+optional
-	CatalogSelector metav1.LabelSelector `json:"catalogSelector,omitempty"`
+	Selector metav1.LabelSelector `json:"selector,omitempty"`
 
 	// upgradeConstraintPolicy is an optional field that controls whether
 	// the upgrade path(s) defined in the catalog are enforced for the package
@@ -228,54 +319,6 @@ type ClusterExtensionSpec struct {
 	//+kubebuilder:default:=Enforce
 	//+optional
 	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
-
-	// installNamespace is a reference to the Namespace in which the bundle of
-	// content for the package referenced in the packageName field will be applied.
-	// The bundle may contain cluster-scoped resources or resources that are
-	// applied to other Namespaces. This Namespace is expected to exist.
-	//
-	// installNamespace is required, immutable, and follows the DNS label standard
-	// as defined in RFC 1123. This means that valid values:
-	//   - Contain no more than 63 characters
-	//   - Contain only lowercase alphanumeric characters or '-'
-	//   - Start with an alphanumeric character
-	//   - End with an alphanumeric character
-	//
-	// Some examples of valid values are:
-	//   - some-namespace
-	//   - 123-namespace
-	//   - 1-namespace-2
-	//   - somenamespace
-	//
-	// Some examples of invalid values are:
-	//   - -some-namespace
-	//   - some-namespace-
-	//   - thisisareallylongnamespacenamethatisgreaterthanthemaximumlength
-	//   - some.namespace
-	//
-	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
-	//+kubebuilder:validation:MaxLength:=63
-	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="installNamespace is immutable"
-	InstallNamespace string `json:"installNamespace"`
-
-	// preflight is an optional field that can be used to configure the preflight checks run before installation or upgrade of the content for the package specified in the packageName field.
-	//
-	// When specified, it overrides the default configuration of the preflight checks that are required to execute successfully during an install/upgrade operation.
-	//
-	// When not specified, the default configuration for each preflight check will be used.
-	//
-	//+optional
-	Preflight *PreflightConfig `json:"preflight,omitempty"`
-
-	// serviceAccount is a required reference to a ServiceAccount that exists
-	// in the installNamespace. The provided ServiceAccount is used to install and
-	// manage the content for the package specified in the packageName field.
-	//
-	// In order to successfully install and manage the content for the package,
-	// the ServiceAccount provided via this field should be configured with the
-	// appropriate permissions to perform the necessary operations on all the
-	// resources that are included in the bundle of content being applied.
-	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
 }
 
 // ServiceAccountReference references a serviceAccount.

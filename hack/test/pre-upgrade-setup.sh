@@ -134,8 +134,11 @@ metadata:
   name: ${TEST_CLUSTER_EXTENSION_NAME}
 spec:
   installNamespace: default
-  packageName: prometheus
-  version: 1.0.0
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: prometheus
+      version: 1.0.0
   serviceAccount:
     name: upgrade-e2e
 EOF

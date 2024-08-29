@@ -11,9 +11,69 @@ import (
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
+func TestClusterExtensionSourceConfig(t *testing.T) {
+	sourceTypeEmptyError := "Invalid value: \"null\""
+	sourceTypeMismatchError := "spec.source.sourceType: Unsupported value"
+	sourceConfigInvalidError := "spec.source: Invalid value"
+	// unionField represents the required Catalog or (future) Bundle field required by SourceConfig
+	testCases := []struct {
+		name       string
+		sourceType string
+		unionField string
+		errMsg     string
+	}{
+		{"sourceType is null", "", "Catalog", sourceTypeEmptyError},
+		{"sourceType is invalid", "Invalid", "Catalog", sourceTypeMismatchError},
+		{"catalog field does not exist", "Catalog", "", sourceConfigInvalidError},
+		{"sourceConfig has required fields", "Catalog", "Catalog", ""},
+	}
+
+	t.Parallel()
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			var err error
+			if tc.unionField == "Catalog" {
+				err = cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: tc.sourceType,
+						Catalog: &ocv1alpha1.CatalogSource{
+							PackageName: "test-package",
+						},
+					},
+					InstallNamespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: "default",
+					},
+				}))
+			}
+			if tc.unionField == "" {
+				err = cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: tc.sourceType,
+					},
+					InstallNamespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: "default",
+					},
+				}))
+			}
+
+			if tc.errMsg == "" {
+				require.NoError(t, err, "unexpected error for sourceType %q: %w", tc.sourceType, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errMsg)
+			}
+		})
+	}
+}
+
 func TestClusterExtensionAdmissionPackageName(t *testing.T) {
-	tooLongError := "spec.packageName: Too long: may not be longer than 48"
-	regexMismatchError := "spec.packageName in body should match"
+	tooLongError := "spec.source.catalog.packageName: Too long: may not be longer than 48"
+	regexMismatchError := "spec.source.catalog.packageName in body should match"
 
 	testCases := []struct {
 		name    string
@@ -43,7 +103,12 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      tc.pkgName,
+				Source: ocv1alpha1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1alpha1.CatalogSource{
+						PackageName: tc.pkgName,
+					},
+				},
 				InstallNamespace: "default",
 				ServiceAccount: ocv1alpha1.ServiceAccountReference{
 					Name: "default",
@@ -59,8 +124,8 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 	}
 }
 func TestClusterExtensionAdmissionVersion(t *testing.T) {
-	tooLongError := "spec.version: Too long: may not be longer than 64"
-	regexMismatchError := "spec.version in body should match"
+	tooLongError := "spec.source.catalog.version: Too long: may not be longer than 64"
+	regexMismatchError := "spec.source.catalog.version in body should match"
 
 	testCases := []struct {
 		name    string
@@ -134,8 +199,13 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      "package",
-				Version:          tc.version,
+				Source: ocv1alpha1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1alpha1.CatalogSource{
+						PackageName: "package",
+						Version:     tc.version,
+					},
+				},
 				InstallNamespace: "default",
 				ServiceAccount: ocv1alpha1.ServiceAccountReference{
 					Name: "default",
@@ -152,8 +222,8 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionChannel(t *testing.T) {
-	tooLongError := "spec.channel: Too long: may not be longer than 48"
-	regexMismatchError := "spec.channel in body should match"
+	tooLongError := "spec.source.catalog.channel: Too long: may not be longer than 48"
+	regexMismatchError := "spec.source.catalog.channel in body should match"
 
 	testCases := []struct {
 		name        string
@@ -182,8 +252,13 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      "package",
-				Channel:          tc.channelName,
+				Source: ocv1alpha1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1alpha1.CatalogSource{
+						PackageName: "package",
+						Channel:     tc.channelName,
+					},
+				},
 				InstallNamespace: "default",
 				ServiceAccount: ocv1alpha1.ServiceAccountReference{
 					Name: "default",
@@ -231,7 +306,12 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      "package",
+				Source: ocv1alpha1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1alpha1.CatalogSource{
+						PackageName: "package",
+					},
+				},
 				InstallNamespace: tc.installNamespace,
 				ServiceAccount: ocv1alpha1.ServiceAccountReference{
 					Name: "default",
@@ -279,7 +359,12 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      "package",
+				Source: ocv1alpha1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1alpha1.CatalogSource{
+						PackageName: "package",
+					},
+				},
 				InstallNamespace: "default",
 				ServiceAccount: ocv1alpha1.ServiceAccountReference{
 					Name: tc.serviceAccount,

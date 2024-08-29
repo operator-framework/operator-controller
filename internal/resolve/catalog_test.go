@@ -534,12 +534,17 @@ func buildFooClusterExtension(pkg, channel, version string, upgradeConstraintPol
 			Name: pkg,
 		},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			InstallNamespace:        "default",
-			ServiceAccount:          ocv1alpha1.ServiceAccountReference{Name: "default"},
-			PackageName:             pkg,
-			Channel:                 channel,
-			Version:                 version,
-			UpgradeConstraintPolicy: upgradeConstraintPolicy,
+			InstallNamespace: "default",
+			ServiceAccount:   ocv1alpha1.ServiceAccountReference{Name: "default"},
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName:             pkg,
+					Channel:                 channel,
+					Version:                 version,
+					UpgradeConstraintPolicy: upgradeConstraintPolicy,
+				},
+			},
 		},
 	}
 }
@@ -641,13 +646,17 @@ func TestInvalidClusterExtensionCatalogMatchExpressions(t *testing.T) {
 			Name: "foo",
 		},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName: "foo",
-			CatalogSelector: metav1.LabelSelector{
-				MatchExpressions: []metav1.LabelSelectorRequirement{
-					{
-						Key:      "name",
-						Operator: metav1.LabelSelectorOperator("bad"),
-						Values:   []string{"value"},
+			Source: ocv1alpha1.SourceConfig{
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: "foo",
+					Selector: metav1.LabelSelector{
+						MatchExpressions: []metav1.LabelSelectorRequirement{
+							{
+								Key:      "name",
+								Operator: metav1.LabelSelectorOperator("bad"),
+								Values:   []string{"value"},
+							},
+						},
 					},
 				},
 			},
@@ -667,9 +676,13 @@ func TestInvalidClusterExtensionCatalogMatchLabelsName(t *testing.T) {
 			Name: "foo",
 		},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName: "foo",
-			CatalogSelector: metav1.LabelSelector{
-				MatchLabels: map[string]string{"": "value"},
+			Source: ocv1alpha1.SourceConfig{
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: "foo",
+					Selector: metav1.LabelSelector{
+						MatchLabels: map[string]string{"": "value"},
+					},
+				},
 			},
 		},
 	}
@@ -687,9 +700,13 @@ func TestInvalidClusterExtensionCatalogMatchLabelsValue(t *testing.T) {
 			Name: "foo",
 		},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName: "foo",
-			CatalogSelector: metav1.LabelSelector{
-				MatchLabels: map[string]string{"name": "&value"},
+			Source: ocv1alpha1.SourceConfig{
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: "foo",
+					Selector: metav1.LabelSelector{
+						MatchLabels: map[string]string{"name": "&value"},
+					},
+				},
 			},
 		},
 	}
@@ -706,7 +723,7 @@ func TestClusterExtensionMatchLabel(t *testing.T) {
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
-	ce.Spec.CatalogSelector.MatchLabels = map[string]string{"olm.operatorframework.io/name": "b"}
+	ce.Spec.Source.Catalog.Selector.MatchLabels = map[string]string{"olm.operatorframework.io/name": "b"}
 
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
@@ -721,7 +738,7 @@ func TestClusterExtensionNoMatchLabel(t *testing.T) {
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
-	ce.Spec.CatalogSelector.MatchLabels = map[string]string{"olm.operatorframework.io/name": "a"}
+	ce.Spec.Source.Catalog.Selector.MatchLabels = map[string]string{"olm.operatorframework.io/name": "a"}
 
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	require.Error(t, err)
