@@ -77,6 +77,13 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
+.PHONY: bingo-upgrade
+bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
+	@for pkg in $$($(BINGO) list | awk '{ print $$1 }' | tail -n +3); do \
+		echo "Upgrading $$pkg to latest..."; \
+		$(BINGO) get "$$pkg@latest"; \
+	done
+
 .PHONY: test-unit
 test-unit: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
 	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && go test $(shell go list ./... | grep -v /test/e2e | grep -v /test/upgrade) -coverprofile cover.out
