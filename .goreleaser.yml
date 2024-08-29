@@ -5,69 +5,69 @@ before:
 builds:
   - id: operator-controller
     main: ./cmd/manager/
-    binary: bin/manager
+    binary: manager
     asmflags: "{{ .Env.GO_BUILD_ASMFLAGS }}"
     gcflags: "{{ .Env.GO_BUILD_GCFLAGS }}"
     ldflags: "{{ .Env.GO_BUILD_LDFLAGS }}"
     goos:
-    - linux
+      - linux
     goarch:
-    - amd64
-    - arm64
-    - ppc64le
-    - s390x
+      - amd64
+      - arm64
+      - ppc64le
+      - s390x
 dockers:
-- image_templates:
-  - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
-  dockerfile: Dockerfile
-  goos: linux
-  goarch: amd64
-  use: buildx
-  build_flag_templates:
-    - "--platform=linux/amd64"
-- image_templates:
-    - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
-  dockerfile: Dockerfile
-  goos: linux
-  goarch: arm64
-  use: buildx
-  build_flag_templates:
-    - "--platform=linux/arm64"
-- image_templates:
-    - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
-  dockerfile: Dockerfile
-  goos: linux
-  goarch: ppc64le
-  use: buildx
-  build_flag_templates:
-    - "--platform=linux/ppc64le"
-- image_templates:
-    - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
-  dockerfile: Dockerfile
-  goos: linux
-  goarch: s390x
-  use: buildx
-  build_flag_templates:
-    - "--platform=linux/s390x"
+  - image_templates:
+      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+    dockerfile: Dockerfile
+    goos: linux
+    goarch: amd64
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+  - image_templates:
+      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+    dockerfile: Dockerfile
+    goos: linux
+    goarch: arm64
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64"
+  - image_templates:
+      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+    dockerfile: Dockerfile
+    goos: linux
+    goarch: ppc64le
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/ppc64le"
+  - image_templates:
+      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+    dockerfile: Dockerfile
+    goos: linux
+    goarch: s390x
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/s390x"
 docker_manifests:
-- name_template: "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
-  image_templates:
-    - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
-    - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
-    - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
-    - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+  - name_template: "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
+    image_templates:
+      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
 checksum:
   name_template: 'checksums.txt'
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 changelog:
   use: github-native
-  skip: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
+  disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
 release:
   disable: '{{ ne .Env.ENABLE_RELEASE_PIPELINE "true" }}'
   extra_files:
-  - glob: 'operator-controller.yaml'
-  - glob: 'install.sh'
+    - glob: 'operator-controller.yaml'
+    - glob: 'install.sh'
   header: |
     ## Installation
 

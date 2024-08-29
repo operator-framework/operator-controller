@@ -121,6 +121,13 @@ fmt: #EXHELP Formats code
 vet: #EXHELP Run go vet against code.
 	go vet ./...
 
+.PHONY: bingo-upgrade
+bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
+	@for pkg in $$($(BINGO) list | awk '{ print $$1 }' | tail -n +3); do \
+		echo "Upgrading $$pkg to latest..."; \
+		$(BINGO) get "$$pkg@latest"; \
+	done
+
 .PHONY: test
 test: manifests generate fmt vet test-unit test-e2e #HELP Run all tests.
 
