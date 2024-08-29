@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	carvel.dev/kapp v0.63.2
-	github.com/Masterminds/semver/v3 v3.2.1
+	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/containerd v1.7.20
 	github.com/fsnotify/fsnotify v1.7.0
