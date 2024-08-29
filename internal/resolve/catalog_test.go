@@ -859,17 +859,40 @@ func TestUnequalPriority(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
-			return genPackage(pkgName), &catalogd.ClusterCatalogSpec{Priority: 1}, nil
+			return &declcfg.DeclarativeConfig{
+				Packages: []declcfg.Package{{Name: pkgName}},
+				Channels: []declcfg.Channel{
+					{Package: pkgName, Name: "alpha", Entries: []declcfg.ChannelEntry{
+						{Name: bundleName(pkgName, "1.0.0")},
+					}},
+				},
+				Bundles: []declcfg.Bundle{
+					genBundle(pkgName, "1.0.0"),
+				},
+				Deprecations: []declcfg.Deprecation{},
+			}, &catalogd.ClusterCatalogSpec{Priority: 1}, nil
 		},
 		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
-			return genPackage(pkgName), &catalogd.ClusterCatalogSpec{Priority: 0}, nil
+			return &declcfg.DeclarativeConfig{
+				Packages: []declcfg.Package{{Name: pkgName}},
+				Channels: []declcfg.Channel{
+					{Package: pkgName, Name: "alpha", Entries: []declcfg.ChannelEntry{
+						{Name: bundleName(pkgName, "1.1.0")},
+					}},
+				},
+				Bundles: []declcfg.Bundle{
+					genBundle(pkgName, "1.1.0"),
+				},
+				Deprecations: []declcfg.Deprecation{},
+			}, &catalogd.ClusterCatalogSpec{Priority: 0}, nil
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 
-	ce := buildFooClusterExtension(pkgName, "", ">=1.0.0 <=1.0.1", ocv1alpha1.UpgradeConstraintPolicyEnforce)
-	_, _, _, err := r.Resolve(context.Background(), ce, nil)
+	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	_, gotVersion, _, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
+	require.Equal(t, bsemver.MustParse("1.0.0"), *gotVersion)
 }
 
 func TestMultiplePriority(t *testing.T) {
