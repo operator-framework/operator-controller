@@ -20,12 +20,6 @@ rules:
   - olm.operatorframework.io
   resources:
   - catalogmetadata
-  verbs:
-  - list
-  - watch
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
   - clustercatalogs
   verbs:
   - list
