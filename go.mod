@@ -11,7 +11,7 @@ require (
 	github.com/google/go-containerregistry/pkg/authn/k8schain v0.0.0-20240505154900-ff385a972813
 	github.com/google/go-containerregistry/pkg/authn/kubernetes v0.0.0-20240505154900-ff385a972813
 	github.com/klauspost/compress v1.17.9
-	github.com/onsi/ginkgo/v2 v2.20.1
+	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.1
 	github.com/operator-framework/operator-registry v1.46.0
 	github.com/prometheus/client_golang v1.20.2
@@ -89,7 +89,7 @@ require (
 	github.com/google/cel-go v0.20.1 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
+	github.com/google/pprof v0.0.0-20240827171923-fa2c70bbbfe5 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/h2non/filetype v1.1.3 // indirect
 	github.com/h2non/go-is-svg v0.0.0-20160927212452-35e8c4b0612c // indirect
