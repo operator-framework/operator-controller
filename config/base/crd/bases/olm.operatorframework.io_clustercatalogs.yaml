@@ -18,7 +18,7 @@ spec:
     - jsonPath: .status.phase
       name: Phase
       type: string
-    - jsonPath: .status.LastUnpacked
+    - jsonPath: .status.lastUnpacked
       name: LastUnpacked
       type: date
     - jsonPath: .metadata.creationTimestamp
