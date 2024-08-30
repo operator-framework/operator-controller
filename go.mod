@@ -12,7 +12,7 @@ require (
 	github.com/google/go-containerregistry/pkg/authn/kubernetes v0.0.0-20240505154900-ff385a972813
 	github.com/klauspost/compress v1.17.9
 	github.com/onsi/ginkgo/v2 v2.20.2
-	github.com/onsi/gomega v1.34.1
+	github.com/onsi/gomega v1.34.2
 	github.com/operator-framework/operator-registry v1.46.0
 	github.com/prometheus/client_golang v1.20.2
 	github.com/spf13/pflag v1.0.5
