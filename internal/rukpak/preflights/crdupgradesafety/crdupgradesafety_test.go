@@ -329,6 +329,25 @@ func TestUpgrade(t *testing.T) {
 				`"NoExistingFieldRemoved"`,
 			},
 		},
+		{
+			name:       "webhook conversion strategy exists",
+			oldCrdPath: "crd-conversion-webhook-old.json",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-conversion-webhook.json"),
+			},
+		},
+		{
+			name:       "new crd validation failure when missing conversion strategy and enum values removed",
+			oldCrdPath: "crd-conversion-webhook-old.json",
+			release: &release.Release{
+				Name:     "test-release",
+				Manifest: getManifestString(t, "crd-conversion-no-webhook.json"),
+			},
+			wantErrMsgs: []string{
+				`"ServedVersionValidator" validation failed: version upgrade "v1" to "v2", field "^.spec.foobarbaz": enum values removed`,
+			},
+		},
 	}
 
 	for _, tc := range tests {
