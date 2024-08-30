@@ -68,7 +68,7 @@ func setInstalledStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message
 }
 
 func setStatusUnpackFailed(ext *ocv1alpha1.ClusterExtension, message string) {
-	ext.Status.InstalledBundle = nil
+	setInstallStatus(ext, nil)
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeUnpacked,
 		Status:             metav1.ConditionFalse,
@@ -86,4 +86,12 @@ func setStatusUnpacked(ext *ocv1alpha1.ClusterExtension, message string) {
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
 	})
+}
+
+func setResolutionStatus(ext *ocv1alpha1.ClusterExtension, resStatus *ocv1alpha1.ClusterExtensionResolutionStatus) {
+	ext.Status.Resolution = resStatus
+}
+
+func setInstallStatus(ext *ocv1alpha1.ClusterExtension, installStatus *ocv1alpha1.ClusterExtensionInstallStatus) {
+	ext.Status.Install = installStatus
 }

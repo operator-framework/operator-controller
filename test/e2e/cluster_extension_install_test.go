@@ -236,9 +236,11 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 				},
 			},
 		},
-		InstallNamespace: "default",
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: sa.Name,
+		Install: ocv1alpha1.ClusterExtensionInstallConfig{
+			Namespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: sa.Name,
+			},
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
@@ -256,7 +258,13 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.1.2.0",
+				Version: "1.2.0",
+			}},
+			clusterExtension.Status.Resolution,
+		)
 	}, pollDuration, pollInterval)
 
 	t.Log("By eventually reporting a successful unpacked")
@@ -281,7 +289,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "Installed bundle")
-		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle)
+		assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
 	}, pollDuration, pollInterval)
 }
 
@@ -299,9 +307,11 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 				PackageName: "prometheus",
 			},
 		},
-		InstallNamespace: "default",
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: sa.Name,
+		Install: ocv1alpha1.ClusterExtensionInstallConfig{
+			Namespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: sa.Name,
+			},
 		},
 	}
 	t.Log("It resolves to multiple bundle paths")
@@ -319,7 +329,7 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionFalse, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
 		assert.Contains(ct, cond.Message, "matching packages found in multiple catalogs")
-		assert.Nil(ct, clusterExtension.Status.ResolvedBundle)
+		assert.Nil(ct, clusterExtension.Status.Resolution)
 	}, pollDuration, pollInterval)
 }
 
@@ -341,9 +351,11 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 				// No Selector since this is an exact version match
 			},
 		},
-		InstallNamespace: "default",
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: sa.Name,
+		Install: ocv1alpha1.ClusterExtensionInstallConfig{
+			Namespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: sa.Name,
+			},
 		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
@@ -356,8 +368,20 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.0", Version: "1.0.0"}, clusterExtension.Status.InstalledBundle)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.1.0.0",
+				Version: "1.0.0",
+			}},
+			clusterExtension.Status.Resolution,
+		)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionInstallStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.1.0.0",
+				Version: "1.0.0",
+			}},
+			clusterExtension.Status.Install,
+		)
 	}, pollDuration, pollInterval)
 
 	t.Log("It does not allow to upgrade the ClusterExtension to a non-successor version")
@@ -374,7 +398,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
 		assert.Equal(ct, "error upgrading from currently installed version \"1.0.0\": no package \"prometheus\" matching version \"1.2.0\" found", cond.Message)
-		assert.Empty(ct, clusterExtension.Status.ResolvedBundle)
+		assert.Empty(ct, clusterExtension.Status.Resolution)
 	}, pollDuration, pollInterval)
 }
 
@@ -395,9 +419,11 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 				Version:     "1.0.0",
 			},
 		},
-		InstallNamespace: "default",
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: sa.Name,
+		Install: ocv1alpha1.ClusterExtensionInstallConfig{
+			Namespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: sa.Name,
+			},
 		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
@@ -410,7 +436,13 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.1.0.0",
+				Version: "1.0.0",
+			}},
+			clusterExtension.Status.Resolution,
+		)
 	}, pollDuration, pollInterval)
 
 	t.Log("It allows to upgrade the ClusterExtension to a non-successor version")
@@ -428,7 +460,13 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.1.2.0",
+				Version: "1.2.0",
+			}},
+			clusterExtension.Status.Resolution,
+		)
 	}, pollDuration, pollInterval)
 }
 
@@ -448,9 +486,11 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 				Version:     "1.0.0",
 			},
 		},
-		InstallNamespace: "default",
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: sa.Name,
+		Install: ocv1alpha1.ClusterExtensionInstallConfig{
+			Namespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: sa.Name,
+			},
 		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
@@ -463,7 +503,13 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.1.0.0",
+				Version: "1.0.0",
+			}},
+			clusterExtension.Status.Resolution,
+		)
 	}, pollDuration, pollInterval)
 
 	t.Log("It does allow to upgrade the ClusterExtension to any of the successor versions within non-zero major version")
@@ -480,7 +526,13 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.1.0.1",
+				Version: "1.0.1",
+			}},
+			clusterExtension.Status.Resolution,
+		)
 	}, pollDuration, pollInterval)
 }
 
@@ -507,9 +559,11 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 				},
 			},
 		},
-		InstallNamespace: "default",
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: sa.Name,
+		Install: ocv1alpha1.ClusterExtensionInstallConfig{
+			Namespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: sa.Name,
+			},
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
@@ -527,7 +581,13 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.1.2.0",
+				Version: "1.2.0",
+			}},
+			clusterExtension.Status.Resolution,
+		)
 	}, pollDuration, pollInterval)
 
 	// patch imageRef tag on test-catalog image with v2 image
@@ -556,7 +616,13 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.2.0.0",
+				Version: "2.0.0",
+			}},
+			clusterExtension.Status.Resolution,
+		)
 	}, pollDuration, pollInterval)
 }
 
@@ -595,9 +661,11 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 				},
 			},
 		},
-		InstallNamespace: "default",
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: sa.Name,
+		Install: ocv1alpha1.ClusterExtensionInstallConfig{
+			Namespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: sa.Name,
+			},
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
@@ -615,7 +683,13 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.1.2.0",
+				Version: "1.2.0",
+			}},
+			clusterExtension.Status.Resolution,
+		)
 	}, pollDuration, pollInterval)
 
 	// update tag on test-catalog image with v2 image
@@ -644,7 +718,13 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.2.0.0", Version: "2.0.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.1.2.0",
+				Version: "1.2.0",
+			}},
+			clusterExtension.Status.Resolution,
+		)
 	}, pollDuration, pollInterval)
 }
 
@@ -665,9 +745,11 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 				},
 			},
 		},
-		InstallNamespace: "default",
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: sa.Name,
+		Install: ocv1alpha1.ClusterExtensionInstallConfig{
+			Namespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: sa.Name,
+			},
 		},
 	}
 	t.Log("It installs the specified package with correct bundle path")
@@ -684,14 +766,20 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.2.0", Version: "1.2.0"}, clusterExtension.Status.InstalledBundle)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.1.2.0",
+				Version: "1.2.0",
+			}},
+			clusterExtension.Status.Resolution,
+		)
 	}, pollDuration, pollInterval)
 
 	t.Log("By deleting a managed resource")
 	prometheusService := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "prometheus-operator",
-			Namespace: clusterExtension.Spec.InstallNamespace,
+			Namespace: clusterExtension.Spec.Install.Namespace,
 		},
 	}
 	require.NoError(t, c.Delete(context.Background(), prometheusService))
@@ -730,9 +818,11 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 				},
 			},
 		},
-		InstallNamespace: "default",
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
-			Name: sa.Name,
+		Install: ocv1alpha1.ClusterExtensionInstallConfig{
+			Namespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: sa.Name,
+			},
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
@@ -750,7 +840,13 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.2.0", Version: "1.2.0"}, clusterExtension.Status.ResolvedBundle)
+		assert.Equal(ct,
+			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
+				Name:    "prometheus-operator.1.2.0",
+				Version: "1.2.0",
+			}},
+			clusterExtension.Status.Resolution,
+		)
 	}, pollDuration, pollInterval)
 
 	t.Log("By eventually reporting a successful unpacked")
@@ -794,7 +890,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "Installed bundle")
-		assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle)
+		assert.NotEmpty(ct, clusterExtension.Status.Install)
 	}, pollDuration, pollInterval)
 }
 

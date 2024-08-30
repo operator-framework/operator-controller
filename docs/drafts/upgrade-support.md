@@ -67,4 +67,8 @@ spec:
       packageName: argocd-operator
       version: 0.6.0
       upgradeConstraintPolicy: Ignore
+  install:
+    namespace: argocd
+    serviceAccout:
+      name: argocd-installer
 ```

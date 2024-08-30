@@ -59,9 +59,11 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 					PackageName: pkgName,
 				},
 			},
-			InstallNamespace: "default",
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: "default",
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: "default",
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: "default",
+				},
 			},
 		},
 	}
@@ -77,8 +79,8 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Empty(t, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Empty(t, clusterExtension.Status.Resolution)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -107,7 +109,7 @@ func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
@@ -121,9 +123,11 @@ func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 					Channel:     pkgChan,
 				},
 			},
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -148,8 +152,8 @@ func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -181,7 +185,7 @@ func TestClusterExtensionUnpackFails(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
@@ -195,9 +199,11 @@ func TestClusterExtensionUnpackFails(t *testing.T) {
 					Channel:     pkgChan,
 				},
 			},
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -222,8 +228,8 @@ func TestClusterExtensionUnpackFails(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -257,7 +263,7 @@ func TestClusterExtensionUnpackUnexpectedState(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
@@ -271,9 +277,11 @@ func TestClusterExtensionUnpackUnexpectedState(t *testing.T) {
 					Channel:     pkgChan,
 				},
 			},
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -298,8 +306,8 @@ func TestClusterExtensionUnpackUnexpectedState(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -334,7 +342,7 @@ func TestClusterExtensionUnpackSucceeds(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
@@ -348,9 +356,11 @@ func TestClusterExtensionUnpackSucceeds(t *testing.T) {
 					Channel:     pkgChan,
 				},
 			},
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -378,8 +388,8 @@ func TestClusterExtensionUnpackSucceeds(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected resolution conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -414,7 +424,7 @@ func TestClusterExtensionInstallationFailedApplierFails(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
@@ -428,9 +438,11 @@ func TestClusterExtensionInstallationFailedApplierFails(t *testing.T) {
 					Channel:     pkgChan,
 				},
 			},
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -458,8 +470,8 @@ func TestClusterExtensionInstallationFailedApplierFails(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected resolution conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -500,7 +512,7 @@ func TestClusterExtensionInstallationFailedWatcherFailed(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
@@ -514,9 +526,11 @@ func TestClusterExtensionInstallationFailedWatcherFailed(t *testing.T) {
 					Channel:     pkgChan,
 				},
 			},
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -547,8 +561,8 @@ func TestClusterExtensionInstallationFailedWatcherFailed(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected resolution conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -589,7 +603,7 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
@@ -603,9 +617,11 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 					Channel:     pkgChan,
 				},
 			},
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -634,8 +650,8 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
 
 	t.Log("By checking the expected resolution conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)

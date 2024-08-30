@@ -272,11 +272,12 @@ kind: ClusterExtension
 metadata:
   name: argocd
 spec:
-  installNamespace: argocd
   source:
     sourceType: Catalog
     catalog:
       packageName: argocd-operator
       version: 0.6.0
-  serviceAccount:
-    name: argocd-installer
+  install:
+    namespace: argocd
+    serviceAccount:
+      name: argocd-installer

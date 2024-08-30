@@ -61,15 +61,18 @@ kind: ClusterExtension
 metadata:
     name: clusterextension-sample
 spec:
-    installNamespace: default
     source:
       sourceType: Catalog
       catalog:
         packageName: argocd-operator
         version: 0.6.0
-    preflight:
+    install:
+      namespace: default
+      serviceAccount:
+        name: argocd-installer
+      preflight:
         crdUpgradeSafety:
-            disabled: true
+          disabled: true
 ```
 
 You cannot disable individual field validators. If you disable the CRD Upgrade Safety preflight check, all field validators are disabled.

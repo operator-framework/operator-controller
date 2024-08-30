@@ -30,6 +30,10 @@ After you add a catalog to your cluster, you can install an extension by creatin
           packageName: <package_name>
           channel: <channel>
           version: "<version>"
+      install:
+        namespace: <namespace_name>
+        serviceAccount:
+          name: <serviceAccount_name>
     ```
 
      `extension_name`
@@ -44,6 +48,15 @@ After you add a catalog to your cluster, you can install an extension by creatin
      `version`
      : Optional: Specifies the version or version range you want installed, such as `1.3.1` or `"<2"`.
      If you use a comparison string to define a version range, the string must be surrounded by double quotes (`"`).
+    
+    `namespace_name`
+    : Specifies a name for the namespace in which the bundle of content for the package referenced 
+    in the packageName field will be applied. 
+
+    `serviceAccount_name`
+    : serviceAccount name is a required reference to a ServiceAccount that exists
+    in the installNamespace. The provided ServiceAccount is used to install and
+    manage the content for the package specified in the packageName field.
 
     !!! warning
         Currently, the following limitations affect the installation of extensions:
