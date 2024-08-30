@@ -838,7 +838,7 @@ func TestClusterExtensionMatchLabel(t *testing.T) {
 	pkgName := randPkg()
 	w := staticCatalogWalker{
 		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
-			return &declcfg.DeclarativeConfig{}, nil, nil
+			return genPackage(pkgName), nil, nil
 		},
 		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
 			return genPackage(pkgName), nil, nil
