@@ -119,7 +119,7 @@ func (fsc *filesystemCache) FetchCatalogContents(ctx context.Context, catalog *c
 	// this to be the same value, skip the write logic and return
 	// the cached contents
 	if data, ok := fsc.cacheDataByCatalogName[catalog.Name]; ok {
-		if data.ResolvedRef == catalog.Status.ResolvedSource.Image.Ref {
+		if data.ResolvedRef == catalog.Status.ResolvedSource.Image.ResolvedRef {
 			return os.DirFS(cacheDir), nil
 		}
 	}
