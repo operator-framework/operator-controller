@@ -25,7 +25,7 @@ var _ client.Fetcher = &filesystemCache{}
 //   - IF cached it will verify the cache is up to date. If it is up to date it will return
 //     the cached contents, if not it will fetch the new contents from the catalogd HTTP
 //     server and update the cached contents.
-func NewFilesystemCache(cachePath string, clientFunc func() (*http.Client, error)) client.Fetcher {
+func NewFilesystemCache(cachePath string, clientFunc func() (*http.Client, error)) *filesystemCache {
 	return &filesystemCache{
 		cachePath:              cachePath,
 		mutex:                  sync.RWMutex{},
@@ -80,7 +80,7 @@ func (fsc *filesystemCache) FetchCatalogContents(ctx context.Context, catalog *c
 		return nil, fmt.Errorf("error: catalog %q has a nil status.resolvedSource.image value", catalog.Name)
 	}
 
-	cacheDir := filepath.Join(fsc.cachePath, catalog.Name)
+	cacheDir := fsc.cacheDir(catalog.Name)
 	fsc.mutex.RLock()
 	if data, ok := fsc.cacheDataByCatalogName[catalog.Name]; ok {
 		if catalog.Status.ResolvedSource.Image.ResolvedRef == data.ResolvedRef {
@@ -165,4 +165,27 @@ func (fsc *filesystemCache) FetchCatalogContents(ctx context.Context, catalog *c
 	}
 
 	return os.DirFS(cacheDir), nil
+}
+
+// Remove deletes cache directory for a given catalog from the filesystem
+func (fsc *filesystemCache) Remove(catalogName string) error {
+	cacheDir := fsc.cacheDir(catalogName)
+
+	fsc.mutex.Lock()
+	defer fsc.mutex.Unlock()
+
+	if _, exists := fsc.cacheDataByCatalogName[catalogName]; !exists {
+		return nil
+	}
+
+	if err := os.RemoveAll(cacheDir); err != nil {
+		return fmt.Errorf("error removing cache directory: %v", err)
+	}
+
+	delete(fsc.cacheDataByCatalogName, catalogName)
+	return nil
+}
+
+func (fsc *filesystemCache) cacheDir(catalogName string) string {
+	return filepath.Join(fsc.cachePath, catalogName)
 }

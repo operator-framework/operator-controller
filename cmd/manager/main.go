@@ -219,9 +219,10 @@ func main() {
 		setupLog.Error(err, "unable to create catalogs cache directory")
 		os.Exit(1)
 	}
-	catalogClient := catalogclient.New(cache.NewFilesystemCache(catalogsCachePath, func() (*http.Client, error) {
+	cacheFetcher := cache.NewFilesystemCache(catalogsCachePath, func() (*http.Client, error) {
 		return httputil.BuildHTTPClient(certPoolWatcher)
-	}))
+	})
+	catalogClient := catalogclient.New(cacheFetcher)
 
 	resolver := &resolve.CatalogResolver{
 		WalkCatalogsFunc: resolve.CatalogWalker(
