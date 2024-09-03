@@ -21,7 +21,7 @@ export IMAGE_TAG
 IMG := $(IMAGE_REPO):$(IMAGE_TAG)
 
 # Define dependency versions (use go.mod if we also use Go code from dependency)
-export CERT_MGR_VERSION := v1.9.0
+export CERT_MGR_VERSION := v1.15.3
 export CATALOGD_VERSION := $(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/catalogd)
 export WAIT_TIMEOUT := 60s
 
