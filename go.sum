@@ -1,5 +1,5 @@
-carvel.dev/kapp v0.63.2 h1:Fy0XXZRKn0e5XGL8y/Tqr1lCFPJejvp/bDlTDXQicCQ=
-carvel.dev/kapp v0.63.2/go.mod h1:1N6sOl3tqkIterSvng8DMc5/4PDlbCHVfLD/M7vLnps=
+carvel.dev/kapp v0.63.3 h1:YKFQa8INOsmdlflHWJGhB4oSvWbOxU0Niybok1/YPaI=
+carvel.dev/kapp v0.63.3/go.mod h1:JJfWYClyhCed6rhwuRqjAbBGvDl0/EGMf1MQ/FKYbWw=
 carvel.dev/vendir v0.40.0 h1:JdhCp/EjAPGI8F5zoAVYwZHf1sPEFee19RpgGb3ciT8=
 carvel.dev/vendir v0.40.0/go.mod h1:XPdluJu7322RZNx05AA4gYnV52aKywBdh7Ma12GuM2Q=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
