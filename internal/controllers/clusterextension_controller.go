@@ -57,6 +57,10 @@ import (
 	rukpaksource "github.com/operator-framework/operator-controller/internal/rukpak/source"
 )
 
+const (
+	ClusterExtensionCleanupUnpackCacheFinalizer = "olm.operatorframework.io/cleanup-unpack-cache"
+)
+
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client

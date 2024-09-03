@@ -200,12 +200,10 @@ func main() {
 	}
 
 	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
-	domain := ocv1alpha1.GroupVersion.Group
-	cleanupUnpackCacheKey := fmt.Sprintf("%s/cleanup-unpack-cache", domain)
-	if err := clusterExtensionFinalizers.Register(cleanupUnpackCacheKey, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+	if err := clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupUnpackCacheFinalizer, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		return crfinalizer.Result{}, os.RemoveAll(filepath.Join(unpacker.BaseCachePath, obj.GetName()))
 	})); err != nil {
-		setupLog.Error(err, "unable to register finalizer", "finalizerKey", cleanupUnpackCacheKey)
+		setupLog.Error(err, "unable to register finalizer", "finalizerKey", controllers.ClusterExtensionCleanupUnpackCacheFinalizer)
 		os.Exit(1)
 	}
 
