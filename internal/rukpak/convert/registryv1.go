@@ -101,12 +101,17 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace stri
 		return nil, err
 	}
 
-	plain, err := Convert(reg, installNamespace, watchNamespaces)
+	return toChart(reg, installNamespace, watchNamespaces)
+}
+
+func toChart(in RegistryV1, installNamespace string, watchNamespaces []string) (*chart.Chart, error) {
+	plain, err := Convert(in, installNamespace, watchNamespaces)
 	if err != nil {
 		return nil, err
 	}
 
 	chrt := &chart.Chart{Metadata: &chart.Metadata{}}
+	chrt.Metadata.Annotations = in.CSV.GetAnnotations()
 	for _, obj := range plain.Objects {
 		jsonData, err := json.Marshal(obj)
 		if err != nil {
