@@ -27,7 +27,7 @@ endif
 include .bingo/Variables.mk
 
 # Dependencies
-export CERT_MGR_VERSION := v1.11.0
+export CERT_MGR_VERSION := v1.15.3
 ENVTEST_SERVER_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 
 # Cluster configuration
