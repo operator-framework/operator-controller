@@ -76,8 +76,8 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
         ```
 
         ``` terminal title="Example output"
-        NAME            PHASE   AGE
-        operatorhubio           9s
+        NAME           LASTUNPACKED   AGE
+        operatorhubio  9m31s          9m55s
         ```
 
     * Check the status of your catalog:
@@ -115,7 +115,6 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
             Type:                  Unpacked
           Content URL:             https://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json
           Observed Generation:     2
-          Phase:                   Unpacked
           Resolved Source:
             Image:
               Last Poll Attempt:  2024-03-12T19:35:26Z
