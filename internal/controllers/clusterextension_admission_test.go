@@ -72,7 +72,7 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionPackageName(t *testing.T) {
-	tooLongError := "spec.source.catalog.packageName: Too long: may not be longer than 48"
+	tooLongError := "spec.source.catalog.packageName: Too long: may not be longer than 253"
 	regexMismatchError := "spec.source.catalog.packageName in body should match"
 
 	testCases := []struct {
@@ -81,7 +81,7 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 		errMsg  string
 	}{
 		{"no package name", "", regexMismatchError},
-		{"long package name", "this-is-a-really-long-package-name-that-is-greater-than-48-characters", tooLongError},
+		{"long package name", strings.Repeat("x", 254), tooLongError},
 		{"leading digits with hypens", "0my-1package-9name", ""},
 		{"trailing digits with hypens", "my0-package1-name9", ""},
 		{"digits with hypens", "012-345-678-9", ""},
@@ -94,6 +94,10 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 		{"single hypen", "-", regexMismatchError},
 		{"uppercase letters", "ABC-DEF-GHI-JKL", regexMismatchError},
 		{"special characters", "my-$pecial-package-name", regexMismatchError},
+		{"dot separated", "some.package", ""},
+		{"underscore separated", "some_package", regexMismatchError},
+		{"starts with dot", ".some.package", regexMismatchError},
+		{"multiple sequential separators", "a.-b", regexMismatchError},
 	}
 
 	t.Parallel()
@@ -123,6 +127,7 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 		})
 	}
 }
+
 func TestClusterExtensionAdmissionVersion(t *testing.T) {
 	tooLongError := "spec.source.catalog.version: Too long: may not be longer than 64"
 	regexMismatchError := "spec.source.catalog.version in body should match"
@@ -222,7 +227,7 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionChannel(t *testing.T) {
-	tooLongError := "spec.source.catalog.channel: Too long: may not be longer than 48"
+	tooLongError := "spec.source.catalog.channel: Too long: may not be longer than 253"
 	regexMismatchError := "spec.source.catalog.channel in body should match"
 
 	testCases := []struct {
@@ -234,7 +239,7 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 		{"hypen-separated", "hyphenated-name", ""},
 		{"dot-separated", "dotted.name", ""},
 		{"includes version", "channel-has-version-1.0.1", ""},
-		{"long channel name", "longname01234567890123456789012345678901234567890", tooLongError},
+		{"long channel name", strings.Repeat("x", 254), tooLongError},
 		{"spaces", "spaces spaces", regexMismatchError},
 		{"capitalized", "Capitalized", regexMismatchError},
 		{"camel case", "camelCase", regexMismatchError},
@@ -243,6 +248,8 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 		{"ends with hyphen", "end-with-hyphen-", regexMismatchError},
 		{"starts with period", ".start-with-period", regexMismatchError},
 		{"ends with period", "end-with-period.", regexMismatchError},
+		{"contains underscore", "some_thing", regexMismatchError},
+		{"multiple sequential separators", "a.-b", regexMismatchError},
 	}
 
 	t.Parallel()
@@ -350,6 +357,7 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 		{"ends with hyphen", "end-with-hyphen-", regexMismatchError},
 		{"starts with period", ".start-with-period", regexMismatchError},
 		{"ends with period", "end-with-period.", regexMismatchError},
+		{"multiple sequential separators", "a.-b", regexMismatchError},
 	}
 
 	t.Parallel()

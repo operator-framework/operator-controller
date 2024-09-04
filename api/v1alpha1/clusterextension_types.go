@@ -67,7 +67,7 @@ type ClusterExtensionSpec struct {
 	// applied to other Namespaces. This Namespace is expected to exist.
 	//
 	// installNamespace is required, immutable, and follows the DNS label standard
-	// as defined in RFC 1123. This means that valid values:
+	// as defined in [RFC 1123]. This means that valid values:
 	//   - Contain no more than 63 characters
 	//   - Contain only lowercase alphanumeric characters or '-'
 	//   - Start with an alphanumeric character
@@ -84,6 +84,8 @@ type ClusterExtensionSpec struct {
 	//   - some-namespace-
 	//   - thisisareallylongnamespacenamethatisgreaterthanthemaximumlength
 	//   - some.namespace
+	//
+	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
 	//+kubebuilder:validation:MaxLength:=63
@@ -140,11 +142,10 @@ type CatalogSource struct {
 	// packageName is a reference to the name of the package to be installed
 	// and is used to filter the content from catalogs.
 	//
-	// This field is required, immutable and follows the DNS label standard as defined in RFC
-	// 1123, with a deviation in the maximum length being no more than 48
-	// characters. This means that valid values:
-	//   - Contain no more than 48 characters
-	//   - Contain only lowercase alphanumeric characters or '-'
+	// This field is required, immutable and follows the DNS subdomain name
+	// standard as defined in [RFC 1123]. This means that valid entries:
+	//   - Contain no more than 253 characters
+	//   - Contain only lowercase alphanumeric characters, '-', or '.'
 	//   - Start with an alphanumeric character
 	//   - End with an alphanumeric character
 	//
@@ -160,8 +161,10 @@ type CatalogSource struct {
 	//   - thisisareallylongpackagenamethatisgreaterthanthemaximumlength
 	//   - some.package
 	//
-	//+kubebuilder:validation:MaxLength:=48
-	//+kubebuilder:validation:Pattern:=^[a-z0-9]+(-[a-z0-9]+)*$
+	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	//
+	//+kubebuilder:validation:MaxLength:=253
+	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
 	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="packageName is immutable"
 	PackageName string `json:"packageName"`
 
@@ -259,10 +262,9 @@ type CatalogSource struct {
 	//
 	// When unspecified, upgrade edges across all channels will be used to identify valid automatic upgrade paths.
 	//
-	// This field follows the DNS subdomain name standard as defined in RFC
-	// 1123, with a deviation in the maximum length being no more than 48
-	// characters. This means that valid values:
-	//   - Contain no more than 48 characters
+	// This field follows the DNS subdomain name standard as defined in [RFC
+	// 1123]. This means that valid entries:
+	//   - Contain no more than 253 characters
 	//   - Contain only lowercase alphanumeric characters, '-', or '.'
 	//   - Start with an alphanumeric character
 	//   - End with an alphanumeric character
@@ -281,9 +283,13 @@ type CatalogSource struct {
 	//   - -some-channel
 	//   - some-channel-
 	//   - thisisareallylongchannelnamethatisgreaterthanthemaximumlength
+	//   - original_40
+	//   - --default-channel
 	//
-	//+kubebuilder:validation:MaxLength:=48
-	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([\.-][a-z0-9]+)*$
+	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	//
+	//+kubebuilder:validation:MaxLength:=253
+	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
 	//+optional
 	Channel string `json:"channel,omitempty"`
 
@@ -329,8 +335,8 @@ type ServiceAccountReference struct {
 	//
 	// This ServiceAccount is expected to exist in the installNamespace.
 	//
-	// This field follows the DNS subdomain name standard as defined in RFC
-	// 1123. This means that valid values:
+	// This field follows the DNS subdomain name standard as defined in [RFC
+	// 1123]. This means that valid values:
 	//   - Contain no more than 253 characters
 	//   - Contain only lowercase alphanumeric characters, '-', or '.'
 	//   - Start with an alphanumeric character
@@ -347,8 +353,10 @@ type ServiceAccountReference struct {
 	//   - -some-serviceaccount
 	//   - some-serviceaccount-
 	//
+	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	//
 	//+kubebuilder:validation:MaxLength:=253
-	//+kubebuilder:validation:Pattern:=^[a-z0-9]+([.|-][a-z0-9]+)*$
+	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
 	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
 	Name string `json:"name"`
 }

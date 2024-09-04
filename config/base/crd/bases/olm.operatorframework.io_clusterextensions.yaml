@@ -47,7 +47,7 @@ spec:
                   applied to other Namespaces. This Namespace is expected to exist.
 
                   installNamespace is required, immutable, and follows the DNS label standard
-                  as defined in RFC 1123. This means that valid values:
+                  as defined in [RFC 1123]. This means that valid values:
                     - Contain no more than 63 characters
                     - Contain only lowercase alphanumeric characters or '-'
                     - Start with an alphanumeric character
@@ -64,6 +64,8 @@ spec:
                     - some-namespace-
                     - thisisareallylongnamespacenamethatisgreaterthanthemaximumlength
                     - some.namespace
+
+                  [RFC 1123]: https://tools.ietf.org/html/rfc1123
                 maxLength: 63
                 pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
                 type: string
@@ -133,8 +135,8 @@ spec:
 
                       This ServiceAccount is expected to exist in the installNamespace.
 
-                      This field follows the DNS subdomain name standard as defined in RFC
-                      1123. This means that valid values:
+                      This field follows the DNS subdomain name standard as defined in [RFC
+                      1123]. This means that valid values:
                         - Contain no more than 253 characters
                         - Contain only lowercase alphanumeric characters, '-', or '.'
                         - Start with an alphanumeric character
@@ -150,8 +152,10 @@ spec:
                       Some examples of invalid values are:
                         - -some-serviceaccount
                         - some-serviceaccount-
+
+                      [RFC 1123]: https://tools.ietf.org/html/rfc1123
                     maxLength: 253
-                    pattern: ^[a-z0-9]+([.|-][a-z0-9]+)*$
+                    pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
                     type: string
                     x-kubernetes-validations:
                     - message: name is immutable
@@ -196,10 +200,9 @@ spec:
 
                           When unspecified, upgrade edges across all channels will be used to identify valid automatic upgrade paths.
 
-                          This field follows the DNS subdomain name standard as defined in RFC
-                          1123, with a deviation in the maximum length being no more than 48
-                          characters. This means that valid values:
-                            - Contain no more than 48 characters
+                          This field follows the DNS subdomain name standard as defined in [RFC
+                          1123]. This means that valid entries:
+                            - Contain no more than 253 characters
                             - Contain only lowercase alphanumeric characters, '-', or '.'
                             - Start with an alphanumeric character
                             - End with an alphanumeric character
@@ -218,19 +221,22 @@ spec:
                             - -some-channel
                             - some-channel-
                             - thisisareallylongchannelnamethatisgreaterthanthemaximumlength
-                        maxLength: 48
-                        pattern: ^[a-z0-9]+([\.-][a-z0-9]+)*$
+                            - original_40
+                            - --default-channel
+
+                          [RFC 1123]: https://tools.ietf.org/html/rfc1123
+                        maxLength: 253
+                        pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
                         type: string
                       packageName:
                         description: |-
                           packageName is a reference to the name of the package to be installed
                           and is used to filter the content from catalogs.
 
-                          This field is required, immutable and follows the DNS label standard as defined in RFC
-                          1123, with a deviation in the maximum length being no more than 48
-                          characters. This means that valid values:
-                            - Contain no more than 48 characters
-                            - Contain only lowercase alphanumeric characters or '-'
+                          This field is required, immutable and follows the DNS subdomain name
+                          standard as defined in [RFC 1123]. This means that valid entries:
+                            - Contain no more than 253 characters
+                            - Contain only lowercase alphanumeric characters, '-', or '.'
                             - Start with an alphanumeric character
                             - End with an alphanumeric character
 
@@ -245,8 +251,10 @@ spec:
                             - some-package-
                             - thisisareallylongpackagenamethatisgreaterthanthemaximumlength
                             - some.package
-                        maxLength: 48
-                        pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+
+                          [RFC 1123]: https://tools.ietf.org/html/rfc1123
+                        maxLength: 253
+                        pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
                         type: string
                         x-kubernetes-validations:
                         - message: packageName is immutable
