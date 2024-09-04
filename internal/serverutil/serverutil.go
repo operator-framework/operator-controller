@@ -23,24 +23,17 @@ type CatalogServerConfig struct {
 	LocalStorage storage.Instance
 }
 
-func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig) error {
+func AddCatalogServerToManager(mgr ctrl.Manager, cfg CatalogServerConfig, tlsFileWatcher *certwatcher.CertWatcher) error {
 	listener, err := net.Listen("tcp", cfg.CatalogAddr)
 	if err != nil {
 		return fmt.Errorf("error creating catalog server listener: %w", err)
 	}
 
 	if cfg.CertFile != "" && cfg.KeyFile != "" {
-		tlsFileWatcher, err := certwatcher.New(cfg.CertFile, cfg.KeyFile)
-		if err != nil {
-			return fmt.Errorf("error creating TLS certificate watcher: %w", err)
-		}
+		// Use the passed certificate watcher instead of creating a new one
 		config := &tls.Config{
 			GetCertificate: tlsFileWatcher.GetCertificate,
 			MinVersion:     tls.VersionTLS12,
-		}
-		err = mgr.Add(tlsFileWatcher)
-		if err != nil {
-			return fmt.Errorf("error adding TLS certificate watcher to manager: %w", err)
 		}
 		listener = tls.NewListener(listener, config)
 	}

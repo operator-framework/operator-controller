@@ -9,7 +9,9 @@ spec:
   dnsNames:
     - localhost
     - catalogd-catalogserver.olmv1-system.svc
+    - catalogd-webhook-service.olmv1-system.svc
     - catalogd-catalogserver.olmv1-system.svc.cluster.local
+    - catalogd-webhook-service.olmv1-system.svc.cluster.local
   privateKey:
     algorithm: ECDSA
     size: 256

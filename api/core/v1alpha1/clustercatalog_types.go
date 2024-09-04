@@ -35,6 +35,8 @@ const (
 	ReasonUnpackFailed        = "UnpackFailed"
 	ReasonStorageFailed       = "FailedToStore"
 	ReasonStorageDeleteFailed = "FailedToDelete"
+
+	MetadataNameLabel = "olm.operatorframework.io/metadata.name"
 )
 
 //+kubebuilder:object:root=true

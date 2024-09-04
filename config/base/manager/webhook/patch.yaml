@@ -1,0 +1,13 @@
+# None of these values can be set via the kubebuilder directive, hence this patch
+- op: replace
+  path: /webhooks/0/clientConfig/service/namespace
+  value: olmv1-system
+- op: replace
+  path: /webhooks/0/clientConfig/service/name
+  value: catalogd-webhook-service
+- op: add
+  path: /webhooks/0/clientConfig/service/port
+  value: 443
+- op: add
+  path: /metadata/annotations/cert-manager.io~1inject-ca-from-secret
+  value: cert-manager/olmv1-ca

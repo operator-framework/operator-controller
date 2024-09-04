@@ -1,9 +1,18 @@
 resources:
 - manager.yaml
 - catalogserver_service.yaml
+- webhook/manifests.yaml
+- webhook/catalogd-webhook-service.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: controller
   newName: quay.io/operator-framework/catalogd
   newTag: devel
+patches:
+- path: webhook/patch.yaml
+  target:
+    group: admissionregistration.k8s.io
+    kind: MutatingWebhookConfiguration
+    name: mutating-webhook-configuration
+    version: v1

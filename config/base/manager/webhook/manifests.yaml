@@ -1,0 +1,27 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: mutating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-olm-operatorframework-io-v1alpha1-clustercatalog
+  failurePolicy: Fail
+  name: inject-metadata-name.olm.operatorframework.io
+  rules:
+  - apiGroups:
+    - olm.operatorframework.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clustercatalogs
+  sideEffects: None
+  timeoutSeconds: 10
