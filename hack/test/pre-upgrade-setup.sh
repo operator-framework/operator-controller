@@ -133,14 +133,15 @@ kind: ClusterExtension
 metadata:
   name: ${TEST_CLUSTER_EXTENSION_NAME}
 spec:
-  installNamespace: default
   source:
     sourceType: Catalog
     catalog:
       packageName: prometheus
       version: 1.0.0
-  serviceAccount:
-    name: upgrade-e2e
+  install:
+    namespace: default
+    serviceAccount:
+      name: upgrade-e2e
 EOF
 
 kubectl wait --for=condition=Unpacked --timeout=60s ClusterCatalog $TEST_CLUSTER_CATALOG_NAME

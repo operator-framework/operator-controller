@@ -187,8 +187,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		//  This is not ideal, and we should consider a more nuanced approach that resolves
 		//  as much status as possible before returning, or at least keeps previous state if
 		//  it is properly labeled with its observed generation.
-		ext.Status.ResolvedBundle = nil
-		ext.Status.InstalledBundle = nil
+		setInstallStatus(ext, nil)
+		setResolutionStatus(ext, nil)
 		setResolvedStatusConditionFailed(ext, err.Error())
 		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
 		return ctrl.Result{}, err
@@ -202,7 +202,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	l.V(1).Info("getting installed bundle")
 	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, ext)
 	if err != nil {
-		ext.Status.InstalledBundle = nil
+		setInstallStatus(ext, nil)
 		// TODO: use Installed=Unknown
 		setInstalledStatusConditionFailed(ext, err.Error())
 		return ctrl.Result{}, err
@@ -213,8 +213,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err := r.Resolver.Resolve(ctx, ext, installedBundle)
 	if err != nil {
 		// Note: We don't distinguish between resolution-specific errors and generic errors
-		ext.Status.ResolvedBundle = nil
-		ext.Status.InstalledBundle = nil
+		setInstallStatus(ext, nil)
+		setResolutionStatus(ext, nil)
 		setResolvedStatusConditionFailed(ext, err.Error())
 		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
 		return ctrl.Result{}, err
@@ -236,7 +236,10 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	//         all catalogs?
 	SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
 
-	ext.Status.ResolvedBundle = bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion)
+	resStatus := &ocv1alpha1.ClusterExtensionResolutionStatus{
+		Bundle: bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion),
+	}
+	setResolutionStatus(ext, resStatus)
 	setResolvedStatusConditionSuccess(ext, fmt.Sprintf("resolved to %q", resolvedBundle.Image))
 
 	bundleSource := &rukpaksource.BundleSource{
@@ -295,13 +298,16 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	if state != applier.StateUnchanged {
 		l.V(1).Info("watching managed objects")
 		if err := r.Watcher.Watch(ctx, r.controller, ext, managedObjs); err != nil {
-			ext.Status.InstalledBundle = nil
+			setInstallStatus(ext, nil)
 			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
 			return ctrl.Result{}, err
 		}
 	}
 
-	ext.Status.InstalledBundle = bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion)
+	installStatus := &ocv1alpha1.ClusterExtensionInstallStatus{
+		Bundle: bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion),
+	}
+	setInstallStatus(ext, installStatus)
 	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", resolvedBundle.Image))
 
 	return ctrl.Result{}, nil

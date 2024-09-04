@@ -61,55 +61,16 @@ type ClusterExtensionSpec struct {
 	//
 	Source SourceConfig `json:"source"`
 
-	// installNamespace is a reference to the Namespace in which the bundle of
-	// content for the package referenced in the packageName field will be applied.
-	// The bundle may contain cluster-scoped resources or resources that are
-	// applied to other Namespaces. This Namespace is expected to exist.
+	// install is a required field used to configure the installation options
+	// for the ClusterExtension such as the installation namespace,
+	// the service account and the pre-flight check configuration.
 	//
-	// installNamespace is required, immutable, and follows the DNS label standard
-	// as defined in [RFC 1123]. This means that valid values:
-	//   - Contain no more than 63 characters
-	//   - Contain only lowercase alphanumeric characters or '-'
-	//   - Start with an alphanumeric character
-	//   - End with an alphanumeric character
-	//
-	// Some examples of valid values are:
-	//   - some-namespace
-	//   - 123-namespace
-	//   - 1-namespace-2
-	//   - somenamespace
-	//
-	// Some examples of invalid values are:
-	//   - -some-namespace
-	//   - some-namespace-
-	//   - thisisareallylongnamespacenamethatisgreaterthanthemaximumlength
-	//   - some.namespace
-	//
-	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
-	//
-	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
-	//+kubebuilder:validation:MaxLength:=63
-	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="installNamespace is immutable"
-	InstallNamespace string `json:"installNamespace"`
-
-	// preflight is an optional field that can be used to configure the preflight checks run before installation or upgrade of the content for the package specified in the packageName field.
-	//
-	// When specified, it overrides the default configuration of the preflight checks that are required to execute successfully during an install/upgrade operation.
-	//
-	// When not specified, the default configuration for each preflight check will be used.
-	//
-	//+optional
-	Preflight *PreflightConfig `json:"preflight,omitempty"`
-
-	// serviceAccount is a required reference to a ServiceAccount that exists
-	// in the installNamespace. The provided ServiceAccount is used to install and
-	// manage the content for the package specified in the packageName field.
-	//
-	// In order to successfully install and manage the content for the package,
-	// the ServiceAccount provided via this field should be configured with the
-	// appropriate permissions to perform the necessary operations on all the
-	// resources that are included in the bundle of content being applied.
-	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
+	// Below is a minimal example of an installation definition (in yaml):
+	// install:
+	//    namespace: example-namespace
+	//    serviceAccount:
+	//      name: example-sa
+	Install ClusterExtensionInstallConfig `json:"install"`
 }
 
 const SourceTypeCatalog = "Catalog"
@@ -135,6 +96,61 @@ type SourceConfig struct {
 	//
 	// +optional.
 	Catalog *CatalogSource `json:"catalog,omitempty"`
+}
+
+// ClusterExtensionInstallConfig is a union which selects the clusterExtension installation config.
+// ClusterExtensionInstallConfig requires the namespace and serviceAccount which should be used for the installation of packages.
+// +union
+type ClusterExtensionInstallConfig struct {
+	// namespace is a reference to the Namespace in which the bundle of
+	// content for the package referenced in the packageName field will be applied.
+	// The bundle may contain cluster-scoped resources or resources that are
+	// applied to other Namespaces. This Namespace is expected to exist.
+	//
+	// namespace is required, immutable, and follows the DNS label standard
+	// as defined in [RFC 1123]. This means that valid values:
+	//   - Contain no more than 63 characters
+	//   - Contain only lowercase alphanumeric characters or '-'
+	//   - Start with an alphanumeric character
+	//   - End with an alphanumeric character
+	//
+	// Some examples of valid values are:
+	//   - some-namespace
+	//   - 123-namespace
+	//   - 1-namespace-2
+	//   - somenamespace
+	//
+	// Some examples of invalid values are:
+	//   - -some-namespace
+	//   - some-namespace-
+	//   - thisisareallylongnamespacenamethatisgreaterthanthemaximumlength
+	//   - some.namespace
+	//
+	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	//
+	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+	//+kubebuilder:validation:MaxLength:=63
+	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
+	Namespace string `json:"namespace"`
+
+	// serviceAccount is a required reference to a ServiceAccount that exists
+	// in the installNamespace. The provided ServiceAccount is used to install and
+	// manage the content for the package specified in the packageName field.
+	//
+	// In order to successfully install and manage the content for the package,
+	// the ServiceAccount provided via this field should be configured with the
+	// appropriate permissions to perform the necessary operations on all the
+	// resources that are included in the bundle of content being applied.
+	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
+
+	// preflight is an optional field that can be used to configure the preflight checks run before installation or upgrade of the content for the package specified in the packageName field.
+	//
+	// When specified, it overrides the default configuration of the preflight checks that are required to execute successfully during an install/upgrade operation.
+	//
+	// When not specified, the default configuration for each preflight check will be used.
+	//
+	//+optional
+	Preflight *PreflightConfig `json:"preflight,omitempty"`
 }
 
 // CatalogSource defines the required fields for catalog source.
@@ -463,24 +479,9 @@ type BundleMetadata struct {
 
 // ClusterExtensionStatus defines the observed state of ClusterExtension.
 type ClusterExtensionStatus struct {
-	// installedBundle is a representation of the currently installed bundle.
-	//
-	// A "bundle" is a versioned set of content that represents the resources that
-	// need to be applied to a cluster to install a package.
-	//
-	// This field is only updated once a bundle has been successfully installed and
-	// once set will only be updated when a new version of the bundle has
-	// successfully replaced the currently installed version.
-	//
-	//+optional
-	InstalledBundle *BundleMetadata `json:"installedBundle,omitempty"`
+	Install *ClusterExtensionInstallStatus `json:"install,omitempty"`
 
-	// resolvedBundle is a representation of the bundle that was identified during
-	// resolution to meet all installation/upgrade constraints and is slated to be
-	// installed or upgraded to.
-	//
-	//+optional
-	ResolvedBundle *BundleMetadata `json:"resolvedBundle,omitempty"`
+	Resolution *ClusterExtensionResolutionStatus `json:"resolution,omitempty"`
 
 	// conditions is a representation of the current state for this ClusterExtension.
 	// The status is represented by a set of "conditions".
@@ -512,6 +513,29 @@ type ClusterExtensionStatus struct {
 	// +listType=map
 	// +listMapKey=type
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+}
+
+type ClusterExtensionInstallStatus struct {
+	// bundle is a representation of the currently installed bundle.
+	//
+	// A "bundle" is a versioned set of content that represents the resources that
+	// need to be applied to a cluster to install a package.
+	//
+	// This field is only updated once a bundle has been successfully installed and
+	// once set will only be updated when a new version of the bundle has
+	// successfully replaced the currently installed version.
+	//
+	//+optional
+	Bundle *BundleMetadata `json:"bundle,omitempty"`
+}
+
+type ClusterExtensionResolutionStatus struct {
+	// bundle is a representation of the bundle that was identified during
+	// resolution to meet all installation/upgrade constraints and is slated to be
+	// installed or upgraded to.
+	//
+	//+optional
+	Bundle *BundleMetadata `json:"bundle,omitempty"`
 }
 
 //+kubebuilder:object:root=true

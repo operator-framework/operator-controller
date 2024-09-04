@@ -43,9 +43,11 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 							PackageName: "test-package",
 						},
 					},
-					InstallNamespace: "default",
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: "default",
+					Install: ocv1alpha1.ClusterExtensionInstallConfig{
+						Namespace: "default",
+						ServiceAccount: ocv1alpha1.ServiceAccountReference{
+							Name: "default",
+						},
 					},
 				}))
 			}
@@ -54,9 +56,11 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: tc.sourceType,
 					},
-					InstallNamespace: "default",
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: "default",
+					Install: ocv1alpha1.ClusterExtensionInstallConfig{
+						Namespace: "default",
+						ServiceAccount: ocv1alpha1.ServiceAccountReference{
+							Name: "default",
+						},
 					},
 				}))
 			}
@@ -113,9 +117,11 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 						PackageName: tc.pkgName,
 					},
 				},
-				InstallNamespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: "default",
+				Install: ocv1alpha1.ClusterExtensionInstallConfig{
+					Namespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: "default",
+					},
 				},
 			}))
 			if tc.errMsg == "" {
@@ -211,9 +217,11 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 						Version:     tc.version,
 					},
 				},
-				InstallNamespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: "default",
+				Install: ocv1alpha1.ClusterExtensionInstallConfig{
+					Namespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: "default",
+					},
 				},
 			}))
 			if tc.errMsg == "" {
@@ -266,9 +274,11 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 						Channel:     tc.channelName,
 					},
 				},
-				InstallNamespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: "default",
+				Install: ocv1alpha1.ClusterExtensionInstallConfig{
+					Namespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: "default",
+					},
 				},
 			}))
 			if tc.errMsg == "" {
@@ -282,13 +292,13 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
-	tooLongError := "spec.installNamespace: Too long: may not be longer than 63"
-	regexMismatchError := "spec.installNamespace in body should match"
+	tooLongError := "spec.install.namespace: Too long: may not be longer than 63"
+	regexMismatchError := "spec.install.namespace in body should match"
 
 	testCases := []struct {
-		name             string
-		installNamespace string
-		errMsg           string
+		name      string
+		namespace string
+		errMsg    string
 	}{
 		{"just alphanumeric", "justalphanumberic1", ""},
 		{"hypen-separated", "hyphenated-name", ""},
@@ -319,13 +329,15 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 						PackageName: "package",
 					},
 				},
-				InstallNamespace: tc.installNamespace,
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: "default",
+				Install: ocv1alpha1.ClusterExtensionInstallConfig{
+					Namespace: tc.namespace,
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: "default",
+					},
 				},
 			}))
 			if tc.errMsg == "" {
-				require.NoError(t, err, "unexpected error for installNamespace %q: %w", tc.installNamespace, err)
+				require.NoError(t, err, "unexpected error for namespace %q: %w", tc.namespace, err)
 			} else {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errMsg)
@@ -335,8 +347,8 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
-	tooLongError := "spec.serviceAccount.name: Too long: may not be longer than 253"
-	regexMismatchError := "spec.serviceAccount.name in body should match"
+	tooLongError := "spec.install.serviceAccount.name: Too long: may not be longer than 253"
+	regexMismatchError := "spec.install.serviceAccount.name in body should match"
 
 	testCases := []struct {
 		name           string
@@ -373,9 +385,11 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 						PackageName: "package",
 					},
 				},
-				InstallNamespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: tc.serviceAccount,
+				Install: ocv1alpha1.ClusterExtensionInstallConfig{
+					Namespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: tc.serviceAccount,
+					},
 				},
 			}))
 			if tc.errMsg == "" {
