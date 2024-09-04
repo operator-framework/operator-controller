@@ -7,7 +7,7 @@ set -e
 # 1. Installs cert-manager for creating a self-signed certificate for the image registry
 # 2. Creates all the resources necessary for deploying the image registry in the catalogd-e2e namespace
 # 3. Creates ConfigMaps containing the test catalog + Dockerfile to be mounted to the kaniko pod
-# 4. Waits for kaniko pod to have Phase == Succeeded, indicating the test catalog image has been built + pushed
+# 4. Waits for kaniko pod to have Condition Complete == true, indicating the test catalog image has been built + pushed
 # to the test image registry
 # Usage:
 # registry.sh

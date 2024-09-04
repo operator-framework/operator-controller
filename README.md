@@ -72,7 +72,6 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
           f:status:
             .:
             f:conditions:
-            f:phase:
         Manager:         manager
         Operation:       Update
         Subresource:     status
@@ -91,7 +90,6 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
         Reason:                Unpacking
         Status:                False
         Type:                  Unpacked
-      Phase:                   Unpacking
     Events:                    <none>
     ```
 

@@ -35,17 +35,11 @@ const (
 	ReasonUnpackFailed        = "UnpackFailed"
 	ReasonStorageFailed       = "FailedToStore"
 	ReasonStorageDeleteFailed = "FailedToDelete"
-
-	PhasePending   = "Pending"
-	PhaseUnpacking = "Unpacking"
-	PhaseFailing   = "Failing"
-	PhaseUnpacked  = "Unpacked"
 )
 
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:scope=Cluster
 //+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 //+kubebuilder:printcolumn:name=LastUnpacked,type=date,JSONPath=`.status.lastUnpacked`
 //+kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
@@ -91,10 +85,6 @@ type ClusterCatalogStatus struct {
 	// resolvedSource contains information about the resolved source
 	// +optional
 	ResolvedSource *ResolvedCatalogSource `json:"resolvedSource,omitempty"`
-	// phase represents a human-readable status of resolution of the content source.
-	// It is not appropriate to use for business logic determination.
-	// +optional
-	Phase string `json:"phase,omitempty"`
 	// contentURL is a cluster-internal address that on-cluster components
 	// can read the content of a catalog from
 	// +optional

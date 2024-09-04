@@ -115,7 +115,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					Phase: catalogdv1alpha1.PhaseFailing,
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeUnpacked,
@@ -160,7 +159,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					Phase: catalogdv1alpha1.PhasePending,
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeUnpacked,
@@ -205,7 +203,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					Phase: catalogdv1alpha1.PhaseUnpacking,
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeUnpacked,
@@ -251,7 +248,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					Phase: catalogdv1alpha1.PhaseFailing,
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeUnpacked,
@@ -297,7 +293,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					Phase: catalogdv1alpha1.PhaseFailing,
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeUnpacked,
@@ -345,7 +340,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					Phase:      catalogdv1alpha1.PhaseUnpacked,
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
 						{
@@ -397,7 +391,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					Phase: catalogdv1alpha1.PhaseFailing,
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeUnpacked,
@@ -650,7 +643,6 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					Phase:      catalogdv1alpha1.PhaseUnpacked,
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
 						{
@@ -689,7 +681,6 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					Phase:      catalogdv1alpha1.PhaseUnpacked,
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
 						{
@@ -728,7 +719,6 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					Phase:      catalogdv1alpha1.PhaseUnpacked,
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
 						{
@@ -767,7 +757,6 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					Phase:      catalogdv1alpha1.PhaseUnpacked,
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
 						{

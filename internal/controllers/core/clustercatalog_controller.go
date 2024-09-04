@@ -186,7 +186,6 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alp
 
 func updateStatusUnpackPending(status *v1alpha1.ClusterCatalogStatus, result *source.Result) {
 	status.ResolvedSource = nil
-	status.Phase = v1alpha1.PhasePending
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:    v1alpha1.TypeUnpacked,
 		Status:  metav1.ConditionFalse,
@@ -197,7 +196,6 @@ func updateStatusUnpackPending(status *v1alpha1.ClusterCatalogStatus, result *so
 
 func updateStatusUnpacking(status *v1alpha1.ClusterCatalogStatus, result *source.Result) {
 	status.ResolvedSource = nil
-	status.Phase = v1alpha1.PhaseUnpacking
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:    v1alpha1.TypeUnpacked,
 		Status:  metav1.ConditionFalse,
@@ -209,7 +207,6 @@ func updateStatusUnpacking(status *v1alpha1.ClusterCatalogStatus, result *source
 func updateStatusUnpacked(status *v1alpha1.ClusterCatalogStatus, result *source.Result, contentURL string, generation int64, lastUnpacked metav1.Time) {
 	status.ResolvedSource = result.ResolvedSource
 	status.ContentURL = contentURL
-	status.Phase = v1alpha1.PhaseUnpacked
 	status.ObservedGeneration = generation
 	status.LastUnpacked = lastUnpacked
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
@@ -222,7 +219,6 @@ func updateStatusUnpacked(status *v1alpha1.ClusterCatalogStatus, result *source.
 
 func updateStatusUnpackFailing(status *v1alpha1.ClusterCatalogStatus, err error) error {
 	status.ResolvedSource = nil
-	status.Phase = v1alpha1.PhaseFailing
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:    v1alpha1.TypeUnpacked,
 		Status:  metav1.ConditionFalse,
@@ -234,7 +230,6 @@ func updateStatusUnpackFailing(status *v1alpha1.ClusterCatalogStatus, err error)
 
 func updateStatusStorageError(status *v1alpha1.ClusterCatalogStatus, err error) error {
 	status.ResolvedSource = nil
-	status.Phase = v1alpha1.PhaseFailing
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:    v1alpha1.TypeUnpacked,
 		Status:  metav1.ConditionFalse,

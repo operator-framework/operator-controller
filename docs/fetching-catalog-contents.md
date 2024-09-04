@@ -91,7 +91,6 @@ of a catalog can be read from:
       status: "True"
       type: Unpacked
     contentURL: https://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json
-    phase: Unpacked
     resolvedSource:
       image:
         ref: quay.io/operatorhubio/catalog@sha256:e53267559addc85227c2a7901ca54b980bc900276fc24d3f4db0549cb38ecf76

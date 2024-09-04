@@ -15,9 +15,6 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.phase
-      name: Phase
-      type: string
     - jsonPath: .status.lastUnpacked
       name: LastUnpacked
       type: date
@@ -182,11 +179,6 @@ spec:
                   ClusterCatalog's generation, which is updated on mutation by the API Server.
                 format: int64
                 type: integer
-              phase:
-                description: |-
-                  phase represents a human-readable status of resolution of the content source.
-                  It is not appropriate to use for business logic determination.
-                type: string
               resolvedSource:
                 description: resolvedSource contains information about the resolved
                   source
