@@ -249,7 +249,6 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 		{"starts with period", ".start-with-period", regexMismatchError},
 		{"ends with period", "end-with-period.", regexMismatchError},
 		{"contains underscore", "some_thing", regexMismatchError},
-		{"starts with dot", ".some.thing", regexMismatchError},
 		{"multiple sequential separators", "a.-b", regexMismatchError},
 	}
 
