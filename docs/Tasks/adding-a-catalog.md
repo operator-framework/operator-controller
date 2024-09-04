@@ -76,8 +76,8 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
         ```
 
         ``` terminal title="Example output"
-        NAME                    AGE
-        operatorhubio           9s
+        NAME           LASTUNPACKED   AGE
+        operatorhubio  9m31s          9m55s
         ```
 
     * Check the status of your catalog:
