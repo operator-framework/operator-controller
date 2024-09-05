@@ -2,138 +2,108 @@ package contentmanager
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/rest"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/operator-framework/operator-controller/api/v1alpha1"
+	cmcache "github.com/operator-framework/operator-controller/internal/contentmanager/cache"
 	oclabels "github.com/operator-framework/operator-controller/internal/labels"
 )
 
-type Watcher interface {
-	// Watch will establish watches for resources owned by a ClusterExtension
-	Watch(context.Context, controller.Controller, *v1alpha1.ClusterExtension, []client.Object) error
-	// Unwatch will remove watches for a ClusterExtension
-	Unwatch(*v1alpha1.ClusterExtension)
+// Manager is a utility to manage content caches belonging
+// to ClusterExtensions
+type Manager interface {
+	// Get returns a managed content cache for the provided
+	// ClusterExtension if one exists. If one does not exist,
+	// a new Cache is created and returned
+	Get(context.Context, *v1alpha1.ClusterExtension) (cmcache.Cache, error)
+	// Delete will stop and remove a managed content cache
+	// for the provided ClusterExtension if one exists.
+	Delete(*v1alpha1.ClusterExtension) error
 }
 
 type RestConfigMapper func(context.Context, client.Object, *rest.Config) (*rest.Config, error)
 
-type extensionCacheData struct {
-	Cache  cache.Cache
-	Cancel context.CancelFunc
+// managerImpl is an implementation of the Manager interface
+type managerImpl struct {
+	rcm          RestConfigMapper
+	baseCfg      *rest.Config
+	caches       map[string]cmcache.Cache
+	mapper       meta.RESTMapper
+	mu           *sync.Mutex
+	syncTimeout  time.Duration
+	resyncPeriod time.Duration
 }
 
-type instance struct {
-	rcm             RestConfigMapper
-	baseCfg         *rest.Config
-	extensionCaches map[string]extensionCacheData
-	mapper          meta.RESTMapper
-	mu              *sync.Mutex
-}
+type ManagerOption func(*managerImpl)
 
-// New creates a new ContentManager object
-func New(rcm RestConfigMapper, cfg *rest.Config, mapper meta.RESTMapper) Watcher {
-	return &instance{
-		rcm:             rcm,
-		baseCfg:         cfg,
-		extensionCaches: make(map[string]extensionCacheData),
-		mapper:          mapper,
-		mu:              &sync.Mutex{},
+// WithSyncTimeout configures the time spent waiting
+// for a managed content source to sync
+func WithSyncTimeout(t time.Duration) ManagerOption {
+	return func(m *managerImpl) {
+		m.syncTimeout = t
 	}
 }
 
-// buildScheme builds a runtime.Scheme based on the provided client.Objects,
-// with all GroupVersionKinds mapping to the unstructured.Unstructured type
-// (unstructured.UnstructuredList for list kinds).
-//
-// If a provided client.Object does not set a Version or Kind field in its
-// GroupVersionKind, an error will be returned.
-func buildScheme(objs []client.Object) (*runtime.Scheme, error) {
-	scheme := runtime.NewScheme()
-	// The ClusterExtension types must be added to the scheme since its
-	// going to be used to establish watches that trigger reconciliation
-	// of the owning ClusterExtension
-	if err := v1alpha1.AddToScheme(scheme); err != nil {
-		return nil, fmt.Errorf("adding operator controller APIs to scheme: %w", err)
+// WithResyncPeriod configures the frequency
+// a managed content source attempts to resync
+func WithResyncPeriod(t time.Duration) ManagerOption {
+	return func(m *managerImpl) {
+		m.resyncPeriod = t
 	}
-
-	for _, obj := range objs {
-		gvk := obj.GetObjectKind().GroupVersionKind()
-
-		// If the Kind or Version is not set in an object's GroupVersionKind
-		// attempting to add it to the runtime.Scheme will result in a panic.
-		// To avoid panics, we are doing the validation and returning early
-		// with an error if any objects are provided with a missing Kind or Version
-		// field
-		if gvk.Kind == "" {
-			return nil, fmt.Errorf(
-				"adding %s to scheme; object Kind is not defined",
-				obj.GetName(),
-			)
-		}
-
-		if gvk.Version == "" {
-			return nil, fmt.Errorf(
-				"adding %s to scheme; object Version is not defined",
-				obj.GetName(),
-			)
-		}
-
-		listKind := gvk.Kind + "List"
-
-		if !scheme.Recognizes(gvk) {
-			// Since we can't have a mapping to every possible Go type in existence
-			// based on the GVK we need to use the unstructured types for mapping
-			u := &unstructured.Unstructured{}
-			u.SetGroupVersionKind(gvk)
-			ul := &unstructured.UnstructuredList{}
-			ul.SetGroupVersionKind(gvk.GroupVersion().WithKind(listKind))
-
-			scheme.AddKnownTypeWithName(gvk, u)
-			scheme.AddKnownTypeWithName(gvk.GroupVersion().WithKind(listKind), ul)
-			// Adding the common meta schemas to the scheme for the GroupVersion
-			// is necessary to ensure the scheme is aware of the different operations
-			// that can be performed against the resources in this GroupVersion
-			metav1.AddToGroupVersion(scheme, gvk.GroupVersion())
-		}
-	}
-
-	return scheme, nil
 }
 
-// Watch configures a controller-runtime cache.Cache and establishes watches for the provided resources.
-// It utilizes the provided ClusterExtension to set a DefaultLabelSelector on the cache.Cache
-// to ensure it is only caching and reacting to content that belongs to the ClusterExtension.
-// For each client.Object provided, a new source.Kind is created and used in a call to the Watch() method
-// of the provided controller.Controller to establish new watches for the managed resources.
-func (i *instance) Watch(ctx context.Context, ctrl controller.Controller, ce *v1alpha1.ClusterExtension, objs []client.Object) error {
-	if len(objs) == 0 || ce == nil || ctrl == nil {
-		return nil
+// NewManager creates a new Manager
+func NewManager(rcm RestConfigMapper, cfg *rest.Config, mapper meta.RESTMapper, opts ...ManagerOption) Manager {
+	m := &managerImpl{
+		rcm:          rcm,
+		baseCfg:      cfg,
+		caches:       make(map[string]cmcache.Cache),
+		mapper:       mapper,
+		mu:           &sync.Mutex{},
+		syncTimeout:  time.Second * 10,
+		resyncPeriod: time.Hour * 10,
+	}
+
+	for _, opt := range opts {
+		opt(m)
+	}
+
+	return m
+}
+
+// Get returns a Cache for the provided ClusterExtension.
+// If a cache does not already exist, a new one will be created.
+// If a nil ClusterExtension is provided this function will panic.
+func (i *managerImpl) Get(ctx context.Context, ce *v1alpha1.ClusterExtension) (cmcache.Cache, error) {
+	if ce == nil {
+		panic("nil ClusterExtension provided")
+	}
+
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	cache, ok := i.caches[ce.Name]
+	if ok {
+		return cache, nil
 	}
 
 	cfg, err := i.rcm(ctx, ce, i.baseCfg)
 	if err != nil {
-		return fmt.Errorf("getting rest.Config for ClusterExtension %q: %w", ce.Name, err)
+		return nil, fmt.Errorf("getting rest.Config: %w", err)
 	}
 
-	scheme, err := buildScheme(objs)
+	dynamicClient, err := dynamic.NewForConfig(cfg)
 	if err != nil {
-		return fmt.Errorf("building scheme for ClusterExtension %q: %w", ce.GetName(), err)
+		return nil, fmt.Errorf("getting dynamic client: %w", err)
 	}
 
 	tgtLabels := labels.Set{
@@ -141,83 +111,37 @@ func (i *instance) Watch(ctx context.Context, ctrl controller.Controller, ce *v1
 		oclabels.OwnerNameKey: ce.GetName(),
 	}
 
-	c, err := cache.New(cfg, cache.Options{
-		Scheme:               scheme,
-		DefaultLabelSelector: tgtLabels.AsSelector(),
-	})
-	if err != nil {
-		return fmt.Errorf("creating cache for ClusterExtension %q: %w", ce.Name, err)
+	dynamicSourcerer := &dynamicSourcerer{
+		// Due to the limitation outlined in the dynamic informer source,
+		// related to reusing an informer factory, we return a new informer
+		// factory every time to ensure we are not attempting to configure or
+		// start an already started informer
+		informerFactoryCreateFunc: func() dynamicinformer.DynamicSharedInformerFactory {
+			return dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicClient, time.Hour*10, metav1.NamespaceAll, func(lo *metav1.ListOptions) {
+				lo.LabelSelector = tgtLabels.AsSelector().String()
+			})
+		},
+		mapper: i.mapper,
 	}
-
-	for _, obj := range objs {
-		err = ctrl.Watch(
-			source.Kind(
-				c,
-				obj,
-				handler.TypedEnqueueRequestForOwner[client.Object](
-					scheme,
-					i.mapper,
-					ce,
-					handler.OnlyControllerOwner(),
-				),
-				predicate.Funcs{
-					CreateFunc:  func(tce event.TypedCreateEvent[client.Object]) bool { return false },
-					UpdateFunc:  func(tue event.TypedUpdateEvent[client.Object]) bool { return true },
-					DeleteFunc:  func(tde event.TypedDeleteEvent[client.Object]) bool { return true },
-					GenericFunc: func(tge event.TypedGenericEvent[client.Object]) bool { return true },
-				},
-			),
-		)
-		if err != nil {
-			return fmt.Errorf("creating watch for ClusterExtension %q managed resource %s: %w", ce.Name, obj.GetObjectKind().GroupVersionKind(), err)
-		}
-	}
-
-	// TODO: Instead of stopping the existing cache and replacing it every time
-	// we should stop the informers that are no longer required
-	// and create any new ones as necessary. To keep the initial pass
-	// simple, we are going to keep this as is and optimize in a follow-up.
-	// Doing this in a follow-up gives us the opportunity to verify that this functions
-	// as expected when wired up in the ClusterExtension reconciler before going too deep
-	// in optimizations.
-	i.mu.Lock()
-	if extCache, ok := i.extensionCaches[ce.GetName()]; ok {
-		extCache.Cancel()
-	}
-
-	cacheCtx, cancel := context.WithCancel(context.Background())
-	i.extensionCaches[ce.Name] = extensionCacheData{
-		Cache:  c,
-		Cancel: cancel,
-	}
-	i.mu.Unlock()
-
-	go func() {
-		err := c.Start(cacheCtx)
-		if err != nil {
-			i.Unwatch(ce)
-		}
-	}()
-
-	if !c.WaitForCacheSync(cacheCtx) {
-		i.Unwatch(ce)
-		return errors.New("cache could not sync, it has been stopped and removed")
-	}
-
-	return nil
+	cache = cmcache.NewCache(dynamicSourcerer, ce, i.syncTimeout)
+	i.caches[ce.Name] = cache
+	return cache, nil
 }
 
-// Unwatch will stop the cache for the provided ClusterExtension
-// stopping any watches on managed content
-func (i *instance) Unwatch(ce *v1alpha1.ClusterExtension) {
+// Delete stops and removes the Cache for the provided ClusterExtension
+func (i *managerImpl) Delete(ce *v1alpha1.ClusterExtension) error {
 	if ce == nil {
-		return
+		panic("nil ClusterExtension provided")
 	}
 
 	i.mu.Lock()
-	if extCache, ok := i.extensionCaches[ce.GetName()]; ok {
-		extCache.Cancel()
-		delete(i.extensionCaches, ce.GetName())
+	defer i.mu.Unlock()
+	if cache, ok := i.caches[ce.Name]; ok {
+		err := cache.Close()
+		if err != nil {
+			return fmt.Errorf("closing cache: %w", err)
+		}
+		delete(i.caches, ce.Name)
 	}
-	i.mu.Unlock()
+	return nil
 }

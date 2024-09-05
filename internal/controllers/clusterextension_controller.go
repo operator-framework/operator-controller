@@ -48,7 +48,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/applier"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/contentmanager"
@@ -58,7 +57,8 @@ import (
 )
 
 const (
-	ClusterExtensionCleanupUnpackCacheFinalizer = "olm.operatorframework.io/cleanup-unpack-cache"
+	ClusterExtensionCleanupUnpackCacheFinalizer         = "olm.operatorframework.io/cleanup-unpack-cache"
+	ClusterExtensionCleanupContentManagerCacheFinalizer = "olm.operatorframework.io/cleanup-contentmanager-cache"
 )
 
 // ClusterExtensionReconciler reconciles a ClusterExtension object
@@ -67,7 +67,7 @@ type ClusterExtensionReconciler struct {
 	Resolver              resolve.Resolver
 	Unpacker              rukpaksource.Unpacker
 	Applier               Applier
-	Watcher               contentmanager.Watcher
+	Manager               contentmanager.Manager
 	controller            crcontroller.Controller
 	cache                 cache.Cache
 	InstalledBundleGetter InstalledBundleGetter
@@ -75,7 +75,10 @@ type ClusterExtensionReconciler struct {
 }
 
 type Applier interface {
-	Apply(context.Context, fs.FS, *ocv1alpha1.ClusterExtension, map[string]string) ([]client.Object, string, error)
+	// Apply applies the content in the provided fs.FS using the configuration of the provided ClusterExtension.
+	// It also takes in a map[string]string to be applied to all applied resources as labels and another
+	// map[string]string used to create a unique identifier for a stored reference to the resources created.
+	Apply(context.Context, fs.FS, *ocv1alpha1.ClusterExtension, map[string]string, map[string]string) ([]client.Object, string, error)
 }
 
 type InstalledBundleGetter interface {
@@ -268,9 +271,12 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", unpackResult.Message)
 	}
 
-	lbls := map[string]string{
-		labels.OwnerKindKey:     ocv1alpha1.ClusterExtensionKind,
-		labels.OwnerNameKey:     ext.GetName(),
+	objLbls := map[string]string{
+		labels.OwnerKindKey: ocv1alpha1.ClusterExtensionKind,
+		labels.OwnerNameKey: ext.GetName(),
+	}
+
+	storeLbls := map[string]string{
 		labels.BundleNameKey:    resolvedBundle.Name,
 		labels.PackageNameKey:   resolvedBundle.Package,
 		labels.BundleVersionKey: resolvedBundleVersion.String(),
@@ -286,22 +292,10 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// to ensure exponential backoff can occur:
 	//   - Permission errors (it is not possible to watch changes to permissions.
 	//     The only way to eventually recover from permission errors is to keep retrying).
-	managedObjs, state, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, lbls)
+	managedObjs, _, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, objLbls, storeLbls)
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, err.Error())
 		return ctrl.Result{}, err
-	}
-
-	// Only attempt to watch resources if we are
-	// installing / upgrading. Otherwise we may restart
-	// watches that have already been established
-	if state != applier.StateUnchanged {
-		l.V(1).Info("watching managed objects")
-		if err := r.Watcher.Watch(ctx, r.controller, ext, managedObjs); err != nil {
-			setInstallStatus(ext, nil)
-			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
-			return ctrl.Result{}, err
-		}
 	}
 
 	installStatus := &ocv1alpha1.ClusterExtensionInstallStatus{
@@ -309,6 +303,38 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 	setInstallStatus(ext, installStatus)
 	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", resolvedBundle.Image))
+
+	l.V(1).Info("watching managed objects")
+	cache, err := r.Manager.Get(ctx, ext)
+	if err != nil {
+		// If we fail to get the cache, set the Healthy condition to
+		// "Unknown". We can't know the health of resources we can't monitor
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+			Type:               ocv1alpha1.TypeHealthy,
+			Reason:             ocv1alpha1.ReasonUnverifiable,
+			Status:             metav1.ConditionUnknown,
+			Message:            err.Error(),
+			ObservedGeneration: ext.Generation,
+		})
+		return ctrl.Result{}, err
+	}
+
+	if err := cache.Watch(ctx, r.controller, managedObjs...); err != nil {
+		// If we fail to establish watches, set the Healthy condition to
+		// "Unknown". We can't know the health of resources we can't monitor
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+			Type:               ocv1alpha1.TypeHealthy,
+			Reason:             ocv1alpha1.ReasonUnverifiable,
+			Status:             metav1.ConditionUnknown,
+			Message:            err.Error(),
+			ObservedGeneration: ext.Generation,
+		})
+		return ctrl.Result{}, err
+	}
+
+	// If we have successfully established the watches, remove the "Healthy" condition.
+	// It should be interpreted as "Unknown" when not present.
+	apimeta.RemoveStatusCondition(&ext.Status.Conditions, ocv1alpha1.TypeHealthy)
 
 	return ctrl.Result{}, nil
 }
