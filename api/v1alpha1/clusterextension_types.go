@@ -263,7 +263,7 @@ type CatalogSource struct {
 	//+optional
 	Version string `json:"version,omitempty"`
 
-	// channel is an optional reference to a channel belonging to
+	// channels is an optional reference to a set of channels belonging to
 	// the package specified in the packageName field.
 	//
 	// A "channel" is a package author defined stream of updates for an extension.
@@ -304,10 +304,10 @@ type CatalogSource struct {
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
-	//+kubebuilder:validation:MaxLength:=253
-	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+	//+kubebuilder:validation:items:MaxLength:=253
+	//+kubebuilder:validation:items:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
 	//+optional
-	Channel string `json:"channel,omitempty"`
+	Channels []string `json:"channels,omitempty"`
 
 	// selector is an optional field that can be used
 	// to filter the set of ClusterCatalogs used in the bundle

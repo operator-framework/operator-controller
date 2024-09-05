@@ -235,29 +235,29 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionChannel(t *testing.T) {
-	tooLongError := "spec.source.catalog.channel: Too long: may not be longer than 253"
-	regexMismatchError := "spec.source.catalog.channel in body should match"
+	tooLongError := "spec.source.catalog.channels[0]: Too long: may not be longer than 253"
+	regexMismatchError := "spec.source.catalog.channels[0] in body should match"
 
 	testCases := []struct {
-		name        string
-		channelName string
-		errMsg      string
+		name     string
+		channels []string
+		errMsg   string
 	}{
-		{"no channel name", "", ""},
-		{"hypen-separated", "hyphenated-name", ""},
-		{"dot-separated", "dotted.name", ""},
-		{"includes version", "channel-has-version-1.0.1", ""},
-		{"long channel name", strings.Repeat("x", 254), tooLongError},
-		{"spaces", "spaces spaces", regexMismatchError},
-		{"capitalized", "Capitalized", regexMismatchError},
-		{"camel case", "camelCase", regexMismatchError},
-		{"invalid characters", "many/invalid$characters+in_name", regexMismatchError},
-		{"starts with hyphen", "-start-with-hyphen", regexMismatchError},
-		{"ends with hyphen", "end-with-hyphen-", regexMismatchError},
-		{"starts with period", ".start-with-period", regexMismatchError},
-		{"ends with period", "end-with-period.", regexMismatchError},
-		{"contains underscore", "some_thing", regexMismatchError},
-		{"multiple sequential separators", "a.-b", regexMismatchError},
+		{"no channel name", []string{""}, regexMismatchError},
+		{"hypen-separated", []string{"hyphenated-name"}, ""},
+		{"dot-separated", []string{"dotted.name"}, ""},
+		{"includes version", []string{"channel-has-version-1.0.1"}, ""},
+		{"long channel name", []string{strings.Repeat("x", 254)}, tooLongError},
+		{"spaces", []string{"spaces spaces"}, regexMismatchError},
+		{"capitalized", []string{"Capitalized"}, regexMismatchError},
+		{"camel case", []string{"camelCase"}, regexMismatchError},
+		{"invalid characters", []string{"many/invalid$characters+in_name"}, regexMismatchError},
+		{"starts with hyphen", []string{"-start-with-hyphen"}, regexMismatchError},
+		{"ends with hyphen", []string{"end-with-hyphen-"}, regexMismatchError},
+		{"starts with period", []string{".start-with-period"}, regexMismatchError},
+		{"ends with period", []string{"end-with-period."}, regexMismatchError},
+		{"contains underscore", []string{"some_thing"}, regexMismatchError},
+		{"multiple sequential separators", []string{"a.-b"}, regexMismatchError},
 	}
 
 	t.Parallel()
@@ -271,7 +271,7 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 					SourceType: "Catalog",
 					Catalog: &ocv1alpha1.CatalogSource{
 						PackageName: "package",
-						Channel:     tc.channelName,
+						Channels:    tc.channels,
 					},
 				},
 				Install: ocv1alpha1.ClusterExtensionInstallConfig{
@@ -282,7 +282,7 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 				},
 			}))
 			if tc.errMsg == "" {
-				require.NoError(t, err, "unexpected error for channel %q: %w", tc.channelName, err)
+				require.NoError(t, err, "unexpected error for channel %q: %w", tc.channels, err)
 			} else {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errMsg)

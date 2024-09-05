@@ -30,6 +30,7 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -342,22 +343,27 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 // SetDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
 // based on the provided bundle
 func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, deprecation *declcfg.Deprecation) {
-	deprecations := map[string]declcfg.DeprecationEntry{}
+	deprecations := map[string][]declcfg.DeprecationEntry{}
+	channelSet := sets.New[string]()
+	if ext.Spec.Source.Catalog != nil {
+		for _, channel := range ext.Spec.Source.Catalog.Channels {
+			channelSet.Insert(channel)
+		}
+	}
 	if deprecation != nil {
 		for _, entry := range deprecation.Entries {
 			switch entry.Reference.Schema {
 			case declcfg.SchemaPackage:
-				deprecations[ocv1alpha1.TypePackageDeprecated] = entry
+				deprecations[ocv1alpha1.TypePackageDeprecated] = []declcfg.DeprecationEntry{entry}
 			case declcfg.SchemaChannel:
-				if ext.Spec.Source.Catalog.Channel != entry.Reference.Name {
-					continue
+				if channelSet.Has(entry.Reference.Name) {
+					deprecations[ocv1alpha1.TypeChannelDeprecated] = append(deprecations[ocv1alpha1.TypeChannelDeprecated], entry)
 				}
-				deprecations[ocv1alpha1.TypeChannelDeprecated] = entry
 			case declcfg.SchemaBundle:
 				if bundleName != entry.Reference.Name {
 					continue
 				}
-				deprecations[ocv1alpha1.TypeBundleDeprecated] = entry
+				deprecations[ocv1alpha1.TypeBundleDeprecated] = []declcfg.DeprecationEntry{entry}
 			}
 		}
 	}
@@ -369,8 +375,10 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, d
 		ocv1alpha1.TypeChannelDeprecated,
 		ocv1alpha1.TypeBundleDeprecated,
 	} {
-		if entry, ok := deprecations[conditionType]; ok {
-			deprecationMessages = append(deprecationMessages, entry.Message)
+		if entries, ok := deprecations[conditionType]; ok {
+			for _, entry := range entries {
+				deprecationMessages = append(deprecationMessages, entry.Message)
+			}
 		}
 	}
 
@@ -393,11 +401,13 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, d
 		ocv1alpha1.TypeChannelDeprecated,
 		ocv1alpha1.TypeBundleDeprecated,
 	} {
-		entry, ok := deprecations[conditionType]
+		entries, ok := deprecations[conditionType]
 		status, reason, message := metav1.ConditionFalse, ocv1alpha1.ReasonDeprecated, ""
 		if ok {
-			status, reason, message = metav1.ConditionTrue, ocv1alpha1.ReasonDeprecated, entry.Message
-			deprecationMessages = append(deprecationMessages, message)
+			status, reason = metav1.ConditionTrue, ocv1alpha1.ReasonDeprecated
+			for _, entry := range entries {
+				message = fmt.Sprintf("%s\n%s", message, entry.Message)
+			}
 		}
 		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 			Type:               conditionType,

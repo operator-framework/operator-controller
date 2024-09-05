@@ -27,7 +27,7 @@ import (
 func TestInvalidClusterExtensionVersionRange(t *testing.T) {
 	r := CatalogResolver{}
 	pkgName := randPkg()
-	ce := buildFooClusterExtension(pkgName, "", "foobar", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "foobar", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	assert.EqualError(t, err, `desired version range "foobar" is invalid: improper constraint: foobar`)
 }
@@ -37,7 +37,7 @@ func TestErrorWalkingCatalogs(t *testing.T) {
 		return fmt.Errorf("fake error")
 	}}
 	pkgName := randPkg()
-	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	assert.EqualError(t, err, "error walking catalogs: fake error")
 }
@@ -50,7 +50,7 @@ func TestErrorGettingPackage(t *testing.T) {
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 	pkgName := randPkg()
-	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	assert.EqualError(t, err, fmt.Sprintf(`error walking catalogs: error getting package %q from catalog "a": fake error`, pkgName))
 }
@@ -69,9 +69,9 @@ func TestPackageDoesNotExist(t *testing.T) {
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 	pkgName := randPkg()
-	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
-	assert.EqualError(t, err, fmt.Sprintf(`no package %q found`, pkgName))
+	assert.EqualError(t, err, fmt.Sprintf(`no bundles found for package %q`, pkgName))
 }
 
 func TestPackageExists(t *testing.T) {
@@ -88,11 +88,11 @@ func TestPackageExists(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
-	assert.Equal(t, genBundle(pkgName, "2.0.0"), *gotBundle)
-	assert.Equal(t, bsemver.MustParse("2.0.0"), *gotVersion)
+	assert.Equal(t, genBundle(pkgName, "3.0.0"), *gotBundle)
+	assert.Equal(t, bsemver.MustParse("3.0.0"), *gotVersion)
 	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
 }
 
@@ -117,7 +117,7 @@ func TestValidationFailed(t *testing.T) {
 			},
 		},
 	}
-	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	require.Error(t, err)
 }
@@ -136,9 +136,9 @@ func TestVersionDoesNotExist(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", "3.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "4.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
-	assert.EqualError(t, err, fmt.Sprintf(`no package %q matching version "3.0.0" found`, pkgName))
+	assert.EqualError(t, err, fmt.Sprintf(`no bundles found for package %q matching version "4.0.0"`, pkgName))
 }
 
 func TestVersionExists(t *testing.T) {
@@ -155,7 +155,7 @@ func TestVersionExists(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", ">=1.0.0 <2.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, ">=1.0.0 <2.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "1.0.2"), *gotBundle)
@@ -177,9 +177,9 @@ func TestChannelDoesNotExist(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "stable", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{"stable"}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
-	assert.EqualError(t, err, fmt.Sprintf(`no package %q in channel "stable" found`, pkgName))
+	assert.EqualError(t, err, fmt.Sprintf(`no bundles found for package %q in channels [stable]`, pkgName))
 }
 
 func TestChannelExists(t *testing.T) {
@@ -196,7 +196,7 @@ func TestChannelExists(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "beta", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{"beta"}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "1.0.2"), *gotBundle)
@@ -218,9 +218,9 @@ func TestChannelExistsButNotVersion(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "beta", "3.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{"beta"}, "3.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
-	assert.EqualError(t, err, fmt.Sprintf(`no package %q matching version "3.0.0" in channel "beta" found`, pkgName))
+	assert.EqualError(t, err, fmt.Sprintf(`no bundles found for package %q matching version "3.0.0" in channels [beta]`, pkgName))
 }
 
 func TestVersionExistsButNotChannel(t *testing.T) {
@@ -237,9 +237,9 @@ func TestVersionExistsButNotChannel(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "stable", "1.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{"stable"}, "1.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
-	assert.EqualError(t, err, fmt.Sprintf(`no package %q matching version "1.0.0" in channel "stable" found`, pkgName))
+	assert.EqualError(t, err, fmt.Sprintf(`no bundles found for package %q matching version "1.0.0" in channels [stable]`, pkgName))
 }
 
 func TestChannelAndVersionExist(t *testing.T) {
@@ -256,7 +256,7 @@ func TestChannelAndVersionExist(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "alpha", "0.1.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{"alpha"}, "0.1.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "0.1.0"), *gotBundle)
@@ -278,7 +278,7 @@ func TestPreferNonDeprecated(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", ">=0.1.0 <=1.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, ">=0.1.0 <=1.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "0.1.0"), *gotBundle)
@@ -300,7 +300,7 @@ func TestAcceptDeprecated(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", ">=1.0.0 <=1.0.1", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, ">=1.0.0 <=1.0.1", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	assert.Equal(t, genBundle(pkgName, "1.0.1"), *gotBundle)
@@ -383,7 +383,7 @@ func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 
 	t.Run("when bundle candidates for a package are deprecated in all but one catalog", func(t *testing.T) {
-		ce := buildFooClusterExtension(pkgName, "", ">=1.0.0 <=1.0.3", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+		ce := buildFooClusterExtension(pkgName, []string{}, ">=1.0.0 <=1.0.3", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 		gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 		require.NoError(t, err)
 		// We choose the only non-deprecated package
@@ -393,29 +393,29 @@ func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 	})
 
 	t.Run("when bundle candidates are found and deprecated in multiple catalogs", func(t *testing.T) {
-		ce := buildFooClusterExtension(pkgName, "", ">=1.0.0 <=1.0.1", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+		ce := buildFooClusterExtension(pkgName, []string{}, ">=1.0.0 <=1.0.1", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 		gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 		require.Error(t, err)
 		// We will not make a decision on which catalog to use
-		assert.ErrorContains(t, err, "found in multiple catalogs: [b c]")
+		assert.ErrorContains(t, err, "in multiple catalogs with the same priority [b c]")
 		assert.Nil(t, gotBundle)
 		assert.Nil(t, gotVersion)
 		assert.Nil(t, gotDeprecation)
 	})
 
 	t.Run("when bundle candidates are found and not deprecated in multiple catalogs", func(t *testing.T) {
-		ce := buildFooClusterExtension(pkgName, "", ">=1.0.0 <=1.0.4", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+		ce := buildFooClusterExtension(pkgName, []string{}, ">=1.0.0 <=1.0.4", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 		gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 		require.Error(t, err)
 		// We will not make a decision on which catalog to use
-		assert.ErrorContains(t, err, "found in multiple catalogs: [d f]")
+		assert.ErrorContains(t, err, "in multiple catalogs with the same priority [d f]")
 		assert.Nil(t, gotBundle)
 		assert.Nil(t, gotVersion)
 		assert.Nil(t, gotDeprecation)
 	})
 
 	t.Run("highest semver bundle is chosen when candidates are all from the same catalog", func(t *testing.T) {
-		ce := buildFooClusterExtension(pkgName, "", ">=1.0.4 <=1.0.5", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+		ce := buildFooClusterExtension(pkgName, []string{}, ">=1.0.4 <=1.0.5", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 		gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 		require.NoError(t, err)
 		// Bundles within one catalog for a package will be sorted by semver and deprecation and the best is returned
@@ -440,7 +440,7 @@ func TestUpgradeFoundLegacy(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	installedBundle := &ocv1alpha1.BundleMetadata{
 		Name:    bundleName(pkgName, "0.1.0"),
 		Version: "0.1.0",
@@ -468,14 +468,14 @@ func TestUpgradeNotFoundLegacy(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", "<1.0.0 >=2.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "<1.0.0 >=2.0.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	installedBundle := &ocv1alpha1.BundleMetadata{
 		Name:    bundleName(pkgName, "0.1.0"),
 		Version: "0.1.0",
 	}
 	// 0.1.0 only upgrades to 1.0.x with its legacy upgrade edges, so this fails.
 	_, _, _, err := r.Resolve(context.Background(), ce, installedBundle)
-	assert.EqualError(t, err, fmt.Sprintf(`error upgrading from currently installed version "0.1.0": no package %q matching version "<1.0.0 >=2.0.0" found`, pkgName))
+	assert.EqualError(t, err, fmt.Sprintf(`error upgrading from currently installed version "0.1.0": no bundles found for package %q matching version "<1.0.0 >=2.0.0"`, pkgName))
 }
 
 func TestUpgradeFoundSemver(t *testing.T) {
@@ -493,7 +493,7 @@ func TestUpgradeFoundSemver(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	installedBundle := &ocv1alpha1.BundleMetadata{
 		Name:    bundleName(pkgName, "1.0.0"),
 		Version: "1.0.0",
@@ -523,7 +523,7 @@ func TestUpgradeNotFoundSemver(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", "!=0.1.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "!=0.1.0", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	installedBundle := &ocv1alpha1.BundleMetadata{
 		Name:    bundleName(pkgName, "0.1.0"),
 		Version: "0.1.0",
@@ -531,7 +531,7 @@ func TestUpgradeNotFoundSemver(t *testing.T) {
 	// there are legacy upgrade edges from 0.1.0 to 1.0.x, but we are using semver semantics here.
 	// therefore, we expect to fail because there are no semver-compatible upgrade edges from 0.1.0.
 	_, _, _, err := r.Resolve(context.Background(), ce, installedBundle)
-	assert.EqualError(t, err, fmt.Sprintf(`error upgrading from currently installed version "0.1.0": no package %q matching version "!=0.1.0" found`, pkgName))
+	assert.EqualError(t, err, fmt.Sprintf(`error upgrading from currently installed version "0.1.0": no bundles found for package %q matching version "!=0.1.0"`, pkgName))
 }
 
 func TestDowngradeFound(t *testing.T) {
@@ -548,7 +548,7 @@ func TestDowngradeFound(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", "<1.0.2", ocv1alpha1.UpgradeConstraintPolicyIgnore)
+	ce := buildFooClusterExtension(pkgName, []string{}, "<1.0.2", ocv1alpha1.UpgradeConstraintPolicyIgnore)
 	installedBundle := &ocv1alpha1.BundleMetadata{
 		Name:    bundleName(pkgName, "1.0.2"),
 		Version: "1.0.2",
@@ -576,14 +576,14 @@ func TestDowngradeNotFound(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", ">0.1.0 <1.0.0", ocv1alpha1.UpgradeConstraintPolicyIgnore)
+	ce := buildFooClusterExtension(pkgName, []string{}, ">0.1.0 <1.0.0", ocv1alpha1.UpgradeConstraintPolicyIgnore)
 	installedBundle := &ocv1alpha1.BundleMetadata{
 		Name:    bundleName(pkgName, "1.0.2"),
 		Version: "1.0.2",
 	}
 	// Downgrades are allowed via the upgrade constraint policy, but there is no bundle in the specified range.
 	_, _, _, err := r.Resolve(context.Background(), ce, installedBundle)
-	assert.EqualError(t, err, fmt.Sprintf(`error upgrading from currently installed version "1.0.2": no package %q matching version ">0.1.0 <1.0.0" found`, pkgName))
+	assert.EqualError(t, err, fmt.Sprintf(`error upgrading from currently installed version "1.0.2": no bundles found for package %q matching version ">0.1.0 <1.0.0"`, pkgName))
 }
 
 func TestCatalogWalker(t *testing.T) {
@@ -640,7 +640,7 @@ func TestCatalogWalker(t *testing.T) {
 	})
 }
 
-func buildFooClusterExtension(pkg, channel, version string, upgradeConstraintPolicy ocv1alpha1.UpgradeConstraintPolicy) *ocv1alpha1.ClusterExtension {
+func buildFooClusterExtension(pkg string, channels []string, version string, upgradeConstraintPolicy ocv1alpha1.UpgradeConstraintPolicy) *ocv1alpha1.ClusterExtension {
 	return &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: pkg,
@@ -654,8 +654,8 @@ func buildFooClusterExtension(pkg, channel, version string, upgradeConstraintPol
 				SourceType: "Catalog",
 				Catalog: &ocv1alpha1.CatalogSource{
 					PackageName:             pkg,
-					Channel:                 channel,
 					Version:                 version,
+					Channels:                channels,
 					UpgradeConstraintPolicy: upgradeConstraintPolicy,
 				},
 			},
@@ -744,6 +744,9 @@ func genPackage(pkg string) *declcfg.DeclarativeConfig {
 				{Name: bundleName(pkg, "0.1.0")},
 				{Name: bundleName(pkg, "1.0.2"), SkipRange: "<1.0.2"},
 			}},
+			{Package: pkg, Name: "gamma", Entries: []declcfg.ChannelEntry{
+				{Name: bundleName(pkg, "3.0.0"), SkipRange: ">=2.0.0 <3.0.0"},
+			}},
 		},
 		Bundles: []declcfg.Bundle{
 			genBundle(pkg, "0.1.0"),
@@ -751,6 +754,7 @@ func genPackage(pkg string) *declcfg.DeclarativeConfig {
 			genBundle(pkg, "1.0.1"),
 			genBundle(pkg, "1.0.2"),
 			genBundle(pkg, "2.0.0"),
+			genBundle(pkg, "3.0.0"),
 		},
 		Deprecations: []declcfg.Deprecation{packageDeprecation(pkg)},
 	}
@@ -847,7 +851,7 @@ func TestClusterExtensionMatchLabel(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	ce.Spec.Source.Catalog.Selector.MatchLabels = map[string]string{"olm.operatorframework.io/name": "b"}
 
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
@@ -866,12 +870,12 @@ func TestClusterExtensionNoMatchLabel(t *testing.T) {
 		},
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
-	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	ce.Spec.Source.Catalog.Selector.MatchLabels = map[string]string{"olm.operatorframework.io/name": "a"}
 
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	require.Error(t, err)
-	require.ErrorContains(t, err, fmt.Sprintf("no package %q found", pkgName))
+	require.ErrorContains(t, err, fmt.Sprintf("no bundles found for package %q", pkgName))
 }
 
 func TestUnequalPriority(t *testing.T) {
@@ -908,7 +912,7 @@ func TestUnequalPriority(t *testing.T) {
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 
-	ce := buildFooClusterExtension(pkgName, "", "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	_, gotVersion, _, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	require.Equal(t, bsemver.MustParse("1.0.0"), *gotVersion)
@@ -929,11 +933,33 @@ func TestMultiplePriority(t *testing.T) {
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 
-	ce := buildFooClusterExtension(pkgName, "", ">=1.0.0 <=1.0.1", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	ce := buildFooClusterExtension(pkgName, []string{}, ">=1.0.0 <=1.0.1", ocv1alpha1.UpgradeConstraintPolicyEnforce)
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "found in multiple catalogs: [a b c]")
+	assert.ErrorContains(t, err, "in multiple catalogs with the same priority [a b c]")
 	assert.Nil(t, gotBundle)
 	assert.Nil(t, gotVersion)
 	assert.Nil(t, gotDeprecation)
+}
+
+func TestMultipleChannels(t *testing.T) {
+	pkgName := randPkg()
+	w := staticCatalogWalker{
+		"a": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+			return &declcfg.DeclarativeConfig{}, nil, nil
+		},
+		"b": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+			return &declcfg.DeclarativeConfig{}, nil, nil
+		},
+		"c": func() (*declcfg.DeclarativeConfig, *catalogd.ClusterCatalogSpec, error) {
+			return genPackage(pkgName), nil, nil
+		},
+	}
+	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
+	ce := buildFooClusterExtension(pkgName, []string{"beta", "alpha"}, "", ocv1alpha1.UpgradeConstraintPolicyEnforce)
+	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
+	require.NoError(t, err)
+	assert.Equal(t, genBundle(pkgName, "2.0.0"), *gotBundle)
+	assert.Equal(t, bsemver.MustParse("2.0.0"), *gotVersion)
+	assert.Equal(t, ptr.To(packageDeprecation(pkgName)), gotDeprecation)
 }
