@@ -249,6 +249,17 @@ func main() {
 		Preflights:         preflights,
 	}
 
+	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
+	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+		ext := obj.(*ocv1alpha1.ClusterExtension)
+		err := cm.Delete(ext)
+		return crfinalizer.Result{}, err
+	}))
+	if err != nil {
+		setupLog.Error(err, "unable to register content manager cleanup finalizer")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.ClusterExtensionReconciler{
 		Client:                cl,
 		Resolver:              resolver,
@@ -256,7 +267,7 @@ func main() {
 		Applier:               applier,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
-		Watcher:               contentmanager.New(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper()),
+		Manager:               cm,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)

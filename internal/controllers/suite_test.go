@@ -30,7 +30,6 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 
@@ -38,6 +37,7 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/contentmanager"
+	cmcache "github.com/operator-framework/operator-controller/internal/contentmanager/cache"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 )
@@ -92,7 +92,7 @@ type MockApplier struct {
 	state string
 }
 
-func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1alpha1.ClusterExtension, _ map[string]string) ([]client.Object, string, error) {
+func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1alpha1.ClusterExtension, _ map[string]string, _ map[string]string) ([]client.Object, string, error) {
 	if m.err != nil {
 		return nil, m.state, m.err
 	}
@@ -100,17 +100,43 @@ func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1alpha1.ClusterExt
 	return m.objs, m.state, nil
 }
 
-var _ contentmanager.Watcher = (*MockWatcher)(nil)
+var _ contentmanager.Manager = (*MockManagedContentCacheManager)(nil)
 
-type MockWatcher struct {
-	err error
+type MockManagedContentCacheManager struct {
+	err   error
+	cache cmcache.Cache
 }
 
-func (m *MockWatcher) Watch(_ context.Context, _ controller.Controller, _ *ocv1alpha1.ClusterExtension, _ []client.Object) error {
+func (m *MockManagedContentCacheManager) Get(_ context.Context, _ *ocv1alpha1.ClusterExtension) (cmcache.Cache, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	return m.cache, nil
+}
+
+func (m *MockManagedContentCacheManager) Delete(_ *ocv1alpha1.ClusterExtension) error {
 	return m.err
 }
 
-func (m *MockWatcher) Unwatch(_ *ocv1alpha1.ClusterExtension) {}
+type MockManagedContentCache struct {
+	err error
+}
+
+var _ cmcache.Cache = (*MockManagedContentCache)(nil)
+
+func (m *MockManagedContentCache) Close() error {
+	if m.err != nil {
+		return m.err
+	}
+	return nil
+}
+
+func (m *MockManagedContentCache) Watch(_ context.Context, _ cmcache.Watcher, _ ...client.Object) error {
+	if m.err != nil {
+		return m.err
+	}
+	return nil
+}
 
 func newClientAndReconciler(t *testing.T) (client.Client, *controllers.ClusterExtensionReconciler) {
 	cl := newClient(t)

@@ -414,6 +414,7 @@ const (
 	// TODO(user): add more Types, here and into init()
 	TypeInstalled = "Installed"
 	TypeResolved  = "Resolved"
+	TypeHealthy   = "Healthy"
 
 	// TypeDeprecated is a rollup condition that is present when
 	// any of the deprecated conditions are present.
@@ -438,6 +439,8 @@ const (
 
 	ReasonErrorGettingReleaseState = "ErrorGettingReleaseState"
 
+	ReasonUnverifiable = "Unverifiable"
+
 	CRDUpgradeSafetyPolicyEnabled  CRDUpgradeSafetyPolicy = "Enabled"
 	CRDUpgradeSafetyPolicyDisabled CRDUpgradeSafetyPolicy = "Disabled"
 )
@@ -452,6 +455,7 @@ func init() {
 		TypeChannelDeprecated,
 		TypeBundleDeprecated,
 		TypeUnpacked,
+		TypeHealthy,
 	)
 	// TODO(user): add Reasons from above
 	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
@@ -465,6 +469,7 @@ func init() {
 		ReasonUnpackSuccess,
 		ReasonUnpackFailed,
 		ReasonErrorGettingReleaseState,
+		ReasonUnverifiable,
 	)
 }
 
