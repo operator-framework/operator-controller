@@ -76,6 +76,11 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 				g.Expect(cond.Reason).To(Equal(catalogd.ReasonUnpackSuccessful))
 			}).Should(Succeed())
 
+			By("Checking that it has an appropriate name label")
+			Expect(catalog.ObjectMeta.Labels).To(Not(BeNil()))
+			Expect(catalog.ObjectMeta.Labels).To(Not(BeEmpty()))
+			Expect(catalog.ObjectMeta.Labels).To(HaveKeyWithValue("olm.operatorframework.io/metadata.name", catalogName))
+
 			By("Making sure the catalog content is available via the http server")
 			actualFBC, err := ReadTestCatalogServerContents(ctx, catalog, c, kubeClient)
 			Expect(err).To(Not(HaveOccurred()))
