@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+# Get the directory of the current script
+SCRIPT_ROOT=$(dirname "$(realpath "$0")")
+
+source "${SCRIPT_ROOT}/lib/unpack.sh"
+source "${SCRIPT_ROOT}/lib/collect-rbac.sh"
+source "${SCRIPT_ROOT}/lib/utils.sh"
+
+# Set the container runtime, default to docker
+export CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
+
+function usage() {
+    print-banner
+    echo ""
+    echo "Usage:"
+    echo ""
+    echo "Generate installation manifests"
+    echo "$0 install <package-name> <package-version> [-n namespace] [-e cluster-extension-name] [-cr cluster-role-name] [-r role-name] [-s service-account-name] [--use-defaults]"
+    echo ""
+    echo "Generate RBAC manifests"
+    echo "$0 rbac <package-name> <package-version> [-n namespace] [-e cluster-extension-name] [-cr cluster-role-name] [-r role-name] [-s service-account-name] [--use-defaults]"
+    echo ""
+    echo "Generate installation or RBAC manifests for a registry+v1 package given an FBA catalog in stdin"
+    echo ""
+    echo "Options:"
+    echo "  -n <namespace> - Namespace where the extension is installed"
+    echo "  -e <cluster-extension-name> - Name of the extension"
+    echo "  -cr <cluster-role-name> - Name of the cluster role"
+    echo "  -r <role-name> - Name of the role"
+    echo "  -s <service-account-name> - Name of the service account"
+    echo "  --use-defaults - Use default resource names"
+    echo ""
+    echo "Template Variables:"
+    echo " * \${NAMESPACE} - Namespace where the extension is installed"
+    echo " * \${EXTENSION_NAME} - Name of the extension"
+    echo " * \${CLUSTER_ROLE_NAME} - Name of the cluster role"
+    echo " * \${ROLE_NAME} - Name of the role"
+    echo " * \${SERVICE_ACCOUNT_NAME} - Name of the service account"
+    echo ""
+    echo "Default Resource Name Format:"
+    echo " * Namespace: <cluster-extension-name>-system"
+    echo " * Extension name: <package-name>"
+    echo " * ClusterRole name: <service-account-name>-cluster-role"
+    echo " * Role name: <service-account-name>-installer-role"
+    echo " * ServiceAccount name: <package-name>-installer"
+    echo " * ClusterRoleBinding name: <cluster-role-name>-binding"
+    echo " * RoleBinding name: <role-name>-binding"
+    echo ""
+    echo "Examples:"
+    echo "  # Generate installation manifests for the argocd-operator package"
+    echo "  $0 install argocd-operator 0.6.0 --use-defaults < operatorhubio-catalog.json"
+    echo ""
+    echo "  # Generate RBAC manifests for the argocd-operator package"
+    echo "  $0 rbac argocd-operator 0.6.0 --use-defaults < operatorhubio-catalog.json"
+    echo ""
+    echo "  # Generate templated installation manifests for the argocd-operator package"
+    echo "  $0 install argocd-operator 0.6.0 < operatorhubio-catalog.json"
+    echo ""
+    echo "  # Generate templated RBAC manifests for the argocd-operator package"
+    echo "  $0 rbac argocd-operator 0.6.0 < operatorhubio-catalog.json"
+    echo ""
+    echo "WARNING: This script is a stopgap solution until proper tools are available in OLMv1 - it is not guaranteed to work with all packages."
+}
+
+# Check for at least 3 arguments
+if [ "$#" -lt 3 ]; then
+    usage
+    exit 1
+fi
+
+# Command and package details
+COMMAND=$1
+export PACKAGE_NAME=$2
+export PACKAGE_VERSION=$3
+
+# Initialize environment variables with template defaults
+export NAMESPACE="\${NAMESPACE}"
+export EXTENSION_NAME="\${EXTENSION-NAME}"
+export CLUSTER_ROLE_NAME="\${CLUSTER_ROLE_NAME}"
+export ROLE_NAME="\${ROLE_NAME}"
+export SERVICE_ACCOUNT_NAME="\${SERVICE_ACCOUNT_NAME}"
+export DEBUG=false
+use_defaults=false
+
+# Parse optional arguments
+shift 3
+while [[ $# -gt 0 ]]; do
+    key="$1"
+
+    case $key in
+        -n)
+            export NAMESPACE="$2"
+            shift 2
+            ;;
+        -e)
+            export EXTENSION_NAME="$2"
+            shift 2
+            ;;
+        -cr)
+            export CLUSTER_ROLE_NAME="$2"
+            shift 2
+            ;;
+        -r)
+            export ROLE_NAME="$2"
+            shift 2
+            ;;
+        -s)
+            export SERVICE_ACCOUNT_NAME="$2"
+            shift 2
+            ;;
+        --use-defaults)
+            use_defaults=true
+            shift
+            ;;
+        --debug)
+          DEBUG=1
+          shift
+          ;;
+        *)
+            echo "Unknown option $1"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+# Apply default values only to unset parameters if --use-defaults is set
+if [ "$use_defaults" = true ]; then
+    [ "$EXTENSION_NAME" == "\${EXTENSION-NAME}" ] && export EXTENSION_NAME="${PACKAGE_NAME}"
+    [ "$NAMESPACE" == "\${NAMESPACE}" ] && export NAMESPACE="${EXTENSION_NAME}-system"
+    [ "$SERVICE_ACCOUNT_NAME" == "\${SERVICE_ACCOUNT_NAME}" ] && export SERVICE_ACCOUNT_NAME="${PACKAGE_NAME}-installer"
+    [ "$CLUSTER_ROLE_NAME" == "\${CLUSTER_ROLE_NAME}" ] && export CLUSTER_ROLE_NAME="${SERVICE_ACCOUNT_NAME}-cluster-role"
+    [ "$ROLE_NAME" == "\${ROLE_NAME}" ] && export ROLE_NAME="${SERVICE_ACCOUNT_NAME}-installer-role"
+fi
+
+# Output the set environment variables for confirmation
+debug "Environment variables set:"
+debug "NAMESPACE=${NAMESPACE}"
+debug "EXTENSION_NAME=${EXTENSION_NAME}"
+debug "CLUSTER_ROLE_NAME=${CLUSTER_ROLE_NAME}"
+debug "ROLE_NAME=${ROLE_NAME}"
+debug "SERVICE_ACCOUNT_NAME=${SERVICE_ACCOUNT_NAME}"
+
+# Find bundle image
+image="$(cat - | get-bundle-image "${PACKAGE_NAME}" "${PACKAGE_VERSION}")"
+
+# Unpack and close container
+bundle_manifest_dir="$("${SCRIPT_ROOT}/unpack-bundle" "${image}")"
+
+# Derive rbac from bundle manifests
+collect_installer_rbac "${bundle_manifest_dir}"
+echo "Done" >&2
+
+# Example output or further processing based on command
+case "${COMMAND}" in
+    install)
+        generate_install_manifests | envsubst
+        ;;
+    rbac)
+        generate_rbac_manifests | envsubst
+        ;;
+    *)
+        echo "Unknown command ${COMMAND}"
+        usage
+        exit 1
+        ;;
+esac
+
+# Clean up manifest directory
+if [ "${DEBUG,,}" != "false" ]; then
+    debug "Skipping cleanup of manifest directory: ${bundle_manifest_dir}"
+else
+  rm -rf "${bundle_manifest_dir}"
+fi
