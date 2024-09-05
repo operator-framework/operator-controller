@@ -231,7 +231,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 			Catalog: &ocv1alpha1.CatalogSource{
 				PackageName: "prometheus",
 				Selector: metav1.LabelSelector{
-					MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
+					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
 				},
 			},
 		},
@@ -548,7 +548,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 				Selector: metav1.LabelSelector{
 					MatchExpressions: []metav1.LabelSelectorRequirement{
 						{
-							Key:      "olm.operatorframework.io/name",
+							Key:      "olm.operatorframework.io/metadata.name",
 							Operator: metav1.LabelSelectorOpIn,
 							Values:   []string{extensionCatalog.Name},
 						},
@@ -652,7 +652,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 			Catalog: &ocv1alpha1.CatalogSource{
 				PackageName: "prometheus",
 				Selector: metav1.LabelSelector{
-					MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
+					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
 				},
 			},
 		},
@@ -713,8 +713,8 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 		assert.Contains(ct, cond.Message, "resolved to")
 		assert.Equal(ct,
 			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
-				Name:    "prometheus-operator.1.2.0",
-				Version: "1.2.0",
+				Name:    "prometheus-operator.2.0.0",
+				Version: "2.0.0",
 			}},
 			clusterExtension.Status.Resolution,
 		)
@@ -734,7 +734,7 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 			Catalog: &ocv1alpha1.CatalogSource{
 				PackageName: "prometheus",
 				Selector: metav1.LabelSelector{
-					MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
+					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
 				},
 			},
 		},
@@ -806,7 +806,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 			Catalog: &ocv1alpha1.CatalogSource{
 				PackageName: "prometheus",
 				Selector: metav1.LabelSelector{
-					MatchLabels: map[string]string{"olm.operatorframework.io/name": extensionCatalog.Name},
+					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
 				},
 			},
 		},
