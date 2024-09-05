@@ -8,3 +8,8 @@
 - op: add
   path: /webhooks/0/clientConfig/service/port
   value: 443
+- op: add
+  path: /webhooks/0/matchConditions
+  value:
+    - name: MissingOrIncorrectMetadataNameLabel
+      expression: "!has(object.metadata.labels) || !('olm.operatorframework.io/metadata.name' in object.metadata.labels) || object.metadata.labels['olm.operatorframework.io/metadata.name'] != object.metadata.name"
