@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+# Get the directory of the current script
+SCRIPT_ROOT=$(dirname "$(realpath "$0")")
+
+source "${SCRIPT_ROOT}/lib/unpack.sh"
+source "${SCRIPT_ROOT}/lib/utils.sh"
+
+export CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
+
+usage() {
+    print-banner
+    echo ""
+    echo "Usage: $0 [-o output_directory] bundle_image"
+    echo ""
+    echo "Unpack a bundle image to a directory``"
+    echo ""
+    echo "Examples:"
+    echo "  # Unpack argcocd-operator bundle image to a temporary directory"
+    echo "  $0 quay.io/operatorhubio/argocd-operator@sha256:d538c45a813b38ef0e44f40d279dc2653f97ca901fb660da5d7fe499d51ad3b3"
+    echo ""
+    echo "  # Unpack the bundle image to a specific directory"
+    echo "  $0 -o argocd-manifests quay.io/operatorhubio/argocd-operator@sha256:d538c45a813b38ef0e44f40d279dc2653f97ca901fb660da5d7fe499d51ad3b3"
+}
+
+# Initialize variables
+output_directory=$(mktemp -d)
+bundle_image=""
+
+# Parse command line arguments
+while getopts "o:" opt; do
+    case ${opt} in
+        o)
+            output_directory=${OPTARG}
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+shift $((OPTIND -1))
+
+# Check if bundle image argument is provided or read from stdin
+if [ -z "$1" ]; then
+    if [ -t 0 ]; then
+        echo "Error: Docker image name is required."
+        usage
+    else
+        read -r bundle_image
+    fi
+else
+    bundle_image="$1"
+fi
+
+if [ -z "${bundle_image}" ]; then
+    echo "Error: Docker image name is required."
+    usage
+    exit 1
+fi
+
+# Validate output directory
+if [ ! -d "$output_directory" ]; then
+    mkdir -p "$output_directory"
+fi
+
+# Unpack the bundle image
+container_id="$(create_container "$bundle_image")"
+unpack "${container_id}" "${output_directory}"
+
+echo "${output_directory}"
