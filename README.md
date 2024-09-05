@@ -2,7 +2,6 @@
 The operator-controller is the central component of Operator Lifecycle Manager (OLM) v1.
 It extends Kubernetes with an API through which users can install extensions.
 
-
 ## Mission
 
 OLM’s purpose is to provide APIs, controllers, and tooling that support the packaging, distribution, and lifecycling of Kubernetes extensions. It aims to:
@@ -23,91 +22,185 @@ For a more complete overview of OLM v1 and how it differs from OLM v0, see our [
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
 
-> [!NOTE] 
+> [!NOTE]
 > Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
 
-### Additional setup on Macintosh computers
-On Macintosh computers some additional setup is necessary to install and configure compatible tooling.
+### Installation
 
-#### Install Homebrew and tools
-Follow the instructions to [installing Homebrew](https://docs.brew.sh/Installation) and then execute the following to install tools:
+> [!CAUTION]  
+> Operator-Controller depends on [cert-manager](https://cert-manager.io/). Running the following command
+> may affect an existing installation of cert-manager and cause cluster instability.
 
-```sh
-brew install bash gnu-tar gsed
+The latest version of Operator Controller can be installed with the following command:
+
+```bash
+curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh | bash -s
 ```
 
-#### Configure your shell
-Modify your login shell's `PATH` to prefer the new tools over those in the existing environment.  This example should work either with `zsh` (in $HOME/.zshrc) or `bash` (in $HOME/.bashrc):
+### Create a ClusterCatalog
 
-```sh
-for bindir in `find $(brew --prefix)/opt -type d -follow -name gnubin -print`
-do
-  export PATH=$bindir:$PATH
-done
+The ClusterCatalog resource supports file-based catalog ([FBC](https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs)) images.
+The following example uses the official [OperatorHub](https://operatorhub.io) catalog.
+
+```bash
+# Create ClusterCatalog
+kubectl apply -f - <<EOF
+apiVersion: catalogd.operatorframework.io/v1alpha1
+kind: ClusterCatalog
+metadata:
+  name: operatorhubio
+spec:
+  source:
+    type: image
+    image:
+      ref: quay.io/operatorhubio/catalog:latest
+      pollInterval: 10m
+EOF
 ```
 
-### Running on the cluster
-1. Install Instances of Custom Resources:
-
-```sh
-kubectl apply -f config/samples/
+```bash
+# Wait for the ClusterCatalog to be unpacked
+kubectl wait --for=condition=Unpacked=True clustercatalog/operatorhubio --timeout=60s
 ```
 
-2. Build and push your image to the location specified by `IMG`:
-	
-```sh
-make docker-build docker-push IMG=<some-registry>/operator-controller:tag
-```
-	
-3. Deploy the controller to the cluster with the image specified by `IMG`:
+### Install Cluster Extension
 
-```sh
-make deploy IMG=<some-registry>/operator-controller:tag
+```bash
+# Apply the sample ClusterExtension. Manifest already includes
+# namespace and adequately privileged service account
+kubectl apply -f config/samples/olm_v1alpha1_clusterextension.yaml
 ```
 
-### Uninstall CRDs
-To delete the CRDs from the cluster:
+#### Upgrade/Downgrade
 
-```sh
-make uninstall
+```bash
+# Update the required version
+kubectl patch clusterextension argocd --type='merge' -p '{"spec": {"version": "0.11.0"}}'
 ```
 
-### Undeploy controller
-To undeploy the controller from the cluster:
+#### Uninstall
 
-```sh
-make undeploy
+```bash
+# Delete cluster extension and residing namespace
+kubectl delete clusterextension/argocd && kubectl delete namespace argocd
 ```
 
-## Contributing
-
-Refer to [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
-
-### How it works
-This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
-
-It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/)
-which provide a reconcile function responsible for synchronizing resources until the desired state is reached on the cluster.
-
-### Test It Out
-
-Install the CRDs and the operator-controller into a new [KIND cluster](https://kind.sigs.k8s.io/):
-```sh
-make run
-```
-This will build a local container image of the operator-controller, create a new KIND cluster and then deploy onto that cluster.
-This will also deploy the catalogd and cert-manager dependencies.
-
-### Modifying the API definitions
-If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
-
-```sh
-make manifests
+```bash
+# Delete cluster-scoped resources
+kubectl delete --ignore-not-found=true -f config/samples/olm_v1alpha1_clusterextension.yaml 
 ```
 
-**NOTE:** Run `make help` for more information on all potential `make` targets.
+### Advanced Usage
 
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html).
+> [!WARNING]
+> The scripts referenced in this section are best-effort and may not always work as
+> intended. They are provided as a stopgap until we can offer production grade tooling
+> for tasks such as: searching the catalog, discovering supported bundles, and determining
+> the least-privilege set of permissions required by the installer service account to install
+> the content.
+
+#### Installation
+
+An extension needs a namespace in which to be installed and a service account with sufficient
+privileges to install the content. For instance:
+
+```bash
+# Create argocd namespace for the argocd-operator
+kubectl create ns argocd
+```
+
+```bash
+# Create installer service account
+kubectl create serviceaccount -n argocd-system argocd-installer
+```
+
+> [!WARNING]
+> We work around the absence of reliable tooling to determine the set of least privileges
+> for the installer service account to be able to install a given bundle by giving
+> the installer service account cluster admin privileges.
+> This is not an option for production clusters due to the security implications.
+> The OLM community is working hard to bridge this tooling gap.
+
+```bash
+# Give service account cluster admin privileges
+# This works with KIND - consult documentation for instructions on how
+# to grant admin privileges for your kubernetes distribution 
+kubectl create clusterrolebinding "argocd-operator-installer-cluster-admin" \
+    --clusterrole=cluster-admin \
+    --serviceaccount="argocd-system:argocd-operator-installer"
+```
+
+```bash
+# Apply ClusterExtension
+cat <<EOF
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
+metadata:
+  name: argocd
+spec:
+  installNamespace: argocd-system
+  packageName: argocd-operator
+  version: 0.6.0
+  serviceAccount:
+    name: argocd-operator-installer
+EOF | kubectl apply -f -
+```
+
+```bash
+# Wait for installation to finish successfully
+kubectl wait --for=condition=Success=True clusterextension/argocd --timeout=60s
+```
+
+#### Finding Content
+
+The catalog content can be downloaded locally as a json file and queried using tools like [jq](The catalog content can be downloaded locally as a json file and queried using tools like [jq](The catalog content can be downloaded locally as a json file and queried using tools like [jq](https://jqlang.github.io/jq/).
+The _catalogd-catalogserver_ service in the _olmv1-system_ namespace provides an endpoint from which to
+download the catalog. This endpoint can be found in the status (.status.contentURL). 
+
+The [download-catalog.sh](hack/tools/catalogs/download-catalog) script automates this process:
+
+```bash
+# Download the catalog provided by the unpacked ClusterCatalog called operatorhuio
+# The catalog will be downloaded to operatorhubio-catalog.json
+./hack/tools/catalogs/download-catalog operatorhubio
+```
+
+OLM v1 currently supports the installation of bundles that:
+- support the 'AllNamespaces' install mode
+- do not have any package or gvk dependencies
+- do not have webhooks
+
+The [list-compatible-bundles.sh](hack/tools/catalogs/list-compatible-bundles) script attempts
+to filter out unsupported bundles:
+
+```bash
+# Returns a JSON array of {packageName: "", versions: ["", ...]} objects
+# This array can be further queried with jq
+./hack/tools/catalogs/list-compatible-bundles < operatorhubio-catalog.json
+# The -r option also allows you to define a regular expression for the package name
+# for futher filtering
+./hack/tools/catalogs/list-compatible-bundles -r 'argocd' < operatorhubio-catalog.json
+```
+
+#### Determining Service Account Privileges
+
+The installer service account needs sufficient privileges to create the bundle's resources,
+as well as to assign RBAC to those resources. This information can be derived from the 
+bundle's ClusterServiceVersion manifest.
+
+The [install-bundle.sh](hack/tools/catalogs/bundle-manifests) script generates all required
+manifests for a bundle installation (including Namespace, and ClusterExtension resources), but can also
+be used to determine the RBAC for the installer service account:
+
+```bash
+# Get RBAC for a ClusterExtension called 'argocd'
+# using package 'argocd-operator' at version '0.6.0'
+# in namespace 'argocd-system'
+RBAC_ONLY=1 ./hack/tools/catalogs/bundle-manifests argocd argocd-operator 0.6.0 argocd-system < operatorhubio-catalog.json
+# Or, let the script do all the heavy lifting (creation of Namespace, and ClusterExtension, as well as
+# the ServiceAccount and all required RBAC
+./hack/tools/catalogs/bundle-manifests argocd argocd-operator 0.6.0 argocd-system < operatorhubio-catalog.json | kubectl apply -f -
+```
 
 ## License
 
