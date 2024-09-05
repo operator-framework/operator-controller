@@ -14,7 +14,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.2
 	github.com/operator-framework/api v0.27.0
-	github.com/operator-framework/catalogd v0.23.0
+	github.com/operator-framework/catalogd v0.26.0
 	github.com/operator-framework/helm-operator-plugins v0.5.0
 	github.com/operator-framework/operator-registry v1.46.0
 	github.com/spf13/pflag v1.0.5
@@ -161,7 +161,7 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.20.2 // indirect
+	github.com/prometheus/client_golang v1.20.3 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
