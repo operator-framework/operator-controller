@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# Get the directory of the current script
+SCRIPT_ROOT=$(dirname "$(realpath "$0")")
+
+source "${SCRIPT_ROOT}/lib/unpack.sh"
+source "${SCRIPT_ROOT}/lib/collect-rbac.sh"
+source "${SCRIPT_ROOT}/lib/utils.sh"
+
+usage() {
+    print-banner
+    echo ""
+    echo "Usage: $0 <manifest_dirn>"
+    echo ""
+    echo "Check if a bundle is supported by OLM v1 given a bundle manifest directory"
+    echo ""
+    echo "Example:"
+    echo "  $0 <manifest_dir>"
+}
+
+# Must have a single argument
+if [ -z "$1" ]; then
+    if [ -t 0 ]; then
+        echo "Error: Docker image name is required."
+        usage
+        exit 1
+    else
+        read -r manifest_dir
+    fi
+else
+    manifest_dir="$1"
+fi
+
+ # Check the bundle is supported
+echo "Checking if bundle is supported by OLM v1" >&2
+assert-bundle-supported "${manifest_dir}"
+
+echo "Bundle is supported by OLM v1" >&2
+echo "true"
