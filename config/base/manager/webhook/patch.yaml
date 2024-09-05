@@ -8,6 +8,3 @@
 - op: add
   path: /webhooks/0/clientConfig/service/port
   value: 443
-- op: add
-  path: /metadata/annotations/cert-manager.io~1inject-ca-from-secret
-  value: cert-manager/olmv1-ca

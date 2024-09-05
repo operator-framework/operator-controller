@@ -13,3 +13,9 @@ patches:
     kind: Deployment
     name: controller-manager
   path: patches/manager_deployment_certs.yaml
+- target:
+    group: admissionregistration.k8s.io
+    kind: MutatingWebhookConfiguration
+    name: mutating-webhook-configuration
+    version: v1
+  path: patches/catalogd_webhook.yaml
