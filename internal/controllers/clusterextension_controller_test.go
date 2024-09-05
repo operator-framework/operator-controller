@@ -120,7 +120,7 @@ func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 				Catalog: &ocv1alpha1.CatalogSource{
 					PackageName: pkgName,
 					Version:     pkgVer,
-					Channel:     pkgChan,
+					Channels:    []string{pkgChan},
 				},
 			},
 			Install: ocv1alpha1.ClusterExtensionInstallConfig{
@@ -196,7 +196,7 @@ func TestClusterExtensionUnpackFails(t *testing.T) {
 				Catalog: &ocv1alpha1.CatalogSource{
 					PackageName: pkgName,
 					Version:     pkgVer,
-					Channel:     pkgChan,
+					Channels:    []string{pkgChan},
 				},
 			},
 			Install: ocv1alpha1.ClusterExtensionInstallConfig{
@@ -274,7 +274,7 @@ func TestClusterExtensionUnpackUnexpectedState(t *testing.T) {
 				Catalog: &ocv1alpha1.CatalogSource{
 					PackageName: pkgName,
 					Version:     pkgVer,
-					Channel:     pkgChan,
+					Channels:    []string{pkgChan},
 				},
 			},
 			Install: ocv1alpha1.ClusterExtensionInstallConfig{
@@ -353,7 +353,7 @@ func TestClusterExtensionUnpackSucceeds(t *testing.T) {
 				Catalog: &ocv1alpha1.CatalogSource{
 					PackageName: pkgName,
 					Version:     pkgVer,
-					Channel:     pkgChan,
+					Channels:    []string{pkgChan},
 				},
 			},
 			Install: ocv1alpha1.ClusterExtensionInstallConfig{
@@ -435,7 +435,7 @@ func TestClusterExtensionInstallationFailedApplierFails(t *testing.T) {
 				Catalog: &ocv1alpha1.CatalogSource{
 					PackageName: pkgName,
 					Version:     pkgVer,
-					Channel:     pkgChan,
+					Channels:    []string{pkgChan},
 				},
 			},
 			Install: ocv1alpha1.ClusterExtensionInstallConfig{
@@ -523,7 +523,7 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 				Catalog: &ocv1alpha1.CatalogSource{
 					PackageName: pkgName,
 					Version:     pkgVer,
-					Channel:     pkgChan,
+					Channels:    []string{pkgChan},
 				},
 			},
 			Install: ocv1alpha1.ClusterExtensionInstallConfig{
@@ -621,7 +621,7 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 				Catalog: &ocv1alpha1.CatalogSource{
 					PackageName: pkgName,
 					Version:     pkgVer,
-					Channel:     pkgChan,
+					Channels:    []string{pkgChan},
 				},
 			},
 			Install: ocv1alpha1.ClusterExtensionInstallConfig{
@@ -720,7 +720,7 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 				Catalog: &ocv1alpha1.CatalogSource{
 					PackageName: pkgName,
 					Version:     pkgVer,
-					Channel:     pkgChan,
+					Channels:    []string{pkgChan},
 				},
 			},
 			Install: ocv1alpha1.ClusterExtensionInstallConfig{
@@ -868,9 +868,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1alpha1.ClusterExtensionSpec{
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1alpha1.CatalogSource{
-							Channel: "",
-						},
+						Catalog:    &ocv1alpha1.CatalogSource{},
 					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
@@ -884,9 +882,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 				Spec: ocv1alpha1.ClusterExtensionSpec{
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: "Catalog",
-						Catalog: &ocv1alpha1.CatalogSource{
-							Channel: "",
-						},
+						Catalog:    &ocv1alpha1.CatalogSource{},
 					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
@@ -938,7 +934,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: "Catalog",
 						Catalog: &ocv1alpha1.CatalogSource{
-							Channel: "nondeprecated",
+							Channels: []string{"nondeprecated"},
 						},
 					},
 				},
@@ -954,7 +950,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: "Catalog",
 						Catalog: &ocv1alpha1.CatalogSource{
-							Channel: "nondeprecated",
+							Channels: []string{"nondeprecated"},
 						},
 					},
 				},
@@ -1009,7 +1005,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: "Catalog",
 						Catalog: &ocv1alpha1.CatalogSource{
-							Channel: "badchannel",
+							Channels: []string{"badchannel"},
 						},
 					},
 				},
@@ -1025,7 +1021,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: "Catalog",
 						Catalog: &ocv1alpha1.CatalogSource{
-							Channel: "badchannel",
+							Channels: []string{"badchannel"},
 						},
 					},
 				},
@@ -1081,7 +1077,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: "Catalog",
 						Catalog: &ocv1alpha1.CatalogSource{
-							Channel: "badchannel",
+							Channels: []string{"badchannel"},
 						},
 					},
 				},
@@ -1097,7 +1093,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: "Catalog",
 						Catalog: &ocv1alpha1.CatalogSource{
-							Channel: "badchannel",
+							Channels: []string{"badchannel"},
 						},
 					},
 				},
@@ -1166,7 +1162,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: "Catalog",
 						Catalog: &ocv1alpha1.CatalogSource{
-							Channel: "badchannel",
+							Channels: []string{"badchannel"},
 						},
 					},
 				},
@@ -1182,7 +1178,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: "Catalog",
 						Catalog: &ocv1alpha1.CatalogSource{
-							Channel: "badchannel",
+							Channels: []string{"badchannel"},
 						},
 					},
 				},
@@ -1245,7 +1241,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: "Catalog",
 						Catalog: &ocv1alpha1.CatalogSource{
-							Channel: "badchannel",
+							Channels: []string{"badchannel"},
 						},
 					},
 				},
@@ -1261,7 +1257,7 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: "Catalog",
 						Catalog: &ocv1alpha1.CatalogSource{
-							Channel: "badchannel",
+							Channels: []string{"badchannel"},
 						},
 					},
 				},
@@ -1309,6 +1305,85 @@ func TestSetDeprecationStatus(t *testing.T) {
 							Schema: declcfg.SchemaPackage,
 						},
 						Message: "bad package!",
+					},
+				},
+			},
+		},
+		{
+			name: "deprecated channels specified, ChannelDeprecated and Deprecated status set to true, others set to false",
+			clusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"badchannel", "anotherbadchannel"},
+						},
+					},
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"badchannel", "anotherbadchannel"},
+						},
+					},
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               ocv1alpha1.TypeDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypePackageDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeChannelDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeBundleDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+					},
+				},
+			},
+			bundle: &declcfg.Bundle{},
+			deprecation: &declcfg.Deprecation{
+				Entries: []declcfg.DeprecationEntry{
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaChannel,
+							Name:   "badchannel",
+						},
+						Message: "bad channel!",
+					},
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaChannel,
+							Name:   "anotherbadchannel",
+						},
+						Message: "another bad channedl!",
 					},
 				},
 			},

@@ -199,9 +199,9 @@ spec:
                       catalog is used to configure how information is sourced from a catalog. This field must be defined when sourceType is set to "Catalog",
                       and must be the only field defined for this sourceType.
                     properties:
-                      channel:
+                      channels:
                         description: |-
-                          channel is an optional reference to a channel belonging to
+                          channels is an optional reference to a set of channels belonging to
                           the package specified in the packageName field.
 
                           A "channel" is a package author defined stream of updates for an extension.
@@ -241,9 +241,11 @@ spec:
                             - --default-channel
 
                           [RFC 1123]: https://tools.ietf.org/html/rfc1123
-                        maxLength: 253
-                        pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
-                        type: string
+                        items:
+                          maxLength: 253
+                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                          type: string
+                        type: array
                       packageName:
                         description: |-
                           packageName is a reference to the name of the package to be installed
