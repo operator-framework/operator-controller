@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+SCRIPT_ROOT=$(dirname "$(realpath "$0")")
+source "${SCRIPT_ROOT}/lib/utils.sh"
+
+# Constants
+SERVICE_NAMESPACE="olmv1-system"
+SERVICE_NAME="catalogd-catalogserver"
+LOCAL_PORT=8001
+SERVICE_PORT=443  # Assuming the service uses HTTPS on port 443
+
+# Display usage
+usage() {
+    print-banner
+    echo ""
+    echo "Usage: $0 <catalog-name>"
+    echo ""
+    echo "Download catalog from a ClusterCatalog in a cluster reachable from KUBECONFIG"
+    echo "Downloaded catalog will be saved as <catalog-name>-catalog.json"
+    echo ""
+    echo "Example:"
+    echo "  $0 operatorhubio"
+}
+
+# Check if catalog name is provided
+if [ -z "$1" ]; then
+    usage
+    exit 1
+fi
+
+CATALOG_NAME="$1"
+
+# Check if the clustercatalog resource exists
+echo "Checking if ClusterCatalog $CATALOG_NAME exists..."
+CLUSTER_CATALOG=$(kubectl get clustercatalog "$CATALOG_NAME" -o json 2>/dev/null)
+if [ -z "$CLUSTER_CATALOG" ]; then
+    echo "ClusterCatalog $CATALOG_NAME does not exist."
+    exit 1
+fi
+
+# Check if the Unpacked condition is true
+UNPACKED_CONDITION=$(echo "$CLUSTER_CATALOG" | jq -r '.status.conditions[]? // [] | select(.type=="Unpacked") | .status')
+if [ "$UNPACKED_CONDITION" != "True" ]; then
+    echo "ClusterCatalog $CATALOG_NAME is not unpacked yet."
+    exit 1
+fi
+
+# Get the contentURL
+CONTENT_URL=$(echo "$CLUSTER_CATALOG" | jq -r '.status.contentURL')
+if [ -z "$CONTENT_URL" ]; then
+    echo "Content URL not found for ClusterCatalog $CATALOG_NAME."
+    exit 1
+fi
+
+# Start port forwarding
+echo "Starting kubectl port-forward to $SERVICE_NAME on port $LOCAL_PORT..."
+kubectl port-forward -n "$SERVICE_NAMESPACE" svc/"$SERVICE_NAME" $LOCAL_PORT:$SERVICE_PORT &>/dev/null &
+PORT_FORWARD_PID=$!
+sleep 2  # Wait for the port-forwarding to start
+
+# Modify the contentURL to hit localhost:<port>
+LOCAL_CONTENT_URL=$(echo "$CONTENT_URL" | sed "s|https://[^/]*|https://localhost:$LOCAL_PORT|")
+
+# Download the catalog using wget
+echo "Downloading catalog from $LOCAL_CONTENT_URL..."
+wget --no-check-certificate "$LOCAL_CONTENT_URL" -O "${CATALOG_NAME}-catalog.json"
+
+# Stop the port forwarding
+echo "Stopping kubectl port-forward..."
+kill $PORT_FORWARD_PID
+
+echo "Catalog downloaded to ${CATALOG_NAME}-catalog.json"
