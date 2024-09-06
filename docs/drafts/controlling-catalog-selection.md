@@ -51,7 +51,7 @@ spec:
         example.com/support: "true"
 ```
 
-This selects catalogs labeled with `redhat.com/support: "true"`.
+This selects catalogs labeled with `example.com/support: "true"`.
 
 #### Using `matchExpressions`
 
@@ -72,7 +72,7 @@ spec:
             - "platinum"
 ```
 
-This selects catalogs where the label `redhat.com/support` has the value `gold` or `platinum`.
+This selects catalogs where the label `example.com/support` has the value `gold` or `platinum`.
 
 ### Excluding Catalogs
 
@@ -110,11 +110,11 @@ spec:
   catalog:
     selector:
       matchExpressions:
-        - key: redhat.com/support
+        - key: example.com/support
           operator: DoesNotExist
 ```
 
-This selects catalogs that do not have the `redhat.com/support` label.
+This selects catalogs that do not have the `example.com/support` label.
 
 ### Setting Catalog Priority
 
@@ -165,7 +165,7 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
    metadata:
      name: catalog-a
      labels:
-       redhat.com/support: "true"
+       example.com/support: "true"
    spec:
      priority: 1000
      source:
@@ -203,7 +203,7 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
      catalog:
        selector:
          matchLabels:
-           redhat.com/support: "true"
+           example.com/support: "true"
    ```
 
 3. **Apply the Resources**
