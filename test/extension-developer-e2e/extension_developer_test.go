@@ -41,7 +41,7 @@ func TestExtensionDeveloper(t *testing.T) {
 
 	catalog := &catalogd.ClusterCatalog{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "catalog",
+			Name: "catalog",
 		},
 		Spec: catalogd.ClusterCatalogSpec{
 			Source: catalogd.CatalogSource{
