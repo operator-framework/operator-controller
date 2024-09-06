@@ -106,7 +106,7 @@ generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyI
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
-verify: tidy fmt vet generate manifests #HELP Verify all generated code is up-to-date.
+verify: tidy fmt vet generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date.
 	git diff --exit-code
 
 .PHONY: fix-lint
@@ -298,6 +298,15 @@ quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the installation release man
 	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
 ##@ Docs
+
+.PHONY: crd-ref-docs
+API_REFERENCE_FILENAME := operator-controller-api-reference.md
+crd-ref-docs: $(CRD_REF_DOCS)
+	rm -f $(ROOT_DIR)/docs/refs/api/$(API_REFERENCE_FILENAME)
+	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api \
+	--config=$(ROOT_DIR)/config/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml \
+	--renderer=markdown \
+	--output-path=$(ROOT_DIR)/docs/refs/api/$(API_REFERENCE_FILENAME)
 
 VENVDIR := $(abspath docs/.venv)
 
