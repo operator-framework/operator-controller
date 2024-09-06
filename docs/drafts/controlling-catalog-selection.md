@@ -48,7 +48,7 @@ spec:
   catalog:
     selector:
       matchLabels:
-        redhat.com/support: "true"
+        example.com/support: "true"
 ```
 
 This selects catalogs labeled with `redhat.com/support: "true"`.
