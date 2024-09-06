@@ -180,7 +180,7 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
    metadata:
      name: catalog-b
      labels:
-       redhat.com/support: "false"
+       example.com/support: "false"
    spec:
      priority: 500
      source:
