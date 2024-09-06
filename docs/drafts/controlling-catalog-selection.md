@@ -90,7 +90,7 @@ spec:
   catalog:
     selector:
       matchExpressions:
-        - key: olm.operatorframework.io/name
+        - key: olm.operatorframework.io/metadata.name
           operator: NotIn
           values:
             - unwanted-catalog
