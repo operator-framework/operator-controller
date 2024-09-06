@@ -13,9 +13,9 @@ nav:
   - Components: 'components.md'
   - Tasks:
     - Adding a catalog of extensions: 'Tasks/adding-a-catalog.md'
-    - Finding extensions to install: 'Tasks/explore-available-packages.md'
+    - Finding extensions to install: 'Tasks/exploring-available-packages.md'
     - Installing an extension: 'Tasks/installing-an-extension.md'
-    - Deleting an extension: 'Tasks/uninstall-an-extension.md'
+    - Deleting an extension: 'Tasks/uninstalling-an-extension.md'
   - References:
     - Catalog queries: 'refs/catalog-queries.md'
     - CRD Upgrade Safety: 'refs/crd-upgrade-safety.md'

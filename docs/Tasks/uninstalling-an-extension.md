@@ -32,3 +32,7 @@ You can uninstall a Kubernetes extension and its associated custom resource defi
     ``` text title="Example output"
     No resources found
     ```
+  
+### Cleanup
+
+* Remove the extension namespace, and installer service account cluster-scoped RBAC resources (if applicable).

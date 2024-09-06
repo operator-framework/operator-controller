@@ -3,16 +3,13 @@
 In Operator Lifecycle Manager (OLM) 1.0, Kubernetes extensions are scoped to the cluster.
 After you add a catalog to your cluster, you can install an extension by creating a custom resource (CR) and applying it.
 
-!!! important
-
-    Currently, extensions that use webhooks or target a single or specified set of namespaces cannot be installed.
-    Extensions must not include webhooks and must use the `AllNamespaces` install mode.
-
-
 ## Prerequisites
 
-* The `jq` CLI tool is installed.
-* You have added a catalog to your cluster.
+* A deployed and unpacked catalog
+* The name, and optionally version, or channel, of the extension to be installed
+* The extension must be compatible with OLM 1.0 (see [current OLM v1 limitations](../drafts/refs/olmv1-limitations.md))
+* An existing namespace in which to install the extension
+* A suitable service account for installation (more information can be found [here](../drafts/Tasks/create-installer-service-account.md))
 
 ## Procedure
 
