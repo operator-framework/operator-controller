@@ -65,7 +65,7 @@ spec:
   catalog:
     selector:
       matchExpressions:
-        - key: redhat.com/support
+        - key: example.com/support
           operator: In
           values:
             - "gold"
