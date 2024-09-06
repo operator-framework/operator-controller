@@ -236,3 +236,4 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
 - [Minimal Controls for Selecting Catalogs to Resolve From](https://github.com/operator-framework/operator-controller/issues/1028)
 - [RFC: Minimal Catalog Selection - Labels](https://docs.google.com/document/d/1v9iPRZHt1YXhwK9__7OITnEN430lryQzWaAaIpn---Y)
 - [RFC: Minimal Catalog Selection - Priority](https://docs.google.com/document/d/1jGAOvE0yf_U2lpyhy2U0KPLGOaG-8-ML0lve1mR-o1Q)
+- [General Concept - Working with Labels & Selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/)
