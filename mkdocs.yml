@@ -17,6 +17,8 @@ nav:
     - Installing an extension: 'Tasks/installing-an-extension.md'
     - Deleting an extension: 'Tasks/uninstalling-an-extension.md'
   - References:
+    - API references:
+      - Operator controller API reference: 'refs/api/operator-controller-api-reference.md'
     - Catalog queries: 'refs/catalog-queries.md'
     - CRD Upgrade Safety: 'refs/crd-upgrade-safety.md'
 

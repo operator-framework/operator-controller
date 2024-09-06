@@ -29,6 +29,12 @@ $(CONTROLLER_GEN): $(BINGO_DIR)/controller-gen.mod
 	@echo "(re)installing $(GOBIN)/controller-gen-v0.16.1"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=controller-gen.mod -o=$(GOBIN)/controller-gen-v0.16.1 "sigs.k8s.io/controller-tools/cmd/controller-gen"
 
+CRD_REF_DOCS := $(GOBIN)/crd-ref-docs-v0.1.0
+$(CRD_REF_DOCS): $(BINGO_DIR)/crd-ref-docs.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/crd-ref-docs-v0.1.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=crd-ref-docs.mod -o=$(GOBIN)/crd-ref-docs-v0.1.0 "github.com/elastic/crd-ref-docs"
+
 GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.60.3
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
