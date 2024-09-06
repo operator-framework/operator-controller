@@ -1,3 +1,5 @@
+# Exploring Available Packages
+
 After you add a catalog of extensions to your cluster, you must port forward your catalog as a service.
 Then you can query the catalog by using `curl` commands and the `jq` CLI tool to find extensions to install.
 
