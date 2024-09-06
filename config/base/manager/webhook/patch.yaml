@@ -8,8 +8,13 @@
 - op: add
   path: /webhooks/0/clientConfig/service/port
   value: 443
+# Make sure there's a name defined, otherwise, we can't create a label. This could happen when generateName is set
+# Then, if any of the conditions are true, create the label:
+# 1. No labels exist
+# 2. The olm.operatorframework.io/metadata.name label doesn't exist
+# 3. The olm.operatorframework.io/metadata.name label doesn't match the name
 - op: add
   path: /webhooks/0/matchConditions
   value:
     - name: MissingOrIncorrectMetadataNameLabel
-      expression: "!has(object.metadata.labels) || !('olm.operatorframework.io/metadata.name' in object.metadata.labels) || object.metadata.labels['olm.operatorframework.io/metadata.name'] != object.metadata.name"
+      expression: "'name' in object.metadata && (!has(object.metadata.labels) || !('olm.operatorframework.io/metadata.name' in object.metadata.labels) || object.metadata.labels['olm.operatorframework.io/metadata.name'] != object.metadata.name)"
