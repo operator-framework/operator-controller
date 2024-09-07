@@ -273,7 +273,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 			return
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1alpha1.ReasonUnpackSuccess, cond.Reason)
+		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "unpack successful")
 	}, pollDuration, pollInterval)
 
@@ -324,7 +324,7 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 			return
 		}
 		assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-		assert.Equal(ct, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
+		assert.Equal(ct, ocv1alpha1.ReasonFailed, cond.Reason)
 		assert.Contains(ct, cond.Message, "in multiple catalogs with the same priority [operatorhubio test-catalog]")
 		assert.Nil(ct, clusterExtension.Status.Resolution)
 	}, pollDuration, pollInterval)
@@ -393,7 +393,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		if !assert.NotNil(ct, cond) {
 			return
 		}
-		assert.Equal(ct, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
+		assert.Equal(ct, ocv1alpha1.ReasonFailed, cond.Reason)
 		assert.Equal(ct, "error upgrading from currently installed version \"1.0.0\": no bundles found for package \"prometheus\" matching version \"1.2.0\"", cond.Message)
 		assert.Empty(ct, clusterExtension.Status.Resolution)
 	}, pollDuration, pollInterval)
@@ -848,7 +848,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 			return
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1alpha1.ReasonUnpackSuccess, cond.Reason)
+		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "unpack successful")
 	}, pollDuration, pollInterval)
 
@@ -860,7 +860,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 			return
 		}
 		assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-		assert.Equal(ct, ocv1alpha1.ReasonInstallationFailed, cond.Reason)
+		assert.Equal(ct, ocv1alpha1.ReasonFailed, cond.Reason)
 		assert.Contains(ct, cond.Message, "forbidden")
 	}, pollDuration, pollInterval)
 

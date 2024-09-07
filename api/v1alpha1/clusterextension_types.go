@@ -425,19 +425,11 @@ const (
 	TypeBundleDeprecated  = "BundleDeprecated"
 	TypeUnpacked          = "Unpacked"
 
-	ReasonErrorGettingClient = "ErrorGettingClient"
-	ReasonBundleLoadFailed   = "BundleLoadFailed"
+	ReasonSuccess    = "Succeeded"
+	ReasonDeprecated = "Deprecated"
+	ReasonFailed     = "Failed"
 
-	ReasonInstallationFailed = "InstallationFailed"
-	ReasonResolutionFailed   = "ResolutionFailed"
-
-	ReasonSuccess       = "Success"
-	ReasonDeprecated    = "Deprecated"
-	ReasonUpgradeFailed = "UpgradeFailed"
-
-	ReasonUnpackSuccess = "UnpackSuccess"
-	ReasonUnpackFailed  = "UnpackFailed"
-
+	ReasonErrorGettingClient       = "ErrorGettingClient"
 	ReasonErrorGettingReleaseState = "ErrorGettingReleaseState"
 
 	ReasonUnverifiable = "Unverifiable"
@@ -460,15 +452,10 @@ func init() {
 	)
 	// TODO(user): add Reasons from above
 	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
-		ReasonResolutionFailed,
-		ReasonInstallationFailed,
 		ReasonSuccess,
 		ReasonDeprecated,
-		ReasonUpgradeFailed,
-		ReasonBundleLoadFailed,
+		ReasonFailed,
 		ReasonErrorGettingClient,
-		ReasonUnpackSuccess,
-		ReasonUnpackFailed,
 		ReasonErrorGettingReleaseState,
 		ReasonUnverifiable,
 	)
@@ -508,11 +495,9 @@ type ClusterExtensionStatus struct {
 	//   - "Unpacked", represents whether or not the bundle contents have been successfully unpacked
 	//
 	// The current set of reasons are:
-	//   - "ResolutionFailed", this reason is set on the "Resolved" condition when an error has occurred during resolution.
-	//   - "InstallationFailed", this reason is set on the "Installed" condition when an error has occurred during installation
-	//   - "Success", this reason is set on the "Resolved" and "Installed" conditions when resolution and installation/upgrading is successful
-	//   - "UnpackSuccess", this reason is set on the "Unpacked" condition when unpacking a bundle's content is successful
-	//   - "UnpackFailed", this reason is set on the "Unpacked" condition when an error has been encountered while unpacking the contents of a bundle
+	//   - "Success", this reason is set on the "Unpacked", "Resolved" and "Installed" conditions when unpacking a bundle's content, resolution and installation/upgrading is successful
+	//   - "Failed", this reason is set on the "Unpacked", "Resolved" and "Installed" conditions when an error has occurred while unpacking the contents of a bundle, during resolution or installation.
+	//
 	//
 	// +patchMergeKey=type
 	// +patchStrategy=merge

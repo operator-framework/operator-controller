@@ -194,7 +194,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setInstallStatus(ext, nil)
 		setResolutionStatus(ext, nil)
 		setResolvedStatusConditionFailed(ext, err.Error())
-		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
+		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonFailed, err.Error())
 		return ctrl.Result{}, err
 	}
 	if finalizeResult.Updated || finalizeResult.StatusUpdated {
@@ -220,7 +220,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		setInstallStatus(ext, nil)
 		setResolutionStatus(ext, nil)
 		setResolvedStatusConditionFailed(ext, err.Error())
-		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
+		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonFailed, err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -262,7 +262,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	switch unpackResult.State {
 	case rukpaksource.StatePending:
 		setStatusUnpackFailed(ext, unpackResult.Message)
-		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonUnpackFailed, "unpack pending")
+		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonFailed, "unpack pending")
 		return ctrl.Result{}, nil
 	case rukpaksource.StateUnpacked:
 		setStatusUnpacked(ext, fmt.Sprintf("unpack successful: %v", unpackResult.Message))

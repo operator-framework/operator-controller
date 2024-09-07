@@ -86,7 +86,7 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionFalse, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonResolutionFailed, cond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonFailed, cond.Reason)
 	require.Equal(t, fmt.Sprintf("no package %q found", pkgName), cond.Message)
 
 	verifyInvariants(ctx, t, reconciler.Client, clusterExtension)
@@ -166,7 +166,7 @@ func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
 	require.NotNil(t, unpackedCond)
 	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonUnpackFailed, unpackedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonFailed, unpackedCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
@@ -242,7 +242,7 @@ func TestClusterExtensionUnpackFails(t *testing.T) {
 	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
 	require.NotNil(t, unpackedCond)
 	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonUnpackFailed, unpackedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonFailed, unpackedCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
@@ -320,7 +320,7 @@ func TestClusterExtensionUnpackUnexpectedState(t *testing.T) {
 	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
 	require.NotNil(t, unpackedCond)
 	require.Equal(t, metav1.ConditionFalse, unpackedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonUnpackFailed, unpackedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonFailed, unpackedCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
@@ -402,7 +402,7 @@ func TestClusterExtensionUnpackSucceeds(t *testing.T) {
 	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
 	require.NotNil(t, unpackedCond)
 	require.Equal(t, metav1.ConditionTrue, unpackedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonUnpackSuccess, unpackedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, unpackedCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
@@ -484,13 +484,13 @@ func TestClusterExtensionInstallationFailedApplierFails(t *testing.T) {
 	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
 	require.NotNil(t, unpackedCond)
 	require.Equal(t, metav1.ConditionTrue, unpackedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonUnpackSuccess, unpackedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, unpackedCond.Reason)
 
 	t.Log("By checking the expected installed conditions")
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, installedCond)
 	require.Equal(t, metav1.ConditionFalse, installedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationFailed, installedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonFailed, installedCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
@@ -575,7 +575,7 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
 	require.NotNil(t, unpackedCond)
 	require.Equal(t, metav1.ConditionTrue, unpackedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonUnpackSuccess, unpackedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, unpackedCond.Reason)
 
 	t.Log("By checking the expected installed conditions")
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
@@ -675,7 +675,7 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
 	require.NotNil(t, unpackedCond)
 	require.Equal(t, metav1.ConditionTrue, unpackedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonUnpackSuccess, unpackedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, unpackedCond.Reason)
 
 	t.Log("By checking the expected installed conditions")
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
@@ -772,7 +772,7 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
 	require.NotNil(t, unpackedCond)
 	require.Equal(t, metav1.ConditionTrue, unpackedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonUnpackSuccess, unpackedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, unpackedCond.Reason)
 
 	t.Log("By checking the expected installed conditions")
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
