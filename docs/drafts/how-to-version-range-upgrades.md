@@ -10,14 +10,15 @@ kind: ClusterExtension
 metadata:
   name: argocd
 spec:
-  installNamespace: argocd
   source:
     sourceType: Catalog
     catalog:
       packageName: argocd-operator
       version: ">=3.0, <3.6"  # Install versions from v3.0.0 up to, but not including, v3.6.0
-  serviceAccount:
-    name: argocd-installer
+  install:
+    namespace: argocd
+    serviceAccount:
+      name: argocd-installer
 ```
 
 For more information on SemVer version ranges see [version-rages](version-ranges.md)
