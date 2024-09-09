@@ -128,6 +128,10 @@ spec:
                     required:
                     - crdUpgradeSafety
                     type: object
+                    x-kubernetes-validations:
+                    - message: at least one of [crdUpgradeSafety] are required when
+                        preflight is specified
+                      rule: has(self.crdUpgradeSafety)
                   serviceAccount:
                     description: |-
                       serviceAccount is a required reference to a ServiceAccount that exists

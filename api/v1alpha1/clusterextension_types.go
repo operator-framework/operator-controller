@@ -377,7 +377,8 @@ type ServiceAccountReference struct {
 	Name string `json:"name"`
 }
 
-// PreflightConfig holds the configuration for the preflight checks.
+// PreflightConfig holds the configuration for the preflight checks.  If used, at least one preflight check must be non-nil.
+// +kubebuilder:validation:XValidation:rule="has(self.crdUpgradeSafety)",message="at least one of [crdUpgradeSafety] are required when preflight is specified"
 type PreflightConfig struct {
 	// crdUpgradeSafety is used to configure the CRD Upgrade Safety pre-flight
 	// checks that run prior to upgrades of installed content.
