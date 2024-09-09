@@ -758,6 +758,7 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Contains(ct, cond.Message, "Installed bundle")
 		assert.Equal(ct,
 			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: &ocv1alpha1.BundleMetadata{
 				Name:    "prometheus-operator.1.2.0",

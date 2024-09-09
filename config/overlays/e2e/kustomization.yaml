@@ -7,5 +7,6 @@ resources:
 components:
 - ../../components/tls
 - ../../components/coverage
+- ../../components/registries-conf
 # ca must be last or (tls|coverage) will overwrite the namespaces
 - ../../components/ca
