@@ -5,7 +5,7 @@ metadata:
   name: catalogserver-cert
   namespace: system
 spec:
-  secretName: catalogd-catalogserver-cert
+  secretName: catalogd-catalogserver-cert-git-version
   dnsNames:
     - localhost
     - catalogd-catalogserver.olmv1-system.svc

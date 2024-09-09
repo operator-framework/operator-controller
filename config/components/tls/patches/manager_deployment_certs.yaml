@@ -1,6 +1,6 @@
 - op: add
   path: /spec/template/spec/volumes/-
-  value: {"name":"catalogserver-certs", "secret":{"secretName":"catalogd-catalogserver-cert"}}
+  value: {"name":"catalogserver-certs", "secret":{"secretName":"catalogd-catalogserver-cert-git-version"}}
 - op: add
   path: /spec/template/spec/containers/1/volumeMounts/-
   value: {"name":"catalogserver-certs", "mountPath":"/var/certs"}

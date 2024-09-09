@@ -207,7 +207,7 @@ deploy: export MANIFEST="./catalogd.yaml"
 deploy: export DEFAULT_CATALOGS="./config/base/default/clustercatalogs/default-catalogs.yaml"
 deploy: $(KUSTOMIZE) ## Deploy Catalogd to the K8s cluster specified in ~/.kube/config with cert-manager and default clustercatalogs
 	cd config/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE) && cd ../../..
-	$(KUSTOMIZE) build config/overlays/cert-manager > catalogd.yaml
+	$(KUSTOMIZE) build config/overlays/cert-manager | sed "s/cert-git-version/cert-$(GIT_VERSION)/g" > catalogd.yaml
 	envsubst '$$CERT_MGR_VERSION,$$MANIFEST,$$DEFAULT_CATALOGS' < scripts/install.tpl.sh | bash -s
 
 .PHONY: only-deploy-manifest
@@ -242,7 +242,7 @@ release: $(GORELEASER) ## Runs goreleaser for catalogd. By default, this will ru
 quickstart: export MANIFEST := https://github.com/operator-framework/catalogd/releases/download/$(VERSION)/catalogd.yaml
 quickstart: export DEFAULT_CATALOGS := https://github.com/operator-framework/catalogd/releases/download/$(VERSION)/default-catalogs.yaml
 quickstart: $(KUSTOMIZE) generate ## Generate the installation release manifests and scripts
-	$(KUSTOMIZE) build config/overlays/cert-manager | sed "s/:devel/:$(GIT_VERSION)/g" > catalogd.yaml
+	$(KUSTOMIZE) build config/overlays/cert-manager | sed "s/:devel/:$(GIT_VERSION)/g" | sed "s/cert-git-version/cert-$(GIT_VERSION)/g" > catalogd.yaml
 	envsubst '$$CERT_MGR_VERSION,$$MANIFEST,$$DEFAULT_CATALOGS' < scripts/install.tpl.sh > install.sh
 
 .PHONY: demo-update
