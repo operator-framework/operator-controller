@@ -1,10 +1,7 @@
 # Derive minimal ServiceAccount required for ClusterExtension Installation and Management
 
-OLM v1 security stance (secure by default)
-
 Adhering to OLM v1's "Secure by Default" tenet, OLM v1 does not have the permissions necessary to install content. This follows the least privilege principle and reduces the chance of a [confused deputy attack](https://en.wikipedia.org/wiki/Confused_deputy_problem). Instead, a ServiceAccount must be provided by users to install and manage content.
 
-Explain installing a CE requires a Service Account
 
 OLMv1 does not provide cluster admin privileges by default for installing cluster extensions. It depends on the cluster extension developer to specify the exact permissions required for the management of any specific bundle. A ServiceAccount needs to be explicitly specified for installing and upgrading operators else will face errors when deploying your cluster extension.
 
