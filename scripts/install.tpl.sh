@@ -47,7 +47,7 @@ kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
 kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/catalogd.yaml"
 # Wait for the rollout, and then wait for the deployment to be Available
 kubectl_wait_rollout "olmv1-system" "deployment/catalogd-controller-manager" "60s"
-kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
+kubectl_wait "olmv1-system" "deployment/catalogd-controller-manager" "60s"
 
 if [[ "${install_default_catalogs,,}" != "false" ]]; then
     kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/default-catalogs.yaml"
