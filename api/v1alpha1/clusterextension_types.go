@@ -33,7 +33,7 @@ type CRDUpgradeSafetyPolicy string
 const (
 	// The extension will only upgrade if the new version satisfies
 	// the upgrade constraints set by the package author.
-	UpgradeConstraintPolicyEnforce UpgradeConstraintPolicy = "Enforce"
+	UpgradeConstraintPolicyCatalogProvided UpgradeConstraintPolicy = "CatalogProvided"
 
 	// Unsafe option which allows an extension to be
 	// upgraded or downgraded to any available version of the package and
@@ -41,7 +41,7 @@ const (
 	// This assumes that users independently verify the outcome of the changes.
 	// Use with caution as this can lead to unknown and potentially
 	// disastrous results such as data loss.
-	UpgradeConstraintPolicyIgnore UpgradeConstraintPolicy = "Ignore"
+	UpgradeConstraintPolicySelfCertified UpgradeConstraintPolicy = "SelfCertified"
 )
 
 // ClusterExtensionSpec defines the desired state of ClusterExtension
@@ -323,22 +323,22 @@ type CatalogSource struct {
 	// the upgrade path(s) defined in the catalog are enforced for the package
 	// referenced in the packageName field.
 	//
-	// Allowed values are: ["Enforce", "Ignore"].
+	// Allowed values are: ["CatalogProvided", "SelfCertified"].
 	//
-	// When this field is set to "Enforce", automatic upgrades will only occur
+	// When this field is set to "CatalogProvided", automatic upgrades will only occur
 	// when upgrade constraints specified by the package author are met.
 	//
-	// When this field is set to "Ignore", the upgrade constraints specified by
+	// When this field is set to "SelfCertified", the upgrade constraints specified by
 	// the package author are ignored. This allows for upgrades and downgrades to
 	// any version of the package. This is considered a dangerous operation as it
 	// can lead to unknown and potentially disastrous outcomes, such as data
 	// loss. It is assumed that users have independently verified changes when
 	// using this option.
 	//
-	// If unspecified, the default value is "Enforce".
+	// If unspecified, the default value is "CatalogProvided".
 	//
-	//+kubebuilder:validation:Enum:=Enforce;Ignore
-	//+kubebuilder:default:=Enforce
+	//+kubebuilder:validation:Enum:=CatalogProvided;SelfCertified
+	//+kubebuilder:default:=CatalogProvided
 	//+optional
 	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 }

@@ -42,17 +42,17 @@ spec:
   packageName: <package_name>
   serviceAccount:
     name: <service_account>
-  upgradeConstraintPolicy: Ignore
+  upgradeConstraintPolicy: SelfCertified
   version: "<version_or_version_range>"
 ```
 
 where setting the `upgradeConstraintPolicy` to:
 
-`Ignore`
+`SelfCertified`
 :   Does not limit the next version to the set of successors, and instead allows for any downgrade, sidegrade, or upgrade.
 
-`Enforce`
-:   Only allows the next version to come from the successors list. This is the default value. If the `upgradeConstraintPolicy` parameter is not defined in an extension's CR, then the policy is set to `Enforce` by default.
+`CatalogProvided`
+:   Only allows the next version to come from the successors list. This is the default value. If the `upgradeConstraintPolicy` parameter is not defined in an extension's CR, then the policy is set to `CatalogProvided` by default.
 
 ## Upgrades
 
@@ -74,11 +74,11 @@ You must verify and perform upgrades manually in cases where automatic upgrades 
 
 **Warning:** If you want to force an upgrade manually, you must thoroughly verify the outcome before applying any changes to production workloads. Failure to test and verify the upgrade might lead to catastrophic consequences such as data loss.
 
-As a package admin, if you must upgrade or downgrade to version that might be incompatible with the currently installed version, you can set the `.spec.upgradeConstraintPolicy` field to `Ignore` on the relevant `ClusterExtension` resource.
+As a package admin, if you must upgrade or downgrade to version that might be incompatible with the currently installed version, you can set the `.spec.upgradeConstraintPolicy` field to `SelfCertified` on the relevant `ClusterExtension` resource.
 
-If you set the field to `Ignore`, no upgrade constraints are set on the package. As a result, you can change the version to any version available in the catalogs for a given package.
+If you set the field to `SelfCertified`, no upgrade constraints are set on the package. As a result, you can change the version to any version available in the catalogs for a given package.
 
-Example `ClusterExtension` with `.spec.upgradeConstraintPolicy` field set to `Ignore`:
+Example `ClusterExtension` with `.spec.upgradeConstraintPolicy` field set to `SelfCertified`:
 
 ```yaml
 apiVersion: olm.operatorframework.io/v1alpha1
@@ -91,7 +91,7 @@ spec:
     catalog:
       packageName: argocd-operator
       version: 0.6.0
-      upgradeConstraintPolicy: Ignore
+      upgradeConstraintPolicy: SelfCertified
   install:
     namespace: argocd
     serviceAccout:
