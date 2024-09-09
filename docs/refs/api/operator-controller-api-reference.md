@@ -217,7 +217,7 @@ _Appears in:_
 
 
 
-PreflightConfig holds the configuration for the preflight checks.
+PreflightConfig holds the configuration for the preflight checks.  If used, at least one preflight check must be non-nil.
 
 
 
