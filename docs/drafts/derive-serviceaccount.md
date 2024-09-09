@@ -41,12 +41,15 @@ In order to derive the minimal RBAC for the installer service account, you must 
 
 
 The following ClusterRole rules are needed:
-# Allow ClusterExtension to set blockOwnerDeletion ownerReferences
+* Allow ClusterExtension to set blockOwnerDeletion ownerReferences
+
 - apiGroups: [olm.operatorframework.io]
   resources: [clusterextensions/finalizers]
   verbs: [update]
   resourceNames: [<cluster-extension-name>]
-# Manage CRDs
+
+* Manage CRDs
+
 - apiGroups: [apiextensions.k8s.io]
   resources: [customresourcedefinitions]
   verbs: [create, list, watch]
@@ -54,7 +57,9 @@ The following ClusterRole rules are needed:
   resources: [customresourcedefinitions]
   verbs: [get, update, patch, delete]
   resourceNames: [<crd name 1>, ..., <crd name n>]
-# Manage ClusterRoles
+
+* Manage ClusterRoles
+
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterroles]
   verbs: [create, list, watch]
@@ -62,7 +67,9 @@ The following ClusterRole rules are needed:
   resources: [clusterroles]
   verbs: [get, update, patch, delete]
   resourceNames: [<generated cluster role 1>, ..., <generated cluster role n>, <manifest cluster role name 1>, ..., <manifest cluster role name n>]
-# Manage ClusterRoleBindings
+
+* Manage ClusterRoleBindings
+
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterrolebindings]
   verbs: [create, list, watch]
@@ -70,11 +77,13 @@ The following ClusterRole rules are needed:
   resources: [clusterrolebindings]
   verbs: [get, update, patch, delete]
   resourceNames: [<generated cluster role 1>, ..., <generated cluster role n>, <manifest cluster role binding name 1>, ..., <manifest cluster role binding name n>]
+
 * Rules defined in the CSV under `.spec.install.clusterPermissions` and `.spec.install.permissions`
 * Rules to manage any other cluster-scoped resources shipped with the bundle
 * Rules to manage any other namespace-scoped resources
 * Rules to manage the deployment defined in the ClusterServiceVersion
 * Rules to manage the service account used for the deployment
+
 - apiGroups: [apps]
   resources: [deployments]
   verbs: [create, list, watch]
@@ -92,7 +101,7 @@ The following ClusterRole rules are needed:
   resources: [serviceaccounts]
   verbs: [get, update, patch, delete]
   resourceNames: [argocd-operator-controller-manager]
-```
+
 
 Below is an example of the argocd installer with the necessary RBAC to deploy the ArgoCD ClusterExtension:
 
