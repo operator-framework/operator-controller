@@ -17,9 +17,10 @@ import (
 // catalog contents from catalogd.
 type Fetcher interface {
 	// FetchCatalogContents fetches contents from the catalogd HTTP
-	// server for the catalog provided. It returns an io.ReadCloser
-	// containing the FBC contents that the caller is expected to close.
-	// returns an error if any occur.
+	// server for the catalog provided. It returns a fs.FS containing the FBC contents.
+	// Each sub directory contains FBC for a single package
+	// and the directory name is package name.
+	// Returns an error if any occur.
 	FetchCatalogContents(ctx context.Context, catalog *catalogd.ClusterCatalog) (fs.FS, error)
 }
 

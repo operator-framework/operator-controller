@@ -11,9 +11,73 @@ import (
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
 
+func TestClusterExtensionSourceConfig(t *testing.T) {
+	sourceTypeEmptyError := "Invalid value: \"null\""
+	sourceTypeMismatchError := "spec.source.sourceType: Unsupported value"
+	sourceConfigInvalidError := "spec.source: Invalid value"
+	// unionField represents the required Catalog or (future) Bundle field required by SourceConfig
+	testCases := []struct {
+		name       string
+		sourceType string
+		unionField string
+		errMsg     string
+	}{
+		{"sourceType is null", "", "Catalog", sourceTypeEmptyError},
+		{"sourceType is invalid", "Invalid", "Catalog", sourceTypeMismatchError},
+		{"catalog field does not exist", "Catalog", "", sourceConfigInvalidError},
+		{"sourceConfig has required fields", "Catalog", "Catalog", ""},
+	}
+
+	t.Parallel()
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			var err error
+			if tc.unionField == "Catalog" {
+				err = cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: tc.sourceType,
+						Catalog: &ocv1alpha1.CatalogSource{
+							PackageName: "test-package",
+						},
+					},
+					Install: ocv1alpha1.ClusterExtensionInstallConfig{
+						Namespace: "default",
+						ServiceAccount: ocv1alpha1.ServiceAccountReference{
+							Name: "default",
+						},
+					},
+				}))
+			}
+			if tc.unionField == "" {
+				err = cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: tc.sourceType,
+					},
+					Install: ocv1alpha1.ClusterExtensionInstallConfig{
+						Namespace: "default",
+						ServiceAccount: ocv1alpha1.ServiceAccountReference{
+							Name: "default",
+						},
+					},
+				}))
+			}
+
+			if tc.errMsg == "" {
+				require.NoError(t, err, "unexpected error for sourceType %q: %w", tc.sourceType, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errMsg)
+			}
+		})
+	}
+}
+
 func TestClusterExtensionAdmissionPackageName(t *testing.T) {
-	tooLongError := "spec.packageName: Too long: may not be longer than 48"
-	regexMismatchError := "spec.packageName in body should match"
+	tooLongError := "spec.source.catalog.packageName: Too long: may not be longer than 253"
+	regexMismatchError := "spec.source.catalog.packageName in body should match"
 
 	testCases := []struct {
 		name    string
@@ -21,7 +85,7 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 		errMsg  string
 	}{
 		{"no package name", "", regexMismatchError},
-		{"long package name", "this-is-a-really-long-package-name-that-is-greater-than-48-characters", tooLongError},
+		{"long package name", strings.Repeat("x", 254), tooLongError},
 		{"leading digits with hypens", "0my-1package-9name", ""},
 		{"trailing digits with hypens", "my0-package1-name9", ""},
 		{"digits with hypens", "012-345-678-9", ""},
@@ -34,6 +98,10 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 		{"single hypen", "-", regexMismatchError},
 		{"uppercase letters", "ABC-DEF-GHI-JKL", regexMismatchError},
 		{"special characters", "my-$pecial-package-name", regexMismatchError},
+		{"dot separated", "some.package", ""},
+		{"underscore separated", "some_package", regexMismatchError},
+		{"starts with dot", ".some.package", regexMismatchError},
+		{"multiple sequential separators", "a.-b", regexMismatchError},
 	}
 
 	t.Parallel()
@@ -43,10 +111,17 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      tc.pkgName,
-				InstallNamespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: "default",
+				Source: ocv1alpha1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1alpha1.CatalogSource{
+						PackageName: tc.pkgName,
+					},
+				},
+				Install: ocv1alpha1.ClusterExtensionInstallConfig{
+					Namespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: "default",
+					},
 				},
 			}))
 			if tc.errMsg == "" {
@@ -58,9 +133,10 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 		})
 	}
 }
+
 func TestClusterExtensionAdmissionVersion(t *testing.T) {
-	tooLongError := "spec.version: Too long: may not be longer than 64"
-	regexMismatchError := "spec.version in body should match"
+	tooLongError := "spec.source.catalog.version: Too long: may not be longer than 64"
+	regexMismatchError := "spec.source.catalog.version in body should match"
 
 	testCases := []struct {
 		name    string
@@ -134,11 +210,18 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      "package",
-				Version:          tc.version,
-				InstallNamespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: "default",
+				Source: ocv1alpha1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1alpha1.CatalogSource{
+						PackageName: "package",
+						Version:     tc.version,
+					},
+				},
+				Install: ocv1alpha1.ClusterExtensionInstallConfig{
+					Namespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: "default",
+					},
 				},
 			}))
 			if tc.errMsg == "" {
@@ -152,27 +235,29 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionChannel(t *testing.T) {
-	tooLongError := "spec.channel: Too long: may not be longer than 48"
-	regexMismatchError := "spec.channel in body should match"
+	tooLongError := "spec.source.catalog.channels[0]: Too long: may not be longer than 253"
+	regexMismatchError := "spec.source.catalog.channels[0] in body should match"
 
 	testCases := []struct {
-		name        string
-		channelName string
-		errMsg      string
+		name     string
+		channels []string
+		errMsg   string
 	}{
-		{"no channel name", "", ""},
-		{"hypen-separated", "hyphenated-name", ""},
-		{"dot-separated", "dotted.name", ""},
-		{"includes version", "channel-has-version-1.0.1", ""},
-		{"long channel name", "longname01234567890123456789012345678901234567890", tooLongError},
-		{"spaces", "spaces spaces", regexMismatchError},
-		{"capitalized", "Capitalized", regexMismatchError},
-		{"camel case", "camelCase", regexMismatchError},
-		{"invalid characters", "many/invalid$characters+in_name", regexMismatchError},
-		{"starts with hyphen", "-start-with-hyphen", regexMismatchError},
-		{"ends with hyphen", "end-with-hyphen-", regexMismatchError},
-		{"starts with period", ".start-with-period", regexMismatchError},
-		{"ends with period", "end-with-period.", regexMismatchError},
+		{"no channel name", []string{""}, regexMismatchError},
+		{"hypen-separated", []string{"hyphenated-name"}, ""},
+		{"dot-separated", []string{"dotted.name"}, ""},
+		{"includes version", []string{"channel-has-version-1.0.1"}, ""},
+		{"long channel name", []string{strings.Repeat("x", 254)}, tooLongError},
+		{"spaces", []string{"spaces spaces"}, regexMismatchError},
+		{"capitalized", []string{"Capitalized"}, regexMismatchError},
+		{"camel case", []string{"camelCase"}, regexMismatchError},
+		{"invalid characters", []string{"many/invalid$characters+in_name"}, regexMismatchError},
+		{"starts with hyphen", []string{"-start-with-hyphen"}, regexMismatchError},
+		{"ends with hyphen", []string{"end-with-hyphen-"}, regexMismatchError},
+		{"starts with period", []string{".start-with-period"}, regexMismatchError},
+		{"ends with period", []string{"end-with-period."}, regexMismatchError},
+		{"contains underscore", []string{"some_thing"}, regexMismatchError},
+		{"multiple sequential separators", []string{"a.-b"}, regexMismatchError},
 	}
 
 	t.Parallel()
@@ -182,15 +267,22 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      "package",
-				Channel:          tc.channelName,
-				InstallNamespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: "default",
+				Source: ocv1alpha1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1alpha1.CatalogSource{
+						PackageName: "package",
+						Channels:    tc.channels,
+					},
+				},
+				Install: ocv1alpha1.ClusterExtensionInstallConfig{
+					Namespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: "default",
+					},
 				},
 			}))
 			if tc.errMsg == "" {
-				require.NoError(t, err, "unexpected error for channel %q: %w", tc.channelName, err)
+				require.NoError(t, err, "unexpected error for channel %q: %w", tc.channels, err)
 			} else {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errMsg)
@@ -200,13 +292,13 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
-	tooLongError := "spec.installNamespace: Too long: may not be longer than 63"
-	regexMismatchError := "spec.installNamespace in body should match"
+	tooLongError := "spec.install.namespace: Too long: may not be longer than 63"
+	regexMismatchError := "spec.install.namespace in body should match"
 
 	testCases := []struct {
-		name             string
-		installNamespace string
-		errMsg           string
+		name      string
+		namespace string
+		errMsg    string
 	}{
 		{"just alphanumeric", "justalphanumberic1", ""},
 		{"hypen-separated", "hyphenated-name", ""},
@@ -231,14 +323,21 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      "package",
-				InstallNamespace: tc.installNamespace,
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: "default",
+				Source: ocv1alpha1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1alpha1.CatalogSource{
+						PackageName: "package",
+					},
+				},
+				Install: ocv1alpha1.ClusterExtensionInstallConfig{
+					Namespace: tc.namespace,
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: "default",
+					},
 				},
 			}))
 			if tc.errMsg == "" {
-				require.NoError(t, err, "unexpected error for installNamespace %q: %w", tc.installNamespace, err)
+				require.NoError(t, err, "unexpected error for namespace %q: %w", tc.namespace, err)
 			} else {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errMsg)
@@ -248,8 +347,8 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
-	tooLongError := "spec.serviceAccount.name: Too long: may not be longer than 253"
-	regexMismatchError := "spec.serviceAccount.name in body should match"
+	tooLongError := "spec.install.serviceAccount.name: Too long: may not be longer than 253"
+	regexMismatchError := "spec.install.serviceAccount.name in body should match"
 
 	testCases := []struct {
 		name           string
@@ -270,6 +369,7 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 		{"ends with hyphen", "end-with-hyphen-", regexMismatchError},
 		{"starts with period", ".start-with-period", regexMismatchError},
 		{"ends with period", "end-with-period.", regexMismatchError},
+		{"multiple sequential separators", "a.-b", regexMismatchError},
 	}
 
 	t.Parallel()
@@ -279,10 +379,17 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
 			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				PackageName:      "package",
-				InstallNamespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: tc.serviceAccount,
+				Source: ocv1alpha1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1alpha1.CatalogSource{
+						PackageName: "package",
+					},
+				},
+				Install: ocv1alpha1.ClusterExtensionInstallConfig{
+					Namespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: tc.serviceAccount,
+					},
 				},
 			}))
 			if tc.errMsg == "" {

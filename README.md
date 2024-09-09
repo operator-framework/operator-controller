@@ -2,7 +2,6 @@
 The operator-controller is the central component of Operator Lifecycle Manager (OLM) v1.
 It extends Kubernetes with an API through which users can install extensions.
 
-
 ## Mission
 
 OLM’s purpose is to provide APIs, controllers, and tooling that support the packaging, distribution, and lifecycling of Kubernetes extensions. It aims to:
@@ -18,96 +17,122 @@ OLM v1 consists of two different components:
 * operator-controller (this repository)
 * [catalogd](https://github.com/operator-framework/catalogd)
 
-For a more complete overview of OLM v1 and how it differs from OLM v0, see our [overview](./docs/olmv1_overview.md).
+For a more complete overview of OLM v1 and how it differs from OLM v0, see our [overview](docs/olmv1_overview.md).
 
-## Getting Started
-You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
+### Installation
 
-> [!NOTE] 
-> Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
+The following script will install OLMv1 on a Kubernetes cluster. If you don't have one, you can deploy a Kubernetes cluster with [KIND](https://sigs.k8s.io/kind).
 
-### Additional setup on Macintosh computers
-On Macintosh computers some additional setup is necessary to install and configure compatible tooling.
+> [!CAUTION]  
+> Operator-Controller depends on [cert-manager](https://cert-manager.io/). Running the following command
+> may affect an existing installation of cert-manager and cause cluster instability.
 
-#### Install Homebrew and tools
-Follow the instructions to [installing Homebrew](https://docs.brew.sh/Installation) and then execute the following to install tools:
+The latest version of Operator Controller can be installed with the following command:
 
-```sh
-brew install bash gnu-tar gsed
+```bash
+curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh | bash -s
 ```
 
-#### Configure your shell
-Modify your login shell's `PATH` to prefer the new tools over those in the existing environment.  This example should work either with `zsh` (in $HOME/.zshrc) or `bash` (in $HOME/.bashrc):
+## Getting Started with OLM v1
 
-```sh
-for bindir in `find $(brew --prefix)/opt -type d -follow -name gnubin -print`
-do
-  export PATH=$bindir:$PATH
-done
+This quickstart procedure will guide you through the following processes:
+* Deploying a catalog
+* Installing, upgrading, or downgrading an extension
+* Deleting catalogs and extensions
+
+### Create a Catalog
+
+OLM v1 is designed to source content from an on-cluster catalog in the file-based catalog ([FBC](https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs)) format.
+These catalogs are deployed and configured through the `ClusterCatalog` resource. More information on adding catalogs
+can be found [here](./docs/Tasks/adding-a-catalog).
+
+The following example uses the official [OperatorHub](https://operatorhub.io) catalog that contains many different
+extensions to choose from. Note that this catalog contains packages designed to work with OLM v0, and that not all packages
+will work with OLM v1. More information on catalog exploration and content compatibility can be found [here](./docs/refs/catalog-queries.md). 
+
+To create the catalog, run the following command:
+
+```bash
+# Create ClusterCatalog
+kubectl apply -f - <<EOF
+apiVersion: catalogd.operatorframework.io/v1alpha1
+kind: ClusterCatalog
+metadata:
+  name: operatorhubio
+spec:
+  source:
+    type: image
+    image:
+      ref: quay.io/operatorhubio/catalog:latest
+      pollInterval: 10m
+EOF
 ```
 
-### Running on the cluster
-1. Install Instances of Custom Resources:
+Once the catalog is unpacked successfully, its content will be available for installation.
 
-```sh
-kubectl apply -f config/samples/
+```bash
+# Wait for the ClusterCatalog to be unpacked
+kubectl wait --for=condition=Unpacked=True clustercatalog/operatorhubio --timeout=60s
 ```
 
-2. Build and push your image to the location specified by `IMG`:
-	
-```sh
-make docker-build docker-push IMG=<some-registry>/operator-controller:tag
-```
-	
-3. Deploy the controller to the cluster with the image specified by `IMG`:
+### Install a Cluster Extension
 
-```sh
-make deploy IMG=<some-registry>/operator-controller:tag
-```
+For simplicity, the following example manifest includes all necessary resources to install the ArgoCD operator. 
+The manifest includes installation namespace, installer service account and associated minimal set of RBAC permissions 
+needed for installation, and the ClusterExtension resource, which specifies the name and version of the extension to install.
+More information on installing extensions can be found [here](docs/Tasks/installing-an-extension).
 
-### Uninstall CRDs
-To delete the CRDs from the cluster:
-
-```sh
-make uninstall
+```bash
+# Apply the sample ClusterExtension. Manifest already includes
+# namespace and adequately privileged service account
+kubectl apply -f https://raw.githubusercontent.com/operator-framework/operator-controller/main/config/samples/olm_v1alpha1_clusterextension.yaml
 ```
 
-### Undeploy controller
-To undeploy the controller from the cluster:
+### Upgrade the Cluster Extension
 
-```sh
-make undeploy
+To upgrade the installed extension, update the version field in the ClusterExtension resource. Note that
+there must be CRD compatibility between the versions being upgraded, and the target version must be
+compatible with OLM v1. More information on CRD upgrade safety can be found [here](./docs/refs/crd-upgrade-safety.md), 
+compatible with OLM v1. More information on CRD upgrade safety can be found [here](./docs/refs/crd-upgrade-safety.md), 
+and on the extension upgrade process [here](./docs/drafts/Tasks/upgrading-an-extension).
+
+```bash
+# Update to v0.11.0
+kubectl patch clusterextension argocd --type='merge' -p '{"spec": {"source": {"catalog": {"version": "0.11.0"}}}}'
+
 ```
 
-## Contributing
+For information on the downgrade process, see [here](./docs/drafts/Tasks/downgrading-an-extension.md).
 
-Refer to [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
+### Uninstall the Cluster Extension
 
-### How it works
-This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
+To uninstall an extension, delete the ClusterExtension resource. This will trigger the uninstallation process, which will
+remove all resources created by the extension. More information on uninstalling extensions can be found [here](./docs/Tasks/uninstalling-an-extension).
 
-It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/)
-which provide a reconcile function responsible for synchronizing resources until the desired state is reached on the cluster.
-
-### Test It Out
-
-Install the CRDs and the operator-controller into a new [KIND cluster](https://kind.sigs.k8s.io/):
-```sh
-make run
-```
-This will build a local container image of the operator-controller, create a new KIND cluster and then deploy onto that cluster.
-This will also deploy the catalogd and cert-manager dependencies.
-
-### Modifying the API definitions
-If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
-
-```sh
-make manifests
+```bash
+# Delete cluster extension and residing namespace
+kubectl delete clusterextension/argocd
 ```
 
-**NOTE:** Run `make help` for more information on all potential `make` targets.
+#### Cleanup
 
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html).
+Extension installation requires the creation of a namespace, an installer service account, and its RBAC. Once the
+extension is uninstalled, these resources can be cleaned up.
+
+```bash
+# Delete namespace, and by extension, the installer service account, Role, and RoleBinding
+kubectl delete namespace argocd
+```
+
+```bash
+# Delete installer service account cluster roles
+kubectl delete clusterrole argocd-installer-clusterrole && kubectl delete clusterrole argocd-rbac-clusterrole
+```
+
+```bash
+# Delete installer service account cluster role bindings
+kuebctl delete clusterrolebinding argocd-installer-binding && kubectl delete clusterrolebinding argocd-rbac-binding
+```
 
 ## License
 

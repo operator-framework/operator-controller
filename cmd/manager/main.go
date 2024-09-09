@@ -172,7 +172,7 @@ func main() {
 		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), systemNamespace)),
 		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
 			ext := obj.(*ocv1alpha1.ClusterExtension)
-			return ext.Spec.InstallNamespace, nil
+			return ext.Spec.Install.Namespace, nil
 		}),
 		helmclient.ClientRestConfigMapper(clientRestConfigMapper),
 	)
@@ -200,13 +200,10 @@ func main() {
 	}
 
 	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
-	domain := ocv1alpha1.GroupVersion.Group
-	cleanupUnpackCacheKey := fmt.Sprintf("%s/cleanup-unpack-cache", domain)
-	if err := clusterExtensionFinalizers.Register(cleanupUnpackCacheKey, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		ext := obj.(*ocv1alpha1.ClusterExtension)
-		return crfinalizer.Result{}, os.RemoveAll(filepath.Join(unpacker.BaseCachePath, ext.GetName()))
+	if err := clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupUnpackCacheFinalizer, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+		return crfinalizer.Result{}, os.RemoveAll(filepath.Join(unpacker.BaseCachePath, obj.GetName()))
 	})); err != nil {
-		setupLog.Error(err, "unable to register finalizer", "finalizerKey", cleanupUnpackCacheKey)
+		setupLog.Error(err, "unable to register finalizer", "finalizerKey", controllers.ClusterExtensionCleanupUnpackCacheFinalizer)
 		os.Exit(1)
 	}
 
@@ -252,6 +249,17 @@ func main() {
 		Preflights:         preflights,
 	}
 
+	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
+	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+		ext := obj.(*ocv1alpha1.ClusterExtension)
+		err := cm.Delete(ext)
+		return crfinalizer.Result{}, err
+	}))
+	if err != nil {
+		setupLog.Error(err, "unable to register content manager cleanup finalizer")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.ClusterExtensionReconciler{
 		Client:                cl,
 		Resolver:              resolver,
@@ -259,7 +267,7 @@ func main() {
 		Applier:               applier,
 		InstalledBundleGetter: &controllers.DefaultInstalledBundleGetter{ActionClientGetter: acg},
 		Finalizers:            clusterExtensionFinalizers,
-		Watcher:               contentmanager.New(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper()),
+		Manager:               cm,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)

@@ -21,7 +21,7 @@ import (
 )
 
 func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.T) {
-	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)()
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, true)
 
 	const testPackageName = "test-package"
 	channelSet := map[string]declcfg.Channel{
@@ -191,7 +191,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.
 }
 
 func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing.T) {
-	defer featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)()
+	featuregatetesting.SetFeatureGateDuringTest(t, features.OperatorControllerFeatureGate, features.ForceSemverUpgradeConstraints, false)
 
 	const testPackageName = "test-package"
 	channelSet := map[string]declcfg.Channel{

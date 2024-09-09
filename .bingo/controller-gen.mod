@@ -4,4 +4,4 @@ go 1.22.0
 
 toolchain go1.22.2
 
-require sigs.k8s.io/controller-tools v0.15.0 // cmd/controller-gen
+require sigs.k8s.io/controller-tools v0.16.1 // cmd/controller-gen

@@ -1,33 +1,58 @@
 # Upgrade support
 
-This document explains how OLM 1.0 handles upgrades.
+This document explains how OLM v1 handles upgrades.
 
-OLM 1.0 introduces a simplified UX for package authors and package admins to implicitly define upgrade edges via [Semantic Versioning](https://semver.org/).
+OLM v1 introduces a simplified UX for package authors and package admins to implicitly define upgrade edges via [Semantic Versioning](https://semver.org/).
 
 It also introduces an API to enable independently verified upgrades and downgrades.
 
 ## Upgrade constraint semantics
 
-As of operator-controller release 0.10.0, OLM 1.0 supports the following upgrade constraint semantics:
+When determining upgrade edges, also known as upgrade paths or upgrade constraints, for an installed cluster extension, Operator Lifecycle Manager (OLM) v1 supports [legacy OLM semantics](https://olm.operatorframework.io/docs/concepts/olm-architecture/operator-catalog/creating-an-update-graph/) by default. This support follows the behavior from legacy OLM, including `replaces`, `skips`, and `skipRange` directives, with a few noted differences.
 
-* [Semantic Versioning](https://semver.org/) (Semver)
-* [Legacy OLM 0 semantics](https://olm.operatorframework.io/docs/concepts/olm-architecture/operator-catalog/creating-an-update-graph/#methods-for-specifying-updates): the `replaces`/`skips`/`skipRange` directives
+By supporting legacy OLM semantics, OLM v1 now honors the upgrade graph from catalogs accurately.
 
-The Kubernetes manifests in this repo enable legacy support by default. Cluster admins can control which semantics to use by passing one of the following arguments to the `manager` binary:
-* `--feature-gates=ForceSemverUpgradeConstraints=true` - enable Semver
-* `--feature-gates=ForceSemverUpgradeConstraints=false` - disable Semver, use legacy semantics
+* If there are multiple possible successors, OLM v1 behavior differs in the following ways:
+  * In legacy OLM, the successor closest to the channel head is chosen.
+  * In OLM v1, the successor with the highest semantic version (semver) is chosen.
+* Consider the following set of file-based catalog (FBC) channel entries:
 
-For example, to enable Semver update the `controller-manager` Deployment manifest to include the following argument:
+  ```yaml
+  # ...
+  - name: example.v3.0.0
+    skips: ["example.v2.0.0"]
+  - name: example.v2.0.0
+    skipRange: >=1.0.0 <2.0.0
+  ```
 
-```yaml
-- command:
-  - /manager
-  args:
-  - --feature-gates=ForceSemverUpgradeConstraints=true
-  image: controller:latest
+If `1.0.0` is installed, OLM v1 behavior differs in the following ways:
+
+  * Legacy OLM does not detect an upgrade edge to `v2.0.0` because `v2.0.0` is skipped and not on the `replaces` chain.
+  * OLM v1 detects the upgrade edge because OLM v1 does not have a concept of a `replaces` chain. OLM v1 finds all entries that have a `replace`, `skip`, or `skipRange` value that covers the currently installed version.
+
+You can change the default behavior of the upgrade constraints by setting the `upgradeConstraintPolicy` parameter in your cluster extension's custom resource (CR).
+
+``` yaml hl_lines="10"
+apiVersion: olm.operatorframework.io/v1alpha1
+kind: ClusterExtension
+metadata:
+  name: <extension_name>
+spec:
+  installNamespace: <namespace>
+  packageName: <package_name>
+  serviceAccount:
+    name: <service_account>
+  upgradeConstraintPolicy: Ignore
+  version: "<version_or_version_range>"
 ```
 
-In a future release, it is planned to remove the `ForceSemverUpgradeConstraints` feature gate and allow package authors to specify upgrade constraint semantics at the catalog level.
+where setting the `upgradeConstraintPolicy` to:
+
+`Ignore`
+:   Does not limit the next version to the set of successors, and instead allows for any downgrade, sidegrade, or upgrade.
+
+`Enforce`
+:   Only allows the next version to come from the successors list. This is the default value. If the `upgradeConstraintPolicy` parameter is not defined in an extension's CR, then the policy is set to `Enforce` by default.
 
 ## Upgrades
 
@@ -61,7 +86,14 @@ kind: ClusterExtension
 metadata:
   name: extension-sample
 spec:
-  packageName: argocd-operator
-  version: 0.6.0
-  upgradeConstraintPolicy: Ignore
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      version: 0.6.0
+      upgradeConstraintPolicy: Ignore
+  install:
+    namespace: argocd
+    serviceAccout:
+      name: argocd-installer
 ```

@@ -53,10 +53,17 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			InstallNamespace: "default",
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: "default",
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+				},
+			},
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: "default",
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: "default",
+				},
 			},
 		},
 	}
@@ -72,8 +79,8 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Empty(t, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Empty(t, clusterExtension.Status.Resolution)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected conditions")
 	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -102,18 +109,25 @@ func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channels:    []string{pkgChan},
+				},
+			},
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -138,8 +152,8 @@ func TestClusterExtensionResolutionSucceeds(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -171,18 +185,25 @@ func TestClusterExtensionUnpackFails(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channels:    []string{pkgChan},
+				},
+			},
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -207,8 +228,8 @@ func TestClusterExtensionUnpackFails(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -242,18 +263,25 @@ func TestClusterExtensionUnpackUnexpectedState(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channels:    []string{pkgChan},
+				},
+			},
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -278,8 +306,8 @@ func TestClusterExtensionUnpackUnexpectedState(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -314,18 +342,25 @@ func TestClusterExtensionUnpackSucceeds(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channels:    []string{pkgChan},
+				},
+			},
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -353,8 +388,8 @@ func TestClusterExtensionUnpackSucceeds(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected resolution conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -389,18 +424,25 @@ func TestClusterExtensionInstallationFailedApplierFails(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channels:    []string{pkgChan},
+				},
+			},
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -428,8 +470,8 @@ func TestClusterExtensionInstallationFailedApplierFails(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected resolution conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -453,7 +495,104 @@ func TestClusterExtensionInstallationFailedApplierFails(t *testing.T) {
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
 
-func TestClusterExtensionInstallationFailedWatcherFailed(t *testing.T) {
+func TestClusterExtensionManagerFailed(t *testing.T) {
+	cl, reconciler := newClientAndReconciler(t)
+	reconciler.Unpacker = &MockUnpacker{
+		result: &source.Result{
+			State:  source.StateUnpacked,
+			Bundle: fstest.MapFS{},
+		},
+	}
+
+	ctx := context.Background()
+	extKey := types.NamespacedName{Name: fmt.Sprintf("cluster-extension-test-%s", rand.String(8))}
+
+	t.Log("When the cluster extension specifies a channel with version that exist")
+	t.Log("By initializing cluster state")
+	pkgName := "prometheus"
+	pkgVer := "1.0.0"
+	pkgChan := "beta"
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
+
+	clusterExtension := &ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
+		Spec: ocv1alpha1.ClusterExtensionSpec{
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channels:    []string{pkgChan},
+				},
+			},
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
+			},
+		},
+	}
+	err := cl.Create(ctx, clusterExtension)
+	require.NoError(t, err)
+
+	t.Log("It sets resolution success status")
+	t.Log("By running reconcile")
+	reconciler.Resolver = resolve.Func(func(_ context.Context, _ *ocv1alpha1.ClusterExtension, _ *ocv1alpha1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+		v := bsemver.MustParse("1.0.0")
+		return &declcfg.Bundle{
+			Name:    "prometheus.v1.0.0",
+			Package: "prometheus",
+			Image:   "quay.io/operatorhubio/prometheus@fake1.0.0",
+		}, &v, nil, nil
+	})
+	reconciler.Applier = &MockApplier{
+		objs: []client.Object{},
+	}
+	reconciler.Manager = &MockManagedContentCacheManager{
+		err: errors.New("manager fail"),
+	}
+	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
+	require.Equal(t, ctrl.Result{}, res)
+	require.Error(t, err)
+
+	t.Log("By fetching updated cluster extension after reconcile")
+	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
+
+	t.Log("By checking the status fields")
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
+
+	t.Log("By checking the expected resolution conditions")
+	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+	require.NotNil(t, resolvedCond)
+	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
+	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
+
+	t.Log("By checking the expected unpacked conditions")
+	unpackedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
+	require.NotNil(t, unpackedCond)
+	require.Equal(t, metav1.ConditionTrue, unpackedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonUnpackSuccess, unpackedCond.Reason)
+
+	t.Log("By checking the expected installed conditions")
+	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+	require.NotNil(t, installedCond)
+	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, installedCond.Reason)
+
+	t.Log("By checking the expected healthy conditions")
+	managedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeHealthy)
+	require.NotNil(t, managedCond)
+	require.Equal(t, metav1.ConditionUnknown, managedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonUnverifiable, managedCond.Reason)
+
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
+}
+
+func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 	cl, reconciler := newClientAndReconciler(t)
 	reconciler.Unpacker = &MockUnpacker{
 		result: &source.Result{
@@ -476,12 +615,20 @@ func TestClusterExtensionInstallationFailedWatcherFailed(t *testing.T) {
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: ocv1alpha1.SourceTypeCatalog,
+
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channels:    []string{pkgChan},
+				},
+			},
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: installNamespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -501,8 +648,10 @@ func TestClusterExtensionInstallationFailedWatcherFailed(t *testing.T) {
 	reconciler.Applier = &MockApplier{
 		objs: []client.Object{},
 	}
-	reconciler.Watcher = &MockWatcher{
-		err: errors.New("watcher fail"),
+	reconciler.Manager = &MockManagedContentCacheManager{
+		cache: &MockManagedContentCache{
+			err: errors.New("watch error"),
+		},
 	}
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
@@ -512,8 +661,8 @@ func TestClusterExtensionInstallationFailedWatcherFailed(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Empty(t, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
 
 	t.Log("By checking the expected resolution conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -531,8 +680,14 @@ func TestClusterExtensionInstallationFailedWatcherFailed(t *testing.T) {
 	t.Log("By checking the expected installed conditions")
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, installedCond)
-	require.Equal(t, metav1.ConditionFalse, installedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonInstallationFailed, installedCond.Reason)
+	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonSuccess, installedCond.Reason)
+
+	t.Log("By checking the expected healthy conditions")
+	managedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeHealthy)
+	require.NotNil(t, managedCond)
+	require.Equal(t, metav1.ConditionUnknown, managedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonUnverifiable, managedCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
@@ -554,18 +709,25 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	pkgName := "prometheus"
 	pkgVer := "1.0.0"
 	pkgChan := "beta"
-	installNamespace := fmt.Sprintf("test-ns-%s", rand.String(8))
+	namespace := fmt.Sprintf("test-ns-%s", rand.String(8))
 	serviceAccount := fmt.Sprintf("test-sa-%s", rand.String(8))
 
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{Name: extKey.Name},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			PackageName:      pkgName,
-			Version:          pkgVer,
-			Channel:          pkgChan,
-			InstallNamespace: installNamespace,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: serviceAccount,
+			Source: ocv1alpha1.SourceConfig{
+				SourceType: "Catalog",
+				Catalog: &ocv1alpha1.CatalogSource{
+					PackageName: pkgName,
+					Version:     pkgVer,
+					Channels:    []string{pkgChan},
+				},
+			},
+			Install: ocv1alpha1.ClusterExtensionInstallConfig{
+				Namespace: namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: serviceAccount,
+				},
 			},
 		},
 	}
@@ -585,7 +747,9 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	reconciler.Applier = &MockApplier{
 		objs: []client.Object{},
 	}
-	reconciler.Watcher = &MockWatcher{}
+	reconciler.Manager = &MockManagedContentCacheManager{
+		cache: &MockManagedContentCache{},
+	}
 	res, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: extKey})
 	require.Equal(t, ctrl.Result{}, res)
 	require.NoError(t, err)
@@ -594,8 +758,8 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.ResolvedBundle)
-	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.InstalledBundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
+	require.Equal(t, &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
 
 	t.Log("By checking the expected resolution conditions")
 	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
@@ -701,6 +865,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
 				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog:    &ocv1alpha1.CatalogSource{},
+					},
+				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
 				},
@@ -708,6 +878,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
 				ObjectMeta: metav1.ObjectMeta{
 					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog:    &ocv1alpha1.CatalogSource{},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -755,7 +931,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "nondeprecated",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"nondeprecated"},
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -766,7 +947,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "nondeprecated",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"nondeprecated"},
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -816,7 +1002,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"badchannel"},
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -827,7 +1018,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"badchannel"},
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -878,7 +1074,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"badchannel"},
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -889,7 +1090,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"badchannel"},
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -953,7 +1159,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"badchannel"},
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -964,7 +1175,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"badchannel"},
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -1022,7 +1238,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"badchannel"},
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{},
@@ -1033,7 +1254,12 @@ func TestSetDeprecationStatus(t *testing.T) {
 					Generation: 1,
 				},
 				Spec: ocv1alpha1.ClusterExtensionSpec{
-					Channel: "badchannel",
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"badchannel"},
+						},
+					},
 				},
 				Status: ocv1alpha1.ClusterExtensionStatus{
 					Conditions: []metav1.Condition{
@@ -1079,6 +1305,85 @@ func TestSetDeprecationStatus(t *testing.T) {
 							Schema: declcfg.SchemaPackage,
 						},
 						Message: "bad package!",
+					},
+				},
+			},
+		},
+		{
+			name: "deprecated channels specified, ChannelDeprecated and Deprecated status set to true, others set to false",
+			clusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"badchannel", "anotherbadchannel"},
+						},
+					},
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{},
+				},
+			},
+			expectedClusterExtension: &ocv1alpha1.ClusterExtension{
+				ObjectMeta: metav1.ObjectMeta{
+					Generation: 1,
+				},
+				Spec: ocv1alpha1.ClusterExtensionSpec{
+					Source: ocv1alpha1.SourceConfig{
+						SourceType: "Catalog",
+						Catalog: &ocv1alpha1.CatalogSource{
+							Channels: []string{"badchannel", "anotherbadchannel"},
+						},
+					},
+				},
+				Status: ocv1alpha1.ClusterExtensionStatus{
+					Conditions: []metav1.Condition{
+						{
+							Type:               ocv1alpha1.TypeDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypePackageDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeChannelDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionTrue,
+							ObservedGeneration: 1,
+						},
+						{
+							Type:               ocv1alpha1.TypeBundleDeprecated,
+							Reason:             ocv1alpha1.ReasonDeprecated,
+							Status:             metav1.ConditionFalse,
+							ObservedGeneration: 1,
+						},
+					},
+				},
+			},
+			bundle: &declcfg.Bundle{},
+			deprecation: &declcfg.Deprecation{
+				Entries: []declcfg.DeprecationEntry{
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaChannel,
+							Name:   "badchannel",
+						},
+						Message: "bad channel!",
+					},
+					{
+						Reference: declcfg.PackageScopedReference{
+							Schema: declcfg.SchemaChannel,
+							Name:   "anotherbadchannel",
+						},
+						Message: "another bad channedl!",
 					},
 				},
 			},

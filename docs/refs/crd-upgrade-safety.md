@@ -61,12 +61,18 @@ kind: ClusterExtension
 metadata:
     name: clusterextension-sample
 spec:
-    installNamespace: default
-    packageName: argocd-operator
-    version: 0.6.0
-    preflight:
+    source:
+      sourceType: Catalog
+      catalog:
+        packageName: argocd-operator
+        version: 0.6.0
+    install:
+      namespace: default
+      serviceAccount:
+        name: argocd-installer
+      preflight:
         crdUpgradeSafety:
-            disabled: true
+          disabled: true
 ```
 
 You cannot disable individual field validators. If you disable the CRD Upgrade Safety preflight check, all field validators are disabled.
@@ -176,9 +182,9 @@ In this example, the existing stored version, `v1alpha1`, has been removed:
     ```
     validating upgrade for CRD "test.example.com" failed: CustomResourceDefinition test.example.com failed upgrade safety validation. "NoStoredVersionRemoved" validation failed: stored version "v1alpha1" removed
     ```
-    
+
 ### Removing an existing field
-    
+
 In this example, the `pollInterval` field has been removed from `v1alpha1`:
 
 ??? example

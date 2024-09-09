@@ -30,6 +30,7 @@ import (
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -48,7 +49,6 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/applier"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/contentmanager"
@@ -57,13 +57,18 @@ import (
 	rukpaksource "github.com/operator-framework/operator-controller/internal/rukpak/source"
 )
 
+const (
+	ClusterExtensionCleanupUnpackCacheFinalizer         = "olm.operatorframework.io/cleanup-unpack-cache"
+	ClusterExtensionCleanupContentManagerCacheFinalizer = "olm.operatorframework.io/cleanup-contentmanager-cache"
+)
+
 // ClusterExtensionReconciler reconciles a ClusterExtension object
 type ClusterExtensionReconciler struct {
 	client.Client
 	Resolver              resolve.Resolver
 	Unpacker              rukpaksource.Unpacker
 	Applier               Applier
-	Watcher               contentmanager.Watcher
+	Manager               contentmanager.Manager
 	controller            crcontroller.Controller
 	cache                 cache.Cache
 	InstalledBundleGetter InstalledBundleGetter
@@ -71,7 +76,10 @@ type ClusterExtensionReconciler struct {
 }
 
 type Applier interface {
-	Apply(context.Context, fs.FS, *ocv1alpha1.ClusterExtension, map[string]string) ([]client.Object, string, error)
+	// Apply applies the content in the provided fs.FS using the configuration of the provided ClusterExtension.
+	// It also takes in a map[string]string to be applied to all applied resources as labels and another
+	// map[string]string used to create a unique identifier for a stored reference to the resources created.
+	Apply(context.Context, fs.FS, *ocv1alpha1.ClusterExtension, map[string]string, map[string]string) ([]client.Object, string, error)
 }
 
 type InstalledBundleGetter interface {
@@ -85,8 +93,7 @@ type InstalledBundleGetter interface {
 //+kubebuilder:rbac:groups=core,resources=serviceaccounts/token,verbs=create
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get
 
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=clustercatalogs,verbs=list;watch
-//+kubebuilder:rbac:groups=catalogd.operatorframework.io,resources=catalogmetadata,verbs=list;watch
+//+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs,verbs=list;watch
 
 // The operator controller needs to watch all the bundle objects and reconcile accordingly. Though not ideal, but these permissions are required.
 // This has been taken from rukpak, and an issue was created before to discuss it: https://github.com/operator-framework/rukpak/issues/800.
@@ -184,8 +191,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		//  This is not ideal, and we should consider a more nuanced approach that resolves
 		//  as much status as possible before returning, or at least keeps previous state if
 		//  it is properly labeled with its observed generation.
-		ext.Status.ResolvedBundle = nil
-		ext.Status.InstalledBundle = nil
+		setInstallStatus(ext, nil)
+		setResolutionStatus(ext, nil)
 		setResolvedStatusConditionFailed(ext, err.Error())
 		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
 		return ctrl.Result{}, err
@@ -199,7 +206,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	l.V(1).Info("getting installed bundle")
 	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, ext)
 	if err != nil {
-		ext.Status.InstalledBundle = nil
+		setInstallStatus(ext, nil)
 		// TODO: use Installed=Unknown
 		setInstalledStatusConditionFailed(ext, err.Error())
 		return ctrl.Result{}, err
@@ -210,8 +217,8 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err := r.Resolver.Resolve(ctx, ext, installedBundle)
 	if err != nil {
 		// Note: We don't distinguish between resolution-specific errors and generic errors
-		ext.Status.ResolvedBundle = nil
-		ext.Status.InstalledBundle = nil
+		setInstallStatus(ext, nil)
+		setResolutionStatus(ext, nil)
 		setResolvedStatusConditionFailed(ext, err.Error())
 		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
 		return ctrl.Result{}, err
@@ -233,7 +240,10 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	//         all catalogs?
 	SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
 
-	ext.Status.ResolvedBundle = bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion)
+	resStatus := &ocv1alpha1.ClusterExtensionResolutionStatus{
+		Bundle: bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion),
+	}
+	setResolutionStatus(ext, resStatus)
 	setResolvedStatusConditionSuccess(ext, fmt.Sprintf("resolved to %q", resolvedBundle.Image))
 
 	bundleSource := &rukpaksource.BundleSource{
@@ -262,9 +272,12 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", unpackResult.Message)
 	}
 
-	lbls := map[string]string{
-		labels.OwnerKindKey:     ocv1alpha1.ClusterExtensionKind,
-		labels.OwnerNameKey:     ext.GetName(),
+	objLbls := map[string]string{
+		labels.OwnerKindKey: ocv1alpha1.ClusterExtensionKind,
+		labels.OwnerNameKey: ext.GetName(),
+	}
+
+	storeLbls := map[string]string{
 		labels.BundleNameKey:    resolvedBundle.Name,
 		labels.PackageNameKey:   resolvedBundle.Package,
 		labels.BundleVersionKey: resolvedBundleVersion.String(),
@@ -280,26 +293,49 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// to ensure exponential backoff can occur:
 	//   - Permission errors (it is not possible to watch changes to permissions.
 	//     The only way to eventually recover from permission errors is to keep retrying).
-	managedObjs, state, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, lbls)
+	managedObjs, _, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, objLbls, storeLbls)
 	if err != nil {
 		setInstalledStatusConditionFailed(ext, err.Error())
 		return ctrl.Result{}, err
 	}
 
-	// Only attempt to watch resources if we are
-	// installing / upgrading. Otherwise we may restart
-	// watches that have already been established
-	if state != applier.StateUnchanged {
-		l.V(1).Info("watching managed objects")
-		if err := r.Watcher.Watch(ctx, r.controller, ext, managedObjs); err != nil {
-			ext.Status.InstalledBundle = nil
-			setInstalledStatusConditionFailed(ext, fmt.Sprintf("%s:%v", ocv1alpha1.ReasonInstallationFailed, err))
-			return ctrl.Result{}, err
-		}
+	installStatus := &ocv1alpha1.ClusterExtensionInstallStatus{
+		Bundle: bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion),
+	}
+	setInstallStatus(ext, installStatus)
+	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", resolvedBundle.Image))
+
+	l.V(1).Info("watching managed objects")
+	cache, err := r.Manager.Get(ctx, ext)
+	if err != nil {
+		// If we fail to get the cache, set the Healthy condition to
+		// "Unknown". We can't know the health of resources we can't monitor
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+			Type:               ocv1alpha1.TypeHealthy,
+			Reason:             ocv1alpha1.ReasonUnverifiable,
+			Status:             metav1.ConditionUnknown,
+			Message:            err.Error(),
+			ObservedGeneration: ext.Generation,
+		})
+		return ctrl.Result{}, err
 	}
 
-	ext.Status.InstalledBundle = bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion)
-	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", resolvedBundle.Image))
+	if err := cache.Watch(ctx, r.controller, managedObjs...); err != nil {
+		// If we fail to establish watches, set the Healthy condition to
+		// "Unknown". We can't know the health of resources we can't monitor
+		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+			Type:               ocv1alpha1.TypeHealthy,
+			Reason:             ocv1alpha1.ReasonUnverifiable,
+			Status:             metav1.ConditionUnknown,
+			Message:            err.Error(),
+			ObservedGeneration: ext.Generation,
+		})
+		return ctrl.Result{}, err
+	}
+
+	// If we have successfully established the watches, remove the "Healthy" condition.
+	// It should be interpreted as "Unknown" when not present.
+	apimeta.RemoveStatusCondition(&ext.Status.Conditions, ocv1alpha1.TypeHealthy)
 
 	return ctrl.Result{}, nil
 }
@@ -307,22 +343,27 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 // SetDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
 // based on the provided bundle
 func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, deprecation *declcfg.Deprecation) {
-	deprecations := map[string]declcfg.DeprecationEntry{}
+	deprecations := map[string][]declcfg.DeprecationEntry{}
+	channelSet := sets.New[string]()
+	if ext.Spec.Source.Catalog != nil {
+		for _, channel := range ext.Spec.Source.Catalog.Channels {
+			channelSet.Insert(channel)
+		}
+	}
 	if deprecation != nil {
 		for _, entry := range deprecation.Entries {
 			switch entry.Reference.Schema {
 			case declcfg.SchemaPackage:
-				deprecations[ocv1alpha1.TypePackageDeprecated] = entry
+				deprecations[ocv1alpha1.TypePackageDeprecated] = []declcfg.DeprecationEntry{entry}
 			case declcfg.SchemaChannel:
-				if ext.Spec.Channel != entry.Reference.Name {
-					continue
+				if channelSet.Has(entry.Reference.Name) {
+					deprecations[ocv1alpha1.TypeChannelDeprecated] = append(deprecations[ocv1alpha1.TypeChannelDeprecated], entry)
 				}
-				deprecations[ocv1alpha1.TypeChannelDeprecated] = entry
 			case declcfg.SchemaBundle:
 				if bundleName != entry.Reference.Name {
 					continue
 				}
-				deprecations[ocv1alpha1.TypeBundleDeprecated] = entry
+				deprecations[ocv1alpha1.TypeBundleDeprecated] = []declcfg.DeprecationEntry{entry}
 			}
 		}
 	}
@@ -334,8 +375,10 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, d
 		ocv1alpha1.TypeChannelDeprecated,
 		ocv1alpha1.TypeBundleDeprecated,
 	} {
-		if entry, ok := deprecations[conditionType]; ok {
-			deprecationMessages = append(deprecationMessages, entry.Message)
+		if entries, ok := deprecations[conditionType]; ok {
+			for _, entry := range entries {
+				deprecationMessages = append(deprecationMessages, entry.Message)
+			}
 		}
 	}
 
@@ -358,11 +401,13 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, d
 		ocv1alpha1.TypeChannelDeprecated,
 		ocv1alpha1.TypeBundleDeprecated,
 	} {
-		entry, ok := deprecations[conditionType]
+		entries, ok := deprecations[conditionType]
 		status, reason, message := metav1.ConditionFalse, ocv1alpha1.ReasonDeprecated, ""
 		if ok {
-			status, reason, message = metav1.ConditionTrue, ocv1alpha1.ReasonDeprecated, entry.Message
-			deprecationMessages = append(deprecationMessages, message)
+			status, reason = metav1.ConditionTrue, ocv1alpha1.ReasonDeprecated
+			for _, entry := range entries {
+				message = fmt.Sprintf("%s\n%s", message, entry.Message)
+			}
 		}
 		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 			Type:               conditionType,

@@ -11,25 +11,18 @@ rules:
   verbs:
   - get
 - apiGroups:
-  - catalogd.operatorframework.io
-  resources:
-  - catalogmetadata
-  verbs:
-  - list
-  - watch
-- apiGroups:
-  - catalogd.operatorframework.io
-  resources:
-  - clustercatalogs
-  verbs:
-  - list
-  - watch
-- apiGroups:
   - ""
   resources:
   - serviceaccounts/token
   verbs:
   - create
+- apiGroups:
+  - olm.operatorframework.io
+  resources:
+  - clustercatalogs
+  verbs:
+  - list
+  - watch
 - apiGroups:
   - olm.operatorframework.io
   resources:

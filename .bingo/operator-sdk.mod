@@ -10,4 +10,4 @@ replace github.com/docker/distribution => github.com/docker/distribution v0.0.0-
 
 replace github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
 
-require github.com/operator-framework/operator-sdk v1.34.2 // cmd/operator-sdk -ldflags=-X=github.com/operator-framework/operator-sdk/internal/version.Version=v1.34.1
+require github.com/operator-framework/operator-sdk v1.36.1 // cmd/operator-sdk -ldflags=-X=github.com/operator-framework/operator-sdk/internal/version.Version=v1.34.1

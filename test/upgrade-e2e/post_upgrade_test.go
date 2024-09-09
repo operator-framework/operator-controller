@@ -86,16 +86,16 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "Installed bundle")
-		if assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle) {
-			assert.NotEmpty(ct, clusterExtension.Status.InstalledBundle.Version)
+		if assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle) {
+			assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle.Version)
 		}
 	}, time.Minute, time.Second)
 
-	previousVersion := clusterExtension.Status.InstalledBundle.Version
+	previousVersion := clusterExtension.Status.Install.Bundle.Version
 
 	t.Log("Updating the ClusterExtension to change version")
 	// Make sure that after we upgrade OLM itself we can still reconcile old objects if we change them
-	clusterExtension.Spec.Version = "1.0.1"
+	clusterExtension.Spec.Source.Catalog.Version = "1.0.1"
 	require.NoError(t, c.Update(ctx, &clusterExtension))
 
 	t.Log("Checking that the ClusterExtension installs successfully")
@@ -107,9 +107,9 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "Installed bundle")
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.ResolvedBundle)
-		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.InstalledBundle)
-		assert.NotEqual(ct, previousVersion, clusterExtension.Status.InstalledBundle.Version)
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.Resolution.Bundle)
+		assert.Equal(ct, &ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.Install.Bundle)
+		assert.NotEqual(ct, previousVersion, clusterExtension.Status.Install.Bundle.Version)
 	}, time.Minute, time.Second)
 }
 

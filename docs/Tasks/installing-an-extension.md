@@ -3,16 +3,13 @@
 In Operator Lifecycle Manager (OLM) 1.0, Kubernetes extensions are scoped to the cluster.
 After you add a catalog to your cluster, you can install an extension by creating a custom resource (CR) and applying it.
 
-!!! important
-
-    Currently, extensions that use webhooks or target a single or specified set of namespaces cannot be installed.
-    Extensions must not include webhooks and must use the `AllNamespaces` install mode.
-
-
 ## Prerequisites
 
-* The `jq` CLI tool is installed.
-* You have added a catalog to your cluster.
+* A deployed and unpacked catalog
+* The name, and optionally version, or channel, of the extension to be installed
+* The extension must be compatible with OLM 1.0 (see [current OLM v1 limitations](../drafts/refs/olmv1-limitations.md))
+* An existing namespace in which to install the extension
+* A suitable service account for installation (more information can be found [here](../drafts/Tasks/create-installer-service-account.md))
 
 ## Procedure
 
@@ -24,9 +21,16 @@ After you add a catalog to your cluster, you can install an extension by creatin
     metadata:
       name: <extension_name>
     spec:
-      packageName: <package_name>
-      channel: <channel>
-      version: "<version>"
+      source:
+        sourceType: Catalog
+        catalog:
+          packageName: <package_name>
+          channel: <channel>
+          version: "<version>"
+      install:
+        namespace: <namespace_name>
+        serviceAccount:
+          name: <serviceAccount_name>
     ```
 
      `extension_name`
@@ -41,6 +45,15 @@ After you add a catalog to your cluster, you can install an extension by creatin
      `version`
      : Optional: Specifies the version or version range you want installed, such as `1.3.1` or `"<2"`.
      If you use a comparison string to define a version range, the string must be surrounded by double quotes (`"`).
+    
+    `namespace_name`
+    : Specifies a name for the namespace in which the bundle of content for the package referenced 
+    in the packageName field will be applied. 
+
+    `serviceAccount_name`
+    : serviceAccount name is a required reference to a ServiceAccount that exists
+    in the installNamespace. The provided ServiceAccount is used to install and
+    manage the content for the package specified in the packageName field.
 
     !!! warning
         Currently, the following limitations affect the installation of extensions:
