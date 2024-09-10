@@ -43,10 +43,13 @@ The cluster extension installer should have the prerequisite permissions in orde
 * Permissions to create the necessary roles and rolebindings for the controller to be able to perform its job
 * Get, list, watch, update, patch, delete the specific resources that get created
 
+If no ServiceAccount is provided in the ClusterExtension manifest then the manifest will be rejected.
+The installation will fail if the ServiceAccount does not have the necessary permissions to install a bundle.
+
 
 ### Sample snippets of ClusterRole rule definitions
 
-* Allow ClusterExtension to set blockOwnerDeletion ownerReferences
+ClusterExtension to set blockOwnerDeletion ownerReferences
 
 ```yaml
 - apiGroups: [olm.operatorframework.io]
@@ -55,7 +58,7 @@ The cluster extension installer should have the prerequisite permissions in orde
   resourceNames: [<cluster-extension-name>]
 ```
 
-* Manage Custom Resource Definitions
+CRUD for Custom Resource Definitions
 
 ```yaml
 - apiGroups: [apiextensions.k8s.io]
@@ -67,7 +70,7 @@ The cluster extension installer should have the prerequisite permissions in orde
   resourceNames: [<crd name 1>, ..., <crd name n>]
 ```
 
-* Manage Cluster Roles
+CRUD for Cluster Roles
 
 ```yaml
 - apiGroups: [rbac.authorization.k8s.io]
@@ -79,7 +82,7 @@ The cluster extension installer should have the prerequisite permissions in orde
   resourceNames: [<generated cluster role 1>, ..., <generated cluster role n>, <manifest cluster role name 1>, ..., <manifest cluster role name n>]
 ```
 
-* Manage Cluster Role Bindings
+CRUD for Cluster Role Bindings
 
 ```yaml
 - apiGroups: [rbac.authorization.k8s.io]
@@ -91,7 +94,7 @@ The cluster extension installer should have the prerequisite permissions in orde
   resourceNames: [<generated cluster role 1>, ..., <generated cluster role n>, <manifest cluster role binding name 1>, ..., <manifest cluster role binding name n>]
 ```
 
-* Manage deployments
+CRUD for managing deployments
 
 ```yaml
 - apiGroups: [apps]
@@ -104,7 +107,7 @@ The cluster extension installer should have the prerequisite permissions in orde
   resourceNames: [argocd-operator-controller-manager]
 ```
 
-* Manage service accounts used for the deployment
+CRUD for service accounts used by the deployment
  
 ```yaml
 - apiGroups: [""]
@@ -115,6 +118,45 @@ The cluster extension installer should have the prerequisite permissions in orde
   resources: [serviceaccounts]
   verbs: [get, update, patch, delete]
   resourceNames: [argocd-operator-controller-manager]
+```
+
+### Manual process for minimal RBAC creation
+
+There are no production tools available to help you understand the precise RBAC required for your cluster extensions. However, if you want to figure this manually you can try the below:
+
+* Create all the intial rbac and then iterate over the ClusterExtention failures, examining conditions and updating the RBAC to include the generated cluster role names (name will be in the failure condition).
+Install the ClusterExtension, read the failure condition, update installer RBAC and iterate until you are out of errors
+* You can get the bundle image, unpacking the same and inspect the manifests to figure out the required permissions.
+* The `oc` cli-tool creates cluster roles with a hash in their name, query the newly created ClusterRole names, then reduce the installer RBAC scope to just the ClusterRoles needed (inc. the generated ones). You can achieve this by allowing the installer to get, list, watch and update any cluster roles.
+
+
+
+### Creation of ClusterRoleBinding using the cluster-admin ClusterRole in non-production environments
+
+Below is an example ClusterRoleBinding using the cluster-admin ClusterRole for non-production environments.
+
+
+```yaml
+# Create ClusterRole
+kubectl apply -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: my-cluster-extension-installer-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: my-cluster-extension-service-account
+  namespace: my-cluster-extension-namespace
+EOF
+
+```sh
+kubectl create clusterrolebinding my-cluster-extension-installer-role-binding \
+  --clusterrole=cluster-admin \
+  --serviceaccount=my-cluster-extension-namespace:my-cluster-installer-service-account
 ```
 
 ### Example ClusterExtension with RBAC
@@ -351,45 +393,3 @@ rules:
   verbs: [get, list, watch, update, patch, delete]
   resourceNames: [argocd-operator-controller-manager]
 ```
-
-### Manual process for minimal RBAC creation
-
-There are no production tools available to help you understand the precise RBAC required for your cluster extensions. However, if you want to figure this manually you can try the below:
-
-* Create all the intial rbac and then iterate over the ClusterExtention failures, examining conditions and updating the RBAC to include the generated cluster role names (name will be in the failure condition).
-Install the ClusterExtension, read the failure condition, update installer RBAC and iterate until you are out of errors
-* You can get the bundle image, unpacking the same and inspect the manifests to figure out the required permissions.
-* The `oc` cli-tool creates cluster roles with a hash in their name, query the newly created ClusterRole names, then reduce the installer RBAC scope to just the ClusterRoles needed (inc. the generated ones). You can achieve this by allowing the installer to get, list, watch and update any cluster roles.
-
-
-
-### Creation of ClusterRoleBinding using the cluster-admin ClusterRole in non-production environments
-
-Below is an example ClusterRoleBinding using the cluster-admin ClusterRole for non-production environments
-
-```yaml
-# Create ClusterRole
-kubectl apply -f - <<EOF
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: my-cluster-extension-installer-role-binding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: my-cluster-extension-service-account
-  namespace: my-cluster-extension-namespace
-EOF
-
-```sh
-kubectl create clusterrolebinding my-cluster-extension-installer-role-binding \
-  --clusterrole=cluster-admin \
-  --serviceaccount=my-cluster-extension-namespace:my-cluster-installer-service-account
-```
-
-
-If no ServiceAccount is provided in the ClusterExtension manifest, then the manifest will be rejected.
-Installation will fail if the ServiceAccount does not have the necessary permissions to install a bundle.
