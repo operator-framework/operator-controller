@@ -120,7 +120,7 @@ The cluster extension installer should have the prerequisite permissions in orde
 ### Example ClusterExtension with RBAC
 This is an example of the argocd installer with the necessary RBAC to deploy the ArgoCD ClusterExtension.
 
-???+ note
+```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -364,6 +364,8 @@ Install the ClusterExtension, read the failure condition, update installer RBAC 
 
 
 ### Creation of ClusterRoleBinding using the cluster-admin ClusterRole in non-production environments
+
+Below is an example ClusterRoleBinding using the cluster-admin ClusterRole for non-production environments
 
 ```yaml
 # Create ClusterRole
