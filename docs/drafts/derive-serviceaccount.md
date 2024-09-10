@@ -1,11 +1,8 @@
 # Derive minimal ServiceAccount required for ClusterExtension Installation and Management
 
-Adhering to OLM v1's "Secure by Default" tenet, OLM v1 does not have the permissions necessary to install content. This follows the least privilege principle and reduces the chance of a [confused deputy attack](https://en.wikipedia.org/wiki/Confused_deputy_problem). Instead, a ServiceAccount must be provided by users to install and manage content.
+OLMv1 does not provide cluster admin privileges by default for installing cluster extensions.This means that the installation process will require a service account with sufficient privileges to install the bundle. It depends on the cluster extension developer to specify the exact permissions required for the management of any specific bundle. A Service Account needs to be explicitly specified for installing and upgrading operators else will face errors when deploying your cluster extension.
 
-
-OLMv1 does not provide cluster admin privileges by default for installing cluster extensions. It depends on the cluster extension developer to specify the exact permissions required for the management of any specific bundle. A ServiceAccount needs to be explicitly specified for installing and upgrading operators else will face errors when deploying your cluster extension.
-
-The ServiceAccount is specified in the ClusterExtension manifest as follows:
+The Service Account is specified in the ClusterExtension manifest as shown below:
 
 ```yaml
 apiVersion: olm.operatorframework.io/v1alpha1
@@ -24,26 +21,43 @@ spec:
       name: argocd-installer
 ```
 
-The cluster extension installer will need RBAC in order to be able to assign the controller the RBAC it requires.
-In order to derive the minimal RBAC for the installer service account, you must specify the following permissions:
-* ClusterRole with all the roles specified in the bundle ClusterServiceVersion.
-* ClusterExtension finalizer
-* Allow ClusterExtenstion to set blockOwnerDeletion ownerReferences
-* create the controller deployment
-* create the ClusterResourceDefnitions
-* create the other manifest objects
-* create the necessary Cluster/Roles for the controller to be able to perform its job.
-* get, list, watch, update, patch, delete the specific resources that get created
-* update finalizers on the ClusterExtension to be able to set blockOwnerDeletion and ownerReferences
+The initial stable version (v1.0.0) only supports FBC catalogs containing registry+v1 bundles. OLMv1 will not support all OLMv0 content. OLMv1 will only support bundles that meet the following criteria:
+* AllNamespaces install mode is enabled
+* No dependencies on other packages or GVKs
+* No webhooks
+* Does not make use of the OperatorConditions API
+
+### Required RBAC
+
+The cluster extension installer should have the prerequisite permissions in order to be able to assign the controller the RBAC it requires. In order to derive the minimal RBAC for the installer service account, you must specify the following permissions:
+
+* ClusterRole with all the roles specified in the bundle ClusterServiceVersion. This includes all the
+  rules defined in the CSV under `.spec.install.clusterPermissions` and `.spec.install.permissions`
+* ClusterRole to create and manage CustomResourceDefinitions
+* Update finalizers on the ClusterExtension to be able to set blockOwnerDeletion and ownerReferences
+* Permissions to create the controller deployment, this corresponds to the rules to manage the
+  deployment defined in the ClusterServiceVersion
+* Permissions to create the other manifest objects, rules to manage any other cluster-scoped resources
+  shipped with the bundle
+* Rules to manage any other namespace-scoped resources 
+* Permissions to create the necessary roles and rolebindings for the controller to be able to perform its job
+* Get, list, watch, update, patch, delete the specific resources that get created
 
 
-The following ClusterRole rules are needed:
-# Allow ClusterExtension to set blockOwnerDeletion ownerReferences
+### Below are snippets of the ClusterRole rule definitions:
+
+* Allow ClusterExtension to set blockOwnerDeletion ownerReferences
+
+```yaml
 - apiGroups: [olm.operatorframework.io]
   resources: [clusterextensions/finalizers]
   verbs: [update]
   resourceNames: [<cluster-extension-name>]
-# Manage CRDs
+```
+
+* Manage Custom Resource Definitions
+
+```yaml
 - apiGroups: [apiextensions.k8s.io]
   resources: [customresourcedefinitions]
   verbs: [create, list, watch]
@@ -51,7 +65,11 @@ The following ClusterRole rules are needed:
   resources: [customresourcedefinitions]
   verbs: [get, update, patch, delete]
   resourceNames: [<crd name 1>, ..., <crd name n>]
-# Manage ClusterRoles
+```
+
+* Manage Cluster Roles
+
+```yaml
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterroles]
   verbs: [create, list, watch]
@@ -59,7 +77,11 @@ The following ClusterRole rules are needed:
   resources: [clusterroles]
   verbs: [get, update, patch, delete]
   resourceNames: [<generated cluster role 1>, ..., <generated cluster role n>, <manifest cluster role name 1>, ..., <manifest cluster role name n>]
-# Manage ClusterRoleBindings
+```
+
+* Manage Cluster Role Bindings
+
+```yaml
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterrolebindings]
   verbs: [create, list, watch]
@@ -67,11 +89,11 @@ The following ClusterRole rules are needed:
   resources: [clusterrolebindings]
   verbs: [get, update, patch, delete]
   resourceNames: [<generated cluster role 1>, ..., <generated cluster role n>, <manifest cluster role binding name 1>, ..., <manifest cluster role binding name n>]
-* Rules defined in the CSV under `.spec.install.clusterPermissions` and `.spec.install.permissions`
-* Rules to manage any other cluster-scoped resources shipped with the bundle
-* Rules to manage any other namespace-scoped resources
-* Rules to manage the deployment defined in the ClusterServiceVersion
-* Rules to manage the service account used for the deployment
+```
+
+* Manage deployments
+
+```yaml
 - apiGroups: [apps]
   resources: [deployments]
   verbs: [create, list, watch]
@@ -80,7 +102,11 @@ The following ClusterRole rules are needed:
   resources: [deployments]
   verbs: [get, update, patch, delete]
   resourceNames: [argocd-operator-controller-manager]
+```
 
+* Manage service accounts used for the deployment
+ 
+```yaml
 - apiGroups: [""]
   resources: [serviceaccounts]
   verbs: [create, list, watch]
@@ -93,6 +119,7 @@ The following ClusterRole rules are needed:
 
 Below is an example of the argocd installer with the necessary RBAC to deploy the ArgoCD ClusterExtension:
 
+???+ note
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -325,7 +352,18 @@ rules:
   resourceNames: [argocd-operator-controller-manager]
 ```
 
-# Creation of ClusterRoleBinding using the cluster-admin ClusterRole in non-production environments
+### Manual process for minimal RBAC creation
+
+There are no production tools available to help you understand the precise RBAC required for your cluster extensions. However, if you want to figure this manually you can try the below:
+
+* Create all the intial rbac and then iterate over the ClusterExtention failures, examining conditions and updating the RBAC to include the generated cluster role names (name will be in the failure condition).
+Install the ClusterExtension, read the failure condition, update installer RBAC and iterate until you are out of errors
+* You can get the bundle image, unpacking the same and inspect the manifests to figure out the required permissions.
+* The `oc` cli-tool creates cluster roles with a hash in their name, query the newly created ClusterRole names, then reduce the installer RBAC scope to just the ClusterRoles needed (inc. the generated ones). You can achieve this by allowing the installer to get, list, watch and update any cluster roles.
+
+
+
+### Creation of ClusterRoleBinding using the cluster-admin ClusterRole in non-production environments
 
 ```yaml
 # Create ClusterRole
@@ -344,7 +382,7 @@ subjects:
   namespace: my-cluster-extension-namespace
 EOF
 
-```
+```sh
 kubectl create clusterrolebinding my-cluster-extension-installer-role-binding \
   --clusterrole=cluster-admin \
   --serviceaccount=my-cluster-extension-namespace:my-cluster-installer-service-account
