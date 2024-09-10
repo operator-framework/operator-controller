@@ -247,6 +247,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	setResolvedStatusConditionSuccess(ext, fmt.Sprintf("resolved to %q", resolvedBundle.Image))
 
 	bundleSource := &rukpaksource.BundleSource{
+		Name: ext.GetName(),
 		Type: rukpaksource.SourceTypeImage,
 		Image: &rukpaksource.ImageSource{
 			Ref: resolvedBundle.Image,
