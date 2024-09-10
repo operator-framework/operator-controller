@@ -32,7 +32,7 @@ Compared to its predecessor, amongst other things, OLM v1 aims to provide:
 * Helm Chart support
 * GitOps support
 
-For an in-depth look at OLM v1, please see the [OLM v1 Overview](olm_overview.md) and the [Roadmap](olmv1_roadmap.md).
+For an in-depth look at OLM v1, please see the [OLM v1 Overview](olmv1_overview.md) and the [Roadmap](olmv1_roadmap.md).
 
 # The OLM community
 
