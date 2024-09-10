@@ -44,7 +44,7 @@ The cluster extension installer should have the prerequisite permissions in orde
 * Get, list, watch, update, patch, delete the specific resources that get created
 
 
-### Below are snippets of the ClusterRole rule definitions:
+### Sample snippets of ClusterRole rule definitions
 
 * Allow ClusterExtension to set blockOwnerDeletion ownerReferences
 
@@ -117,10 +117,10 @@ The cluster extension installer should have the prerequisite permissions in orde
   resourceNames: [argocd-operator-controller-manager]
 ```
 
-Below is an example of the argocd installer with the necessary RBAC to deploy the ArgoCD ClusterExtension:
+### Example ClusterExtension with RBAC
+This is an example of the argocd installer with the necessary RBAC to deploy the ArgoCD ClusterExtension.
 
 ???+ note
-```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
