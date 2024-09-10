@@ -39,7 +39,7 @@ func setResolvedStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message 
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeResolved,
 		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonResolutionFailed,
+		Reason:             ocv1alpha1.ReasonFailed,
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
 	})
@@ -61,7 +61,7 @@ func setInstalledStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonInstallationFailed,
+		Reason:             ocv1alpha1.ReasonFailed,
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
 	})
@@ -72,7 +72,7 @@ func setStatusUnpackFailed(ext *ocv1alpha1.ClusterExtension, message string) {
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeUnpacked,
 		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonUnpackFailed,
+		Reason:             ocv1alpha1.ReasonFailed,
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
 	})
@@ -82,7 +82,7 @@ func setStatusUnpacked(ext *ocv1alpha1.ClusterExtension, message string) {
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeUnpacked,
 		Status:             metav1.ConditionTrue,
-		Reason:             ocv1alpha1.ReasonUnpackSuccess,
+		Reason:             ocv1alpha1.ReasonSuccess,
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
 	})
