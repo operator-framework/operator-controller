@@ -48,13 +48,16 @@ The cluster extension installer should have the prerequisite permissions in orde
 
 * Allow ClusterExtension to set blockOwnerDeletion ownerReferences
 
+```yaml
 - apiGroups: [olm.operatorframework.io]
   resources: [clusterextensions/finalizers]
   verbs: [update]
   resourceNames: [<cluster-extension-name>]
+```
 
 * Manage Custom Resource Definitions
 
+```yaml
 - apiGroups: [apiextensions.k8s.io]
   resources: [customresourcedefinitions]
   verbs: [create, list, watch]
@@ -62,9 +65,11 @@ The cluster extension installer should have the prerequisite permissions in orde
   resources: [customresourcedefinitions]
   verbs: [get, update, patch, delete]
   resourceNames: [<crd name 1>, ..., <crd name n>]
+```
 
 * Manage Cluster Roles
 
+```yaml
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterroles]
   verbs: [create, list, watch]
@@ -72,9 +77,11 @@ The cluster extension installer should have the prerequisite permissions in orde
   resources: [clusterroles]
   verbs: [get, update, patch, delete]
   resourceNames: [<generated cluster role 1>, ..., <generated cluster role n>, <manifest cluster role name 1>, ..., <manifest cluster role name n>]
+```
 
 * Manage Cluster Role Bindings
 
+```yaml
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterrolebindings]
   verbs: [create, list, watch]
@@ -82,9 +89,11 @@ The cluster extension installer should have the prerequisite permissions in orde
   resources: [clusterrolebindings]
   verbs: [get, update, patch, delete]
   resourceNames: [<generated cluster role 1>, ..., <generated cluster role n>, <manifest cluster role binding name 1>, ..., <manifest cluster role binding name n>]
+```
 
 * Manage deployments
 
+```yaml
 - apiGroups: [apps]
   resources: [deployments]
   verbs: [create, list, watch]
@@ -93,10 +102,11 @@ The cluster extension installer should have the prerequisite permissions in orde
   resources: [deployments]
   verbs: [get, update, patch, delete]
   resourceNames: [argocd-operator-controller-manager]
-
+```
 
 * Manage service accounts used for the deployment
-
+ 
+```yaml
 - apiGroups: [""]
   resources: [serviceaccounts]
   verbs: [create, list, watch]
@@ -105,11 +115,12 @@ The cluster extension installer should have the prerequisite permissions in orde
   resources: [serviceaccounts]
   verbs: [get, update, patch, delete]
   resourceNames: [argocd-operator-controller-manager]
-
+```
 
 Below is an example of the argocd installer with the necessary RBAC to deploy the ArgoCD ClusterExtension:
 
 ???+ note
+```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
