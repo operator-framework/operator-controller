@@ -32,8 +32,8 @@ operator-controller requires
 their own Tiltfiles, before proceeding. If you want to use Tilt, make sure you specify a unique `--port` flag to each
 `tilt up` invocation.
 
-## Install tilt-support Repo, one level up
-You must install the tilt-support repo one level up from this repo
+## Install tilt-support Repo
+You must install the tilt-support repo at the directory level above this repo
 
 ```bash
 pushd ..
