@@ -4,6 +4,9 @@
 SCRIPT_ROOT=$(dirname "$(realpath "$0")")
 source "${SCRIPT_ROOT}/lib/utils.sh"
 
+# Check required tools are installed
+assert-commands jq
+
 usage() {
     print-banner
     echo ""
@@ -42,13 +45,13 @@ done
 shift $((OPTIND -1))
 
 # Select bundle documents
-function looking-for-a-bundle() {
+function select-bundle-documents() {
     jq 'select(.schema == "olm.bundle")'
 }
 
 # Select bundles that declare AllNamespace install mode
 # or declare nothing at all (older released bundles sans "olm.csv.metadata" property)
-function in-finance() {
+function that-support-allnamespace-install-mode() {
     jq 'select(
             all(.properties[].type; . != "olm.csv.metadata") or
             (.properties[]? |
@@ -62,23 +65,23 @@ function in-finance() {
 }
 
 # Select bundles without dependencies
-function with-a-trust-fund() {
+function that-dont-have-dependencies() {
     jq 'select(all(.properties[].type; . != "olm.package.required" and . != "olm.gvk.required"))'
 }
 
 # Select the "olm.package" property from the bundles
 # This contains the packageName and version information
-function six-five() {
+function extract-olm-package-property() {
     jq '.properties[] | select(.type == "olm.package") |.value'
 }
 
 # Group packages by name and collect versions into an array
-function blue-eyes() {
+function group-versions-by-package-name() {
     jq -s 'group_by(.packageName) | map({packageName: .[0].packageName, versions: map(.version)})' | regex_it
 }
 
 # Apply regex on name
-function regex_it() {
+function filter-by-regex-if-necessary() {
     jq --arg regex "$REGEX" '
         if $regex != "" then
             map(select(.packageName | test($regex)))
@@ -87,7 +90,7 @@ function regex_it() {
         end'
 }
 
-cat - | looking-for-a-bundle | in-finance | with-a-trust-fund | six-five | blue-eyes
+cat - | select-bundle-documents | that-support-allnamespace-install-mode | that-dont-have-dependencies | group-versions-by-package-name | filter-by-regex-if-necessary
 
 echo "NOTE: OLM v1 currently only supports bundles that support AllNamespaces install model, don't have dependencies, and don't contain webhooks" >&2
 echo "WARNING: These results may include bundles with webhooks, which are incompatible" >&2

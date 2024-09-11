@@ -6,7 +6,9 @@ SCRIPT_ROOT=$(dirname "$(realpath "$0")")
 source "${SCRIPT_ROOT}/lib/unpack.sh"
 source "${SCRIPT_ROOT}/lib/utils.sh"
 
-export CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
+# Check there is a container runtime (podman, or docker)
+# If neither are found, check CONTAINER_RUNTIME is set and exists in PATH
+assert-container-runtime
 
 usage() {
     print-banner

@@ -38,7 +38,7 @@ CLUSTER_RBAC_RULES="[]"
 NAMESPACE_RBAC_RULES="[]"
 
 # Function to create a JSON-formatted RBAC rule
-function make_rbac_rule() {
+make_rbac_rule() {
     local apiGroups="${1}"
     local resources="${2}"
     local verbs="${3}"
@@ -60,7 +60,7 @@ EOF
 }
 
 # Function to aggregate rules into a JSON array
-function aggregate_rules() {
+aggregate_rules() {
     local rules="$1"
     local scope="$2"
     debug "rules: $(echo "${rules}" | jq -c)"
@@ -96,7 +96,7 @@ function aggregate_rules() {
 #   - applications.argoproj.io
 #   - argocdexports.argoproj.io
 #   - applicationsets.argoproj.io
-function add_rbac_rules() {
+add_rbac_rules() {
     local api_group="${1}"
     local resource="${2}"
     local scope="${3}"

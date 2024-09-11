@@ -10,8 +10,12 @@ source "${SCRIPT_ROOT}/lib/unpack.sh"
 source "${SCRIPT_ROOT}/lib/collect-rbac.sh"
 source "${SCRIPT_ROOT}/lib/utils.sh"
 
-# Set the container runtime, default to docker
-export CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
+# Check there is a container runtime (podman, or docker)
+# If neither are found, check CONTAINER_RUNTIME is set and exists in PATH
+assert-container-runtime
+
+# Check required tools are installed
+assert-commands jq
 
 function usage() {
     print-banner
@@ -19,12 +23,12 @@ function usage() {
     echo "Usage:"
     echo ""
     echo "Generate installation manifests"
-    echo "$0 install <package-name> <package-version> [-n namespace] [-e cluster-extension-name] [-cr cluster-role-name] [-r role-name] [-s service-account-name] [--use-defaults]"
+    echo "$0 install <package-name> <package-version> [-n namespace] [-e cluster-extension-name] [-cr cluster-role-name] [-r role-name] [-s service-account-name] [--template]"
     echo ""
     echo "Generate RBAC manifests"
-    echo "$0 rbac <package-name> <package-version> [-n namespace] [-e cluster-extension-name] [-cr cluster-role-name] [-r role-name] [-s service-account-name] [--use-defaults]"
+    echo "$0 rbac <package-name> <package-version> [-n namespace] [-e cluster-extension-name] [-cr cluster-role-name] [-r role-name] [-s service-account-name] [--template]"
     echo ""
-    echo "Generate installation or RBAC manifests for a registry+v1 package given an FBA catalog in stdin"
+    echo "Generate installation or RBAC manifests for a registry+v1 package given an FBC catalog in stdin"
     echo ""
     echo "Options:"
     echo "  -n <namespace> - Namespace where the extension is installed"
@@ -32,7 +36,7 @@ function usage() {
     echo "  -cr <cluster-role-name> - Name of the cluster role"
     echo "  -r <role-name> - Name of the role"
     echo "  -s <service-account-name> - Name of the service account"
-    echo "  --use-defaults - Use default resource names"
+    echo "  --template - Generate template manifests"
     echo ""
     echo "Template Variables:"
     echo " * \${NAMESPACE} - Namespace where the extension is installed"
@@ -52,16 +56,16 @@ function usage() {
     echo ""
     echo "Examples:"
     echo "  # Generate installation manifests for the argocd-operator package"
-    echo "  $0 install argocd-operator 0.6.0 --use-defaults < operatorhubio-catalog.json"
-    echo ""
-    echo "  # Generate RBAC manifests for the argocd-operator package"
-    echo "  $0 rbac argocd-operator 0.6.0 --use-defaults < operatorhubio-catalog.json"
-    echo ""
-    echo "  # Generate templated installation manifests for the argocd-operator package"
     echo "  $0 install argocd-operator 0.6.0 < operatorhubio-catalog.json"
     echo ""
-    echo "  # Generate templated RBAC manifests for the argocd-operator package"
+    echo "  # Generate RBAC manifests for the argocd-operator package"
     echo "  $0 rbac argocd-operator 0.6.0 < operatorhubio-catalog.json"
+    echo ""
+    echo "  # Generate templated installation manifests for the argocd-operator package"
+    echo "  $0 install argocd-operator 0.6.0 --template < operatorhubio-catalog.json"
+    echo ""
+    echo "  # Generate templated RBAC manifests for the argocd-operator package"
+    echo "  $0 rbac argocd-operator 0.6.0 --template < operatorhubio-catalog.json"
     echo ""
     echo "WARNING: This script is a stopgap solution until proper tools are available in OLMv1 - it is not guaranteed to work with all packages."
 }
@@ -79,12 +83,12 @@ export PACKAGE_VERSION=$3
 
 # Initialize environment variables with template defaults
 export NAMESPACE="\${NAMESPACE}"
-export EXTENSION_NAME="\${EXTENSION-NAME}"
+export EXTENSION_NAME="\${EXTENSION_NAME}"
 export CLUSTER_ROLE_NAME="\${CLUSTER_ROLE_NAME}"
 export ROLE_NAME="\${ROLE_NAME}"
 export SERVICE_ACCOUNT_NAME="\${SERVICE_ACCOUNT_NAME}"
 export DEBUG=false
-use_defaults=false
+template=false
 
 # Parse optional arguments
 shift 3
@@ -112,8 +116,8 @@ while [[ $# -gt 0 ]]; do
             export SERVICE_ACCOUNT_NAME="$2"
             shift 2
             ;;
-        --use-defaults)
-            use_defaults=true
+        --template)
+            template=true
             shift
             ;;
         --debug)
@@ -128,9 +132,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Apply default values only to unset parameters if --use-defaults is set
-if [ "$use_defaults" = true ]; then
-    [ "$EXTENSION_NAME" == "\${EXTENSION-NAME}" ] && export EXTENSION_NAME="${PACKAGE_NAME}"
+# Apply default values only to unset parameters if --template is not set
+if [ "$template" = false ]; then
+    [ "$EXTENSION_NAME" == "\${EXTENSION_NAME}" ] && export EXTENSION_NAME="${PACKAGE_NAME}"
     [ "$NAMESPACE" == "\${NAMESPACE}" ] && export NAMESPACE="${EXTENSION_NAME}-system"
     [ "$SERVICE_ACCOUNT_NAME" == "\${SERVICE_ACCOUNT_NAME}" ] && export SERVICE_ACCOUNT_NAME="${PACKAGE_NAME}-installer"
     [ "$CLUSTER_ROLE_NAME" == "\${CLUSTER_ROLE_NAME}" ] && export CLUSTER_ROLE_NAME="${SERVICE_ACCOUNT_NAME}-cluster-role"

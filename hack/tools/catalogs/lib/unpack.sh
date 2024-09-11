@@ -1,6 +1,6 @@
 # Library of functions for unpacking bundles
 
-function create_container() {
+create_container() {
     local image="${1}"
     # Create a container from the image
     # Catalog images don't have an executable, but some entrypoint is required (though it will be ignored)
@@ -15,7 +15,7 @@ function create_container() {
     echo "${container_id}"
 }
 
-function unpack() {
+unpack() {
     local container_id="${1}"
     local output_dir="${2}"
 

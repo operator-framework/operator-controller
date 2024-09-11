@@ -6,13 +6,13 @@ source "$(dirname "${BASH_SOURCE[0]}")/manifests.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/bundle.sh"
 
 # Function to add the specified rules
-function add_required_rules() {
+add_required_rules() {
     local finalizer_perm
     finalizer_perm=$(make_rbac_rule "olm.operatorframework.io" "clusterextensions/finalizers" '"update"' "$EXTENSION_NAME")
     aggregate_rules "${finalizer_perm}" "cluster"
 }
 
-function collect_crd_rbac() {
+collect_crd_rbac() {
     debug "Collecting CRD permissions"
     local csv="${1}"
     crds=()
@@ -22,7 +22,7 @@ function collect_crd_rbac() {
     add_rbac_rules "apiextensions.k8s.io" "customresourcedefinitions" "cluster" "${ALL_RESOURCE_VERBS}" "${NAMED_RESOURCE_VERBS}" "${crds[@]}"
 }
 
-function collect_cluster_role_rbac() {
+collect_cluster_role_rbac() {
     local manifest_dir="${1}"
     local csv="${2}"
     debug "Adding ClusterRole RBAC"
@@ -60,7 +60,7 @@ function collect_cluster_role_rbac() {
     add_rbac_rules "rbac.authorization.k8s.io" "clusterrolebindings" "cluster" "${ALL_RESOURCE_VERBS}" "${NAMED_RESOURCE_VERBS}" "${all_cluster_role_binding_names[@]}"
 }
 
-function collect_cluster_scoped_resource_rbac() {
+collect_cluster_scoped_resource_rbac() {
     debug "Adding other ClusterScoped Resources"
     local manifest_dir="${1}"
     for kind in "${CLUSTER_SCOPED_RESOURCES[@]}"; do
@@ -73,7 +73,7 @@ function collect_cluster_scoped_resource_rbac() {
     done
 }
 
-function collect_operator_deployment_rbac() {
+collect_operator_deployment_rbac() {
     local manifest_dir="${1}"
     local csv="${2}"
 
@@ -84,7 +84,7 @@ function collect_operator_deployment_rbac() {
     add_rbac_rules "apps" "deployments" "namespace" "${ALL_RESOURCE_VERBS}" "${NAMED_RESOURCE_VERBS}" "${all_deployments[@]}"
 }
 
-function collect_service_account_rbac() {
+collect_service_account_rbac() {
     debug "Adding ServiceAccount RBAC"
     local manifest_dir="${1}"
     local csv="${2}"
@@ -94,7 +94,7 @@ function collect_service_account_rbac() {
     add_rbac_rules "" "serviceaccounts" "namespace" "${ALL_RESOURCE_VERBS}" "${NAMED_RESOURCE_VERBS}" "${all_sas[@]}"
 }
 
-function collect_role_rbac() {
+collect_role_rbac() {
     debug "Collecting Role RBAC"
     local manifest_dir="${1}"
     local csv="${2}"
@@ -123,7 +123,7 @@ function collect_role_rbac() {
 }
 
 # Expects a supported bundle
-function collect_installer_rbac() {
+collect_installer_rbac() {
     local manifest_dir="${1}"
     csv="$(find_csv "${manifest_dir}")"
 

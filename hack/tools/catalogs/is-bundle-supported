@@ -7,10 +7,13 @@ source "${SCRIPT_ROOT}/lib/unpack.sh"
 source "${SCRIPT_ROOT}/lib/collect-rbac.sh"
 source "${SCRIPT_ROOT}/lib/utils.sh"
 
+# Check required tools are installed
+assert-commands jq
+
 usage() {
     print-banner
     echo ""
-    echo "Usage: $0 <manifest_dirn>"
+    echo "Usage: $0 <manifest_dir>"
     echo ""
     echo "Check if a bundle is supported by OLM v1 given a bundle manifest directory"
     echo ""
@@ -32,7 +35,6 @@ else
 fi
 
  # Check the bundle is supported
-echo "Checking if bundle is supported by OLM v1" >&2
 assert-bundle-supported "${manifest_dir}"
 
 echo "Bundle is supported by OLM v1" >&2

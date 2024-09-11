@@ -6,6 +6,9 @@ SCRIPT_ROOT=$(dirname "$(realpath "$0")")
 source "${SCRIPT_ROOT}/lib/bundle.sh"
 source "${SCRIPT_ROOT}/lib/utils.sh"
 
+# Check required tools are installed
+assert-commands jq
+
 usage() {
     print-banner
     echo ""

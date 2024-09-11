@@ -4,7 +4,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/hash.sh"
 
 # Given package and version grabs the bundle image from stdin FBC stream
-function get-bundle-image(){
+get-bundle-image(){
     local package_name="${1}"
     local package_version="${2}"
     local image
@@ -19,28 +19,31 @@ function get-bundle-image(){
     echo "${image}"
 }
 
-function is-all-namespace-mode-enabled() {
+is-all-namespace-mode-enabled() {
     local csv="${1}"
     local valid
+    # Note: The 'and true' is to ensure that the expression evaluates to true or false
+    # Without it, yq will return the matched value. This is done for succinctness. Without the 'and true',
+    # the same behavior could be achieved by checking if the output is non-empty.
     valid=$(yq eval '(.spec.installModes[] | select(.type == "AllNamespaces" and .supported == true)) and true' "${csv}")
     echo "${valid}"
 }
 
-function does-not-have-webhooks() {
+does-not-have-webhooks() {
     local csv="${1}"
     local valid
     valid=$(yq eval '((.spec.webhookdefinitions == null) or (.spec.webhookdefinitions | length == 0))' "${csv}")
     echo "${valid}"
 }
 
-function does-not-have-dependencies() {
+does-not-have-dependencies() {
     local csv="${1}"
     local valid
     valid=$(yq eval '((.spec.customresourcedefinitions.required == null) or (.spec.customresourcedefinitions.required | length == 0))' "${csv}")
     echo "${valid}"
 }
 
-function is-crd-version-supported() {
+is-crd-version-supported() {
     local manifest_dir="${1}"
     local valid=true
     while IFS= read -r resource_file; do
@@ -53,7 +56,7 @@ function is-crd-version-supported() {
     echo "$valid"
 }
 
-function is-bundle-supported() {
+is-bundle-supported() {
     local manifest_dir="${1}"
     csv="$(find_csv "${manifest_dir}")"
 
@@ -77,7 +80,7 @@ function is-bundle-supported() {
 }
 
 # Function to validate the bundle is supported
-function assert-bundle-supported() {
+assert-bundle-supported() {
     local manifest_dir="${1}"
     if [ "$(is-bundle-supported "${manifest_dir}")" != "true" ]; then
       exit 1
@@ -86,7 +89,7 @@ function assert-bundle-supported() {
 
 # Function to get all resource names for a particular kind
 # from the manifest directory
-function collect_resource_names() {
+collect_resource_names() {
     local manifest_dir="${1}"
     local kind="${2}"
     local resource_names=()
@@ -101,7 +104,7 @@ function collect_resource_names() {
 
 # Function that collects all the rules for all the ClusterRole manifests
 # shipped with the bundle
-function collect_manifest_cluster_role_perms() {
+collect_manifest_cluster_role_perms() {
     local manifest_dir="${1}"
     local kind="ClusterRole"
     local all_cr_rules="[]"
@@ -119,7 +122,7 @@ function collect_manifest_cluster_role_perms() {
 
 # Function that collects all the rules for all the Role manifests
 # shipped with the bundle
-function collect_manifest_role_perms() {
+collect_manifest_role_perms() {
     local manifest_dir="${1}"
     local kind="Role"
     local all_cr_rules="[]"
@@ -137,7 +140,7 @@ function collect_manifest_role_perms() {
 
 # Function to get the apiGroup for a named resource of a given kind
 # from the manifests dir
-function get_api_group() {
+get_api_group() {
     local dir_path="$1"
     local kind="$2"
     local name="$3"
@@ -155,7 +158,7 @@ function get_api_group() {
 }
 
 # Function to get the generated clusterrole resource names
-function generated_cluster_role_names() {
+generated_cluster_role_names() {
     local csvFile="${1}"
     local generated_cluster_role_names=()
     csv_name=$(yq eval -r '.metadata.name' "${csvFile}")
@@ -171,7 +174,7 @@ function generated_cluster_role_names() {
 }
 
 # Get CSV from manifest directory
-function find_csv() {
+find_csv() {
     local manifest_dir="${1}"
     local csv_files
 

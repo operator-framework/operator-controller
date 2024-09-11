@@ -1,7 +1,7 @@
 # Library of functions for generating kube manifests
 
 # Function to generate the target install namespace
-function generate_namespace() {
+generate_namespace() {
     cat <<EOF
 ---
 apiVersion: v1
@@ -11,7 +11,7 @@ metadata:
 EOF
 }
 
-function generate_service_account() {
+generate_service_account() {
     cat <<EOF
 ---
 apiVersion: v1
@@ -22,7 +22,7 @@ metadata:
 EOF
 }
 
-function generate_cluster_role() {
+generate_cluster_role() {
     cat <<EOF
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -33,7 +33,7 @@ rules: $(echo "$CLUSTER_RBAC_RULES" | jq '.')
 EOF
 }
 
-function generate_cluster_role_binding() {
+generate_cluster_role_binding() {
     cat <<EOF
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -51,7 +51,7 @@ subjects:
 EOF
 }
 
-function generate_role() {
+generate_role() {
     cat <<EOF
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -63,7 +63,7 @@ rules: $(echo "$NAMESPACE_RBAC_RULES" | jq '.')
 EOF
 }
 
-function generate_role_binding() {
+generate_role_binding() {
     cat << EOF
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -82,7 +82,7 @@ subjects:
 EOF
 }
 
-function generate_cluster_extension() {
+generate_cluster_extension() {
     cat <<EOF
 ---
 apiVersion: olm.operatorframework.io/v1alpha1
@@ -102,7 +102,7 @@ spec:
 EOF
 }
 
-function generate_rbac_manifests() {
+generate_rbac_manifests() {
     if [ "$(echo "$CLUSTER_RBAC_RULES" | jq length)" -gt 0 ]; then
         generate_cluster_role
         generate_cluster_role_binding
@@ -113,7 +113,7 @@ function generate_rbac_manifests() {
     fi
 }
 
-function generate_install_manifests() {
+generate_install_manifests() {
     generate_namespace
     generate_service_account
     generate_rbac_manifests
