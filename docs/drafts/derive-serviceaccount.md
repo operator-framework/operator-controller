@@ -152,6 +152,9 @@ subjects:
   name: my-cluster-extension-service-account
   namespace: my-cluster-extension-namespace
 EOF
+```
+
+Use the below on a Kind cluster to assign cluster-admin privileges to your cluster extension
 
 ```sh
 kubectl create clusterrolebinding my-cluster-extension-installer-role-binding \
