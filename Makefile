@@ -7,6 +7,7 @@ SHELL := /usr/bin/env bash -o pipefail
 .SHELLFLAGS := -ec
 export ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
+GOLANG_VERSION := 1.22.5
 # Image URL to use all building/pushing image targets
 ifeq ($(origin IMAGE_REPO), undefined)
 IMAGE_REPO := quay.io/operator-framework/operator-controller
@@ -95,7 +96,7 @@ lint: $(GOLANGCI_LINT) #HELP Run golangci linter.
 
 .PHONY: tidy
 tidy: #HELP Update dependencies.
-	$(Q)go mod tidy
+	$(Q)go mod tidy -go=$(GOLANG_VERSION)
 
 .PHONY: manifests
 manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
@@ -105,8 +106,12 @@ manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole 
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
+.PHONY: go-verify
+go-verify:
+	hack/tools/check-go-version.sh $(GOLANG_VERSION)
+
 .PHONY: verify
-verify: tidy fmt vet generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date.
+verify: tidy fmt vet generate manifests crd-ref-docs go-verify #HELP Verify all generated code is up-to-date.
 	git diff --exit-code
 
 .PHONY: fix-lint
