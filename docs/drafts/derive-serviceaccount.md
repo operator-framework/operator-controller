@@ -64,6 +64,7 @@ CRUD for Custom Resource Definitions
 - apiGroups: [apiextensions.k8s.io]
   resources: [customresourcedefinitions]
   verbs: [create, list, watch]
+  
 - apiGroups: [apiextensions.k8s.io]
   resources: [customresourcedefinitions]
   verbs: [get, update, patch, delete]
@@ -76,6 +77,7 @@ CRUD for Cluster Roles
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterroles]
   verbs: [create, list, watch]
+
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterroles]
   verbs: [get, update, patch, delete]
@@ -88,6 +90,7 @@ CRUD for Cluster Role Bindings
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterrolebindings]
   verbs: [create, list, watch]
+
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterrolebindings]
   verbs: [get, update, patch, delete]
