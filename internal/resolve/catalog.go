@@ -83,7 +83,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 			predicates = append(predicates, filter.InMastermindsSemverRange(versionRangeConstraints))
 		}
 
-		if ext.Spec.Source.Catalog.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicyIgnore && installedBundle != nil {
+		if ext.Spec.Source.Catalog.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicySelfCertified && installedBundle != nil {
 			successorPredicate, err := filter.SuccessorsOf(installedBundle, packageFBC.Channels...)
 			if err != nil {
 				return fmt.Errorf("error finding upgrade edges: %w", err)

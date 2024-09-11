@@ -446,7 +446,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("By updating the ClusterExtension resource to a non-successor version")
 	// 1.2.0 does not replace/skip/skipRange 1.0.0.
 	clusterExtension.Spec.Source.Catalog.Version = "1.2.0"
-	clusterExtension.Spec.Source.Catalog.UpgradeConstraintPolicy = ocv1alpha1.UpgradeConstraintPolicyIgnore
+	clusterExtension.Spec.Source.Catalog.UpgradeConstraintPolicy = ocv1alpha1.UpgradeConstraintPolicySelfCertified
 	require.NoError(t, c.Update(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a satisfiable resolution")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
