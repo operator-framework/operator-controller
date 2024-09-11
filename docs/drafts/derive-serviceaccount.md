@@ -1,8 +1,8 @@
 # Derive minimal ServiceAccount required for ClusterExtension Installation and Management
 
-OLMv1 does not provide cluster admin privileges by default for installing cluster extensions. This means that the installation process will require a service account with sufficient privileges to install the bundle. It depends on the cluster extension developer to specify the exact permissions required for the management of any specific bundle. A Service Account needs to be explicitly specified for installing and upgrading operators else will face errors when deploying your cluster extension.
+OLMv1 does not provide cluster admin privileges by default for installing cluster extensions. This means that the installation process will require a service account with sufficient privileges to install the bundle. It depends on the cluster extension developer to specify the exact permissions required for the management of any specific bundle. A ServiceAccount needs to be explicitly specified for installing and upgrading operators to avoid errors when deploying your cluster extension.
 
-The Service Account is specified in the ClusterExtension manifest as shown below:
+The ServiceAccount is specified in the ClusterExtension manifest as shown below:
 
 ```yaml
 apiVersion: olm.operatorframework.io/v1alpha1
@@ -64,7 +64,7 @@ CRUD for Custom Resource Definitions
 - apiGroups: [apiextensions.k8s.io]
   resources: [customresourcedefinitions]
   verbs: [create, list, watch]
-  
+
 - apiGroups: [apiextensions.k8s.io]
   resources: [customresourcedefinitions]
   verbs: [get, update, patch, delete]
