@@ -673,7 +673,7 @@ func (w staticCatalogWalker) WalkCatalogs(ctx context.Context, _ string, f Catal
 			ObjectMeta: metav1.ObjectMeta{
 				Name: k,
 				Labels: map[string]string{
-					"olm.operatorframework.io/name": k,
+					"olm.operatorframework.io/metadata.name": k,
 				},
 			},
 		}
@@ -852,7 +852,7 @@ func TestClusterExtensionMatchLabel(t *testing.T) {
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyCatalogProvided)
-	ce.Spec.Source.Catalog.Selector.MatchLabels = map[string]string{"olm.operatorframework.io/name": "b"}
+	ce.Spec.Source.Catalog.Selector.MatchLabels = map[string]string{"olm.operatorframework.io/metadata.name": "b"}
 
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
@@ -871,7 +871,7 @@ func TestClusterExtensionNoMatchLabel(t *testing.T) {
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyCatalogProvided)
-	ce.Spec.Source.Catalog.Selector.MatchLabels = map[string]string{"olm.operatorframework.io/name": "a"}
+	ce.Spec.Source.Catalog.Selector.MatchLabels = map[string]string{"olm.operatorframework.io/metadata.name": "a"}
 
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	require.Error(t, err)
