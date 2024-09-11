@@ -1,6 +1,6 @@
 # Derive minimal ServiceAccount required for ClusterExtension Installation and Management
 
-OLMv1 does not provide cluster admin privileges by default for installing cluster extensions.This means that the installation process will require a service account with sufficient privileges to install the bundle. It depends on the cluster extension developer to specify the exact permissions required for the management of any specific bundle. A Service Account needs to be explicitly specified for installing and upgrading operators else will face errors when deploying your cluster extension.
+OLMv1 does not provide cluster admin privileges by default for installing cluster extensions. This means that the installation process will require a service account with sufficient privileges to install the bundle. It depends on the cluster extension developer to specify the exact permissions required for the management of any specific bundle. A Service Account needs to be explicitly specified for installing and upgrading operators else will face errors when deploying your cluster extension.
 
 The Service Account is specified in the ClusterExtension manifest as shown below:
 
@@ -152,6 +152,9 @@ subjects:
   name: my-cluster-extension-service-account
   namespace: my-cluster-extension-namespace
 EOF
+```
+
+Use the below on a Kind cluster to assign cluster-admin privileges to your cluster extension
 
 ```sh
 kubectl create clusterrolebinding my-cluster-extension-installer-role-binding \
