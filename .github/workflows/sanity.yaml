@@ -12,13 +12,26 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: "go.mod"
-      - name: Run verification checks
-        run: make verify
+    - uses: actions/checkout@v4
+      with:
+        path: operator-controller
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: "operator-controller/go.mod"
+    - name: Get catalogd version
+      id: get-catalogd-version
+      run: |
+        cd operator-controller
+        echo "CATALOGD_VERSION=$(go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/catalogd)" >> "$GITHUB_OUTPUT"
+    - uses: actions/checkout@v4
+      with:
+        repository: operator-framework/catalogd
+        path: catalogd
+        ref: "${{ steps.get-catalogd-version.outputs.CATALOGD_VERSION }}"
+    - name: Run verification checks
+      run: |
+        cd operator-controller
+        make verify
   lint:
     runs-on: ubuntu-latest
     steps:
