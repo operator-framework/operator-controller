@@ -6,10 +6,10 @@ After you add a catalog to your cluster, you can install an extension by creatin
 ## Prerequisites
 
 * A deployed and unpacked catalog
-* The name, and optionally version, or channel, of the extension to be installed
-* The extension must be compatible with OLM 1.0 (see [current OLM v1 limitations](../drafts/refs/olmv1-limitations.md))
+* The name, and optionally version, or channel, of the [supported extension](../concepts/supported-extensions.md) to be installed
 * An existing namespace in which to install the extension
 * A suitable service account for installation (more information can be found [here](../drafts/Tasks/create-installer-service-account.md))
+
 
 ## Procedure
 
