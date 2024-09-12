@@ -7,6 +7,7 @@ SHELL := /usr/bin/env bash -o pipefail
 .SHELLFLAGS := -ec
 export ROOT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
+GOLANG_VERSION := $(shell sed -En 's/^go (.*)$$/\1/p' "go.mod")
 # Image URL to use all building/pushing image targets
 ifeq ($(origin IMAGE_REPO), undefined)
 IMAGE_REPO := quay.io/operator-framework/operator-controller
@@ -95,7 +96,8 @@ lint: $(GOLANGCI_LINT) #HELP Run golangci linter.
 
 .PHONY: tidy
 tidy: #HELP Update dependencies.
-	$(Q)go mod tidy
+	# Force tidy to use the version already in go.mod
+	$(Q)go mod tidy -go=$(GOLANG_VERSION)
 
 .PHONY: manifests
 manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
