@@ -13,7 +13,7 @@ The core principle enforced by OLM is that each resource (object) can only have 
 If an operator bundle provides a `CustomResourceDefinition` (CRD), it can only be installed once in the cluster. Attempting to install another `ClusterExtension` that provides the same CRD will result in a failure, as OLM prevents multiple ownership of the CRD resource.
 
 ### 2. `ClusterExtensions` Cannot Share Objects
-OLM's single-owner policy means that **`ClusterExtensions` cannot share ownership of any objects**. If one `ClusterExtension` manages a specific resource (e.g., a custom resource or a service), another `ClusterExtension` cannot claim ownership of the same object. Any attempt to do so will be blocked by the system.
+OLM's single-owner policy means that **`ClusterExtensions` cannot share ownership of any objects**. If one `ClusterExtension` manages a specific resource (e.g., a `Deployment`, `CustomResourceDefinition`, or `Service`), another `ClusterExtension` cannot claim ownership of the same object. Any attempt to do so will be blocked by the system.
 
 ## Error Messages
 
