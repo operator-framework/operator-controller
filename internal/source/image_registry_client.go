@@ -65,17 +65,16 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Cl
 	}
 	remoteOpts = append(remoteOpts, remote.WithTransport(tlsTransport))
 
-	// always fetch the hash
-	imgDesc, err := remote.Head(imgRef, remoteOpts...)
+	digestHex, err := resolveDigest(imgRef, remoteOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching image descriptor: %w", err)
 	}
-	l.V(1).Info("resolved image descriptor", "digest", imgDesc.Digest.String())
+	l.V(1).Info("resolved image descriptor", "digest", digestHex)
 
-	unpackPath := filepath.Join(i.BaseCachePath, catalog.Name, imgDesc.Digest.Hex)
-	resolvedRef := fmt.Sprintf("%s@sha256:%s", imgRef.Context().Name(), imgDesc.Digest.Hex)
+	unpackPath := filepath.Join(i.BaseCachePath, catalog.Name, digestHex)
+	resolvedRef := fmt.Sprintf("%s@sha256:%s", imgRef.Context().Name(), digestHex)
 	if stat, err := os.Stat(unpackPath); err == nil && stat.IsDir() {
-		l.V(1).Info("found image in filesystem cache", "digest", imgDesc.Digest.Hex)
+		l.V(1).Info("found image in filesystem cache", "digest", digestHex)
 		// TODO: https://github.com/operator-framework/catalogd/issues/389
 		return unpackedResult(os.DirFS(unpackPath), catalog, resolvedRef, metav1.Time{Time: time.Now()}), nil
 	}
@@ -135,6 +134,23 @@ func unpackedResult(fsys fs.FS, catalog *catalogdv1alpha1.ClusterCatalog, ref st
 		},
 		State: StateUnpacked,
 	}
+}
+
+// resolveDigest returns hex value of the digest for image reference
+func resolveDigest(imgRef name.Reference, remoteOpts ...remote.Option) (string, error) {
+	digest, isDigest := imgRef.(name.Digest)
+	if isDigest {
+		digestHex := strings.TrimPrefix(digest.DigestStr(), "sha256:")
+		// If the reference is already a digest - return without making a network call
+		return digestHex, nil
+	}
+
+	imgDesc, err := remote.Head(imgRef, remoteOpts...)
+	if err != nil {
+		return "", err
+	}
+
+	return imgDesc.Digest.Hex, nil
 }
 
 // unpackImage unpacks a catalog image reference to the provided unpackPath,
