@@ -263,6 +263,8 @@ func (r *ClusterCatalogReconciler) needsUnpacking(catalog *v1alpha1.ClusterCatal
 		return false
 	}
 	// if the spec.Source.Image.Ref was changed, unpack the new ref
+	// NOTE: we must compare image reference WITHOUT sha hash here
+	// otherwise we will always be unpacking image even when poll interval not lapsed
 	if catalog.Spec.Source.Image.Ref != catalog.Status.ResolvedSource.Image.Ref {
 		return true
 	}

@@ -92,16 +92,6 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Cl
 		remoteOpts = append(remoteOpts, remote.WithTransport(tlsTransport))
 	}
 
-	digest, isDigest := imgRef.(name.Digest)
-	if isDigest {
-		hexVal := strings.TrimPrefix(digest.DigestStr(), "sha256:")
-		unpackPath := filepath.Join(i.BaseCachePath, catalog.Name, hexVal)
-		if stat, err := os.Stat(unpackPath); err == nil && stat.IsDir() {
-			l.V(1).Info("found image in filesystem cache", "digest", hexVal)
-			return unpackedResult(os.DirFS(unpackPath), catalog, digest.String(), metav1.Time{Time: time.Now()}), nil
-		}
-	}
-
 	// always fetch the hash
 	imgDesc, err := remote.Head(imgRef, remoteOpts...)
 	if err != nil {
@@ -110,6 +100,13 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Cl
 	l.V(1).Info("resolved image descriptor", "digest", imgDesc.Digest.String())
 
 	unpackPath := filepath.Join(i.BaseCachePath, catalog.Name, imgDesc.Digest.Hex)
+	resolvedRef := fmt.Sprintf("%s@sha256:%s", imgRef.Context().Name(), imgDesc.Digest.Hex)
+	if stat, err := os.Stat(unpackPath); err == nil && stat.IsDir() {
+		l.V(1).Info("found image in filesystem cache", "digest", imgDesc.Digest.Hex)
+		// TODO: https://github.com/operator-framework/catalogd/issues/389
+		return unpackedResult(os.DirFS(unpackPath), catalog, resolvedRef, metav1.Time{Time: time.Now()}), nil
+	}
+
 	if _, err = os.Stat(unpackPath); errors.Is(err, os.ErrNotExist) { //nolint: nestif
 		// Ensure any previous unpacked catalog is cleaned up before unpacking the new catalog.
 		if err := i.Cleanup(ctx, catalog); err != nil {
@@ -130,13 +127,13 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Cl
 					},
 				)
 			}
+			_, isDigest := imgRef.(name.Digest)
 			return nil, wrapUnrecoverable(fmt.Errorf("error unpacking image: %w", err), isDigest)
 		}
 	} else if err != nil {
 		return nil, fmt.Errorf("error checking if image is in filesystem cache: %w", err)
 	}
 
-	resolvedRef := fmt.Sprintf("%s@sha256:%s", imgRef.Context().Name(), imgDesc.Digest.Hex)
 	return unpackedResult(os.DirFS(unpackPath), catalog, resolvedRef, metav1.Time{Time: time.Now()}), nil
 }
 
