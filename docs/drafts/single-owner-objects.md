@@ -1,7 +1,7 @@
 
 # OLM Ownership Enforcement for `ClusterExtensions`
 
-In OLM, **a given object can only be owned by a single `ClusterExtension` at a time**. This ensures that resources within a Kubernetes cluster are managed consistently and prevents conflicts between multiple `ClusterExtensions` attempting to control the same object.
+In OLM, **a custom resource (or object) can only be owned by a single `ClusterExtension` at a time**. This ensures that resources within a Kubernetes cluster are managed consistently and prevents conflicts between multiple `ClusterExtensions` attempting to control the same object.
 
 ## Key Concept: Single Ownership
 
