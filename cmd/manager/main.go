@@ -44,6 +44,7 @@ import (
 	corecontrollers "github.com/operator-framework/catalogd/internal/controllers/core"
 	"github.com/operator-framework/catalogd/internal/features"
 	"github.com/operator-framework/catalogd/internal/garbagecollection"
+	"github.com/operator-framework/catalogd/internal/httputil"
 	catalogdmetrics "github.com/operator-framework/catalogd/internal/metrics"
 	"github.com/operator-framework/catalogd/internal/serverutil"
 	"github.com/operator-framework/catalogd/internal/source"
@@ -81,6 +82,7 @@ func main() {
 		certFile             string
 		keyFile              string
 		webhookPort          int
+		caCertDir            string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -97,6 +99,7 @@ func main() {
 	flag.StringVar(&certFile, "tls-cert", "", "The certificate file used for serving catalog contents over HTTPS. Requires tls-key.")
 	flag.StringVar(&keyFile, "tls-key", "", "The key file used for serving catalog contents over HTTPS. Requires tls-cert.")
 	flag.IntVar(&webhookPort, "webhook-server-port", 9443, "The port that the mutating webhook server serves at.")
+	flag.StringVar(&caCertDir, "ca-certs-dir", "", "The directory of TLS certificate to use for verifying HTTPS connections to the Catalogd and docker-registry web servers.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -175,7 +178,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	unpacker, err := source.NewDefaultUnpacker(systemNamespace, cacheDir)
+	certPool, err := httputil.NewCertPool(caCertDir, ctrl.Log.WithName("cert-pool"))
+	if err != nil {
+		setupLog.Error(err, "unable to create CA certificate pool")
+		os.Exit(1)
+	}
+
+	unpacker, err := source.NewDefaultUnpacker(systemNamespace, cacheDir, certPool)
 	if err != nil {
 		setupLog.Error(err, "unable to create unpacker")
 		os.Exit(1)

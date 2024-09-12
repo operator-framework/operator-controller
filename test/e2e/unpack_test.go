@@ -54,8 +54,7 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 					Source: catalogd.CatalogSource{
 						Type: catalogd.SourceTypeImage,
 						Image: &catalogd.ImageSource{
-							Ref:                   catalogImageRef(),
-							InsecureSkipTLSVerify: true,
+							Ref: catalogImageRef(),
 						},
 					},
 				},

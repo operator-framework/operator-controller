@@ -4,14 +4,6 @@ metadata:
   name: catalogd-e2e
 ---
 apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: selfsigned-issuer
-  namespace: catalogd-e2e
-spec:
-  selfSigned: {}
----
-apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: catalogd-e2e-registry
@@ -25,8 +17,8 @@ spec:
     algorithm: ECDSA
     size: 256
   issuerRef:
-    name: selfsigned-issuer
-    kind: Issuer
+    name: olmv1-ca
+    kind: ClusterIssuer
     group: cert-manager.io
 ---
 apiVersion: apps/v1

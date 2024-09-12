@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -31,6 +32,7 @@ import (
 type ImageRegistry struct {
 	BaseCachePath string
 	AuthNamespace string
+	CertPool      *x509.CertPool
 }
 
 const ConfigDirLabel = "operators.operatorframework.io.index.configs.v1"
@@ -51,6 +53,17 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Cl
 	}
 
 	remoteOpts := []remote.Option{}
+	tlsTransport := remote.DefaultTransport.(*http.Transport).Clone()
+	if tlsTransport.TLSClientConfig == nil {
+		tlsTransport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: false,
+			MinVersion:         tls.VersionTLS12,
+		} // nolint:gosec
+	}
+	if i.CertPool != nil {
+		tlsTransport.TLSClientConfig.RootCAs = i.CertPool
+	}
+
 	if catalog.Spec.Source.Image.PullSecret != "" {
 		chainOpts := k8schain.Options{
 			ImagePullSecrets: []string{catalog.Spec.Source.Image.PullSecret},
@@ -75,6 +88,8 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Cl
 		}
 		insecureTransport.TLSClientConfig.InsecureSkipVerify = true // nolint:gosec
 		remoteOpts = append(remoteOpts, remote.WithTransport(insecureTransport))
+	} else {
+		remoteOpts = append(remoteOpts, remote.WithTransport(tlsTransport))
 	}
 
 	digest, isDigest := imgRef.(name.Digest)

@@ -113,10 +113,12 @@ verify: tidy fmt vet generate ## Verify the current code generation and lint
 lint: $(GOLANGCI_LINT) ## Run golangci linter.
 	$(GOLANGCI_LINT) run $(GOLANGCI_LINT_ARGS)
 
+## image-registry target has to come after run-latest-release,
+## because the image-registry depends on the olm-ca issuer.
 .PHONY: test-upgrade-e2e
 test-upgrade-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-upgrade-e2e: export TEST_CLUSTER_CATALOG_IMAGE := docker-registry.catalogd-e2e.svc:5000/test-catalog:e2e
-test-upgrade-e2e: kind-cluster cert-manager build-container kind-load image-registry run-latest-release pre-upgrade-setup only-deploy-manifest wait post-upgrade-checks kind-cluster-cleanup ## Run upgrade e2e tests on a local kind cluster
+test-upgrade-e2e: kind-cluster cert-manager build-container kind-load run-latest-release image-registry pre-upgrade-setup only-deploy-manifest wait post-upgrade-checks kind-cluster-cleanup ## Run upgrade e2e tests on a local kind cluster
 
 pre-upgrade-setup:
 	./test/tools/imageregistry/pre-upgrade-setup.sh ${TEST_CLUSTER_CATALOG_IMAGE} ${TEST_CLUSTER_CATALOG_NAME}

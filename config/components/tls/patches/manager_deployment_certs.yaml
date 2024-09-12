@@ -10,3 +10,6 @@
 - op: add
   path: /spec/template/spec/containers/1/args/-
   value: "--tls-key=/var/certs/tls.key"
+- op: add
+  path: /spec/template/spec/containers/1/args/-
+  value: "--ca-certs-dir=/var/certs"

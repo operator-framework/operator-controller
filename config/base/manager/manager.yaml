@@ -20,6 +20,7 @@ spec:
     matchLabels:
       control-plane: catalogd-controller-manager
   replicas: 1
+  minReadySeconds: 5
   template:
     metadata:
       annotations:
