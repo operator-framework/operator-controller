@@ -62,7 +62,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `policy` _[CRDUpgradeSafetyPolicy](#crdupgradesafetypolicy)_ | policy is used to configure the state of the CRD Upgrade Safety pre-flight check.<br /><br />This field is required when the spec.preflight.crdUpgradeSafety field is<br />specified.<br /><br />Allowed values are ["Enabled", "Disabled"]. The default value is "Enabled".<br /><br />When set to "Disabled", the CRD Upgrade Safety pre-flight check will be skipped<br />when performing an upgrade operation. This should be used with caution as<br />unintended consequences such as data loss can occur.<br /><br />When set to "Enabled", the CRD Upgrade Safety pre-flight check will be run when<br />performing an upgrade operation. | Enabled | Enum: [Enabled Disabled] <br /> |
+| `policy` _[CRDUpgradeSafetyPolicy](#crdupgradesafetypolicy)_ | policy is used to configure the state of the CRD Upgrade Safety pre-flight check.<br /><br />This field is required when the spec.install.preflight.crdUpgradeSafety field is<br />specified.<br /><br />Allowed values are ["Enabled", "Disabled"]. The default value is "Enabled".<br /><br />When set to "Disabled", the CRD Upgrade Safety pre-flight check will be skipped<br />when performing an upgrade operation. This should be used with caution as<br />unintended consequences such as data loss can occur.<br /><br />When set to "Enabled", the CRD Upgrade Safety pre-flight check will be run when<br />performing an upgrade operation. | Enabled | Enum: [Enabled Disabled] <br /> |
 
 
 #### CatalogSource
@@ -139,7 +139,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `bundle` _[BundleMetadata](#bundlemetadata)_ | bundle is a representation of the currently installed bundle.<br /><br />A "bundle" is a versioned set of content that represents the resources that<br />need to be applied to a cluster to install a package.<br /><br />This field is only updated once a bundle has been successfully installed and<br />once set will only be updated when a new version of the bundle has<br />successfully replaced the currently installed version. |  |  |
+| `bundle` _[BundleMetadata](#bundlemetadata)_ | bundle is a representation of the currently installed bundle.<br /><br />A "bundle" is a versioned set of content that represents the resources that<br />need to be applied to a cluster to install a package. |  |  |
 
 
 #### ClusterExtensionList
@@ -175,7 +175,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `bundle` _[BundleMetadata](#bundlemetadata)_ | bundle is a representation of the bundle that was identified during<br />resolution to meet all installation/upgrade constraints and is slated to be<br />installed or upgraded to. |  |  |
+| `bundle` _[BundleMetadata](#bundlemetadata)_ | bundle is a representation of the bundle that was identified during<br />resolution to meet all installation/upgrade constraints and is slated to be<br />installed or upgraded to.<br /><br />A "bundle" is a versioned set of content that represents the resources that<br />need to be applied to a cluster to install a package. |  |  |
 
 
 #### ClusterExtensionSpec
@@ -210,7 +210,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `install` _[ClusterExtensionInstallStatus](#clusterextensioninstallstatus)_ |  |  |  |
 | `resolution` _[ClusterExtensionResolutionStatus](#clusterextensionresolutionstatus)_ |  |  |  |
-| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v/#condition-v1-meta) array_ | conditions is a representation of the current state for this ClusterExtension.<br />The status is represented by a set of "conditions".<br /><br />Each condition is generally structured in the following format:<br />  - Type: a string representation of the condition type. More or less the condition "name".<br />  - Status: a string representation of the state of the condition. Can be one of ["True", "False", "Unknown"].<br />  - Reason: a string representation of the reason for the current state of the condition. Typically useful for building automation around particular Type+Reason combinations.<br />  - Message: a human readable message that further elaborates on the state of the condition<br /><br />The current set of condition types are:<br />  - "Installed", represents whether or not the package referenced in the spec.packageName field has been installed<br />  - "Resolved", represents whether or not a bundle was found that satisfies the selection criteria outlined in the spec<br />  - "Deprecated", represents an aggregation of the PackageDeprecated, ChannelDeprecated, and BundleDeprecated condition types.<br />  - "PackageDeprecated", represents whether or not the package specified in the spec.packageName field has been deprecated<br />  - "ChannelDeprecated", represents whether or not the channel specified in spec.channel has been deprecated<br />  - "BundleDeprecated", represents whether or not the bundle installed is deprecated<br />  - "Unpacked", represents whether or not the bundle contents have been successfully unpacked<br /><br />The current set of reasons are:<br />  - "Success", this reason is set on the "Unpacked", "Resolved" and "Installed" conditions when unpacking a bundle's content, resolution and installation/upgrading is successful<br />  - "Failed", this reason is set on the "Unpacked", "Resolved" and "Installed" conditions when an error has occurred while unpacking the contents of a bundle, during resolution or installation. |  |  |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v/#condition-v1-meta) array_ | conditions is a representation of the current state for this ClusterExtension.<br />The status is represented by a set of "conditions".<br /><br />Each condition is generally structured in the following format:<br />  - Type: a string representation of the condition type. More or less the condition "name".<br />  - Status: a string representation of the state of the condition. Can be one of ["True", "False", "Unknown"].<br />  - Reason: a string representation of the reason for the current state of the condition. Typically useful for building automation around particular Type+Reason combinations.<br />  - Message: a human readable message that further elaborates on the state of the condition<br /><br />The global set of condition types are:<br />  - "Installed", represents whether or not the a bundle has been installed for this ClusterExtension<br />  - "Resolved", represents whether or not a bundle was found that satisfies the selection criteria outlined in the spec<br />  - "Unpacked", represents whether or not the bundle contents have been successfully unpacked<br /><br />When the ClusterExtension is sourced from a catalog, the following conditions are also possible:<br />  - "Deprecated", represents an aggregation of the PackageDeprecated, ChannelDeprecated, and BundleDeprecated condition types<br />  - "PackageDeprecated", represents whether or not the package specified in the spec.source.catalog.packageName field has been deprecated<br />  - "ChannelDeprecated", represents whether or not any channel specified in spec.source.catalog.channels has been deprecated<br />  - "BundleDeprecated", represents whether or not the installed bundle is deprecated<br /><br />The current set of reasons are:<br />  - "Success", this reason is set on the "Unpacked", "Resolved" and "Installed" conditions when unpacking a bundle's content, resolution and installation/upgrading is successful<br />  - "Failed", this reason is set on the "Unpacked", "Resolved" and "Installed" conditions when an error has occurred while unpacking the contents of a bundle, during resolution or installation. |  |  |
 
 
 #### PreflightConfig
@@ -226,7 +226,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `crdUpgradeSafety` _[CRDUpgradeSafetyPreflightConfig](#crdupgradesafetypreflightconfig)_ | crdUpgradeSafety is used to configure the CRD Upgrade Safety pre-flight<br />checks that run prior to upgrades of installed content.<br /><br />The CRD Upgrade Safety pre-flight check safeguards from unintended<br />consequences of upgrading a CRD, such as data loss.<br /><br />This field is required if the spec.preflight field is specified. |  |  |
+| `crdUpgradeSafety` _[CRDUpgradeSafetyPreflightConfig](#crdupgradesafetypreflightconfig)_ | crdUpgradeSafety is used to configure the CRD Upgrade Safety pre-flight<br />checks that run prior to upgrades of installed content.<br /><br />The CRD Upgrade Safety pre-flight check safeguards from unintended<br />consequences of upgrading a CRD, such as data loss.<br /><br />This field is required if the spec.install.preflight field is specified. |  |  |
 
 
 #### ServiceAccountReference

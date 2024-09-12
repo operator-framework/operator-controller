@@ -23,8 +23,7 @@ import (
 )
 
 var (
-	ClusterExtensionGVK  = SchemeBuilder.GroupVersion.WithKind("ClusterExtension")
-	ClusterExtensionKind = ClusterExtensionGVK.Kind
+	ClusterExtensionKind = "ClusterExtension"
 )
 
 type UpgradeConstraintPolicy string
@@ -386,7 +385,7 @@ type PreflightConfig struct {
 	// The CRD Upgrade Safety pre-flight check safeguards from unintended
 	// consequences of upgrading a CRD, such as data loss.
 	//
-	// This field is required if the spec.preflight field is specified.
+	// This field is required if the spec.install.preflight field is specified.
 	CRDUpgradeSafety *CRDUpgradeSafetyPreflightConfig `json:"crdUpgradeSafety"`
 }
 
@@ -394,7 +393,7 @@ type PreflightConfig struct {
 type CRDUpgradeSafetyPreflightConfig struct {
 	// policy is used to configure the state of the CRD Upgrade Safety pre-flight check.
 	//
-	// This field is required when the spec.preflight.crdUpgradeSafety field is
+	// This field is required when the spec.install.preflight.crdUpgradeSafety field is
 	// specified.
 	//
 	// Allowed values are ["Enabled", "Disabled"]. The default value is "Enabled".
@@ -485,14 +484,16 @@ type ClusterExtensionStatus struct {
 	//   - Reason: a string representation of the reason for the current state of the condition. Typically useful for building automation around particular Type+Reason combinations.
 	//   - Message: a human readable message that further elaborates on the state of the condition
 	//
-	// The current set of condition types are:
-	//   - "Installed", represents whether or not the package referenced in the spec.packageName field has been installed
+	// The global set of condition types are:
+	//   - "Installed", represents whether or not the a bundle has been installed for this ClusterExtension
 	//   - "Resolved", represents whether or not a bundle was found that satisfies the selection criteria outlined in the spec
-	//   - "Deprecated", represents an aggregation of the PackageDeprecated, ChannelDeprecated, and BundleDeprecated condition types.
-	//   - "PackageDeprecated", represents whether or not the package specified in the spec.packageName field has been deprecated
-	//   - "ChannelDeprecated", represents whether or not the channel specified in spec.channel has been deprecated
-	//   - "BundleDeprecated", represents whether or not the bundle installed is deprecated
 	//   - "Unpacked", represents whether or not the bundle contents have been successfully unpacked
+	//
+	// When the ClusterExtension is sourced from a catalog, the following conditions are also possible:
+	//   - "Deprecated", represents an aggregation of the PackageDeprecated, ChannelDeprecated, and BundleDeprecated condition types
+	//   - "PackageDeprecated", represents whether or not the package specified in the spec.source.catalog.packageName field has been deprecated
+	//   - "ChannelDeprecated", represents whether or not any channel specified in spec.source.catalog.channels has been deprecated
+	//   - "BundleDeprecated", represents whether or not the installed bundle is deprecated
 	//
 	// The current set of reasons are:
 	//   - "Success", this reason is set on the "Unpacked", "Resolved" and "Installed" conditions when unpacking a bundle's content, resolution and installation/upgrading is successful
@@ -511,13 +512,7 @@ type ClusterExtensionInstallStatus struct {
 	//
 	// A "bundle" is a versioned set of content that represents the resources that
 	// need to be applied to a cluster to install a package.
-	//
-	// This field is only updated once a bundle has been successfully installed and
-	// once set will only be updated when a new version of the bundle has
-	// successfully replaced the currently installed version.
-	//
-	//+optional
-	Bundle *BundleMetadata `json:"bundle,omitempty"`
+	Bundle BundleMetadata `json:"bundle"`
 }
 
 type ClusterExtensionResolutionStatus struct {
@@ -525,8 +520,9 @@ type ClusterExtensionResolutionStatus struct {
 	// resolution to meet all installation/upgrade constraints and is slated to be
 	// installed or upgraded to.
 	//
-	//+optional
-	Bundle *BundleMetadata `json:"bundle,omitempty"`
+	// A "bundle" is a versioned set of content that represents the resources that
+	// need to be applied to a cluster to install a package.
+	Bundle BundleMetadata `json:"bundle"`
 }
 
 //+kubebuilder:object:root=true

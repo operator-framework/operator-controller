@@ -30,8 +30,8 @@ func GetVersion(b declcfg.Bundle) (*bsemver.Version, error) {
 }
 
 // MetadataFor returns a BundleMetadata for the given bundle name and version.
-func MetadataFor(bundleName string, bundleVersion bsemver.Version) *ocv1alpha1.BundleMetadata {
-	return &ocv1alpha1.BundleMetadata{
+func MetadataFor(bundleName string, bundleVersion bsemver.Version) ocv1alpha1.BundleMetadata {
+	return ocv1alpha1.BundleMetadata{
 		Name:    bundleName,
 		Version: bundleVersion.String(),
 	}
