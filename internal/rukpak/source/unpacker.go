@@ -2,9 +2,27 @@ package source
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
 )
+
+// SourceTypeImage is the identifier for image-type bundle sources
+const SourceTypeImage SourceType = "image"
+
+type ImageSource struct {
+	// Ref contains the reference to a container image containing Bundle contents.
+	Ref string
+}
+
+// Unrecoverable represents an error that can not be recovered
+// from without user intervention. When this error is returned
+// the request should not be requeued.
+type Unrecoverable struct {
+	error
+}
+
+func NewUnrecoverable(err error) Unrecoverable {
+	return Unrecoverable{err}
+}
 
 // Unpacker unpacks bundle content, either synchronously or asynchronously and
 // returns a Result, which conveys information about the progress of unpacking
@@ -73,30 +91,4 @@ type BundleSource struct {
 	Type SourceType
 	// Image is the bundle image that backs the content of this bundle.
 	Image *ImageSource
-}
-
-type unpacker struct {
-	sources map[SourceType]Unpacker
-}
-
-// NewUnpacker returns a new composite Source that unpacks bundles using the source
-// mapping provided by the configured sources.
-func NewUnpacker(sources map[SourceType]Unpacker) Unpacker {
-	return &unpacker{sources: sources}
-}
-
-func (s *unpacker) Unpack(ctx context.Context, bundle *BundleSource) (*Result, error) {
-	source, ok := s.sources[bundle.Type]
-	if !ok {
-		return nil, fmt.Errorf("source type %q not supported", bundle.Type)
-	}
-	return source.Unpack(ctx, bundle)
-}
-
-func (s *unpacker) Cleanup(ctx context.Context, bundle *BundleSource) error {
-	source, ok := s.sources[bundle.Type]
-	if !ok {
-		return fmt.Errorf("source type %q not supported", bundle.Type)
-	}
-	return source.Cleanup(ctx, bundle)
 }

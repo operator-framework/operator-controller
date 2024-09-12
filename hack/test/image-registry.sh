@@ -7,14 +7,16 @@ set -o pipefail
 help="
 image-registry.sh is a script to stand up an image registry within a cluster.
 Usage:
-  image-registry.sh [NAMESPACE] [NAME]
+  image-registry.sh [NAMESPACE] [NAME] [CERT_REF]
 
 Argument Descriptions:
   - NAMESPACE is the namespace that should be created and is the namespace in which the image registry will be created
   - NAME is the name that should be used for the image registry Deployment and Service
+  - CERT_REF is the reference to the CA certificate that should be used to serve the image registry over HTTPS, in the
+    format of 'Issuer/<issuer-name>' or 'ClusterIssuer/<cluster-issuer-name>'
 "
 
-if [[ "$#" -ne 2 ]]; then
+if [[ "$#" -ne 3 ]]; then
   echo "Illegal number of arguments passed"
   echo "${help}"
   exit 1
@@ -22,12 +24,23 @@ fi
 
 namespace=$1
 name=$2
+certRef=$3
+
+echo "CERT_REF: ${certRef}"
 
 kubectl apply -f - << EOF
 apiVersion: v1
 kind: Namespace
 metadata:
   name: ${namespace}
+---
+ apiVersion: cert-manager.io/v1
+ kind: Issuer
+ metadata:
+   name: selfsigned-issuer
+   namespace: ${namespace}
+ spec:
+   selfSigned: {}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -44,8 +57,8 @@ spec:
     algorithm: ECDSA
     size: 256
   issuerRef:
-    name: olmv1-ca
-    kind: ClusterIssuer
+    name: ${certRef#*/}
+    kind: ${certRef%/*}
     group: cert-manager.io
 ---
 apiVersion: apps/v1
