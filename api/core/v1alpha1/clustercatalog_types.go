@@ -141,21 +141,12 @@ type ResolvedImageSource struct {
 type ImageSource struct {
 	// ref contains the reference to a container image containing Catalog contents.
 	Ref string `json:"ref"`
-	// pullSecret contains the name of the image pull secret in the namespace that catalogd is deployed.
-	// +optional
-	PullSecret string `json:"pullSecret,omitempty"`
 	// pollInterval indicates the interval at which the image source should be polled for new content,
 	// specified as a duration (e.g., "5m", "1h", "24h", "etc".). Note that PollInterval may not be
 	// specified for a catalog image referenced by a sha256 digest.
 	// +kubebuilder:validation:Format:=duration
 	// +optional
 	PollInterval *metav1.Duration `json:"pollInterval,omitempty"`
-	// insecureSkipTLSVerify indicates that TLS certificate validation should be skipped.
-	// If this option is specified, the HTTPS protocol will still be used to
-	// fetch the specified image reference.
-	// This should not be used in a production environment.
-	// +optional
-	InsecureSkipTLSVerify bool `json:"insecureSkipTLSVerify,omitempty"`
 }
 
 func init() {

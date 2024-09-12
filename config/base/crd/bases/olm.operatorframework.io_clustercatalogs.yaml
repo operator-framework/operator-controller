@@ -61,23 +61,12 @@ spec:
                     description: image is the catalog image that backs the content
                       of this catalog.
                     properties:
-                      insecureSkipTLSVerify:
-                        description: |-
-                          insecureSkipTLSVerify indicates that TLS certificate validation should be skipped.
-                          If this option is specified, the HTTPS protocol will still be used to
-                          fetch the specified image reference.
-                          This should not be used in a production environment.
-                        type: boolean
                       pollInterval:
                         description: |-
                           pollInterval indicates the interval at which the image source should be polled for new content,
                           specified as a duration (e.g., "5m", "1h", "24h", "etc".). Note that PollInterval may not be
                           specified for a catalog image referenced by a sha256 digest.
                         format: duration
-                        type: string
-                      pullSecret:
-                        description: pullSecret contains the name of the image pull
-                          secret in the namespace that catalogd is deployed.
                         type: string
                       ref:
                         description: ref contains the reference to a container image

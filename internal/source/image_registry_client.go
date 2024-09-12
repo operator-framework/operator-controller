@@ -15,8 +15,6 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/archive"
-	"github.com/google/go-containerregistry/pkg/authn/k8schain"
-	gcrkube "github.com/google/go-containerregistry/pkg/authn/kubernetes"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,7 +50,9 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Cl
 		return nil, catalogderrors.NewUnrecoverable(fmt.Errorf("error parsing image reference: %w", err))
 	}
 
-	remoteOpts := []remote.Option{}
+	var remoteOpts []remote.Option
+
+	// Set up the TLS transport
 	tlsTransport := remote.DefaultTransport.(*http.Transport).Clone()
 	if tlsTransport.TLSClientConfig == nil {
 		tlsTransport.TLSClientConfig = &tls.Config{
@@ -63,34 +63,7 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Cl
 	if i.CertPool != nil {
 		tlsTransport.TLSClientConfig.RootCAs = i.CertPool
 	}
-
-	if catalog.Spec.Source.Image.PullSecret != "" {
-		chainOpts := k8schain.Options{
-			ImagePullSecrets: []string{catalog.Spec.Source.Image.PullSecret},
-			Namespace:        i.AuthNamespace,
-			// TODO: Do we want to use any secrets that are included in the catalogd service account?
-			// If so, we will need to add the permission to get service accounts and specify
-			// the catalogd service account name here.
-			ServiceAccountName: gcrkube.NoServiceAccount,
-		}
-		authChain, err := k8schain.NewInCluster(ctx, chainOpts)
-		if err != nil {
-			return nil, fmt.Errorf("error getting auth keychain: %w", err)
-		}
-
-		remoteOpts = append(remoteOpts, remote.WithAuthFromKeychain(authChain))
-	}
-
-	if catalog.Spec.Source.Image.InsecureSkipTLSVerify {
-		insecureTransport := remote.DefaultTransport.(*http.Transport).Clone()
-		if insecureTransport.TLSClientConfig == nil {
-			insecureTransport.TLSClientConfig = &tls.Config{} // nolint:gosec
-		}
-		insecureTransport.TLSClientConfig.InsecureSkipVerify = true // nolint:gosec
-		remoteOpts = append(remoteOpts, remote.WithTransport(insecureTransport))
-	} else {
-		remoteOpts = append(remoteOpts, remote.WithTransport(tlsTransport))
-	}
+	remoteOpts = append(remoteOpts, remote.WithTransport(tlsTransport))
 
 	// always fetch the hash
 	imgDesc, err := remote.Head(imgRef, remoteOpts...)
