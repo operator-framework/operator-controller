@@ -21,7 +21,7 @@ When a conflict occurs due to multiple `ClusterExtensions` attempting to manage 
 
 - **Example Error**:
   ```plaintext
-  CustomResourceDefinition 'logfilemetricexporters.logging.openshift.io' already exists in namespace 'openshift-logging' and cannot be managed by operator-controller
+  CustomResourceDefinition 'logfilemetricexporters.logging.kubernetes.io' already exists in namespace 'kubernetes-logging' and cannot be managed by operator-controller
   ```
 
 This error message signals that the resource is already being managed by another `ClusterExtension` and cannot be reassigned or "shared."
