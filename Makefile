@@ -311,16 +311,19 @@ quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the installation release man
 .PHONY: crd-ref-docs
 OPERATOR_CONTROLLER_API_REFERENCE_FILENAME := operator-controller-api-reference.md
 CATALOGD_API_REFERENCE_FILENAME := catalogd-api-reference.md
-CATALOGD_PATH := "$(ROOT_DIR)/../catalogd"
-crd-ref-docs: $(CRD_REF_DOCS) #EXHELP Generate the API Reference Documents. NOTE: catalogd must be cloned into operator-controller's parent directory.
+CATALOGD_TMP_DIR := $(ROOT_DIR)/.catalogd-tmp/
+crd-ref-docs: $(CRD_REF_DOCS) #EXHELP Generate the API Reference Documents.
 	rm -f $(ROOT_DIR)/docs/refs/api/$(OPERATOR_CONTROLLER_API_REFERENCE_FILENAME)
 	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api \
 	--config=$(ROOT_DIR)/docs/refs/api/crd-ref-docs-gen-config.yaml \
 	--renderer=markdown --output-path=$(ROOT_DIR)/docs/refs/api/$(OPERATOR_CONTROLLER_API_REFERENCE_FILENAME);
+	rm -rf $(CATALOGD_TMP_DIR)
+	git clone --depth 1 --branch $(CATALOGD_VERSION) https://github.com/operator-framework/catalogd $(CATALOGD_TMP_DIR)
 	rm -f $(ROOT_DIR)/docs/refs/api/$(CATALOGD_API_REFERENCE_FILENAME)
-	$(CRD_REF_DOCS) --source-path=$(CATALOGD_PATH)/api \
+	$(CRD_REF_DOCS) --source-path=$(CATALOGD_TMP_DIR)/api \
 	--config=$(ROOT_DIR)/docs/refs/api/crd-ref-docs-gen-config.yaml \
 	--renderer=markdown --output-path=$(ROOT_DIR)/docs/refs/api/$(CATALOGD_API_REFERENCE_FILENAME)
+	rm -rf $(CATALOGD_TMP_DIR)/
 
 VENVDIR := $(abspath docs/.venv)
 
