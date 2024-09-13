@@ -47,8 +47,7 @@ func TestExtensionDeveloper(t *testing.T) {
 			Source: catalogd.CatalogSource{
 				Type: catalogd.SourceTypeImage,
 				Image: &catalogd.ImageSource{
-					Ref:                   os.Getenv("CATALOG_IMG"),
-					InsecureSkipTLSVerify: true,
+					Ref: os.Getenv("CATALOG_IMG"),
 				},
 			},
 		},
