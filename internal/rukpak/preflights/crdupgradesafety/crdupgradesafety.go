@@ -32,17 +32,18 @@ type Preflight struct {
 
 func NewPreflight(crdCli apiextensionsv1client.CustomResourceDefinitionInterface, opts ...Option) *Preflight {
 	changeValidations := []kappcus.ChangeValidation{
-		kappcus.EnumChangeValidation,
-		kappcus.RequiredFieldChangeValidation,
-		kappcus.MaximumChangeValidation,
-		kappcus.MaximumItemsChangeValidation,
-		kappcus.MaximumLengthChangeValidation,
-		kappcus.MaximumPropertiesChangeValidation,
-		kappcus.MinimumChangeValidation,
-		kappcus.MinimumItemsChangeValidation,
-		kappcus.MinimumLengthChangeValidation,
-		kappcus.MinimumPropertiesChangeValidation,
-		kappcus.DefaultValueChangeValidation,
+        Enum,
+        Required,
+        Maximum,
+        MaxItems,
+        MaxLength,
+        MaxProperties,
+        Minimum,
+        MinItems,
+        MinLength,
+        MinProperties,
+        Default,
+        Type,
 	}
 	p := &Preflight{
 		crdClient: crdCli,
