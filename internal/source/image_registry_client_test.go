@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/go-logr/logr/funcr"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -164,6 +165,13 @@ func TestImageRegistry(t *testing.T) {
 						},
 					},
 				},
+				Status: v1alpha1.ClusterCatalogStatus{
+					ResolvedSource: &v1alpha1.ResolvedCatalogSource{
+						Image: &v1alpha1.ResolvedImageSource{
+							LastUnpacked: metav1.Time{Time: time.Date(2000, 2, 1, 12, 30, 0, 0, time.UTC)},
+						},
+					},
+				},
 			},
 			wantErr: false,
 			image: func() v1.Image {
@@ -190,6 +198,13 @@ func TestImageRegistry(t *testing.T) {
 						},
 					},
 				},
+				Status: v1alpha1.ClusterCatalogStatus{
+					ResolvedSource: &v1alpha1.ResolvedCatalogSource{
+						Image: &v1alpha1.ResolvedImageSource{
+							LastUnpacked: metav1.Time{Time: time.Date(2000, 2, 1, 12, 30, 0, 1, time.UTC)},
+						},
+					},
+				},
 			},
 			wantErr:             false,
 			digestAlreadyExists: true,
@@ -213,6 +228,13 @@ func TestImageRegistry(t *testing.T) {
 						Type: v1alpha1.SourceTypeImage,
 						Image: &v1alpha1.ImageSource{
 							Ref: "",
+						},
+					},
+				},
+				Status: v1alpha1.ClusterCatalogStatus{
+					ResolvedSource: &v1alpha1.ResolvedCatalogSource{
+						Image: &v1alpha1.ResolvedImageSource{
+							LastUnpacked: metav1.Time{Time: time.Date(2000, 2, 1, 12, 30, 0, 2, time.UTC)},
 						},
 					},
 				},
@@ -380,7 +402,15 @@ func TestImageRegistry(t *testing.T) {
 				assert.Len(t, entries, 1)
 				// If the digest should already exist check that we actually hit it
 				if tt.digestAlreadyExists {
-					require.Contains(t, buf.String(), "found image in filesystem cache")
+					assert.Contains(t, buf.String(), "found image in filesystem cache")
+					assert.Equal(t, tt.catalog.Status.ResolvedSource.Image.LastUnpacked, rs.ResolvedSource.Image.LastUnpacked)
+				} else if tt.oldDigestExists {
+					assert.NotContains(t, buf.String(), "found image in filesystem cache")
+					assert.NotEqual(t, tt.catalog.Status.ResolvedSource.Image.LastUnpacked, rs.ResolvedSource.Image.LastUnpacked)
+				} else {
+					require.NotNil(t, rs.ResolvedSource.Image.LastUnpacked)
+					require.NotNil(t, rs.ResolvedSource.Image)
+					assert.False(t, rs.ResolvedSource.Image.LastUnpacked.IsZero())
 				}
 			} else {
 				assert.Error(t, err)

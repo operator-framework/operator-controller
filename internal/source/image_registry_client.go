@@ -75,8 +75,11 @@ func (i *ImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.Cl
 	resolvedRef := fmt.Sprintf("%s@sha256:%s", imgRef.Context().Name(), digestHex)
 	if stat, err := os.Stat(unpackPath); err == nil && stat.IsDir() {
 		l.V(1).Info("found image in filesystem cache", "digest", digestHex)
-		// TODO: https://github.com/operator-framework/catalogd/issues/389
-		return unpackedResult(os.DirFS(unpackPath), catalog, resolvedRef, metav1.Time{Time: time.Now()}), nil
+		lastUnpacked := metav1.Time{Time: time.Now()}
+		if catalog.Status.ResolvedSource != nil && catalog.Status.ResolvedSource.Image != nil {
+			lastUnpacked = catalog.Status.ResolvedSource.Image.LastUnpacked
+		}
+		return unpackedResult(os.DirFS(unpackPath), catalog, resolvedRef, lastUnpacked), nil
 	}
 
 	if _, err = os.Stat(unpackPath); errors.Is(err, os.ErrNotExist) { //nolint: nestif
