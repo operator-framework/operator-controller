@@ -1,6 +1,8 @@
 # Derive minimal ServiceAccount required for ClusterExtension Installation and Management
 
-OLMv1 does not provide cluster admin privileges by default for installing cluster extensions. This document will explain how to derive the required RBAC configuration for a provided service account.
+OLM v1 does not have permission to install extensions on a cluster by default. In order to install a [supported bundle](../refs/supported-extensions.md), OLM must be provided a ServiceAccount configured with the appropriate permissions. For more information, see the provided ServiceAccount [documentation](./provided-serviceaccount.md).
+
+This document serves as a guide for how to derive the RBAC necessary to install a bundle.
 
 The ServiceAccount is specified in the ClusterExtension manifest as shown below:
 
@@ -39,12 +41,12 @@ You can determine the specifics of these permissions by referencing the bundle o
 
 ### Manual process for minimal RBAC creation
 
-There are no production tools available to help you understand the precise RBAC required for your cluster extensions. However, if you want to figure this manually you can try the below:
+There are no production tools available to help you understand the precise RBAC required for your cluster extensions. To determine the RBAC manually,
 
-* Create all the intial rbac and then iterate over the ClusterExtention failures, examining conditions and updating the RBAC to include the generated cluster role names (name will be in the failure condition).
+* Create all the initial rbac and then iterate over the ClusterExtension failures, examining conditions and updating the RBAC to include the generated cluster role names (name will be in the failure condition).
 * After reading the failure condition, update the installer RBAC and iterate until you are out of errors.
-* You can get the bundle image, unpacking the same and inspect the manifests to figure out the required permissions.
-* The `oc` cli-tool creates cluster roles with a hash in their name, you canquery the newly created ClusterRole names, reduce the installer RBAC scope to have the ClusterRoles needed ,this can include generated roles. You can achieve this by allowing the installer to get, list, watch and update any cluster roles.
+* You can get the bundle image, unpack the same and inspect the manifests to determine the required permissions.
+* The `oc` cli-tool creates cluster roles with a hash in their name, you can query the newly created ClusterRole names and reduce the installer RBAC scope to have the ClusterRoles needed and this can include generated roles. You can achieve this by allowing the installer to get, list, watch and update any cluster roles.
 
 ### Sample snippets of ClusterRole rule definitions
 
