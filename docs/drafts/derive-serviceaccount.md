@@ -1,6 +1,6 @@
 # Derive minimal ServiceAccount required for ClusterExtension Installation and Management
 
-OLM v1 does not have permission to install extensions on a cluster by default. In order to install a [supported bundle](../refs/supported-extensions.md), OLM must be provided a ServiceAccount configured with the appropriate permissions. For more information, see the provided ServiceAccount [documentation](./provided-serviceaccount.md).
+OLM v1 does not have permission to install extensions on a cluster by default. In order to install a [supported bundle](../refs/supported-extensions.md), OLM must be provided a ServiceAccount configured with the appropriate permissions. For more information, see the provided [ServiceAccount](./provided-serviceaccount.md) documentation.
 
 This document serves as a guide for how to derive the RBAC necessary to install a bundle.
 
@@ -37,11 +37,11 @@ You can determine the specifics of these permissions by referencing the bundle o
   shipped with the bundle
 * Rules to manage any other namespace-scoped resources 
 * Permissions to create the necessary roles and rolebindings for the controller to be able to perform its job
-* Get, list, watch, update, patch, delete the specific resources that get created/
+* Get, list, watch, update, patch, delete the specific resources that get created.
 
 ### Manual process for minimal RBAC creation
 
-There are no production tools available to help you understand the precise RBAC required for your cluster extensions. To determine the RBAC manually,
+To determine the RBAC required for your cluster extensions manually, you can
 
 * Create all the initial rbac and then iterate over the ClusterExtension failures, examining conditions and updating the RBAC to include the generated cluster role names (name will be in the failure condition).
 * After reading the failure condition, update the installer RBAC and iterate until you are out of errors.
