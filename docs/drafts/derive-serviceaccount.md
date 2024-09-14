@@ -1,27 +1,8 @@
 # Derive minimal ServiceAccount required for ClusterExtension Installation and Management
 
-OLM v1 does not have permission to install extensions on a cluster by default. In order to install a [supported bundle](../refs/supported-extensions.md), OLM must be provided a ServiceAccount configured with the appropriate permissions. For more information, see the provided [ServiceAccount](./provided-serviceaccount.md) documentation.
+OLM v1 does not have permission to install extensions on a cluster by default. In order to install a [supported bundle](../refs/supported-extensions.md), OLM must be provided a ServiceAccount configured with the appropriate permissions. For more information, see the [provided ServiceAccount](./provided-serviceaccount.md) documentation.
 
 This document serves as a guide for how to derive the RBAC necessary to install a bundle.
-
-The ServiceAccount is specified in the ClusterExtension manifest as shown below:
-
-```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
-kind: ClusterExtension
-metadata:
-  name: argocd
-spec:
-  source:
-    sourceType: Catalog
-    catalog:
-      packageName: argocd-operator
-      version: 0.6.0
-  install:
-    namespace: argocd
-    serviceAccount:
-      name: argocd-installer
-```
 
 ### Required RBAC
 
