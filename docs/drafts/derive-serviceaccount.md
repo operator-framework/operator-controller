@@ -1,6 +1,6 @@
 # Derive minimal ServiceAccount required for ClusterExtension Installation and Management
 
-OLMv1 does not provide cluster admin privileges by default for installing cluster extensions. This document will explain how to derive the required RBAC configuration for a provided service account"
+OLMv1 does not provide cluster admin privileges by default for installing cluster extensions. This document will explain how to derive the required RBAC configuration for a provided service account.
 
 The ServiceAccount is specified in the ClusterExtension manifest as shown below:
 
@@ -20,12 +20,6 @@ spec:
     serviceAccount:
       name: argocd-installer
 ```
-
-The initial stable version (v1.0.0) only supports FBC catalogs containing registry+v1 bundles. OLMv1 will not support all OLMv0 content. OLMv1 will only support bundles that meet the following criteria:
-* AllNamespaces install mode is enabled
-* No dependencies on other packages or GVKs
-* No webhooks
-* Does not make use of the OperatorConditions API
 
 ### Required RBAC
 
