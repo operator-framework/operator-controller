@@ -21,6 +21,7 @@ import (
 	"github.com/containers/image/v5/types"
 	"github.com/opencontainers/go-digest"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type ContainersImageRegistry struct {
@@ -36,7 +37,7 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, bundle *BundleSour
 	}
 
 	if bundle.Image == nil {
-		return nil, NewUnrecoverable(fmt.Errorf("error parsing bundle, bundle %s has a nil image source", bundle.Name))
+		return nil, reconcile.TerminalError(fmt.Errorf("error parsing bundle, bundle %s has a nil image source", bundle.Name))
 	}
 
 	//////////////////////////////////////////////////////
@@ -46,7 +47,7 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, bundle *BundleSour
 	//////////////////////////////////////////////////////
 	imgRef, err := reference.ParseNamed(bundle.Image.Ref)
 	if err != nil {
-		return nil, NewUnrecoverable(fmt.Errorf("error parsing image reference %q: %w", bundle.Image.Ref, err))
+		return nil, reconcile.TerminalError(fmt.Errorf("error parsing image reference %q: %w", bundle.Image.Ref, err))
 	}
 
 	canonicalRef, err := resolveCanonicalRef(ctx, imgRef, i.SourceContext)
@@ -180,7 +181,7 @@ func resolveCanonicalRef(ctx context.Context, imgRef reference.Named, imageCtx *
 
 	srcRef, err := docker.NewReference(imgRef)
 	if err != nil {
-		return nil, NewUnrecoverable(fmt.Errorf("error creating reference: %w", err))
+		return nil, reconcile.TerminalError(fmt.Errorf("error creating reference: %w", err))
 	}
 
 	imgSrc, err := srcRef.NewImageSource(ctx, imageCtx)

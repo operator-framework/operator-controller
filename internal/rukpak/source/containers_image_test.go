@@ -20,6 +20,7 @@ import (
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 )
@@ -143,7 +144,7 @@ func TestUnpackNameOnlyImageReference(t *testing.T) {
 	// Attempt to pull and unpack the image
 	_, err := unpacker.Unpack(context.Background(), bundleSource)
 	assert.ErrorContains(t, err, "tag or digest is needed")
-	assert.ErrorAs(t, err, &source.Unrecoverable{})
+	assert.ErrorIs(t, err, reconcile.TerminalError(nil))
 }
 
 func TestUnpackUnservedTaggedImageReference(t *testing.T) {
@@ -225,7 +226,7 @@ func TestUnpackInvalidNilImage(t *testing.T) {
 	result, err := unpacker.Unpack(context.Background(), bundleSource)
 	assert.Nil(t, result)
 	assert.ErrorContains(t, err, "nil image source")
-	assert.ErrorAs(t, err, &source.Unrecoverable{})
+	assert.ErrorIs(t, err, reconcile.TerminalError(nil))
 	assert.NoDirExists(t, filepath.Join(unpacker.BaseCachePath, bundleSource.Name))
 }
 
@@ -244,7 +245,7 @@ func TestUnpackInvalidImageRef(t *testing.T) {
 	result, err := unpacker.Unpack(context.Background(), bundleSource)
 	assert.Nil(t, result)
 	assert.ErrorContains(t, err, "error parsing image reference")
-	assert.ErrorAs(t, err, &source.Unrecoverable{})
+	assert.ErrorIs(t, err, reconcile.TerminalError(nil))
 	assert.NoDirExists(t, filepath.Join(unpacker.BaseCachePath, bundleSource.Name))
 }
 
