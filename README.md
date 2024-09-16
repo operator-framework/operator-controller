@@ -102,7 +102,7 @@ kubectl patch clusterextension argocd --type='merge' -p '{"spec": {"source": {"c
 
 ```
 
-For information on the downgrade process, see [here](./docs/drafts/Tasks/downgrading-an-extension.md).
+For information on the downgrade process, see [here](docs/drafts/downgrading-an-extension.md).
 
 ### Uninstall the Cluster Extension
 
