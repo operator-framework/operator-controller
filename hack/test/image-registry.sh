@@ -16,7 +16,7 @@ Argument Descriptions:
     format of 'Issuer/<issuer-name>' or 'ClusterIssuer/<cluster-issuer-name>'
 "
 
-if [[ "$#" -ne 3 ]]; then
+if [[ "$#" -ne 2 ]]; then
   echo "Illegal number of arguments passed"
   echo "${help}"
   exit 1
@@ -24,23 +24,12 @@ fi
 
 namespace=$1
 name=$2
-certRef=$3
-
-echo "CERT_REF: ${certRef}"
 
 kubectl apply -f - << EOF
 apiVersion: v1
 kind: Namespace
 metadata:
   name: ${namespace}
----
- apiVersion: cert-manager.io/v1
- kind: Issuer
- metadata:
-   name: selfsigned-issuer
-   namespace: ${namespace}
- spec:
-   selfSigned: {}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -57,8 +46,8 @@ spec:
     algorithm: ECDSA
     size: 256
   issuerRef:
-    name: ${certRef#*/}
-    kind: ${certRef%/*}
+    name: olmv1-ca
+    kind: ClusterIssuer
     group: cert-manager.io
 ---
 apiVersion: apps/v1

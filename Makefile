@@ -163,9 +163,8 @@ test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
                 $(UNIT_TEST_DIRS) \
                 -test.gocoverdir=$(ROOT_DIR)/coverage/unit
 
-E2E_REGISTRY_CERT_REF := ClusterIssuer/olmv1-ca # By default, we'll use a trusted CA for the registry.
 image-registry: ## Setup in-cluster image registry
-	./hack/test/image-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME) $(E2E_REGISTRY_CERT_REF)
+	./hack/test/image-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME)
 
 build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and push it to the image registry
 	./hack/test/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
@@ -180,7 +179,6 @@ build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and pus
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
 test-e2e: GO_BUILD_FLAGS := -cover
-test-e2e: E2E_REGISTRY_CERT_REF := Issuer/selfsigned-issuer
 test-e2e: run image-registry build-push-e2e-catalog registry-load-bundles e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: extension-developer-e2e

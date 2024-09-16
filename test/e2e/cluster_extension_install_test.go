@@ -218,77 +218,98 @@ func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *o
 }
 
 func TestClusterExtensionInstallRegistry(t *testing.T) {
-	t.Log("When a cluster extension is installed from a catalog")
-	t.Log("When the extension bundle format is registry+v1")
-
-	clusterExtension, extensionCatalog, sa := testInit(t)
-	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
-	defer getArtifactsOutput(t)
-
-	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		Source: ocv1alpha1.SourceConfig{
-			SourceType: "Catalog",
-			Catalog: &ocv1alpha1.CatalogSource{
-				PackageName: "prometheus",
-				Selector: metav1.LabelSelector{
-					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
-				},
-			},
-		},
-		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: "default",
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: sa.Name,
-			},
-		},
+	type testCase struct {
+		name        string
+		packageName string
 	}
-	t.Log("It resolves the specified package with correct bundle path")
-	t.Log("By creating the ClusterExtension resource")
-	require.NoError(t, c.Create(context.Background(), clusterExtension))
+	for _, tc := range []testCase{
+		{
+			name:        "no registry configuration necessary",
+			packageName: "prometheus",
+		},
+		{
+			// NOTE: This test requires an extra configuration in /etc/containers/registries.conf, which is mounted
+			// for this e2e via the ./config/components/registries-conf kustomize component as part of the e2e overlay.
+			// The goal here is to prove that "mirrored-registry.operator-controller-e2e.svc.cluster.local:5000" is
+			// mapped to the "real" registry hostname ("docker-registry.operator-controller-e2e.svc.cluster.local:5000").
+			name:        "package requires mirror registry configuration in /etc/containers/registries.conf",
+			packageName: "prometheus-mirrored",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Log("When a cluster extension is installed from a catalog")
+			t.Log("When the extension bundle format is registry+v1")
 
-	t.Log("By eventually reporting a successful resolution and bundle path")
-	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-		if !assert.NotNil(ct, cond) {
-			return
-		}
-		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
-		assert.Contains(ct, cond.Message, "resolved to")
-		assert.Equal(ct,
-			&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: ocv1alpha1.BundleMetadata{
-				Name:    "prometheus-operator.1.2.0",
-				Version: "1.2.0",
-			}},
-			clusterExtension.Status.Resolution,
-		)
-	}, pollDuration, pollInterval)
+			clusterExtension, extensionCatalog, sa := testInit(t)
+			defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+			defer getArtifactsOutput(t)
 
-	t.Log("By eventually reporting a successful unpacked")
-	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
-		if !assert.NotNil(ct, cond) {
-			return
-		}
-		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
-		assert.Regexp(ct, "^unpacked .* successfully", cond.Message)
-	}, pollDuration, pollInterval)
+			clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
+				Source: ocv1alpha1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1alpha1.CatalogSource{
+						PackageName: tc.packageName,
+						Selector: metav1.LabelSelector{
+							MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
+						},
+					},
+				},
+				Install: ocv1alpha1.ClusterExtensionInstallConfig{
+					Namespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: sa.Name,
+					},
+				},
+			}
+			t.Log("It resolves the specified package with correct bundle path")
+			t.Log("By creating the ClusterExtension resource")
+			require.NoError(t, c.Create(context.Background(), clusterExtension))
 
-	t.Log("By eventually installing the package successfully")
-	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
-		if !assert.NotNil(ct, cond) {
-			return
-		}
-		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
-		assert.Contains(ct, cond.Message, "Installed bundle")
-		assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
-	}, pollDuration, pollInterval)
+			t.Log("By eventually reporting a successful resolution and bundle path")
+			require.EventuallyWithT(t, func(ct *assert.CollectT) {
+				assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
+				if !assert.NotNil(ct, cond) {
+					return
+				}
+				assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+				assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+				assert.Contains(ct, cond.Message, "resolved to")
+				assert.Equal(ct,
+					&ocv1alpha1.ClusterExtensionResolutionStatus{Bundle: ocv1alpha1.BundleMetadata{
+						Name:    fmt.Sprintf("%s-operator.1.2.0", tc.packageName),
+						Version: "1.2.0",
+					}},
+					clusterExtension.Status.Resolution,
+				)
+			}, pollDuration, pollInterval)
+
+			t.Log("By eventually reporting a successful unpacked")
+			require.EventuallyWithT(t, func(ct *assert.CollectT) {
+				assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
+				if !assert.NotNil(ct, cond) {
+					return
+				}
+				assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+				assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+				assert.Regexp(ct, "^unpacked .* successfully", cond.Message)
+			}, pollDuration, pollInterval)
+
+			t.Log("By eventually installing the package successfully")
+			require.EventuallyWithT(t, func(ct *assert.CollectT) {
+				assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
+				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+				if !assert.NotNil(ct, cond) {
+					return
+				}
+				assert.Equal(ct, metav1.ConditionTrue, cond.Status)
+				assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+				assert.Contains(ct, cond.Message, "Installed bundle")
+				assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
+			}, pollDuration, pollInterval)
+		})
+	}
 }
 
 func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {

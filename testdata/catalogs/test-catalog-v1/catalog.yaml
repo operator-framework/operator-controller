@@ -48,3 +48,24 @@ properties:
     value:
       packageName: prometheus
       version: 1.2.0
+
+---
+schema: olm.package
+name: prometheus-mirrored
+defaultChannel: beta
+---
+schema: olm.channel
+name: beta
+package: prometheus-mirrored
+entries:
+  - name: prometheus-mirrored-operator.1.2.0
+---
+schema: olm.bundle
+name: prometheus-mirrored-operator.1.2.0
+package: prometheus-mirrored
+image: mirrored-registry.operator-controller-e2e.svc.cluster.local:5000/bundles/registry-v1/prometheus-operator:v1.2.0
+properties:
+  - type: olm.package
+    value:
+      packageName: prometheus-mirrored
+      version: 1.2.0
