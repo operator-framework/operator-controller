@@ -4,7 +4,28 @@ You’ll need a Kubernetes cluster to run against. You can use [KIND](https://si
 > [!NOTE]
 > Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
 
-### Installation
+### Steps For Installation
+
+#### Additional setup on Macintosh computers
+On Macintosh computers some additional setup is necessary to install and configure compatible tooling.
+
+##### Install Homebrew and tools
+Follow the instructions to [installing Homebrew](https://docs.brew.sh/Installation) and then execute the following to install tools:
+
+```sh
+brew install bash gnu-tar gsed
+```
+
+##### Configure your shell
+Modify your login shell's `PATH` to prefer the new tools over those in the existing environment.  This example should work either with `zsh` (in $HOME/.zshrc) or `bash` (in $HOME/.bashrc):
+
+```sh
+for bindir in `find $(brew --prefix)/opt -type d -follow -name gnubin -print`
+do
+  export PATH=$bindir:$PATH
+done
+```
+#### Installation
 
 > [!CAUTION]  
 > Operator-Controller depends on [cert-manager](https://cert-manager.io/). Running the following command
@@ -14,26 +35,6 @@ The latest version of Operator Controller can be installed with the following co
 
 ```bash
 curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh | bash -s
-```
-
-### Additional setup on Macintosh computers
-On Macintosh computers some additional setup is necessary to install and configure compatible tooling.
-
-#### Install Homebrew and tools
-Follow the instructions to [installing Homebrew](https://docs.brew.sh/Installation) and then execute the following to install tools:
-
-```sh
-brew install bash gnu-tar gsed
-```
-
-#### Configure your shell
-Modify your login shell's `PATH` to prefer the new tools over those in the existing environment.  This example should work either with `zsh` (in $HOME/.zshrc) or `bash` (in $HOME/.bashrc):
-
-```sh
-for bindir in `find $(brew --prefix)/opt -type d -follow -name gnubin -print`
-do
-  export PATH=$bindir:$PATH
-done
 ```
 
 ### Running on the cluster
