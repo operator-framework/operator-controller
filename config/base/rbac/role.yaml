@@ -21,6 +21,7 @@ rules:
   resources:
   - clustercatalogs
   verbs:
+  - get
   - list
   - watch
 - apiGroups:

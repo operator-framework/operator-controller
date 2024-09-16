@@ -278,6 +278,15 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
 	}
+
+	if err = (&controllers.ClusterCatalogReconciler{
+		Client: cl,
+		Cache:  cacheFetcher,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
+		os.Exit(1)
+	}
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
