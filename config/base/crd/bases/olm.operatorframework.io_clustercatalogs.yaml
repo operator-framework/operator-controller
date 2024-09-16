@@ -24,7 +24,9 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ClusterCatalog is the Schema for the ClusterCatalogs API
+        description: |-
+          ClusterCatalog enables users to make File-Based Catalog (FBC) catalog data available to the cluster.
+          For more information on FBC, see https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
         properties:
           apiVersion:
             description: |-
@@ -48,35 +50,64 @@ spec:
             properties:
               priority:
                 default: 0
-                description: priority is used as the tie-breaker between bundles selected
-                  from different catalogs; a higher number means higher priority.
+                description: |-
+                  priority is an optional field that allows the user to define a priority for a ClusterCatalog.
+                  A ClusterCatalog's priority is used by clients as a tie-breaker between ClusterCatalogs that meet the client's requirements.
+                  For example, in the case where multiple ClusterCatalogs provide the same bundle.
+                  A higher number means higher priority. Negative number as also accepted.
+                  When omitted, the default priority is 0.
                 format: int32
                 type: integer
               source:
                 description: |-
-                  source is the source of a Catalog that contains catalog metadata in the FBC format
-                  https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
+                  source is a required field that allows the user to define the source of a Catalog that contains catalog metadata in the File-Based Catalog (FBC) format.
+
+                  Below is a minimal example of a ClusterCatalogSpec that sources a catalog from an image:
+
+                   source:
+                     type: image
+                     image:
+                       ref: quay.io/operatorhubio/catalog:latest
+
+                  For more information on FBC, see https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
                 properties:
                   image:
-                    description: image is the catalog image that backs the content
-                      of this catalog.
+                    description: image is used to configure how catalog contents are
+                      sourced from an OCI image. This field must be set when type
+                      is set to "image" and must be the only field defined for this
+                      type.
                     properties:
                       pollInterval:
                         description: |-
-                          pollInterval indicates the interval at which the image source should be polled for new content,
-                          specified as a duration (e.g., "5m", "1h", "24h", "etc".). Note that PollInterval may not be
-                          specified for a catalog image referenced by a sha256 digest.
+                          pollInterval is an optional field that allows the user to set the interval at which the image source should be polled for new content.
+                          It must be specified as a duration.
+                          It must not be specified for a catalog image referenced by a sha256 digest.
+                          Examples:
+                            pollInterval: 1h # poll the image source every hour
+                            pollInterval: 30m # poll the image source every 30 minutes
+                            pollInterval: 1h30m # poll the image source every 1 hour and 30 minutes
+
+                          When omitted, the image will not be polled for new content.
                         format: duration
                         type: string
                       ref:
-                        description: ref contains the reference to a container image
-                          containing Catalog contents.
+                        description: |-
+                          ref is a required field that allows the user to define the reference to a container image containing Catalog contents.
+                          Examples:
+                            ref: quay.io/operatorhubio/catalog:latest # image reference
+                            ref: quay.io/operatorhubio/catalog@sha256:c7392b4be033da629f9d665fec30f6901de51ce3adebeff0af579f311ee5cf1b # image reference with sha256 digest
                         type: string
                     required:
                     - ref
                     type: object
                   type:
-                    description: type defines the kind of Catalog content being sourced.
+                    description: |-
+                      type is a required reference to the type of source the catalog is sourced from.
+
+                      Allowed values are ["image"]
+
+                      When this field is set to "image", the ClusterCatalog content will be sourced from an OCI image.
+                      When using an image source, the image field must be set and must be the only field defined for this type.
                     enum:
                     - image
                     type: string
@@ -94,8 +125,26 @@ spec:
             description: ClusterCatalogStatus defines the observed state of ClusterCatalog
             properties:
               conditions:
-                description: conditions store the status conditions of the ClusterCatalog
-                  instances
+                description: |-
+                  conditions is a representation of the current state for this ClusterCatalog.
+                  The status is represented by a set of "conditions".
+
+                  Each condition is generally structured in the following format:
+                    - Type: a string representation of the condition type. More or less the condition "name".
+                    - Status: a string representation of the state of the condition. Can be one of ["True", "False", "Unknown"].
+                    - Reason: a string representation of the reason for the current state of the condition. Typically useful for building automation around particular Type+Reason combinations.
+                    - Message: a human-readable message that further elaborates on the state of the condition.
+
+                  The current set of condition types are:
+                    - "Unpacked", epresents whether, or not, the catalog contents have been successfully unpacked.
+                    - "Deleted", represents whether, or not, the catalog contents have been successfully deleted.
+
+                  The current set of reasons are:
+                    - "UnpackPending", this reason is set on the "Unpack" condition when unpacking the catalog has not started.
+                    - "Unpacking", this reason is set on the "Unpack" condition when the catalog is being unpacked.
+                    - "UnpackSuccessful", this reason is set on the "Unpack" condition when unpacking the catalog is successful and the catalog metadata is available to the cluster.
+                    - "FailedToStore", this reason is set on the "Unpack" condition when an error has been encountered while storing the contents of the catalog.
+                    - "FailedToDelete", this reason is set on the "Delete" condition when an error has been encountered while deleting the contents of the catalog.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -153,12 +202,12 @@ spec:
                 type: array
               contentURL:
                 description: |-
-                  contentURL is a cluster-internal address that on-cluster components
-                  can read the content of a catalog from
+                  contentURL is a cluster-internal URL from which on-cluster components
+                  can read the content of a catalog
                 type: string
               lastUnpacked:
                 description: |-
-                  LastUnpacked represents the time when the
+                  lastUnpacked represents the time when the
                   ClusterCatalog object was last unpacked.
                 format: date-time
                 type: string
@@ -169,30 +218,40 @@ spec:
                 format: int64
                 type: integer
               resolvedSource:
-                description: resolvedSource contains information about the resolved
-                  source
+                description: |-
+                  resolvedSource contains information about the resolved source based on the source type.
+
+                  Below is an example of a resolved source for an image source:
+                  resolvedSource:
+
+                   image:
+                     lastPollAttempt: "2024-09-10T12:22:13Z"
+                     lastUnpacked: "2024-09-10T12:22:13Z"
+                     ref: quay.io/operatorhubio/catalog:latest
+                     resolvedRef: quay.io/operatorhubio/catalog@sha256:c7392b4be033da629f9d665fec30f6901de51ce3adebeff0af579f311ee5cf1b
+                   type: image
                 properties:
                   image:
-                    description: image is the catalog image that backs the content
-                      of this catalog.
+                    description: image is a field containing resolution information
+                      for a catalog sourced from an image.
                     properties:
                       lastPollAttempt:
-                        description: lastPollAtempt is the time when the source resolved
+                        description: lastPollAttempt is the time when the source image
                           was last polled for new content.
                         format: date-time
                         type: string
                       lastUnpacked:
-                        description: LastUnpacked is the time when the catalog contents
-                          were successfully unpacked.
+                        description: lastUnpacked is the last time when the Catalog
+                          contents were successfully unpacked.
                         format: date-time
                         type: string
                       ref:
-                        description: ref contains the reference to a container image
-                          containing Catalog contents.
+                        description: ref is the reference to a container image containing
+                          Catalog contents.
                         type: string
                       resolvedRef:
-                        description: resolvedRef contains the resolved sha256 image
-                          ref containing Catalog contents.
+                        description: resolvedRef is the resolved sha256 image ref
+                          containing Catalog contents.
                         type: string
                     required:
                     - lastPollAttempt
@@ -201,8 +260,12 @@ spec:
                     - resolvedRef
                     type: object
                   type:
-                    description: type defines the kind of Catalog content that was
-                      sourced.
+                    description: |-
+                      type is a reference to the type of source the catalog is sourced from.
+
+                      It will be set to one of the following values: ["image"].
+
+                      When this field is set to "image", information about the resolved image source will be set in the 'image' field.
                     enum:
                     - image
                     type: string
