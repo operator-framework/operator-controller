@@ -3,3 +3,8 @@ kind: Component
 # No namespace is specified here, otherwise, it will overwrite _all_ the other namespaces!
 resources:
 - resources/issuers.yaml
+patches:
+- target:
+    kind: Deployment
+    name: controller-manager
+  path: patches/manager_deployment_cacerts.yaml

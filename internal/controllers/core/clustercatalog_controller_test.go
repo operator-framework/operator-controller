@@ -84,12 +84,13 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		name            string
 		catalog         *catalogdv1alpha1.ClusterCatalog
 		shouldErr       bool
+		shouldPanic     bool
 		expectedCatalog *catalogdv1alpha1.ClusterCatalog
 		source          source.Unpacker
 		store           storage.Instance
 	}{
 		{
-			name:   "invalid source type, returns error",
+			name:   "invalid source type, panics",
 			source: &MockSource{},
 			store:  &MockStore{},
 			catalog: &catalogdv1alpha1.ClusterCatalog{
@@ -103,7 +104,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 			},
-			shouldErr: true,
+			shouldPanic: true,
 			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "catalog",
@@ -518,15 +519,17 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			reconciler := &ClusterCatalogReconciler{
-				Client: nil,
-				Unpacker: source.NewUnpacker(
-					map[catalogdv1alpha1.SourceType]source.Unpacker{
-						catalogdv1alpha1.SourceTypeImage: tt.source,
-					},
-				),
-				Storage: tt.store,
+				Client:   nil,
+				Unpacker: tt.source,
+				Storage:  tt.store,
 			}
 			ctx := context.Background()
+
+			if tt.shouldPanic {
+				assert.Panics(t, func() { _, _ = reconciler.reconcile(ctx, tt.catalog) })
+				return
+			}
+
 			res, err := reconciler.reconcile(ctx, tt.catalog)
 			assert.Equal(t, ctrl.Result{}, res)
 
@@ -585,14 +588,10 @@ func TestPollingRequeue(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			reconciler := &ClusterCatalogReconciler{
 				Client: nil,
-				Unpacker: source.NewUnpacker(
-					map[catalogdv1alpha1.SourceType]source.Unpacker{
-						catalogdv1alpha1.SourceTypeImage: &MockSource{result: &source.Result{
-							State: source.StateUnpacked,
-							FS:    &fstest.MapFS{},
-						}},
-					},
-				),
+				Unpacker: &MockSource{result: &source.Result{
+					State: source.StateUnpacked,
+					FS:    &fstest.MapFS{},
+				}},
 				Storage: &MockStore{},
 			}
 			res, _ := reconciler.reconcile(context.Background(), tc.catalog)

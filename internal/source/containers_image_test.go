@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containers/image/v5/types"
 	"github.com/go-logr/logr/funcr"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/registry"
@@ -165,13 +166,6 @@ func TestImageRegistry(t *testing.T) {
 						},
 					},
 				},
-				Status: v1alpha1.ClusterCatalogStatus{
-					ResolvedSource: &v1alpha1.ResolvedCatalogSource{
-						Image: &v1alpha1.ResolvedImageSource{
-							LastUnpacked: metav1.Time{Time: time.Date(2000, 2, 1, 12, 30, 0, 0, time.UTC)},
-						},
-					},
-				},
 			},
 			wantErr: false,
 			image: func() v1.Image {
@@ -198,13 +192,6 @@ func TestImageRegistry(t *testing.T) {
 						},
 					},
 				},
-				Status: v1alpha1.ClusterCatalogStatus{
-					ResolvedSource: &v1alpha1.ResolvedCatalogSource{
-						Image: &v1alpha1.ResolvedImageSource{
-							LastUnpacked: metav1.Time{Time: time.Date(2000, 2, 1, 12, 30, 0, 1, time.UTC)},
-						},
-					},
-				},
 			},
 			wantErr:             false,
 			digestAlreadyExists: true,
@@ -228,13 +215,6 @@ func TestImageRegistry(t *testing.T) {
 						Type: v1alpha1.SourceTypeImage,
 						Image: &v1alpha1.ImageSource{
 							Ref: "",
-						},
-					},
-				},
-				Status: v1alpha1.ClusterCatalogStatus{
-					ResolvedSource: &v1alpha1.ResolvedCatalogSource{
-						Image: &v1alpha1.ResolvedImageSource{
-							LastUnpacked: metav1.Time{Time: time.Date(2000, 2, 1, 12, 30, 0, 2, time.UTC)},
 						},
 					},
 				},
@@ -331,8 +311,12 @@ func TestImageRegistry(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
 			testCache := t.TempDir()
-			imgReg := &source.ImageRegistry{
+			imgReg := &source.ContainersImageRegistry{
 				BaseCachePath: testCache,
+				SourceContext: &types.SystemContext{
+					OCIInsecureSkipTLSVerify:    true,
+					DockerInsecureSkipTLSVerify: types.OptionalBoolTrue,
+				},
 			}
 
 			// Create a logger with a simple function-based LogSink that writes to the buffer
@@ -358,9 +342,13 @@ func TestImageRegistry(t *testing.T) {
 			require.NoError(t, err)
 
 			// If an old digest should exist in the cache, create one
+			oldDigestDir := filepath.Join(testCache, tt.catalog.Name, "olddigest")
+			var oldDigestModTime time.Time
 			if tt.oldDigestExists {
-				err = os.MkdirAll(filepath.Join(testCache, tt.catalog.Name, "olddigest"), os.ModePerm)
+				require.NoError(t, os.MkdirAll(oldDigestDir, os.ModePerm))
+				oldDigestDirStat, err := os.Stat(oldDigestDir)
 				require.NoError(t, err)
+				oldDigestModTime = oldDigestDirStat.ModTime()
 			}
 
 			var digest v1.Hash
@@ -372,7 +360,7 @@ func TestImageRegistry(t *testing.T) {
 
 				// if the digest should already exist in the cache, create it
 				if tt.digestAlreadyExists {
-					err = os.MkdirAll(filepath.Join(testCache, tt.catalog.Name, digest.Hex), os.ModePerm)
+					err = os.MkdirAll(filepath.Join(testCache, tt.catalog.Name, digest.String()), os.ModePerm)
 					require.NoError(t, err)
 				}
 
@@ -393,20 +381,26 @@ func TestImageRegistry(t *testing.T) {
 
 			rs, err := imgReg.Unpack(ctx, tt.catalog)
 			if !tt.wantErr {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, fmt.Sprintf("%s@sha256:%s", imgName.Context().Name(), digest.Hex), rs.ResolvedSource.Image.ResolvedRef)
 				assert.Equal(t, source.StateUnpacked, rs.State)
-				assert.DirExists(t, filepath.Join(testCache, tt.catalog.Name, digest.Hex))
+
+				unpackDir := filepath.Join(testCache, tt.catalog.Name, digest.String())
+				assert.DirExists(t, unpackDir)
+				unpackDirStat, err := os.Stat(unpackDir)
+				require.NoError(t, err)
+
 				entries, err := os.ReadDir(filepath.Join(testCache, tt.catalog.Name))
 				require.NoError(t, err)
 				assert.Len(t, entries, 1)
 				// If the digest should already exist check that we actually hit it
 				if tt.digestAlreadyExists {
-					assert.Contains(t, buf.String(), "found image in filesystem cache")
-					assert.Equal(t, tt.catalog.Status.ResolvedSource.Image.LastUnpacked, rs.ResolvedSource.Image.LastUnpacked)
+					assert.Contains(t, buf.String(), "image already unpacked")
+					assert.Equal(t, rs.ResolvedSource.Image.LastUnpacked.Time, unpackDirStat.ModTime())
 				} else if tt.oldDigestExists {
-					assert.NotContains(t, buf.String(), "found image in filesystem cache")
-					assert.NotEqual(t, tt.catalog.Status.ResolvedSource.Image.LastUnpacked, rs.ResolvedSource.Image.LastUnpacked)
+					assert.NotContains(t, buf.String(), "image already unpacked")
+					assert.NotEqual(t, rs.ResolvedSource.Image.LastUnpacked.Time, oldDigestModTime)
+					assert.NoDirExists(t, oldDigestDir)
 				} else {
 					require.NotNil(t, rs.ResolvedSource.Image.LastUnpacked)
 					require.NotNil(t, rs.ResolvedSource.Image)
@@ -414,8 +408,7 @@ func TestImageRegistry(t *testing.T) {
 				}
 			} else {
 				assert.Error(t, err)
-				var unrecov *catalogderrors.Unrecoverable
-				isUnrecov := errors.As(err, &unrecov)
+				isUnrecov := errors.As(err, &catalogderrors.Unrecoverable{})
 				assert.Equal(t, tt.unrecoverable, isUnrecov, "expected unrecoverable %v, got %v", tt.unrecoverable, isUnrecov)
 			}
 		})
@@ -433,7 +426,7 @@ func TestImageRegistryMissingLabelConsistentFailure(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	testCache := t.TempDir()
-	imgReg := &source.ImageRegistry{
+	imgReg := &source.ContainersImageRegistry{
 		BaseCachePath: testCache,
 	}
 

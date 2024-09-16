@@ -29,7 +29,6 @@ spec:
     type: image
     image:
       ref: ${TEST_CLUSTER_CATALOG_IMAGE}
-      insecureSkipTLSVerify: true
 EOF
 
 kubectl wait --for=condition=Unpacked --timeout=60s ClusterCatalog $TEST_CLUSTER_CATALOG_NAME

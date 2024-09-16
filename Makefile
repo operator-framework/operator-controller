@@ -23,6 +23,9 @@ ifeq ($(shell [[ $$HOME == "" || $$HOME == "/" ]] && [[ $$XDG_DATA_HOME == "" ]]
 	SETUP_ENVTEST_BIN_DIR_OVERRIDE += --bin-dir /tmp/envtest-binaries
 endif
 
+# For standard development and release flows, we use the config/overlays/cert-manager overlay.
+KUSTOMIZE_OVERLAY := config/overlays/cert-manager
+
 # bingo manages consistent tooling versions for things like kind, kustomize, etc.
 include .bingo/Variables.mk
 
@@ -75,7 +78,7 @@ fmt: ## Run go fmt against code.
 
 .PHONY: vet
 vet: ## Run go vet against code.
-	go vet ./...
+	go vet -tags '$(GO_BUILD_TAGS)' ./...
 
 .PHONY: bingo-upgrade
 bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
@@ -85,8 +88,13 @@ bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
 	done
 
 .PHONY: test-unit
+UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/e2e | grep -v /test/upgrade)
 test-unit: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && go test $(shell go list ./... | grep -v /test/e2e | grep -v /test/upgrade) -coverprofile cover.out
+	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && \
+        go test \
+          -tags '$(GO_BUILD_TAGS)' \
+          -coverprofile cover.out \
+          $(UNIT_TEST_DIRS)
 
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 ifeq ($(origin E2E_FLAGS), undefined)
@@ -95,11 +103,14 @@ endif
 test-e2e: $(GINKGO) ## Run the e2e tests
 	$(GINKGO) $(E2E_FLAGS) -trace -vv $(FOCUS) test/e2e
 
-e2e: KIND_CLUSTER_NAME=catalogd-e2e
+e2e: KIND_CLUSTER_NAME := catalogd-e2e
+e2e: ISSUER_KIND := Issuer
+e2e: ISSUER_NAME := selfsigned-issuer
+e2e: KUSTOMIZE_OVERLAY := config/overlays/e2e
 e2e: run image-registry test-e2e kind-cluster-cleanup ## Run e2e test suite on local kind cluster
 
 image-registry: ## Setup in-cluster image registry
-	./test/tools/imageregistry/registry.sh
+	./test/tools/imageregistry/registry.sh $(ISSUER_KIND) $(ISSUER_NAME)
 
 .PHONY: tidy
 tidy: ## Update dependencies
@@ -111,13 +122,15 @@ verify: tidy fmt vet generate ## Verify the current code generation and lint
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Run golangci linter.
-	$(GOLANGCI_LINT) run $(GOLANGCI_LINT_ARGS)
+	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
 ## image-registry target has to come after run-latest-release,
 ## because the image-registry depends on the olm-ca issuer.
 .PHONY: test-upgrade-e2e
 test-upgrade-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-upgrade-e2e: export TEST_CLUSTER_CATALOG_IMAGE := docker-registry.catalogd-e2e.svc:5000/test-catalog:e2e
+test-upgrade-e2e: ISSUER_KIND=ClusterIssuer
+test-upgrade-e2e: ISSUER_NAME=olmv1-ca
 test-upgrade-e2e: kind-cluster cert-manager build-container kind-load run-latest-release image-registry pre-upgrade-setup only-deploy-manifest wait post-upgrade-checks kind-cluster-cleanup ## Run upgrade e2e tests on a local kind cluster
 
 pre-upgrade-setup:
@@ -157,8 +170,9 @@ export GO_BUILD_LDFLAGS  := -s -w \
     -X "$(VERSION_PKG).gitTreeState=$(GIT_TREE_STATE)" \
     -X "$(VERSION_PKG).commitDate=$(GIT_COMMIT_DATE)"
 export GO_BUILD_GCFLAGS  := all=-trimpath=${PWD}
+export GO_BUILD_TAGS     := containers_image_openpgp
 
-BUILDCMD = go build -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$(notdir $@) ./cmd/$(notdir $@)
+BUILDCMD = go build -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$(notdir $@) ./cmd/$(notdir $@)
 
 .PHONY: build-deps
 build-deps: generate fmt vet
@@ -209,13 +223,13 @@ deploy: export MANIFEST="./catalogd.yaml"
 deploy: export DEFAULT_CATALOGS="./config/base/default/clustercatalogs/default-catalogs.yaml"
 deploy: $(KUSTOMIZE) ## Deploy Catalogd to the K8s cluster specified in ~/.kube/config with cert-manager and default clustercatalogs
 	cd config/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE) && cd ../../..
-	$(KUSTOMIZE) build config/overlays/cert-manager | sed "s/cert-git-version/cert-$(GIT_VERSION)/g" > catalogd.yaml
+	$(KUSTOMIZE) build $(KUSTOMIZE_OVERLAY) | sed "s/cert-git-version/cert-$(GIT_VERSION)/g" > catalogd.yaml
 	envsubst '$$CERT_MGR_VERSION,$$MANIFEST,$$DEFAULT_CATALOGS' < scripts/install.tpl.sh | bash -s
 
 .PHONY: only-deploy-manifest
 only-deploy-manifest: $(KUSTOMIZE) ## Deploy just the Catalogd manifest--used in e2e testing where cert-manager is installed in a separate step
 	cd config/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
-	$(KUSTOMIZE) build config/overlays/cert-manager | kubectl apply -f -
+	$(KUSTOMIZE) build $(KUSTOMIZE_OVERLAY) | kubectl apply -f -
 
 wait:
 	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
@@ -244,7 +258,7 @@ release: $(GORELEASER) ## Runs goreleaser for catalogd. By default, this will ru
 quickstart: export MANIFEST := https://github.com/operator-framework/catalogd/releases/download/$(VERSION)/catalogd.yaml
 quickstart: export DEFAULT_CATALOGS := https://github.com/operator-framework/catalogd/releases/download/$(VERSION)/default-catalogs.yaml
 quickstart: $(KUSTOMIZE) generate ## Generate the installation release manifests and scripts
-	$(KUSTOMIZE) build config/overlays/cert-manager | sed "s/:devel/:$(GIT_VERSION)/g" | sed "s/cert-git-version/cert-$(GIT_VERSION)/g" > catalogd.yaml
+	$(KUSTOMIZE) build $(KUSTOMIZE_OVERLAY) | sed "s/:devel/:$(GIT_VERSION)/g" | sed "s/cert-git-version/cert-$(GIT_VERSION)/g" > catalogd.yaml
 	envsubst '$$CERT_MGR_VERSION,$$MANIFEST,$$DEFAULT_CATALOGS' < scripts/install.tpl.sh > install.sh
 
 .PHONY: demo-update

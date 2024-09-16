@@ -26,6 +26,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/containers/image/v5/types"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -44,7 +45,6 @@ import (
 	corecontrollers "github.com/operator-framework/catalogd/internal/controllers/core"
 	"github.com/operator-framework/catalogd/internal/features"
 	"github.com/operator-framework/catalogd/internal/garbagecollection"
-	"github.com/operator-framework/catalogd/internal/httputil"
 	catalogdmetrics "github.com/operator-framework/catalogd/internal/metrics"
 	"github.com/operator-framework/catalogd/internal/serverutil"
 	"github.com/operator-framework/catalogd/internal/source"
@@ -99,7 +99,7 @@ func main() {
 	flag.StringVar(&certFile, "tls-cert", "", "The certificate file used for serving catalog contents over HTTPS. Requires tls-key.")
 	flag.StringVar(&keyFile, "tls-key", "", "The key file used for serving catalog contents over HTTPS. Requires tls-cert.")
 	flag.IntVar(&webhookPort, "webhook-server-port", 9443, "The port that the mutating webhook server serves at.")
-	flag.StringVar(&caCertDir, "ca-certs-dir", "", "The directory of TLS certificate to use for verifying HTTPS connections to the Catalogd and docker-registry web servers.")
+	flag.StringVar(&caCertDir, "ca-certs-dir", "", "The directory of CA certificate to use for verifying HTTPS connections to image registries.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -178,16 +178,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	certPool, err := httputil.NewCertPool(caCertDir, ctrl.Log.WithName("cert-pool"))
-	if err != nil {
-		setupLog.Error(err, "unable to create CA certificate pool")
+	unpackCacheBasePath := filepath.Join(cacheDir, source.UnpackCacheDir)
+	if err := os.MkdirAll(unpackCacheBasePath, 0770); err != nil {
+		setupLog.Error(err, "unable to create cache directory for unpacking")
 		os.Exit(1)
 	}
-
-	unpacker, err := source.NewDefaultUnpacker(systemNamespace, cacheDir, certPool)
-	if err != nil {
-		setupLog.Error(err, "unable to create unpacker")
-		os.Exit(1)
+	unpacker := &source.ContainersImageRegistry{
+		BaseCachePath: unpackCacheBasePath,
+		SourceContext: &types.SystemContext{
+			OCICertPath:    caCertDir,
+			DockerCertPath: caCertDir,
+		},
 	}
 
 	var localStorage storage.Instance
@@ -248,7 +249,7 @@ func main() {
 
 	ctx := ctrl.SetupSignalHandler()
 	gc := &garbagecollection.GarbageCollector{
-		CachePath:      filepath.Join(cacheDir, source.UnpackCacheDir),
+		CachePath:      unpackCacheBasePath,
 		Logger:         ctrl.Log.WithName("garbage-collector"),
 		MetadataClient: metaClient,
 		Interval:       gcInterval,

@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,9 +55,6 @@ type ClusterCatalogReconciler struct {
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=create;update;patch;delete;get;list;watch
-//+kubebuilder:rbac:groups=core,resources=pods/log,verbs=get;list;watch
-//+kubebuilder:rbac:groups=core,namespace=system,resources=secrets,verbs=get;
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -66,8 +62,7 @@ type ClusterCatalogReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
 func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	// TODO: Where and when should we be logging errors and at which level?
-	_ = log.FromContext(ctx).WithName("catalogd-controller")
+	l := log.FromContext(ctx).WithName("catalogd-controller")
 
 	existingCatsrc := v1alpha1.ClusterCatalog{}
 	if err := r.Client.Get(ctx, req.NamespacedName, &existingCatsrc); err != nil {
@@ -76,8 +71,8 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	reconciledCatsrc := existingCatsrc.DeepCopy()
 	res, reconcileErr := r.reconcile(ctx, reconciledCatsrc)
 
-	var unrecov *catalogderrors.Unrecoverable
-	if errors.As(reconcileErr, &unrecov) {
+	if errors.As(reconcileErr, &catalogderrors.Unrecoverable{}) {
+		l.Error(reconcileErr, "unrecoverable reconcile error")
 		reconcileErr = nil
 	}
 
@@ -105,7 +100,6 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 func (r *ClusterCatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.ClusterCatalog{}).
-		Owns(&corev1.Pod{}).
 		Complete(r)
 }
 

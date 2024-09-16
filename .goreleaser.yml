@@ -9,6 +9,8 @@ builds:
     asmflags: "{{ .Env.GO_BUILD_ASMFLAGS }}"
     gcflags: "{{ .Env.GO_BUILD_GCFLAGS }}"
     ldflags: "{{ .Env.GO_BUILD_LDFLAGS }}"
+    tags:
+    - "{{ .Env.GO_BUILD_TAGS }}"
     mod_timestamp: "{{ .CommitTimestamp }}"
     goos:
     - linux

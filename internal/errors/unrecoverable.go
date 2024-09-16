@@ -7,6 +7,6 @@ type Unrecoverable struct {
 	error
 }
 
-func NewUnrecoverable(err error) *Unrecoverable {
-	return &Unrecoverable{err}
+func NewUnrecoverable(err error) Unrecoverable {
+	return Unrecoverable{err}
 }

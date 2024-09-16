@@ -2,11 +2,7 @@ package source
 
 import (
 	"context"
-	"crypto/x509"
-	"fmt"
 	"io/fs"
-	"os"
-	"path"
 
 	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
 )
@@ -76,52 +72,4 @@ const (
 	StateUnpacked State = "Unpacked"
 )
 
-type unpacker struct {
-	sources map[catalogdv1alpha1.SourceType]Unpacker
-}
-
-// NewUnpacker returns a new composite Source that unpacks catalogs using the source
-// mapping provided by the configured sources.
-func NewUnpacker(sources map[catalogdv1alpha1.SourceType]Unpacker) Unpacker {
-	return &unpacker{sources: sources}
-}
-
-func (s *unpacker) Unpack(ctx context.Context, catalog *catalogdv1alpha1.ClusterCatalog) (*Result, error) {
-	source, ok := s.sources[catalog.Spec.Source.Type]
-	if !ok {
-		return nil, fmt.Errorf("source type %q not supported", catalog.Spec.Source.Type)
-	}
-	return source.Unpack(ctx, catalog)
-}
-
-// TODO: Generalize the cleanup logic for the Unpacker so that cleanup
-// logic isn't specific to individual source types.
-func (s *unpacker) Cleanup(ctx context.Context, catalog *catalogdv1alpha1.ClusterCatalog) error {
-	source, ok := s.sources[catalog.Spec.Source.Type]
-	if !ok {
-		return fmt.Errorf("source type %q not supported", catalog.Spec.Source.Type)
-	}
-	return source.Cleanup(ctx, catalog)
-}
-
 const UnpackCacheDir = "unpack"
-
-// NewDefaultUnpacker returns a new composite Source that unpacks catalogs using
-// a default source mapping with built-in implementations of all of the supported
-// source types.
-//
-// TODO: refactor NewDefaultUnpacker due to growing parameter list
-func NewDefaultUnpacker(namespace, cacheDir string, certPool *x509.CertPool) (Unpacker, error) {
-	unpackPath := path.Join(cacheDir, UnpackCacheDir)
-	if err := os.MkdirAll(unpackPath, 0700); err != nil {
-		return nil, fmt.Errorf("creating unpack cache directory: %w", err)
-	}
-
-	return NewUnpacker(map[catalogdv1alpha1.SourceType]Unpacker{
-		catalogdv1alpha1.SourceTypeImage: &ImageRegistry{
-			BaseCachePath: unpackPath,
-			AuthNamespace: namespace,
-			CertPool:      certPool,
-		},
-	}), nil
-}

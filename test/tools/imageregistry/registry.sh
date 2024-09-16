@@ -10,10 +10,19 @@ set -e
 # 4. Waits for kaniko pod to have Condition Complete == true, indicating the test catalog image has been built + pushed
 # to the test image registry
 # Usage:
-# registry.sh
+# registry.sh <issuer-kind> <issuer-name>
+
+if [[ "$#" -ne 2 ]]; then
+  echo "Incorrect number of arguments passed"
+  echo "Usage: registry.sh <issuer-kind> <issuer-name>"
+  exit 1
+fi
+
+export ISSUER_KIND=$1
+export ISSUER_NAME=$2
 
 # create the image registry with all the certs
-kubectl apply -f test/tools/imageregistry/imgreg.yaml
+envsubst '${ISSUER_KIND},${ISSUER_NAME}' < test/tools/imageregistry/imgreg.yaml | kubectl apply -f -
 kubectl wait -n catalogd-e2e --for=condition=Available deployment/docker-registry --timeout=60s
 
 # Load the testdata onto the cluster as a configmap so it can be used with kaniko

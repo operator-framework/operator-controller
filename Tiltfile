@@ -12,4 +12,4 @@ repo = {
     'starting_debug_port': 20000,
 }
 
-deploy_repo('catalogd', repo)
+deploy_repo('catalogd', repo, '-tags containers_image_openpgp')
