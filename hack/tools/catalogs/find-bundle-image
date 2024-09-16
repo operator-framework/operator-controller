@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# Get the directory of the current script
+SCRIPT_ROOT=$(dirname "$(realpath "$0")")
+
+source "${SCRIPT_ROOT}/lib/bundle.sh"
+source "${SCRIPT_ROOT}/lib/utils.sh"
+
+# Check required tools are installed
+assert-commands jq
+
+usage() {
+    print-banner
+    echo ""
+    echo "Usage: $0 <packageName> <package-version>"
+    echo ""
+    echo "Find the bundle image for a package in a catalog in <stdin>"
+    echo ""
+    echo "Example:"
+    echo "  $0 argocd-operator 0.6.0 < operatorhubio-catalog.json"
+}
+
+if [ "$#" -lt 2 ]; then
+    usage
+    exit 1
+fi
+
+package_name="$1"
+package_version="$2"
+
+# Find bundle image
+image="$(cat - | get-bundle-image "${package_name}" "${package_version}")"
+echo "${image}"
