@@ -2,7 +2,7 @@
 
 Existing extensions can be upgraded by updating the version field in the ClusterExtension resource.
 
-For information on downgrading an extension, see [Downgrade an Extension](downgrading-an-extension).
+For information on downgrading an extension, see [Downgrade an Extension](../downgrading-an-extension.md).
 
 ## Prerequisites
 
