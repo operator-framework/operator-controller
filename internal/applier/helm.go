@@ -42,13 +42,13 @@ type Preflight interface {
 	// to installing the Helm release. It is provided
 	// a Helm release and returns an error if the
 	// check is unsuccessful
-	Install(context.Context, *release.Release) error
+	Install(context.Context, *release.Release, *ocv1alpha1.ClusterExtension) error
 
 	// Upgrade runs checks that should be successful prior
 	// to upgrading the Helm release. It is provided
 	// a Helm release and returns an error if the
 	// check is unsuccessful
-	Upgrade(context.Context, *release.Release) error
+	Upgrade(context.Context, *release.Release, *ocv1alpha1.ClusterExtension) error
 }
 
 type Helm struct {
@@ -87,12 +87,12 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 		}
 		switch state {
 		case StateNeedsInstall:
-			err := preflight.Install(ctx, desiredRel)
+			err := preflight.Install(ctx, desiredRel, ext)
 			if err != nil {
 				return nil, state, err
 			}
 		case StateNeedsUpgrade:
-			err := preflight.Upgrade(ctx, desiredRel)
+			err := preflight.Upgrade(ctx, desiredRel, ext)
 			if err != nil {
 				return nil, state, err
 			}

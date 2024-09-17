@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 )
 
@@ -65,11 +66,11 @@ func NewPreflight(crdCli apiextensionsv1client.CustomResourceDefinitionInterface
 	return p
 }
 
-func (p *Preflight) Install(ctx context.Context, rel *release.Release) error {
+func (p *Preflight) Install(ctx context.Context, rel *release.Release, _ *ocv1alpha1.ClusterExtension) error {
 	return p.runPreflight(ctx, rel)
 }
 
-func (p *Preflight) Upgrade(ctx context.Context, rel *release.Release) error {
+func (p *Preflight) Upgrade(ctx context.Context, rel *release.Release, _ *ocv1alpha1.ClusterExtension) error {
 	return p.runPreflight(ctx, rel)
 }
 
