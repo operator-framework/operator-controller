@@ -212,8 +212,9 @@ func TestFilesystemCache(t *testing.T) {
 			cacheDir := t.TempDir()
 			tt.tripper.content = make(fstest.MapFS)
 			maps.Copy(tt.tripper.content, tt.contents)
-			httpClient := http.DefaultClient
-			httpClient.Transport = tt.tripper
+			httpClient := &http.Client{
+				Transport: tt.tripper,
+			}
 			c := cache.NewFilesystemCache(cacheDir, func() (*http.Client, error) {
 				return httpClient, nil
 			})
