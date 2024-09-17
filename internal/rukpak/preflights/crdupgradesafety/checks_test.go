@@ -203,7 +203,7 @@ func TestMaximum(t *testing.T) {
 					Maximum: ptr.To(10.0),
 				},
 			},
-			err:     errors.New("maximum constraint 10 added when there were no restrictions previously"),
+			err:     errors.New("maximum: constraint 10 added when there were no restrictions previously"),
 			handled: true,
 		},
 		{
@@ -216,7 +216,7 @@ func TestMaximum(t *testing.T) {
 					Maximum: ptr.To(10.0),
 				},
 			},
-			err:     errors.New("maximum constraint decreased from 20 to 10"),
+			err:     errors.New("maximum: constraint decreased from 20 to 10"),
 			handled: true,
 		},
 		{
@@ -277,7 +277,7 @@ func TestMaxItems(t *testing.T) {
 					MaxItems: ptr.To(int64(10)),
 				},
 			},
-			err:     errors.New("maxItems constraint 10 added when there were no restrictions previously"),
+			err:     errors.New("maxItems: constraint 10 added when there were no restrictions previously"),
 			handled: true,
 		},
 		{
@@ -290,7 +290,7 @@ func TestMaxItems(t *testing.T) {
 					MaxItems: ptr.To(int64(10)),
 				},
 			},
-			err:     errors.New("maxItems constraint decreased from 20 to 10"),
+			err:     errors.New("maxItems: constraint decreased from 20 to 10"),
 			handled: true,
 		},
 		{
@@ -351,7 +351,7 @@ func TestMaxLength(t *testing.T) {
 					MaxLength: ptr.To(int64(10)),
 				},
 			},
-			err:     errors.New("maxLength constraint 10 added when there were no restrictions previously"),
+			err:     errors.New("maxLength: constraint 10 added when there were no restrictions previously"),
 			handled: true,
 		},
 		{
@@ -364,7 +364,7 @@ func TestMaxLength(t *testing.T) {
 					MaxLength: ptr.To(int64(10)),
 				},
 			},
-			err:     errors.New("maxLength constraint decreased from 20 to 10"),
+			err:     errors.New("maxLength: constraint decreased from 20 to 10"),
 			handled: true,
 		},
 		{
@@ -425,7 +425,7 @@ func TestMaxProperties(t *testing.T) {
 					MaxProperties: ptr.To(int64(10)),
 				},
 			},
-			err:     errors.New("maxProperties constraint 10 added when there were no restrictions previously"),
+			err:     errors.New("maxProperties: constraint 10 added when there were no restrictions previously"),
 			handled: true,
 		},
 		{
@@ -438,7 +438,7 @@ func TestMaxProperties(t *testing.T) {
 					MaxProperties: ptr.To(int64(10)),
 				},
 			},
-			err:     errors.New("maxProperties constraint decreased from 20 to 10"),
+			err:     errors.New("maxProperties: constraint decreased from 20 to 10"),
 			handled: true,
 		},
 		{
@@ -499,7 +499,7 @@ func TestMinItems(t *testing.T) {
 					MinItems: ptr.To(int64(10)),
 				},
 			},
-			err:     errors.New("minItems constraint 10 added when there were no restrictions previously"),
+			err:     errors.New("minItems: constraint 10 added when there were no restrictions previously"),
 			handled: true,
 		},
 		{
@@ -525,7 +525,7 @@ func TestMinItems(t *testing.T) {
 					MinItems: ptr.To(int64(20)),
 				},
 			},
-			err:     errors.New("minItems constraint increased from 10 to 20"),
+			err:     errors.New("minItems: constraint increased from 10 to 20"),
 			handled: true,
 		},
 		{
@@ -573,7 +573,7 @@ func TestMinimum(t *testing.T) {
 					Minimum: ptr.To(10.0),
 				},
 			},
-			err:     errors.New("minimum constraint 10 added when there were no restrictions previously"),
+			err:     errors.New("minimum: constraint 10 added when there were no restrictions previously"),
 			handled: true,
 		},
 		{
@@ -599,7 +599,7 @@ func TestMinimum(t *testing.T) {
 					Minimum: ptr.To(20.0),
 				},
 			},
-			err:     errors.New("minimum constraint increased from 10 to 20"),
+			err:     errors.New("minimum: constraint increased from 10 to 20"),
 			handled: true,
 		},
 		{
@@ -647,7 +647,7 @@ func TestMinLength(t *testing.T) {
 					MinLength: ptr.To(int64(10)),
 				},
 			},
-			err:     errors.New("minLength constraint 10 added when there were no restrictions previously"),
+			err:     errors.New("minLength: constraint 10 added when there were no restrictions previously"),
 			handled: true,
 		},
 		{
@@ -673,7 +673,7 @@ func TestMinLength(t *testing.T) {
 					MinLength: ptr.To(int64(20)),
 				},
 			},
-			err:     errors.New("minLength constraint increased from 10 to 20"),
+			err:     errors.New("minLength: constraint increased from 10 to 20"),
 			handled: true,
 		},
 		{
@@ -721,7 +721,7 @@ func TestMinProperties(t *testing.T) {
 					MinProperties: ptr.To(int64(10)),
 				},
 			},
-			err:     errors.New("minProperties constraint 10 added when there were no restrictions previously"),
+			err:     errors.New("minProperties: constraint 10 added when there were no restrictions previously"),
 			handled: true,
 		},
 		{
@@ -747,7 +747,7 @@ func TestMinProperties(t *testing.T) {
 					MinProperties: ptr.To(int64(20)),
 				},
 			},
-			err:     errors.New("minProperties constraint increased from 10 to 20"),
+			err:     errors.New("minProperties: constraint increased from 10 to 20"),
 			handled: true,
 		},
 		{
@@ -778,14 +778,14 @@ func TestDefault(t *testing.T) {
 			name: "no diff, no error, handled",
 			diff: kappcus.FieldDiff{
 				Old: &apiextensionsv1.JSONSchemaProps{
-                    Default: &apiextensionsv1.JSON{
-                        Raw: []byte("foo"),
-                    },
+					Default: &apiextensionsv1.JSON{
+						Raw: []byte("foo"),
+					},
 				},
 				New: &apiextensionsv1.JSONSchemaProps{
-                    Default: &apiextensionsv1.JSON{
-                        Raw: []byte("foo"),
-                    },
+					Default: &apiextensionsv1.JSON{
+						Raw: []byte("foo"),
+					},
 				},
 			},
 			err:     nil,
@@ -796,9 +796,9 @@ func TestDefault(t *testing.T) {
 			diff: kappcus.FieldDiff{
 				Old: &apiextensionsv1.JSONSchemaProps{},
 				New: &apiextensionsv1.JSONSchemaProps{
-                    Default: &apiextensionsv1.JSON{
-                        Raw: []byte("foo"),
-                    },
+					Default: &apiextensionsv1.JSON{
+						Raw: []byte("foo"),
+					},
 				},
 			},
 			err:     errors.New("default value \"foo\" added when there was no default previously"),
@@ -808,9 +808,9 @@ func TestDefault(t *testing.T) {
 			name: "default value removed, error, handled",
 			diff: kappcus.FieldDiff{
 				Old: &apiextensionsv1.JSONSchemaProps{
-                    Default: &apiextensionsv1.JSON{
-                        Raw: []byte("foo"),
-                    },
+					Default: &apiextensionsv1.JSON{
+						Raw: []byte("foo"),
+					},
 				},
 				New: &apiextensionsv1.JSONSchemaProps{},
 			},
@@ -821,15 +821,15 @@ func TestDefault(t *testing.T) {
 			name: "default value changed, error, handled",
 			diff: kappcus.FieldDiff{
 				Old: &apiextensionsv1.JSONSchemaProps{
-                    Default: &apiextensionsv1.JSON{
-                        Raw: []byte("foo"),
-                    },
+					Default: &apiextensionsv1.JSON{
+						Raw: []byte("foo"),
+					},
 				},
 				New: &apiextensionsv1.JSONSchemaProps{
-                    Default: &apiextensionsv1.JSON{
-                        Raw: []byte("bar"),
-                    },
-                },
+					Default: &apiextensionsv1.JSON{
+						Raw: []byte("bar"),
+					},
+				},
 			},
 			err:     errors.New("default value changed from \"foo\" to \"bar\""),
 			handled: true,
@@ -862,10 +862,10 @@ func TestType(t *testing.T) {
 			name: "no diff, no error, handled",
 			diff: kappcus.FieldDiff{
 				Old: &apiextensionsv1.JSONSchemaProps{
-                    Type: "string",
+					Type: "string",
 				},
 				New: &apiextensionsv1.JSONSchemaProps{
-                    Type: "string",
+					Type: "string",
 				},
 			},
 			err:     nil,
@@ -875,11 +875,11 @@ func TestType(t *testing.T) {
 			name: "type changed, error, handled",
 			diff: kappcus.FieldDiff{
 				Old: &apiextensionsv1.JSONSchemaProps{
-                    Type: "string",
+					Type: "string",
 				},
 				New: &apiextensionsv1.JSONSchemaProps{
-                    Type: "integer",
-                },
+					Type: "integer",
+				},
 			},
 			err:     errors.New("type changed from \"string\" to \"integer\""),
 			handled: true,

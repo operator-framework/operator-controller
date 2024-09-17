@@ -2,6 +2,7 @@ package crdupgradesafety
 
 import (
 	"bytes"
+	"cmp"
 	"errors"
 	"fmt"
 	"reflect"
@@ -129,6 +130,17 @@ func Required(diff kappcus.FieldDiff) (bool, error) {
 	return isHandled(diff, reset), err
 }
 
+func maxVerification[T cmp.Ordered](older *T, newer *T) error {
+	var err error
+	switch {
+	case older == nil && newer != nil:
+		err = fmt.Errorf("constraint %v added when there were no restrictions previously", *newer)
+	case older != nil && newer != nil && *newer < *older:
+		err = fmt.Errorf("constraint decreased from %v to %v", *older, *newer)
+	}
+	return err
+}
+
 func Maximum(diff kappcus.FieldDiff) (bool, error) {
 	reset := func(diff kappcus.FieldDiff) kappcus.FieldDiff {
 		diff.Old.Maximum = nil
@@ -136,13 +148,9 @@ func Maximum(diff kappcus.FieldDiff) (bool, error) {
 		return diff
 	}
 
-	var err error
-
-	switch {
-	case diff.Old.Maximum == nil && diff.New.Maximum != nil:
-		err = fmt.Errorf("maximum constraint %v added when there were no restrictions previously", *diff.New.Maximum)
-	case diff.Old.Maximum != nil && diff.New.Maximum != nil && *diff.New.Maximum < *diff.Old.Maximum:
-		err = fmt.Errorf("maximum constraint decreased from %v to %v", *diff.Old.Maximum, *diff.New.Maximum)
+	err := maxVerification(diff.Old.Maximum, diff.New.Maximum)
+	if err != nil {
+		err = fmt.Errorf("maximum: %s", err.Error())
 	}
 
 	return isHandled(diff, reset), err
@@ -155,13 +163,9 @@ func MaxItems(diff kappcus.FieldDiff) (bool, error) {
 		return diff
 	}
 
-	var err error
-
-	switch {
-	case diff.Old.MaxItems == nil && diff.New.MaxItems != nil:
-		err = fmt.Errorf("maxItems constraint %v added when there were no restrictions previously", *diff.New.MaxItems)
-	case diff.Old.MaxItems != nil && diff.New.MaxItems != nil && *diff.New.MaxItems < *diff.Old.MaxItems:
-		err = fmt.Errorf("maxItems constraint decreased from %v to %v", *diff.Old.MaxItems, *diff.New.MaxItems)
+	err := maxVerification(diff.Old.MaxItems, diff.New.MaxItems)
+	if err != nil {
+		err = fmt.Errorf("maxItems: %s", err.Error())
 	}
 
 	return isHandled(diff, reset), err
@@ -174,13 +178,9 @@ func MaxLength(diff kappcus.FieldDiff) (bool, error) {
 		return diff
 	}
 
-	var err error
-
-	switch {
-	case diff.Old.MaxLength == nil && diff.New.MaxLength != nil:
-		err = fmt.Errorf("maxLength constraint %v added when there were no restrictions previously", *diff.New.MaxLength)
-	case diff.Old.MaxLength != nil && diff.New.MaxLength != nil && *diff.New.MaxLength < *diff.Old.MaxLength:
-		err = fmt.Errorf("maxLength constraint decreased from %v to %v", *diff.Old.MaxLength, *diff.New.MaxLength)
+	err := maxVerification(diff.Old.MaxLength, diff.New.MaxLength)
+	if err != nil {
+		err = fmt.Errorf("maxLength: %s", err.Error())
 	}
 
 	return isHandled(diff, reset), err
@@ -193,16 +193,23 @@ func MaxProperties(diff kappcus.FieldDiff) (bool, error) {
 		return diff
 	}
 
-	var err error
-
-	switch {
-	case diff.Old.MaxProperties == nil && diff.New.MaxProperties != nil:
-		err = fmt.Errorf("maxProperties constraint %v added when there were no restrictions previously", *diff.New.MaxProperties)
-	case diff.Old.MaxProperties != nil && diff.New.MaxProperties != nil && *diff.New.MaxProperties < *diff.Old.MaxProperties:
-		err = fmt.Errorf("maxProperties constraint decreased from %v to %v", *diff.Old.MaxProperties, *diff.New.MaxProperties)
+	err := maxVerification(diff.Old.MaxProperties, diff.New.MaxProperties)
+	if err != nil {
+		err = fmt.Errorf("maxProperties: %s", err.Error())
 	}
 
 	return isHandled(diff, reset), err
+}
+
+func minVerification[T cmp.Ordered](older *T, newer *T) error {
+	var err error
+	switch {
+	case older == nil && newer != nil:
+		err = fmt.Errorf("constraint %v added when there were no restrictions previously", *newer)
+	case older != nil && newer != nil && *newer > *older:
+		err = fmt.Errorf("constraint increased from %v to %v", *older, *newer)
+	}
+	return err
 }
 
 func Minimum(diff kappcus.FieldDiff) (bool, error) {
@@ -212,13 +219,9 @@ func Minimum(diff kappcus.FieldDiff) (bool, error) {
 		return diff
 	}
 
-	var err error
-
-	switch {
-	case diff.Old.Minimum == nil && diff.New.Minimum != nil:
-		err = fmt.Errorf("minimum constraint %v added when there were no restrictions previously", *diff.New.Minimum)
-	case diff.Old.Minimum != nil && diff.New.Minimum != nil && *diff.New.Minimum > *diff.Old.Minimum:
-		err = fmt.Errorf("minimum constraint increased from %v to %v", *diff.Old.Minimum, *diff.New.Minimum)
+	err := minVerification(diff.Old.Minimum, diff.New.Minimum)
+	if err != nil {
+		err = fmt.Errorf("minimum: %s", err.Error())
 	}
 
 	return isHandled(diff, reset), err
@@ -231,13 +234,9 @@ func MinItems(diff kappcus.FieldDiff) (bool, error) {
 		return diff
 	}
 
-	var err error
-
-	switch {
-	case diff.Old.MinItems == nil && diff.New.MinItems != nil:
-		err = fmt.Errorf("minItems constraint %v added when there were no restrictions previously", *diff.New.MinItems)
-	case diff.Old.MinItems != nil && diff.New.MinItems != nil && *diff.New.MinItems > *diff.Old.MinItems:
-		err = fmt.Errorf("minItems constraint increased from %v to %v", *diff.Old.MinItems, *diff.New.MinItems)
+	err := minVerification(diff.Old.MinItems, diff.New.MinItems)
+	if err != nil {
+		err = fmt.Errorf("minItems: %s", err.Error())
 	}
 
 	return isHandled(diff, reset), err
@@ -250,13 +249,9 @@ func MinLength(diff kappcus.FieldDiff) (bool, error) {
 		return diff
 	}
 
-	var err error
-
-	switch {
-	case diff.Old.MinLength == nil && diff.New.MinLength != nil:
-		err = fmt.Errorf("minLength constraint %v added when there were no restrictions previously", *diff.New.MinLength)
-	case diff.Old.MinLength != nil && diff.New.MinLength != nil && *diff.New.MinLength > *diff.Old.MinLength:
-		err = fmt.Errorf("minLength constraint increased from %v to %v", *diff.Old.MinLength, *diff.New.MinLength)
+	err := minVerification(diff.Old.MinLength, diff.New.MinLength)
+	if err != nil {
+		err = fmt.Errorf("minLength: %s", err.Error())
 	}
 
 	return isHandled(diff, reset), err
@@ -269,13 +264,9 @@ func MinProperties(diff kappcus.FieldDiff) (bool, error) {
 		return diff
 	}
 
-	var err error
-
-	switch {
-	case diff.Old.MinProperties == nil && diff.New.MinProperties != nil:
-		err = fmt.Errorf("minProperties constraint %v added when there were no restrictions previously", *diff.New.MinProperties)
-	case diff.Old.MinProperties != nil && diff.New.MinProperties != nil && *diff.New.MinProperties > *diff.Old.MinProperties:
-		err = fmt.Errorf("minProperties constraint increased from %v to %v", *diff.Old.MinProperties, *diff.New.MinProperties)
+	err := minVerification(diff.Old.MinProperties, diff.New.MinProperties)
+	if err != nil {
+		err = fmt.Errorf("minProperties: %s", err.Error())
 	}
 
 	return isHandled(diff, reset), err
@@ -303,16 +294,16 @@ func Default(diff kappcus.FieldDiff) (bool, error) {
 }
 
 func Type(diff kappcus.FieldDiff) (bool, error) {
-    reset := func(diff kappcus.FieldDiff) kappcus.FieldDiff {
-        diff.Old.Type = ""
-        diff.New.Type = ""
-        return diff
-    }
+	reset := func(diff kappcus.FieldDiff) kappcus.FieldDiff {
+		diff.Old.Type = ""
+		diff.New.Type = ""
+		return diff
+	}
 
-    var err error
-    if diff.Old.Type != diff.New.Type {
-        err = fmt.Errorf("type changed from %q to %q", diff.Old.Type, diff.New.Type)
-    }
+	var err error
+	if diff.Old.Type != diff.New.Type {
+		err = fmt.Errorf("type changed from %q to %q", diff.Old.Type, diff.New.Type)
+	}
 
-    return isHandled(diff, reset), err
+	return isHandled(diff, reset), err
 }
