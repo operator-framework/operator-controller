@@ -29,4 +29,4 @@ jobs:
           go-version-file: "go.mod"
 
       - name: Run golangci linting checks
-        run: make lint GOLANGCI_LINT_ARGS="--out-format github-actions"
+        run: make lint GOLANGCI_LINT_ARGS="--out-format colored-line-number"
