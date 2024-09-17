@@ -1,6 +1,6 @@
 - op: add
   path: /spec/template/spec/volumes/-
-  value: {"name":"olmv1-certificate", "secret":{"secretName":"catalogd-catalogserver-cert-git-version", "optional": false, "items": [{"key": "ca.crt", "path": "olm-ca.crt"}]}}
+  value: {"name":"olmv1-certificate", "secret":{"secretName":"catalogd-service-cert-git-version", "optional": false, "items": [{"key": "ca.crt", "path": "olm-ca.crt"}]}}
 - op: add
   path: /spec/template/spec/containers/1/volumeMounts/-
   value: {"name":"olmv1-certificate", "readOnly": true, "mountPath":"/var/ca-certs/"}

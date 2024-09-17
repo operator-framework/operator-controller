@@ -4,10 +4,10 @@
   value: olmv1-system
 - op: replace
   path: /webhooks/0/clientConfig/service/name
-  value: catalogd-webhook-service
+  value: catalogd-service
 - op: add
   path: /webhooks/0/clientConfig/service/port
-  value: 443
+  value: 9443
 # Make sure there's a name defined, otherwise, we can't create a label. This could happen when generateName is set
 # Then, if any of the conditions are true, create the label:
 # 1. No labels exist

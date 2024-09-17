@@ -91,7 +91,7 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&systemNamespace, "system-namespace", "", "The namespace catalogd uses for internal state, configuration, and workloads")
-	flag.StringVar(&catalogServerAddr, "catalogs-server-addr", ":8083", "The address where the unpacked catalogs' content will be accessible")
+	flag.StringVar(&catalogServerAddr, "catalogs-server-addr", ":8443", "The address where the unpacked catalogs' content will be accessible")
 	flag.StringVar(&externalAddr, "external-address", "catalogd-catalogserver.olmv1-system.svc", "The external address at which the http(s) server is reachable.")
 	flag.StringVar(&cacheDir, "cache-dir", "/var/cache/", "The directory in the filesystem that catalogd will use for file based caching")
 	flag.BoolVar(&catalogdVersion, "version", false, "print the catalogd version and exit")

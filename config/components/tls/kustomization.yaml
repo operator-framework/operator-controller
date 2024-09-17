@@ -7,8 +7,8 @@ resources:
 patches:
 - target:
     kind: Service
-    name: catalogserver
-  path: patches/catalogserver_service_port.yaml
+    name: service
+  path: patches/catalogd_service_port.yaml
 - target:
     kind: Deployment
     name: controller-manager

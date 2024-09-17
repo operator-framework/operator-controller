@@ -236,7 +236,7 @@ only-deploy-manifest: $(KUSTOMIZE) ## Deploy just the Catalogd manifest--used in
 
 wait:
 	kubectl wait --for=condition=Available --namespace=$(CATALOGD_NAMESPACE) deployment/catalogd-controller-manager --timeout=60s
-	kubectl wait --for=condition=Ready --namespace=$(CATALOGD_NAMESPACE) certificate/catalogd-catalogserver-cert # Avoid upgrade test flakes when reissuing cert
+	kubectl wait --for=condition=Ready --namespace=$(CATALOGD_NAMESPACE) certificate/catalogd-service-cert # Avoid upgrade test flakes when reissuing cert
 
 
 .PHONY: cert-manager

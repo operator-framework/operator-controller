@@ -2,16 +2,14 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: catalogserver-cert
+  name: service-cert
   namespace: system
 spec:
-  secretName: catalogd-catalogserver-cert-git-version
+  secretName: catalogd-service-cert-git-version
   dnsNames:
     - localhost
-    - catalogd-catalogserver.olmv1-system.svc
-    - catalogd-webhook-service.olmv1-system.svc
-    - catalogd-catalogserver.olmv1-system.svc.cluster.local
-    - catalogd-webhook-service.olmv1-system.svc.cluster.local
+    - catalogd-service.olmv1-system.svc
+    - catalogd-service.olmv1-system.svc.cluster.local
   privateKey:
     algorithm: ECDSA
     size: 256

@@ -57,13 +57,13 @@ spec:
               - ALL
         image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
         args:
-        - --secure-listen-address=0.0.0.0:8443
+        - --secure-listen-address=0.0.0.0:7443
         - --http2-disable
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
         - --v=0
         ports:
-        - containerPort: 8443
+        - containerPort: 7443
           protocol: TCP
           name: https
         resources:
@@ -76,7 +76,7 @@ spec:
         args:
         - --leader-elect
         - --metrics-bind-address=127.0.0.1:8080
-        - --external-address=catalogd-catalogserver.olmv1-system.svc
+        - --external-address=catalogd-service.olmv1-system.svc
         image: controller:latest
         name: manager
         volumeMounts:
