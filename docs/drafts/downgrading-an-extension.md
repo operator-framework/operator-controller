@@ -3,7 +3,7 @@
 
 ## Introduction
 
-Downgrading a `ClusterExtension` involves reverting the extension to a previous version. This process might be necessary due to compatibility issues, unexpected behavior in the newer version, or specific feature requirements that are only available in an earlier release. This guide provides step-by-step instructions to safely downgrade a `ClusterExtension`, including necessary overrides to bypass default constraints and disable CRD safety checks.
+Downgrading a `ClusterExtension` involves reverting the extension to a previous available version. This process might be required due to compatibility issues, unexpected behavior in the newer version, or specific feature requirements that are only available in an earlier release. This guide provides step-by-step instructions to safely downgrade a `ClusterExtension`, including necessary overrides to bypass default constraints and disable CRD safety checks.
 
 ## Prerequisites
 
