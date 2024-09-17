@@ -13,17 +13,6 @@ type ImageSource struct {
 	Ref string
 }
 
-// Unrecoverable represents an error that can not be recovered
-// from without user intervention. When this error is returned
-// the request should not be requeued.
-type Unrecoverable struct {
-	error
-}
-
-func NewUnrecoverable(err error) Unrecoverable {
-	return Unrecoverable{err}
-}
-
 // Unpacker unpacks bundle content, either synchronously or asynchronously and
 // returns a Result, which conveys information about the progress of unpacking
 // the bundle content.
