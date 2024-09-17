@@ -8,31 +8,28 @@ This document serves as a guide for how to derive the RBAC necessary to install 
 
 You can determine the specifics of these permissions by referencing the bundle of the ClusterExtension you want to install. The service account must have the following permissions:
 
-* Create, list, watch verbs for all resources that are a part of the install (cannot be scoped to specific resource names). These are created using ClusterRole + ClusterRoleBinding
+* Create, list, watch verbs for all resources that are a part of the install (cannot be scoped to specific resource names).
   - Permissions to create and manage CustomResourceDefinitions
   - Permissions to create any other manifest objects
-  - Rules to manage any other cluster-scoped resources. This includes all the rules defined in the CSV under `.spec.install.clusterPermissions` and `.spec.install.permissions`
-  - Permissions for namespace-scoped resources. These are specified with ClusterRole + ClusterRoleBinding, ClusterRole + RoleBinding, or Role + RoleBinding
-
-* Get, update, patch, delete verbs for all resources that are a part of the install (can be scoped to specific resource names). These are created using ClusterRole + ClusterRoleBinding
-  - Permissions for cluster-scoped resources.
+  - Rules to manage any other cluster-scoped resources
+  - All the rules defined in the CSV under `.spec.install.clusterPermissions` and `.spec.install.permissions`
   - Permissions for namespace-scoped resources.
+  - These are specified with ClusterRole + ClusterRoleBinding, ClusterRole + RoleBinding, or Role + RoleBinding.
+
+* Get, update, patch, delete verbs for all resources that are a part of the install (can be scoped to specific resource names)
+  - Permissions for cluster-scoped resources
+  - Permissions for namespace-scoped resources
+  - These are created using ClusterRole + ClusterRoleBinding, ClusterRole + RoleBinding, or Role + RoleBinding
 
 * Permissions to create any ClusterRole, ClusterRoleBinding, Role, RoleBinding resources required by the extension.
   - All the same rules defined in the ClusterRole and Role resources
   - Escalate and bind verbs for ClusterRole, ClusterRoleBinding, Role, RoleBinding resources
+  - Permissions to create the necessary roles and rolebindings for the controller to be able to perform its job
 
 * Update finalizers on the ClusterExtension to be able to set blockOwnerDeletion and ownerReferences
 
 * Permissions to create the controller deployment, this corresponds to the rules to manage the
   deployment defined in the ClusterServiceVersion
-
-* Permissions to create the other manifest objects, rules to manage any other cluster-scoped resources
-  shipped with the bundle
-
-* Rules to manage any other namespace-scoped resources 
-
-* Permissions to create the necessary roles and rolebindings for the controller to be able to perform its job
 
 ### Manual process for minimal RBAC creation
 
@@ -41,7 +38,7 @@ If you want determine the RBAC manually, you can
 * Create all the initial RBAC and then iterate over the ClusterExtension failures, examining conditions and updating the RBAC to include the generated cluster role names (name will be in the failure condition).
 * After reading the failure condition, update the installer RBAC and iterate until you are out of errors.
 * You can get the bundle image, unpack the same and inspect the manifests to determine the required permissions.
-* The `oc` cli-tool creates cluster roles with a hash in their name, you can query the newly created ClusterRole names and reduce the installer RBAC scope to have the ClusterRoles needed and this can include generated roles. You can achieve this by allowing the installer to get, list, watch and update any cluster roles.
+* The `oc` cli-tool creates cluster roles with a hash in their name. you can query the newly created ClusterRole names and reduce the installer RBAC scope to have the ClusterRoles needed, this can include generated roles. You can achieve this by allowing the installer to get, list, watch and update any cluster roles.
 
 ### Sample snippets of ClusterRole rule definitions
 
