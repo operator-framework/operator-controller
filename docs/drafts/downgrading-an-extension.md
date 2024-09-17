@@ -3,7 +3,7 @@
 
 ## Introduction
 
-Downgrading a `ClusterExtension` involves reverting the extension to a previous available version. This process might be required due to compatibility issues, unexpected behavior in the newer version, or specific feature requirements that are only available in an earlier release. This guide provides step-by-step instructions to safely downgrade a `ClusterExtension`, including necessary overrides to bypass default constraints and disable CRD safety checks.
+Downgrading a `ClusterExtension` involves reverting the extension to a previously available version. This process may be necessary due to compatibility issues, unexpected behavior in the newer version, or specific feature requirements only available in an earlier release. However, downgrading carries inherent risks, such as potential data loss, issues with new CRD versions, and possible breakage of clients that rely on the newer version. Users should carefully consider these risks and be confident in their decision to proceed with the downgrade. This guide provides step-by-step instructions for performing a downgrade, including overrides to bypass default constraints and disable CRD safety checks.
 
 ## Prerequisites
 
@@ -47,25 +47,13 @@ spec:
       upgradeConstraintPolicy: SelfCertified
 ```
 
-**Steps to Disable CRD Upgrade Safety Check:**
+** Disable CRD Upgrade Safety Check:**
 
-1. **Edit the ClusterExtension Resource:**
+**Patch the ClusterExtension Resource:**
 
    ```bash
-   kubectl edit clusterextension <extension_name>
+   kubectl patch clusterextension <extension_name> --patch '{"spec":{"install":{"preflight":{"crdUpgradeSafety":{"policy":"Disabled"}}}}}' --type=merge
    ```
-
-2. **Add the `crdUpgradeSafety.policy` Field:**
-
-   Insert the following line under the `spec.install.preflight` section:
-
-   ```yaml
-   crdUpgradeSafety:
-     policy: Disabled
-   ```
-
-3. **Save and Exit:**
-
    Kubernetes will apply the updated configuration, disabling CRD safety checks during the downgrade process.
 
 ### 2. Ignoring Catalog Provided Upgrade Constraints
