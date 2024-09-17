@@ -53,9 +53,8 @@ func createTestCatalog(ctx context.Context, name string, imageRef string) (*cata
 			Source: catalogd.CatalogSource{
 				Type: catalogd.SourceTypeImage,
 				Image: &catalogd.ImageSource{
-					Ref:                   imageRef,
-					InsecureSkipTLSVerify: true,
-					PollInterval:          &metav1.Duration{Duration: time.Second},
+					Ref:          imageRef,
+					PollInterval: &metav1.Duration{Duration: time.Second},
 				},
 			},
 		},

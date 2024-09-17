@@ -132,9 +132,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `ref` _string_ | ref contains the reference to a container image containing Catalog contents. |  |  |
-| `pullSecret` _string_ | pullSecret contains the name of the image pull secret in the namespace that catalogd is deployed. |  |  |
 | `pollInterval` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#duration-v1-meta)_ | pollInterval indicates the interval at which the image source should be polled for new content,<br />specified as a duration (e.g., "5m", "1h", "24h", "etc".). Note that PollInterval may not be<br />specified for a catalog image referenced by a sha256 digest. |  | Format: duration <br /> |
-| `insecureSkipTLSVerify` _boolean_ | insecureSkipTLSVerify indicates that TLS certificate validation should be skipped.<br />If this option is specified, the HTTPS protocol will still be used to<br />fetch the specified image reference.<br />This should not be used in a production environment. |  |  |
 
 
 #### ResolvedCatalogSource
