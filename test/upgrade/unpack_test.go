@@ -1,16 +1,24 @@
 package upgradee2e
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 	"os"
+	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/google/go-cmp/cmp"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/catalogd/test/e2e"
@@ -20,6 +28,43 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 	When("A ClusterCatalog is created", func() {
 		It("Successfully unpacks catalog contents", func() {
 			ctx := context.Background()
+
+			var managerDeployment appsv1.Deployment
+			managerLabelSelector := labels.Set{"control-plane": "catalogd-controller-manager"}
+			By("Checking that the controller-manager deployment is updated")
+			Eventually(func(g Gomega) {
+				var managerDeployments appsv1.DeploymentList
+				err := c.List(ctx, &managerDeployments, client.MatchingLabels(managerLabelSelector), client.InNamespace("olmv1-system"))
+				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(managerDeployments.Items).To(HaveLen(1))
+				managerDeployment = managerDeployments.Items[0]
+				g.Expect(managerDeployment.Status.UpdatedReplicas).To(Equal(*managerDeployment.Spec.Replicas))
+				g.Expect(managerDeployment.Status.Replicas).To(Equal(*managerDeployment.Spec.Replicas))
+				g.Expect(managerDeployment.Status.AvailableReplicas).To(Equal(*managerDeployment.Spec.Replicas))
+				g.Expect(managerDeployment.Status.ReadyReplicas).To(Equal(*managerDeployment.Spec.Replicas))
+			}).Should(Succeed())
+
+			var managerPod corev1.Pod
+			By("Waiting for only one controller-manager pod to remain")
+			Eventually(func(g Gomega) {
+				var managerPods corev1.PodList
+				err := c.List(ctx, &managerPods, client.MatchingLabels(managerLabelSelector))
+				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(managerPods.Items).To(HaveLen(1))
+				managerPod = managerPods.Items[0]
+			}).Should(Succeed())
+
+			By("Reading logs to make sure that ClusterCatalog was reconciled by catalogd")
+			logCtx, cancel := context.WithTimeout(ctx, time.Minute)
+			defer cancel()
+			substrings := []string{
+				"reconcile ending",
+				fmt.Sprintf(`"ClusterCatalog": {"name":"%s"}`, testClusterCatalogName),
+			}
+			found, err := watchPodLogsForSubstring(logCtx, &managerPod, "manager", substrings...)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(found).To(BeTrue())
+
 			catalog := &catalogd.ClusterCatalog{}
 			By("Ensuring ClusterCatalog has Status.Condition of Unpacked with a status == True")
 			Eventually(func(g Gomega) {
@@ -44,3 +89,34 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 		})
 	})
 })
+
+func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, container string, substrings ...string) (bool, error) {
+	podLogOpts := corev1.PodLogOptions{
+		Follow:    true,
+		Container: container,
+	}
+
+	req := kubeClient.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOpts)
+	podLogs, err := req.Stream(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer podLogs.Close()
+
+	scanner := bufio.NewScanner(podLogs)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		foundCount := 0
+		for _, substring := range substrings {
+			if strings.Contains(line, substring) {
+				foundCount++
+			}
+		}
+		if foundCount == len(substrings) {
+			return true, nil
+		}
+	}
+
+	return false, scanner.Err()
+}

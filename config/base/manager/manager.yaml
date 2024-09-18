@@ -12,9 +12,10 @@ kind: Deployment
 metadata:
   name: controller-manager
   namespace: system
+  annotations:
+    kubectl.kubernetes.io/default-logs-container: manager
   labels:
-    app.kubernetes.io/part-of: olm
-    app.kubernetes.io/name: catalogd
+    control-plane: catalogd-controller-manager
 spec:
   selector:
     matchLabels:

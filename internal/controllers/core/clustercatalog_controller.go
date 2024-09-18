@@ -63,6 +63,10 @@ type ClusterCatalogReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
 func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	l := log.FromContext(ctx).WithName("catalogd-controller")
+	ctx = log.IntoContext(ctx, l)
+
+	l.V(1).Info("reconcile starting")
+	defer l.V(1).Info("reconcile ending")
 
 	existingCatsrc := v1alpha1.ClusterCatalog{}
 	if err := r.Client.Get(ctx, req.NamespacedName, &existingCatsrc); err != nil {
