@@ -26,9 +26,9 @@ import (
 	"github.com/opencontainers/go-digest"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	catalogderrors "github.com/operator-framework/catalogd/internal/errors"
 )
 
 const ConfigDirLabel = "operators.operatorframework.io.index.configs.v1"
@@ -46,7 +46,7 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, catalog *catalogdv
 	}
 
 	if catalog.Spec.Source.Image == nil {
-		return nil, catalogderrors.NewUnrecoverable(fmt.Errorf("error parsing catalog, catalog %s has a nil image source", catalog.Name))
+		return nil, reconcile.TerminalError(fmt.Errorf("error parsing catalog, catalog %s has a nil image source", catalog.Name))
 	}
 
 	//////////////////////////////////////////////////////
@@ -191,7 +191,7 @@ func (i *ContainersImageRegistry) unpackPath(catalogName string, digest digest.D
 func resolveReferences(ctx context.Context, ref string, sourceContext *types.SystemContext) (reference.Named, reference.Canonical, bool, error) {
 	imgRef, err := reference.ParseNamed(ref)
 	if err != nil {
-		return nil, nil, false, catalogderrors.NewUnrecoverable(fmt.Errorf("error parsing image reference %q: %w", ref, err))
+		return nil, nil, false, reconcile.TerminalError(fmt.Errorf("error parsing image reference %q: %w", ref, err))
 	}
 
 	canonicalRef, isCanonical, err := resolveCanonicalRef(ctx, imgRef, sourceContext)
@@ -208,7 +208,7 @@ func resolveCanonicalRef(ctx context.Context, imgRef reference.Named, imageCtx *
 
 	srcRef, err := docker.NewReference(imgRef)
 	if err != nil {
-		return nil, false, catalogderrors.NewUnrecoverable(fmt.Errorf("error creating reference: %w", err))
+		return nil, false, reconcile.TerminalError(fmt.Errorf("error creating reference: %w", err))
 	}
 
 	imgSrc, err := srcRef.NewImageSource(ctx, imageCtx)
@@ -269,8 +269,8 @@ func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath st
 	if !ok {
 		// If the spec is a tagged ref, retries could end up resolving a new digest, where the label
 		// might show up. If the spec is canonical, no amount of retries will make the label appear.
-		// Therefore, we treat the error as unrecoverable if the reference from the spec is canonical.
-		return wrapUnrecoverable(fmt.Errorf("catalog image is missing the required label %q", ConfigDirLabel), specIsCanonical)
+		// Therefore, we treat the error as terminal if the reference from the spec is canonical.
+		return wrapTerminal(fmt.Errorf("catalog image is missing the required label %q", ConfigDirLabel), specIsCanonical)
 	}
 
 	if err := os.MkdirAll(unpackPath, 0700); err != nil {
@@ -402,9 +402,9 @@ func deleteRecursive(root string) error {
 	return os.RemoveAll(root)
 }
 
-func wrapUnrecoverable(err error, isUnrecoverable bool) error {
-	if !isUnrecoverable {
+func wrapTerminal(err error, isTerminal bool) error {
+	if !isTerminal {
 		return err
 	}
-	return catalogderrors.NewUnrecoverable(err)
+	return reconcile.TerminalError(err)
 }

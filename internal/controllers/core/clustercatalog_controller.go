@@ -18,7 +18,6 @@ package core
 
 import (
 	"context" // #nosec
-	"errors"
 	"fmt"
 	"time"
 
@@ -33,7 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
-	catalogderrors "github.com/operator-framework/catalogd/internal/errors"
 	"github.com/operator-framework/catalogd/internal/source"
 	"github.com/operator-framework/catalogd/internal/storage"
 )
@@ -74,11 +72,6 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 	reconciledCatsrc := existingCatsrc.DeepCopy()
 	res, reconcileErr := r.reconcile(ctx, reconciledCatsrc)
-
-	if errors.As(reconcileErr, &catalogderrors.Unrecoverable{}) {
-		l.Error(reconcileErr, "unrecoverable reconcile error")
-		reconcileErr = nil
-	}
 
 	// Update the status subresource before updating the main object. This is
 	// necessary because, in many cases, the main object update will remove the

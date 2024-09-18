@@ -24,9 +24,9 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
-	catalogderrors "github.com/operator-framework/catalogd/internal/errors"
 	"github.com/operator-framework/catalogd/internal/source"
 )
 
@@ -39,7 +39,7 @@ func TestImageRegistry(t *testing.T) {
 		// points to the registry created for the test
 		catalog             *v1alpha1.ClusterCatalog
 		wantErr             bool
-		unrecoverable       bool
+		terminal            bool
 		image               v1.Image
 		digestAlreadyExists bool
 		oldDigestExists     bool
@@ -60,9 +60,9 @@ func TestImageRegistry(t *testing.T) {
 					},
 				},
 			},
-			wantErr:       true,
-			unrecoverable: true,
-			refType:       "tag",
+			wantErr:  true,
+			terminal: true,
+			refType:  "tag",
 		},
 		{
 			name: ".spec.source.image.ref is unparsable",
@@ -79,9 +79,9 @@ func TestImageRegistry(t *testing.T) {
 					},
 				},
 			},
-			wantErr:       true,
-			unrecoverable: true,
-			refType:       "tag",
+			wantErr:  true,
+			terminal: true,
+			refType:  "tag",
 		},
 		{
 			name: "tag based, image is missing required label",
@@ -123,8 +123,8 @@ func TestImageRegistry(t *testing.T) {
 					},
 				},
 			},
-			wantErr:       true,
-			unrecoverable: true,
+			wantErr:  true,
+			terminal: true,
 			image: func() v1.Image {
 				img, err := random.Image(20, 3)
 				if err != nil {
@@ -408,8 +408,8 @@ func TestImageRegistry(t *testing.T) {
 				}
 			} else {
 				assert.Error(t, err)
-				isUnrecov := errors.As(err, &catalogderrors.Unrecoverable{})
-				assert.Equal(t, tt.unrecoverable, isUnrecov, "expected unrecoverable %v, got %v", tt.unrecoverable, isUnrecov)
+				isTerminal := errors.Is(err, reconcile.TerminalError(nil))
+				assert.Equal(t, tt.terminal, isTerminal, "expected terminal %v, got %v", tt.terminal, isTerminal)
 			}
 
 			assert.NoError(t, imgReg.Cleanup(ctx, tt.catalog))
