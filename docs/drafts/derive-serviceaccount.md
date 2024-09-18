@@ -31,14 +31,208 @@ You can determine the specifics of these permissions by referencing the bundle o
 * Permissions to create the controller deployment, this corresponds to the rules to manage the
   deployment defined in the ClusterServiceVersion
 
-### Manual process for minimal RBAC creation
+### Derive minimal RBAC
 
-If you want determine the RBAC manually, you can
+Consider a cluster extension that needs to query OpenShift users and groups as part of its controller logic and specifies the below cluster permissions in its ClusterServiceVersion:
+
+```yml
+clusterPermissions:
+        - rules:
+            - apiGroups:
+                - user.openshift.io
+              resources:
+                - users
+                - groups
+                - identities
+              verbs:
+                - get
+                - list
+```
+
+In addition to cluster permissions, it specifies these additional permissions to manage itself:
+
+```yml
+permissions:
+        - rules:
+            - apiGroups:
+                - apps
+              resourceNames:
+                - <cluster-extension-name>
+              resources:
+                - deployments/finalizers
+              verbs:
+                - update
+            - apiGroups:
+                - apps
+              resources:
+                - deployments
+              verbs:
+                - create
+                - delete
+                - get
+                - list
+                - patch
+                - update
+                - watch
+```
+
+Below is the translation of the above cluster permissions into ClusterRole and ClusterRoleBinding for your cluster extension:
+
+```yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: <cluster-extension-name>
+rules:
+- apiGroups:
+  - olm.operatorframework.io
+  resourceNames:
+  - <cluster-extension-name>
+  resources:
+  - clusterextensions/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterroles
+  - clusterrolebindings
+  verbs:
+  - create
+- apiGroups:
+  - user.openshift.io
+  resources:
+  - users
+  - groups
+  - identities
+  verbs:
+  - get
+  - list
+```
+
+Below is the ClusterRoleBinding that associates your cluster extension to its service account:
+
+```yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: <cluster-extension-name>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: <cluster-extension-name>
+subjects:
+- kind: ServiceAccount
+  name: <cluster-extension-sa-name>
+  namespace: <cluster-extension-namespace>
+```
+
+Below is the translation of the above cluster permissions into Role and RoleBinding for your cluster extension:
+
+```yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: <cluster-extension-name>
+  namespace: <cluster-extension-name>
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - services/finalizers
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resourceNames:
+  - <cluster-extension-name>
+  resources:
+  - deployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  - rolebindings
+  verbs:
+  - create
+```
+Below is the RoleBinding that associates your cluster extension to its service account:
+
+```yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: <cluster-extension-name>
+  namespace: <cluster-extension-namespace>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: <cluster-extension-name>
+subjects:
+- kind: ServiceAccount
+  name: <cluster-extension-sa-name>
+```
+
+You can use the above example as a starting point to derive the minimal RBAC for your cluster extension.
+You should start by specifying permissions to manage the deployment, serviceaccounts and roles required for your cluster extension. Subsequently, you can iterate as below.
 
 * Create all the initial RBAC and then iterate over the ClusterExtension failures, examining conditions and updating the RBAC to include the generated cluster role names (name will be in the failure condition).
 * After reading the failure condition, update the installer RBAC and iterate until you are out of errors.
 * You can get the bundle image, unpack the same and inspect the manifests to determine the required permissions.
-* The `oc` cli-tool creates cluster roles with a hash in their name. you can query the newly created ClusterRole names and reduce the installer RBAC scope to have the ClusterRoles needed, this can include generated roles. You can achieve this by allowing the installer to get, list, watch and update any cluster roles.
+* The `oc` cli-tool creates cluster roles with a hash in their name. You can query the newly created ClusterRole names and reduce the installer RBAC scope to have the ClusterRoles needed, this can include generated roles. 
+* You can achieve this by allowing the installer to get, list, watch and update any cluster roles.
+
+Note: Production tools to help you manage RBAC are also available with OLM v1 release.
 
 ### Sample snippets of ClusterRole rule definitions
 
