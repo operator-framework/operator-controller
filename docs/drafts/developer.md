@@ -8,9 +8,9 @@ You’ll need a Kubernetes cluster to run against. You can use [KIND](https://si
 > 
 > If you are on MacOS, see [Special Setup for MacOS](#special-setup-for-macos).
 
-### Test It Out
+### Quickstart Installation
 
-Install the CRDs and the operator-controller into a new [KIND cluster](https://kind.sigs.k8s.io/):
+First, you need to install the CRDs and the operator-controller into a new [KIND cluster](https://kind.sigs.k8s.io/). You can do this by running:
 
 ```sh
 make run
@@ -18,7 +18,7 @@ make run
 
 This will build a local container image of the operator-controller, create a new KIND cluster and then deploy onto that cluster. This will also deploy the catalogd and cert-manager dependencies.
 
-### Installation
+### To Install any Given Release
 
 > [!CAUTION]  
 > Operator-Controller depends on [cert-manager](https://cert-manager.io/). Running the following command
@@ -30,7 +30,7 @@ The latest version of Operator Controller can be installed with the following co
 curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh | bash -s
 ```
 
-### Running on the cluster -- the targets `make run` combines
+### Manual step-by-step installation
 1. Install Instances of Custom Resources:
 
 ```sh
@@ -108,7 +108,7 @@ Follow Tilt's [instructions](https://docs.tilt.dev/install.html) for installatio
 ### Installing catalogd
 
 operator-controller requires
-[catalogd](https://github.com/operator-framework/catalogd). Please make sure it's installed, either normally or via their own Tiltfiles, before proceeding. If you want to use Tilt, make sure you specify a unique `--port` flag to each `tilt up` invocation.
+[catalogd](https://github.com/operator-framework/catalogd). Please make sure it's installed, either normally or via its own Tiltfile., before proceeding. If you want to use Tilt, make sure you specify a unique `--port` flag to each `tilt up` invocation.
 
 ### Install tilt-support Repo
 
@@ -152,7 +152,7 @@ v0.33.1, built 2023-06-28
 (ctrl-c) to exit
 ```
 
-Typically, you'll want to press the space bar to have it open the UI in your web browser.
+At the end of the installation process, the command output will prompt you to press the space bar to open the web UI, which provides a useful overview of all the installed components.
 
 ---
 
@@ -161,14 +161,14 @@ Typically, you'll want to press the space bar to have it open the UI in your web
 Some additional setup is necessary on Macintosh computers to install and configure compatible tooling.
 
 ### Install Homebrew and tools
-Follow the instructions to [installing Homebrew](https://docs.brew.sh/Installation) and then execute the following to install tools:
+Follow the instructions to [install Homebrew](https://docs.brew.sh/Installation), and then execute the following command to install the required tools:
 
 ```sh
 brew install bash gnu-tar gsed
 ```
 
 ### Configure your shell
-Modify your login shell's `PATH` to prefer the new tools over those in the existing environment. This example should work either with `zsh` (in $HOME/.zshrc) or `bash` (in $HOME/.bashrc):
+To configure your shell, either add this to your bash or zsh profile (e.g., in $HOME/.bashrc or $HOME/.zshrc), or run the following command in the terminal:
 
 ```sh
 for bindir in `find $(brew --prefix)/opt -type d -follow -name gnubin -print`
