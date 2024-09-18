@@ -411,6 +411,9 @@ func TestImageRegistry(t *testing.T) {
 				isUnrecov := errors.As(err, &catalogderrors.Unrecoverable{})
 				assert.Equal(t, tt.unrecoverable, isUnrecov, "expected unrecoverable %v, got %v", tt.unrecoverable, isUnrecov)
 			}
+
+			assert.NoError(t, imgReg.Cleanup(ctx, tt.catalog))
+			assert.NoError(t, imgReg.Cleanup(ctx, tt.catalog), "cleanup should ignore missing files")
 		})
 	}
 }

@@ -174,7 +174,10 @@ func successResult(catalog *catalogdv1alpha1.ClusterCatalog, unpackPath string, 
 }
 
 func (i *ContainersImageRegistry) Cleanup(_ context.Context, catalog *catalogdv1alpha1.ClusterCatalog) error {
-	return deleteRecursive(i.catalogPath(catalog.Name))
+	if err := deleteRecursive(i.catalogPath(catalog.Name)); err != nil {
+		return fmt.Errorf("error deleting catalog cache: %w", err)
+	}
+	return nil
 }
 
 func (i *ContainersImageRegistry) catalogPath(catalogName string) string {
@@ -380,6 +383,9 @@ func setReadOnlyRecursive(root string) error {
 
 func deleteRecursive(root string) error {
 	if err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if os.IsNotExist(err) {
+			return nil
+		}
 		if err != nil {
 			return err
 		}
