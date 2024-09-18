@@ -9,8 +9,6 @@ import (
 
 	kappperms "carvel.dev/kapp/pkg/kapp/permissions"
 	kappres "carvel.dev/kapp/pkg/kapp/resources"
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
-	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 	"helm.sh/helm/v3/pkg/release"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -18,6 +16,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/internal/rukpak/util"
 )
 
 type RestConfigMapper func(context.Context, client.Object, *rest.Config) (*rest.Config, error)
@@ -76,9 +77,8 @@ func (p *Preflight) runPreflight(ctx context.Context, rel *release.Release, ext 
 		return fmt.Errorf("parsing release %q objects: %w", rel.Name, err)
 	}
 
-    // TODO: Update this to be more efficient
-
-	resources := []kappres.Resource{}
+	verbsToCheck := []string{"create", "update", "patch", "delete", "get", "list", "watch"}
+	errs := []error{}
 	for _, obj := range relObjects {
 		bytes, err := json.Marshal(obj)
 		if err != nil {
@@ -88,19 +88,18 @@ func (p *Preflight) runPreflight(ctx context.Context, rel *release.Release, ext 
 		if err != nil {
 			return fmt.Errorf("converting bytes to resource: %w", err)
 		}
-		resources = append(resources, resource)
+
+		for _, verb := range verbsToCheck {
+			err := validator.Validate(ctx, resource, verb)
+			if err != nil {
+				errs = append(errs, err)
+			}
+		}
 	}
 
-    verbsToCheck := []string{"create", "update", "patch", "delete", "get", "list", "watch"}
-    errs := []error{}
-    for _, resource := range resources {
-        for _, verb := range verbsToCheck {
-            err := validator.Validate(ctx, resource, verb)
-            if err != nil {
-                errs = append(errs, err)
-            }
-        }
-    }
+	if len(errs) > 0 {
+		errs = append([]error{errors.New("validating permissions to install and manage resources")}, errs...)
+	}
 
 	return errors.Join(errs...)
 }

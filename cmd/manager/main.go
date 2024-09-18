@@ -248,7 +248,7 @@ func main() {
 
 	preflights := []applier.Preflight{
 		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
-        permissions.NewPreflight(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper()),
+		permissions.NewPreflight(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper()),
 	}
 
 	applier := &applier.Helm{
