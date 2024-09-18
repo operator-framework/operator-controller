@@ -93,9 +93,9 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
     Events:                    <none>
     ```
 
-1. Port forward the `catalogd-catalogserver` service in the `olmv1-system` namespace:
+1. Port forward the `catalogd-service` service in the `olmv1-system` namespace:
     ```sh
-    $ kubectl -n olmv1-system port-forward svc/catalogd-catalogserver 8080:443
+    $ kubectl -n olmv1-system port-forward svc/catalogd-service 8080:443
     ```
 
 1. Run the following command to get a list of packages:

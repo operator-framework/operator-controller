@@ -90,7 +90,7 @@ of a catalog can be read from:
       reason: UnpackSuccessful
       status: "True"
       type: Unpacked
-    contentURL: https://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json
+    contentURL: https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/all.json
     resolvedSource:
       image:
         ref: quay.io/operatorhubio/catalog@sha256:e53267559addc85227c2a7901ca54b980bc900276fc24d3f4db0549cb38ecf76
@@ -102,20 +102,20 @@ of a catalog can be read from:
 
 When making a request for the contents of the `operatorhubio` `ClusterCatalog` from within
 the cluster issue a HTTP `GET` request to 
-`https://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json`
+`https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/all.json`
 
 An example command to run a `Pod` to `curl` the catalog contents:
 ```sh
-kubectl run fetcher --image=curlimages/curl:latest -- curl https://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json
+kubectl run fetcher --image=curlimages/curl:latest -- curl https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/all.json
 ```
 
 ## Off cluster
 
 When making a request for the contents of the `operatorhubio` `ClusterCatalog` from outside
 the cluster, we have to perform an extra step:
-1. Port forward the `catalogd-catalogserver` service in the `olmv1-system` namespace:
+1. Port forward the `catalogd-service` service in the `olmv1-system` namespace:
 ```sh
-kubectl -n olmv1-system port-forward svc/catalogd-catalogserver 8080:443
+kubectl -n olmv1-system port-forward svc/catalogd-service 8080:443
 ```
 
 Once the service has been successfully forwarded to a localhost port, issue a HTTP `GET`
@@ -181,7 +181,7 @@ This section outlines a way of exposing the `Catalogd` Service's endpoints outsi
               pathType: Prefix
               backend:
                 service:
-                  name: catalogd-catalogserver
+                  name: catalogd-service
                   port:
                     number: 80
       ```
