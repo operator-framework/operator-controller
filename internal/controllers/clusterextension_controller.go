@@ -116,17 +116,24 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingExt.Status, reconciledExt.Status)
 	updateFinalizers := !equality.Semantic.DeepEqual(existingExt.Finalizers, reconciledExt.Finalizers)
-	unexpectedFieldsChanged := checkForUnexpectedFieldChange(*existingExt, *reconciledExt)
 
+	// If any unexpected fields have changed, panic before updating the resource
+	unexpectedFieldsChanged := checkForUnexpectedFieldChange(*existingExt, *reconciledExt)
+	if unexpectedFieldsChanged {
+		panic("spec or metadata changed by reconciler")
+	}
+
+	// Save the finalizers off to the side. If we update the status, the reconciledExt will be updated
+	// to contain the new state of the ClusterExtension, which contains the status update, but (critically)
+	// does not contain the finalizers. After the status update, we need to re-add the finalizers to the
+	// reconciledExt before updating the object.
+	finalizers := reconciledExt.Finalizers
 	if updateStatus {
 		if err := r.Client.Status().Update(ctx, reconciledExt); err != nil {
 			updateError = errors.Join(updateError, fmt.Errorf("error updating status: %v", err))
 		}
 	}
-
-	if unexpectedFieldsChanged {
-		panic("spec or metadata changed by reconciler")
-	}
+	reconciledExt.Finalizers = finalizers
 
 	if updateFinalizers {
 		if err := r.Client.Update(ctx, reconciledExt); err != nil {
