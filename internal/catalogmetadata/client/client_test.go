@@ -62,7 +62,7 @@ func TestClientGetPackage(t *testing.T) {
 			catalog: defaultCatalog,
 			cache:   &fakeCache{getErr: errors.New("fetch error")},
 			assert: func(t *testing.T, dc *declcfg.DeclarativeConfig, err error) {
-				assert.ErrorContains(t, err, `error retrieving catalog cache`)
+				assert.ErrorContains(t, err, `error retrieving cache for catalog "catalog-1"`)
 			},
 		},
 		{
@@ -114,18 +114,7 @@ func TestClientGetPackage(t *testing.T) {
 				return testFS, nil
 			}},
 			assert: func(t *testing.T, fbc *declcfg.DeclarativeConfig, err error) {
-				require.NoError(t, err)
-				assert.Equal(t, &declcfg.DeclarativeConfig{Packages: []declcfg.Package{{Schema: declcfg.SchemaPackage, Name: "pkg-present"}}}, fbc)
-			},
-		},
-		{
-			name:    "cache unpopulated and fails to populate",
-			catalog: defaultCatalog,
-			pkgName: "pkg-present",
-			cache:   &fakeCache{putErr: errors.New("fake cache put error")},
-			assert: func(t *testing.T, fbc *declcfg.DeclarativeConfig, err error) {
-				assert.Nil(t, fbc)
-				assert.ErrorContains(t, err, "error fetching catalog contents")
+				assert.ErrorContains(t, err, `cache for catalog "catalog-1" not found`)
 			},
 		},
 	} {
@@ -278,7 +267,6 @@ type fakeCache struct {
 	getErr error
 
 	putFunc func(source string, errToCache error) (fs.FS, error)
-	putErr  error
 }
 
 func (c *fakeCache) Get(catalogName, resolvedRef string) (fs.FS, error) {
@@ -292,9 +280,6 @@ func (c *fakeCache) Put(catalogName, resolvedRef string, source io.Reader, errTo
 			io.Copy(buf, source) // nolint:errcheck
 		}
 		return c.putFunc(buf.String(), errToCache)
-	}
-	if c.putErr != nil {
-		return nil, c.putErr
 	}
 
 	return nil, errors.New("unexpected error")
