@@ -68,6 +68,7 @@ If you are editing the API definitions, generate the manifests such as CRs or CR
 
 ```sh
 make manifests
+```
 
 ---
 
