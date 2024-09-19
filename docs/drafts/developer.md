@@ -1,7 +1,7 @@
 
 ## Getting Started
 
-You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
+The following `make run` starts a [KIND](https://sigs.k8s.io/kind) cluster for you to get a local cluster for testing, see the manual install steps below for how to run against a remote cluster.
 
 > [!NOTE]
 > Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
@@ -18,7 +18,7 @@ make run
 
 This will build a local container image of the operator-controller, create a new KIND cluster and then deploy onto that cluster. This will also deploy the catalogd and cert-manager dependencies.
 
-### To Install any Given Release
+### To Install Any Given Release
 
 > [!CAUTION]  
 > Operator-Controller depends on [cert-manager](https://cert-manager.io/). Running the following command
@@ -30,7 +30,7 @@ The latest version of Operator Controller can be installed with the following co
 curl -L -s https://github.com/operator-framework/operator-controller/releases/latest/download/install.sh | bash -s
 ```
 
-### Manual step-by-step installation
+### Manual Step-by-Step Installation
 1. Install Instances of Custom Resources:
 
 ```sh
@@ -63,18 +63,13 @@ To undeploy the controller from the cluster:
 make undeploy
 ```
 
----
-
-## Iterative Development
-
-If you are making code changes and want to iterate on them quickly, there are specific targets for this purpose.
-
 ### Modifying the API definitions
 If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
 
 ```sh
 make manifests
-```
+
+---
 
 **NOTE:** Run `make help` for more information on all potential `make` targets.
 
@@ -176,14 +171,6 @@ do
   export PATH=$bindir:$PATH
 done
 ```
-
----
-
-## How it works
-This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
-
-It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/)
-which provide a reconcile function responsible for synchronizing resources until the desired state is reached on the cluster.
 
 ---
 
