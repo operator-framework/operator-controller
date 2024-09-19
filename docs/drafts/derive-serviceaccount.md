@@ -345,235 +345,234 @@ kubectl create clusterrolebinding my-cluster-extension-installer-role-binding \
 Below is an example of the ArgoCD installer with the necessary RBAC to deploy the ArgoCD ClusterExtension.
 
 ??? example
-```yaml
-
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: argocd-installer-clusterrole
-rules:
-# Allow ClusterExtension to set blockOwnerDeletion ownerReferences
-- apiGroups: [olm.operatorframework.io]
-  resources: [clusterextensions/finalizers]
-  verbs: [update]
-  resourceNames: [argocd]
-# Manage ArgoCD CRDs
-- apiGroups: [apiextensions.k8s.io]
-  resources: [customresourcedefinitions]
-  verbs: [create]
-- apiGroups: [apiextensions.k8s.io]
-  resources: [customresourcedefinitions]
-  verbs: [get, list, watch, update, patch, delete]
-  resourceNames:
-  - appprojects.argoproj.io
-  - argocds.argoproj.io
-  - applications.argoproj.io
-  - argocdexports.argoproj.io
-  - applicationsets.argoproj.io
-# Manage ArgoCD ClusterRoles and ClusterRoleBindings
-- apiGroups: [rbac.authorization.k8s.io]
-  resources: [clusterroles]
-  verbs: [create]
-- apiGroups: [rbac.authorization.k8s.io]
-  resources: [clusterroles]
-  verbs: [get, list, watch, update, patch, delete]
-  resourceNames:
-  - argocd-operator.v0-1dhiybrldl1gyksid1dk2dqjsc72psdybc7iyvse5gpx
-  - argocd-operator-metrics-reader
-  - argocd-operator.v0-22gmilmgp91wu25is5i2ec598hni8owq3l71bbkl7iz3
-- apiGroups: [rbac.authorization.k8s.io]
-  resources: [clusterrolebindings]
-  verbs: [create]
-- apiGroups: [rbac.authorization.k8s.io]
-  resources: [clusterrolebindings]
-  verbs: [get, list, watch, update, patch, delete]
-  resourceNames:
-  - argocd-operator.v0-1dhiybrldl1gyksid1dk2dqjsc72psdybc7iyvse5gpx
-  - argocd-operator.v0-22gmilmgp91wu25is5i2ec598hni8owq3l71bbkl7iz3
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: argocd-installer-rbac-binding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
+  ```yaml
+  apiVersion: rbac.authorization.k8s.io/v1
   kind: ClusterRole
-  name: argocd-installer-rbac-clusterrole
-subjects:
-- kind: ServiceAccount
-  name: argocd-installer
-  namespace: argocd
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: argocd-installer-rbac-clusterrole
-rules:
-# ArgoCD's operator requires the following permissions, which means the
-# installer also needs them in order to create ArgoCD's RBAC objects.
-- apiGroups: [""]
-  resources: [configmaps]
-  verbs: ['*']
-- apiGroups: [""]
-  resources: [endpoints]
-  verbs: ['*']
-- apiGroups: [""]
-  resources: [events]
-  verbs: ['*']
-- apiGroups: [""]
-  resources: [namespaces]
-  verbs: ['*']
-- apiGroups: [""]
-  resources: [persistentvolumeclaims]
-  verbs: ['*']
-- apiGroups: [""]
-  resources: [pods]
-  verbs: ['*', get]
-- apiGroups: [""]
-  resources: [pods/log]
-  verbs: [get]
-- apiGroups: [""]
-  resources: [secrets]
-  verbs: ['*']
-- apiGroups: [""]
-  resources: [serviceaccounts]
-  verbs: ['*']
-- apiGroups: [""]
-  resources: [services]
-  verbs: ['*']
-- apiGroups: [""]
-  resources: [services/finalizers]
-  verbs: ['*']
-- apiGroups: [apps]
-  resources: [daemonsets]
-  verbs: ['*']
-- apiGroups: [apps]
-  resources: [deployments]
-  verbs: ['*']
-- apiGroups: [apps]
-  resources: [deployments/finalizers]
-  resourceNames: [argocd-operator]
-  verbs: [update]
-- apiGroups: [apps]
-  resources: [replicasets]
-  verbs: ['*']
-- apiGroups: [apps]
-  resources: [statefulsets]
-  verbs: ['*']
-- apiGroups: [apps.openshift.io]
-  resources: [deploymentconfigs]
-  verbs: ['*']
-- apiGroups: [argoproj.io]
-  resources: [applications]
-  verbs: ['*']
-- apiGroups: [argoproj.io]
-  resources: [appprojects]
-  verbs: ['*']
-- apiGroups: [argoproj.io]
-  resources: [argocdexports]
-  verbs: ['*']
-- apiGroups: [argoproj.io]
-  resources: [argocdexports/finalizers]
-  verbs: ['*']
-- apiGroups: [argoproj.io]
-  resources: [argocdexports/status]
-  verbs: ['*']
-- apiGroups: [argoproj.io]
-  resources: [argocds]
-  verbs: ['*']
-- apiGroups: [argoproj.io]
-  resources: [argocds/finalizers]
-  verbs: ['*']
-- apiGroups: [argoproj.io]
-  resources: [argocds/status]
-  verbs: ['*']
-- apiGroups: [authentication.k8s.io]
-  resources: [tokenreviews]
-  verbs: [create]
-- apiGroups: [authorization.k8s.io]
-  resources: [subjectaccessreviews]
-  verbs: [create]
-- apiGroups: [autoscaling]
-  resources: [horizontalpodautoscalers]
-  verbs: ['*']
-- apiGroups: [batch]
-  resources: [cronjobs]
-  verbs: ['*']
-- apiGroups: [batch]
-  resources: [jobs]
-  verbs: ['*']
-- apiGroups: [config.openshift.io]
-  resources: [clusterversions]
-  verbs: [get, list, watch]
-- apiGroups: [monitoring.coreos.com]
-  resources: [prometheuses]
-  verbs: ['*']
-- apiGroups: [monitoring.coreos.com]
-  resources: [servicemonitors]
-  verbs: ['*']
-- apiGroups: [networking.k8s.io]
-  resources: [ingresses]
-  verbs: ['*']
-- apiGroups: [oauth.openshift.io]
-  resources: [oauthclients]
-  verbs: [create, delete, get, list, patch, update, watch]
-- apiGroups: [rbac.authorization.k8s.io]
-  resources: ['*']
-  verbs: ['*']
-- apiGroups: [rbac.authorization.k8s.io]
-  resources: [clusterrolebindings]
-  verbs: ['*']
-- apiGroups: [rbac.authorization.k8s.io]
-  resources: [clusterroles]
-  verbs: ['*']
-- apiGroups: [route.openshift.io]
-  resources: [routes]
-  verbs: ['*']
-- apiGroups: [route.openshift.io]
-  resources: [routes/custom-host]
-  verbs: ['*']
-- apiGroups: [template.openshift.io]
-  resources: [templateconfigs]
-  verbs: ['*']
-- apiGroups: [template.openshift.io]
-  resources: [templateinstances]
-  verbs: ['*']
-- apiGroups: [template.openshift.io]
-  resources: [templates]
-  verbs: ['*']
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: argocd-installer-role
-  namespace: argocd
-rules:
-- apiGroups: [""]
-  resources: [serviceaccounts]
-  verbs: [create]
-- apiGroups: [""]
-  resources: [serviceaccounts]
-  verbs: [get, list, watch, update, patch, delete]
-  resourceNames: [argocd-operator-controller-manager]
-- apiGroups: [""]
-  resources: [configmaps]
-  verbs: [create]
-- apiGroups: [""]
-  resources: [configmaps]
-  verbs: [get, list, watch, update, patch, delete]
-  resourceNames: [argocd-operator-manager-config]
-- apiGroups: [""]
-  resources: [services]
-  verbs: [create]
-- apiGroups: [""]
-  resources: [services]
-  verbs: [get, list, watch, update, patch, delete]
-  resourceNames: [argocd-operator-controller-manager-metrics-service]
-- apiGroups: [apps]
-  resources: [deployments]
-  verbs: [create]
-- apiGroups: [apps]
-  resources: [deployments]
-  verbs: [get, list, watch, update, patch, delete]
-  resourceNames: [argocd-operator-controller-manager]
-```
+  metadata:
+    name: argocd-installer-clusterrole
+  rules:
+  # Allow ClusterExtension to set blockOwnerDeletion ownerReferences
+  - apiGroups: [olm.operatorframework.io]
+    resources: [clusterextensions/finalizers]
+    verbs: [update]
+    resourceNames: [argocd]
+  # Manage ArgoCD CRDs
+  - apiGroups: [apiextensions.k8s.io]
+    resources: [customresourcedefinitions]
+    verbs: [create]
+  - apiGroups: [apiextensions.k8s.io]
+    resources: [customresourcedefinitions]
+    verbs: [get, list, watch, update, patch, delete]
+    resourceNames:
+    - appprojects.argoproj.io
+    - argocds.argoproj.io
+    - applications.argoproj.io
+    - argocdexports.argoproj.io
+    - applicationsets.argoproj.io
+  # Manage ArgoCD ClusterRoles and ClusterRoleBindings
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [clusterroles]
+    verbs: [create]
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [clusterroles]
+    verbs: [get, list, watch, update, patch, delete]
+    resourceNames:
+    - argocd-operator.v0-1dhiybrldl1gyksid1dk2dqjsc72psdybc7iyvse5gpx
+    - argocd-operator-metrics-reader
+    - argocd-operator.v0-22gmilmgp91wu25is5i2ec598hni8owq3l71bbkl7iz3
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [clusterrolebindings]
+    verbs: [create]
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [clusterrolebindings]
+    verbs: [get, list, watch, update, patch, delete]
+    resourceNames:
+    - argocd-operator.v0-1dhiybrldl1gyksid1dk2dqjsc72psdybc7iyvse5gpx
+    - argocd-operator.v0-22gmilmgp91wu25is5i2ec598hni8owq3l71bbkl7iz3
+  ---
+  apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: argocd-installer-rbac-binding
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: argocd-installer-rbac-clusterrole
+  subjects:
+  - kind: ServiceAccount
+    name: argocd-installer
+    namespace: argocd
+  ---
+  apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    name: argocd-installer-rbac-clusterrole
+  rules:
+  # ArgoCD's operator requires the following permissions, which means the
+  # installer also needs them in order to create ArgoCD's RBAC objects.
+  - apiGroups: [""]
+    resources: [configmaps]
+    verbs: ['*']
+  - apiGroups: [""]
+    resources: [endpoints]
+    verbs: ['*']
+  - apiGroups: [""]
+    resources: [events]
+    verbs: ['*']
+  - apiGroups: [""]
+    resources: [namespaces]
+    verbs: ['*']
+  - apiGroups: [""]
+    resources: [persistentvolumeclaims]
+    verbs: ['*']
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: ['*', get]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: ['*']
+  - apiGroups: [""]
+    resources: [serviceaccounts]
+    verbs: ['*']
+  - apiGroups: [""]
+    resources: [services]
+    verbs: ['*']
+  - apiGroups: [""]
+    resources: [services/finalizers]
+    verbs: ['*']
+  - apiGroups: [apps]
+    resources: [daemonsets]
+    verbs: ['*']
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: ['*']
+  - apiGroups: [apps]
+    resources: [deployments/finalizers]
+    resourceNames: [argocd-operator]
+    verbs: [update]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    verbs: ['*']
+  - apiGroups: [apps]
+    resources: [statefulsets]
+    verbs: ['*']
+  - apiGroups: [apps.openshift.io]
+    resources: [deploymentconfigs]
+    verbs: ['*']
+  - apiGroups: [argoproj.io]
+    resources: [applications]
+    verbs: ['*']
+  - apiGroups: [argoproj.io]
+    resources: [appprojects]
+    verbs: ['*']
+  - apiGroups: [argoproj.io]
+    resources: [argocdexports]
+    verbs: ['*']
+  - apiGroups: [argoproj.io]
+    resources: [argocdexports/finalizers]
+    verbs: ['*']
+  - apiGroups: [argoproj.io]
+    resources: [argocdexports/status]
+    verbs: ['*']
+  - apiGroups: [argoproj.io]
+    resources: [argocds]
+    verbs: ['*']
+  - apiGroups: [argoproj.io]
+    resources: [argocds/finalizers]
+    verbs: ['*']
+  - apiGroups: [argoproj.io]
+    resources: [argocds/status]
+    verbs: ['*']
+  - apiGroups: [authentication.k8s.io]
+    resources: [tokenreviews]
+    verbs: [create]
+  - apiGroups: [authorization.k8s.io]
+    resources: [subjectaccessreviews]
+    verbs: [create]
+  - apiGroups: [autoscaling]
+    resources: [horizontalpodautoscalers]
+    verbs: ['*']
+  - apiGroups: [batch]
+    resources: [cronjobs]
+    verbs: ['*']
+  - apiGroups: [batch]
+    resources: [jobs]
+    verbs: ['*']
+  - apiGroups: [config.openshift.io]
+    resources: [clusterversions]
+    verbs: [get, list, watch]
+  - apiGroups: [monitoring.coreos.com]
+    resources: [prometheuses]
+    verbs: ['*']
+  - apiGroups: [monitoring.coreos.com]
+    resources: [servicemonitors]
+    verbs: ['*']
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses]
+    verbs: ['*']
+  - apiGroups: [oauth.openshift.io]
+    resources: [oauthclients]
+    verbs: [create, delete, get, list, patch, update, watch]
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: ['*']
+    verbs: ['*']
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [clusterrolebindings]
+    verbs: ['*']
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [clusterroles]
+    verbs: ['*']
+  - apiGroups: [route.openshift.io]
+    resources: [routes]
+    verbs: ['*']
+  - apiGroups: [route.openshift.io]
+    resources: [routes/custom-host]
+    verbs: ['*']
+  - apiGroups: [template.openshift.io]
+    resources: [templateconfigs]
+    verbs: ['*']
+  - apiGroups: [template.openshift.io]
+    resources: [templateinstances]
+    verbs: ['*']
+  - apiGroups: [template.openshift.io]
+    resources: [templates]
+    verbs: ['*']
+  ---
+  apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: argocd-installer-role
+    namespace: argocd
+  rules:
+  - apiGroups: [""]
+    resources: [serviceaccounts]
+    verbs: [create]
+  - apiGroups: [""]
+    resources: [serviceaccounts]
+    verbs: [get, list, watch, update, patch, delete]
+    resourceNames: [argocd-operator-controller-manager]
+  - apiGroups: [""]
+    resources: [configmaps]
+    verbs: [create]
+  - apiGroups: [""]
+    resources: [configmaps]
+    verbs: [get, list, watch, update, patch, delete]
+    resourceNames: [argocd-operator-manager-config]
+  - apiGroups: [""]
+    resources: [services]
+    verbs: [create]
+  - apiGroups: [""]
+    resources: [services]
+    verbs: [get, list, watch, update, patch, delete]
+    resourceNames: [argocd-operator-controller-manager-metrics-service]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [create]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list, watch, update, patch, delete]
+    resourceNames: [argocd-operator-controller-manager]
+  ```
