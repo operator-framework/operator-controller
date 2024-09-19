@@ -33,7 +33,7 @@ You can determine the specifics of these permissions by referencing the bundle o
 
 ### Derive minimal RBAC
 
-Consider a cluster extension that needs to query OpenShift users and groups as part of its controller logic and specifies the below cluster permissions in its ClusterServiceVersion:
+As an example, consider a cluster extension that needs to query OpenShift users and groups as part of its controller logic and specifies the below cluster permissions in its ClusterServiceVersion:
 
 ```yml
 clusterPermissions:
@@ -224,12 +224,12 @@ subjects:
 ```
 
 You can use the above example as a starting point to derive the minimal RBAC for your cluster extension.
-You should start by specifying permissions to manage the deployment, serviceaccounts and roles required for your cluster extension. Subsequently, you can iterate as below.
+You should start by specifying permissions to manage the Deployment, ServiceAccount and Roles required for your cluster extension. Subsequently, you can iterate as below.
 
 * Create all the initial RBAC and then iterate over the ClusterExtension failures, examining conditions and updating the RBAC to include the generated cluster role names (name will be in the failure condition).
 * After reading the failure condition, update the installer RBAC and iterate until you are out of errors.
 * You can get the bundle image, unpack the same and inspect the manifests to determine the required permissions.
-* The `oc` cli-tool creates cluster roles with a hash in their name. You can query the newly created ClusterRole names and reduce the installer RBAC scope to have the ClusterRoles needed, this can include generated roles. 
+* The `oc` cli-tool creates cluster roles with a hash in their name. You can query the newly created ClusterRole names and reduce the installer RBAC scope to have the ClusterRoles needed, this can include generated roles.
 * You can achieve this by allowing the installer to get, list, watch and update any cluster roles.
 
 Note: Production tools to help you manage RBAC are also available with OLM v1 release.
@@ -343,6 +343,7 @@ kubectl create clusterrolebinding my-cluster-extension-installer-role-binding \
 ### Example ClusterExtension with RBAC
 This is an example of the argocd installer with the necessary RBAC to deploy the ArgoCD ClusterExtension.
 
+??? note
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
