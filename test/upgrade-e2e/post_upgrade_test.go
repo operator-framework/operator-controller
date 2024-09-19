@@ -67,12 +67,12 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		var clusterCatalog catalogdv1alpha1.ClusterCatalog
 		assert.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, &clusterCatalog))
-		cond := apimeta.FindStatusCondition(clusterCatalog.Status.Conditions, catalogdv1alpha1.TypeUnpacked)
+		cond := apimeta.FindStatusCondition(clusterCatalog.Status.Conditions, catalogdv1alpha1.TypeServing)
 		if !assert.NotNil(ct, cond) {
 			return
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, catalogdv1alpha1.ReasonUnpackSuccessful, cond.Reason)
+		assert.Equal(ct, catalogdv1alpha1.ReasonAvailable, cond.Reason)
 	}, time.Minute, time.Second)
 
 	t.Log("Checking that the ClusterExtension is installed")
