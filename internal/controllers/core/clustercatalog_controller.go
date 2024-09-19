@@ -18,17 +18,17 @@ package core
 
 import (
 	"context" // #nosec
+	"errors"
 	"fmt"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apimacherrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/operator-framework/catalogd/api/core/v1alpha1"
@@ -46,8 +46,9 @@ const (
 // ClusterCatalogReconciler reconciles a Catalog object
 type ClusterCatalogReconciler struct {
 	client.Client
-	Unpacker source.Unpacker
-	Storage  storage.Instance
+	Unpacker   source.Unpacker
+	Storage    storage.Instance
+	Finalizers crfinalizer.Finalizers
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs,verbs=get;list;watch;create;update;patch;delete
@@ -73,23 +74,35 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	reconciledCatsrc := existingCatsrc.DeepCopy()
 	res, reconcileErr := r.reconcile(ctx, reconciledCatsrc)
 
-	// Update the status subresource before updating the main object. This is
-	// necessary because, in many cases, the main object update will remove the
-	// finalizer, which will cause the core Kubernetes deletion logic to
-	// complete. Therefore, we need to make the status update prior to the main
-	// object update to ensure that the status update can be processed before
-	// a potential deletion.
-	if !equality.Semantic.DeepEqual(existingCatsrc.Status, reconciledCatsrc.Status) {
-		if updateErr := r.Client.Status().Update(ctx, reconciledCatsrc); updateErr != nil {
-			return res, apimacherrors.NewAggregate([]error{reconcileErr, updateErr})
+	// Do checks before any Update()s, as Update() may modify the resource structure!
+	updateStatus := !equality.Semantic.DeepEqual(existingCatsrc.Status, reconciledCatsrc.Status)
+	updateFinalizers := !equality.Semantic.DeepEqual(existingCatsrc.Finalizers, reconciledCatsrc.Finalizers)
+	unexpectedFieldsChanged := checkForUnexpectedFieldChange(existingCatsrc, *reconciledCatsrc)
+
+	if unexpectedFieldsChanged {
+		panic("spec or metadata changed by reconciler")
+	}
+
+	// Save the finalizers off to the side. If we update the status, the reconciledCatsrc will be updated
+	// to contain the new state of the ClusterCatalog, which contains the status update, but (critically)
+	// does not contain the finalizers. After the status update, we need to re-add the finalizers to the
+	// reconciledCatsrc before updating the object.
+	finalizers := reconciledCatsrc.Finalizers
+
+	if updateStatus {
+		if err := r.Client.Status().Update(ctx, reconciledCatsrc); err != nil {
+			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating status: %v", err))
 		}
 	}
-	existingCatsrc.Status, reconciledCatsrc.Status = v1alpha1.ClusterCatalogStatus{}, v1alpha1.ClusterCatalogStatus{}
-	if !equality.Semantic.DeepEqual(existingCatsrc, reconciledCatsrc) {
-		if updateErr := r.Client.Update(ctx, reconciledCatsrc); updateErr != nil {
-			return res, apimacherrors.NewAggregate([]error{reconcileErr, updateErr})
+
+	reconciledCatsrc.Finalizers = finalizers
+
+	if updateFinalizers {
+		if err := r.Client.Update(ctx, reconciledCatsrc); err != nil {
+			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating finalizers: %v", err))
 		}
 	}
+
 	return res, reconcileErr
 }
 
@@ -109,18 +122,20 @@ func (r *ClusterCatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // linting from the linter that was fussing about this.
 // nolint:unparam
 func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.ClusterCatalog) (ctrl.Result, error) {
-	if catalog.DeletionTimestamp.IsZero() && !controllerutil.ContainsFinalizer(catalog, fbcDeletionFinalizer) {
-		controllerutil.AddFinalizer(catalog, fbcDeletionFinalizer)
-		return ctrl.Result{}, nil
+	finalizeResult, err := r.Finalizers.Finalize(ctx, catalog)
+	if err != nil {
+		// TODO: For now, this error handling follows the pattern of other error handling.
+		//  Namely: zero just about everything out, throw our hands up, and return an error.
+		//  This is not ideal, and we should consider a more nuanced approach that resolves
+		//  as much status as possible before returning, or at least keeps previous state if
+		//  it is properly labeled with its observed generation.
+		_ = updateStatusStorageError(&catalog.Status, err)
+		_ = updateStatusUnpackFailing(&catalog.Status, err)
+		return ctrl.Result{}, err
 	}
-	if !catalog.DeletionTimestamp.IsZero() {
-		if err := r.Storage.Delete(catalog.Name); err != nil {
-			return ctrl.Result{}, updateStatusStorageDeleteError(&catalog.Status, err)
-		}
-		if err := r.Unpacker.Cleanup(ctx, catalog); err != nil {
-			return ctrl.Result{}, updateStatusStorageDeleteError(&catalog.Status, err)
-		}
-		controllerutil.RemoveFinalizer(catalog, fbcDeletionFinalizer)
+	if finalizeResult.Updated || finalizeResult.StatusUpdated {
+		// On create: make sure the finalizer is applied before we do anything
+		// On delete: make sure we do nothing after the finalizer is removed
 		return ctrl.Result{}, nil
 	}
 
@@ -270,4 +285,38 @@ func (r *ClusterCatalogReconciler) needsUnpacking(catalog *v1alpha1.ClusterCatal
 	}
 	// time to unpack
 	return true
+}
+
+// Compare resources - ignoring status & metadata.finalizers
+func checkForUnexpectedFieldChange(a, b v1alpha1.ClusterCatalog) bool {
+	a.Status, b.Status = v1alpha1.ClusterCatalogStatus{}, v1alpha1.ClusterCatalogStatus{}
+	a.Finalizers, b.Finalizers = []string{}, []string{}
+	return !equality.Semantic.DeepEqual(a, b)
+}
+
+type finalizerFunc func(ctx context.Context, obj client.Object) (crfinalizer.Result, error)
+
+func (f finalizerFunc) Finalize(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+	return f(ctx, obj)
+}
+
+func NewFinalizers(localStorage storage.Instance, unpacker source.Unpacker) (crfinalizer.Finalizers, error) {
+	f := crfinalizer.NewFinalizers()
+	err := f.Register(fbcDeletionFinalizer, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+		catalog, ok := obj.(*v1alpha1.ClusterCatalog)
+		if !ok {
+			panic("could not convert object to clusterCatalog")
+		}
+		if err := localStorage.Delete(catalog.Name); err != nil {
+			return crfinalizer.Result{}, updateStatusStorageDeleteError(&catalog.Status, err)
+		}
+		if err := unpacker.Cleanup(ctx, catalog); err != nil {
+			return crfinalizer.Result{}, updateStatusStorageDeleteError(&catalog.Status, err)
+		}
+		return crfinalizer.Result{}, nil
+	}))
+	if err != nil {
+		return f, err
+	}
+	return f, nil
 }

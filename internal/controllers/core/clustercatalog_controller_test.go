@@ -403,9 +403,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			},
 		},
 		{
-			name:   "storage finalizer not set, storage finalizer gets set",
-			source: &MockSource{},
-			store:  &MockStore{},
+			name: "storage finalizer not set, storage finalizer gets set",
+			source: &MockSource{
+				result: &source.Result{
+					State: source.StateUnpacked,
+					FS:    &fstest.MapFS{},
+				},
+			},
+			store: &MockStore{},
 			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "catalog",
@@ -435,9 +440,14 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			},
 		},
 		{
-			name:   "storage finalizer set, catalog deletion timestamp is not zero (or nil), finalizer removed",
-			source: &MockSource{},
-			store:  &MockStore{},
+			name: "storage finalizer set, catalog deletion timestamp is not zero (or nil), finalizer removed",
+			source: &MockSource{
+				result: &source.Result{
+					State: source.StateUnpacked,
+					FS:    &fstest.MapFS{},
+				},
+			},
+			store: &MockStore{},
 			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "catalog",
@@ -472,7 +482,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		{
 			name:      "storage finalizer set, catalog deletion timestamp is not zero (or nil), storage delete failed, error returned and finalizer not removed",
 			shouldErr: true,
-			source:    &MockSource{},
+			source: &MockSource{
+				result: &source.Result{
+					State: source.StateUnpacked,
+					FS:    &fstest.MapFS{},
+				},
+			},
 			store: &MockStore{
 				shouldError: true,
 			},
@@ -512,6 +527,11 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 							Status: metav1.ConditionFalse,
 							Reason: catalogdv1alpha1.ReasonStorageDeleteFailed,
 						},
+						{
+							Type:   catalogdv1alpha1.TypeUnpacked,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1alpha1.ReasonUnpackFailed,
+						},
 					},
 				},
 			},
@@ -522,6 +542,11 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				Client:   nil,
 				Unpacker: tt.source,
 				Storage:  tt.store,
+			}
+			var err error
+			reconciler.Finalizers, err = NewFinalizers(reconciler.Storage, reconciler.Unpacker)
+			if err != nil {
+				panic("unable to initialize finalizers")
 			}
 			ctx := context.Background()
 
@@ -593,6 +618,11 @@ func TestPollingRequeue(t *testing.T) {
 					FS:    &fstest.MapFS{},
 				}},
 				Storage: &MockStore{},
+			}
+			var err error
+			reconciler.Finalizers, err = NewFinalizers(reconciler.Storage, reconciler.Unpacker)
+			if err != nil {
+				panic("unable to initialize finalizers")
 			}
 			res, _ := reconciler.reconcile(context.Background(), tc.catalog)
 			assert.GreaterOrEqual(t, res.RequeueAfter, tc.expectedRequeueAfter)
@@ -784,7 +814,12 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 				Unpacker: &MockSource{shouldError: true},
 				Storage:  &MockStore{},
 			}
-			_, err := reconciler.reconcile(context.Background(), tc.catalog)
+			var err error
+			reconciler.Finalizers, err = NewFinalizers(reconciler.Storage, reconciler.Unpacker)
+			if err != nil {
+				panic("unable to initialize finalizers")
+			}
+			_, err = reconciler.reconcile(context.Background(), tc.catalog)
 			if tc.expectedUnpackRun {
 				assert.Error(t, err)
 			} else {

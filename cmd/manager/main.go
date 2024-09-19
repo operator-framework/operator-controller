@@ -222,10 +222,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	clusterCatalogFinalizers, err := corecontrollers.NewFinalizers(localStorage, unpacker)
+	if err != nil {
+		setupLog.Error(err, "unable to configure finalizers")
+		os.Exit(1)
+	}
+
 	if err = (&corecontrollers.ClusterCatalogReconciler{
-		Client:   mgr.GetClient(),
-		Unpacker: unpacker,
-		Storage:  localStorage,
+		Client:     mgr.GetClient(),
+		Unpacker:   unpacker,
+		Storage:    localStorage,
+		Finalizers: clusterCatalogFinalizers,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
 		os.Exit(1)
