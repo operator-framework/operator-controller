@@ -344,7 +344,7 @@ kubectl create clusterrolebinding my-cluster-extension-installer-role-binding \
 This is an example of the argocd installer with the necessary RBAC to deploy the ArgoCD ClusterExtension.
 
 ??? note
-```yaml
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
