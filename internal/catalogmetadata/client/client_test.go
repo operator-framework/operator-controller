@@ -34,13 +34,13 @@ func TestClientNew(t *testing.T) {
 			catalog: &catalogd.ClusterCatalog{ObjectMeta: metav1.ObjectMeta{Name: "catalog-1"}},
 			fetcher: fetcherFunc(func(context.Context, *catalogd.ClusterCatalog) (fs.FS, error) { return testFS, nil }),
 			assert: func(t *testing.T, dc *declcfg.DeclarativeConfig, err error) {
-				assert.ErrorContains(t, err, `catalog "catalog-1" is not unpacked`)
+				assert.ErrorContains(t, err, `catalog "catalog-1" is not yet being served`)
 			},
 		},
 		{
 			name: "unpacked, fetcher returns error",
 			catalog: &catalogd.ClusterCatalog{
-				Status: catalogd.ClusterCatalogStatus{Conditions: []metav1.Condition{{Type: catalogd.TypeUnpacked, Status: metav1.ConditionTrue}}},
+				Status: catalogd.ClusterCatalogStatus{Conditions: []metav1.Condition{{Type: catalogd.TypeServing, Status: metav1.ConditionTrue}}},
 			},
 			fetcher: fetcherFunc(func(context.Context, *catalogd.ClusterCatalog) (fs.FS, error) { return nil, errors.New("fetch error") }),
 			assert: func(t *testing.T, dc *declcfg.DeclarativeConfig, err error) {
@@ -50,7 +50,7 @@ func TestClientNew(t *testing.T) {
 		{
 			name: "unpacked, invalid package path",
 			catalog: &catalogd.ClusterCatalog{
-				Status: catalogd.ClusterCatalogStatus{Conditions: []metav1.Condition{{Type: catalogd.TypeUnpacked, Status: metav1.ConditionTrue}}},
+				Status: catalogd.ClusterCatalogStatus{Conditions: []metav1.Condition{{Type: catalogd.TypeServing, Status: metav1.ConditionTrue}}},
 			},
 			fetcher: fetcherFunc(func(context.Context, *catalogd.ClusterCatalog) (fs.FS, error) { return testFS, nil }),
 			pkgName: "/",
@@ -61,7 +61,7 @@ func TestClientNew(t *testing.T) {
 		{
 			name: "unpacked, package missing",
 			catalog: &catalogd.ClusterCatalog{
-				Status: catalogd.ClusterCatalogStatus{Conditions: []metav1.Condition{{Type: catalogd.TypeUnpacked, Status: metav1.ConditionTrue}}},
+				Status: catalogd.ClusterCatalogStatus{Conditions: []metav1.Condition{{Type: catalogd.TypeServing, Status: metav1.ConditionTrue}}},
 			},
 			pkgName: "pkg-missing",
 			fetcher: fetcherFunc(func(context.Context, *catalogd.ClusterCatalog) (fs.FS, error) { return testFS, nil }),
@@ -73,7 +73,7 @@ func TestClientNew(t *testing.T) {
 		{
 			name: "unpacked, invalid package present",
 			catalog: &catalogd.ClusterCatalog{
-				Status: catalogd.ClusterCatalogStatus{Conditions: []metav1.Condition{{Type: catalogd.TypeUnpacked, Status: metav1.ConditionTrue}}},
+				Status: catalogd.ClusterCatalogStatus{Conditions: []metav1.Condition{{Type: catalogd.TypeServing, Status: metav1.ConditionTrue}}},
 			},
 			pkgName: "invalid-pkg-present",
 			fetcher: fetcherFunc(func(context.Context, *catalogd.ClusterCatalog) (fs.FS, error) {
@@ -89,7 +89,7 @@ func TestClientNew(t *testing.T) {
 		{
 			name: "unpacked, package present",
 			catalog: &catalogd.ClusterCatalog{
-				Status: catalogd.ClusterCatalogStatus{Conditions: []metav1.Condition{{Type: catalogd.TypeUnpacked, Status: metav1.ConditionTrue}}},
+				Status: catalogd.ClusterCatalogStatus{Conditions: []metav1.Condition{{Type: catalogd.TypeServing, Status: metav1.ConditionTrue}}},
 			},
 			pkgName: "pkg-present",
 			fetcher: fetcherFunc(func(context.Context, *catalogd.ClusterCatalog) (fs.FS, error) { return testFS, nil }),
