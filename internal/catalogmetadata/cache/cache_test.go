@@ -10,12 +10,14 @@ import (
 	"io/fs"
 	"maps"
 	"net/http"
+	"os"
 	"path/filepath"
 	"testing"
 	"testing/fstest"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -62,7 +64,7 @@ var defaultFS = fstest.MapFS{
 	"fake1/olm.channel/stable.json":      &fstest.MapFile{Data: []byte(stableChannel)},
 }
 
-func TestFilesystemCache(t *testing.T) {
+func TestFilesystemCacheFetchCatalogContents(t *testing.T) {
 	type test struct {
 		name           string
 		catalog        *catalogd.ClusterCatalog
@@ -243,6 +245,64 @@ func TestFilesystemCache(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFilesystemCacheRemove(t *testing.T) {
+	testCatalog := &catalogd.ClusterCatalog{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-catalog",
+		},
+		Status: catalogd.ClusterCatalogStatus{
+			ResolvedSource: &catalogd.ResolvedCatalogSource{
+				Type: catalogd.SourceTypeImage,
+				Image: &catalogd.ResolvedImageSource{
+					ResolvedRef: "fake/catalog@sha256:fakesha",
+				},
+			},
+		},
+	}
+
+	ctx := context.Background()
+	cacheDir := t.TempDir()
+
+	tripper := &mockTripper{}
+	tripper.content = make(fstest.MapFS)
+	maps.Copy(tripper.content, defaultFS)
+	httpClient := &http.Client{
+		Transport: tripper,
+	}
+	c := cache.NewFilesystemCache(cacheDir, func() (*http.Client, error) {
+		return httpClient, nil
+	})
+
+	catalogCachePath := filepath.Join(cacheDir, testCatalog.Name)
+
+	t.Log("Remove cache before it exists")
+	require.NoDirExists(t, catalogCachePath)
+	err := c.Remove(testCatalog.Name)
+	require.NoError(t, err)
+	assert.NoDirExists(t, catalogCachePath)
+
+	t.Log("Fetch contents to populate cache")
+	_, err = c.FetchCatalogContents(ctx, testCatalog)
+	require.NoError(t, err)
+	require.DirExists(t, catalogCachePath)
+
+	t.Log("Temporary change permissions to the cache dir to cause error")
+	require.NoError(t, os.Chmod(catalogCachePath, 0000))
+
+	t.Log("Remove cache causes an error")
+	err = c.Remove(testCatalog.Name)
+	require.ErrorContains(t, err, "error removing cache directory")
+	require.DirExists(t, catalogCachePath)
+
+	t.Log("Restore directory permissions for successful removal")
+	require.NoError(t, os.Chmod(catalogCachePath, 0777))
+
+	t.Log("Remove cache")
+	err = c.Remove(testCatalog.Name)
+	require.NoError(t, err)
+	assert.NoDirExists(t, catalogCachePath)
 }
 
 var _ http.RoundTripper = &mockTripper{}
