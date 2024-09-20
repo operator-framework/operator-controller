@@ -4,7 +4,7 @@
 The following `make run` starts a [KIND](https://sigs.k8s.io/kind) cluster for you to get a local cluster for testing, see the manual install steps below for how to run against a remote cluster.
 
 > [!NOTE]
-> Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
+> You will need a container runtime environment, like Docker, or experimentally, Podman, installed, to run Kind.
 > 
 > If you are on MacOS, see [Special Setup for MacOS](#special-setup-for-macos).
 
@@ -167,7 +167,7 @@ brew install bash gnu-tar gsed
 To configure your shell, either add this to your bash or zsh profile (e.g., in $HOME/.bashrc or $HOME/.zshrc), or run the following command in the terminal:
 
 ```sh
-for bindir in `find $(brew --prefix)/opt -type d -follow -name gnubin -print`
+for bindir in `find $(brew --prefix)/opt -type d -follow -name gnubin -print -maxdepth 3`
 do
   export PATH=$bindir:$PATH
 done
