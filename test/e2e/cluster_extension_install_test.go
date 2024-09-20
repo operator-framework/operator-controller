@@ -614,12 +614,12 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 	require.NoError(t, err)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.Name}, extensionCatalog))
-		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, catalogd.TypeUnpacked)
+		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, catalogd.TypeServing)
 		if !assert.NotNil(ct, cond) {
 			return
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, catalogd.ReasonUnpackSuccessful, cond.Reason)
+		assert.Equal(ct, catalogd.ReasonAvailable, cond.Reason)
 	}, pollDuration, pollInterval)
 
 	t.Log("By eventually reporting a successful resolution and bundle path")
@@ -714,12 +714,12 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	require.NoError(t, err)
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: extensionCatalog.Name}, extensionCatalog))
-		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, catalogd.TypeUnpacked)
+		cond := apimeta.FindStatusCondition(extensionCatalog.Status.Conditions, catalogd.TypeServing)
 		if !assert.NotNil(ct, cond) {
 			return
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, catalogd.ReasonUnpackSuccessful, cond.Reason)
+		assert.Equal(ct, catalogd.ReasonAvailable, cond.Reason)
 	}, pollDuration, pollInterval)
 
 	t.Log("By eventually reporting a successful resolution and bundle path")
