@@ -18,6 +18,9 @@ spec:
     - jsonPath: .status.lastUnpacked
       name: LastUnpacked
       type: date
+    - jsonPath: .status.conditions[?(@.type=="Serving")].status
+      name: Serving
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date

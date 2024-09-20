@@ -84,13 +84,9 @@ of a catalog can be read from:
 
 ```yaml
   status:
-    conditions:
-    - lastTransitionTime: "2023-09-14T15:21:18Z"
-      message: successfully unpacked the catalog image "quay.io/operatorhubio/catalog@sha256:e53267559addc85227c2a7901ca54b980bc900276fc24d3f4db0549cb38ecf76"
-      reason: UnpackSuccessful
-      status: "True"
-      type: Unpacked
-    contentURL: https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/all.json
+    .
+    .
+    contentURL: https://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json
     resolvedSource:
       image:
         ref: quay.io/operatorhubio/catalog@sha256:e53267559addc85227c2a7901ca54b980bc900276fc24d3f4db0549cb38ecf76

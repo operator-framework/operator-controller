@@ -39,4 +39,4 @@ kubectl apply -f "${catalogd_manifest}"
 kubectl_wait "olmv1-system" "deployment/catalogd-controller-manager" "60s"
 
 kubectl apply -f "${default_catalogs}"
-kubectl wait --for=condition=Unpacked "clustercatalog/operatorhubio" --timeout="60s"
+kubectl wait --for=condition=Serving "clustercatalog/operatorhubio" --timeout="60s"

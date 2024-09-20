@@ -40,58 +40,48 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
     ```sh
     Name:         operatorhubio
     Namespace:    
-    Labels:       <none>
+    Labels:       olm.operatorframework.io/metadata.name=operatorhubio
     Annotations:  <none>
     API Version:  olm.operatorframework.io/v1alpha1
     Kind:         ClusterCatalog
     Metadata:
-      Creation Timestamp:  2023-06-23T18:35:13Z
-      Generation:          1
-      Managed Fields:
-        API Version:  olm.operatorframework.io/v1alpha1
-        Fields Type:  FieldsV1
-        fieldsV1:
-          f:metadata:
-            f:annotations:
-              .:
-              f:kubectl.kubernetes.io/last-applied-configuration:
-          f:spec:
-            .:
-            f:source:
-              .:
-              f:image:
-                .:
-                f:ref:
-              f:type:
-        Manager:      kubectl-client-side-apply
-        Operation:    Update
-        Time:         2023-06-23T18:35:13Z
-        API Version:  olm.operatorframework.io/v1alpha1
-        Fields Type:  FieldsV1
-        fieldsV1:
-          f:status:
-            .:
-            f:conditions:
-        Manager:         manager
-        Operation:       Update
-        Subresource:     status
-        Time:            2023-06-23T18:35:43Z
-      Resource Version:  1397
-      UID:               709cee9d-c669-46e1-97d0-e97dcce8f388
+      Creation Timestamp:  2024-09-12T13:37:04Z
+      Finalizers:
+        olm.operatorframework.io/delete-server-cache
+      Generation:        1
+      Resource Version:  961
+      UID:               fa6bb9cf-1a36-4189-a7a0-83284c3f6f55
     Spec:
+      Priority:  0
       Source:
         Image:
-          Ref:  quay.io/operatorhubio/catalog:latest
-        Type:   image
+          Poll Interval:  10m0s
+          Ref:            quay.io/operatorhubio/catalog:latest
+        Type:             image
     Status:
       Conditions:
-        Last Transition Time:  2023-06-23T18:35:13Z
-        Message:               
-        Reason:                Unpacking
+        Last Transition Time:  2024-09-12T13:37:53Z
+        Message:               Successfully unpacked and stored content from quay.io/operatorhubio/catalog:latest
+        Reason:                Succeeded
         Status:                False
-        Type:                  Unpacked
-    Events:                    <none>
-    ```
+        Type:                  Progressing
+        Last Transition Time:  2024-09-12T13:37:53Z
+        Message:               Content from quay.io/operatorhubio/catalog:latest is being served
+        Reason:                Available
+        Status:                True
+        Type:                  Serving
+      Content URL:             https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/all.json
+      Last Unpacked:           2024-09-12T13:37:52Z
+      Observed Generation:     1
+      Resolved Source:
+        Image:
+          Last Poll Attempt:  2024-09-12T13:37:52Z
+          Last Unpacked:      2024-09-12T13:37:52Z
+          Ref:                quay.io/operatorhubio/catalog:latest
+          Resolved Ref:       quay.io/operatorhubio/catalog@sha256:4453a361198d39d0390fd8c1a7f07b5a5a3ae1e8dac9979ef0c4eba46299df16
+        Type:                 image
+   Events:                   <none>
+   ```
 
 1. Port forward the `catalogd-service` service in the `olmv1-system` namespace:
     ```sh

@@ -66,14 +66,14 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			Expect(found).To(BeTrue())
 
 			catalog := &catalogd.ClusterCatalog{}
-			By("Ensuring ClusterCatalog has Status.Condition of Unpacked with a status == True")
+			By("Ensuring ClusterCatalog has Status.Condition of Progressing with a status == False, reason == Succeeded")
 			Eventually(func(g Gomega) {
 				err := c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, catalog)
 				g.Expect(err).ToNot(HaveOccurred())
-				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeUnpacked)
+				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeProgressing)
 				g.Expect(cond).ToNot(BeNil())
-				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-				g.Expect(cond.Reason).To(Equal(catalogd.ReasonUnpackSuccessful))
+				g.Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				g.Expect(cond.Reason).To(Equal(catalogd.ReasonSucceeded))
 			}).Should(Succeed())
 
 			expectedFBC, err := os.ReadFile("../../testdata/catalogs/test-catalog/expected_all.json")
@@ -86,6 +86,15 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 				g.Expect(cmp.Diff(expectedFBC, actualFBC)).To(BeEmpty())
 			}).Should(Succeed())
 
+			By("Ensuring ClusterCatalog has Status.Condition of Serving with a status == True, reason == Available")
+			Eventually(func(g Gomega) {
+				err := c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, catalog)
+				g.Expect(err).ToNot(HaveOccurred())
+				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeServing)
+				g.Expect(cond).ToNot(BeNil())
+				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+				g.Expect(cond.Reason).To(Equal(catalogd.ReasonAvailable))
+			}).Should(Succeed())
 		})
 	})
 })
