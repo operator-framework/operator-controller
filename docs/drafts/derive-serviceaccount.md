@@ -41,33 +41,15 @@ clusterPermissions:
     - apiGroups: [user.openshift.io]
       resources: [users, groups, identities]
       verbs: [get, list]
-```
-
-In addition to cluster permissions, it specifies these additional permissions to manage itself:
-
-```yml
 permissions:
-        - rules:
-            - apiGroups:
-                - apps
-              resourceNames:
-                - <cluster-extension-name>
-              resources:
-                - deployments/finalizers
-              verbs:
-                - update
-            - apiGroups:
-                - apps
-              resources:
-                - deployments
-              verbs:
-                - create
-                - delete
-                - get
-                - list
-                - patch
-                - update
-                - watch
+  - rules:
+    - apiGroups: [apps]
+      resourceNames: [<cluster-extension-name>]
+      resources: [deployments/finalizers]
+      verbs: [update]
+    - apiGroups: [apps]
+      resources: [deployments]
+      verbs: [create, delete, get, list, patch, update, watch]
 ```
 
 Here are the ClusterRole end and ClusterRoleBinding for the above cluster permissions.
