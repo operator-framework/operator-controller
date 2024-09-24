@@ -6,7 +6,7 @@ This document describes the OLM v1 architecture. OLM v1 consists of two main com
 * [operator-controller](https://github.com/operator-framework/operator-controller)
 * [catalogD](https://github.com/operator-framework/catalogd)
 
-The below diagram and text explains the sub-components within each code repository and how they related to each-other.
+The diagram below illustrates the OLM v1 architecture and its components,  and the following sections describe each of the components in detail.
 
 ### Operator-controller:
 
