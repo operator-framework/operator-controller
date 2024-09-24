@@ -583,12 +583,6 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
 	require.Equal(t, ocv1alpha1.ReasonSuccess, installedCond.Reason)
 
-	t.Log("By checking the expected healthy conditions")
-	managedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeHealthy)
-	require.NotNil(t, managedCond)
-	require.Equal(t, metav1.ConditionUnknown, managedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonUnverifiable, managedCond.Reason)
-
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }
 
@@ -682,12 +676,6 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 	require.NotNil(t, installedCond)
 	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
 	require.Equal(t, ocv1alpha1.ReasonSuccess, installedCond.Reason)
-
-	t.Log("By checking the expected healthy conditions")
-	managedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeHealthy)
-	require.NotNil(t, managedCond)
-	require.Equal(t, metav1.ConditionUnknown, managedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonUnverifiable, managedCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }

@@ -316,34 +316,12 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	l.V(1).Info("watching managed objects")
 	cache, err := r.Manager.Get(ctx, ext)
 	if err != nil {
-		// If we fail to get the cache, set the Healthy condition to
-		// "Unknown". We can't know the health of resources we can't monitor
-		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1alpha1.TypeHealthy,
-			Reason:             ocv1alpha1.ReasonUnverifiable,
-			Status:             metav1.ConditionUnknown,
-			Message:            err.Error(),
-			ObservedGeneration: ext.Generation,
-		})
 		return ctrl.Result{}, err
 	}
 
 	if err := cache.Watch(ctx, r.controller, managedObjs...); err != nil {
-		// If we fail to establish watches, set the Healthy condition to
-		// "Unknown". We can't know the health of resources we can't monitor
-		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1alpha1.TypeHealthy,
-			Reason:             ocv1alpha1.ReasonUnverifiable,
-			Status:             metav1.ConditionUnknown,
-			Message:            err.Error(),
-			ObservedGeneration: ext.Generation,
-		})
 		return ctrl.Result{}, err
 	}
-
-	// If we have successfully established the watches, remove the "Healthy" condition.
-	// It should be interpreted as "Unknown" when not present.
-	apimeta.RemoveStatusCondition(&ext.Status.Conditions, ocv1alpha1.TypeHealthy)
 
 	return ctrl.Result{}, nil
 }
