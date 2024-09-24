@@ -412,8 +412,8 @@ type CRDUpgradeSafetyPreflightConfig struct {
 
 const (
 	// TODO(user): add more Types, here and into init()
-	TypeInstalled = "Installed"
-	TypeResolved  = "Resolved"
+	TypeInstalled   = "Installed"
+	TypeResolved    = "Resolved"
 	TypeProgressing = "Progressing"
 
 	// TypeDeprecated is a rollup condition that is present when
@@ -432,8 +432,6 @@ const (
 
 	ReasonErrorGettingClient       = "ErrorGettingClient"
 	ReasonErrorGettingReleaseState = "ErrorGettingReleaseState"
-
-	ReasonUnverifiable = "Unverifiable"
 
 	CRDUpgradeSafetyPolicyEnabled  CRDUpgradeSafetyPolicy = "Enabled"
 	CRDUpgradeSafetyPolicyDisabled CRDUpgradeSafetyPolicy = "Disabled"
@@ -458,7 +456,6 @@ func init() {
 		ReasonFailed,
 		ReasonErrorGettingClient,
 		ReasonErrorGettingReleaseState,
-		ReasonUnverifiable,
 		ReasonBlocked,
 		ReasonRetrying,
 	)
