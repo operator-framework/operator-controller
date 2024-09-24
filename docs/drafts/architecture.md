@@ -10,7 +10,17 @@ The diagram below illustrates the OLM v1 architecture and its components,  and t
 
 ### Operator-controller:
 
-operator-controller is the central component of OLM v1, that consumes all of the components below to extend Kubernetes to allows users to install, and manage the lifecycle of other extensions
+operator-controller is the central component of OLM v1. It is responsible:
+ * managing a cache of catalog metadata provided by catalogd through its HTTP server
+ * keeping the catalog metadata cache up-to-date with the current state of the catalogs
+ * locating the right `registry+v1` bundle, if any,  that meet the constraints expressed in the `ClusterExtension` resource, such as package name, version range, channel, etc. given the current state of the cluster
+ * unpacking the bundle
+ * applying the bundle manifests: installing or updating the content.
+ 
+ It has three main sub-components:
+ * Cluster Extension Controller: ...
+ * Resolver: ...
+ * Bundle Cache: ...
 
 * Operator-controller queries the catalogd (catalogd HTTP Server) to get catalog information.  Once received the catalog information is saved  to catalog-cache. The cache will be updated automatically if a Catalog is noticed to have a different resolved image reference.
 * Resolver in operator-controller helps the extension controller to filter the bundle reference after applying the user restrictions (e.g. name, priority etc) and returns the bundle reference to the extension controller.
