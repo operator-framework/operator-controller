@@ -19,7 +19,7 @@ operator-controller is the central component of OLM v1, that consumes all of the
 
 ### Catalogd:
 
-Catalogd unpacks [file-based catalog (FBC)](https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs) content that is packaged and shipped in container images, for consumption by clients on-clusters (unpacking from other sources, like git repos, OCI artifacts etc, are in the roadmap for catalogD). As component of the Operator Lifecycle Manager (OLM) v1 microservices architecture, catalogD hosts metadata for Kubernetes extensions packaged by the authors of the extensions, as a result helping customers discover installable content.
+Catalogd unpacks [file-based catalog (FBC)](https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs) content that is packaged and shipped in container images, for consumption by clients on-clusters (unpacking from other sources, like git repos, OCI artifacts etc, are in the roadmap for catalogD). It serves the extension metadata, provided by the extension authors, found in the FBC, making it possible for on-cluster clients to discover installable content.
 
 * Catalogd can be broken down in to three sub-components i.e. ClusterCatalog controller, catalogd http server, catalogd content cache.
 * Catalog controller  is responsible for pulling FBC based catalog images from registry and unpacking them into the catalog content cache. It is also responsible for reconciling the latest changes in the cluster catalog.
