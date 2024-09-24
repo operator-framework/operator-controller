@@ -1,7 +1,7 @@
 
 ## OLM V1 Architecture
 
-This document talks about the V1 architecture. OLM V1 consists of many components, however majority of the code is divided in to two components
+This document describes the OLM v1 architecture. OLM v1 consists of two main components:
 
 * [operator-controller](https://github.com/operator-framework/operator-controller)
 * [catalogD](https://github.com/operator-framework/catalogd)
