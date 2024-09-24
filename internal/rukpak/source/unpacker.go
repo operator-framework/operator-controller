@@ -59,15 +59,6 @@ type Result struct {
 type State string
 
 const (
-	// StatePending conveys that a request for unpacking a bundle has been
-	// acknowledged, but not yet started.
-	StatePending State = "Pending"
-
-	// StateUnpacking conveys that the source is currently unpacking a bundle.
-	// This state should be used when the bundle contents are being downloaded
-	// and processed.
-	StateUnpacking State = "Unpacking"
-
 	// StateUnpacked conveys that the bundle has been successfully unpacked.
 	StateUnpacked State = "Unpacked"
 )

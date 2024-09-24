@@ -22,12 +22,12 @@ import (
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 )
 
-var (
-	ClusterExtensionKind = "ClusterExtension"
-)
+var ClusterExtensionKind = "ClusterExtension"
 
-type UpgradeConstraintPolicy string
-type CRDUpgradeSafetyPolicy string
+type (
+	UpgradeConstraintPolicy string
+	CRDUpgradeSafetyPolicy  string
+)
 
 const (
 	// The extension will only upgrade if the new version satisfies
@@ -414,6 +414,7 @@ const (
 	// TODO(user): add more Types, here and into init()
 	TypeInstalled = "Installed"
 	TypeResolved  = "Resolved"
+	TypeProgressing = "Progressing"
 
 	// TypeDeprecated is a rollup condition that is present when
 	// any of the deprecated conditions are present.
@@ -426,6 +427,8 @@ const (
 	ReasonSuccess    = "Succeeded"
 	ReasonDeprecated = "Deprecated"
 	ReasonFailed     = "Failed"
+	ReasonBlocked    = "Blocked"
+	ReasonRetrying   = "Retrying"
 
 	ReasonErrorGettingClient       = "ErrorGettingClient"
 	ReasonErrorGettingReleaseState = "ErrorGettingReleaseState"
@@ -446,6 +449,7 @@ func init() {
 		TypeChannelDeprecated,
 		TypeBundleDeprecated,
 		TypeUnpacked,
+		TypeProgressing,
 	)
 	// TODO(user): add Reasons from above
 	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
@@ -455,6 +459,8 @@ func init() {
 		ReasonErrorGettingClient,
 		ReasonErrorGettingReleaseState,
 		ReasonUnverifiable,
+		ReasonBlocked,
+		ReasonRetrying,
 	)
 }
 
