@@ -31,22 +31,16 @@ You can determine the specifics of these permissions by referencing the bundle o
 * Permissions to create the controller deployment, this corresponds to the rules to manage the
   deployment defined in the ClusterServiceVersion
 
-### Derive minimal RBAC
+### Example to derive RBAC
 
-As an example, consider a cluster extension that needs to query OpenShift users and groups as part of its controller logic and specifies the below cluster permissions in its ClusterServiceVersion:
+As an example, consider a cluster extension that needs to query OpenShift users and groups as part of its controller logic and specifies the following permissions in its ClusterServiceVersion under `.spec.install.clusterPermissions`:
 
 ```yml
 clusterPermissions:
-        - rules:
-            - apiGroups:
-                - user.openshift.io
-              resources:
-                - users
-                - groups
-                - identities
-              verbs:
-                - get
-                - list
+  - rules:
+    - apiGroups: [user.openshift.io]
+      resources: [users, groups, identities]
+      verbs: [get, list]
 ```
 
 In addition to cluster permissions, it specifies these additional permissions to manage itself:
@@ -76,7 +70,7 @@ permissions:
                 - watch
 ```
 
-Below is the translation of the above cluster permissions into ClusterRole and ClusterRoleBinding for your cluster extension:
+Here are the ClusterRole end and ClusterRoleBinding for the above cluster permissions.
 
 ```yml
 apiVersion: rbac.authorization.k8s.io/v1
