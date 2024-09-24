@@ -200,7 +200,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		//  it is properly labeled with its observed generation.
 		setInstallStatus(ext, nil)
 		setResolutionStatus(ext, nil)
-		setResolvedStatusConditionFailed(ext, err.Error())
 		setStatusProgressing(ext, err)
 		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonFailed, err.Error())
 		return ctrl.Result{}, err
@@ -228,7 +227,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		// Note: We don't distinguish between resolution-specific errors and generic errors
 		setInstallStatus(ext, nil)
 		setResolutionStatus(ext, nil)
-		setResolvedStatusConditionFailed(ext, err.Error())
 		setStatusProgressing(ext, err)
 		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonFailed, err.Error())
 		return ctrl.Result{}, err
@@ -255,7 +253,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		Bundle: resolvedBundleMetadata,
 	}
 	setResolutionStatus(ext, resStatus)
-	setResolvedStatusConditionSuccess(ext, fmt.Sprintf("resolved to %q", resolvedBundle.Image))
 
 	bundleSource := &rukpaksource.BundleSource{
 		Name: ext.GetName(),

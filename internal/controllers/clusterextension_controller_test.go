@@ -83,13 +83,7 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected conditions")
-	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, cond)
-	require.Equal(t, metav1.ConditionFalse, cond.Status)
-	require.Equal(t, ocv1alpha1.ReasonFailed, cond.Reason)
-	require.Equal(t, fmt.Sprintf("no package %q found", pkgName), cond.Message)
-
-	cond = apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+	cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 	require.NotNil(t, cond)
 	require.Equal(t, metav1.ConditionTrue, cond.Status)
 	require.Equal(t, ocv1alpha1.ReasonRetrying, cond.Reason)
@@ -161,12 +155,6 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected conditions")
-	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, resolvedCond)
-	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
-	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
-
 	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 	require.NotNil(t, progressingCond)
 	require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
@@ -302,13 +290,6 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 	require.Equal(t, expectedBundleMetadata, clusterExtension.Status.Resolution.Bundle)
 	require.Empty(t, clusterExtension.Status.Install)
 
-	t.Log("By checking the expected resolution conditions")
-	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, resolvedCond)
-	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
-	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
-
 	t.Log("By checking the expected installed conditions")
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, installedCond)
@@ -393,13 +374,6 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 	t.Log("By checking the status fields")
 	require.Equal(t, ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
 	require.Equal(t, ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
-
-	t.Log("By checking the expected resolution conditions")
-	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, resolvedCond)
-	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
-	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
 
 	t.Log("By checking the expected installed conditions")
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
@@ -488,13 +462,6 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 	require.Equal(t, ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
 	require.Equal(t, ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
 
-	t.Log("By checking the expected resolution conditions")
-	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, resolvedCond)
-	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
-	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
-
 	t.Log("By checking the expected installed conditions")
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, installedCond)
@@ -578,13 +545,6 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	t.Log("By checking the status fields")
 	require.Equal(t, ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
 	require.Equal(t, ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
-
-	t.Log("By checking the expected resolution conditions")
-	resolvedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeResolved)
-	require.NotNil(t, resolvedCond)
-	require.Equal(t, metav1.ConditionTrue, resolvedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, resolvedCond.Reason)
-	require.Equal(t, "resolved to \"quay.io/operatorhubio/prometheus@fake1.0.0\"", resolvedCond.Message)
 
 	t.Log("By checking the expected installed conditions")
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
