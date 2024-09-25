@@ -422,7 +422,6 @@ const (
 	TypePackageDeprecated = "PackageDeprecated"
 	TypeChannelDeprecated = "ChannelDeprecated"
 	TypeBundleDeprecated  = "BundleDeprecated"
-	TypeUnpacked          = "Unpacked"
 
 	ReasonSuccess    = "Succeeded"
 	ReasonDeprecated = "Deprecated"
@@ -446,7 +445,6 @@ func init() {
 		TypePackageDeprecated,
 		TypeChannelDeprecated,
 		TypeBundleDeprecated,
-		TypeUnpacked,
 		TypeProgressing,
 	)
 	// TODO(user): add Reasons from above

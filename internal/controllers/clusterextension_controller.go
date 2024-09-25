@@ -267,7 +267,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	l.V(1).Info("unpacking resolved bundle")
 	unpackResult, err := r.Unpacker.Unpack(ctx, bundleSource)
 	if err != nil {
-		setStatusUnpackFailed(ext, err.Error())
 		// Wrap the error passed to this with the resolution information until we have successfully
 		// installed since we intend for the progressing condition to replace the resolved condition
 		// and will be removing the .status.resolution field from the ClusterExtension status API
@@ -275,10 +274,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
-	switch unpackResult.State {
-	case rukpaksource.StateUnpacked:
-		setStatusUnpacked(ext, unpackResult.Message)
-	default:
+	if unpackResult.State != rukpaksource.StateUnpacked {
 		panic(fmt.Sprintf("unexpected unpack state %q", unpackResult.State))
 	}
 

@@ -70,30 +70,6 @@ func setInstalledStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message
 	})
 }
 
-func setStatusUnpackFailed(ext *ocv1alpha1.ClusterExtension, message string) {
-	setInstallStatus(ext, nil)
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeUnpacked,
-		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonFailed,
-		Message:            message,
-		ObservedGeneration: ext.GetGeneration(),
-	})
-}
-
-func setStatusUnpacked(ext *ocv1alpha1.ClusterExtension, message string) {
-	if message == "" {
-		message = "unpack successful"
-	}
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeUnpacked,
-		Status:             metav1.ConditionTrue,
-		Reason:             ocv1alpha1.ReasonSuccess,
-		Message:            message,
-		ObservedGeneration: ext.GetGeneration(),
-	})
-}
-
 func setResolutionStatus(ext *ocv1alpha1.ClusterExtension, resStatus *ocv1alpha1.ClusterExtensionResolutionStatus) {
 	ext.Status.Resolution = resStatus
 }
