@@ -31,4 +31,4 @@ spec:
       ref: ${TEST_CLUSTER_CATALOG_IMAGE}
 EOF
 
-kubectl wait --for=condition=Unpacked --timeout=60s ClusterCatalog $TEST_CLUSTER_CATALOG_NAME
+kubectl wait --for=condition=Serving --timeout=60s ClusterCatalog "$TEST_CLUSTER_CATALOG_NAME"
