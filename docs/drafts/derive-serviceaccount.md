@@ -6,9 +6,9 @@ This document serves as a guide for how to derive the RBAC necessary to install 
 
 ### Required RBAC
 
-You can determine the specifics of these permissions by referencing the bundle of the ClusterExtension you want to install. The service account must have the following permissions:
+You can determine the specifics of the permissions required by your ClusterExtension by referencing the bundle of the ClusterExtension you want to install. The service account must have the following permissions:
 
-1) The service account should be bound to one ClusterRole, defining the permissions for cluster-scoped resources and cluster-wide namespace scoped resources.
+The service account should be bound to one ClusterRole, defining the permissions for cluster-scoped resources and cluster-wide namespace scoped resources.
 
 
 * Create, list, watch verbs for all resources that are a part of the install (cannot be scoped to specific resource names).
@@ -25,7 +25,7 @@ You can determine the specifics of these permissions by referencing the bundle o
   - Permissions to create the necessary roles and rolebindings for the controller to be able to perform its job
 
 
-2) The service account should be bound to a Role to define the permissions for the service account within the installation namespace.
+The service account should be bound to a Role to define the permissions for the service account within the installation namespace.
 
 * Get, update, patch, delete verbs for all resources that are a part of the install (can be scoped to specific resource names)
   - Permissions for non cluster-scoped resources
@@ -86,7 +86,6 @@ rules:
 - apiGroups: [apiextensions.k8s.io]
   resources: [customresourcedefinitions]
   verbs: [create, list, watch]
-
 - apiGroups: [apiextensions.k8s.io]
   resources: [customresourcedefinitions]
   verbs: [get, update, patch, delete]
@@ -120,33 +119,30 @@ rules:
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterrolebindings]
   verbs: [create, list, watch]
-
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterrolebindings]
   verbs: [get, update, patch, delete]
   resourceNames: [<generated cluster role 1>, ..., <generated cluster role n>, <manifest cluster role binding name 1>, ..., <manifest cluster role binding name n>]
 ```
 
-8) The ClusterExtension installer will need permissions to manage ServiceAccounts for your ClusterExtension.
+8) The ClusterExtension installer will need permissions to manage the Deployment for your ClusterExtension.
 
 ```yaml
 - apiGroups: [apps]
   resources: [deployments]
   verbs: [create, list, watch]
-
 - apiGroups: [apps]
   resources: [deployments]
   verbs: [get, update, patch, delete]
   resourceNames: [<cluster-extension>-controller-manager]
 ```
 
-9) The ClusterExtension installer will need permissions to manage the deployment for your ClusterExtension.
+9) The ClusterExtension installer will need permissions to manage the ServiceAccount for your ClusterExtension.
 
 ```yaml
 - apiGroups: [""]
   resources: [serviceaccounts]
   verbs: [create, list, watch]
-
 - apiGroups: [""]
   resources: [serviceaccounts]
   verbs: [get, update, patch, delete]
