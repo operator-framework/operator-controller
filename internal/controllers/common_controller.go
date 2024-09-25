@@ -17,8 +17,11 @@ limitations under the License.
 package controllers
 
 import (
+	"errors"
+
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
@@ -97,4 +100,27 @@ func setResolutionStatus(ext *ocv1alpha1.ClusterExtension, resStatus *ocv1alpha1
 
 func setInstallStatus(ext *ocv1alpha1.ClusterExtension, installStatus *ocv1alpha1.ClusterExtensionInstallStatus) {
 	ext.Status.Install = installStatus
+}
+
+func setStatusProgressing(ext *ocv1alpha1.ClusterExtension, err error) {
+	progressingCond := metav1.Condition{
+		Type:               ocv1alpha1.TypeProgressing,
+		Status:             metav1.ConditionFalse,
+		Reason:             ocv1alpha1.ReasonSuccess,
+		Message:            "desired state reached",
+		ObservedGeneration: ext.GetGeneration(),
+	}
+
+	if err != nil {
+		progressingCond.Status = metav1.ConditionTrue
+		progressingCond.Reason = ocv1alpha1.ReasonRetrying
+		progressingCond.Message = err.Error()
+	}
+
+	if errors.Is(err, reconcile.TerminalError(nil)) {
+		progressingCond.Status = metav1.ConditionFalse
+		progressingCond.Reason = ocv1alpha1.ReasonBlocked
+	}
+
+	apimeta.SetStatusCondition(&ext.Status.Conditions, progressingCond)
 }
