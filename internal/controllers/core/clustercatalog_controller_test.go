@@ -121,7 +121,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 						{
 							Type:   catalogdv1alpha1.TypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1alpha1.ReasonTerminal,
+							Reason: catalogdv1alpha1.ReasonBlocked,
 						},
 					},
 				},
@@ -173,10 +173,10 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			},
 		},
 		{
-			name:          "valid source type, unpack returns unrecoverable error, status updated to reflect unrecoverable error state and error is returned",
-			expectedError: fmt.Errorf("source bundle content: %w", reconcile.TerminalError(fmt.Errorf("mocksource Unrecoverable error"))),
+			name:          "valid source type, unpack returns terminal error, status updated to reflect terminal error state(Blocked) and error is returned",
+			expectedError: fmt.Errorf("source bundle content: %w", reconcile.TerminalError(fmt.Errorf("mocksource terminal error"))),
 			source: &MockSource{
-				unpackError: reconcile.TerminalError(errors.New("mocksource Unrecoverable error")),
+				unpackError: reconcile.TerminalError(errors.New("mocksource terminal error")),
 			},
 			store: &MockStore{},
 			catalog: &catalogdv1alpha1.ClusterCatalog{
@@ -211,7 +211,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 						{
 							Type:   catalogdv1alpha1.TypeProgressing,
 							Status: metav1.ConditionFalse,
-							Reason: catalogdv1alpha1.ReasonTerminal,
+							Reason: catalogdv1alpha1.ReasonBlocked,
 						},
 					},
 				},

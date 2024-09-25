@@ -197,7 +197,7 @@ func updateStatusProgressing(catalog *v1alpha1.ClusterCatalog, err error) {
 
 	if errors.Is(err, reconcile.TerminalError(nil)) {
 		progressingCond.Status = metav1.ConditionFalse
-		progressingCond.Reason = v1alpha1.ReasonTerminal
+		progressingCond.Reason = v1alpha1.ReasonBlocked
 	}
 
 	meta.SetStatusCondition(&catalog.Status.Conditions, progressingCond)

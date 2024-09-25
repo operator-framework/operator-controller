@@ -37,7 +37,7 @@ const (
 	// Progressing reasons
 	ReasonSucceeded = "Succeeded"
 	ReasonRetrying  = "Retrying"
-	ReasonTerminal  = "Terminal"
+	ReasonBlocked   = "Blocked"
 
 	MetadataNameLabel = "olm.operatorframework.io/metadata.name"
 )
