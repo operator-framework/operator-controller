@@ -8,26 +8,30 @@ This document serves as a guide for how to derive the RBAC necessary to install 
 
 You can determine the specifics of these permissions by referencing the bundle of the ClusterExtension you want to install. The service account must have the following permissions:
 
-The service account should be bound to one ClusterRole, defining the permissions for cluster-scoped resources and cluster-wide namespace scoped resources.
-The service account should be bound to a Role to define the permissions for the service account within the installation namespace.
+1) The service account should be bound to one ClusterRole, defining the permissions for cluster-scoped resources and cluster-wide namespace scoped resources.
+
 
 * Create, list, watch verbs for all resources that are a part of the install (cannot be scoped to specific resource names).
   - Permissions to create and manage CustomResourceDefinitions
   - Permissions to create any other manifest objects
   - Rules to manage any other cluster-scoped resources
-  - All the rules defined in the CSV under `.spec.install.clusterPermissions` and `.spec.install.permissions`
+  - All the rules defined in the CSV under `.spec.install.clusterPermissions`.
   - Permissions for namespace-scoped resources.
   - These are specified with ClusterRole + ClusterRoleBinding, ClusterRole + RoleBinding, or Role + RoleBinding.
-
-* Get, update, patch, delete verbs for all resources that are a part of the install (can be scoped to specific resource names)
-  - Permissions for cluster-scoped resources
-  - Permissions for namespace-scoped resources
-  - These are created using ClusterRole + ClusterRoleBinding, ClusterRole + RoleBinding, or Role + RoleBinding
 
 * Permissions to create any ClusterRole, ClusterRoleBinding, Role, RoleBinding resources required by the extension.
   - All the same rules defined in the ClusterRole and Role resources
   - Escalate and bind verbs for ClusterRole, ClusterRoleBinding, Role, RoleBinding resources
   - Permissions to create the necessary roles and rolebindings for the controller to be able to perform its job
+
+
+2) The service account should be bound to a Role to define the permissions for the service account within the installation namespace.
+
+* Get, update, patch, delete verbs for all resources that are a part of the install (can be scoped to specific resource names)
+  - Permissions for non cluster-scoped resources
+  - Permissions for namespace-scoped resources
+   - All the rules defined in the CSV under `.spec.install.permissions`.
+  - These are created using ClusterRole + ClusterRoleBinding, ClusterRole + RoleBinding, or Role + RoleBinding
 
 * Update finalizers on the ClusterExtension to be able to set blockOwnerDeletion and ownerReferences.
 
