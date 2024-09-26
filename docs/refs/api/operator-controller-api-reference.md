@@ -24,7 +24,6 @@ Package v1alpha1 contains API Schema definitions for the olm v1alpha1 API group
 
 _Appears in:_
 - [ClusterExtensionInstallStatus](#clusterextensioninstallstatus)
-- [ClusterExtensionResolutionStatus](#clusterextensionresolutionstatus)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -162,22 +161,6 @@ ClusterExtensionList contains a list of ClusterExtension
 | `items` _[ClusterExtension](#clusterextension) array_ |  |  |  |
 
 
-#### ClusterExtensionResolutionStatus
-
-
-
-
-
-
-
-_Appears in:_
-- [ClusterExtensionStatus](#clusterextensionstatus)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `bundle` _[BundleMetadata](#bundlemetadata)_ | bundle is a representation of the bundle that was identified during<br />resolution to meet all installation/upgrade constraints and is slated to be<br />installed or upgraded to.<br /><br />A "bundle" is a versioned set of content that represents the resources that<br />need to be applied to a cluster to install a package. |  |  |
-
-
 #### ClusterExtensionSpec
 
 
@@ -209,7 +192,6 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `install` _[ClusterExtensionInstallStatus](#clusterextensioninstallstatus)_ |  |  |  |
-| `resolution` _[ClusterExtensionResolutionStatus](#clusterextensionresolutionstatus)_ |  |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions is a representation of the current state for this ClusterExtension.<br />The status is represented by a set of "conditions".<br /><br />Each condition is generally structured in the following format:<br />  - Type: a string representation of the condition type. More or less the condition "name".<br />  - Status: a string representation of the state of the condition. Can be one of ["True", "False", "Unknown"].<br />  - Reason: a string representation of the reason for the current state of the condition. Typically useful for building automation around particular Type+Reason combinations.<br />  - Message: a human readable message that further elaborates on the state of the condition<br /><br />The global set of condition types are:<br />  - "Installed", represents whether or not the a bundle has been installed for this ClusterExtension<br />  - "Resolved", represents whether or not a bundle was found that satisfies the selection criteria outlined in the spec<br />  - "Unpacked", represents whether or not the bundle contents have been successfully unpacked<br /><br />When the ClusterExtension is sourced from a catalog, the following conditions are also possible:<br />  - "Deprecated", represents an aggregation of the PackageDeprecated, ChannelDeprecated, and BundleDeprecated condition types<br />  - "PackageDeprecated", represents whether or not the package specified in the spec.source.catalog.packageName field has been deprecated<br />  - "ChannelDeprecated", represents whether or not any channel specified in spec.source.catalog.channels has been deprecated<br />  - "BundleDeprecated", represents whether or not the installed bundle is deprecated<br /><br />The current set of reasons are:<br />  - "Success", this reason is set on the "Unpacked", "Resolved" and "Installed" conditions when unpacking a bundle's content, resolution and installation/upgrading is successful<br />  - "Failed", this reason is set on the "Unpacked", "Resolved" and "Installed" conditions when an error has occurred while unpacking the contents of a bundle, during resolution or installation. |  |  |
 
 

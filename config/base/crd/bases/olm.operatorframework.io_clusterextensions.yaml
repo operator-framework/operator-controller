@@ -572,34 +572,6 @@ spec:
                 required:
                 - bundle
                 type: object
-              resolution:
-                properties:
-                  bundle:
-                    description: |-
-                      bundle is a representation of the bundle that was identified during
-                      resolution to meet all installation/upgrade constraints and is slated to be
-                      installed or upgraded to.
-
-                      A "bundle" is a versioned set of content that represents the resources that
-                      need to be applied to a cluster to install a package.
-                    properties:
-                      name:
-                        description: |-
-                          name is a required field and is a reference
-                          to the name of a bundle
-                        type: string
-                      version:
-                        description: |-
-                          version is a required field and is a reference
-                          to the version that this bundle represents
-                        type: string
-                    required:
-                    - name
-                    - version
-                    type: object
-                required:
-                - bundle
-                type: object
             type: object
         type: object
     served: true

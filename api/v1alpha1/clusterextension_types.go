@@ -470,8 +470,6 @@ type BundleMetadata struct {
 type ClusterExtensionStatus struct {
 	Install *ClusterExtensionInstallStatus `json:"install,omitempty"`
 
-	Resolution *ClusterExtensionResolutionStatus `json:"resolution,omitempty"`
-
 	// conditions is a representation of the current state for this ClusterExtension.
 	// The status is represented by a set of "conditions".
 	//
@@ -506,16 +504,6 @@ type ClusterExtensionStatus struct {
 
 type ClusterExtensionInstallStatus struct {
 	// bundle is a representation of the currently installed bundle.
-	//
-	// A "bundle" is a versioned set of content that represents the resources that
-	// need to be applied to a cluster to install a package.
-	Bundle BundleMetadata `json:"bundle"`
-}
-
-type ClusterExtensionResolutionStatus struct {
-	// bundle is a representation of the bundle that was identified during
-	// resolution to meet all installation/upgrade constraints and is slated to be
-	// installed or upgraded to.
 	//
 	// A "bundle" is a versioned set of content that represents the resources that
 	// need to be applied to a cluster to install a package.
