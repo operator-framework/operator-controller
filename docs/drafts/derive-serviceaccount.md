@@ -45,27 +45,39 @@ As an example, consider a ClusterExtension that has the following permissions de
 ```yml
 clusterPermissions:
   - rules:
-    - apiGroups: [user.openshift.io]
+    - apiGroups: [user.openshift.io] #1, Cluster-scoped resource
       resources: [users, groups, identities]
       verbs: [get, list]
-    - apiGroups: [rbac.authorization.k8s.io]
+    - apiGroups: [rbac.authorization.k8s.io] #2, Cluster-scoped resource
       resources: [clusterroles, clusterrolebindings]
       verbs: [create]
 permissions:
   - rules:
     - apiGroups: [apps]
-      resources: [deployments]
+      resources: [deployments] #3, Namespace-scoped resource
       verbs: [create, delete, get, list, patch, update, watch]
     - apiGroups: [""]
-      resources: [pods, services]
+      resources: [pods, services] #4, Namespace-scoped resource
       verbs: [create, delete, get, list, patch, update, watch]
 ```
 
 Below is the procedure to create RBAC for the above extension iteratively.
 
-1) Begin by defining a ClusterRole with your ClusterExtension name and including the above clusterPermissions . ClusterExtensions are cluster-scoped permissions and in order to update the ClusterExtension finalizer we should create the below ClusterRole.
-2) In the ClusterServiceVersion above, OpenShift users related permissions are defined which are cluster-scoped resources and are added in ClusterRole below.
-3) If your ClusterServiceVersion file defines additional clusterPermissions, add them to the ClusterRole as done below.
+1) Begin by defining a ClusterRole with your ClusterExtension name and including the above clusterPermissions.
+2) In the ClusterServiceVersion above, OpenShift users related permissions are cluster-scoped resources and should be added to the ClusterRole as done below for `#1, Cluster-scoped resource` in the example above.
+
+```yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: <cluster-extension-name>
+rules:
+- apiGroups: [user.openshift.io]
+  resources: [users, groups, identities]
+  verbs: [get,list]
+```
+
+3) If your ClusterServiceVersion defines additional clusterPermissions, add them to the ClusterRole as done below for `#2, RBAC Cluster-scoped resource`.
 
 ```yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -76,10 +88,8 @@ rules:
 - apiGroups: [rbac.authorization.k8s.io]
   resources: [clusterroles, clusterrolebindings]
   verbs: [create]
-- apiGroups: [user.openshift.io]
-  resources: [users, groups, identities]
-  verbs: [get,list]
 ```
+
 4) The installer will need additional permissions to manage the CustomResourceDefinitions its owns. Add the below rules to enable the installer to manage CustomResourceDefinitions for your ClusterExtension.
 
 ```yaml
@@ -101,7 +111,7 @@ rules:
   resourceNames: [<cluster-extension-name>]
 ```
 
-6) The ClusterExtension installer will need permissions to create clusterroles for your ClusterExtension.
+6) The ClusterExtension installer will need permissions to create clusterroles for your ClusterExtension. ClusterExtensions are cluster-scoped permissions and in order to update the ClusterExtension finalizer we should add the below snippet to our ClusterRole. This was defined in the ClusterServiceVersion in the example ` #2, Cluster-scoped resource`.
 
 ```yaml
 - apiGroups: [rbac.authorization.k8s.io]
@@ -125,19 +135,7 @@ rules:
   resourceNames: [<generated cluster role 1>, ..., <generated cluster role n>, <manifest cluster role binding name 1>, ..., <manifest cluster role binding name n>]
 ```
 
-8) The ClusterExtension installer will need permissions to manage the Deployment for your ClusterExtension.
-
-```yaml
-- apiGroups: [apps]
-  resources: [deployments]
-  verbs: [create, list, watch]
-- apiGroups: [apps]
-  resources: [deployments]
-  verbs: [get, update, patch, delete]
-  resourceNames: [<cluster-extension>-controller-manager]
-```
-
-9) The ClusterExtension installer will need permissions to manage the ServiceAccount for your ClusterExtension.
+8) The ClusterExtension installer will need permissions to manage the ServiceAccount for your ClusterExtension.
 
 ```yaml
 - apiGroups: [""]
@@ -149,7 +147,7 @@ rules:
   resourceNames: [argocd-operator-controller-manager]
 ```
 
-10) Create an ClusterRoleBinding that associates your ClusterExtension ClusterRole to its ServiceAccount:
+9) Create an ClusterRoleBinding that associates your ClusterExtension ClusterRole to its ServiceAccount:
 
 ```yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -166,9 +164,9 @@ subjects:
   namespace: <cluster-extension-namespace>
 ```
 
-11) As a next step define the Roles required by your the ClusterExtension.
-12) The `.spec.install.permissions` section in your ClusterServiceVersion corresponds to the roles required by your ClusterExtension.
-13) In our example, we have permissions defined for creating, listing and watching pods and services.
+10) As a next step define the Roles required by your the ClusterExtension by creating a Role as shown below.
+11) The `.spec.install.permissions` section in your ClusterServiceVersion corresponds to the roles required by your ClusterExtension.
+12) In our example, we have permissions defined for creating, listing and watching pods and services as seen in `#3, Namespace-scoped resource`.
 
 ```yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -185,6 +183,19 @@ rules:
   resources: [deployments]
   verbs: [create, delete, get, list, patch, update, watch]
 ```
+
+13) The ClusterExtension installer will need permissions to manage the Deployment for your ClusterExtension as seen in `#4, Namespace-scoped resource`.
+
+```yaml
+- apiGroups: [apps]
+  resources: [deployments]
+  verbs: [create, list, watch]
+- apiGroups: [apps]
+  resources: [deployments]
+  verbs: [get, update, patch, delete]
+  resourceNames: [<cluster-extension>-controller-manager]
+```
+
 14) The installer needs permissions to manage Roles and RoleBindings for your ClusterExtension.
 
 ```yml
