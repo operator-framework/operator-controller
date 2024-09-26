@@ -322,7 +322,7 @@ func authFilePathIfPresent(logger logr.Logger) string {
 		return ""
 	}
 	if err != nil {
-		logger.Error(err, "could not stat auth file path", "path", authFilePath)
+		logger.Error(err, "Errors accessing the file in", "path", authFilePath)
 		os.Exit(1)
 	}
 	return authFilePath
