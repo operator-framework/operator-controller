@@ -113,7 +113,7 @@ For clusters that use `OwnerReferencesPermissionEnforcement`, the installer serv
   resourceNames: [argocd-operator.v0.6.0]
 ```
 
-##### Step 4. `Deployments` permissions
+##### Step 4. `Deployment` permissions
 The installer service account must be able to create and manage the `Deployment`s for the extension controller(s).
 
 ```yaml
@@ -156,10 +156,8 @@ rules:
   verbs: [create, delete, get, list, patch, update, watch]
 ```
 
-##### Step 7: Controller `ServiceAccount` permissions
-
-The controller service account will need permissions do its job i.e. permissions to manage all resources listed under `.spec.install.permissions`.
-Therefore, it must have the following permissions:
+##### Step 7: Installer `ServiceAccount` permissions
+The installer service account needs permissions to create and manage the controller manager service accounts. We can specify the specific service account resource name of the cluster extension.
 
 ```yaml
 - apiGroups: [""]
@@ -171,9 +169,9 @@ Therefore, it must have the following permissions:
   resourceNames: [argocd-operator-controller-manager]
 ```
 
-##### Step 8: Controller Manager `Deployment` permissions
+##### Step 8: Controller Manager `ServiceAccount` permissions
 
-The controller manager deployment service account must be able to create and manage all resources listed under `.spec.install.permissions` for the [extension](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yamlprovided-serviceaccount.md) namely `Configmap`s and `Events` etc.
+The controller manager deployment service account must be able to create and manage all resources listed under `.spec.install.permissions` for the [ArgoCD extension](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1132) namely `Configmap`s and `Events` etc.
 
 
 The controller manager deployment service account will need permissions to create and manage the resources.
