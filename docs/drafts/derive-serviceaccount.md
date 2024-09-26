@@ -135,9 +135,20 @@ Therefore, it must have the following permissions:
   resources: [roles]
   verbs: [create, list, watch]
 - apiGroups: [rbac.authorization.k8s.io]
-  resources: [rolebindings]
+  resources: [roles]
   verbs: [get, update, patch, delete]
   resourceNames: [<controller cluster role name>]
+```
+The installer service account must create and manage the `RoleBinding`s for the extension controller(s).
+
+```yaml
+- apiGroups: [rbac.authorization.k8s.io]
+  resources: [rolebindings]
+  verbs: [create, list, watch]
+- apiGroups: [rbac.authorization.k8s.io]
+  resources: [rolebindings]
+  verbs: [get, update, patch, delete]
+  resourceNames: [<generated role 1>, ..., <generated role n>, <manifest role binding name 1>, ..., <manifest role binding name n>]
 ```
 
 ##### Step 6. Permissions for scoped-resources.
