@@ -284,18 +284,6 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 				)
 			}, pollDuration, pollInterval)
 
-			t.Log("By eventually reporting a successful unpacked")
-			require.EventuallyWithT(t, func(ct *assert.CollectT) {
-				assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
-				if !assert.NotNil(ct, cond) {
-					return
-				}
-				assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-				assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
-				assert.Regexp(ct, "^unpacked .* successfully", cond.Message)
-			}, pollDuration, pollInterval)
-
 			t.Log("By eventually reporting no longer progressing")
 			require.EventuallyWithT(t, func(ct *assert.CollectT) {
 				assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
@@ -966,18 +954,6 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 			}},
 			clusterExtension.Status.Resolution,
 		)
-	}, pollDuration, pollInterval)
-
-	t.Log("By eventually reporting a successful unpacked")
-	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeUnpacked)
-		if !assert.NotNil(ct, cond) {
-			return
-		}
-		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
-		assert.Regexp(ct, "^unpacked .* successfully", cond.Message)
 	}, pollDuration, pollInterval)
 
 	t.Log("By eventually reporting Progressing == True with Reason Retrying")
