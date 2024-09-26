@@ -155,8 +155,6 @@ The installer service account must create and manage the `RoleBinding`s for the 
 
 The installer service account should be assign the controller's service account the permissions it needs to perform its operations i.e. the permissions to manage all resources listed under `.spec.install.permissions`. In order to grant the deployment service account permissions to manage the scoped resources, the installer service account must itself have permissions to manage and create the listed scoped resources.
 
-In this specific example, for the ArgoCD extension the installer service account should assign the controller's service account [permissions](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1132) to create and manage `Configmap`s, `Events`  and `coordination.k8s.io`.
-
 ```yml
 rules:
 - apiGroups: [""]
