@@ -54,6 +54,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/features"
+	"github.com/operator-framework/operator-controller/internal/finalizers"
 	"github.com/operator-framework/operator-controller/internal/httputil"
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/resolve"
@@ -207,7 +208,7 @@ func main() {
 	}
 
 	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
-	if err := clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupUnpackCacheFinalizer, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+	if err := clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupUnpackCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		return crfinalizer.Result{}, unpacker.Cleanup(ctx, &source.BundleSource{Name: obj.GetName()})
 	})); err != nil {
 		setupLog.Error(err, "unable to register finalizer", "finalizerKey", controllers.ClusterExtensionCleanupUnpackCacheFinalizer)
@@ -258,7 +259,7 @@ func main() {
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
-	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		ext := obj.(*ocv1alpha1.ClusterExtension)
 		err := cm.Delete(ext)
 		return crfinalizer.Result{}, err
@@ -306,12 +307,6 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-}
-
-type finalizerFunc func(ctx context.Context, obj client.Object) (crfinalizer.Result, error)
-
-func (f finalizerFunc) Finalize(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-	return f(ctx, obj)
 }
 
 func authFilePathIfPresent(logger logr.Logger) string {
