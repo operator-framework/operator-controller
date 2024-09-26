@@ -12,7 +12,7 @@ as well as a [`ClusterServiceVersion`](https://olm.operatorframework.io/docs/con
 
 The service account must have permissions to:
  - create and manage the extension's `CustomResourceDefinition`s
- - create and manage the resources in packaged in the bundle
+ - create and manage the resources packaged in the bundle
  - grant the extension controller's service account the permissions it requires for its operation
  - create and manage the extension controller's service account
  - create and manage the `Role`s, `RoleBinding`s, `ClusterRole`s, and `ClusterRoleBinding`s associated with the extension controller's service account
@@ -56,7 +56,7 @@ It declares the following cluster-scoped permissions in `spec.install.clusterPer
 
 ##### Step 1. RBAC creation and management permissions
 
-The installer service account must create and manage the `ClusterRole`s and `ClusterRoleBinding`s for the extension controller(s). 
+The installer service account must create and manage the `ClusterRole`s and `ClusterRoleBinding`s for the extension controller(s).
 Therefore, it must have the following permissions:
 
 ```yaml
@@ -74,7 +74,7 @@ The names are generated and have the following format: `<packageName>.<hash>`. S
 to generate these names ahead of time, it is recommended to use a wildcard `*` in the `resourceNames` field for the installation.
 Once the `ClusterRole`s are created, the cluster can be queried for the generated names and the `resourceNames` field can be updated accordingly.
 
-The installer service account must create and manage the `ClusterRoleBinding`s for the extension controller(s). 
+The installer service account must create and manage the `ClusterRoleBinding`s for the extension controller(s).
 
 ```yaml
 - apiGroups: [rbac.authorization.k8s.io]
@@ -102,34 +102,32 @@ as grant the extension controller's service account the permissions it needs to 
   resourceNames: [applications.argoproj.io, appprojects.argoproj.io, argocds.argoproj.io, argocdexports.argoproj.io, applicationsets.argoproj.io]
 ```
 
-etc.
-
 ##### Step 3. `OwnerReferencesPermissionEnforcement` permissions
-The installer service account must be able to update finalizers on the ClusterExtension to be able to set blockOwnerDeletion and ownerReferences for clusters that use `OwnerReferencesPermissionEnforcement` as below.
+
+For clusters that use `OwnerReferencesPermissionEnforcement`, the installer service account must be able to update finalizers on the ClusterExtension to be able to set blockOwnerDeletion and ownerReferences for clusters that use `OwnerReferencesPermissionEnforcement`.
 
 ```yaml
 - apiGroups: [olm.operatorframework.io]
   resources: [clusterextensions/finalizers]
   verbs: [update]
-  resourceNames: [<cluster-extension-name>]
+  resourceNames: [argocd-operator.v0.6.0]
 ```
 
 ##### Step 4. `Deployments` permissions
 The installer service account must be able to create and manage the `Deployment`s for the extension controller(s).
 
-```
-- rules:
-  - apiGroups: [apps]
-    resources: [deployments]
-    verbs: [create, delete, get, list, patch, update, watch]
-   - apiGroups: [""]
-    resources: [pods, services]
-    verbs: [create, delete, get, list, patch, update, watch]
+```yaml
+- apiGroups: [apps]
+  resources: [deployments]
+  verbs: [create, delete, get, list, patch, update, watch]
+- apiGroups: [""]
+  resources: [pods, services]
+  verbs: [create, delete, get, list, patch, update, watch]
 ```
 
 ##### Step 5: RBAC creation and management permissions
 
-The installer service account must create and manage the `Role`s and `RoleBinding`s for the extension controller(s). 
+The installer service account must create and manage the `Role`s and `RoleBinding`s for the extension controller(s).
 Therefore, it must have the following permissions:
 
 ```yaml
@@ -144,7 +142,7 @@ Therefore, it must have the following permissions:
 
 ##### Step 6. Permissions for scoped-resources.
 
-The installer service account should be assign the controller's service account the permissions it needs to do its job i.e. the permissions to manage all resources listed under `.spec.install.permissions`. In order to grant the deployment service account permissions to manage the scoped resources, the installer service account must itself have permissions to manage and create the listed scoped resources.
+The installer service account should be assign the controller's service account the permissions it needs to perform its operations i.e. the permissions to manage all resources listed under `.spec.install.permissions`. In order to grant the deployment service account permissions to manage the scoped resources, the installer service account must itself have permissions to manage and create the listed scoped resources.
 
 In this specific example, for the [extension](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yamlprovided-serviceaccount.md) the installer service account should assign the controller's service account permissions to create and manage `Configmap`s, `Events`  and `coordination.k8s.io`.
 
@@ -158,7 +156,7 @@ rules:
   verbs: [create, delete, get, list, patch, update, watch]
 ```
 
-##### Step 7: `ServiceAccount` permissions
+##### Step 7: Controller `ServiceAccount` permissions
 
 The controller service account will need permissions do its job i.e. permissions to manage all resources listed under `.spec.install.permissions`.
 Therefore, it must have the following permissions:
