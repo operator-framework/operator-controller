@@ -129,7 +129,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		},
 		{
 			name:          "valid source type, unpack returns error, status updated to reflect error state and error is returned",
-			expectedError: fmt.Errorf("source bundle content: %w", fmt.Errorf("mocksource error")),
+			expectedError: fmt.Errorf("source catalog content: %w", fmt.Errorf("mocksource error")),
 			source: &MockSource{
 				unpackError: errors.New("mocksource error"),
 			},
@@ -174,7 +174,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 		},
 		{
 			name:          "valid source type, unpack returns terminal error, status updated to reflect terminal error state(Blocked) and error is returned",
-			expectedError: fmt.Errorf("source bundle content: %w", reconcile.TerminalError(fmt.Errorf("mocksource terminal error"))),
+			expectedError: fmt.Errorf("source catalog content: %w", reconcile.TerminalError(fmt.Errorf("mocksource terminal error"))),
 			source: &MockSource{
 				unpackError: reconcile.TerminalError(errors.New("mocksource terminal error")),
 			},

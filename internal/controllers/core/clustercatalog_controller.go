@@ -139,7 +139,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alp
 
 	unpackResult, err := r.Unpacker.Unpack(ctx, catalog)
 	if err != nil {
-		unpackErr := fmt.Errorf("source bundle content: %w", err)
+		unpackErr := fmt.Errorf("source catalog content: %w", err)
 		updateStatusProgressing(catalog, unpackErr)
 		return ctrl.Result{}, unpackErr
 	}
