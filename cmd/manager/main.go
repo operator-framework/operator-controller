@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/containers/image/v5/types"
+	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -58,7 +59,10 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
-const storageDir = "catalogs"
+const (
+	storageDir   = "catalogs"
+	authFilePath = "/etc/catalogd/auth.json"
+)
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -188,6 +192,7 @@ func main() {
 		SourceContext: &types.SystemContext{
 			OCICertPath:    caCertDir,
 			DockerCertPath: caCertDir,
+			AuthFilePath:   authFilePathIfPresent(setupLog),
 		},
 	}
 
@@ -285,4 +290,16 @@ func podNamespace() string {
 		return "olmv1-system"
 	}
 	return string(namespace)
+}
+
+func authFilePathIfPresent(logger logr.Logger) string {
+	_, err := os.Stat(authFilePath)
+	if os.IsNotExist(err) {
+		return ""
+	}
+	if err != nil {
+		logger.Error(err, "could not stat auth file path", "path", authFilePath)
+		os.Exit(1)
+	}
+	return authFilePath
 }
