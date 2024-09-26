@@ -144,7 +144,7 @@ Therefore, it must have the following permissions:
 
 The installer service account should be assign the controller's service account the permissions it needs to perform its operations i.e. the permissions to manage all resources listed under `.spec.install.permissions`. In order to grant the deployment service account permissions to manage the scoped resources, the installer service account must itself have permissions to manage and create the listed scoped resources.
 
-In this specific example, for the [extension](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yamlprovided-serviceaccount.md) the installer service account should assign the controller's service account permissions to create and manage `Configmap`s, `Events`  and `coordination.k8s.io`.
+In this specific example, for the ArgoCD extension the installer service account should assign the controller's service account [permissions](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1132) to create and manage `Configmap`s, `Events`  and `coordination.k8s.io`.
 
 ```yml
 rules:
@@ -171,7 +171,7 @@ The installer service account needs permissions to create and manage the control
 
 ##### Step 8: Controller Manager `ServiceAccount` permissions
 
-The controller manager deployment service account must be able to create and manage all resources listed under `.spec.install.permissions` for the [ArgoCD extension](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1132) namely `Configmap`s and `Events` etc.
+The controller manager deployment service account must be able to create and manage all resources listed under [`.spec.install.permissions`](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1132) for the [ArgoCD extension](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml) namely `Configmap`s and `Events` etc.
 
 
 The controller manager deployment service account will need permissions to create and manage the resources.
