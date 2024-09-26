@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/containers/image/v5/types"
+	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
@@ -66,6 +67,8 @@ var (
 	setupLog               = ctrl.Log.WithName("setup")
 	defaultSystemNamespace = "olmv1-system"
 )
+
+const authFilePath = "/etc/operator-controller/auth.json"
 
 // podNamespace checks whether the controller is running in a Pod vs.
 // being run locally by inspecting the namespace file that gets mounted
@@ -201,6 +204,7 @@ func main() {
 		SourceContext: &types.SystemContext{
 			DockerCertPath: caCertDir,
 			OCICertPath:    caCertDir,
+			AuthFilePath:   authFilePathIfPresent(setupLog),
 		},
 	}
 
@@ -310,4 +314,16 @@ type finalizerFunc func(ctx context.Context, obj client.Object) (crfinalizer.Res
 
 func (f finalizerFunc) Finalize(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 	return f(ctx, obj)
+}
+
+func authFilePathIfPresent(logger logr.Logger) string {
+	_, err := os.Stat(authFilePath)
+	if os.IsNotExist(err) {
+		return ""
+	}
+	if err != nil {
+		logger.Error(err, "could not stat auth file path", "path", authFilePath)
+		os.Exit(1)
+	}
+	return authFilePath
 }
