@@ -322,7 +322,7 @@ func authFilePathIfPresent(logger logr.Logger) string {
 		return ""
 	}
 	if err != nil {
-		logger.Error(err, "Errors accessing the file in", "path", authFilePath)
+		logger.Error(err, "unable to access the global auth file", "path", authFilePath)
 		os.Exit(1)
 	}
 	return authFilePath
