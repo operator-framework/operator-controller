@@ -197,7 +197,7 @@ func TestInstall(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			preflight := newMockPreflight(getCrdFromManifestFile(t, tc.oldCrdPath), tc.wantCrdGetErr, tc.validator)
-			err := preflight.Install(context.Background(), tc.release)
+			err := preflight.Install(context.Background(), tc.release, nil)
 			if len(tc.wantErrMsgs) != 0 {
 				for _, expectedErrMsg := range tc.wantErrMsgs {
 					require.ErrorContainsf(t, err, expectedErrMsg, "")
@@ -353,7 +353,7 @@ func TestUpgrade(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			preflight := newMockPreflight(getCrdFromManifestFile(t, tc.oldCrdPath), tc.wantCrdGetErr, tc.validator)
-			err := preflight.Upgrade(context.Background(), tc.release)
+			err := preflight.Upgrade(context.Background(), tc.release, nil)
 			if len(tc.wantErrMsgs) != 0 {
 				for _, expectedErrMsg := range tc.wantErrMsgs {
 					require.ErrorContainsf(t, err, expectedErrMsg, "")

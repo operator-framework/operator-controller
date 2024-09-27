@@ -58,6 +58,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/resolve"
 	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
+	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/permissions"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 	"github.com/operator-framework/operator-controller/internal/scheme"
 	"github.com/operator-framework/operator-controller/internal/version"
@@ -252,6 +253,7 @@ func main() {
 
 	preflights := []applier.Preflight{
 		crdupgradesafety.NewPreflight(aeClient.CustomResourceDefinitions()),
+		permissions.NewPreflight(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper()),
 	}
 
 	applier := &applier.Helm{
