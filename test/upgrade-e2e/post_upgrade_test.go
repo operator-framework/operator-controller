@@ -57,7 +57,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	defer cancel()
 	substrings := []string{
 		"reconcile ending",
-		fmt.Sprintf(`"ClusterExtension": {"name":"%s"}`, testClusterExtensionName),
+		fmt.Sprintf(`ClusterExtension=%q`, testClusterExtensionName),
 	}
 	found, err := watchPodLogsForSubstring(logCtx, &managerPods.Items[0], "manager", substrings...)
 	require.NoError(t, err)
