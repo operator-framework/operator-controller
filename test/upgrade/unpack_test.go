@@ -59,7 +59,7 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			defer cancel()
 			substrings := []string{
 				"reconcile ending",
-				fmt.Sprintf(`"ClusterCatalog": {"name":"%s"}`, testClusterCatalogName),
+				fmt.Sprintf(`ClusterCatalog=%q`, testClusterCatalogName),
 			}
 			found, err := watchPodLogsForSubstring(logCtx, &managerPod, "manager", substrings...)
 			Expect(err).ToNot(HaveOccurred())

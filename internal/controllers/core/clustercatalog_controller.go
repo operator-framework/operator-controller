@@ -65,8 +65,8 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	l := log.FromContext(ctx).WithName("catalogd-controller")
 	ctx = log.IntoContext(ctx, l)
 
-	l.V(1).Info("reconcile starting")
-	defer l.V(1).Info("reconcile ending")
+	l.Info("reconcile starting")
+	defer l.Info("reconcile ending")
 
 	existingCatsrc := v1alpha1.ClusterCatalog{}
 	if err := r.Client.Get(ctx, req.NamespacedName, &existingCatsrc); err != nil {

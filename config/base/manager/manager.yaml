@@ -62,7 +62,6 @@ spec:
         - --http2-disable
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
-        - --v=0
         ports:
         - containerPort: 7443
           protocol: TCP
