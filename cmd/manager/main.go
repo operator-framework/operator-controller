@@ -299,7 +299,7 @@ func authFilePathIfPresent(logger logr.Logger) string {
 		return ""
 	}
 	if err != nil {
-		logger.Error(err, "unable to stat auth file path", "path", authFilePath)
+		logger.Error(err, "unable to access auth file path", "path", authFilePath)
 		os.Exit(1)
 	}
 	logger.Info("auth file found, configuring globally for image registry interactions", "path", authFilePath)
