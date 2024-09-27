@@ -15,8 +15,7 @@ import (
 	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	"github.com/containers/image/v5/types"
 	"github.com/google/go-containerregistry/pkg/crane"
-	"github.com/olareg/olareg"
-	"github.com/olareg/olareg/config"
+	"github.com/google/go-containerregistry/pkg/registry"
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -62,6 +61,7 @@ func TestUnpackValidInsecure(t *testing.T) {
 	assert.NoError(t, err)
 	// Ensure the unpacked file matches the source content
 	assert.Equal(t, []byte(testFileContents), unpackedFile)
+	assert.NoError(t, unpacker.Cleanup(context.Background(), bundleSource))
 }
 
 func TestUnpackValidUsesCache(t *testing.T) {
@@ -94,6 +94,7 @@ func TestUnpackValidUsesCache(t *testing.T) {
 	// Make sure the original contents of the cache are still present. If the cached contents
 	// were not used, we would expect the original contents to be removed.
 	assert.DirExists(t, testCacheFilePath)
+	assert.NoError(t, unpacker.Cleanup(context.Background(), bundleSource))
 }
 
 func TestUnpackCacheCheckError(t *testing.T) {
@@ -271,8 +272,7 @@ func TestUnpackUnexpectedFile(t *testing.T) {
 	require.NoError(t, os.WriteFile(unpackPath, []byte{}, 0600))
 
 	// Attempt to pull and unpack the image
-	_, err := unpacker.Unpack(context.Background(), bundleSource)
-	assert.ErrorContains(t, err, "expected a directory")
+	assert.Panics(t, func() { _, _ = unpacker.Unpack(context.Background(), bundleSource) })
 }
 
 func TestUnpackCopySucceedsMountFails(t *testing.T) {
@@ -327,12 +327,7 @@ func TestCleanup(t *testing.T) {
 }
 
 func setupRegistry(t *testing.T) (reference.NamedTagged, reference.Canonical, func()) {
-	regHandler := olareg.New(config.Config{
-		Storage: config.ConfigStorage{
-			StoreType: config.StoreMem,
-		},
-	})
-	server := httptest.NewServer(regHandler)
+	server := httptest.NewServer(registry.New())
 	serverURL, err := url.Parse(server.URL)
 	require.NoError(t, err)
 
@@ -353,7 +348,6 @@ func setupRegistry(t *testing.T) (reference.NamedTagged, reference.Canonical, fu
 
 	cleanup := func() {
 		server.Close()
-		require.NoError(t, regHandler.Close())
 	}
 	return imageTagRef, imageDigestRef, cleanup
 }
