@@ -118,16 +118,27 @@ The installer service account must be able to create and manage the `Deployment`
 
 ```yaml
 - apiGroups: [apps]
-  resources: [deployments]
-  verbs: [create, delete, get, list, patch, update, watch]
-- apiGroups: [""]
-  resources: [pods, services]
-  verbs: [create, delete, get, list, patch, update, watch]
+  resources: [deployments, daemonsets, replicasets, statefulsets]
+  verbs: [create, list, watch]
+- apiGroups: [apps]
+  resources: [deployments, daemonsets, replicasets, statefulsets]
+  verbs: [get, update, patch, delete]
+```
+#### Step 5: Services permissions
+The installer service account must be able to create and manage the resources listed under [`.spec.install.clusterPermissions`](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml#L917)
+
+```yaml
+- apiGroups: []
+  resources: [pods, services, configmaps, secrets]
+  verbs: [create, list, watch]
+- apiGroups: []
+  resources: [pods, services, etc.]
+  verbs: [get, update, patch, delete]
 ```
 
-##### Step 5: RBAC creation and management permissions
+##### Step 6: RBAC creation and management permissions for namespaced-scoped resources
 
-The installer service account must create and manage the `Role`s and `RoleBinding`s for the extension controller(s).
+The installer service account must create and manage the `Role`s and `RoleBinding`s for the extension controller(s) to bind the controller's resources.
 Therefore, it must have the following permissions:
 
 ```yaml
@@ -151,7 +162,7 @@ The installer service account must create and manage the `RoleBinding`s for the 
   resourceNames: [<generated role 1>, ..., <generated role n>, <manifest role binding name 1>, ..., <manifest role binding name n>]
 ```
 
-##### Step 6. Permissions for scoped-resources.
+##### Step 7. Permissions for scoped-resources.
 
 The installer service account should be assign the controller's service account the permissions it needs to perform its operations i.e. the permissions to manage all resources listed under `.spec.install.permissions`. In order to grant the deployment service account permissions to manage the scoped resources, the installer service account must itself have permissions to manage and create the listed scoped resources.
 
@@ -165,7 +176,7 @@ rules:
   verbs: [create, delete, get, list, patch, update, watch]
 ```
 
-##### Step 7: Installer `ServiceAccount` permissions
+##### Step 8: Installer `ServiceAccount` permissions
 The installer service account needs permissions to create and manage the controller manager service accounts. We can specify the specific service account resource name of the cluster extension.
 
 ```yaml
@@ -178,7 +189,7 @@ The installer service account needs permissions to create and manage the control
   resourceNames: [argocd-operator-controller-manager]
 ```
 
-##### Step 8: Controller Manager `ServiceAccount` permissions
+##### Step 9: Controller Manager `ServiceAccount` permissions
 
 The controller manager deployment service account must be able to create and manage all resources listed under [`.spec.install.permissions`](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1132) for the [ArgoCD extension](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml) namely `Configmap`s and `Events` etc.
 
