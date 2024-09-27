@@ -124,15 +124,16 @@ The installer service account must be able to create and manage the `Deployment`
   resources: [deployments, daemonsets, replicasets, statefulsets]
   verbs: [get, update, patch, delete]
 ```
+
 #### Step 5: Services permissions
 The installer service account must be able to create and manage the resources listed under [`.spec.install.clusterPermissions`](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml#L917)
 
 ```yaml
 - apiGroups: []
-  resources: [pods, services, configmaps, secrets]
+  resources: [pods, services, configmaps, secrets, ...]
   verbs: [create, list, watch]
 - apiGroups: []
-  resources: [pods, services, etc.]
+  resources: [pods, services, configmaps, secrets, ...]
   verbs: [get, update, patch, delete]
 ```
 
