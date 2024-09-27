@@ -180,7 +180,7 @@ The installer service account needs permissions to create and manage the control
 
 ##### Step 8: Controller Manager `ServiceAccount` permissions
 
-The controller manager deployment service account must be able to create and manage all resources listed under [`.spec.install.permissions`](../samples/unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1132) for the [ArgoCD extension](../samples/unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml) namely `Configmap`s and `Events` etc.
+The controller manager deployment service account must be able to create and manage all resources listed under [`.spec.install.permissions`](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1132) for the [ArgoCD extension](./unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml) namely `Configmap`s and `Events` etc.
 
 
 The controller manager deployment service account will need permissions to create and manage the resources.
