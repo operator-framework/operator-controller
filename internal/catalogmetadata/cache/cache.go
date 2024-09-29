@@ -1,35 +1,24 @@
 package cache
 
 import (
-	"context"
 	"fmt"
+	"io"
 	"io/fs"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 )
 
-var _ client.Fetcher = &filesystemCache{}
+var _ client.Cache = &filesystemCache{}
 
-// NewFilesystemCache returns a client.Fetcher implementation that uses a
-// local filesystem to cache Catalog contents. When fetching the Catalog contents
-// it will:
-// - Check if the Catalog is cached
-//   - IF !cached it will fetch from the catalogd HTTP server and cache the response
-//   - IF cached it will verify the cache is up to date. If it is up to date it will return
-//     the cached contents, if not it will fetch the new contents from the catalogd HTTP
-//     server and update the cached contents.
-func NewFilesystemCache(cachePath string, clientFunc func() (*http.Client, error)) *filesystemCache {
+func NewFilesystemCache(cachePath string) *filesystemCache {
 	return &filesystemCache{
 		cachePath:              cachePath,
 		mutex:                  sync.RWMutex{},
-		getClient:              clientFunc,
 		cacheDataByCatalogName: map[string]cacheData{},
 	}
 }
@@ -40,75 +29,34 @@ func NewFilesystemCache(cachePath string, clientFunc func() (*http.Client, error
 // the cache.
 type cacheData struct {
 	ResolvedRef string
+	Error       error
 }
 
 // FilesystemCache is a cache that
 // uses the local filesystem for caching
-// catalog contents. It will fetch catalog
-// contents if the catalog does not already
-// exist in the cache.
+// catalog contents.
 type filesystemCache struct {
 	mutex                  sync.RWMutex
 	cachePath              string
-	getClient              func() (*http.Client, error)
 	cacheDataByCatalogName map[string]cacheData
 }
 
-// FetchCatalogContents implements the client.Fetcher interface and
-// will fetch the contents for the provided Catalog from the filesystem.
-// If the provided Catalog has not yet been cached, it will make a GET
-// request to the Catalogd HTTP server to get the Catalog contents and cache
-// them. The cache will be updated automatically if a Catalog is noticed to
-// have a different resolved image reference.
-// The Catalog provided to this function is expected to:
-// - Be non-nil
-// - Have a non-nil Catalog.Status.ResolvedSource.Image
-// This ensures that we are only attempting to fetch catalog contents for Catalog
-// resources that have been successfully reconciled, unpacked, and are being served.
-// These requirements help ensure that we can rely on status conditions to determine
-// when to issue a request to update the cached Catalog contents.
-func (fsc *filesystemCache) FetchCatalogContents(ctx context.Context, catalog *catalogd.ClusterCatalog) (fs.FS, error) {
-	if catalog == nil {
-		return nil, fmt.Errorf("error: provided catalog must be non-nil")
-	}
-
-	if catalog.Status.ResolvedSource == nil {
-		return nil, fmt.Errorf("error: catalog %q has a nil status.resolvedSource value", catalog.Name)
-	}
-
-	if catalog.Status.ResolvedSource.Image == nil {
-		return nil, fmt.Errorf("error: catalog %q has a nil status.resolvedSource.image value", catalog.Name)
-	}
-
-	cacheDir := fsc.cacheDir(catalog.Name)
-	fsc.mutex.RLock()
-	if data, ok := fsc.cacheDataByCatalogName[catalog.Name]; ok {
-		if catalog.Status.ResolvedSource.Image.ResolvedRef == data.ResolvedRef {
-			fsc.mutex.RUnlock()
-			return os.DirFS(cacheDir), nil
-		}
-	}
-	fsc.mutex.RUnlock()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, catalog.Status.ContentURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error forming request: %v", err)
-	}
-
-	client, err := fsc.getClient()
-	if err != nil {
-		return nil, fmt.Errorf("error getting HTTP client: %w", err)
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("error performing request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error: received unexpected response status code %d", resp.StatusCode)
-	}
-
+// Put writes content from source to the filesystem and stores errToCache
+// for a specified catalog name and version (resolvedRef).
+//
+// Method behaviour is as follows:
+//   - If successfully populated cache for catalogName and resolvedRef exists,
+//     errToCache is ignored and existing cache returned with nil error
+//   - If existing cache for catalogName and resolvedRef exists but
+//     is populated with an error, update the cache with either
+//     new content from source or errToCache.
+//   - If cache doesn't exist, populate it with either new content
+//     from source or errToCache.
+//
+// This cache implementation tracks only one version of cache per catalog,
+// so Put will override any existing cache on the filesystem for catalogName
+// if resolvedRef does not match the one which is already tracked.
+func (fsc *filesystemCache) Put(catalogName, resolvedRef string, source io.Reader, errToCache error) (fs.FS, error) {
 	fsc.mutex.Lock()
 	defer fsc.mutex.Unlock()
 
@@ -117,19 +65,35 @@ func (fsc *filesystemCache) FetchCatalogContents(ctx context.Context, catalog *c
 	// updating this, has no way to tell if the current ref is the
 	// newest possible ref. If another thread has already updated
 	// this to be the same value, skip the write logic and return
-	// the cached contents
-	if data, ok := fsc.cacheDataByCatalogName[catalog.Name]; ok {
-		if data.ResolvedRef == catalog.Status.ResolvedSource.Image.ResolvedRef {
-			return os.DirFS(cacheDir), nil
-		}
+	// the cached contents.
+	if cache, err := fsc.get(catalogName, resolvedRef); err == nil && cache != nil {
+		// We only return here if the was no error during
+		// the previous (likely concurrent) cache population attempt.
+		// If there was an error - we want to try and populate the cache again.
+		return cache, nil
 	}
 
-	tmpDir, err := os.MkdirTemp(fsc.cachePath, fmt.Sprintf(".%s-", catalog.Name))
+	var cacheFS fs.FS
+	if errToCache == nil {
+		cacheFS, errToCache = fsc.writeFS(catalogName, source)
+	}
+	fsc.cacheDataByCatalogName[catalogName] = cacheData{
+		ResolvedRef: resolvedRef,
+		Error:       errToCache,
+	}
+
+	return cacheFS, errToCache
+}
+
+func (fsc *filesystemCache) writeFS(catalogName string, source io.Reader) (fs.FS, error) {
+	cacheDir := fsc.cacheDir(catalogName)
+
+	tmpDir, err := os.MkdirTemp(fsc.cachePath, fmt.Sprintf(".%s-", catalogName))
 	if err != nil {
 		return nil, fmt.Errorf("error creating temporary directory to unpack catalog metadata: %v", err)
 	}
 
-	if err := declcfg.WalkMetasReader(resp.Body, func(meta *declcfg.Meta, err error) error {
+	if err := declcfg.WalkMetasReader(source, func(meta *declcfg.Meta, err error) error {
 		if err != nil {
 			return fmt.Errorf("error parsing catalog contents: %v", err)
 		}
@@ -160,11 +124,35 @@ func (fsc *filesystemCache) FetchCatalogContents(ctx context.Context, catalog *c
 		return nil, fmt.Errorf("error moving temporary directory to cache directory: %v", err)
 	}
 
-	fsc.cacheDataByCatalogName[catalog.Name] = cacheData{
-		ResolvedRef: catalog.Status.ResolvedSource.Image.ResolvedRef,
+	return os.DirFS(cacheDir), nil
+}
+
+// Get returns cache for a specified catalog name and version (resolvedRef).
+//
+// Method behaviour is as follows:
+//   - If cache exists, it returns a non-nil fs.FS and nil error
+//   - If cache doesn't exist, it returns nil fs.FS and nil error
+//   - If there was an error during cache population,
+//     it returns nil fs.FS and the error from the cache population.
+//     In other words - cache population errors are also cached.
+func (fsc *filesystemCache) Get(catalogName, resolvedRef string) (fs.FS, error) {
+	fsc.mutex.RLock()
+	defer fsc.mutex.RUnlock()
+	return fsc.get(catalogName, resolvedRef)
+}
+
+func (fsc *filesystemCache) get(catalogName, resolvedRef string) (fs.FS, error) {
+	cacheDir := fsc.cacheDir(catalogName)
+	if data, ok := fsc.cacheDataByCatalogName[catalogName]; ok {
+		if resolvedRef == data.ResolvedRef {
+			if data.Error != nil {
+				return nil, data.Error
+			}
+			return os.DirFS(cacheDir), nil
+		}
 	}
 
-	return os.DirFS(cacheDir), nil
+	return nil, nil
 }
 
 // Remove deletes cache directory for a given catalog from the filesystem
