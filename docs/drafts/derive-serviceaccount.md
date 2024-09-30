@@ -29,12 +29,10 @@ Depending on the scope, each permission will need to be added to either a `Clust
 
 ### Example
 
-The following example illustrates the process of deriving the minimal RBAC required to install the [ArgoCD Operator](https://operatorhub.io/operator/argocd-operator) v0.6.0 provided by [OperatorHub.io](https://operatorhub.io/).
+The following example illustrates the process of deriving the minimal RBAC required to install the [ArgoCD Operator](https://operatorhub.io/operator/argocd-operator) [v0.6.0](https://operatorhub.io/operator/argocd-operator/alpha/argocd-operator.v0.6.0) provided by [OperatorHub.io](https://operatorhub.io/).
 The final permission set can be found in the [ClusterExtension sample manifest](../../config/samples/olm_v1alpha1_clusterextension.yaml) in the [samples](../../config/samples/olm_v1alpha1_clusterextension.yaml) directory.
 
-The bundle image for the ArgoCD Operator v0.6.0 can be sourced from [quay.io/operatorhubio/argocd-operator:v0.6.0](https://quay.io/operatorhubio/argocd-operator:v0.6.0).
-
-The bundle includes the following content:
+The bundle includes the following manifests, which can be found [here](https://github.com/argoproj-labs/argocd-operator/tree/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0):
 
 * `ClusterServiceVersion`:
   - argocd-operator.v0.6.0.clusterserviceversion.yaml
@@ -144,7 +142,7 @@ is sufficient to add the `argocd-operator-metrics-reader`resource name to the `r
 
 ##### Step 5. Operator permissions declared in the ClusterServiceVersion
 
-Include all permissions defined in the `.spec.install.permissions` and `.spec.install.clusterPermissions` stanzas in the bundle's [`ClusterServiceVersion`](unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml).
+Include all permissions defined in the `.spec.install.permissions` ([reference](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1091)) and `.spec.install.clusterPermissions` ([reference](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml#L872)) stanzas in the bundle's `ClusterServiceVersion`.
 These permissions are required by the extension controller, and therefore the installer service account must be able to grant them.
 
 Note: there may be overlap between the rules defined in each stanza. Overlapping rules needn't be added twice.
@@ -234,8 +232,8 @@ The installer service account must create and manage the `RoleBinding`s for the 
 ##### Step 1. `Deployment` permissions
 
 The installer service account must be able to create and manage the `Deployment`s for the extension controller(s).
-The `Deployment` name(s) can be found in the `ClusterServiceVersion` resource packed in the bundle under `.spec.install.deployments`.
-This example's `ClusterServiceVersion` can be found [here](unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml).
+The `Deployment` name(s) can be found in the `ClusterServiceVersion` resource packed in the bundle under `.spec.install.deployments` ([reference](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1029)).
+This example's `ClusterServiceVersion` can be found [here](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml).
 
 ```yaml
 - apiGroups: [apps]
@@ -252,7 +250,7 @@ This example's `ClusterServiceVersion` can be found [here](unpacked-argocd-bundl
 
 The installer service account must be able to create and manage the `ServiceAccount`(s) for the extension controller(s).
 The `ServiceAccount` name(s) can be found in deployment template in the `ClusterServiceVersion` resource packed in the bundle under `.spec.install.deployments`.
-This example's `ClusterServiceVersion` can be found [here](unpacked-argocd-bundle/argocd-operator.v0.6.0.clusterserviceversion.yaml).
+This example's `ClusterServiceVersion` can be found [here](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml).
 
 ```yaml
 - apiGroups: [""]
@@ -269,8 +267,8 @@ This example's `ClusterServiceVersion` can be found [here](unpacked-argocd-bundl
 
 The installer service account must also create and manage other namespace-scoped resources included in the bundle.
 In this example, the bundle also includes two additional namespace-scoped resources:
- * the [argocd-operator-controller-manager-metrics-service](unpacked-argocd-bundle/argocd-operator-controller-manager-metrics-service_v1_service.yaml) `Service`, and
- * the [argocd-operator-manager-config](unpacked-argocd-bundle/argocd-operator-manager-config_v1_configmap.yaml) `ConfigMap`
+ * the [argocd-operator-controller-manager-metrics-service](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-controller-manager-metrics-service_v1_service.yaml) `Service`, and
+ * the [argocd-operator-manager-config](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-manager-config_v1_configmap.yaml) `ConfigMap`
 
 Therefore, the following permissions must be given to the installer service account:
 
