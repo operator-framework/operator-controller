@@ -192,15 +192,9 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	l.Info("handling finalizers")
 	finalizeResult, err := r.Finalizers.Finalize(ctx, ext)
 	if err != nil {
-		// TODO: For now, this error handling follows the pattern of other error handling.
-		//  Namely: zero just about everything out, throw our hands up, and return an error.
-		//  This is not ideal, and we should consider a more nuanced approach that resolves
-		//  as much status as possible before returning, or at least keeps previous state if
-		//  it is properly labeled with its observed generation.
-		setInstallStatus(ext, nil)
 		setResolutionStatus(ext, nil)
 		setStatusProgressing(ext, err)
-		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonFailed, err.Error())
+
 		return ctrl.Result{}, err
 	}
 	if finalizeResult.Updated || finalizeResult.StatusUpdated {
@@ -297,8 +291,11 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	//     The only way to eventually recover from permission errors is to keep retrying).
 	managedObjs, _, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, objLbls, storeLbls)
 	if err != nil {
-		setInstalledStatusConditionFailed(ext, err.Error())
 		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedBundleMetadata, err))
+		// If bundle is not already installed, set Installed status condition to False
+		if installedBundle == nil {
+			setInstalledStatusConditionFailed(ext, err.Error())
+		}
 		return ctrl.Result{}, err
 	}
 
