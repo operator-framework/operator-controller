@@ -37,16 +37,16 @@ The bundle includes the following manifests, which can be found [here](https://g
 * `ClusterServiceVersion`:
   - argocd-operator.v0.6.0.clusterserviceversion.yaml
 * `CustomResourceDefinition`s:
-  - argoproj.io_applicationsets.yaml
-  - argoproj.io_applications.yaml
-  - argoproj.io_appprojects.yaml
-  - argoproj.io_argocdexports.yaml
-  - argoproj.io_argocds.yaml
+  - [argoproj.io_applicationsets.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_applicationsets.yaml)
+  - [argoproj.io_applications.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_applications.yaml)
+  - [argoproj.io_appprojects.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_appprojects.yaml)
+  - [argoproj.io_argocdexports.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_argocdexports.yaml)
+  - [argoproj.io_argocds.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_argocds.yaml)
 * Additional resources:
-  - argocd-operator-controller-manager-service_v1_service.yaml
-  - argocd-operator-controller-manager-metrics-service_v1_service.yaml
-  - argocd-operator-manager-config_v1_configmap.yaml
-  - argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml
+  - [argocd-operator-controller-manager-service_v1_service.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-controller-manager-metrics-service_v1_service.yaml)
+  - [argocd-operator-controller-manager-metrics-service_v1_service.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-manager-config_v1_configmap.yaml)
+  - [argocd-operator-manager-config_v1_configmap.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-manager-config_v1_configmap.yaml)
+  - [argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml)
 
 The `ClusterServiceVersion` defines a single `Deployment` in `spec.install.deployments` named `argocd-operator-controller-manager` with a `ServiceAccount` of the same name.
 It declares the following cluster-scoped permissions in `spec.install.clusterPermissions`, and its namespace-scoped permissions in `spec.install.permissions`.
