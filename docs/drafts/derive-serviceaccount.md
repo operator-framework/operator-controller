@@ -35,7 +35,7 @@ The final permission set can be found in the [ClusterExtension sample manifest](
 The bundle includes the following manifests, which can be found [here](https://github.com/argoproj-labs/argocd-operator/tree/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0):
 
 * `ClusterServiceVersion`:
-  - argocd-operator.v0.6.0.clusterserviceversion.yaml
+  - [argocd-operator.v0.6.0.clusterserviceversion.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml)
 * `CustomResourceDefinition`s:
   - [argoproj.io_applicationsets.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_applicationsets.yaml)
   - [argoproj.io_applications.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_applications.yaml)
@@ -43,8 +43,7 @@ The bundle includes the following manifests, which can be found [here](https://g
   - [argoproj.io_argocdexports.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_argocdexports.yaml)
   - [argoproj.io_argocds.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_argocds.yaml)
 * Additional resources:
-  - [argocd-operator-controller-manager-service_v1_service.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-controller-manager-metrics-service_v1_service.yaml)
-  - [argocd-operator-controller-manager-metrics-service_v1_service.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-manager-config_v1_configmap.yaml)
+  - [argocd-operator-controller-manager-metrics-service_v1_service.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-controller-manager-metrics-service_v1_service.yaml)
   - [argocd-operator-manager-config_v1_configmap.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-manager-config_v1_configmap.yaml)
   - [argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml)
 
@@ -349,4 +348,4 @@ kubectl create clusterrolebinding my-cluster-extension-installer-role-binding \
 In the spirit of making this process more tenable until the proper tools are in place, the scripts
 in [hack/tools/catalogs](../../hack/tools/catalogs) were created to help the user navigate and search catalogs as well
 as to generate the minimal RBAC requirements. These tools are offered as is, with no guarantees on their correctness, 
-support, or maintenance. 
+support, or maintenance. For more information, see [Hack Catalog Tools](https://github.com/operator-framework/operator-controller/blob/main/hack/tools/catalogs/README.md).
