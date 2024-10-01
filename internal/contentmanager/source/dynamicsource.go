@@ -139,7 +139,7 @@ func (dis *dynamicInformerSource) Start(ctx context.Context, q workqueue.TypedRa
 			close(dis.syncedChan)
 		})
 
-		_ = wait.PollUntilContextCancel(dis.informerCtx, time.Second, true, func(_ context.Context) (bool, error) {
+		_ = wait.PollUntilContextCancel(dis.informerCtx, time.Millisecond*100, true, func(_ context.Context) (bool, error) {
 			if sharedIndexInf.HasSynced() {
 				syncOnce()
 				return true, nil
