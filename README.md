@@ -16,11 +16,11 @@ OLM v1 consists of two different components:
 * operator-controller (this repository)
 * [catalogd](https://github.com/operator-framework/catalogd)
 
-For a more complete overview of OLM v1 and how it differs from OLM v0, see our [overview](docs/general/olmv1_design_decisions.md).
+For a more complete overview of OLM v1 and how it differs from OLM v0, see our [overview](docs/project/olmv1_design_decisions.md).
 
 ## Getting Started
 
-To get started with OLM v1, please see our [Getting Started](docs/general/olmv1_getting_started.md) documentation.
+To get started with OLM v1, please see our [Getting Started](docs/getting-started/olmv1_getting_started.md) documentation.
 
 ## License
 
