@@ -82,7 +82,6 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Empty(t, clusterExtension.Status.Resolution)
 	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected conditions")
@@ -175,7 +174,6 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 
 			t.Log("By checking the status fields")
 			expectedBundleMetadata := ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}
-			require.Equal(t, expectedBundleMetadata, clusterExtension.Status.Resolution.Bundle)
 			require.Empty(t, clusterExtension.Status.Install)
 
 			t.Log("By checking the expected conditions")
@@ -319,7 +317,6 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 
 	t.Log("By checking the status fields")
 	expectedBundleMetadata := ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}
-	require.Equal(t, expectedBundleMetadata, clusterExtension.Status.Resolution.Bundle)
 	require.Empty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected installed conditions")
@@ -418,7 +415,6 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 
 	t.Log("By checking the status fields")
 	expectedBundleMetadata := ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}
-	require.Equal(t, expectedBundleMetadata, clusterExtension.Status.Resolution.Bundle)
 	require.Equal(t, expectedBundleMetadata, clusterExtension.Status.Install.Bundle)
 
 	t.Log("By checking the expected installed conditions")
@@ -503,7 +499,6 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
 	require.Equal(t, ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
 
 	t.Log("By checking the expected installed conditions")
@@ -590,7 +585,6 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
 	require.Equal(t, ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
 
 	t.Log("By checking the expected installed conditions")
@@ -674,7 +668,6 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	require.NoError(t, cl.Get(ctx, extKey, clusterExtension))
 
 	t.Log("By checking the status fields")
-	require.Equal(t, ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Resolution.Bundle)
 	require.Equal(t, ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
 
 	t.Log("By checking the expected installed conditions")

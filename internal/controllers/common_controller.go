@@ -48,10 +48,6 @@ func setInstalledStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message
 	})
 }
 
-func setResolutionStatus(ext *ocv1alpha1.ClusterExtension, resStatus *ocv1alpha1.ClusterExtensionResolutionStatus) {
-	ext.Status.Resolution = resStatus
-}
-
 func setInstallStatus(ext *ocv1alpha1.ClusterExtension, installStatus *ocv1alpha1.ClusterExtensionInstallStatus) {
 	ext.Status.Install = installStatus
 }

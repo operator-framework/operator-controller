@@ -192,9 +192,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	l.Info("handling finalizers")
 	finalizeResult, err := r.Finalizers.Finalize(ctx, ext)
 	if err != nil {
-		setResolutionStatus(ext, nil)
 		setStatusProgressing(ext, err)
-
 		return ctrl.Result{}, err
 	}
 	if finalizeResult.Updated || finalizeResult.StatusUpdated {
@@ -219,7 +217,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	if err != nil {
 		// Note: We don't distinguish between resolution-specific errors and generic errors
 		setInstallStatus(ext, nil)
-		setResolutionStatus(ext, nil)
 		setStatusProgressing(ext, err)
 		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonFailed, err.Error())
 		return ctrl.Result{}, err
@@ -242,11 +239,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
 
 	resolvedBundleMetadata := bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion)
-	resStatus := &ocv1alpha1.ClusterExtensionResolutionStatus{
-		Bundle: resolvedBundleMetadata,
-	}
-	setResolutionStatus(ext, resStatus)
-
 	bundleSource := &rukpaksource.BundleSource{
 		Name: ext.GetName(),
 		Type: rukpaksource.SourceTypeImage,
