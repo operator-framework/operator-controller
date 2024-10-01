@@ -21,4 +21,4 @@ spec:
       name: argocd-installer
 ```
 
-For more information on SemVer version ranges see [version-rages](version-ranges.md)
+For more information on SemVer version ranges see [version-rages](../../refs/version-ranges.md)

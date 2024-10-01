@@ -2,16 +2,16 @@
 
 Existing extensions can be upgraded by updating the version field in the ClusterExtension resource.
 
-For information on downgrading an extension, see [Downgrade an Extension](../downgrading-an-extension.md).
+For information on downgrading an extension, see [Downgrade an Extension](../downgrade/downgrading-an-extension.md).
 
 ## Prerequisites
 
 * You have an extension installed
-* The target version is compatible with OLM v1 (see [OLM v1 limitations](../refs/olmv1-limitations.md))
+* The target version is compatible with OLM v1 (see [OLM v1 limitations](../../drafts/olmv1-limitations.md))
 * CRD compatibility between the versions being upgraded or downgraded (see [CRD upgrade safety](../../refs/crd-upgrade-safety.md))
-* The installer service account's RBAC permissions are adequate for the target version (see [Minimal RBAC for Installer Service Account](create-installer-service-account.md))
+* The installer service account's RBAC permissions are adequate for the target version (see [Minimal RBAC for Installer Service Account](../../drafts/create-installer-service-account.md))
 
-For more detailed information see [Upgrade Support](../upgrade-support.md).
+For more detailed information see [Upgrade Support](upgrade-support.md).
 
 ## Procedure
 

@@ -8,7 +8,7 @@ After you add a catalog to your cluster, you can install an extension by creatin
 * A deployed and unpacked catalog
 * The name, and optionally version, or channel, of the [supported extension](../concepts/supported-extensions.md) to be installed
 * An existing namespace in which to install the extension
-* A suitable service account for installation (more information can be found [here](../drafts/Tasks/create-installer-service-account.md))
+* A suitable service account for installation (more information can be found [here](../../drafts/create-installer-service-account.md))
 
 
 ## Procedure

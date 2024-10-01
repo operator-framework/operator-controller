@@ -9,15 +9,15 @@ theme:
 repo_url: https://github.com/operator-framework/operator-controller
 
 nav:
-  - Home: 'index.md'
+  - Home: 'olmv1_overview.md'
   - Components: 'components.md'
   - Tasks:
-    - Adding a catalog of extensions: 'Tasks/adding-a-catalog.md'
-    - Finding extensions to install: 'Tasks/exploring-available-packages.md'
-    - Installing an extension: 'Tasks/installing-an-extension.md'
-    - Deleting an extension: 'Tasks/uninstalling-an-extension.md'
+    - Adding a catalog of extensions: 'tasks/adding-a-catalog.md'
+    - Finding extensions to install: 'tasks/exploring-available-packages.md'
+    - Installing an extension: 'tasks/installing-an-extension.md'
+    - Deleting an extension: 'tasks/uninstalling-an-extension.md'
   - References:
-    - Supported extensions: 'refs//supported-extensions.md'
+    - Supported extensions: 'refs/supported-extensions.md'
     - API references:
       - Operator Controller API reference: 'refs/api/operator-controller-api-reference.md'
       - CatalogD API reference: 'refs/api/catalogd-api-reference.md'

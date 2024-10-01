@@ -143,4 +143,4 @@ The following examples will show this default behavior, but for simplicity's sak
 
 ### Additional resources
 
-* [Catalog queries](../refs/catalog-queries.md)
+* [Catalog queries](catalog-queries.md)
