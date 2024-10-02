@@ -5,7 +5,7 @@ metadata:
 spec:
   priority: 0
   source:
-    type: image
+    type: Image
     image:
       pollInterval: 24h
       ref: quay.io/operatorhubio/catalog:latest

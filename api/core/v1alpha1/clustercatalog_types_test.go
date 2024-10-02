@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -23,7 +24,7 @@ func TestPollIntervalCELValidationRules(t *testing.T) {
 	validators := fieldValidatorsFromFile(t, "../../../config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml")
 	pth := "openAPIV3Schema.properties.spec"
 	validator, found := validators["v1alpha1"][pth]
-	assert.True(t, found)
+	require.True(t, found)
 
 	for name, tc := range map[string]struct {
 		spec     ClusterCatalogSpec
@@ -57,6 +58,84 @@ func TestPollIntervalCELValidationRules(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&tc.spec) //nolint:gosec
+			require.NoError(t, err)
+			errs := validator(obj, nil)
+			require.Equal(t, len(tc.wantErrs), len(errs))
+			for i := range tc.wantErrs {
+				got := errs[i].Error()
+				assert.Equal(t, tc.wantErrs[i], got)
+			}
+		})
+	}
+}
+
+func TestSourceCELValidation(t *testing.T) {
+	validators := fieldValidatorsFromFile(t, "../../../config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml")
+	pth := "openAPIV3Schema.properties.spec.properties.source"
+	validator, found := validators["v1alpha1"][pth]
+	require.True(t, found)
+	for name, tc := range map[string]struct {
+		source   CatalogSource
+		wantErrs []string
+	}{
+		"image source missing required image field": {
+			source: CatalogSource{
+				Type: SourceTypeImage,
+			},
+			wantErrs: []string{
+				fmt.Sprintf("%s: Invalid value: \"object\": source type '%s' requires image field", pth, SourceTypeImage),
+			},
+		},
+		"image source with required image field": {
+			source: CatalogSource{
+				Type:  SourceTypeImage,
+				Image: &ImageSource{},
+			},
+			wantErrs: []string{},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&tc.source) //nolint:gosec
+			require.NoError(t, err)
+			errs := validator(obj, nil)
+			fmt.Println(errs)
+			require.Equal(t, len(tc.wantErrs), len(errs))
+			for i := range tc.wantErrs {
+				got := errs[i].Error()
+				assert.Equal(t, tc.wantErrs[i], got)
+			}
+		})
+	}
+}
+
+func TestResolvedSourceCELValidation(t *testing.T) {
+	validators := fieldValidatorsFromFile(t, "../../../config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml")
+	pth := "openAPIV3Schema.properties.status.properties.resolvedSource"
+	validator, found := validators["v1alpha1"][pth]
+
+	require.True(t, found)
+	for name, tc := range map[string]struct {
+		source   ResolvedCatalogSource
+		wantErrs []string
+	}{
+		"image source missing required image field": {
+			source: ResolvedCatalogSource{
+				Type: SourceTypeImage,
+			},
+			wantErrs: []string{
+				fmt.Sprintf("%s: Invalid value: \"object\": source type '%s' requires image field", pth, SourceTypeImage),
+			},
+		},
+		"image source with required image field": {
+			source: ResolvedCatalogSource{
+				Type:  SourceTypeImage,
+				Image: &ResolvedImageSource{},
+			},
+			wantErrs: []string{},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&tc.source) //nolint:gosec
 			require.NoError(t, err)
 			errs := validator(obj, nil)
 			require.Equal(t, len(tc.wantErrs), len(errs))

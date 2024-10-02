@@ -90,7 +90,7 @@ of a catalog can be read from:
     resolvedSource:
       image:
         ref: quay.io/operatorhubio/catalog@sha256:e53267559addc85227c2a7901ca54b980bc900276fc24d3f4db0549cb38ecf76
-      type: image
+      type: Image
 ```
 
 
@@ -148,7 +148,7 @@ This section outlines a way of exposing the `Catalogd` Service's endpoints outsi
           name: operatorhubio
         spec:
           source:
-            type: image
+            type: Image
             image:
               ref: quay.io/operatorhubio/catalog:latest
         EOF

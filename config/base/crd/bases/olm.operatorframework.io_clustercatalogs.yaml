@@ -68,7 +68,7 @@ spec:
                   Below is a minimal example of a ClusterCatalogSpec that sources a catalog from an image:
 
                    source:
-                     type: image
+                     type: Image
                      image:
                        ref: quay.io/operatorhubio/catalog:latest
 
@@ -77,7 +77,7 @@ spec:
                   image:
                     description: image is used to configure how catalog contents are
                       sourced from an OCI image. This field must be set when type
-                      is set to "image" and must be the only field defined for this
+                      is set to "Image" and must be the only field defined for this
                       type.
                     properties:
                       pollInterval:
@@ -107,16 +107,19 @@ spec:
                     description: |-
                       type is a required reference to the type of source the catalog is sourced from.
 
-                      Allowed values are ["image"]
+                      Allowed values are ["Image"]
 
-                      When this field is set to "image", the ClusterCatalog content will be sourced from an OCI image.
+                      When this field is set to "Image", the ClusterCatalog content will be sourced from an OCI image.
                       When using an image source, the image field must be set and must be the only field defined for this type.
                     enum:
-                    - image
+                    - Image
                     type: string
                 required:
                 - type
                 type: object
+                x-kubernetes-validations:
+                - message: source type 'Image' requires image field
+                  rule: self.type == 'Image' && has(self.image)
             required:
             - source
             type: object
@@ -211,15 +214,9 @@ spec:
               lastUnpacked:
                 description: |-
                   lastUnpacked represents the time when the
-                  ClusterCatalog object was last unpacked.
+                  ClusterCatalog object was last unpacked successfully.
                 format: date-time
                 type: string
-              observedGeneration:
-                description: |-
-                  observedGeneration is the most recent generation observed for this ClusterCatalog. It corresponds to the
-                  ClusterCatalog's generation, which is updated on mutation by the API Server.
-                format: int64
-                type: integer
               resolvedSource:
                 description: |-
                   resolvedSource contains information about the resolved source based on the source type.
@@ -232,50 +229,42 @@ spec:
                      lastUnpacked: "2024-09-10T12:22:13Z"
                      ref: quay.io/operatorhubio/catalog:latest
                      resolvedRef: quay.io/operatorhubio/catalog@sha256:c7392b4be033da629f9d665fec30f6901de51ce3adebeff0af579f311ee5cf1b
-                   type: image
+                   type: Image
                 properties:
                   image:
                     description: image is a field containing resolution information
                       for a catalog sourced from an image.
                     properties:
-                      lastPollAttempt:
-                        description: lastPollAttempt is the time when the source image
-                          was last polled for new content.
-                        format: date-time
-                        type: string
-                      lastUnpacked:
-                        description: lastUnpacked is the last time when the Catalog
-                          contents were successfully unpacked.
+                      lastSuccessfulPollAttempt:
+                        description: lastSuccessfulPollAttempt is the time when the
+                          resolved source was last successfully polled for new content.
                         format: date-time
                         type: string
                       ref:
-                        description: ref is the reference to a container image containing
+                        description: ref contains the resolved sha256 image ref containing
                           Catalog contents.
                         type: string
-                      resolvedRef:
-                        description: resolvedRef is the resolved sha256 image ref
-                          containing Catalog contents.
-                        type: string
                     required:
-                    - lastPollAttempt
-                    - lastUnpacked
+                    - lastSuccessfulPollAttempt
                     - ref
-                    - resolvedRef
                     type: object
                   type:
                     description: |-
                       type is a reference to the type of source the catalog is sourced from.
 
-                      It will be set to one of the following values: ["image"].
+                      It will be set to one of the following values: ["Image"].
 
-                      When this field is set to "image", information about the resolved image source will be set in the 'image' field.
+                      When this field is set to "Image", information about the resolved image source will be set in the 'image' field.
                     enum:
-                    - image
+                    - Image
                     type: string
                 required:
                 - image
                 - type
                 type: object
+                x-kubernetes-validations:
+                - message: source type 'Image' requires image field
+                  rule: self.type == 'Image' && has(self.image)
             type: object
         required:
         - metadata

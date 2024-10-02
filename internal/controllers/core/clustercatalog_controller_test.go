@@ -141,9 +141,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -155,9 +155,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -186,9 +186,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -200,9 +200,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -225,7 +225,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					FS:    &fstest.MapFS{},
 					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
 						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref: "someimage@someSHA256Digest",
+							Ref: "my.org/someimage@someSHA256Digest",
 						},
 					},
 				},
@@ -238,9 +238,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -252,9 +252,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -274,7 +274,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
 						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref: "someimage@someSHA256Digest",
+							Ref: "my.org/someimage@someSHA256Digest",
 						},
 					},
 				},
@@ -299,9 +299,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -313,9 +313,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -345,9 +345,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -359,9 +359,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -384,23 +384,19 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL:         "URL",
-					LastUnpacked:       metav1.Time{},
-					ObservedGeneration: 0,
+					ContentURL:   "URL",
+					LastUnpacked: metav1.Time{},
 					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref:             "",
-							ResolvedRef:     "",
-							LastPollAttempt: metav1.Time{},
-							LastUnpacked:    metav1.Time{},
+							Ref: "",
 						},
 					},
 					Conditions: []metav1.Condition{
@@ -425,9 +421,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -468,9 +464,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -498,9 +494,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -539,9 +535,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -569,9 +565,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -640,9 +636,9 @@ func TestPollingRequeue(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -657,9 +653,9 @@ func TestPollingRequeue(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref:          "someimage:latest",
+							Ref:          "my.org/someimage:latest",
 							PollInterval: &metav1.Duration{Duration: time.Minute * 5},
 						},
 					},
@@ -676,7 +672,7 @@ func TestPollingRequeue(t *testing.T) {
 					FS:    &fstest.MapFS{},
 					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
 						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref: "someImage@someSHA256Digest",
+							Ref: "my.org/someImage@someSHA256Digest",
 						},
 					},
 				}},
@@ -697,6 +693,8 @@ func TestPollingRequeue(t *testing.T) {
 }
 
 func TestPollingReconcilerUnpack(t *testing.T) {
+	oldDigest := "a5d4f4467250074216eb1ba1c36e06a3ab797d81c431427fc2aca97ecaf4e9d8"
+	newDigest := "f42337e7b85a46d83c94694638e2312e10ca16a03542399a65ba783c94a32b63"
 	for name, tc := range map[string]struct {
 		catalog           *catalogdv1alpha1.ClusterCatalog
 		expectedUnpackRun bool
@@ -709,9 +707,9 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref:          "someimage:latest",
+							Ref:          "my.org/someimage:latest",
 							PollInterval: &metav1.Duration{Duration: time.Minute * 5},
 						},
 					},
@@ -728,9 +726,9 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref: "someimage:latest",
+							Ref: "my.org/someimage:latest",
 						},
 					},
 				},
@@ -738,23 +736,23 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1alpha1.TypeProgressing,
-							Status: metav1.ConditionFalse,
-							Reason: catalogdv1alpha1.ReasonSucceeded,
+							Type:               catalogdv1alpha1.TypeProgressing,
+							Status:             metav1.ConditionFalse,
+							Reason:             catalogdv1alpha1.ReasonSucceeded,
+							ObservedGeneration: 2,
 						},
 						{
-							Type:   catalogdv1alpha1.TypeServing,
-							Status: metav1.ConditionTrue,
-							Reason: catalogdv1alpha1.ReasonAvailable,
+							Type:               catalogdv1alpha1.TypeServing,
+							Status:             metav1.ConditionTrue,
+							Reason:             catalogdv1alpha1.ReasonAvailable,
+							ObservedGeneration: 2,
 						},
 					},
-					ObservedGeneration: 2,
 					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref:             "someimage:latest",
-							ResolvedRef:     "someimage@sha256:asdf123",
-							LastPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
+							Ref:                       "my.org/someimage@sha256:" + oldDigest,
+							LastSuccessfulPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
 						},
 					},
 				},
@@ -770,9 +768,9 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref:          "someimage:latest",
+							Ref:          "my.org/someimage:latest",
 							PollInterval: &metav1.Duration{Duration: time.Minute * 7},
 						},
 					},
@@ -781,23 +779,23 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1alpha1.TypeProgressing,
-							Status: metav1.ConditionFalse,
-							Reason: catalogdv1alpha1.ReasonSucceeded,
+							Type:               catalogdv1alpha1.TypeProgressing,
+							Status:             metav1.ConditionFalse,
+							Reason:             catalogdv1alpha1.ReasonSucceeded,
+							ObservedGeneration: 2,
 						},
 						{
-							Type:   catalogdv1alpha1.TypeServing,
-							Status: metav1.ConditionTrue,
-							Reason: catalogdv1alpha1.ReasonAvailable,
+							Type:               catalogdv1alpha1.TypeServing,
+							Status:             metav1.ConditionTrue,
+							Reason:             catalogdv1alpha1.ReasonAvailable,
+							ObservedGeneration: 2,
 						},
 					},
-					ObservedGeneration: 2,
 					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref:             "someimage:latest",
-							ResolvedRef:     "someimage@sha256:asdf123",
-							LastPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
+							Ref:                       "my.org/someimage@sha256:" + oldDigest,
+							LastSuccessfulPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
 						},
 					},
 				},
@@ -813,9 +811,9 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref:          "someimage:latest",
+							Ref:          "my.org/someimage:latest",
 							PollInterval: &metav1.Duration{Duration: time.Minute * 3},
 						},
 					},
@@ -824,30 +822,30 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1alpha1.TypeProgressing,
-							Status: metav1.ConditionFalse,
-							Reason: catalogdv1alpha1.ReasonSucceeded,
+							Type:               catalogdv1alpha1.TypeProgressing,
+							Status:             metav1.ConditionFalse,
+							Reason:             catalogdv1alpha1.ReasonSucceeded,
+							ObservedGeneration: 2,
 						},
 						{
-							Type:   catalogdv1alpha1.TypeServing,
-							Status: metav1.ConditionTrue,
-							Reason: catalogdv1alpha1.ReasonAvailable,
+							Type:               catalogdv1alpha1.TypeServing,
+							Status:             metav1.ConditionTrue,
+							Reason:             catalogdv1alpha1.ReasonAvailable,
+							ObservedGeneration: 2,
 						},
 					},
-					ObservedGeneration: 2,
 					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref:             "someimage:latest",
-							ResolvedRef:     "someimage@sha256:asdf123",
-							LastPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
+							Ref:                       "my.org/someimage@sha256:" + oldDigest,
+							LastSuccessfulPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
 						},
 					},
 				},
 			},
 			expectedUnpackRun: true,
 		},
-		"ClusterCatalog not being resolved the first time, pollInterval mentioned, \"now\" is before next expected poll time, spec.image changed, unpack should run": {
+		"ClusterCatalog not being resolved the first time, pollInterval mentioned, \"now\" is before next expected poll time, generation changed, unpack should run": {
 			catalog: &catalogdv1alpha1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test-catalog",
@@ -856,9 +854,9 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 				},
 				Spec: catalogdv1alpha1.ClusterCatalogSpec{
 					Source: catalogdv1alpha1.CatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ImageSource{
-							Ref:          "someotherimage:latest",
+							Ref:          "my.org/someotherimage@sha256:" + newDigest,
 							PollInterval: &metav1.Duration{Duration: time.Minute * 7},
 						},
 					},
@@ -867,23 +865,23 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 					ContentURL: "URL",
 					Conditions: []metav1.Condition{
 						{
-							Type:   catalogdv1alpha1.TypeProgressing,
-							Status: metav1.ConditionFalse,
-							Reason: catalogdv1alpha1.ReasonSucceeded,
+							Type:               catalogdv1alpha1.TypeProgressing,
+							Status:             metav1.ConditionFalse,
+							Reason:             catalogdv1alpha1.ReasonSucceeded,
+							ObservedGeneration: 3,
 						},
 						{
-							Type:   catalogdv1alpha1.TypeServing,
-							Status: metav1.ConditionTrue,
-							Reason: catalogdv1alpha1.ReasonAvailable,
+							Type:               catalogdv1alpha1.TypeServing,
+							Status:             metav1.ConditionTrue,
+							Reason:             catalogdv1alpha1.ReasonAvailable,
+							ObservedGeneration: 2,
 						},
 					},
-					ObservedGeneration: 2,
 					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
-						Type: "image",
+						Type: catalogdv1alpha1.SourceTypeImage,
 						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref:             "someimage:latest",
-							ResolvedRef:     "someimage@sha256:asdf123",
-							LastPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
+							Ref:                       "my.org/someimage@sha256:" + oldDigest,
+							LastSuccessfulPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
 						},
 					},
 				},

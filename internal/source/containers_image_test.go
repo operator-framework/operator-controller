@@ -382,7 +382,7 @@ func TestImageRegistry(t *testing.T) {
 			rs, err := imgReg.Unpack(ctx, tt.catalog)
 			if !tt.wantErr {
 				require.NoError(t, err)
-				assert.Equal(t, fmt.Sprintf("%s@sha256:%s", imgName.Context().Name(), digest.Hex), rs.ResolvedSource.Image.ResolvedRef)
+				assert.Equal(t, fmt.Sprintf("%s@sha256:%s", imgName.Context().Name(), digest.Hex), rs.ResolvedSource.Image.Ref)
 				assert.Equal(t, source.StateUnpacked, rs.State)
 
 				unpackDir := filepath.Join(testCache, tt.catalog.Name, digest.String())
@@ -396,15 +396,15 @@ func TestImageRegistry(t *testing.T) {
 				// If the digest should already exist check that we actually hit it
 				if tt.digestAlreadyExists {
 					assert.Contains(t, buf.String(), "image already unpacked")
-					assert.Equal(t, rs.ResolvedSource.Image.LastUnpacked.Time, unpackDirStat.ModTime())
+					assert.Equal(t, rs.UnpackTime, unpackDirStat.ModTime())
 				} else if tt.oldDigestExists {
 					assert.NotContains(t, buf.String(), "image already unpacked")
-					assert.NotEqual(t, rs.ResolvedSource.Image.LastUnpacked.Time, oldDigestModTime)
+					assert.NotEqual(t, rs.UnpackTime, oldDigestModTime)
 					assert.NoDirExists(t, oldDigestDir)
 				} else {
-					require.NotNil(t, rs.ResolvedSource.Image.LastUnpacked)
+					require.NotNil(t, rs.UnpackTime)
 					require.NotNil(t, rs.ResolvedSource.Image)
-					assert.False(t, rs.ResolvedSource.Image.LastUnpacked.IsZero())
+					assert.False(t, rs.UnpackTime.IsZero())
 				}
 			} else {
 				assert.Error(t, err)

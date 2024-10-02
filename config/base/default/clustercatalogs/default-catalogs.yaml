@@ -5,7 +5,7 @@ metadata:
   namespace: olmv1-system
 spec:
   source:
-    type: image
+    type: Image
     image:
       ref: quay.io/operatorhubio/catalog:latest
       pollInterval: 10m

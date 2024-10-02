@@ -26,7 +26,7 @@ metadata:
   name: ${TEST_CLUSTER_CATALOG_NAME}
 spec:
   source:
-    type: image
+    type: Image
     image:
       ref: ${TEST_CLUSTER_CATALOG_IMAGE}
 EOF

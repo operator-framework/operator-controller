@@ -24,7 +24,7 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
       name: operatorhubio
     spec:
       source:
-        type: image
+        type: Image
         image:
           ref: quay.io/operatorhubio/catalog:latest
     EOF
@@ -57,7 +57,7 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
         Image:
           Poll Interval:  10m0s
           Ref:            quay.io/operatorhubio/catalog:latest
-        Type:             image
+        Type:             Image
     Status:
       Conditions:
         Last Transition Time:  2024-09-12T13:37:53Z
@@ -79,7 +79,7 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
           Last Unpacked:      2024-09-12T13:37:52Z
           Ref:                quay.io/operatorhubio/catalog:latest
           Resolved Ref:       quay.io/operatorhubio/catalog@sha256:4453a361198d39d0390fd8c1a7f07b5a5a3ae1e8dac9979ef0c4eba46299df16
-        Type:                 image
+        Type:                 Image
    Events:                   <none>
    ```
 

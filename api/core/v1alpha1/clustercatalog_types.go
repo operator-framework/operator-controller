@@ -25,7 +25,7 @@ import (
 type SourceType string
 
 const (
-	SourceTypeImage SourceType = "image"
+	SourceTypeImage SourceType = "Image"
 
 	TypeProgressing = "Progressing"
 	TypeServing     = "Serving"
@@ -77,7 +77,7 @@ type ClusterCatalogSpec struct {
 	// Below is a minimal example of a ClusterCatalogSpec that sources a catalog from an image:
 	//
 	//  source:
-	//    type: image
+	//    type: Image
 	//    image:
 	//      ref: quay.io/operatorhubio/catalog:latest
 	//
@@ -91,7 +91,7 @@ type ClusterCatalogSpec struct {
 	// When omitted, the default priority is 0.
 	// +kubebuilder:default:=0
 	// +optional
-	Priority int32 `json:"priority,omitempty"`
+	Priority int32 `json:"priority"`
 }
 
 // ClusterCatalogStatus defines the observed state of ClusterCatalog
@@ -128,51 +128,54 @@ type ClusterCatalogStatus struct {
 	//    lastUnpacked: "2024-09-10T12:22:13Z"
 	//    ref: quay.io/operatorhubio/catalog:latest
 	//    resolvedRef: quay.io/operatorhubio/catalog@sha256:c7392b4be033da629f9d665fec30f6901de51ce3adebeff0af579f311ee5cf1b
-	//  type: image
+	//  type: Image
 	// +optional
 	ResolvedSource *ResolvedCatalogSource `json:"resolvedSource,omitempty"`
 	// contentURL is a cluster-internal URL from which on-cluster components
 	// can read the content of a catalog
 	// +optional
 	ContentURL string `json:"contentURL,omitempty"`
-	// observedGeneration is the most recent generation observed for this ClusterCatalog. It corresponds to the
-	// ClusterCatalog's generation, which is updated on mutation by the API Server.
-	// +optional
-	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
 	// lastUnpacked represents the time when the
-	// ClusterCatalog object was last unpacked.
+	// ClusterCatalog object was last unpacked successfully.
 	// +optional
 	LastUnpacked metav1.Time `json:"lastUnpacked,omitempty"`
 }
 
 // CatalogSource is a discriminated union of possible sources for a Catalog.
+// CatalogSource contains the sourcing information for a Catalog
+// +union
+// +kubebuilder:validation:XValidation:rule="self.type == 'Image' && has(self.image)",message="source type 'Image' requires image field"
 type CatalogSource struct {
 	// type is a required reference to the type of source the catalog is sourced from.
 	//
-	// Allowed values are ["image"]
+	// Allowed values are ["Image"]
 	//
-	// When this field is set to "image", the ClusterCatalog content will be sourced from an OCI image.
+	// When this field is set to "Image", the ClusterCatalog content will be sourced from an OCI image.
 	// When using an image source, the image field must be set and must be the only field defined for this type.
 	//
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="image"
+	// +kubebuilder:validation:Enum:="Image"
 	// +kubebuilder:validation:Required
 	Type SourceType `json:"type"`
-	// image is used to configure how catalog contents are sourced from an OCI image. This field must be set when type is set to "image" and must be the only field defined for this type.
+	// image is used to configure how catalog contents are sourced from an OCI image. This field must be set when type is set to "Image" and must be the only field defined for this type.
 	// +optional
 	Image *ImageSource `json:"image,omitempty"`
 }
 
 // ResolvedCatalogSource is a discriminated union of resolution information for a Catalog.
+// ResolvedCatalogSource contains the information about a sourced Catalog
+// +union
+// +kubebuilder:validation:XValidation:rule="self.type == 'Image' && has(self.image)",message="source type 'Image' requires image field"
 type ResolvedCatalogSource struct {
 	// type is a reference to the type of source the catalog is sourced from.
 	//
-	// It will be set to one of the following values: ["image"].
+	// It will be set to one of the following values: ["Image"].
 	//
-	// When this field is set to "image", information about the resolved image source will be set in the 'image' field.
+	// When this field is set to "Image", information about the resolved image source will be set in the 'image' field.
 	//
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="image"
+	// +kubebuilder:validation:Enum:="Image"
 	// +kubebuilder:validation:Required
 	Type SourceType `json:"type"`
 	// image is a field containing resolution information for a catalog sourced from an image.
@@ -181,14 +184,10 @@ type ResolvedCatalogSource struct {
 
 // ResolvedImageSource provides information about the resolved source of a Catalog sourced from an image.
 type ResolvedImageSource struct {
-	// ref is the reference to a container image containing Catalog contents.
+	// ref contains the resolved sha256 image ref containing Catalog contents.
 	Ref string `json:"ref"`
-	// resolvedRef is the resolved sha256 image ref containing Catalog contents.
-	ResolvedRef string `json:"resolvedRef"`
-	// lastPollAttempt is the time when the source image was last polled for new content.
-	LastPollAttempt metav1.Time `json:"lastPollAttempt"`
-	// lastUnpacked is the last time when the Catalog contents were successfully unpacked.
-	LastUnpacked metav1.Time `json:"lastUnpacked"`
+	// lastSuccessfulPollAttempt is the time when the resolved source was last successfully polled for new content.
+	LastSuccessfulPollAttempt metav1.Time `json:"lastSuccessfulPollAttempt"`
 }
 
 // ImageSource enables users to define the information required for sourcing a Catalog from an OCI image
