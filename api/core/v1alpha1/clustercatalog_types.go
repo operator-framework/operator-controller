@@ -87,7 +87,7 @@ type ClusterCatalogSpec struct {
 	// priority is an optional field that allows the user to define a priority for a ClusterCatalog.
 	// A ClusterCatalog's priority is used by clients as a tie-breaker between ClusterCatalogs that meet the client's requirements.
 	// For example, in the case where multiple ClusterCatalogs provide the same bundle.
-	// A higher number means higher priority. Negative number as also accepted.
+	// A higher number means higher priority. Negative numbers are also accepted.
 	// When omitted, the default priority is 0.
 	// +kubebuilder:default:=0
 	// +optional
@@ -106,15 +106,15 @@ type ClusterCatalogStatus struct {
 	//   - Message: a human-readable message that further elaborates on the state of the condition.
 	//
 	// The current set of condition types are:
-	//   - "Unpacked", epresents whether, or not, the catalog contents have been successfully unpacked.
-	//   - "Deleted", represents whether, or not, the catalog contents have been successfully deleted.
+	//   - "Serving", which represents whether or not the contents of the catalog are being served via the HTTP(S) web server.
+	//   - "Progressing", which represents whether or not the ClusterCatalog is progressing towards a new state.
 	//
 	// The current set of reasons are:
-	//   - "UnpackPending", this reason is set on the "Unpack" condition when unpacking the catalog has not started.
-	//   - "Unpacking", this reason is set on the "Unpack" condition when the catalog is being unpacked.
-	//   - "UnpackSuccessful", this reason is set on the "Unpack" condition when unpacking the catalog is successful and the catalog metadata is available to the cluster.
-	//   - "FailedToStore", this reason is set on the "Unpack" condition when an error has been encountered while storing the contents of the catalog.
-	//   - "FailedToDelete", this reason is set on the "Delete" condition when an error has been encountered while deleting the contents of the catalog.
+	//   - "Succeeded", this reason is set on the "Progressing" condition when progressing to a new state is successful.
+	//   - "Blocked", this reason is set on the "Progressing" condition when the ClusterCatalog controller has encountered an error that requires manual intervention for recovery.
+	//   - "Retrying", this reason is set on the "Progressing" condition when the ClusterCatalog controller has encountered an error that might be resolvable on subsequent reconciliation attempts.
+	//   - "Available", this reason is set on the "Serving" condition when the contents of the ClusterCatalog are being served via an endpoint on the HTTP(S) web server.
+	//   - "Unavailable", this reason is set on the "Serving" condition when there is not an endpoint on the HTTP(S) web server that is serving the contents of the ClusterCatalog.
 	//
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
@@ -124,10 +124,8 @@ type ClusterCatalogStatus struct {
 	// resolvedSource:
 	//
 	//  image:
-	//    lastPollAttempt: "2024-09-10T12:22:13Z"
-	//    lastUnpacked: "2024-09-10T12:22:13Z"
-	//    ref: quay.io/operatorhubio/catalog:latest
-	//    resolvedRef: quay.io/operatorhubio/catalog@sha256:c7392b4be033da629f9d665fec30f6901de51ce3adebeff0af579f311ee5cf1b
+	//    lastSuccessfulPollAttempt: "2024-09-10T12:22:13Z"
+	//    ref: quay.io/operatorhubio/catalog@sha256:c7392b4be033da629f9d665fec30f6901de51ce3adebeff0af579f311ee5cf1b
 	//  type: Image
 	// +optional
 	ResolvedSource *ResolvedCatalogSource `json:"resolvedSource,omitempty"`
