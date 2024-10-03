@@ -58,7 +58,7 @@ func (c *Client) GetPackage(ctx context.Context, catalog *catalogd.ClusterCatalo
 		return nil, err
 	}
 
-	catalogFsys, err := c.cache.Get(catalog.Name, catalog.Status.ResolvedSource.Image.ResolvedRef)
+	catalogFsys, err := c.cache.Get(catalog.Name, catalog.Status.ResolvedSource.Image.Ref)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving catalog cache: %v", err)
 	}
@@ -100,16 +100,16 @@ func (c *Client) PopulateCache(ctx context.Context, catalog *catalogd.ClusterCat
 	if err != nil {
 		// Any errors from the http request we want to cache
 		// so later on cache get they can be bubbled up to the user.
-		return c.cache.Put(catalog.Name, catalog.Status.ResolvedSource.Image.ResolvedRef, nil, err)
+		return c.cache.Put(catalog.Name, catalog.Status.ResolvedSource.Image.Ref, nil, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		errToCache := fmt.Errorf("error: received unexpected response status code %d", resp.StatusCode)
-		return c.cache.Put(catalog.Name, catalog.Status.ResolvedSource.Image.ResolvedRef, nil, errToCache)
+		return c.cache.Put(catalog.Name, catalog.Status.ResolvedSource.Image.Ref, nil, errToCache)
 	}
 
-	return c.cache.Put(catalog.Name, catalog.Status.ResolvedSource.Image.ResolvedRef, resp.Body, nil)
+	return c.cache.Put(catalog.Name, catalog.Status.ResolvedSource.Image.Ref, resp.Body, nil)
 }
 
 func (c *Client) doRequest(ctx context.Context, catalog *catalogd.ClusterCatalog) (*http.Response, error) {
@@ -136,7 +136,7 @@ func validateCatalog(catalog *catalogd.ClusterCatalog) error {
 		return fmt.Errorf("error: provided catalog must be non-nil")
 	}
 
-	// if the catalog has not been successfully unpacked, report an error. This ensures that our
+	// if the catalog is not being served, report an error. This ensures that our
 	// reconciles are deterministic and wait for all desired catalogs to be ready.
 	if !meta.IsStatusConditionPresentAndEqual(catalog.Status.Conditions, catalogd.TypeServing, metav1.ConditionTrue) {
 		return fmt.Errorf("catalog %q is not being served", catalog.Name)

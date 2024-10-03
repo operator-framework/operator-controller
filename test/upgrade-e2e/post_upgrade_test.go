@@ -63,7 +63,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, found)
 
-	t.Log("Checking that the ClusterCatalog is unpacked")
+	t.Log("Checking that the ClusterCatalog is serving")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		var clusterCatalog catalogdv1alpha1.ClusterCatalog
 		assert.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, &clusterCatalog))

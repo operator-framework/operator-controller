@@ -27,6 +27,7 @@ Package v1alpha1 contains API Schema definitions for the core v1alpha1 API group
 
 
 CatalogSource is a discriminated union of possible sources for a Catalog.
+CatalogSource contains the sourcing information for a Catalog
 
 
 
@@ -35,8 +36,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `type` _[SourceType](#sourcetype)_ | type is a required reference to the type of source the catalog is sourced from.<br /><br />Allowed values are ["image"]<br /><br />When this field is set to "image", the ClusterCatalog content will be sourced from an OCI image.<br />When using an image source, the image field must be set and must be the only field defined for this type. |  | Enum: [image] <br />Required: \{\} <br /> |
-| `image` _[ImageSource](#imagesource)_ | image is used to configure how catalog contents are sourced from an OCI image. This field must be set when type is set to "image" and must be the only field defined for this type. |  |  |
+| `type` _[SourceType](#sourcetype)_ | type is a required reference to the type of source the catalog is sourced from.<br /><br />Allowed values are ["Image"]<br /><br />When this field is set to "Image", the ClusterCatalog content will be sourced from an OCI image.<br />When using an image source, the image field must be set and must be the only field defined for this type. |  | Enum: [Image] <br />Required: \{\} <br /> |
+| `image` _[ImageSource](#imagesource)_ | image is used to configure how catalog contents are sourced from an OCI image. This field must be set when type is set to "Image" and must be the only field defined for this type. |  |  |
 
 
 #### ClusterCatalog
@@ -95,7 +96,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `source` _[CatalogSource](#catalogsource)_ | source is a required field that allows the user to define the source of a Catalog that contains catalog metadata in the File-Based Catalog (FBC) format.<br /><br />Below is a minimal example of a ClusterCatalogSpec that sources a catalog from an image:<br /><br /> source:<br />   type: image<br />   image:<br />     ref: quay.io/operatorhubio/catalog:latest<br /><br />For more information on FBC, see https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs |  |  |
+| `source` _[CatalogSource](#catalogsource)_ | source is a required field that allows the user to define the source of a Catalog that contains catalog metadata in the File-Based Catalog (FBC) format.<br /><br />Below is a minimal example of a ClusterCatalogSpec that sources a catalog from an image:<br /><br /> source:<br />   type: Image<br />   image:<br />     ref: quay.io/operatorhubio/catalog:latest<br /><br />For more information on FBC, see https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs |  |  |
 | `priority` _integer_ | priority is an optional field that allows the user to define a priority for a ClusterCatalog.<br />A ClusterCatalog's priority is used by clients as a tie-breaker between ClusterCatalogs that meet the client's requirements.<br />For example, in the case where multiple ClusterCatalogs provide the same bundle.<br />A higher number means higher priority. Negative number as also accepted.<br />When omitted, the default priority is 0. | 0 |  |
 
 
@@ -113,10 +114,9 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions is a representation of the current state for this ClusterCatalog.<br />The status is represented by a set of "conditions".<br /><br />Each condition is generally structured in the following format:<br />  - Type: a string representation of the condition type. More or less the condition "name".<br />  - Status: a string representation of the state of the condition. Can be one of ["True", "False", "Unknown"].<br />  - Reason: a string representation of the reason for the current state of the condition. Typically useful for building automation around particular Type+Reason combinations.<br />  - Message: a human-readable message that further elaborates on the state of the condition.<br /><br />The current set of condition types are:<br />  - "Unpacked", epresents whether, or not, the catalog contents have been successfully unpacked.<br />  - "Deleted", represents whether, or not, the catalog contents have been successfully deleted.<br /><br />The current set of reasons are:<br />  - "UnpackPending", this reason is set on the "Unpack" condition when unpacking the catalog has not started.<br />  - "Unpacking", this reason is set on the "Unpack" condition when the catalog is being unpacked.<br />  - "UnpackSuccessful", this reason is set on the "Unpack" condition when unpacking the catalog is successful and the catalog metadata is available to the cluster.<br />  - "FailedToStore", this reason is set on the "Unpack" condition when an error has been encountered while storing the contents of the catalog.<br />  - "FailedToDelete", this reason is set on the "Delete" condition when an error has been encountered while deleting the contents of the catalog. |  |  |
-| `resolvedSource` _[ResolvedCatalogSource](#resolvedcatalogsource)_ | resolvedSource contains information about the resolved source based on the source type.<br /><br />Below is an example of a resolved source for an image source:<br />resolvedSource:<br /><br /> image:<br />   lastPollAttempt: "2024-09-10T12:22:13Z"<br />   lastUnpacked: "2024-09-10T12:22:13Z"<br />   ref: quay.io/operatorhubio/catalog:latest<br />   resolvedRef: quay.io/operatorhubio/catalog@sha256:c7392b4be033da629f9d665fec30f6901de51ce3adebeff0af579f311ee5cf1b<br /> type: image |  |  |
+| `resolvedSource` _[ResolvedCatalogSource](#resolvedcatalogsource)_ | resolvedSource contains information about the resolved source based on the source type.<br /><br />Below is an example of a resolved source for an image source:<br />resolvedSource:<br /><br /> image:<br />   lastPollAttempt: "2024-09-10T12:22:13Z"<br />   lastUnpacked: "2024-09-10T12:22:13Z"<br />   ref: quay.io/operatorhubio/catalog:latest<br />   resolvedRef: quay.io/operatorhubio/catalog@sha256:c7392b4be033da629f9d665fec30f6901de51ce3adebeff0af579f311ee5cf1b<br /> type: Image |  |  |
 | `contentURL` _string_ | contentURL is a cluster-internal URL from which on-cluster components<br />can read the content of a catalog |  |  |
-| `observedGeneration` _integer_ | observedGeneration is the most recent generation observed for this ClusterCatalog. It corresponds to the<br />ClusterCatalog's generation, which is updated on mutation by the API Server. |  |  |
-| `lastUnpacked` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#time-v1-meta)_ | lastUnpacked represents the time when the<br />ClusterCatalog object was last unpacked. |  |  |
+| `lastUnpacked` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#time-v1-meta)_ | lastUnpacked represents the time when the<br />ClusterCatalog object was last unpacked successfully. |  |  |
 
 
 #### ImageSource
@@ -141,6 +141,7 @@ _Appears in:_
 
 
 ResolvedCatalogSource is a discriminated union of resolution information for a Catalog.
+ResolvedCatalogSource contains the information about a sourced Catalog
 
 
 
@@ -149,7 +150,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `type` _[SourceType](#sourcetype)_ | type is a reference to the type of source the catalog is sourced from.<br /><br />It will be set to one of the following values: ["image"].<br /><br />When this field is set to "image", information about the resolved image source will be set in the 'image' field. |  | Enum: [image] <br />Required: \{\} <br /> |
+| `type` _[SourceType](#sourcetype)_ | type is a reference to the type of source the catalog is sourced from.<br /><br />It will be set to one of the following values: ["Image"].<br /><br />When this field is set to "Image", information about the resolved image source will be set in the 'image' field. |  | Enum: [Image] <br />Required: \{\} <br /> |
 | `image` _[ResolvedImageSource](#resolvedimagesource)_ | image is a field containing resolution information for a catalog sourced from an image. |  |  |
 
 
@@ -166,10 +167,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `ref` _string_ | ref is the reference to a container image containing Catalog contents. |  |  |
-| `resolvedRef` _string_ | resolvedRef is the resolved sha256 image ref containing Catalog contents. |  |  |
-| `lastPollAttempt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#time-v1-meta)_ | lastPollAttempt is the time when the source image was last polled for new content. |  |  |
-| `lastUnpacked` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#time-v1-meta)_ | lastUnpacked is the last time when the Catalog contents were successfully unpacked. |  |  |
+| `ref` _string_ | ref contains the resolved sha256 image ref containing Catalog contents. |  |  |
+| `lastSuccessfulPollAttempt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#time-v1-meta)_ | lastSuccessfulPollAttempt is the time when the resolved source was last successfully polled for new content. |  |  |
 
 
 #### SourceType
@@ -186,6 +185,6 @@ _Appears in:_
 
 | Field | Description |
 | --- | --- |
-| `image` |  |
+| `Image` |  |
 
 

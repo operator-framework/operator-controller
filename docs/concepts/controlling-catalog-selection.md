@@ -132,7 +132,7 @@ metadata:
 spec:
   priority: 1000
   source:
-    type: image
+    type: Image
     image:
       ref: quay.io/example/high-priority-content-management:latest
 ```
@@ -169,7 +169,7 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
    spec:
      priority: 1000
      source:
-       type: image
+       type: Image
        image:
          ref: quay.io/example/content-management-a:latest
    ```
@@ -184,7 +184,7 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
    spec:
      priority: 500
      source:
-       type: image
+       type: Image
        image:
          ref: quay.io/example/content-management-b:latest
    ```

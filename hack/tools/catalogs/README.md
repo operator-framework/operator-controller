@@ -33,7 +33,7 @@ If you use another container runtime, set the `CONTAINER_RUNTIME` environment va
 
 #### download-catalog
 
-Download a catalog from an unpacked ClusterCatalog running on a cluster reachable by `kubectl`.
+Download a catalog from a served ClusterCatalog running on a cluster reachable by `kubectl`.
 
 Example:
 

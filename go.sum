@@ -412,8 +412,8 @@ github.com/k14s/ytt v0.36.0/go.mod h1:awQ3bHBk1qT2Xn3GJVdmaLss2khZOIBBKFd2TNXZNM
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
-github.com/klauspost/compress v1.17.9 h1:6KIumPrER1LHsvBVuDa0r5xaG0Es51mhhB9BQB2qeMA=
-github.com/klauspost/compress v1.17.9/go.mod h1:Di0epgTjJY877eYKx5yC51cX2A2Vl2ibi7bDH9ttBbw=
+github.com/klauspost/compress v1.17.10 h1:oXAz+Vh0PMUvJczoi+flxpnBEPxoER1IaAnU/NMPtT0=
+github.com/klauspost/compress v1.17.10/go.mod h1:pMDklpSncoRMuLFrf1W9Ss9KT+0rH90U12bZKk7uwG0=
 github.com/klauspost/pgzip v1.2.6 h1:8RXeL5crjEUFnR2/Sn6GJNWtSQ3Dk8pq4CL3jvdDyjU=
 github.com/klauspost/pgzip v1.2.6/go.mod h1:Ch1tH69qFZu15pkjo5kYi6mth2Zzwzt50oCQKQE9RUs=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
@@ -535,8 +535,8 @@ github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11 h1:eT
 github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11/go.mod h1:EmVJt97N+pfWFsli/ipXTBZqSG5F5KGQhm3c3IsGq1o=
 github.com/operator-framework/api v0.27.0 h1:OrVaGKZJvbZo58HTv2guz7aURkhVKYhFqZ/6VpifiXI=
 github.com/operator-framework/api v0.27.0/go.mod h1:lg2Xx+S8NQWGYlEOvFwQvH46E5EK5IrAIL7HWfAhciM=
-github.com/operator-framework/catalogd v0.29.0 h1:GpeBGUWNGbVTH9l2S4RLi2wRvLAguG/4LYdxqfrwlak=
-github.com/operator-framework/catalogd v0.29.0/go.mod h1:cikCg3BwFMyMrRhMXN6cxpv03Cm/EMV3rHX5yi2w8vo=
+github.com/operator-framework/catalogd v0.30.0 h1:uW5fGZ5vJlUy9n26B13WZLjc3OMrvr2gM4FQDStUd2Y=
+github.com/operator-framework/catalogd v0.30.0/go.mod h1:mSyAemlhvngQPylBU1nY/57syccOv1u9biyovhlRe08=
 github.com/operator-framework/helm-operator-plugins v0.5.0 h1:qph2OoECcI9mpuUBtOsWOMgvpx52mPTTSvzVxICsT04=
 github.com/operator-framework/helm-operator-plugins v0.5.0/go.mod h1:yVncrZ/FJNqedMil+055fk6sw8aMKRrget/AqGM0ig0=
 github.com/operator-framework/operator-lib v0.15.0 h1:0QeRM4PMtThqINpcFGCEBnIV3Z8u7/8fYLEx6mUtdcM=
