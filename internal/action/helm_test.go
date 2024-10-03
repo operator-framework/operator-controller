@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -130,12 +131,12 @@ func TestActionClientFor(t *testing.T) {
 
 	// Test the successful case
 	actionClient, err := acg.ActionClientFor(ctx, obj)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, actionClient)
 	assert.IsType(t, &ActionClient{}, actionClient)
 
 	// Test the error case
 	actionClient, err = acg.ActionClientFor(ctx, obj)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, actionClient)
 }

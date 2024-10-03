@@ -6,6 +6,7 @@ import (
 
 	mmsemver "github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
@@ -40,7 +41,7 @@ func TestInMastermindsSemverRange(t *testing.T) {
 	}
 
 	vRange, err := mmsemver.NewConstraint(">=1.0.0")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	f := filter.InMastermindsSemverRange(vRange)
 

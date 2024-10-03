@@ -171,7 +171,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			successors, err := SuccessorsOf(tt.installedBundle, channelSet[testPackageName])
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			allBundles := make([]declcfg.Bundle, 0, len(bundleSet))
 			for _, bundle := range bundleSet {
@@ -328,7 +328,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			successors, err := SuccessorsOf(tt.installedBundle, channelSet[testPackageName])
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			allBundles := make([]declcfg.Bundle, 0, len(bundleSet))
 			for _, bundle := range bundleSet {
@@ -380,7 +380,7 @@ func TestLegacySuccessor(t *testing.T) {
 	emptyBundle := declcfg.Bundle{}
 
 	f, err := legacySuccessor(installedBundle, fakeChannel)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.True(t, f(b2))
 	assert.False(t, f(b3))
