@@ -1,28 +1,57 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 
-site_name: Operator Controller documentation
+site_name: Operator Lifecycle Manager
 theme:
- name: "material"
- features:
-   - content.code.copy
+  logo: assets/logo.svg
+  name: "material"
+  palette:
+    primary: black
+  features:
+    - content.code.copy
+    - navigation.top
+#    - navigation.tabs
+    - navigation.indexes
 
 repo_url: https://github.com/operator-framework/operator-controller
 
+extra_css:
+  - css/extra.css
+
 nav:
-  - Home: 'index.md'
-  - Components: 'components.md'
-  - Tasks:
-    - Adding a catalog of extensions: 'Tasks/adding-a-catalog.md'
-    - Finding extensions to install: 'Tasks/exploring-available-packages.md'
-    - Installing an extension: 'Tasks/installing-an-extension.md'
-    - Deleting an extension: 'Tasks/uninstalling-an-extension.md'
-  - References:
-    - Supported extensions: 'refs//supported-extensions.md'
-    - API references:
-      - Operator Controller API reference: 'refs/api/operator-controller-api-reference.md'
-      - CatalogD API reference: 'refs/api/catalogd-api-reference.md'
-    - Catalog queries: 'refs/catalog-queries.md'
-    - CRD Upgrade Safety: 'refs/crd-upgrade-safety.md'
+  - Overview:
+    - index.md
+    - Community: project/olmv1_community.md
+    - Architecture: project/olmv1_architecture.md
+    - Design Decisions: project/olmv1_design_decisions.md
+    - Limitations: project/olmv1_limitations.md
+    - Roadmap: project/olmv1_roadmap.md
+  - Getting Started: getting-started/olmv1_getting_started.md
+  - Tutorials:
+    - Add a Catalog: tutorials/add-catalog.md
+    - Explore Content: tutorials/explore-available-content.md
+    - Install an Extension: tutorials/install-extension.md
+    - Upgrade an Extension: tutorials/upgrade-extension.md
+    - Downgrade an Extension: tutorials/downgrade-extension.md
+    - Uninstall an Extension: tutorials/uninstall-extension.md
+  - How-To Guides:
+    - Catalog queries: howto/catalog-queries.md
+    - Channel-Based Upgrades: howto/how-to-channel-based-upgrades.md
+    - Version Pinning: howto/how-to-pin-version.md
+    - Version Range Upgrades: howto/how-to-version-range-upgrades.md
+    - Z-Stream Upgrades: howto/how-to-z-stream-upgrades.md
+    - Derive Service Account Permissions: howto/derive-service-account.md
+  - Conceptual Guides:
+    - Single Owner Objects: concepts/single-owner-objects.md
+    - Upgrade Support: concepts/upgrade-support.md
+    - CRD Upgrade Safety: concepts/crd-upgrade-safety.md
+    - Content Resolution: concepts/controlling-catalog-selection.md
+    - Version Ranges: concepts/version-ranges.md
+  - API Reference:
+    - Operator Controller API reference: api-reference/operator-controller-api-reference.md
+    - CatalogD API reference: api-reference/catalogd-api-reference.md
+  - Contribute:
+    - Contributing: contribute/contributing.md
+    - Developing OLM v1: contribute/developer.md
 
 markdown_extensions:
   - pymdownx.highlight:
