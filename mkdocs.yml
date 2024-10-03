@@ -25,6 +25,7 @@ nav:
     - Design Decisions: project/olmv1_design_decisions.md
     - Limitations: project/olmv1_limitations.md
     - Roadmap: project/olmv1_roadmap.md
+    - Public API: refs/public-api.md
   - Getting Started: getting-started/olmv1_getting_started.md
   - Tutorials:
     - Add a Catalog: tutorials/add-catalog.md
@@ -49,6 +50,7 @@ nav:
   - API Reference:
     - Operator Controller API reference: api-reference/operator-controller-api-reference.md
     - CatalogD API reference: api-reference/catalogd-api-reference.md
+    - CatalogD Web Server reference: api-reference/catalogd-webserver.md
   - Contribute:
     - Contributing: contribute/contributing.md
     - Developing OLM v1: contribute/developer.md
