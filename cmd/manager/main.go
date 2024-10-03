@@ -222,10 +222,10 @@ func main() {
 		setupLog.Error(err, "unable to create catalogs cache directory")
 		os.Exit(1)
 	}
-	cacheFetcher := cache.NewFilesystemCache(catalogsCachePath, func() (*http.Client, error) {
+	catalogClientBackend := cache.NewFilesystemCache(catalogsCachePath)
+	catalogClient := catalogclient.New(catalogClientBackend, func() (*http.Client, error) {
 		return httputil.BuildHTTPClient(certPoolWatcher)
 	})
-	catalogClient := catalogclient.New(cacheFetcher)
 
 	resolver := &resolve.CatalogResolver{
 		WalkCatalogsFunc: resolve.CatalogWalker(
@@ -284,7 +284,7 @@ func main() {
 
 	if err = (&controllers.ClusterCatalogReconciler{
 		Client: cl,
-		Cache:  cacheFetcher,
+		Cache:  catalogClientBackend,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
 		os.Exit(1)

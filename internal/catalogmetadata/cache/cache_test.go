@@ -2,27 +2,21 @@ package cache_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
-	"maps"
-	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"testing/fstest"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
-
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
-	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/cache"
 )
@@ -58,233 +52,105 @@ const (
 	}`
 )
 
-var defaultFS = fstest.MapFS{
-	"fake1/olm.package/fake1.json":       &fstest.MapFile{Data: []byte(package1)},
-	"fake1/olm.bundle/fake1.v1.0.0.json": &fstest.MapFile{Data: []byte(bundle1)},
-	"fake1/olm.channel/stable.json":      &fstest.MapFile{Data: []byte(stableChannel)},
+func defaultContent() io.Reader {
+	return strings.NewReader(package1 + bundle1 + stableChannel)
 }
 
-func TestFilesystemCacheFetchCatalogContents(t *testing.T) {
-	type test struct {
-		name           string
-		catalog        *catalogd.ClusterCatalog
-		contents       fstest.MapFS
-		wantErr        bool
-		tripper        *mockTripper
-		testCaching    bool
-		shouldHitCache bool
+func defaultFS() fstest.MapFS {
+	return fstest.MapFS{
+		"fake1/olm.package/fake1.json":       &fstest.MapFile{Data: []byte(package1)},
+		"fake1/olm.bundle/fake1.v1.0.0.json": &fstest.MapFile{Data: []byte(bundle1)},
+		"fake1/olm.channel/stable.json":      &fstest.MapFile{Data: []byte(stableChannel)},
 	}
-	for _, tt := range []test{
-		{
-			name: "valid non-cached fetch",
-			catalog: &catalogd.ClusterCatalog{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-catalog",
-				},
-				Status: catalogd.ClusterCatalogStatus{
-					ResolvedSource: &catalogd.ResolvedCatalogSource{
-						Type: catalogd.SourceTypeImage,
-						Image: &catalogd.ResolvedImageSource{
-							ResolvedRef: "fake/catalog@sha256:fakesha",
-						},
-					},
-				},
-			},
-			contents: defaultFS,
-			tripper:  &mockTripper{},
-		},
-		{
-			name: "valid cached fetch",
-			catalog: &catalogd.ClusterCatalog{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-catalog",
-				},
-				Status: catalogd.ClusterCatalogStatus{
-					ResolvedSource: &catalogd.ResolvedCatalogSource{
-						Type: catalogd.SourceTypeImage,
-						Image: &catalogd.ResolvedImageSource{
-							ResolvedRef: "fake/catalog@sha256:fakesha",
-						},
-					},
-				},
-			},
-			contents:       defaultFS,
-			tripper:        &mockTripper{},
-			testCaching:    true,
-			shouldHitCache: true,
-		},
-		{
-			name: "cached update fetch with changes",
-			catalog: &catalogd.ClusterCatalog{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-catalog",
-				},
-				Status: catalogd.ClusterCatalogStatus{
-					ResolvedSource: &catalogd.ResolvedCatalogSource{
-						Type: catalogd.SourceTypeImage,
-						Image: &catalogd.ResolvedImageSource{
-							ResolvedRef: "fake/catalog@sha256:fakesha",
-						},
-					},
-				},
-			},
-			contents:       defaultFS,
-			tripper:        &mockTripper{},
-			testCaching:    true,
-			shouldHitCache: false,
-		},
-		{
-			name: "fetch error",
-			catalog: &catalogd.ClusterCatalog{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-catalog",
-				},
-				Status: catalogd.ClusterCatalogStatus{
-					ResolvedSource: &catalogd.ResolvedCatalogSource{
-						Type: catalogd.SourceTypeImage,
-						Image: &catalogd.ResolvedImageSource{
-							ResolvedRef: "fake/catalog@sha256:fakesha",
-						},
-					},
-				},
-			},
-			contents: defaultFS,
-			tripper:  &mockTripper{shouldError: true},
-			wantErr:  true,
-		},
-		{
-			name: "fetch internal server error response",
-			catalog: &catalogd.ClusterCatalog{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-catalog",
-				},
-				Status: catalogd.ClusterCatalogStatus{
-					ResolvedSource: &catalogd.ResolvedCatalogSource{
-						Type: catalogd.SourceTypeImage,
-						Image: &catalogd.ResolvedImageSource{
-							ResolvedRef: "fake/catalog@sha256:fakesha",
-						},
-					},
-				},
-			},
-			contents: defaultFS,
-			tripper:  &mockTripper{serverError: true},
-			wantErr:  true,
-		},
-		{
-			name:     "nil catalog",
-			catalog:  nil,
-			contents: defaultFS,
-			tripper:  &mockTripper{serverError: true},
-			wantErr:  true,
-		},
-		{
-			name: "nil catalog.status.resolvedSource",
-			catalog: &catalogd.ClusterCatalog{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-catalog",
-				},
-				Status: catalogd.ClusterCatalogStatus{
-					ResolvedSource: nil,
-				},
-			},
-			contents: defaultFS,
-			tripper:  &mockTripper{serverError: true},
-			wantErr:  true,
-		},
-		{
-			name: "nil catalog.status.resolvedSource.image",
-			catalog: &catalogd.ClusterCatalog{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-catalog",
-				},
-				Status: catalogd.ClusterCatalogStatus{
-					ResolvedSource: &catalogd.ResolvedCatalogSource{
-						Image: nil,
-					},
-				},
-			},
-			contents: defaultFS,
-			tripper:  &mockTripper{serverError: true},
-			wantErr:  true,
-		},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
-			cacheDir := t.TempDir()
-			tt.tripper.content = make(fstest.MapFS)
-			maps.Copy(tt.tripper.content, tt.contents)
-			httpClient := &http.Client{
-				Transport: tt.tripper,
-			}
-			c := cache.NewFilesystemCache(cacheDir, func() (*http.Client, error) {
-				return httpClient, nil
-			})
+}
 
-			actualFS, err := c.FetchCatalogContents(ctx, tt.catalog)
-			if !tt.wantErr {
-				assert.NoError(t, err)
-				assert.NoError(t, equalFilesystems(tt.contents, actualFS))
-			} else {
-				assert.Error(t, err)
-			}
+func TestFilesystemCachePutAndGet(t *testing.T) {
+	const (
+		catalogName  = "test-catalog"
+		resolvedRef1 = "fake/catalog@sha256:fakesha1"
+		resolvedRef2 = "fake/catalog@sha256:fakesha2"
+	)
 
-			if tt.testCaching {
-				if !tt.shouldHitCache {
-					tt.catalog.Status.ResolvedSource.Image.ResolvedRef = "fake/catalog@sha256:shafake"
-				}
-				tt.tripper.content["foobar/olm.package/foobar.json"] = &fstest.MapFile{Data: []byte(`{"schema": "olm.package", "name": "foobar"}`)}
-				actualFS, err := c.FetchCatalogContents(ctx, tt.catalog)
-				assert.NoError(t, err)
-				if !tt.shouldHitCache {
-					assert.NoError(t, equalFilesystems(tt.tripper.content, actualFS))
-					assert.ErrorContains(t, equalFilesystems(tt.contents, actualFS), "foobar/olm.package/foobar.json")
-				} else {
-					assert.NoError(t, equalFilesystems(tt.contents, actualFS))
-				}
-			}
-		})
-	}
+	cacheDir := t.TempDir()
+	c := cache.NewFilesystemCache(cacheDir)
+
+	catalogCachePath := filepath.Join(cacheDir, catalogName)
+	require.NoDirExists(t, catalogCachePath)
+
+	t.Log("Get empty v1 cache")
+	actualFSGet, err := c.Get(catalogName, resolvedRef1)
+	assert.NoError(t, err)
+	assert.Nil(t, actualFSGet)
+
+	t.Log("Put v1 content into cache")
+	actualFSPut, err := c.Put(catalogName, resolvedRef1, defaultContent(), nil)
+	assert.NoError(t, err)
+	require.NotNil(t, actualFSPut)
+	assert.NoError(t, equalFilesystems(defaultFS(), actualFSPut))
+
+	t.Log("Get v1 content from cache")
+	actualFSGet, err = c.Get(catalogName, resolvedRef1)
+	assert.NoError(t, err)
+	require.NotNil(t, actualFSGet)
+	assert.NoError(t, equalFilesystems(defaultFS(), actualFSPut))
+	assert.NoError(t, equalFilesystems(actualFSPut, actualFSGet))
+
+	t.Log("Put v1 error into cache")
+	actualFSPut, err = c.Put(catalogName, resolvedRef1, nil, errors.New("fake put error"))
+	// Errors do not override previously successfully populated cache
+	assert.NoError(t, err)
+	require.NotNil(t, actualFSPut)
+	assert.NoError(t, equalFilesystems(defaultFS(), actualFSPut))
+	assert.NoError(t, equalFilesystems(actualFSPut, actualFSGet))
+
+	t.Log("Put v2 error into cache")
+	actualFSPut, err = c.Put(catalogName, resolvedRef2, nil, errors.New("fake v2 put error"))
+	assert.Equal(t, errors.New("fake v2 put error"), err)
+	assert.Nil(t, actualFSPut)
+
+	t.Log("Get v2 error from cache")
+	actualFSGet, err = c.Get(catalogName, resolvedRef2)
+	assert.Equal(t, errors.New("fake v2 put error"), err)
+	assert.Nil(t, actualFSGet)
+
+	t.Log("Put v2 content into cache")
+	actualFSPut, err = c.Put(catalogName, resolvedRef2, defaultContent(), nil)
+	assert.NoError(t, err)
+	require.NotNil(t, actualFSPut)
+	assert.NoError(t, equalFilesystems(defaultFS(), actualFSPut))
+
+	t.Log("Get v2 content from cache")
+	actualFSGet, err = c.Get(catalogName, resolvedRef2)
+	assert.NoError(t, err)
+	require.NotNil(t, actualFSGet)
+	assert.NoError(t, equalFilesystems(defaultFS(), actualFSPut))
+	assert.NoError(t, equalFilesystems(actualFSPut, actualFSGet))
+
+	t.Log("Get empty v1 cache")
+	// Cache should be empty and no error because
+	// Put with a new version overrides the old version
+	actualFSGet, err = c.Get(catalogName, resolvedRef1)
+	assert.NoError(t, err)
+	assert.Nil(t, actualFSGet)
 }
 
 func TestFilesystemCacheRemove(t *testing.T) {
-	testCatalog := &catalogd.ClusterCatalog{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-catalog",
-		},
-		Status: catalogd.ClusterCatalogStatus{
-			ResolvedSource: &catalogd.ResolvedCatalogSource{
-				Type: catalogd.SourceTypeImage,
-				Image: &catalogd.ResolvedImageSource{
-					ResolvedRef: "fake/catalog@sha256:fakesha",
-				},
-			},
-		},
-	}
+	catalogName := "test-catalog"
+	resolvedRef := "fake/catalog@sha256:fakesha"
 
-	ctx := context.Background()
 	cacheDir := t.TempDir()
+	c := cache.NewFilesystemCache(cacheDir)
 
-	tripper := &mockTripper{}
-	tripper.content = make(fstest.MapFS)
-	maps.Copy(tripper.content, defaultFS)
-	httpClient := &http.Client{
-		Transport: tripper,
-	}
-	c := cache.NewFilesystemCache(cacheDir, func() (*http.Client, error) {
-		return httpClient, nil
-	})
-
-	catalogCachePath := filepath.Join(cacheDir, testCatalog.Name)
+	catalogCachePath := filepath.Join(cacheDir, catalogName)
 
 	t.Log("Remove cache before it exists")
 	require.NoDirExists(t, catalogCachePath)
-	err := c.Remove(testCatalog.Name)
+	err := c.Remove(catalogName)
 	require.NoError(t, err)
 	assert.NoDirExists(t, catalogCachePath)
 
 	t.Log("Fetch contents to populate cache")
-	_, err = c.FetchCatalogContents(ctx, testCatalog)
+	_, err = c.Put(catalogName, resolvedRef, defaultContent(), nil)
 	require.NoError(t, err)
 	require.DirExists(t, catalogCachePath)
 
@@ -292,7 +158,7 @@ func TestFilesystemCacheRemove(t *testing.T) {
 	require.NoError(t, os.Chmod(catalogCachePath, 0000))
 
 	t.Log("Remove cache causes an error")
-	err = c.Remove(testCatalog.Name)
+	err = c.Remove(catalogName)
 	require.ErrorContains(t, err, "error removing cache directory")
 	require.DirExists(t, catalogCachePath)
 
@@ -300,47 +166,9 @@ func TestFilesystemCacheRemove(t *testing.T) {
 	require.NoError(t, os.Chmod(catalogCachePath, 0777))
 
 	t.Log("Remove cache")
-	err = c.Remove(testCatalog.Name)
+	err = c.Remove(catalogName)
 	require.NoError(t, err)
 	assert.NoDirExists(t, catalogCachePath)
-}
-
-var _ http.RoundTripper = &mockTripper{}
-
-type mockTripper struct {
-	content     fstest.MapFS
-	shouldError bool
-	serverError bool
-}
-
-func (mt *mockTripper) RoundTrip(_ *http.Request) (*http.Response, error) {
-	if mt.shouldError {
-		return nil, errors.New("mock tripper error")
-	}
-
-	if mt.serverError {
-		return &http.Response{
-			StatusCode: http.StatusInternalServerError,
-			Body:       http.NoBody,
-		}, nil
-	}
-
-	pr, pw := io.Pipe()
-
-	go func() {
-		_ = pw.CloseWithError(declcfg.WalkMetasFS(context.Background(), mt.content, func(_ string, meta *declcfg.Meta, err error) error {
-			if err != nil {
-				return err
-			}
-			_, err = pw.Write(meta.Blob)
-			return err
-		}))
-	}()
-
-	return &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       pr,
-	}, nil
 }
 
 func equalFilesystems(expected, actual fs.FS) error {
