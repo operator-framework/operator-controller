@@ -17,7 +17,7 @@ require (
 	github.com/onsi/gomega v1.34.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/operator-framework/api v0.27.0
-	github.com/operator-framework/catalogd v0.29.0
+	github.com/operator-framework/catalogd v0.30.0
 	github.com/operator-framework/helm-operator-plugins v0.5.0
 	github.com/operator-framework/operator-registry v1.47.0
 	github.com/spf13/pflag v1.0.5
@@ -139,7 +139,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368 // indirect
 	github.com/k14s/ytt v0.36.0 // indirect
-	github.com/klauspost/compress v1.17.9 // indirect
+	github.com/klauspost/compress v1.17.10 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
