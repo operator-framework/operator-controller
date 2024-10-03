@@ -25,7 +25,7 @@ nav:
     - Design Decisions: project/olmv1_design_decisions.md
     - Limitations: project/olmv1_limitations.md
     - Roadmap: project/olmv1_roadmap.md
-    - Public API: refs/public-api.md
+    - Public API: project/public-api.md
   - Getting Started: getting-started/olmv1_getting_started.md
   - Tutorials:
     - Add a Catalog: tutorials/add-catalog.md
