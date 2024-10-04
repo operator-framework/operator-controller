@@ -162,13 +162,23 @@ func successResult(unpackPath string, canonicalRef reference.Canonical, lastUnpa
 		ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
 			Type: catalogdv1alpha1.SourceTypeImage,
 			Image: &catalogdv1alpha1.ResolvedImageSource{
-				Ref:                       canonicalRef.String(),
-				LastSuccessfulPollAttempt: metav1.NewTime(time.Now()),
+				Ref: canonicalRef.String(),
+
+				// We truncate to the second because metav1.Time is serialized
+				// as RFC 3339 which only has second-level precision. When we
+				// use this result in a comparison with what we deserialized
+				// from the Kubernetes API server, we need it to match.
+				LastSuccessfulPollAttempt: metav1.NewTime(time.Now().Truncate(time.Second)),
 			},
 		},
-		State:      StateUnpacked,
-		Message:    fmt.Sprintf("unpacked %q successfully", canonicalRef),
-		UnpackTime: lastUnpacked,
+		State:   StateUnpacked,
+		Message: fmt.Sprintf("unpacked %q successfully", canonicalRef),
+
+		// We truncate to the second because metav1.Time is serialized
+		// as RFC 3339 which only has second-level precision. When we
+		// use this result in a comparison with what we deserialized
+		// from the Kubernetes API server, we need it to match.
+		UnpackTime: lastUnpacked.Truncate(time.Second),
 	}
 }
 

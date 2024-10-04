@@ -13,6 +13,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -590,15 +592,12 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			reconciler := &ClusterCatalogReconciler{
-				Client:   nil,
-				Unpacker: tt.source,
-				Storage:  tt.store,
+				Client:         nil,
+				Unpacker:       tt.source,
+				Storage:        tt.store,
+				storedCatalogs: map[string]storedCatalogData{},
 			}
-			var err error
-			reconciler.Finalizers, err = NewFinalizers(reconciler.Storage, reconciler.Unpacker)
-			if err != nil {
-				panic("unable to initialize finalizers")
-			}
+			require.NoError(t, reconciler.setupFinalizers())
 			ctx := context.Background()
 
 			if tt.shouldPanic {
@@ -624,6 +623,8 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 }
 
 func TestPollingRequeue(t *testing.T) {
+	now := time.Now()
+
 	for name, tc := range map[string]struct {
 		catalog              *catalogdv1alpha1.ClusterCatalog
 		expectedRequeueAfter time.Duration
@@ -672,22 +673,17 @@ func TestPollingRequeue(t *testing.T) {
 					FS:    &fstest.MapFS{},
 					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
 						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref: "my.org/someImage@someSHA256Digest",
+							Ref:                       "my.org/someImage@someSHA256Digest",
+							LastSuccessfulPollAttempt: metav1.NewTime(now),
 						},
 					},
 				}},
-				Storage: &MockStore{},
+				Storage:        &MockStore{},
+				storedCatalogs: map[string]storedCatalogData{},
 			}
-			var err error
-			reconciler.Finalizers, err = NewFinalizers(reconciler.Storage, reconciler.Unpacker)
-			if err != nil {
-				panic("unable to initialize finalizers")
-			}
+			require.NoError(t, reconciler.setupFinalizers())
 			res, _ := reconciler.reconcile(context.Background(), tc.catalog)
-			assert.GreaterOrEqual(t, res.RequeueAfter, tc.expectedRequeueAfter)
-			// wait.Jitter used to calculate requeueAfter by the reconciler
-			// returns a time.Duration between pollDuration and pollDuration + maxFactor * pollDuration.
-			assert.LessOrEqual(t, float64(res.RequeueAfter), float64(tc.expectedRequeueAfter)+(float64(tc.expectedRequeueAfter)*requeueJitterMaxFactor))
+			assert.InDelta(t, tc.expectedRequeueAfter, res.RequeueAfter, requeueJitterMaxFactor*float64(tc.expectedRequeueAfter))
 		})
 	}
 }
@@ -695,8 +691,55 @@ func TestPollingRequeue(t *testing.T) {
 func TestPollingReconcilerUnpack(t *testing.T) {
 	oldDigest := "a5d4f4467250074216eb1ba1c36e06a3ab797d81c431427fc2aca97ecaf4e9d8"
 	newDigest := "f42337e7b85a46d83c94694638e2312e10ca16a03542399a65ba783c94a32b63"
+	now := time.Now()
+
+	successfulObservedGeneration := int64(2)
+	successfulUnpackStatus := func(mods ...func(status *catalogdv1alpha1.ClusterCatalogStatus)) catalogdv1alpha1.ClusterCatalogStatus {
+		s := catalogdv1alpha1.ClusterCatalogStatus{
+			ContentURL: "URL",
+			Conditions: []metav1.Condition{
+				{
+					Type:               catalogdv1alpha1.TypeProgressing,
+					Status:             metav1.ConditionFalse,
+					Reason:             catalogdv1alpha1.ReasonSucceeded,
+					Message:            "Successfully unpacked and stored content from resolved source",
+					ObservedGeneration: successfulObservedGeneration,
+				},
+				{
+					Type:               catalogdv1alpha1.TypeServing,
+					Status:             metav1.ConditionTrue,
+					Reason:             catalogdv1alpha1.ReasonAvailable,
+					Message:            "Serving desired content from resolved source",
+					ObservedGeneration: successfulObservedGeneration,
+				},
+			},
+			ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
+				Type: catalogdv1alpha1.SourceTypeImage,
+				Image: &catalogdv1alpha1.ResolvedImageSource{
+					Ref:                       "my.org/someimage@sha256:" + oldDigest,
+					LastSuccessfulPollAttempt: metav1.Time{Time: now.Add(-time.Minute * 5)},
+				},
+			},
+		}
+		for _, mod := range mods {
+			mod(&s)
+		}
+		return s
+	}
+	successfulStoredCatalogData := func() map[string]storedCatalogData {
+		return map[string]storedCatalogData{
+			"test-catalog": {
+				observedGeneration: successfulObservedGeneration,
+				unpackResult: source.Result{
+					ResolvedSource: successfulUnpackStatus().ResolvedSource,
+				},
+			},
+		}
+	}
+
 	for name, tc := range map[string]struct {
 		catalog           *catalogdv1alpha1.ClusterCatalog
+		storedCatalogData map[string]storedCatalogData
 		expectedUnpackRun bool
 	}{
 		"ClusterCatalog being resolved the first time, unpack should run": {
@@ -732,31 +775,9 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL: "URL",
-					Conditions: []metav1.Condition{
-						{
-							Type:               catalogdv1alpha1.TypeProgressing,
-							Status:             metav1.ConditionFalse,
-							Reason:             catalogdv1alpha1.ReasonSucceeded,
-							ObservedGeneration: 2,
-						},
-						{
-							Type:               catalogdv1alpha1.TypeServing,
-							Status:             metav1.ConditionTrue,
-							Reason:             catalogdv1alpha1.ReasonAvailable,
-							ObservedGeneration: 2,
-						},
-					},
-					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
-						Type: catalogdv1alpha1.SourceTypeImage,
-						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref:                       "my.org/someimage@sha256:" + oldDigest,
-							LastSuccessfulPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
-						},
-					},
-				},
+				Status: successfulUnpackStatus(),
 			},
+			storedCatalogData: successfulStoredCatalogData(),
 			expectedUnpackRun: false,
 		},
 		"ClusterCatalog not being resolved the first time, pollInterval mentioned, \"now\" is before next expected poll time, unpack should not run": {
@@ -775,31 +796,9 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL: "URL",
-					Conditions: []metav1.Condition{
-						{
-							Type:               catalogdv1alpha1.TypeProgressing,
-							Status:             metav1.ConditionFalse,
-							Reason:             catalogdv1alpha1.ReasonSucceeded,
-							ObservedGeneration: 2,
-						},
-						{
-							Type:               catalogdv1alpha1.TypeServing,
-							Status:             metav1.ConditionTrue,
-							Reason:             catalogdv1alpha1.ReasonAvailable,
-							ObservedGeneration: 2,
-						},
-					},
-					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
-						Type: catalogdv1alpha1.SourceTypeImage,
-						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref:                       "my.org/someimage@sha256:" + oldDigest,
-							LastSuccessfulPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
-						},
-					},
-				},
+				Status: successfulUnpackStatus(),
 			},
+			storedCatalogData: successfulStoredCatalogData(),
 			expectedUnpackRun: false,
 		},
 		"ClusterCatalog not being resolved the first time, pollInterval mentioned, \"now\" is after next expected poll time, unpack should run": {
@@ -818,31 +817,9 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL: "URL",
-					Conditions: []metav1.Condition{
-						{
-							Type:               catalogdv1alpha1.TypeProgressing,
-							Status:             metav1.ConditionFalse,
-							Reason:             catalogdv1alpha1.ReasonSucceeded,
-							ObservedGeneration: 2,
-						},
-						{
-							Type:               catalogdv1alpha1.TypeServing,
-							Status:             metav1.ConditionTrue,
-							Reason:             catalogdv1alpha1.ReasonAvailable,
-							ObservedGeneration: 2,
-						},
-					},
-					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
-						Type: catalogdv1alpha1.SourceTypeImage,
-						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref:                       "my.org/someimage@sha256:" + oldDigest,
-							LastSuccessfulPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
-						},
-					},
-				},
+				Status: successfulUnpackStatus(),
 			},
+			storedCatalogData: successfulStoredCatalogData(),
 			expectedUnpackRun: true,
 		},
 		"ClusterCatalog not being resolved the first time, pollInterval mentioned, \"now\" is before next expected poll time, generation changed, unpack should run": {
@@ -861,46 +838,68 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 						},
 					},
 				},
-				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL: "URL",
-					Conditions: []metav1.Condition{
-						{
-							Type:               catalogdv1alpha1.TypeProgressing,
-							Status:             metav1.ConditionFalse,
-							Reason:             catalogdv1alpha1.ReasonSucceeded,
-							ObservedGeneration: 3,
-						},
-						{
-							Type:               catalogdv1alpha1.TypeServing,
-							Status:             metav1.ConditionTrue,
-							Reason:             catalogdv1alpha1.ReasonAvailable,
-							ObservedGeneration: 2,
-						},
-					},
-					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
+				Status: successfulUnpackStatus(),
+			},
+			storedCatalogData: successfulStoredCatalogData(),
+			expectedUnpackRun: true,
+		},
+		"ClusterCatalog not being resolved the first time, no stored catalog in cache, unpack should run": {
+			catalog: &catalogdv1alpha1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+					Generation: 3,
+				},
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
 						Type: catalogdv1alpha1.SourceTypeImage,
-						Image: &catalogdv1alpha1.ResolvedImageSource{
-							Ref:                       "my.org/someimage@sha256:" + oldDigest,
-							LastSuccessfulPollAttempt: metav1.Time{Time: time.Now().Add(-time.Minute * 5)},
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref:          "my.org/someotherimage@sha256:" + newDigest,
+							PollInterval: &metav1.Duration{Duration: time.Minute * 7},
 						},
 					},
 				},
+				Status: successfulUnpackStatus(),
 			},
+			expectedUnpackRun: true,
+		},
+		"ClusterCatalog not being resolved the first time, unexpected status, unpack should run": {
+			catalog: &catalogdv1alpha1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test-catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+					Generation: 3,
+				},
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
+						Type: catalogdv1alpha1.SourceTypeImage,
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref:          "my.org/someotherimage@sha256:" + newDigest,
+							PollInterval: &metav1.Duration{Duration: time.Minute * 7},
+						},
+					},
+				},
+				Status: successfulUnpackStatus(func(status *catalogdv1alpha1.ClusterCatalogStatus) {
+					meta.FindStatusCondition(status.Conditions, catalogdv1alpha1.TypeProgressing).Status = metav1.ConditionTrue
+				}),
+			},
+			storedCatalogData: successfulStoredCatalogData(),
 			expectedUnpackRun: true,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			scd := tc.storedCatalogData
+			if scd == nil {
+				scd = map[string]storedCatalogData{}
+			}
 			reconciler := &ClusterCatalogReconciler{
-				Client:   nil,
-				Unpacker: &MockSource{unpackError: errors.New("mocksource error")},
-				Storage:  &MockStore{},
+				Client:         nil,
+				Unpacker:       &MockSource{unpackError: errors.New("mocksource error")},
+				Storage:        &MockStore{},
+				storedCatalogs: scd,
 			}
-			var err error
-			reconciler.Finalizers, err = NewFinalizers(reconciler.Storage, reconciler.Unpacker)
-			if err != nil {
-				panic("unable to initialize finalizers")
-			}
-			_, err = reconciler.reconcile(context.Background(), tc.catalog)
+			require.NoError(t, reconciler.setupFinalizers())
+			_, err := reconciler.reconcile(context.Background(), tc.catalog)
 			if tc.expectedUnpackRun {
 				assert.Error(t, err)
 			} else {

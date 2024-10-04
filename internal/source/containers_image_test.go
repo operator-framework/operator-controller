@@ -396,7 +396,7 @@ func TestImageRegistry(t *testing.T) {
 				// If the digest should already exist check that we actually hit it
 				if tt.digestAlreadyExists {
 					assert.Contains(t, buf.String(), "image already unpacked")
-					assert.Equal(t, rs.UnpackTime, unpackDirStat.ModTime())
+					assert.Equal(t, rs.UnpackTime, unpackDirStat.ModTime().Truncate(time.Second))
 				} else if tt.oldDigestExists {
 					assert.NotContains(t, buf.String(), "image already unpacked")
 					assert.NotEqual(t, rs.UnpackTime, oldDigestModTime)
