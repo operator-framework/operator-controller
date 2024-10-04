@@ -80,7 +80,7 @@ The web server will include a `Content-Encoding: gzip` header in compressed resp
 
 !!! note
 
-    Only catalogs that result in a response size greater than 1400 bytes will be compressed.
+    Only catalogs whose uncompressed response body would result in a response size greater than 1400 bytes will be compressed.
 
 ### Cache Header Support
 
