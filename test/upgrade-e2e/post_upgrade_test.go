@@ -86,7 +86,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
 		assert.Contains(ct, cond.Message, "Installed bundle")
-		if assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle) {
+		if assert.NotNil(ct, clusterExtension.Status.Install) {
 			assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle.Version)
 		}
 	}, time.Minute, time.Second)
