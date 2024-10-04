@@ -10,7 +10,7 @@ After you add a catalog to your cluster, you can install an extension by creatin
 
 ## Prerequisites
 
-* A deployed and unpacked catalog
+* A catalog that is being served
 * The name, and optionally version, or channel, of the [supported extension](../project/olmv1_limitations.md) to be installed
 * An existing namespace in which to install the extension
 

@@ -28,8 +28,8 @@ func NewFilesystemCache(cachePath string) *filesystemCache {
 // making decisions on when to attempt to refresh
 // the cache.
 type cacheData struct {
-	ResolvedRef string
-	Error       error
+	Ref   string
+	Error error
 }
 
 // FilesystemCache is a cache that
@@ -78,8 +78,8 @@ func (fsc *filesystemCache) Put(catalogName, resolvedRef string, source io.Reade
 		cacheFS, errToCache = fsc.writeFS(catalogName, source)
 	}
 	fsc.cacheDataByCatalogName[catalogName] = cacheData{
-		ResolvedRef: resolvedRef,
-		Error:       errToCache,
+		Ref:   resolvedRef,
+		Error: errToCache,
 	}
 
 	return cacheFS, errToCache
@@ -144,7 +144,7 @@ func (fsc *filesystemCache) Get(catalogName, resolvedRef string) (fs.FS, error) 
 func (fsc *filesystemCache) get(catalogName, resolvedRef string) (fs.FS, error) {
 	cacheDir := fsc.cacheDir(catalogName)
 	if data, ok := fsc.cacheDataByCatalogName[catalogName]; ok {
-		if resolvedRef == data.ResolvedRef {
+		if resolvedRef == data.Ref {
 			if data.Error != nil {
 				return nil, data.Error
 			}

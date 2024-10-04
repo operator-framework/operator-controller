@@ -41,18 +41,18 @@ metadata:
   name: operatorhubio
 spec:
   source:
-    type: image
+    type: Image
     image:
       ref: quay.io/operatorhubio/catalog:latest
       pollInterval: 10m
 EOF
 ```
 
-Once the catalog is unpacked successfully, its content will be available for installation.
+Once the catalog is being served, its content will be available for installation.
 
 ```bash
-# Wait for the ClusterCatalog to be unpacked
-kubectl wait --for=condition=Unpacked=True clustercatalog/operatorhubio --timeout=60s
+# Wait for the ClusterCatalog to be ready
+kubectl wait --for=condition=Serving=True clustercatalog/operatorhubio --timeout=60s
 ```
 
 ### Install a Cluster Extension

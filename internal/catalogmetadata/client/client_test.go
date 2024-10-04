@@ -26,7 +26,7 @@ func defaultCatalog() *catalogd.ClusterCatalog {
 		Status: catalogd.ClusterCatalogStatus{
 			Conditions: []metav1.Condition{{Type: catalogd.TypeServing, Status: metav1.ConditionTrue}},
 			ResolvedSource: &catalogd.ResolvedCatalogSource{Image: &catalogd.ResolvedImageSource{
-				ResolvedRef: "fake/catalog@sha256:fakesha",
+				Ref: "fake/catalog@sha256:fakesha",
 			}},
 			ContentURL: "https://fake-url.svc.local/all.json",
 		},
@@ -47,7 +47,7 @@ func TestClientGetPackage(t *testing.T) {
 	}
 	for _, tc := range []testCase{
 		{
-			name: "not unpacked",
+			name: "not served",
 			catalog: func() *catalogd.ClusterCatalog {
 				return &catalogd.ClusterCatalog{ObjectMeta: metav1.ObjectMeta{Name: "catalog-1"}}
 			},
@@ -56,7 +56,7 @@ func TestClientGetPackage(t *testing.T) {
 			},
 		},
 		{
-			name:    "unpacked, cache returns error",
+			name:    "served, cache returns error",
 			catalog: defaultCatalog,
 			cache:   &fakeCache{getErr: errors.New("fetch error")},
 			assert: func(t *testing.T, dc *declcfg.DeclarativeConfig, err error) {
@@ -64,7 +64,7 @@ func TestClientGetPackage(t *testing.T) {
 			},
 		},
 		{
-			name:    "unpacked, invalid package path",
+			name:    "served, invalid package path",
 			catalog: defaultCatalog,
 			cache:   &fakeCache{getFS: testFS},
 			pkgName: "/",
@@ -73,7 +73,7 @@ func TestClientGetPackage(t *testing.T) {
 			},
 		},
 		{
-			name:    "unpacked, package missing",
+			name:    "served, package missing",
 			catalog: defaultCatalog,
 			pkgName: "pkg-missing",
 			cache:   &fakeCache{getFS: testFS},
@@ -83,7 +83,7 @@ func TestClientGetPackage(t *testing.T) {
 			},
 		},
 		{
-			name:    "unpacked, invalid package present",
+			name:    "served, invalid package present",
 			catalog: defaultCatalog,
 			pkgName: "invalid-pkg-present",
 			cache: &fakeCache{getFS: fstest.MapFS{
@@ -95,7 +95,7 @@ func TestClientGetPackage(t *testing.T) {
 			},
 		},
 		{
-			name:    "unpacked, package present",
+			name:    "served, package present",
 			catalog: defaultCatalog,
 			pkgName: "pkg-present",
 			cache:   &fakeCache{getFS: testFS},
@@ -183,7 +183,7 @@ func TestClientPopulateCache(t *testing.T) {
 			},
 		},
 		{
-			name: "not unpacked",
+			name: "not served",
 			catalog: func() *catalogd.ClusterCatalog {
 				return &catalogd.ClusterCatalog{ObjectMeta: metav1.ObjectMeta{Name: "catalog-1"}}
 			},
