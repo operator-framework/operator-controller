@@ -30,7 +30,6 @@ import (
 	"github.com/spf13/pflag"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2"
@@ -56,7 +55,6 @@ import (
 	"github.com/operator-framework/operator-controller/internal/features"
 	"github.com/operator-framework/operator-controller/internal/finalizers"
 	"github.com/operator-framework/operator-controller/internal/httputil"
-	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/resolve"
 	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
@@ -122,13 +120,6 @@ func main() {
 		systemNamespace = podNamespace()
 	}
 
-	dependentRequirement, err := k8slabels.NewRequirement(labels.OwnerKindKey, selection.In, []string{ocv1alpha1.ClusterExtensionKind})
-	if err != nil {
-		setupLog.Error(err, "unable to create dependent label selector for cache")
-		os.Exit(1)
-	}
-	dependentSelector := k8slabels.NewSelector().Add(*dependentRequirement)
-
 	setupLog.Info("set up manager")
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme.Scheme,
@@ -144,7 +135,7 @@ func main() {
 			DefaultNamespaces: map[string]crcache.Config{
 				systemNamespace: {LabelSelector: k8slabels.Everything()},
 			},
-			DefaultLabelSelector: dependentSelector,
+			DefaultLabelSelector: k8slabels.Nothing(),
 		},
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the

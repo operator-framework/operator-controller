@@ -31,7 +31,7 @@ func setInstalledStatusConditionSuccess(ext *ocv1alpha1.ClusterExtension, messag
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionTrue,
-		Reason:             ocv1alpha1.ReasonSuccess,
+		Reason:             ocv1alpha1.ReasonSucceeded,
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
 	})
@@ -56,7 +56,7 @@ func setStatusProgressing(ext *ocv1alpha1.ClusterExtension, err error) {
 	progressingCond := metav1.Condition{
 		Type:               ocv1alpha1.TypeProgressing,
 		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonSuccess,
+		Reason:             ocv1alpha1.ReasonSucceeded,
 		Message:            "desired state reached",
 		ObservedGeneration: ext.GetGeneration(),
 	}

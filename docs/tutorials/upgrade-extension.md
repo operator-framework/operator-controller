@@ -92,83 +92,73 @@ spec:
 
     ??? success
       ``` text title="Example output"
-      Name:         argocd
-      Namespace:    
-      Labels:       olm.operatorframework.io/owner-kind=ClusterExtension
-                    olm.operatorframework.io/owner-name=argocd
-      Annotations:  <none>
-      API Version:  olm.operatorframework.io/v1alpha1
-      Kind:         ClusterExtension
-      Metadata:
-        Creation Timestamp:  2024-09-06T13:38:38Z
-        Finalizers:
-          olm.operatorframework.io/cleanup-unpack-cache
-          olm.operatorframework.io/cleanup-contentmanager-cache
-        Generation:        5
-        Resource Version:  21167
-        UID:               5abdf57d-aedc-45d4-ba0d-a86e785fd34a
-      Spec:
-        Install:
-          Namespace:  argocd
-          Service Account:
-            Name:  argocd-installer
-        Source:
-          Catalog:
-            Package Name:  argocd-operator
-          Selector:
-          Upgrade Constraint Policy:  Enforce
-          Version:                    0.6.0
-        Source Type:                  Catalog
-      Status:
-        Conditions:
-          Last Transition Time:  2024-09-06T13:38:38Z
-          Message:               
-          Observed Generation:   5
-          Reason:                Deprecated
-          Status:                False
-          Type:                  Deprecated
-          Last Transition Time:  2024-09-06T13:38:38Z
-          Message:               
-          Observed Generation:   5
-          Reason:                Deprecated
-          Status:                False
-          Type:                  PackageDeprecated
-          Last Transition Time:  2024-09-06T13:38:38Z
-          Message:               
-          Observed Generation:   5
-          Reason:                Deprecated
-          Status:                False
-          Type:                  ChannelDeprecated
-          Last Transition Time:  2024-09-06T13:38:38Z
-          Message:               
-          Observed Generation:   5
-          Reason:                Deprecated
-          Status:                False
-          Type:                  BundleDeprecated
-          Last Transition Time:  2024-09-06T13:40:14Z
-          Message:               resolved to "quay.io/operatorhubio/argocd-operator@sha256:d538c45a813b38ef0e44f40d279dc2653f97ca901fb660da5d7fe499d51ad3b3"
-          Observed Generation:   5
-          Reason:                Success
-          Status:                True
-          Type:                  Resolved
-          Last Transition Time:  2024-09-06T13:38:38Z
-          Message:               unpack successful:
-          Observed Generation:   5
-          Reason:                UnpackSuccess
-          Status:                True
-          Type:                  Unpacked
-          Last Transition Time:  2024-09-06T13:40:31Z
-          Message:               Installed bundle quay.io/operatorhubio/argocd-operator@sha256:d538c45a813b38ef0e44f40d279dc2653f97ca901fb660da5d7fe499d51ad3b3 successfully
-          Observed Generation:   5
-          Reason:                Success
-          Status:                True
-          Type:                  Installed
-      Install:
-        Bundle:
-          Name:     argocd-operator.v0.6.0
-          Version:  0.6.0
-      Resolution:
-        Bundle:
-          Name:     argocd-operator.v0.6.0
-          Version:  0.6.0
+        apiVersion: olm.operatorframework.io/v1alpha1
+        kind: ClusterExtension
+        metadata:
+        annotations:
+            kubectl.kubernetes.io/last-applied-configuration: |
+            {"apiVersion":"olm.operatorframework.io/v1alpha1","kind":"ClusterExtension","metadata":{"annotations":{},"name":"argocd"},"spec":{"install":{"namespace":"argocd","serviceAccount":{"name":"argocd-installer"}},"source":{"catalog":{"packageName":"argocd-operator","version":"0.6.0"},"sourceType":"Catalog"}}}
+        creationTimestamp: "2024-10-03T16:02:40Z"
+        finalizers:
+        - olm.operatorframework.io/cleanup-unpack-cache
+        - olm.operatorframework.io/cleanup-contentmanager-cache
+        generation: 2
+        name: argocd
+        resourceVersion: "1174"
+        uid: 0fcaf3f5-d142-4c7e-8d88-c88a549f7764
+        spec:
+        install:
+            namespace: argocd
+            serviceAccount:
+            name: argocd-installer
+        source:
+            catalog:
+            packageName: argocd-operator
+            selector: {}
+            upgradeConstraintPolicy: CatalogProvided
+            version: 0.6.0
+            sourceType: Catalog
+        status:
+        conditions:
+        - lastTransitionTime: "2024-10-03T16:02:41Z"
+            message: ""
+            observedGeneration: 2
+            reason: Deprecated
+            status: "False"
+            type: Deprecated
+        - lastTransitionTime: "2024-10-03T16:02:41Z"
+            message: ""
+            observedGeneration: 2
+            reason: Deprecated
+            status: "False"
+            type: PackageDeprecated
+        - lastTransitionTime: "2024-10-03T16:02:41Z"
+            message: ""
+            observedGeneration: 2
+            reason: Deprecated
+            status: "False"
+            type: ChannelDeprecated
+        - lastTransitionTime: "2024-10-03T16:02:41Z"
+            message: ""
+            observedGeneration: 2
+            reason: Deprecated
+            status: "False"
+            type: BundleDeprecated
+        - lastTransitionTime: "2024-10-03T16:02:43Z"
+            message: Installed bundle quay.io/operatorhubio/argocd-operator@sha256:d538c45a813b38ef0e44f40d279dc2653f97ca901fb660da5d7fe499d51ad3b3
+            successfully
+            observedGeneration: 2
+            reason: Succeeded
+            status: "True"
+            type: Installed
+        - lastTransitionTime: "2024-10-03T16:02:43Z"
+            message: desired state reached
+            observedGeneration: 2
+            reason: Succeeded
+            status: "False"
+            type: Progressing
+        install:
+            bundle:
+            name: argocd-operator.v0.6.0
+            version: 0.6.0
       ```

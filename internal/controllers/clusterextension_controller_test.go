@@ -421,7 +421,7 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, installedCond)
 	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, installedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonSucceeded, installedCond.Reason)
 
 	t.Log("By checking the expected progressing conditions")
 	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
@@ -505,7 +505,7 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, installedCond)
 	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, installedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonSucceeded, installedCond.Reason)
 
 	t.Log("By checking the expected progressing conditions")
 	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
@@ -591,7 +591,7 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, installedCond)
 	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, installedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonSucceeded, installedCond.Reason)
 
 	t.Log("By checking the expected progressing conditions")
 	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
@@ -674,13 +674,13 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, installedCond)
 	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, installedCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonSucceeded, installedCond.Reason)
 
 	t.Log("By checking the expected progressing conditions")
 	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 	require.NotNil(t, progressingCond)
 	require.Equal(t, metav1.ConditionFalse, progressingCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSuccess, progressingCond.Reason)
+	require.Equal(t, ocv1alpha1.ReasonSucceeded, progressingCond.Reason)
 
 	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1alpha1.ClusterExtension{}))
 }

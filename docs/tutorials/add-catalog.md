@@ -99,12 +99,12 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
         API Version:  olm.operatorframework.io/v1alpha1
         Kind:         ClusterCatalog
         Metadata:
-          Creation Timestamp:  2024-03-12T19:34:50Z
-          Finalizers:
+        Creation Timestamp:  2024-10-02T19:51:24Z
+        Finalizers:
             olm.operatorframework.io/delete-server-cache
-          Generation:        2
-          Resource Version:  6469
-          UID:               2e2778cb-dda6-4645-96b7-992e8dd37503
+        Generation:        1
+        Resource Version:  33321
+        UID:               52894532-0646-41a5-8285-c7f48bba49e4
         Spec:
           Priority:  0
           Source:
