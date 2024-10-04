@@ -1,7 +1,7 @@
 # Catalogd web server
 
 [Catalogd](https://github.com/operator-framework/catalogd), the OLM v1 component for making catalog contents available on cluster, includes
-a web server that serves catalog contents to clients via a HTTP(S) endpoint.
+a web server that serves catalog contents to clients via an HTTP(S) endpoint.
 
 The endpoint to retrieve this information is provided in the `.status.contentURL` of a `ClusterCatalog` resource.
 As an example:
@@ -74,7 +74,7 @@ Responses are encoded as a [JSON Lines](https://jsonlines.org/) stream of [File-
 
 ### Compression Support
 
-The `catalogd` web server supports gzip compression of responses, which can significantly reduce associated network traffic.  In order to signal to that the client handles compressed responses, the client must include `Accept-Encoding: gzip` as a header in the HTTP request.
+The `catalogd` web server supports gzip compression of responses, which can significantly reduce associated network traffic.  In order to signal that the client handles compressed responses, the client must include `Accept-Encoding: gzip` as a header in the HTTP request.
 
 The web server will include a `Content-Encoding: gzip` header in compressed responses.
 
