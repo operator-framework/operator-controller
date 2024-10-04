@@ -30,6 +30,7 @@ linters:
   - nonamedreturns
   - prealloc
   - stylecheck
+  - testifylint
   - tparallel
   - unconvert
   - unparam

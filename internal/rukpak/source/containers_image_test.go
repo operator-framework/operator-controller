@@ -53,12 +53,12 @@ func TestUnpackValidInsecure(t *testing.T) {
 	result, err := unpacker.Unpack(context.Background(), bundleSource)
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, result.State, source.StateUnpacked)
+	assert.Equal(t, source.StateUnpacked, result.State)
 
 	require.NoDirExists(t, oldBundlePath)
 
 	unpackedFile, err := fs.ReadFile(result.Bundle, testFileName)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	// Ensure the unpacked file matches the source content
 	assert.Equal(t, []byte(testFileContents), unpackedFile)
 	assert.NoError(t, unpacker.Cleanup(context.Background(), bundleSource))
@@ -87,9 +87,9 @@ func TestUnpackValidUsesCache(t *testing.T) {
 
 	// Attempt to pull and unpack the image
 	result, err := unpacker.Unpack(context.Background(), bundleSource)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, result.State, source.StateUnpacked)
+	assert.Equal(t, source.StateUnpacked, result.State)
 
 	// Make sure the original contents of the cache are still present. If the cached contents
 	// were not used, we would expect the original contents to be removed.
@@ -144,7 +144,7 @@ func TestUnpackNameOnlyImageReference(t *testing.T) {
 
 	// Attempt to pull and unpack the image
 	_, err := unpacker.Unpack(context.Background(), bundleSource)
-	assert.ErrorContains(t, err, "tag or digest is needed")
+	require.ErrorContains(t, err, "tag or digest is needed")
 	assert.ErrorIs(t, err, reconcile.TerminalError(nil))
 }
 
@@ -226,8 +226,8 @@ func TestUnpackInvalidNilImage(t *testing.T) {
 	// Attempt to unpack
 	result, err := unpacker.Unpack(context.Background(), bundleSource)
 	assert.Nil(t, result)
-	assert.ErrorContains(t, err, "nil image source")
-	assert.ErrorIs(t, err, reconcile.TerminalError(nil))
+	require.ErrorContains(t, err, "nil image source")
+	require.ErrorIs(t, err, reconcile.TerminalError(nil))
 	assert.NoDirExists(t, filepath.Join(unpacker.BaseCachePath, bundleSource.Name))
 }
 
@@ -245,8 +245,8 @@ func TestUnpackInvalidImageRef(t *testing.T) {
 	// Attempt to unpack
 	result, err := unpacker.Unpack(context.Background(), bundleSource)
 	assert.Nil(t, result)
-	assert.ErrorContains(t, err, "error parsing image reference")
-	assert.ErrorIs(t, err, reconcile.TerminalError(nil))
+	require.ErrorContains(t, err, "error parsing image reference")
+	require.ErrorIs(t, err, reconcile.TerminalError(nil))
 	assert.NoDirExists(t, filepath.Join(unpacker.BaseCachePath, bundleSource.Name))
 }
 
@@ -322,7 +322,7 @@ func TestCleanup(t *testing.T) {
 
 	// Clean up the bundle
 	err := unpacker.Cleanup(context.Background(), bundleSource)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NoDirExists(t, bundleDir)
 }
 

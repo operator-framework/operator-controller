@@ -167,7 +167,7 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 
 			isTerminal := errors.Is(err, reconcile.TerminalError(nil))
 			assert.Equal(t, tc.expectTerminal, isTerminal, "expected terminal error: %v, got: %v", tc.expectTerminal, isTerminal)
-			assert.ErrorContains(t, err, tc.unpackErr.Error())
+			require.ErrorContains(t, err, tc.unpackErr.Error())
 
 			t.Log("By fetching updated cluster extension after reconcile")
 			require.NoError(t, cl.Get(ctx, extKey, clusterExtension))

@@ -11,6 +11,7 @@ import (
 	"testing/fstest"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
@@ -77,7 +78,7 @@ func TestClientGetPackage(t *testing.T) {
 			pkgName: "pkg-missing",
 			cache:   &fakeCache{getFS: testFS},
 			assert: func(t *testing.T, fbc *declcfg.DeclarativeConfig, err error) {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, &declcfg.DeclarativeConfig{}, fbc)
 			},
 		},
@@ -89,7 +90,7 @@ func TestClientGetPackage(t *testing.T) {
 				"invalid-pkg-present/olm.package/invalid-pkg-present.json": &fstest.MapFile{Data: []byte(`{"schema": "olm.package","name": 12345}`)},
 			}},
 			assert: func(t *testing.T, fbc *declcfg.DeclarativeConfig, err error) {
-				assert.ErrorContains(t, err, `error loading package "invalid-pkg-present"`)
+				require.ErrorContains(t, err, `error loading package "invalid-pkg-present"`)
 				assert.Nil(t, fbc)
 			},
 		},
@@ -99,7 +100,7 @@ func TestClientGetPackage(t *testing.T) {
 			pkgName: "pkg-present",
 			cache:   &fakeCache{getFS: testFS},
 			assert: func(t *testing.T, fbc *declcfg.DeclarativeConfig, err error) {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, &declcfg.DeclarativeConfig{Packages: []declcfg.Package{{Schema: declcfg.SchemaPackage, Name: "pkg-present"}}}, fbc)
 			},
 		},
@@ -111,7 +112,7 @@ func TestClientGetPackage(t *testing.T) {
 				return testFS, nil
 			}},
 			assert: func(t *testing.T, fbc *declcfg.DeclarativeConfig, err error) {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, &declcfg.DeclarativeConfig{Packages: []declcfg.Package{{Schema: declcfg.SchemaPackage, Name: "pkg-present"}}}, fbc)
 			},
 		},
@@ -170,7 +171,7 @@ func TestClientPopulateCache(t *testing.T) {
 				}, nil
 			},
 			assert: func(t *testing.T, fs fs.FS, err error) {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, testFS, fs)
 			},
 			putFuncConstructor: func(t *testing.T) func(source string, errToCache error) (fs.FS, error) {

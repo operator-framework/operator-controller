@@ -397,7 +397,7 @@ func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 		gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 		require.Error(t, err)
 		// We will not make a decision on which catalog to use
-		assert.ErrorContains(t, err, "in multiple catalogs with the same priority [b c]")
+		require.ErrorContains(t, err, "in multiple catalogs with the same priority [b c]")
 		assert.Nil(t, gotBundle)
 		assert.Nil(t, gotVersion)
 		assert.Nil(t, gotDeprecation)
@@ -408,7 +408,7 @@ func TestPackageVariationsBetweenCatalogs(t *testing.T) {
 		gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 		require.Error(t, err)
 		// We will not make a decision on which catalog to use
-		assert.ErrorContains(t, err, "in multiple catalogs with the same priority [d f]")
+		require.ErrorContains(t, err, "in multiple catalogs with the same priority [d f]")
 		assert.Nil(t, gotBundle)
 		assert.Nil(t, gotVersion)
 		assert.Nil(t, gotDeprecation)
@@ -635,7 +635,7 @@ func TestCatalogWalker(t *testing.T) {
 			seenCatalogs = append(seenCatalogs, cat.Name)
 			return nil
 		}
-		assert.NoError(t, w(context.Background(), "", walkFunc))
+		require.NoError(t, w(context.Background(), "", walkFunc))
 		assert.Equal(t, []string{"a", "b"}, seenCatalogs)
 	})
 }
@@ -936,7 +936,7 @@ func TestMultiplePriority(t *testing.T) {
 	ce := buildFooClusterExtension(pkgName, []string{}, ">=1.0.0 <=1.0.1", ocv1alpha1.UpgradeConstraintPolicyCatalogProvided)
 	gotBundle, gotVersion, gotDeprecation, err := r.Resolve(context.Background(), ce, nil)
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "in multiple catalogs with the same priority [a b c]")
+	require.ErrorContains(t, err, "in multiple catalogs with the same priority [a b c]")
 	assert.Nil(t, gotBundle)
 	assert.Nil(t, gotVersion)
 	assert.Nil(t, gotDeprecation)
