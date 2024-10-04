@@ -276,7 +276,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 				if assert.NotNil(ct, cond) {
 					assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-					assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+					assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 				}
 			}, pollDuration, pollInterval)
 
@@ -286,7 +286,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 				if assert.NotNil(ct, cond) {
 					assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-					assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+					assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 					assert.Contains(ct, cond.Message, "Installed bundle")
 					assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
 				}
@@ -377,7 +377,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
@@ -433,7 +433,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
@@ -449,7 +449,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 }
@@ -484,7 +484,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
@@ -499,7 +499,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 }
@@ -544,7 +544,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
@@ -568,7 +568,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 }
@@ -625,7 +625,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
@@ -649,7 +649,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 }
@@ -688,7 +688,7 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 			assert.Contains(ct, cond.Message, "Installed bundle")
 		}
 	}, pollDuration, pollInterval)
@@ -786,7 +786,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 			assert.Contains(ct, cond.Message, "Installed bundle")
 			assert.NotEmpty(ct, clusterExtension.Status.Install)
 		}
@@ -798,7 +798,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 }

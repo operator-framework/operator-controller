@@ -28,7 +28,7 @@ func TestSetStatusProgressing(t *testing.T) {
 			expected: metav1.Condition{
 				Type:    ocv1alpha1.TypeProgressing,
 				Status:  metav1.ConditionFalse,
-				Reason:  ocv1alpha1.ReasonSuccess,
+				Reason:  ocv1alpha1.ReasonSucceeded,
 				Message: "desired state reached",
 			},
 		},

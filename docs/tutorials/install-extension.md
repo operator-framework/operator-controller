@@ -103,35 +103,73 @@ For information on determining the ServiceAccount's permission, please see [Deri
 
     ??? success
         ``` text title="Example output"
-        Name:         my-camel-k
+        Name:         argocd
         Namespace:
         Labels:       <none>
         Annotations:  <none>
         API Version:  olm.operatorframework.io/v1alpha1
         Kind:         ClusterExtension
         Metadata:
-          Creation Timestamp:  2024-03-15T15:03:47Z
-          Generation:          1
-          Resource Version:    7691
-          UID:                 d756879f-217d-4ebe-85b1-8427bbb2f1df
+        Creation Timestamp:  2024-10-03T16:02:40Z
+        Finalizers:
+            olm.operatorframework.io/cleanup-unpack-cache
+            olm.operatorframework.io/cleanup-contentmanager-cache
+        Generation:        2
+        Resource Version:  1174
+        UID:               0fcaf3f5-d142-4c7e-8d88-c88a549f7764
         Spec:
-          Package Name:               camel-k
-          Upgrade Constraint Policy:  Enforce
+        Install:
+            Namespace:  argocd
+            Service Account:
+            Name:  argocd-installer
+        Source:
+            Catalog:
+            Package Name:  argocd-operator
+            Selector:
+            Upgrade Constraint Policy:  CatalogProvided
+            Version:                    0.6.0
+            Source Type:                  Catalog
         Status:
-          Conditions:
-            Last Transition Time:     2024-03-15T15:03:50Z
-            Message:                  resolved to "quay.io/operatorhubio/camel-k@sha256:d2b74c43ec8f9294450c9dcf2057be328d0998bb924ad036db489af79d1b39c3"
-            Observed Generation:      1
-            Reason:                   Success
-            Status:                   True
-            Type:                     Resolved
-            Last Transition Time:     2024-03-15T15:04:13Z
-            Message:                  installed from "quay.io/operatorhubio/camel-k@sha256:d2b74c43ec8f9294450c9dcf2057be328d0998bb924ad036db489af79d1b39c3"
-            Observed Generation:      1
-            Reason:                   Success
-            Status:                   True
-            Type:                     Installed
-          Installed Bundle Resource:  quay.io/operatorhubio/camel-k@sha256:d2b74c43ec8f9294450c9dcf2057be328d0998bb924ad036db489af79d1b39c3
-          Resolved Bundle Resource:   quay.io/operatorhubio/camel-k@sha256:d2b74c43ec8f9294450c9dcf2057be328d0998bb924ad036db489af79d1b39c3
-        Events:                       <none>
+        Conditions:
+            Last Transition Time:  2024-10-03T16:02:41Z
+            Message:
+            Observed Generation:   2
+            Reason:                Deprecated
+            Status:                False
+            Type:                  Deprecated
+            Last Transition Time:  2024-10-03T16:02:41Z
+            Message:
+            Observed Generation:   2
+            Reason:                Deprecated
+            Status:                False
+            Type:                  PackageDeprecated
+            Last Transition Time:  2024-10-03T16:02:41Z
+            Message:
+            Observed Generation:   2
+            Reason:                Deprecated
+            Status:                False
+            Type:                  ChannelDeprecated
+            Last Transition Time:  2024-10-03T16:02:41Z
+            Message:
+            Observed Generation:   2
+            Reason:                Deprecated
+            Status:                False
+            Type:                  BundleDeprecated
+            Last Transition Time:  2024-10-03T16:02:43Z
+            Message:               Installed bundle quay.io/operatorhubio/argocd-operator@sha256:d538c45a813b38ef0e44f40d279dc2653f97ca901fb660da5d7fe499d51ad3b3 successfully
+            Observed Generation:   2
+            Reason:                Succeeded
+            Status:                True
+            Type:                  Installed
+            Last Transition Time:  2024-10-03T16:02:43Z
+            Message:               desired state reached
+            Observed Generation:   2
+            Reason:                Succeeded
+            Status:                False
+            Type:                  Progressing
+        Install:
+            Bundle:
+            Name:     argocd-operator.v0.6.0
+            Version:  0.6.0
+        Events:         <none>
         ```

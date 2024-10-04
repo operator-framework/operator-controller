@@ -476,8 +476,7 @@ spec:
 
                   The global set of condition types are:
                     - "Installed", represents whether or not the a bundle has been installed for this ClusterExtension
-                    - "Resolved", represents whether or not a bundle was found that satisfies the selection criteria outlined in the spec
-                    - "Unpacked", represents whether or not the bundle contents have been successfully unpacked
+                    - "Progressing", represents whether or not the ClusterExtension is progressing towards a new state
 
                   When the ClusterExtension is sourced from a catalog, the following conditions are also possible:
                     - "Deprecated", represents an aggregation of the PackageDeprecated, ChannelDeprecated, and BundleDeprecated condition types
@@ -486,8 +485,11 @@ spec:
                     - "BundleDeprecated", represents whether or not the installed bundle is deprecated
 
                   The current set of reasons are:
-                    - "Success", this reason is set on the "Unpacked", "Resolved" and "Installed" conditions when unpacking a bundle's content, resolution and installation/upgrading is successful
-                    - "Failed", this reason is set on the "Unpacked", "Resolved" and "Installed" conditions when an error has occurred while unpacking the contents of a bundle, during resolution or installation.
+                    - "Succeeded", this reason is set on the "Installed" and "Progressing" conditions when initial installation and progressing to a new state is successful
+                    - "Failed", this reason is set on the "Installed" condition when an error has occurred while performing the initial installation.
+                    - "Blocked", this reason is set on the "Progressing" condition when the ClusterExtension controller has encountered an error that requires manual intervention for recovery
+                    - "Retrying", this reason is set on the "Progressing" condition when the ClusterExtension controller has encountered an error that could be resolved on subsequent reconciliation attempts
+                    - "Deprecated", this reason is set on the "Deprecated", "PackageDeprecated", "ChannelDeprecated", and "BundleDeprecated" conditions to signal that the installed package has been deprecated at the particular scope
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
