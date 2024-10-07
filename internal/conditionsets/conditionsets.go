@@ -16,10 +16,6 @@ limitations under the License.
 
 package conditionsets
 
-import (
-	"github.com/operator-framework/operator-controller/api/v1alpha1"
-)
-
 // ConditionTypes is the full set of ClusterExtension condition Types.
 // ConditionReasons is the full set of ClusterExtension condition Reasons.
 //

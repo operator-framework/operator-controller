@@ -5,7 +5,7 @@ To restrict automatic updates to only z-stream patches and avoid breaking change
 Example:
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: argocd

@@ -11,7 +11,7 @@ resources:
   domain: operatorframework.io
   group: olm
   kind: ClusterExtension
-  path: github.com/operator-framework/operator-controller/api/v1alpha1
+  path: github.com/operator-framework/operator-controller/api/v1
   version: v1alpha1
 - api:
     crdVersion: v1
@@ -20,6 +20,6 @@ resources:
   domain: operatorframework.io
   group: olm
   kind: Extension
-  path: github.com/operator-framework/operator-controller/api/v1alpha1
+  path: github.com/operator-framework/operator-controller/api/v11
   version: v1alpha1
 version: "3"

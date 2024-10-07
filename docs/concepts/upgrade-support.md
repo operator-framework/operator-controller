@@ -38,7 +38,7 @@ If `1.0.0` is installed, OLM v1 behavior differs in the following ways:
 You can change the default behavior of the upgrade constraints by setting the `upgradeConstraintPolicy` parameter in your cluster extension's custom resource (CR).
 
 ``` yaml hl_lines="10"
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: <extension_name>
@@ -86,7 +86,7 @@ If you set the field to `SelfCertified`, no upgrade constraints are set on the p
 Example `ClusterExtension` with `.spec.upgradeConstraintPolicy` field set to `SelfCertified`:
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: extension-sample

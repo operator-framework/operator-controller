@@ -1,10 +1,10 @@
 # API Reference
 
 ## Packages
-- [olm.operatorframework.io/v1alpha1](#olmoperatorframeworkiov1alpha1)
+- [olm.operatorframework.io/v1](#olmoperatorframeworkiov1)
 
 
-## olm.operatorframework.io/v1alpha1
+## olm.operatorframework.io/v1
 
 Package v1alpha1 contains API Schema definitions for the olm v1alpha1 API group
 
@@ -97,7 +97,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `apiVersion` _string_ | `olm.operatorframework.io/v1alpha1` | | |
+| `apiVersion` _string_ | `olm.operatorframework.io/v1` | | |
 | `kind` _string_ | `ClusterExtension` | | |
 | `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  |  |
 | `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  |  |
@@ -151,7 +151,7 @@ ClusterExtensionList contains a list of ClusterExtension
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `apiVersion` _string_ | `olm.operatorframework.io/v1alpha1` | | |
+| `apiVersion` _string_ | `olm.operatorframework.io/v1` | | |
 | `kind` _string_ | `ClusterExtensionList` | | |
 | `kind` _string_ | Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds |  |  |
 | `apiVersion` _string_ | APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources |  |  |
