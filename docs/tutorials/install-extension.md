@@ -34,7 +34,7 @@ For information on determining the ServiceAccount's permission, please see [Deri
 1. Create a CR for the Kubernetes extension you want to install:
 
     ``` yaml title="Example CR"
-    apiVersion: olm.operatorframework.io/v1alpha1
+    apiVersion: olm.operatorframework.io/v1
     kind: ClusterExtension
     metadata:
       name: <extension_name>
@@ -107,7 +107,7 @@ For information on determining the ServiceAccount's permission, please see [Deri
         Namespace:
         Labels:       <none>
         Annotations:  <none>
-        API Version:  olm.operatorframework.io/v1alpha1
+        API Version:  olm.operatorframework.io/v1
         Kind:         ClusterExtension
         Metadata:
         Creation Timestamp:  2024-10-03T16:02:40Z
