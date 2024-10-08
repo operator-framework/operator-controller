@@ -7,15 +7,16 @@ Operator Controller is an Apache 2.0 licensed project and accepts contributions 
 By contributing to this project you agree to the Developer Certificate of
 Origin (DCO). This document was created by the Linux Kernel community and is a
 simple statement that you, as a contributor, have the legal right to make the
-contribution. See the [DCO](DCO) file for details.
+contribution. See the [DCO](https://github.com/operator-framework/operator-controller/blob/main/DCO) file for details.
 
 ## Overview
 
 Thank you for your interest in contributing to the Operator-Controller.
 
-As you may or may not know, the Operator-Controller project aims to deliver the user experience described in the [Operator Lifecycle Manager (OLM) V1 Product Requirements Document (PRD)](https://docs.google.com/document/d/1-vsZ2dAODNfoHb7Nf0fbYeKDF7DUqEzS9HqgeMCvbDs/edit). The design requirements captured in the OLM V1 PRD were born from customer and community feedback based on the experience they had with the released version of [OLM V0](github.com/operator-framework/operator-lifecycle-manager).
+As you may or may not know, the Operator-Controller project aims to deliver the user experience described in the [Operator Lifecycle Manager (OLM) V1 Product Requirements Document (PRD)](https://docs.google.com/document/d/1-vsZ2dAODNfoHb7Nf0fbYeKDF7DUqEzS9HqgeMCvbDs/edit). The design requirements captured in the OLM V1 PRD were born from customer and community feedback based on the experience they had with the released version of [OLM V0](https://github.com/operator-framework/operator-lifecycle-manager).
 
 The user experience captured in the OLM V1 PRD introduces many requirements that are best satisfied by a microservices architecture. The OLM V1 experience currently relies on two projects:
+
 - [The Operator-Controller project](https://github.com/operator-framework/operator-controller/), which is the top level component allowing users to specify operators they'd like to install.
 - [The Catalogd project](https://github.com/operator-framework/catalogd/), which hosts operator content and helps users discover installable content.
 
@@ -45,6 +46,7 @@ Please keep this workflow in mind as you read through the document.
 ## How are Milestones Designed?
 
 It's unreasonable to attempt to consider all of the design requirements laid out in the [OLM V1 PRD](https://docs.google.com/document/d/1-vsZ2dAODNfoHb7Nf0fbYeKDF7DUqEzS9HqgeMCvbDs/edit) from the onset of the project. Instead, the community attempts to design Milestones with the following principles:
+
 - Milestones are tightly scoped units of work, ideally lasting one to three weeks.
 - Milestones are derived from the OLM V1 PRD.
 - Milestones are "demo driven", meaning that a set of acceptance criteria is defined upfront and the milestone is done as soon as some member of the community can run the demo.
@@ -52,7 +54,7 @@ It's unreasonable to attempt to consider all of the design requirements laid out
 
 This "demo driven" development model will allow us to collect user experience and regularly course correct based on user feedback. Subsequent milestone may revert features or change the user experience based on community feedback.
 
-The project maintainer will create a [GitHub Discussion](github.com/operator-framework/operator-controller/discussions) for the upcoming milestone once we've finalized the current milestone. Please feel encouraged to contribute suggestions for the milestone in the discussion.
+The project maintainer will create a [GitHub Discussion](https://github.com/operator-framework/operator-controller/discussions) for the upcoming milestone once we've finalized the current milestone. Please feel encouraged to contribute suggestions for the milestone in the discussion.
 
 ## Where are Operator Controller Milestones?
 
@@ -67,6 +69,7 @@ As discussed earlier, the operator-controller adheres to a microservice architec
 ## Submitting Issues
 
 Unsure where to submit an issue? 
+
 - [The Operator-Controller project](https://github.com/operator-framework/operator-controller/), which is the top level component allowing users to specify operators they'd like to install.
 - [The Catalogd project](https://github.com/operator-framework/catalogd/), which hosts operator content and helps users discover installable content.
 
@@ -87,7 +90,7 @@ approach of changes.
 When contributing changes that require a new dependency, check whether it's feasible to directly vendor that
 code [without introducing a new dependency](https://go-proverbs.github.io/).
 
-Currently, PRs require at least one approval from a operator-controller maintainer in order to get merged.
+Currently, PRs require at least one approval from an operator-controller maintainer in order to get merged.
 
 ### Code style
 

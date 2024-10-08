@@ -7,11 +7,13 @@ set -o pipefail
 help="
 image-registry.sh is a script to stand up an image registry within a cluster.
 Usage:
-  image-registry.sh [NAMESPACE] [NAME]
+  image-registry.sh [NAMESPACE] [NAME] [CERT_REF]
 
 Argument Descriptions:
   - NAMESPACE is the namespace that should be created and is the namespace in which the image registry will be created
   - NAME is the name that should be used for the image registry Deployment and Service
+  - CERT_REF is the reference to the CA certificate that should be used to serve the image registry over HTTPS, in the
+    format of 'Issuer/<issuer-name>' or 'ClusterIssuer/<cluster-issuer-name>'
 "
 
 if [[ "$#" -ne 2 ]]; then

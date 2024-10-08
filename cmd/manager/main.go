@@ -23,21 +23,27 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/containers/image/v5/types"
+	"github.com/go-logr/logr"
 	"github.com/spf13/pflag"
-	"go.uber.org/zap/zapcore"
+	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1client "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	k8slabels "k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
+	k8stypes "k8s.io/apimachinery/pkg/types"
+	apimachineryrand "k8s.io/apimachinery/pkg/util/rand"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/klog/v2"
+	"k8s.io/klog/v2/textlogger"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
@@ -52,8 +58,8 @@ import (
 	"github.com/operator-framework/operator-controller/internal/contentmanager"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/features"
+	"github.com/operator-framework/operator-controller/internal/finalizers"
 	"github.com/operator-framework/operator-controller/internal/httputil"
-	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/resolve"
 	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
@@ -65,6 +71,8 @@ var (
 	setupLog               = ctrl.Log.WithName("setup")
 	defaultSystemNamespace = "olmv1-system"
 )
+
+const authFilePrefix = "operator-controller-global-pull-secrets"
 
 // podNamespace checks whether the controller is running in a Pod vs.
 // being run locally by inspecting the namespace file that gets mounted
@@ -87,6 +95,7 @@ func main() {
 		operatorControllerVersion bool
 		systemNamespace           string
 		caCertDir                 string
+		globalPullSecret          string
 	)
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -97,11 +106,9 @@ func main() {
 	flag.StringVar(&cachePath, "cache-path", "/var/cache", "The local directory path used for filesystem based caching")
 	flag.BoolVar(&operatorControllerVersion, "version", false, "Prints operator-controller version information")
 	flag.StringVar(&systemNamespace, "system-namespace", "", "Configures the namespace that gets used to deploy system resources.")
-	opts := zap.Options{
-		Development: true,
-		TimeEncoder: zapcore.RFC3339NanoTimeEncoder,
-	}
-	opts.BindFlags(flag.CommandLine)
+	flag.StringVar(&globalPullSecret, "global-pull-secret", "", "The <namespace>/<name> of the global pull secret that is going to be used to pull bundle images.")
+
+	klog.InitFlags(flag.CommandLine)
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	features.OperatorControllerFeatureGate.AddFlag(pflag.CommandLine)
@@ -112,37 +119,55 @@ func main() {
 		os.Exit(0)
 	}
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts), zap.StacktraceLevel(zapcore.DPanicLevel)))
+	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
+
 	setupLog.Info("starting up the controller", "version info", version.String())
+
+	authFilePath := filepath.Join(os.TempDir(), fmt.Sprintf("%s-%s.json", authFilePrefix, apimachineryrand.String(8)))
+	var globalPullSecretKey *k8stypes.NamespacedName
+	if globalPullSecret != "" {
+		secretParts := strings.Split(globalPullSecret, "/")
+		if len(secretParts) != 2 {
+			setupLog.Error(fmt.Errorf("incorrect number of components"), "value of global-pull-secret should be of the format <namespace>/<name>")
+			os.Exit(1)
+		}
+		globalPullSecretKey = &k8stypes.NamespacedName{Name: secretParts[1], Namespace: secretParts[0]}
+	}
 
 	if systemNamespace == "" {
 		systemNamespace = podNamespace()
 	}
 
-	dependentRequirement, err := k8slabels.NewRequirement(labels.OwnerKindKey, selection.In, []string{ocv1alpha1.ClusterExtensionKind})
-	if err != nil {
-		setupLog.Error(err, "unable to create dependent label selector for cache")
-		os.Exit(1)
-	}
-	dependentSelector := k8slabels.NewSelector().Add(*dependentRequirement)
-
 	setupLog.Info("set up manager")
+	cacheOptions := crcache.Options{
+		ByObject: map[client.Object]crcache.ByObject{
+			&ocv1alpha1.ClusterExtension{}: {Label: k8slabels.Everything()},
+			&catalogd.ClusterCatalog{}:     {Label: k8slabels.Everything()},
+		},
+		DefaultNamespaces: map[string]crcache.Config{
+			systemNamespace: {LabelSelector: k8slabels.Everything()},
+		},
+		DefaultLabelSelector: k8slabels.Nothing(),
+	}
+	if globalPullSecretKey != nil {
+		cacheOptions.ByObject[&corev1.Secret{}] = crcache.ByObject{
+			Namespaces: map[string]crcache.Config{
+				globalPullSecretKey.Namespace: {
+					LabelSelector: k8slabels.Everything(),
+					FieldSelector: fields.SelectorFromSet(map[string]string{
+						"metadata.name": globalPullSecretKey.Name,
+					}),
+				},
+			},
+		}
+	}
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme.Scheme,
 		Metrics:                server.Options{BindAddress: metricsAddr},
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "9c4404e7.operatorframework.io",
-		Cache: crcache.Options{
-			ByObject: map[client.Object]crcache.ByObject{
-				&ocv1alpha1.ClusterExtension{}: {Label: k8slabels.Everything()},
-				&catalogd.ClusterCatalog{}:     {Label: k8slabels.Everything()},
-			},
-			DefaultNamespaces: map[string]crcache.Config{
-				systemNamespace: {LabelSelector: k8slabels.Everything()},
-			},
-			DefaultLabelSelector: dependentSelector,
-		},
+		Cache:                  cacheOptions,
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
@@ -194,14 +219,28 @@ func main() {
 		setupLog.Error(err, "unable to create CA certificate pool")
 		os.Exit(1)
 	}
-	unpacker := &source.ImageRegistry{
-		BaseCachePath:   filepath.Join(cachePath, "unpack"),
-		CertPoolWatcher: certPoolWatcher,
-	}
+
+	unpacker := &source.ContainersImageRegistry{
+		BaseCachePath: filepath.Join(cachePath, "unpack"),
+		SourceContextFunc: func(logger logr.Logger) (*types.SystemContext, error) {
+			srcContext := &types.SystemContext{
+				DockerCertPath: caCertDir,
+				OCICertPath:    caCertDir,
+			}
+			if _, err := os.Stat(authFilePath); err == nil && globalPullSecretKey != nil {
+				logger.Info("using available authentication information for pulling image")
+				srcContext.AuthFilePath = authFilePath
+			} else if os.IsNotExist(err) {
+				logger.Info("no authentication information found for pulling image, proceeding without auth")
+			} else {
+				return nil, fmt.Errorf("could not stat auth file, error: %w", err)
+			}
+			return srcContext, nil
+		}}
 
 	clusterExtensionFinalizers := crfinalizer.NewFinalizers()
-	if err := clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupUnpackCacheFinalizer, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		return crfinalizer.Result{}, os.RemoveAll(filepath.Join(unpacker.BaseCachePath, obj.GetName()))
+	if err := clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupUnpackCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+		return crfinalizer.Result{}, unpacker.Cleanup(ctx, &source.BundleSource{Name: obj.GetName()})
 	})); err != nil {
 		setupLog.Error(err, "unable to register finalizer", "finalizerKey", controllers.ClusterExtensionCleanupUnpackCacheFinalizer)
 		os.Exit(1)
@@ -214,9 +253,10 @@ func main() {
 		setupLog.Error(err, "unable to create catalogs cache directory")
 		os.Exit(1)
 	}
-	catalogClient := catalogclient.New(cache.NewFilesystemCache(catalogsCachePath, func() (*http.Client, error) {
+	catalogClientBackend := cache.NewFilesystemCache(catalogsCachePath)
+	catalogClient := catalogclient.New(catalogClientBackend, func() (*http.Client, error) {
 		return httputil.BuildHTTPClient(certPoolWatcher)
-	}))
+	})
 
 	resolver := &resolve.CatalogResolver{
 		WalkCatalogsFunc: resolve.CatalogWalker(
@@ -250,7 +290,7 @@ func main() {
 	}
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
-	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
+	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		ext := obj.(*ocv1alpha1.ClusterExtension)
 		err := cm.Delete(ext)
 		return crfinalizer.Result{}, err
@@ -272,6 +312,28 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterExtension")
 		os.Exit(1)
 	}
+
+	if err = (&controllers.ClusterCatalogReconciler{
+		Client: cl,
+		Cache:  catalogClientBackend,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
+		os.Exit(1)
+	}
+
+	if globalPullSecretKey != nil {
+		setupLog.Info("creating SecretSyncer controller for watching secret", "Secret", globalPullSecret)
+		err := (&controllers.PullSecretReconciler{
+			Client:       mgr.GetClient(),
+			AuthFilePath: authFilePath,
+			SecretKey:    *globalPullSecretKey,
+		}).SetupWithManager(mgr)
+		if err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "SecretSyncer")
+			os.Exit(1)
+		}
+	}
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -289,10 +351,8 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-}
-
-type finalizerFunc func(ctx context.Context, obj client.Object) (crfinalizer.Result, error)
-
-func (f finalizerFunc) Finalize(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-	return f(ctx, obj)
+	if err := os.Remove(authFilePath); err != nil {
+		setupLog.Error(err, "failed to cleanup temporary auth file")
+		os.Exit(1)
+	}
 }

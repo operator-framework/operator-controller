@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+# Get the directory of the current script
+SCRIPT_ROOT=$(dirname "$(realpath "$0")")
+source "${SCRIPT_ROOT}/lib/utils.sh"
+
+# Check required tools are installed
+assert-commands jq
+
+usage() {
+    print-banner
+    echo ""
+    echo "Usage: $0 [-r <regex>] < <input_file>"
+    echo ""
+    echo "Filter Catalog FBC in stdin for OLMv1 (potentially) supported bundles"
+    echo ""
+    echo "Examples:"
+    echo "  # Filter for all OLMv1 (potentially) supported bundles"
+    echo "  $0 < operatorhubio-catalog.json"
+    echo ""
+    echo "  # Filter for all OLMv1 (potentially) supported bundles that contain argocd in the package name"
+    echo "  $0 -r argocd < operatorhubio-catalog.json"
+    echo ""
+    echo "NOTE: OLM v1 currently only supports bundles that fulfill the following criteria: "
+    echo "  - Support AllNamespaces install model"
+    echo "  - Don't have dependencies"
+    echo "  - Don't contain webhooks"
+    echo "  - Don't interact with the OperatorConditions API (only verifiable at runtime)"
+    echo "WARNING: These results may include bundles with webhooks, which are incompatible"
+}
+
+# Parse the optional regex argument
+REGEX=""
+while getopts "r:" opt; do
+    case ${opt} in
+        r )
+            REGEX=$OPTARG
+            ;;
+        \? )
+            usage
+            exit 1
+            ;;
+    esac
+done
+shift $((OPTIND -1))
+
+# Select bundle documents
+function select-bundle-documents() {
+    jq 'select(.schema == "olm.bundle")'
+}
+
+# Select bundles that declare AllNamespace install mode
+# or declare nothing at all (older released bundles sans "olm.csv.metadata" property)
+function that-support-allnamespace-install-mode() {
+    jq 'select(
+            all(.properties[].type; . != "olm.csv.metadata") or
+            (.properties[]? |
+                select(.type == "olm.csv.metadata" and
+                (.value.installModes[]? |
+                    select(.type == "AllNamespaces" and .supported == true)
+                )
+            )
+        )
+    )'
+}
+
+# Select bundles without dependencies
+function that-dont-have-dependencies() {
+    jq 'select(all(.properties[].type; . != "olm.package.required" and . != "olm.gvk.required"))'
+}
+
+# Select the "olm.package" property from the bundles
+# This contains the packageName and version information
+function extract-olm-package-property() {
+    jq '.properties[] | select(.type == "olm.package") |.value'
+}
+
+# Group packages by name and collect versions into an array
+function group-versions-by-package-name() {
+    jq -s 'group_by(.packageName) | map({packageName: .[0].packageName, versions: map(.version)})' | regex_it
+}
+
+# Apply regex on name
+function filter-by-regex-if-necessary() {
+    jq --arg regex "$REGEX" '
+        if $regex != "" then
+            map(select(.packageName | test($regex)))
+        else
+            .
+        end'
+}
+
+cat - | select-bundle-documents | that-support-allnamespace-install-mode | that-dont-have-dependencies | group-versions-by-package-name | filter-by-regex-if-necessary
+
+echo "NOTE: OLM v1 currently only supports bundles that support AllNamespaces install model, don't have dependencies, and don't contain webhooks" >&2
+echo "WARNING: These results may include bundles with webhooks, which are incompatible" >&2

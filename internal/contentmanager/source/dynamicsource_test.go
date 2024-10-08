@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
@@ -92,7 +92,7 @@ func TestDynamicInformerSourceStartAlreadyStarted(t *testing.T) {
 }
 
 func TestDynamicInformerSourceStart(t *testing.T) {
-	fakeDynamicClient := dynamicfake.NewSimpleDynamicClient(runtime.NewScheme())
+	fakeDynamicClient := dynamicfake.NewSimpleDynamicClient(scheme.Scheme)
 	infFact := dynamicinformer.NewDynamicSharedInformerFactory(fakeDynamicClient, time.Minute)
 	dis := NewDynamicSource(DynamicSourceConfig{
 		DynamicInformerFactory: infFact,
@@ -108,5 +108,9 @@ func TestDynamicInformerSourceStart(t *testing.T) {
 	})
 
 	require.NoError(t, dis.Start(context.Background(), nil))
+
+	waitCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	require.NoError(t, dis.WaitForSync(waitCtx))
 	require.NoError(t, dis.Close())
 }

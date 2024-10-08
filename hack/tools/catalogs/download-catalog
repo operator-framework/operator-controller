@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+SCRIPT_ROOT=$(dirname "$(realpath "$0")")
+source "${SCRIPT_ROOT}/lib/utils.sh"
+
+# Check required tools are installed
+assert-commands kubectl jq wget
+
+# ClusterCatalog coordinates
+: "${CATALOGD_CATALOGD_SERVICE_NAMESPACE:=olmv1-system}"
+: "${CATALOGD_SERVICE_NAME:=catalogd-server}"
+: "${CATALOGD_SERVICE_PORT:=443}" # Assumes the service uses HTTPS on port 443
+: "${CATALOGD_LOCAL_SERVICE_PORT:=8001}"
+
+echo "Namespace: $CATALOGD_CATALOGD_SERVICE_NAMESPACE"
+echo "Service Name: $CATALOGD_SERVICE_NAME"
+echo "Service Port: $CATALOGD_SERVICE_PORT"
+echo "Local Service Port: $CATALOGD_LOCAL_SERVICE_PORT"
+
+# Display usage
+usage() {
+    print-banner
+    echo ""
+    echo "Usage: $0 <catalog-name>"
+    echo ""
+    echo "Download catalog from a ClusterCatalog in a cluster reachable from KUBECONFIG"
+    echo "Downloaded catalog will be saved as <catalog-name>-catalog.json"
+    echo ""
+    echo "Example:"
+    echo "  $0 operatorhubio"
+}
+
+# Check if catalog name is provided
+if [ -z "$1" ]; then
+    usage
+    exit 1
+fi
+
+CATALOG_NAME="$1"
+
+# Check if the clustercatalog resource exists
+echo "Checking if ClusterCatalog $CATALOG_NAME exists..."
+CLUSTER_CATALOG=$(kubectl get clustercatalog "$CATALOG_NAME" -o json 2>/dev/null)
+if [ -z "$CLUSTER_CATALOG" ]; then
+    echo "ClusterCatalog $CATALOG_NAME does not exist."
+    exit 1
+fi
+
+# Check if the Serving condition is true
+UNPACKED_CONDITION=$(echo "$CLUSTER_CATALOG" | jq -r '.status.conditions[]? // [] | select(.type=="Serving") | .status')
+if [ "$UNPACKED_CONDITION" != "True" ]; then
+    echo "ClusterCatalog $CATALOG_NAME is not ready yet."
+    exit 1
+fi
+
+# Get the contentURL
+CONTENT_URL=$(echo "$CLUSTER_CATALOG" | jq -r '.status.contentURL')
+if [ -z "$CONTENT_URL" ]; then
+    echo "Content URL not found for ClusterCatalog $CATALOG_NAME."
+    exit 1
+fi
+
+# Start port forwarding
+echo "Starting kubectl port-forward to $CATALOGD_SERVICE_NAME on port $CATALOGD_LOCAL_SERVICE_PORT..."
+kubectl port-forward -n "$CATALOGD_CATALOGD_SERVICE_NAMESPACE" svc/"$CATALOGD_SERVICE_NAME" "$CATALOGD_LOCAL_SERVICE_PORT:$CATALOGD_SERVICE_PORT" &>/dev/null &
+PORT_FORWARD_PID=$!
+
+# Poll the service until it responds or timeout after 30 seconds
+timeout=30
+while ! curl -s "http://localhost:${CATALOGD_LOCAL_SERVICE_PORT}" >/dev/null; do
+  timeout=$((timeout - 1))
+  if [ $timeout -le 0 ]; then
+    echo "Port forwarding failed to start within 30 seconds."
+    kill $PORT_FORWARD_PID
+    exit 1
+  fi
+  sleep 1
+done
+
+# Modify the contentURL to hit localhost:<port>
+LOCAL_CONTENT_URL=${CONTENT_URL//https:\/\/$CATALOGD_SERVICE_NAME.$CATALOGD_CATALOGD_SERVICE_NAMESPACE.svc/https:\/\/localhost:$CATALOGD_LOCAL_SERVICE_PORT}
+echo "Found content URL: $CONTENT_URL"
+echo "Using local port: $CATALOGD_LOCAL_SERVICE_PORT"
+echo "Using local content URL: $LOCAL_CONTENT_URL"
+
+# shellcheck disable=SC2001
+# Download the catalog using wget
+echo "Downloading catalog from $LOCAL_CONTENT_URL..."
+wget --no-check-certificate "$LOCAL_CONTENT_URL" -O "${CATALOG_NAME}-catalog.json"
+
+# Stop the port forwarding
+echo "Stopping kubectl port-forward..."
+kill $PORT_FORWARD_PID
+
+echo "Catalog downloaded to ${CATALOG_NAME}-catalog.json"

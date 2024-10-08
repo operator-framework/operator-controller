@@ -18,6 +18,6 @@ repo = {
 
 for r in repos:
     if r == 'operator-controller':
-        deploy_repo('operator-controller', repo)
+        deploy_repo('operator-controller', repo, '-tags containers_image_openpgp')
     else:
         include('../{}/Tiltfile'.format(r))

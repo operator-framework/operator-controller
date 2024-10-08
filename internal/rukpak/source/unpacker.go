@@ -2,9 +2,16 @@ package source
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
 )
+
+// SourceTypeImage is the identifier for image-type bundle sources
+const SourceTypeImage SourceType = "image"
+
+type ImageSource struct {
+	// Ref contains the reference to a container image containing Bundle contents.
+	Ref string
+}
 
 // Unpacker unpacks bundle content, either synchronously or asynchronously and
 // returns a Result, which conveys information about the progress of unpacking
@@ -52,15 +59,6 @@ type Result struct {
 type State string
 
 const (
-	// StatePending conveys that a request for unpacking a bundle has been
-	// acknowledged, but not yet started.
-	StatePending State = "Pending"
-
-	// StateUnpacking conveys that the source is currently unpacking a bundle.
-	// This state should be used when the bundle contents are being downloaded
-	// and processed.
-	StateUnpacking State = "Unpacking"
-
 	// StateUnpacked conveys that the bundle has been successfully unpacked.
 	StateUnpacked State = "Unpacked"
 )
@@ -73,30 +71,4 @@ type BundleSource struct {
 	Type SourceType
 	// Image is the bundle image that backs the content of this bundle.
 	Image *ImageSource
-}
-
-type unpacker struct {
-	sources map[SourceType]Unpacker
-}
-
-// NewUnpacker returns a new composite Source that unpacks bundles using the source
-// mapping provided by the configured sources.
-func NewUnpacker(sources map[SourceType]Unpacker) Unpacker {
-	return &unpacker{sources: sources}
-}
-
-func (s *unpacker) Unpack(ctx context.Context, bundle *BundleSource) (*Result, error) {
-	source, ok := s.sources[bundle.Type]
-	if !ok {
-		return nil, fmt.Errorf("source type %q not supported", bundle.Type)
-	}
-	return source.Unpack(ctx, bundle)
-}
-
-func (s *unpacker) Cleanup(ctx context.Context, bundle *BundleSource) error {
-	source, ok := s.sources[bundle.Type]
-	if !ok {
-		return fmt.Errorf("source type %q not supported", bundle.Type)
-	}
-	return source.Cleanup(ctx, bundle)
 }

@@ -26,11 +26,10 @@ metadata:
   name: ${TEST_CLUSTER_CATALOG_NAME}
 spec:
   source:
-    type: image
+    type: Image
     image:
       ref: ${TEST_CATALOG_IMG}
       pollInterval: 24h
-      insecureSkipTLSVerify: true
 EOF
 
 kubectl apply -f - <<EOF
@@ -144,5 +143,5 @@ spec:
       name: upgrade-e2e
 EOF
 
-kubectl wait --for=condition=Unpacked --timeout=60s ClusterCatalog $TEST_CLUSTER_CATALOG_NAME
+kubectl wait --for=condition=Serving --timeout=60s ClusterCatalog $TEST_CLUSTER_CATALOG_NAME
 kubectl wait --for=condition=Installed --timeout=60s ClusterExtension $TEST_CLUSTER_EXTENSION_NAME

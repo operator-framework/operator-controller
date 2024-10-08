@@ -33,15 +33,25 @@ function kubectl_wait() {
     kubectl wait --for=condition=Available --namespace="${namespace}" "${runtime}" --timeout="${timeout}"
 }
 
+function kubectl_wait_rollout() {
+    namespace=$1
+    runtime=$2
+    timeout=$3
+
+    kubectl rollout status --namespace="${namespace}" "${runtime}" --timeout="${timeout}"
+}
+
 kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/${cert_mgr_version}/cert-manager.yaml"
 kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
 
 kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/catalogd.yaml"
+# Wait for the rollout, and then wait for the deployment to be Available
+kubectl_wait_rollout "olmv1-system" "deployment/catalogd-controller-manager" "60s"
 kubectl_wait "olmv1-system" "deployment/catalogd-controller-manager" "60s"
 
 if [[ "${install_default_catalogs,,}" != "false" ]]; then
     kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/default-catalogs.yaml"
-    kubectl wait --for=condition=Unpacked "clustercatalog/operatorhubio" --timeout="60s"
+    kubectl wait --for=condition=Serving "clustercatalog/operatorhubio" --timeout="60s"
 fi
 
 kubectl apply -f "${operator_controller_manifest}"

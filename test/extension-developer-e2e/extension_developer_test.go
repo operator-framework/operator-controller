@@ -47,8 +47,7 @@ func TestExtensionDeveloper(t *testing.T) {
 			Source: catalogd.CatalogSource{
 				Type: catalogd.SourceTypeImage,
 				Image: &catalogd.ImageSource{
-					Ref:                   os.Getenv("CATALOG_IMG"),
-					InsecureSkipTLSVerify: true,
+					Ref: os.Getenv("CATALOG_IMG"),
 				},
 			},
 		},
@@ -210,7 +209,7 @@ func TestExtensionDeveloper(t *testing.T) {
 			return
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1alpha1.ReasonSuccess, cond.Reason)
+		assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 	}, 2*time.Minute, time.Second)
 	require.NoError(t, c.Delete(context.Background(), catalog))
 	require.NoError(t, c.Delete(context.Background(), clusterExtension))

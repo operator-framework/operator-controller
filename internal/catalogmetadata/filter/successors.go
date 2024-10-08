@@ -12,7 +12,7 @@ import (
 	"github.com/operator-framework/operator-controller/internal/features"
 )
 
-func SuccessorsOf(installedBundle *ocv1alpha1.BundleMetadata, channels ...declcfg.Channel) (Predicate[declcfg.Bundle], error) {
+func SuccessorsOf(installedBundle ocv1alpha1.BundleMetadata, channels ...declcfg.Channel) (Predicate[declcfg.Bundle], error) {
 	var successors successorsPredicateFunc = legacySuccessor
 	if features.OperatorControllerFeatureGate.Enabled(features.ForceSemverUpgradeConstraints) {
 		successors = semverSuccessor
@@ -42,9 +42,9 @@ func SuccessorsOf(installedBundle *ocv1alpha1.BundleMetadata, channels ...declcf
 
 // successorsPredicateFunc returns a predicate to find successors
 // for a bundle. Predicate must not include the current version.
-type successorsPredicateFunc func(installedBundle *ocv1alpha1.BundleMetadata, channels ...declcfg.Channel) (Predicate[declcfg.Bundle], error)
+type successorsPredicateFunc func(installedBundle ocv1alpha1.BundleMetadata, channels ...declcfg.Channel) (Predicate[declcfg.Bundle], error)
 
-func legacySuccessor(installedBundle *ocv1alpha1.BundleMetadata, channels ...declcfg.Channel) (Predicate[declcfg.Bundle], error) {
+func legacySuccessor(installedBundle ocv1alpha1.BundleMetadata, channels ...declcfg.Channel) (Predicate[declcfg.Bundle], error) {
 	installedBundleVersion, err := bsemver.Parse(installedBundle.Version)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing installed bundle version: %w", err)
@@ -88,7 +88,7 @@ func legacySuccessor(installedBundle *ocv1alpha1.BundleMetadata, channels ...dec
 // in a channel entry that is necessary to determine if a bundle is a successor.
 // A semver range check is the only necessary element. If filtering by channel
 // membership is necessary, an additional filter for that purpose should be applied.
-func semverSuccessor(installedBundle *ocv1alpha1.BundleMetadata, _ ...declcfg.Channel) (Predicate[declcfg.Bundle], error) {
+func semverSuccessor(installedBundle ocv1alpha1.BundleMetadata, _ ...declcfg.Channel) (Predicate[declcfg.Bundle], error) {
 	currentVersion, err := mmsemver.NewVersion(installedBundle.Version)
 	if err != nil {
 		return nil, err

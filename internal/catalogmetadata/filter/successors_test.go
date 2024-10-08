@@ -129,7 +129,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.
 
 	for _, tt := range []struct {
 		name            string
-		installedBundle *ocv1alpha1.BundleMetadata
+		installedBundle ocv1alpha1.BundleMetadata
 		expectedResult  []declcfg.Bundle
 	}{
 		{
@@ -162,7 +162,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.
 		},
 		{
 			name: "installed bundle not found",
-			installedBundle: &ocv1alpha1.BundleMetadata{
+			installedBundle: ocv1alpha1.BundleMetadata{
 				Name:    "test-package.v9.0.0",
 				Version: "9.0.0",
 			},
@@ -171,7 +171,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			successors, err := SuccessorsOf(tt.installedBundle, channelSet[testPackageName])
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			allBundles := make([]declcfg.Bundle, 0, len(bundleSet))
 			for _, bundle := range bundleSet {
@@ -281,7 +281,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing
 
 	for _, tt := range []struct {
 		name            string
-		installedBundle *ocv1alpha1.BundleMetadata
+		installedBundle ocv1alpha1.BundleMetadata
 		expectedResult  []declcfg.Bundle
 	}{
 		{
@@ -319,7 +319,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing
 		},
 		{
 			name: "installed bundle not found",
-			installedBundle: &ocv1alpha1.BundleMetadata{
+			installedBundle: ocv1alpha1.BundleMetadata{
 				Name:    "test-package.v9.0.0",
 				Version: "9.0.0",
 			},
@@ -328,7 +328,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			successors, err := SuccessorsOf(tt.installedBundle, channelSet[testPackageName])
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			allBundles := make([]declcfg.Bundle, 0, len(bundleSet))
 			for _, bundle := range bundleSet {
@@ -368,7 +368,7 @@ func TestLegacySuccessor(t *testing.T) {
 			},
 		},
 	}
-	installedBundle := &ocv1alpha1.BundleMetadata{
+	installedBundle := ocv1alpha1.BundleMetadata{
 		Name:    "package1.v0.0.1",
 		Version: "0.0.1",
 	}
@@ -380,7 +380,7 @@ func TestLegacySuccessor(t *testing.T) {
 	emptyBundle := declcfg.Bundle{}
 
 	f, err := legacySuccessor(installedBundle, fakeChannel)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.True(t, f(b2))
 	assert.False(t, f(b3))

@@ -101,8 +101,8 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	l := log.FromContext(ctx).WithName("operator-controller")
 	ctx = log.IntoContext(ctx, l)
 
-	l.V(1).Info("reconcile starting")
-	defer l.V(1).Info("reconcile ending")
+	l.Info("reconcile starting")
+	defer l.Info("reconcile ending")
 
 	existingExt := &ocv1alpha1.ClusterExtension{}
 	if err := r.Client.Get(ctx, req.NamespacedName, existingExt); err != nil {
@@ -110,31 +110,37 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	reconciledExt := existingExt.DeepCopy()
-	res, err := r.reconcile(ctx, reconciledExt)
-	updateError := err
+	res, reconcileErr := r.reconcile(ctx, reconciledExt)
 
 	// Do checks before any Update()s, as Update() may modify the resource structure!
 	updateStatus := !equality.Semantic.DeepEqual(existingExt.Status, reconciledExt.Status)
 	updateFinalizers := !equality.Semantic.DeepEqual(existingExt.Finalizers, reconciledExt.Finalizers)
+
+	// If any unexpected fields have changed, panic before updating the resource
 	unexpectedFieldsChanged := checkForUnexpectedFieldChange(*existingExt, *reconciledExt)
-
-	if updateStatus {
-		if err := r.Client.Status().Update(ctx, reconciledExt); err != nil {
-			updateError = errors.Join(updateError, fmt.Errorf("error updating status: %v", err))
-		}
-	}
-
 	if unexpectedFieldsChanged {
 		panic("spec or metadata changed by reconciler")
 	}
 
+	// Save the finalizers off to the side. If we update the status, the reconciledExt will be updated
+	// to contain the new state of the ClusterExtension, which contains the status update, but (critically)
+	// does not contain the finalizers. After the status update, we need to re-add the finalizers to the
+	// reconciledExt before updating the object.
+	finalizers := reconciledExt.Finalizers
+	if updateStatus {
+		if err := r.Client.Status().Update(ctx, reconciledExt); err != nil {
+			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating status: %v", err))
+		}
+	}
+	reconciledExt.Finalizers = finalizers
+
 	if updateFinalizers {
 		if err := r.Client.Update(ctx, reconciledExt); err != nil {
-			updateError = errors.Join(updateError, fmt.Errorf("error updating finalizers: %v", err))
+			reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error updating finalizers: %v", err))
 		}
 	}
 
-	return res, updateError
+	return res, reconcileErr
 }
 
 // ensureAllConditionsWithReason checks that all defined condition types exist in the given ClusterExtension,
@@ -183,18 +189,10 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 
-	l.V(1).Info("handling finalizers")
+	l.Info("handling finalizers")
 	finalizeResult, err := r.Finalizers.Finalize(ctx, ext)
 	if err != nil {
-		// TODO: For now, this error handling follows the pattern of other error handling.
-		//  Namely: zero just about everything out, throw our hands up, and return an error.
-		//  This is not ideal, and we should consider a more nuanced approach that resolves
-		//  as much status as possible before returning, or at least keeps previous state if
-		//  it is properly labeled with its observed generation.
-		setInstallStatus(ext, nil)
-		setResolutionStatus(ext, nil)
-		setResolvedStatusConditionFailed(ext, err.Error())
-		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
+		setStatusProgressing(ext, err)
 		return ctrl.Result{}, err
 	}
 	if finalizeResult.Updated || finalizeResult.StatusUpdated {
@@ -203,24 +201,24 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, nil
 	}
 
-	l.V(1).Info("getting installed bundle")
+	l.Info("getting installed bundle")
 	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, ext)
 	if err != nil {
 		setInstallStatus(ext, nil)
 		// TODO: use Installed=Unknown
 		setInstalledStatusConditionFailed(ext, err.Error())
+		setStatusProgressing(ext, err)
 		return ctrl.Result{}, err
 	}
 
 	// run resolution
-	l.V(1).Info("resolving bundle")
+	l.Info("resolving bundle")
 	resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err := r.Resolver.Resolve(ctx, ext, installedBundle)
 	if err != nil {
 		// Note: We don't distinguish between resolution-specific errors and generic errors
 		setInstallStatus(ext, nil)
-		setResolutionStatus(ext, nil)
-		setResolvedStatusConditionFailed(ext, err.Error())
-		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonResolutionFailed, err.Error())
+		setStatusProgressing(ext, err)
+		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonFailed, err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -240,36 +238,26 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	//         all catalogs?
 	SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
 
-	resStatus := &ocv1alpha1.ClusterExtensionResolutionStatus{
-		Bundle: bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion),
-	}
-	setResolutionStatus(ext, resStatus)
-	setResolvedStatusConditionSuccess(ext, fmt.Sprintf("resolved to %q", resolvedBundle.Image))
-
+	resolvedBundleMetadata := bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion)
 	bundleSource := &rukpaksource.BundleSource{
+		Name: ext.GetName(),
 		Type: rukpaksource.SourceTypeImage,
 		Image: &rukpaksource.ImageSource{
 			Ref: resolvedBundle.Image,
 		},
 	}
-	l.V(1).Info("unpacking resolved bundle")
+	l.Info("unpacking resolved bundle")
 	unpackResult, err := r.Unpacker.Unpack(ctx, bundleSource)
 	if err != nil {
-		setStatusUnpackFailed(ext, err.Error())
+		// Wrap the error passed to this with the resolution information until we have successfully
+		// installed since we intend for the progressing condition to replace the resolved condition
+		// and will be removing the .status.resolution field from the ClusterExtension status API
+		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedBundleMetadata, err))
 		return ctrl.Result{}, err
 	}
 
-	switch unpackResult.State {
-	case rukpaksource.StatePending:
-		setStatusUnpackFailed(ext, unpackResult.Message)
-		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonUnpackFailed, "unpack pending")
-		return ctrl.Result{}, nil
-	case rukpaksource.StateUnpacked:
-		setStatusUnpacked(ext, fmt.Sprintf("unpack successful: %v", unpackResult.Message))
-	default:
-		setStatusUnpackFailed(ext, "unexpected unpack status")
-		// We previously exit with a failed status if error is not nil.
-		return ctrl.Result{}, fmt.Errorf("unexpected unpack status: %v", unpackResult.Message)
+	if unpackResult.State != rukpaksource.StateUnpacked {
+		panic(fmt.Sprintf("unexpected unpack state %q", unpackResult.State))
 	}
 
 	objLbls := map[string]string{
@@ -283,7 +271,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		labels.BundleVersionKey: resolvedBundleVersion.String(),
 	}
 
-	l.V(1).Info("applying bundle contents")
+	l.Info("applying bundle contents")
 	// NOTE: We need to be cautious of eating errors here.
 	// We should always return any error that occurs during an
 	// attempt to apply content to the cluster. Only when there is
@@ -295,48 +283,40 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	//     The only way to eventually recover from permission errors is to keep retrying).
 	managedObjs, _, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, objLbls, storeLbls)
 	if err != nil {
-		setInstalledStatusConditionFailed(ext, err.Error())
+		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedBundleMetadata, err))
+		// If bundle is not already installed, set Installed status condition to False
+		if installedBundle == nil {
+			setInstalledStatusConditionFailed(ext, err.Error())
+		}
 		return ctrl.Result{}, err
 	}
 
 	installStatus := &ocv1alpha1.ClusterExtensionInstallStatus{
-		Bundle: bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion),
+		Bundle: resolvedBundleMetadata,
 	}
 	setInstallStatus(ext, installStatus)
 	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", resolvedBundle.Image))
 
-	l.V(1).Info("watching managed objects")
+	l.Info("watching managed objects")
 	cache, err := r.Manager.Get(ctx, ext)
 	if err != nil {
-		// If we fail to get the cache, set the Healthy condition to
-		// "Unknown". We can't know the health of resources we can't monitor
-		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1alpha1.TypeHealthy,
-			Reason:             ocv1alpha1.ReasonUnverifiable,
-			Status:             metav1.ConditionUnknown,
-			Message:            err.Error(),
-			ObservedGeneration: ext.Generation,
-		})
+		// No need to wrap error with resolution information here (or beyond) since the
+		// bundle was successfully installed and the information will be present in
+		// the .status.installed field
+		setStatusProgressing(ext, err)
 		return ctrl.Result{}, err
 	}
 
 	if err := cache.Watch(ctx, r.controller, managedObjs...); err != nil {
-		// If we fail to establish watches, set the Healthy condition to
-		// "Unknown". We can't know the health of resources we can't monitor
-		apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-			Type:               ocv1alpha1.TypeHealthy,
-			Reason:             ocv1alpha1.ReasonUnverifiable,
-			Status:             metav1.ConditionUnknown,
-			Message:            err.Error(),
-			ObservedGeneration: ext.Generation,
-		})
+		setStatusProgressing(ext, err)
 		return ctrl.Result{}, err
 	}
 
-	// If we have successfully established the watches, remove the "Healthy" condition.
-	// It should be interpreted as "Unknown" when not present.
-	apimeta.RemoveStatusCondition(&ext.Status.Conditions, ocv1alpha1.TypeHealthy)
-
+	// If we made it here, we have successfully reconciled the ClusterExtension
+	// and have reached the desired state. Since the Progressing status should reflect
+	// our progress towards the desired state, we also set it when we have reached
+	// the desired state by providing a nil error value.
+	setStatusProgressing(ext, nil)
 	return ctrl.Result{}, nil
 }
 
@@ -436,7 +416,7 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 					if oldObject.Status.ResolvedSource != nil && newObject.Status.ResolvedSource != nil {
 						if oldObject.Status.ResolvedSource.Image != nil && newObject.Status.ResolvedSource.Image != nil {
-							return oldObject.Status.ResolvedSource.Image.ResolvedRef != newObject.Status.ResolvedSource.Image.ResolvedRef
+							return oldObject.Status.ResolvedSource.Image.Ref != newObject.Status.ResolvedSource.Image.Ref
 						}
 					}
 					return true
@@ -450,6 +430,10 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.cache = mgr.GetCache()
 
 	return nil
+}
+
+func wrapErrorWithResolutionInfo(resolved ocv1alpha1.BundleMetadata, err error) error {
+	return fmt.Errorf("%w for resolved bundle %q with version %q", err, resolved.Name, resolved.Version)
 }
 
 // Generate reconcile requests for all cluster extensions affected by a catalog change

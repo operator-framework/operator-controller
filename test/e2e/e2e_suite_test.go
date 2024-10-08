@@ -41,19 +41,20 @@ func TestMain(m *testing.M) {
 // createTestCatalog will create a new catalog on the test cluster, provided
 // the context, catalog name, and the image reference. It returns the created catalog
 // or an error if any errors occurred while creating the catalog.
+// Note that catalogd will automatically create the label:
+//
+//	"olm.operatorframework.io/metadata.name": name
 func createTestCatalog(ctx context.Context, name string, imageRef string) (*catalogd.ClusterCatalog, error) {
 	catalog := &catalogd.ClusterCatalog{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   name,
-			Labels: map[string]string{"olm.operatorframework.io/name": name},
+			Name: name,
 		},
 		Spec: catalogd.ClusterCatalogSpec{
 			Source: catalogd.CatalogSource{
 				Type: catalogd.SourceTypeImage,
 				Image: &catalogd.ImageSource{
-					Ref:                   imageRef,
-					InsecureSkipTLSVerify: true,
-					PollInterval:          &metav1.Duration{Duration: time.Second},
+					Ref:          imageRef,
+					PollInterval: &metav1.Duration{Duration: time.Second},
 				},
 			},
 		},

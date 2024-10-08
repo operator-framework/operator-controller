@@ -17,40 +17,21 @@ limitations under the License.
 package controllers
 
 import (
+	"errors"
+
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
-
-// setResolvedStatusConditionSuccess sets the resolved status condition to success.
-func setResolvedStatusConditionSuccess(ext *ocv1alpha1.ClusterExtension, message string) {
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeResolved,
-		Status:             metav1.ConditionTrue,
-		Reason:             ocv1alpha1.ReasonSuccess,
-		Message:            message,
-		ObservedGeneration: ext.GetGeneration(),
-	})
-}
-
-// setResolvedStatusConditionFailed sets the resolved status condition to failed.
-func setResolvedStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message string) {
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeResolved,
-		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonResolutionFailed,
-		Message:            message,
-		ObservedGeneration: ext.GetGeneration(),
-	})
-}
 
 // setInstalledStatusConditionSuccess sets the installed status condition to success.
 func setInstalledStatusConditionSuccess(ext *ocv1alpha1.ClusterExtension, message string) {
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionTrue,
-		Reason:             ocv1alpha1.ReasonSuccess,
+		Reason:             ocv1alpha1.ReasonSucceeded,
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
 	})
@@ -61,37 +42,35 @@ func setInstalledStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonInstallationFailed,
+		Reason:             ocv1alpha1.ReasonFailed,
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
 	})
-}
-
-func setStatusUnpackFailed(ext *ocv1alpha1.ClusterExtension, message string) {
-	setInstallStatus(ext, nil)
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeUnpacked,
-		Status:             metav1.ConditionFalse,
-		Reason:             ocv1alpha1.ReasonUnpackFailed,
-		Message:            message,
-		ObservedGeneration: ext.GetGeneration(),
-	})
-}
-
-func setStatusUnpacked(ext *ocv1alpha1.ClusterExtension, message string) {
-	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeUnpacked,
-		Status:             metav1.ConditionTrue,
-		Reason:             ocv1alpha1.ReasonUnpackSuccess,
-		Message:            message,
-		ObservedGeneration: ext.GetGeneration(),
-	})
-}
-
-func setResolutionStatus(ext *ocv1alpha1.ClusterExtension, resStatus *ocv1alpha1.ClusterExtensionResolutionStatus) {
-	ext.Status.Resolution = resStatus
 }
 
 func setInstallStatus(ext *ocv1alpha1.ClusterExtension, installStatus *ocv1alpha1.ClusterExtensionInstallStatus) {
 	ext.Status.Install = installStatus
+}
+
+func setStatusProgressing(ext *ocv1alpha1.ClusterExtension, err error) {
+	progressingCond := metav1.Condition{
+		Type:               ocv1alpha1.TypeProgressing,
+		Status:             metav1.ConditionFalse,
+		Reason:             ocv1alpha1.ReasonSucceeded,
+		Message:            "desired state reached",
+		ObservedGeneration: ext.GetGeneration(),
+	}
+
+	if err != nil {
+		progressingCond.Status = metav1.ConditionTrue
+		progressingCond.Reason = ocv1alpha1.ReasonRetrying
+		progressingCond.Message = err.Error()
+	}
+
+	if errors.Is(err, reconcile.TerminalError(nil)) {
+		progressingCond.Status = metav1.ConditionFalse
+		progressingCond.Reason = ocv1alpha1.ReasonBlocked
+	}
+
+	apimeta.SetStatusCondition(&ext.Status.Conditions, progressingCond)
 }
