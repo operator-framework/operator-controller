@@ -26,8 +26,8 @@ import (
 )
 
 type ContainersImageRegistry struct {
-	BaseCachePath string
-	SourceContext *types.SystemContext
+	BaseCachePath     string
+	SourceContextFunc func(logger logr.Logger) (*types.SystemContext, error)
 }
 
 func (i *ContainersImageRegistry) Unpack(ctx context.Context, bundle *BundleSource) (*Result, error) {
@@ -41,12 +41,16 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, bundle *BundleSour
 		return nil, reconcile.TerminalError(fmt.Errorf("error parsing bundle, bundle %s has a nil image source", bundle.Name))
 	}
 
+	srcCtx, err := i.SourceContextFunc(l)
+	if err != nil {
+		return nil, err
+	}
 	//////////////////////////////////////////////////////
 	//
 	// Resolve a canonical reference for the image.
 	//
 	//////////////////////////////////////////////////////
-	imgRef, canonicalRef, _, err := resolveReferences(ctx, bundle.Image.Ref, i.SourceContext)
+	imgRef, canonicalRef, _, err := resolveReferences(ctx, bundle.Image.Ref, srcCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +106,7 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, bundle *BundleSour
 	// a policy context for the image pull.
 	//
 	//////////////////////////////////////////////////////
-	policyContext, err := loadPolicyContext(i.SourceContext, l)
+	policyContext, err := loadPolicyContext(srcCtx, l)
 	if err != nil {
 		return nil, fmt.Errorf("error loading policy context: %w", err)
 	}
@@ -118,7 +122,7 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, bundle *BundleSour
 	//
 	//////////////////////////////////////////////////////
 	if _, err := copy.Image(ctx, policyContext, layoutRef, dockerRef, &copy.Options{
-		SourceCtx: i.SourceContext,
+		SourceCtx: srcCtx,
 	}); err != nil {
 		return nil, fmt.Errorf("error copying image: %w", err)
 	}
@@ -129,7 +133,7 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, bundle *BundleSour
 	// Mount the image we just pulled
 	//
 	//////////////////////////////////////////////////////
-	if err := i.unpackImage(ctx, unpackPath, layoutRef); err != nil {
+	if err := i.unpackImage(ctx, unpackPath, layoutRef, srcCtx); err != nil {
 		if cleanupErr := deleteRecursive(unpackPath); cleanupErr != nil {
 			err = errors.Join(err, cleanupErr)
 		}
@@ -225,8 +229,8 @@ func loadPolicyContext(sourceContext *types.SystemContext, l logr.Logger) (*sign
 	return signature.NewPolicyContext(policy)
 }
 
-func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath string, imageReference types.ImageReference) error {
-	img, err := imageReference.NewImage(ctx, i.SourceContext)
+func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath string, imageReference types.ImageReference, sourceContext *types.SystemContext) error {
+	img, err := imageReference.NewImage(ctx, sourceContext)
 	if err != nil {
 		return fmt.Errorf("error reading image: %w", err)
 	}
@@ -236,7 +240,7 @@ func (i *ContainersImageRegistry) unpackImage(ctx context.Context, unpackPath st
 		}
 	}()
 
-	layoutSrc, err := imageReference.NewImageSource(ctx, i.SourceContext)
+	layoutSrc, err := imageReference.NewImageSource(ctx, sourceContext)
 	if err != nil {
 		return fmt.Errorf("error creating image source: %w", err)
 	}

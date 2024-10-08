@@ -14,6 +14,7 @@ import (
 	"github.com/containers/image/v5/docker/reference"
 	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	"github.com/containers/image/v5/types"
+	"github.com/go-logr/logr"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/google/go-containerregistry/pkg/registry"
 	"github.com/opencontainers/go-digest"
@@ -34,8 +35,8 @@ func TestUnpackValidInsecure(t *testing.T) {
 	defer cleanup()
 
 	unpacker := &source.ContainersImageRegistry{
-		BaseCachePath: t.TempDir(),
-		SourceContext: buildPullContext(t, imageTagRef),
+		BaseCachePath:     t.TempDir(),
+		SourceContextFunc: buildPullContextfunc(t, imageTagRef),
 	}
 	bundleSource := &source.BundleSource{
 		Name: "test-bundle",
@@ -69,8 +70,8 @@ func TestUnpackValidUsesCache(t *testing.T) {
 	defer cleanup()
 
 	unpacker := &source.ContainersImageRegistry{
-		BaseCachePath: t.TempDir(),
-		SourceContext: buildPullContext(t, imageDigestRef),
+		BaseCachePath:     t.TempDir(),
+		SourceContextFunc: buildPullContextfunc(t, imageDigestRef),
 	}
 
 	bundleSource := &source.BundleSource{
@@ -102,8 +103,8 @@ func TestUnpackCacheCheckError(t *testing.T) {
 	defer cleanup()
 
 	unpacker := &source.ContainersImageRegistry{
-		BaseCachePath: t.TempDir(),
-		SourceContext: buildPullContext(t, imageTagRef),
+		BaseCachePath:     t.TempDir(),
+		SourceContextFunc: buildPullContextfunc(t, imageTagRef),
 	}
 	bundleSource := &source.BundleSource{
 		Name: "test-bundle",
@@ -131,8 +132,8 @@ func TestUnpackNameOnlyImageReference(t *testing.T) {
 	defer cleanup()
 
 	unpacker := &source.ContainersImageRegistry{
-		BaseCachePath: t.TempDir(),
-		SourceContext: buildPullContext(t, imageTagRef),
+		BaseCachePath:     t.TempDir(),
+		SourceContextFunc: buildPullContextfunc(t, imageTagRef),
 	}
 	bundleSource := &source.BundleSource{
 		Name: "test-bundle",
@@ -153,8 +154,8 @@ func TestUnpackUnservedTaggedImageReference(t *testing.T) {
 	defer cleanup()
 
 	unpacker := &source.ContainersImageRegistry{
-		BaseCachePath: t.TempDir(),
-		SourceContext: buildPullContext(t, imageTagRef),
+		BaseCachePath:     t.TempDir(),
+		SourceContextFunc: buildPullContextfunc(t, imageTagRef),
 	}
 	bundleSource := &source.BundleSource{
 		Name: "test-bundle",
@@ -175,8 +176,8 @@ func TestUnpackUnservedCanonicalImageReference(t *testing.T) {
 	defer cleanup()
 
 	unpacker := &source.ContainersImageRegistry{
-		BaseCachePath: t.TempDir(),
-		SourceContext: buildPullContext(t, imageTagRef),
+		BaseCachePath:     t.TempDir(),
+		SourceContextFunc: buildPullContextfunc(t, imageTagRef),
 	}
 
 	origRef := imageDigestRef.String()
@@ -232,7 +233,11 @@ func TestUnpackInvalidNilImage(t *testing.T) {
 }
 
 func TestUnpackInvalidImageRef(t *testing.T) {
-	unpacker := &source.ContainersImageRegistry{}
+	unpacker := &source.ContainersImageRegistry{
+		SourceContextFunc: func(logr.Logger) (*types.SystemContext, error) {
+			return &types.SystemContext{}, nil
+		},
+	}
 	// Create BundleSource with malformed image reference
 	bundleSource := &source.BundleSource{
 		Name: "test-bundle",
@@ -255,8 +260,8 @@ func TestUnpackUnexpectedFile(t *testing.T) {
 	defer cleanup()
 
 	unpacker := &source.ContainersImageRegistry{
-		BaseCachePath: t.TempDir(),
-		SourceContext: buildPullContext(t, imageTagRef),
+		BaseCachePath:     t.TempDir(),
+		SourceContextFunc: buildPullContextfunc(t, imageTagRef),
 	}
 	bundleSource := &source.BundleSource{
 		Name: "test-bundle",
@@ -280,8 +285,8 @@ func TestUnpackCopySucceedsMountFails(t *testing.T) {
 	defer cleanup()
 
 	unpacker := &source.ContainersImageRegistry{
-		BaseCachePath: t.TempDir(),
-		SourceContext: buildPullContext(t, imageTagRef),
+		BaseCachePath:     t.TempDir(),
+		SourceContextFunc: buildPullContextfunc(t, imageTagRef),
 	}
 	bundleSource := &source.BundleSource{
 		Name: "test-bundle",
@@ -305,8 +310,8 @@ func TestCleanup(t *testing.T) {
 	defer cleanup()
 
 	unpacker := &source.ContainersImageRegistry{
-		BaseCachePath: t.TempDir(),
-		SourceContext: buildPullContext(t, imageTagRef),
+		BaseCachePath:     t.TempDir(),
+		SourceContextFunc: buildPullContextfunc(t, imageTagRef),
 	}
 	bundleSource := &source.BundleSource{
 		Name: "test-bundle",
@@ -360,27 +365,29 @@ func newReference(host, repo, tag string) (reference.NamedTagged, error) {
 	return reference.WithTag(ref, tag)
 }
 
-func buildPullContext(t *testing.T, ref reference.Named) *types.SystemContext {
-	// Build a containers/image context that allows pulling from the test registry insecurely
-	registriesConf := sysregistriesv2.V2RegistriesConf{Registries: []sysregistriesv2.Registry{
-		{
-			Prefix: reference.Domain(ref),
-			Endpoint: sysregistriesv2.Endpoint{
-				Location: reference.Domain(ref),
-				Insecure: true,
+func buildPullContextfunc(t *testing.T, ref reference.Named) func(_ logr.Logger) (*types.SystemContext, error) {
+	return func(_ logr.Logger) (*types.SystemContext, error) {
+		// Build a containers/image context that allows pulling from the test registry insecurely
+		registriesConf := sysregistriesv2.V2RegistriesConf{Registries: []sysregistriesv2.Registry{
+			{
+				Prefix: reference.Domain(ref),
+				Endpoint: sysregistriesv2.Endpoint{
+					Location: reference.Domain(ref),
+					Insecure: true,
+				},
 			},
-		},
-	}}
-	configDir := t.TempDir()
-	registriesConfPath := filepath.Join(configDir, "registries.conf")
-	f, err := os.Create(registriesConfPath)
-	require.NoError(t, err)
+		}}
+		configDir := t.TempDir()
+		registriesConfPath := filepath.Join(configDir, "registries.conf")
+		f, err := os.Create(registriesConfPath)
+		require.NoError(t, err)
 
-	enc := toml.NewEncoder(f)
-	require.NoError(t, enc.Encode(registriesConf))
-	require.NoError(t, f.Close())
+		enc := toml.NewEncoder(f)
+		require.NoError(t, enc.Encode(registriesConf))
+		require.NoError(t, f.Close())
 
-	return &types.SystemContext{
-		SystemRegistriesConfPath: registriesConfPath,
+		return &types.SystemContext{
+			SystemRegistriesConfPath: registriesConfPath,
+		}, nil
 	}
 }
