@@ -17,7 +17,7 @@ require (
 	github.com/onsi/gomega v1.34.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/operator-framework/api v0.27.0
-	github.com/operator-framework/catalogd v0.30.0
+	github.com/operator-framework/catalogd v0.31.0
 	github.com/operator-framework/helm-operator-plugins v0.5.0
 	github.com/operator-framework/operator-registry v1.47.0
 	github.com/spf13/pflag v1.0.5
