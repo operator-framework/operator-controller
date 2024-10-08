@@ -18,9 +18,13 @@ OLM v1 consists of two different components:
 
 For a more complete overview of OLM v1 and how it differs from OLM v0, see our [overview](docs/project/olmv1_design_decisions.md).
 
+## Documentation
+
+The documentation currently lives at [website](https://operator-framework.github.io/operator-controller/). The source of the documentation exists in this repository, see [docs directory](docs/).
+
 ## Getting Started
 
-To get started with OLM v1, please see our [Getting Started](docs/getting-started/olmv1_getting_started.md) documentation.
+To get started with OLM v1, please see our [Getting Started](https://operator-framework.github.io/operator-controller/getting-started/olmv1_getting_started/) documentation.
 
 ## License
 
