@@ -151,12 +151,14 @@ func main() {
 	}
 	if globalPullSecretKey != nil {
 		cacheOptions.ByObject[&corev1.Secret{}] = crcache.ByObject{
-			Field: fields.SelectorFromSet(map[string]string{
-				"metadata.name": globalPullSecretKey.Name,
-			}),
-		}
-		cacheOptions.DefaultNamespaces[globalPullSecretKey.Namespace] = crcache.Config{
-			LabelSelector: k8slabels.Everything(),
+			Namespaces: map[string]crcache.Config{
+				globalPullSecretKey.Namespace: {
+					LabelSelector: k8slabels.Everything(),
+					FieldSelector: fields.SelectorFromSet(map[string]string{
+						"metadata.name": globalPullSecretKey.Name,
+					}),
+				},
+			},
 		}
 	}
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
