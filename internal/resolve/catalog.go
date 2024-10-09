@@ -3,6 +3,7 @@ package resolve
 import (
 	"context"
 	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"slices"
 	"sort"
 	"strings"
@@ -233,18 +234,50 @@ type CatalogWalkFunc func(context.Context, *catalogd.ClusterCatalog, *declcfg.De
 
 func CatalogWalker(listCatalogs func(context.Context, ...client.ListOption) ([]catalogd.ClusterCatalog, error), getPackage func(context.Context, *catalogd.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error)) func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
 	return func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
+		l := log.FromContext(ctx)
 		catalogs, err := listCatalogs(ctx, catalogListOpts...)
 		if err != nil {
 			return fmt.Errorf("error listing catalogs: %w", err)
 		}
 
+		// Track if at least one catalog was processed (not disabled)
+		processedCatalogs := false
+		bundleFound := false
+
 		for i := range catalogs {
 			cat := &catalogs[i]
+
+			// skip catalogs with Availability set to "Disabled"
+			if cat.Spec.Availability == "" || cat.Spec.Availability == "Enabled" {
+				// Continue processing the catalog as it is enabled
+			} else if cat.Spec.Availability == "Disabled" {
+				l.Info("excluding ClusterCatalog from resolution process since it is disabled", "catalog", cat.Name)
+				continue
+			}
+
+			// Mark that we processed at least one catalog
+			processedCatalogs = true
+
 			fbc, fbcErr := getPackage(ctx, cat, packageName)
+			if fbcErr == nil && fbc != nil {
+				bundleFound = true
+			}
+
 			if walkErr := f(ctx, cat, fbc, fbcErr); walkErr != nil {
 				return walkErr
 			}
 		}
+
+		// If no catalogs were processed at all, return a 'no catalogs' error
+		if !processedCatalogs {
+			return fmt.Errorf("no enabled catalogs found for package: %s", packageName)
+		}
+
+		// Return an error if no valid bundle was found in any processed catalog
+		if !bundleFound {
+			return fmt.Errorf("no bundles found for package: %s", packageName)
+		}
+
 		return nil
 	}
 }
