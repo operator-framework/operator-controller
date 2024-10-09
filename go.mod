@@ -37,6 +37,10 @@ require (
 	sigs.k8s.io/yaml v1.4.0
 )
 
+replace (
+	github.com/operator-framework/catalogd => ../catalogd
+)
+
 require (
 	carvel.dev/vendir v0.40.0 // indirect
 	dario.cat/mergo v1.0.1 // indirect
