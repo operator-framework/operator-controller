@@ -23,7 +23,7 @@ The service account must have permissions to:
 Additionally, for clusters that use the [OwnerReferencesPermissionEnforcement](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement) admission plug-in, the service account must also have permissions to:
  - update finalizers on the ClusterExtension to be able to set blockOwnerDeletion and ownerReferences
 
-It is good security practice to follow the [principle of least privilege(https://en.wikipedia.org/wiki/Principle_of_least_privilege)], and scope permissions to specific resource names, wherever possible.
+It is good security practice to follow the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege), and scope permissions to specific resource names, wherever possible.
 Keep in mind, that it is not possible to scope `create`, `list`, and `watch` permissions to specific resource names.
 
 Depending on the scope, each permission will need to be added to either a `ClusterRole` or a `Role` and then bound to the service account with a `ClusterRoleBinding` or a `RoleBinding`.
