@@ -21,7 +21,7 @@ The following examples will show this default behavior, but for simplicity's sak
 1. Port forward the catalog server service:
 
     ``` terminal
-    kubectl -n olmv1-system port-forward svc/catalogd-catalogserver 8443:443
+    kubectl -n olmv1-system port-forward svc/catalogd-service 8443:443
     ```
 
 2. Return a list of all the extensions in a catalog:
