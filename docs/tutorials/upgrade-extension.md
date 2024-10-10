@@ -23,7 +23,7 @@ For more detailed information see [Upgrade Support](../concepts/upgrade-support.
 Suppose we have successfully created and installed v0.5.0 of the ArgoCD operator with the following `ClusterExtension`:
 
 ``` yaml title="Example CR"
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: argocd
@@ -43,7 +43,7 @@ spec:
 
     ``` terminal
       kubectl apply -f - <<EOF
-      apiVersion: olm.operatorframework.io/v1alpha1
+      apiVersion: olm.operatorframework.io/v1
       kind: ClusterExtension
         metadata:
           name: argocd
@@ -92,12 +92,12 @@ spec:
 
     ??? success
       ``` text title="Example output"
-        apiVersion: olm.operatorframework.io/v1alpha1
+        apiVersion: olm.operatorframework.io/v1
         kind: ClusterExtension
         metadata:
         annotations:
             kubectl.kubernetes.io/last-applied-configuration: |
-            {"apiVersion":"olm.operatorframework.io/v1alpha1","kind":"ClusterExtension","metadata":{"annotations":{},"name":"argocd"},"spec":{"install":{"namespace":"argocd","serviceAccount":{"name":"argocd-installer"}},"source":{"catalog":{"packageName":"argocd-operator","version":"0.6.0"},"sourceType":"Catalog"}}}
+            {"apiVersion":"olm.operatorframework.io/v1","kind":"ClusterExtension","metadata":{"annotations":{},"name":"argocd"},"spec":{"install":{"namespace":"argocd","serviceAccount":{"name":"argocd-installer"}},"source":{"catalog":{"packageName":"argocd-operator","version":"0.6.0"},"sourceType":"Catalog"}}}
         creationTimestamp: "2024-10-03T16:02:40Z"
         finalizers:
         - olm.operatorframework.io/cleanup-unpack-cache
