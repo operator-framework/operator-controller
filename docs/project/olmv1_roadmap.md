@@ -153,7 +153,3 @@ OLM 1.0 does not support managing bundles or extension versions that do not supp
 - Migration scripting is provided to mass-convert existing installed extensions (“Subscription” / “OperatorGroup” objects) on existing clusters to the new OLM 1.0 model assuming they are compatible
 
 - Extension authors that are also SRE/Managed PaaS administrators are incentivized to make their extension compatible with the requirements of OLM 1.0 to reap the operational benefits
-
-# TODO
-- Definition of "extension"
-- Does OLM become ELM?  Does this provide of provisioning bundles that do not add APIs?
