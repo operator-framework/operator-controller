@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -246,6 +247,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 			Ref: resolvedBundle.Image,
 		},
 	}
+
 	l.Info("unpacking resolved bundle")
 	unpackResult, err := r.Unpacker.Unpack(ctx, bundleSource)
 	if err != nil {
@@ -470,16 +472,26 @@ func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, e
 		return nil, err
 	}
 
-	release, err := cl.Get(ext.GetName())
+	rel, err := cl.Get(ext.GetName())
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil, err
 	}
-	if release == nil {
+	if rel == nil {
 		return nil, nil
 	}
 
+	switch rel.Info.Status {
+	case release.StatusUnknown:
+		return nil, fmt.Errorf("installation status is unknown")
+	case release.StatusDeployed, release.StatusUninstalled, release.StatusSuperseded, release.StatusFailed:
+	case release.StatusUninstalling, release.StatusPendingInstall, release.StatusPendingRollback, release.StatusPendingUpgrade:
+		return nil, fmt.Errorf("installation is still pending: %s", rel.Info.Status)
+	default:
+		return nil, fmt.Errorf("unknown installation status: %s", rel.Info.Status)
+	}
+
 	return &ocv1alpha1.BundleMetadata{
-		Name:    release.Labels[labels.BundleNameKey],
-		Version: release.Labels[labels.BundleVersionKey],
+		Name:    rel.Labels[labels.BundleNameKey],
+		Version: rel.Labels[labels.BundleVersionKey],
 	}, nil
 }
