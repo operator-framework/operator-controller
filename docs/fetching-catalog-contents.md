@@ -86,7 +86,7 @@ of a catalog can be read from:
   status:
     .
     .
-    contentURL: https://catalogd-catalogserver.olmv1-system.svc/catalogs/operatorhubio/all.json
+    contentURL: https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/all.json
     resolvedSource:
       image:
         ref: quay.io/operatorhubio/catalog@sha256:e53267559addc85227c2a7901ca54b980bc900276fc24d3f4db0549cb38ecf76
