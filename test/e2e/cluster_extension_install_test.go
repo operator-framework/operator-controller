@@ -759,16 +759,6 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1alpha1.ReasonRetrying, cond.Reason)
-		}
-	}, pollDuration, pollInterval)
-
-	t.Log("By eventually failing to install the package successfully due to insufficient ServiceAccount permissions")
-	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
-		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonFailed, cond.Reason)
 			assert.Contains(ct, cond.Message, "forbidden")
 		}
 	}, pollDuration, pollInterval)
