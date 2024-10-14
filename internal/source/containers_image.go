@@ -131,6 +131,12 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, catalog *catalogdv
 	//////////////////////////////////////////////////////
 	if _, err := copy.Image(ctx, policyContext, layoutRef, dockerRef, &copy.Options{
 		SourceCtx: srcCtx,
+		// We use the OCI layout as a temporary storage and
+		// pushing signatures for OCI images is not supported
+		// so we remove the source signatures when copying.
+		// Signature validation will still be performed
+		// accordingly to a provided policy context.
+		RemoveSignatures: true,
 	}); err != nil {
 		return nil, fmt.Errorf("error copying image: %w", err)
 	}
