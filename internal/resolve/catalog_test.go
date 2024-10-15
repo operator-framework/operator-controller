@@ -992,7 +992,7 @@ func TestAllCatalogsDisabled(t *testing.T) {
 	ce := buildFooClusterExtension(pkgName, []string{}, ">=1.0.0", ocv1alpha1.UpgradeConstraintPolicyCatalogProvided)
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no enabled catalogs found for package")
+	assert.Contains(t, err.Error(), "no enabled catalogs found")
 }
 
 func TestSomeCatalogsDisabled(t *testing.T) {

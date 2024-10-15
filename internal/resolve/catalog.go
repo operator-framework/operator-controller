@@ -270,7 +270,7 @@ func CatalogWalker(listCatalogs func(context.Context, ...client.ListOption) ([]c
 
 		// If no catalogs were processed at all, return a 'no catalogs' error
 		if !processedCatalogs {
-			return errors.New("no enabled catalogs found")
+			return fmt.Errorf("no enabled catalogs found")
 		}
 
 		// Return an error if no valid bundle was found in any processed catalog
