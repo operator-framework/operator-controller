@@ -30,6 +30,17 @@ func (m *mockActionClient) Get(name string, opts ...actionclient.GetOption) (*re
 	return args.Get(0).(*release.Release), args.Error(1)
 }
 
+func (m *mockActionClient) History(name string, opts ...actionclient.HistoryOption) ([]*release.Release, error) {
+	args := m.Called(name, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	rel := []*release.Release{
+		args.Get(0).(*release.Release),
+	}
+	return rel, args.Error(1)
+}
+
 func (m *mockActionClient) Install(name, namespace string, chrt *chart.Chart, vals map[string]interface{}, opts ...actionclient.InstallOption) (*release.Release, error) {
 	args := m.Called(name, namespace, chrt, vals, opts)
 	if args.Get(0) == nil {
@@ -82,6 +93,7 @@ func TestActionClientErrorTranslation(t *testing.T) {
 
 	ac := new(mockActionClient)
 	ac.On("Get", mock.Anything, mock.Anything).Return(nil, originalError)
+	ac.On("History", mock.Anything, mock.Anything).Return(nil, originalError)
 	ac.On("Install", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, originalError)
 	ac.On("Uninstall", mock.Anything, mock.Anything).Return(nil, originalError)
 	ac.On("Upgrade", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, originalError)
@@ -92,6 +104,10 @@ func TestActionClientErrorTranslation(t *testing.T) {
 	// Get
 	_, err := wrappedAc.Get("something")
 	assert.Equal(t, expectedErr, err, "expected Get() to return translated error")
+
+	// History
+	_, err = wrappedAc.History("something")
+	assert.Equal(t, expectedErr, err, "expected History() to return translated error")
 
 	// Install
 	_, err = wrappedAc.Install("something", "somethingelse", nil, nil)
