@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,6 +26,22 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
+
+// setInstalledStatusFromBundle sets the installed status based on the given installedBundle.
+func setInstalledStatusFromBundle(ext *ocv1alpha1.ClusterExtension, installedBundle *InstalledBundle) {
+	// Nothing is installed
+	if installedBundle == nil {
+		setInstallStatus(ext, nil)
+		setInstalledStatusConditionFailed(ext, "No bundle installed")
+		return
+	}
+	// Something is installed
+	installStatus := &ocv1alpha1.ClusterExtensionInstallStatus{
+		Bundle: installedBundle.BundleMetadata,
+	}
+	setInstallStatus(ext, installStatus)
+	setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", installedBundle.Image))
+}
 
 // setInstalledStatusConditionSuccess sets the installed status condition to success.
 func setInstalledStatusConditionSuccess(ext *ocv1alpha1.ClusterExtension, message string) {
@@ -42,6 +59,17 @@ func setInstalledStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionFalse,
+		Reason:             ocv1alpha1.ReasonFailed,
+		Message:            message,
+		ObservedGeneration: ext.GetGeneration(),
+	})
+}
+
+// setInstalledStatusConditionUnknown sets the installed status condition to unknown.
+func setInstalledStatusConditionUnknown(ext *ocv1alpha1.ClusterExtension, message string) {
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeInstalled,
+		Status:             metav1.ConditionUnknown,
 		Reason:             ocv1alpha1.ReasonFailed,
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),
