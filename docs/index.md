@@ -3,43 +3,37 @@ hide:
   - toc
 ---
 
-# Overview
+# Operator Lifecycle Manager
 
-Operator Lifecycle Manager (OLM) is an open-source [CNCF](https://www.cncf.io/) project with the mission to manage the
-lifecycle of cluster extensions centrally and declaratively on Kubernetes clusters. Its purpose is to make installing,
-running, and updating functional extensions to the cluster easy, safe, and reproducible for cluster administrators and PaaS administrators.
+The Operator Lifecycle Manager (OLM) is an open-source project under the [Cloud Native Computing Foundation (CNCF)](https://www.cncf.io/), designed to simplify and centralize the management of Kubernetes cluster extensions. OLM streamlines the process of installing, running, and updating these extensions, making it easier, safer, and more reproducible for cluster and platform administrators alike.
 
-Previously, OLM was focused on a particular type of cluster extension: [Operators](https://operatorhub.io/what-is-an-operator#:~:text=is%20an%20Operator-,What%20is%20an%20Operator%20after%20all%3F,or%20automation%20software%20like%20Ansible.).
-Operators are a method of packaging, deploying, and managing a Kubernetes application. An Operator is composed of one or more controllers paired with one or both of the following objects:
+Originally, OLM was focused on managing a specific type of extension known as [Operators](https://operatorhub.io/what-is-an-operator#:~:text=is%20an%20Operator-,What%20is%20an%20Operator%20after%20all%3F,or%20automation%20software%20like%20Ansible.), which are powerful tools that automate the management of complex Kubernetes applications. At its core, an Operator is made up of controllers that automate the lifecycle of applications, paired with:
 
-* One or more API extensions
-* One or more [CustomResourceDefinitions](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) (CRDs).
+- One or more Kubernetes API extensions.
+- One or more [CustomResourceDefinitions (CRDs)](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/), allowing administrators to define custom resources.
 
-OLM helped define lifecycles for these extensions: from packaging and distribution to installation, configuration, upgrade, and removal.
+The purpose of OLM is to manage the lifecycle of these extensions—from their packaging and distribution to installation, updates, and eventual removal—helping administrators ensure stability and security across their clusters.
 
-The first iteration of OLM, termed OLM v0, included several concepts and features targeting the stability, security, and supportability of the life-cycled applications, for instance:
+In its first release (OLM v0), the project introduced several important concepts and features aimed at improving the lifecycle management of Kubernetes applications:
 
-* A dependency model that enabled cluster extensions to focus on their primary purpose by delegating out of scope behavior to dependencies
-* A constraint model that allowed cluster extension developers to define support limitations such as conflicting extensions, and minimum kubernetes versions
-* A namespace-based multi-tenancy model in lieu of namespace-scoped CRDs
-* A packaging model in which catalogs of extensions, usually containing the entire version history of each extension, are made available to clusters for cluster users to browse and select from
+- **Dependency Model**: Enables extensions to focus on their primary function by delegating non-essential tasks to other dependencies.
+- **Constraint Model**: Allows developers to define compatibility constraints such as conflicting extensions or minimum required Kubernetes versions.
+- **Namespace-Based Multi-Tenancy**: Provides a multi-tenancy model to manage multiple extensions without the need for namespace-scoped CRDs.
+- **Packaging Model**: Distributes extensions through catalogs, allowing users to browse and install extensions, often with access to the full version history.
 
-Since its initial release, OLM has helped catalyse the growth of Operators throughout the Kubernetes ecosystem. [OperatorHub.io](https://operatorhub.io/)
-is a popular destination for discovering Operators, and boasts over 300 packages from many different vendors.
+Thanks to these innovations, OLM has played a significant role in popularizing Operators throughout the Kubernetes ecosystem. A prime example of its impact is [OperatorHub.io](https://operatorhub.io/), a widely-used platform with over 300 Operators from various vendors, providing users with a central location to discover and install Operators.
 
-## Why are we building OLM v1?
+## Why Build OLM v1?
 
-The Operator Lifecycle Manager (OLM) has been in production for over five years, serving as a critical component in managing Kubernetes Operators.
-Over this time, the community has gathered valuable insights from real-world usage, identifying both the strengths and limitations of the initial design,
-and validating the design's initial assumptions. This process led to a complete redesign and rewrite of OLM that, compared to its predecessor, aims to
-provide:
+After five years of real-world use, OLM has become an essential part of managing Kubernetes Operators. However, over time, the community has gathered valuable insights, uncovering both the strengths and limitations of OLM v0. These findings have led to a comprehensive redesign and the creation of OLM v1, with several key improvements over the initial version:
 
-* A simpler API surface and mental model
-* Less opinionated automation and greater flexibility
-* Support for Kubernetes applications beyond only Operators
-* Security by default
-* Helm Chart support
-* GitOps support
+- **Simpler API and Mental Model**: Streamlined APIs and a more intuitive design, making it easier to understand and work with.
+- **Greater Flexibility**: Less rigid automation, allowing for more customization and broader use cases.
+- **Beyond Operators**: Support for a wider range of Kubernetes applications, not limited to Operators.
+- **Security by Default**: Enhanced security features out-of-the-box, reducing vulnerabilities.
+- **Helm Chart and GitOps Support**: Expanded support for popular Kubernetes tools like Helm and GitOps, broadening the range of integration options.
 
-To learn more about where v1 one came from, and where it's going, please see [Multi-Tenancy Challenges, Lessons Learned, and Design Shifts](project/olmv1_design_decisions.md)
-and our feature [Roadmap](project/olmv1_roadmap.md).
+For more details on the evolution of OLM and the roadmap for v1, explore the following resources:
+
+- [Multi-Tenancy Challenges, Lessons Learned, and Design Shifts](project/olmv1_design_decisions.md)
+- [OLM v1 Roadmap](project/olmv1_roadmap.md)

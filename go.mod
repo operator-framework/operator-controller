@@ -7,7 +7,7 @@ require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/blang/semver/v4 v4.0.0
-	github.com/containerd/containerd v1.7.22
+	github.com/containerd/containerd v1.7.23
 	github.com/containers/image/v5 v5.32.2
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-logr/logr v1.4.2
@@ -17,14 +17,14 @@ require (
 	github.com/onsi/gomega v1.34.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/operator-framework/api v0.27.0
-	github.com/operator-framework/catalogd v0.31.0
+	github.com/operator-framework/catalogd v0.32.0
 	github.com/operator-framework/helm-operator-plugins v0.5.0
 	github.com/operator-framework/operator-registry v1.47.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.16.1
+	helm.sh/helm/v3 v3.16.2
 	k8s.io/api v0.31.1
 	k8s.io/apiextensions-apiserver v0.31.1
 	k8s.io/apimachinery v0.31.1
@@ -59,7 +59,7 @@ require (
 	github.com/containerd/cgroups/v3 v3.0.3 // indirect
 	github.com/containerd/containerd/api v1.7.19 // indirect
 	github.com/containerd/continuity v0.4.2 // indirect
-	github.com/containerd/errdefs v0.1.0 // indirect
+	github.com/containerd/errdefs v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
@@ -139,7 +139,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368 // indirect
 	github.com/k14s/ytt v0.36.0 // indirect
-	github.com/klauspost/compress v1.17.10 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
@@ -243,7 +243,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiserver v0.31.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
-	k8s.io/kubectl v0.31.0 // indirect
+	k8s.io/kubectl v0.31.1 // indirect
 	oras.land/oras-go v1.2.5 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.30.3 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
