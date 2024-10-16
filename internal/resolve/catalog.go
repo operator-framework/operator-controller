@@ -243,15 +243,19 @@ func CatalogWalker(
 			return fmt.Errorf("error listing catalogs: %w", err)
 		}
 
+		// Remove disabled catalogs from consideration
+		catalogs = slices.DeleteFunc(catalogs, func(c catalogd.ClusterCatalog) bool {
+			if c.Spec.Availability == "Disabled" {
+				l.Info("excluding ClusterCatalog from resolution process since it is disabled", "catalog", c.Name)
+				return true
+			}
+			return false
+		})
+
 		for i := range catalogs {
 			cat := &catalogs[i]
 
-			// skip catalogs with Availability set to "Disabled"
-			if cat.Spec.Availability == "Disabled" {
-				l.Info("excluding ClusterCatalog from resolution process since it is disabled", "catalog", cat.Name)
-				continue
-			}
-
+			// process enabled catalogs
 			fbc, fbcErr := getPackage(ctx, cat, packageName)
 
 			if walkErr := f(ctx, cat, fbc, fbcErr); walkErr != nil {
