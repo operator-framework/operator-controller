@@ -982,7 +982,7 @@ func TestAllCatalogsDisabled(t *testing.T) {
 	}
 
 	getPackage := func(ctx context.Context, cat *catalogd.ClusterCatalog, packageName string) (*declcfg.DeclarativeConfig, error) {
-		return genPackage(pkgName), nil
+		panic("getPackage should never be called when all catalogs are disabled")
 	}
 
 	r := CatalogResolver{
@@ -992,7 +992,7 @@ func TestAllCatalogsDisabled(t *testing.T) {
 	ce := buildFooClusterExtension(pkgName, []string{}, ">=1.0.0", ocv1alpha1.UpgradeConstraintPolicyCatalogProvided)
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no enabled catalogs found")
+	assert.Contains(t, err.Error(), "no bundles found for package")
 }
 
 func TestSomeCatalogsDisabled(t *testing.T) {
@@ -1032,14 +1032,20 @@ func TestPriorityRespectedWithDisabledCatalogs(t *testing.T) {
 	listCatalogs := func(ctx context.Context, options ...client.ListOption) ([]catalogd.ClusterCatalog, error) {
 		return []catalogd.ClusterCatalog{
 			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "enabledCatalog",
+				},
 				Spec: catalogd.ClusterCatalogSpec{
-					Priority:     1,
+					Priority:     0, // Lower priority
 					Availability: "Enabled",
 				},
 			},
 			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "disabledCatalog",
+				},
 				Spec: catalogd.ClusterCatalogSpec{
-					Priority:     0,
+					Priority:     1, // Higher priority
 					Availability: "Disabled",
 				},
 			},
@@ -1047,18 +1053,37 @@ func TestPriorityRespectedWithDisabledCatalogs(t *testing.T) {
 	}
 
 	getPackage := func(ctx context.Context, cat *catalogd.ClusterCatalog, packageName string) (*declcfg.DeclarativeConfig, error) {
-		return genPackage(pkgName), nil
+		if cat.Spec.Availability == "Disabled" {
+			panic("getPackage should not be called for disabled catalogs")
+		}
+		// Enabled catalog returns a lower version
+		return &declcfg.DeclarativeConfig{
+			Packages: []declcfg.Package{{Name: pkgName}},
+			Channels: []declcfg.Channel{
+				{
+					Package: pkgName,
+					Name:    "alpha",
+					Entries: []declcfg.ChannelEntry{
+						{Name: bundleName(pkgName, "1.0.0")},
+					},
+				},
+			},
+			Bundles: []declcfg.Bundle{
+				genBundle(pkgName, "1.0.0"),
+			},
+		}, nil
 	}
 
 	r := CatalogResolver{
 		WalkCatalogsFunc: CatalogWalker(listCatalogs, getPackage),
 	}
 
-	ce := buildFooClusterExtension(pkgName, []string{}, ">=1.0.0", ocv1alpha1.UpgradeConstraintPolicyCatalogProvided)
+	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyCatalogProvided)
 	gotBundle, gotVersion, _, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
 	require.NotNil(t, gotBundle)
-	require.Equal(t, bsemver.MustParse("3.0.0"), *gotVersion)
+	require.Equal(t, genBundle(pkgName, "1.0.0"), *gotBundle)
+	require.Equal(t, bsemver.MustParse("1.0.0"), *gotVersion)
 }
 
 func TestCatalogWithoutAvailabilityIsEnabled(t *testing.T) {

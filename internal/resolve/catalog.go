@@ -232,7 +232,10 @@ func isDeprecated(bundle declcfg.Bundle, deprecation *declcfg.Deprecation) bool 
 
 type CatalogWalkFunc func(context.Context, *catalogd.ClusterCatalog, *declcfg.DeclarativeConfig, error) error
 
-func CatalogWalker(listCatalogs func(context.Context, ...client.ListOption) ([]catalogd.ClusterCatalog, error), getPackage func(context.Context, *catalogd.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error)) func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
+func CatalogWalker(
+	listCatalogs func(context.Context, ...client.ListOption) ([]catalogd.ClusterCatalog, error),
+	getPackage func(context.Context, *catalogd.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error),
+) func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
 	return func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
 		l := log.FromContext(ctx)
 		catalogs, err := listCatalogs(ctx, catalogListOpts...)
@@ -240,42 +243,20 @@ func CatalogWalker(listCatalogs func(context.Context, ...client.ListOption) ([]c
 			return fmt.Errorf("error listing catalogs: %w", err)
 		}
 
-		// Track if at least one catalog was processed (not disabled)
-		processedCatalogs := false
-		bundleFound := false
-
 		for i := range catalogs {
 			cat := &catalogs[i]
 
 			// skip catalogs with Availability set to "Disabled"
-			if cat.Spec.Availability == "" || cat.Spec.Availability == "Enabled" {
-				// Continue processing the catalog as it is enabled
-			} else if cat.Spec.Availability == "Disabled" {
+			if cat.Spec.Availability == "Disabled" {
 				l.Info("excluding ClusterCatalog from resolution process since it is disabled", "catalog", cat.Name)
 				continue
 			}
 
-			// Mark that we processed at least one catalog
-			processedCatalogs = true
-
 			fbc, fbcErr := getPackage(ctx, cat, packageName)
-			if fbcErr == nil && fbc != nil {
-				bundleFound = true
-			}
 
 			if walkErr := f(ctx, cat, fbc, fbcErr); walkErr != nil {
 				return walkErr
 			}
-		}
-
-		// If no catalogs were processed at all, return a 'no catalogs' error
-		if !processedCatalogs {
-			return fmt.Errorf("no enabled catalogs found")
-		}
-
-		// Return an error if no valid bundle was found in any processed catalog
-		if !bundleFound {
-			return fmt.Errorf("no bundles found for package: %s", packageName)
 		}
 
 		return nil
