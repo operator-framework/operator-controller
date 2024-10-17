@@ -15,7 +15,7 @@ curl -k https://localhost:8443/catalogs/operatorhubio/all.json | <query>
 Available packages in a catalog
 : 
 ``` terminal
-jq -s '.[] | select( .schema == "olm.package")
+jq -s '.[] | select( .schema == "olm.package")'
 ```
 
 Packages that support `AllNamespaces` install mode and do not use webhooks
