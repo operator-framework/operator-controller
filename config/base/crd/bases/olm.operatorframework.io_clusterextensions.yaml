@@ -14,7 +14,7 @@ spec:
     singular: clusterextension
   scope: Cluster
   versions:
-  - name: v1alpha1
+  - name: v1
     schema:
       openAPIV3Schema:
         description: ClusterExtension is the Schema for the clusterextensions API

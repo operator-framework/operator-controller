@@ -5,7 +5,7 @@ A "channel" is a package author defined stream of updates for an extension. A se
 Example:
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: argocd
@@ -27,7 +27,7 @@ Note that the `version` field also accepts a version range to further restrict t
 Example:
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: argocd

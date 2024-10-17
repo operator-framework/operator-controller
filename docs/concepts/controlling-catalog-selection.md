@@ -18,7 +18,7 @@ To select a specific catalog by name, you can use the `matchLabels` field in you
 #### Example
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: my-extension
@@ -39,7 +39,7 @@ If you have catalogs labeled with specific metadata, you can select them using `
 #### Using `matchLabels`
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: my-extension
@@ -56,7 +56,7 @@ This selects catalogs labeled with `example.com/support: "true"`.
 #### Using `matchExpressions`
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: my-extension
@@ -81,7 +81,7 @@ You can exclude catalogs by using the `NotIn` or `DoesNotExist` operators in `ma
 #### Example: Exclude Specific Catalogs
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: my-extension
@@ -101,7 +101,7 @@ This excludes the catalog named `unwanted-catalog` from consideration.
 #### Example: Exclude Catalogs with a Specific Label
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: my-extension
@@ -194,7 +194,7 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
 2. **Create a `ClusterExtension` with Catalog Selection**
 
    ```yaml
-   apiVersion: olm.operatorframework.io/v1alpha1
+   apiVersion: olm.operatorframework.io/v1
    kind: ClusterExtension
    metadata:
      name: install-my-operator

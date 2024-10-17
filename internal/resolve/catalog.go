@@ -18,7 +18,7 @@ import (
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
