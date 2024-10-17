@@ -260,6 +260,7 @@ func main() {
 
 	localStorage = storage.LocalDir{RootDir: storeDir, BaseURL: baseStorageURL}
 
+	// Config for the the catalogd web server
 	catalogServerConfig := serverutil.CatalogServerConfig{
 		ExternalAddr: externalAddr,
 		CatalogAddr:  catalogServerAddr,

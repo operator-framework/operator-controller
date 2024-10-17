@@ -51,6 +51,21 @@ spec:
           spec:
             description: ClusterCatalogSpec defines the desired state of ClusterCatalog
             properties:
+              availability:
+                default: Enabled
+                description: |-
+                  Availability is an optional field that allows users to define whether the ClusterCatalog is utilized by the operator-controller.
+
+                  Allowed values are : ["Enabled", "Disabled"].
+                  If set to "Enabled", the catalog will be used for updates, serving contents, and package installations.
+
+                  If set to "Disabled", catalogd will stop serving the catalog and the cached data will be removed.
+
+                  If unspecified, the default value is "Enabled"
+                enum:
+                - Disabled
+                - Enabled
+                type: string
               priority:
                 default: 0
                 description: |-

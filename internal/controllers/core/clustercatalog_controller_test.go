@@ -589,6 +589,158 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "catalog availability set to disabled, ContentURL should get unset",
+			source: &MockSource{
+				result: &source.Result{
+					State: source.StateUnpacked,
+					FS:    &fstest.MapFS{},
+				},
+			},
+			store: &MockStore{},
+			catalog: &catalogdv1alpha1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "catalog",
+				},
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
+						Type: catalogdv1alpha1.SourceTypeImage,
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref: "my.org/someimage:latest",
+						},
+					},
+					Availability: "Disabled",
+				},
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
+					ContentURL:   "URL",
+					LastUnpacked: metav1.Time{},
+					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
+						Type: catalogdv1alpha1.SourceTypeImage,
+						Image: &catalogdv1alpha1.ResolvedImageSource{
+							Ref: "",
+						},
+					},
+					Conditions: []metav1.Condition{
+						{
+							Type:   catalogdv1alpha1.TypeServing,
+							Status: metav1.ConditionTrue,
+							Reason: catalogdv1alpha1.ReasonAvailable,
+						},
+						{
+							Type:   catalogdv1alpha1.TypeProgressing,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1alpha1.ReasonSucceeded,
+						},
+					},
+				},
+			},
+			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "catalog",
+				},
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
+						Type: catalogdv1alpha1.SourceTypeImage,
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref: "my.org/someimage:latest",
+						},
+					},
+					Availability: "Disabled",
+				},
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
+					ContentURL: "",
+					Conditions: []metav1.Condition{
+						{
+							Type:   catalogdv1alpha1.TypeServing,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1alpha1.ReasonUnavailable,
+						},
+						{
+							Type:   catalogdv1alpha1.TypeProgressing,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1alpha1.ReasonDisabled,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "catalog availability set to disabled, finalizer should get removed",
+			source: &MockSource{
+				result: &source.Result{
+					State: source.StateUnpacked,
+					FS:    &fstest.MapFS{},
+				},
+			},
+			store: &MockStore{},
+			catalog: &catalogdv1alpha1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "catalog",
+					Finalizers: []string{fbcDeletionFinalizer},
+				},
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
+						Type: catalogdv1alpha1.SourceTypeImage,
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref: "my.org/someimage:latest",
+						},
+					},
+					Availability: "Disabled",
+				},
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
+					ContentURL:   "URL",
+					LastUnpacked: metav1.Time{},
+					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
+						Type: catalogdv1alpha1.SourceTypeImage,
+						Image: &catalogdv1alpha1.ResolvedImageSource{
+							Ref: "",
+						},
+					},
+					Conditions: []metav1.Condition{
+						{
+							Type:   catalogdv1alpha1.TypeServing,
+							Status: metav1.ConditionTrue,
+							Reason: catalogdv1alpha1.ReasonAvailable,
+						},
+						{
+							Type:   catalogdv1alpha1.TypeProgressing,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1alpha1.ReasonSucceeded,
+						},
+					},
+				},
+			},
+			expectedCatalog: &catalogdv1alpha1.ClusterCatalog{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "catalog",
+					Finalizers: []string{},
+				},
+				Spec: catalogdv1alpha1.ClusterCatalogSpec{
+					Source: catalogdv1alpha1.CatalogSource{
+						Type: catalogdv1alpha1.SourceTypeImage,
+						Image: &catalogdv1alpha1.ImageSource{
+							Ref: "my.org/someimage:latest",
+						},
+					},
+					Availability: "Disabled",
+				},
+				Status: catalogdv1alpha1.ClusterCatalogStatus{
+					ContentURL: "",
+					Conditions: []metav1.Condition{
+						{
+							Type:   catalogdv1alpha1.TypeServing,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1alpha1.ReasonUnavailable,
+						},
+						{
+							Type:   catalogdv1alpha1.TypeProgressing,
+							Status: metav1.ConditionFalse,
+							Reason: catalogdv1alpha1.ReasonDisabled,
+						},
+					},
+				},
+			},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			reconciler := &ClusterCatalogReconciler{
