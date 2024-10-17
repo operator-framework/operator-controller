@@ -1,4 +1,4 @@
 # netlify.toml
 [build]
-  command = "mkdocs build"
+  command = "which mkdocs & mkdocs build"
   publish = "site"
