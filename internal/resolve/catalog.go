@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
@@ -231,20 +232,37 @@ func isDeprecated(bundle declcfg.Bundle, deprecation *declcfg.Deprecation) bool 
 
 type CatalogWalkFunc func(context.Context, *catalogd.ClusterCatalog, *declcfg.DeclarativeConfig, error) error
 
-func CatalogWalker(listCatalogs func(context.Context, ...client.ListOption) ([]catalogd.ClusterCatalog, error), getPackage func(context.Context, *catalogd.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error)) func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
+func CatalogWalker(
+	listCatalogs func(context.Context, ...client.ListOption) ([]catalogd.ClusterCatalog, error),
+	getPackage func(context.Context, *catalogd.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error),
+) func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
 	return func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
+		l := log.FromContext(ctx)
 		catalogs, err := listCatalogs(ctx, catalogListOpts...)
 		if err != nil {
 			return fmt.Errorf("error listing catalogs: %w", err)
 		}
 
+		// Remove disabled catalogs from consideration
+		catalogs = slices.DeleteFunc(catalogs, func(c catalogd.ClusterCatalog) bool {
+			if c.Spec.Availability == "Disabled" {
+				l.Info("excluding ClusterCatalog from resolution process since it is disabled", "catalog", c.Name)
+				return true
+			}
+			return false
+		})
+
 		for i := range catalogs {
 			cat := &catalogs[i]
+
+			// process enabled catalogs
 			fbc, fbcErr := getPackage(ctx, cat, packageName)
+
 			if walkErr := f(ctx, cat, fbc, fbcErr); walkErr != nil {
 				return walkErr
 			}
 		}
+
 		return nil
 	}
 }
