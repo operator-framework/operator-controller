@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,6 +26,31 @@ import (
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 )
+
+// setInstalledStatusFromBundle sets the installed status based on the given installedBundle.
+func setInstalledStatusFromBundle(ext *ocv1alpha1.ClusterExtension, installedBundle *InstalledBundle, err error) {
+	// Something is installed
+	if installedBundle != nil {
+		installStatus := &ocv1alpha1.ClusterExtensionInstallStatus{
+			Bundle: installedBundle.BundleMetadata,
+		}
+		setInstallStatus(ext, installStatus)
+		// If both conditions occur, this is a failed Apply when a bundle was already installed
+		if err != nil {
+			setInstalledStatusConditionFailed(ext, err.Error())
+		} else {
+			setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", installedBundle.Image))
+		}
+		return
+	}
+	// Nothing is installed, if there's no error, it means no installed bundle was found
+	setInstallStatus(ext, nil)
+	if err != nil {
+		setInstalledStatusConditionFailed(ext, err.Error())
+	} else {
+		setInstalledStatusConditionFailed(ext, "No installed bundle found")
+	}
+}
 
 // setInstalledStatusConditionSuccess sets the installed status condition to success.
 func setInstalledStatusConditionSuccess(ext *ocv1alpha1.ClusterExtension, message string) {
@@ -42,6 +68,17 @@ func setInstalledStatusConditionFailed(ext *ocv1alpha1.ClusterExtension, message
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
 		Type:               ocv1alpha1.TypeInstalled,
 		Status:             metav1.ConditionFalse,
+		Reason:             ocv1alpha1.ReasonFailed,
+		Message:            message,
+		ObservedGeneration: ext.GetGeneration(),
+	})
+}
+
+// setInstalledStatusConditionUnknown sets the installed status condition to unknown.
+func setInstalledStatusConditionUnknown(ext *ocv1alpha1.ClusterExtension, message string) {
+	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
+		Type:               ocv1alpha1.TypeInstalled,
+		Status:             metav1.ConditionUnknown,
 		Reason:             ocv1alpha1.ReasonFailed,
 		Message:            message,
 		ObservedGeneration: ext.GetGeneration(),

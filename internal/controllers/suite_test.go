@@ -73,14 +73,14 @@ func newClient(t *testing.T) client.Client {
 }
 
 type MockInstalledBundleGetter struct {
-	bundle *ocv1alpha1.BundleMetadata
+	bundle *controllers.InstalledBundle
 }
 
-func (m *MockInstalledBundleGetter) SetBundle(bundle *ocv1alpha1.BundleMetadata) {
+func (m *MockInstalledBundleGetter) SetBundle(bundle *controllers.InstalledBundle) {
 	m.bundle = bundle
 }
 
-func (m *MockInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*ocv1alpha1.BundleMetadata, error) {
+func (m *MockInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*controllers.InstalledBundle, error) {
 	return m.bundle, nil
 }
 
