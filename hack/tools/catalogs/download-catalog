@@ -53,12 +53,14 @@ if [ "$UNPACKED_CONDITION" != "True" ]; then
     exit 1
 fi
 
-# Get the contentURL
-CONTENT_URL=$(echo "$CLUSTER_CATALOG" | jq -r '.status.contentURL')
-if [ -z "$CONTENT_URL" ]; then
-    echo "Content URL not found for ClusterCatalog $CATALOG_NAME."
+# Construct the API URL from the ClusterCatalog status
+CATALOG_API_URL=$(echo "$CLUSTER_CATALOG" | jq -r '.status.urls.base')
+if [ -z "$CATALOG_API_URL" ]; then
+    echo "ClusterCatalog $CATALOG_NAME does not express API endpoint in '.status.urls.base'."
     exit 1
 fi
+# Assemble the v1 API URL from the base endpoint
+CATALOG_CONTENT_URL="${CATALOG_API_URL}/api/v1/all"
 
 # Start port forwarding
 echo "Starting kubectl port-forward to $CATALOGD_SERVICE_NAME on port $CATALOGD_LOCAL_SERVICE_PORT..."
@@ -77,9 +79,9 @@ while ! curl -s "http://localhost:${CATALOGD_LOCAL_SERVICE_PORT}" >/dev/null; do
   sleep 1
 done
 
-# Modify the contentURL to hit localhost:<port>
-LOCAL_CONTENT_URL=${CONTENT_URL//https:\/\/$CATALOGD_SERVICE_NAME.$CATALOGD_CATALOGD_SERVICE_NAMESPACE.svc/https:\/\/localhost:$CATALOGD_LOCAL_SERVICE_PORT}
-echo "Found content URL: $CONTENT_URL"
+# Modify the catalogd service endpoint URL to hit localhost:<port>
+LOCAL_CONTENT_URL=${CATALOG_CONTENT_URL//https:\/\/$CATALOGD_SERVICE_NAME.$CATALOGD_CATALOGD_SERVICE_NAMESPACE.svc/https:\/\/localhost:$CATALOGD_LOCAL_SERVICE_PORT}
+echo "Calculated catalogd API pathcontent URL: $CATALOG_CONTENT_URL"
 echo "Using local port: $CATALOGD_LOCAL_SERVICE_PORT"
 echo "Using local content URL: $LOCAL_CONTENT_URL"
 

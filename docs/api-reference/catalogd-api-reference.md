@@ -116,8 +116,24 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | conditions is a representation of the current state for this ClusterCatalog.<br />The status is represented by a set of "conditions".<br /><br />Each condition is generally structured in the following format:<br />  - Type: a string representation of the condition type. More or less the condition "name".<br />  - Status: a string representation of the state of the condition. Can be one of ["True", "False", "Unknown"].<br />  - Reason: a string representation of the reason for the current state of the condition. Typically useful for building automation around particular Type+Reason combinations.<br />  - Message: a human-readable message that further elaborates on the state of the condition.<br /><br />The current set of condition types are:<br />  - "Serving", which represents whether or not the contents of the catalog are being served via the HTTP(S) web server.<br />  - "Progressing", which represents whether or not the ClusterCatalog is progressing towards a new state.<br /><br />The current set of reasons are:<br />  - "Succeeded", this reason is set on the "Progressing" condition when progressing to a new state is successful.<br />  - "Blocked", this reason is set on the "Progressing" condition when the ClusterCatalog controller has encountered an error that requires manual intervention for recovery.<br />  - "Retrying", this reason is set on the "Progressing" condition when the ClusterCatalog controller has encountered an error that might be resolvable on subsequent reconciliation attempts.<br />  - "Available", this reason is set on the "Serving" condition when the contents of the ClusterCatalog are being served via an endpoint on the HTTP(S) web server.<br />  - "Unavailable", this reason is set on the "Serving" condition when there is not an endpoint on the HTTP(S) web server that is serving the contents of the ClusterCatalog. |  |  |
 | `resolvedSource` _[ResolvedCatalogSource](#resolvedcatalogsource)_ | resolvedSource contains information about the resolved source based on the source type.<br /><br />Below is an example of a resolved source for an image source:<br />resolvedSource:<br /><br /> image:<br />   lastSuccessfulPollAttempt: "2024-09-10T12:22:13Z"<br />   ref: quay.io/operatorhubio/catalog@sha256:c7392b4be033da629f9d665fec30f6901de51ce3adebeff0af579f311ee5cf1b<br /> type: Image |  |  |
-| `contentURL` _string_ | contentURL is a cluster-internal URL from which on-cluster components<br />can read the content of a catalog |  |  |
+| `urls` _[ClusterCatalogURLs](#clustercatalogurls)_ | urls contains the URLs that can be used to access the catalog. |  |  |
 | `lastUnpacked` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#time-v1-meta)_ | lastUnpacked represents the time when the<br />ClusterCatalog object was last unpacked successfully. |  |  |
+
+
+#### ClusterCatalogURLs
+
+
+
+ClusterCatalogURLs contains the URLs that can be used to access the catalog.
+
+
+
+_Appears in:_
+- [ClusterCatalogStatus](#clustercatalogstatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `base` _string_ | base is a required cluster-internal URL which provides API access for this ClusterCatalog.<br />A suffix API access path can be added to retrieve catalog data for the ClusterCatalog.<br />Currently, a 'v1' API access provides complete FBC retrival via the path "/api/v1/all", with the general form `\{base\}/api/v1/all`. |  | Required: \{\} <br /> |
 
 
 #### ImageSource

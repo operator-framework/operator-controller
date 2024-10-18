@@ -3,18 +3,21 @@
 [Catalogd](https://github.com/operator-framework/catalogd), the OLM v1 component for making catalog contents available on cluster, includes
 a web server that serves catalog contents to clients via an HTTP(S) endpoint.
 
-The endpoint to retrieve this information is provided in the `.status.contentURL` of a `ClusterCatalog` resource.
-As an example:
+The endpoint to retrieve this information can be composed from the `.status.urls.base` of a `ClusterCatalog` resource with the selected access API path.
+As an example, to access the full FBC via the v1 API endpoint (indicated by path `api/v1/all`) where `.status.urls.base` is
 
 ```yaml
-    contentURL: https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/all.json
+    urls:
+        base: https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio
 ```
+
+the URL to access the service would be `https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/api/v1/all`
 
 !!! note
 
-    The value of the `.status.contentURL` field in a `ClusterCatalog` resource is an arbitrary string value and can change at any time.
-    While there are no guarantees on the exact value of this field, it will always be a URL that resolves successfully for clients using
-    it to make a request from within the cluster.
+    The values of the `.status.urls` field in a `ClusterCatalog` resource are arbitrary string values and can change at any time.
+    While there are no guarantees on the exact value of this field, it will always contain catalog-specific API endpoints for use
+    by clients to make a request from within the cluster.
 
 ## Interacting With the Server
 

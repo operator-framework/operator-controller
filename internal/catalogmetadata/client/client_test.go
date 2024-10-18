@@ -28,7 +28,9 @@ func defaultCatalog() *catalogd.ClusterCatalog {
 			ResolvedSource: &catalogd.ResolvedCatalogSource{Image: &catalogd.ResolvedImageSource{
 				Ref: "fake/catalog@sha256:fakesha",
 			}},
-			ContentURL: "https://fake-url.svc.local/all.json",
+			URLs: &catalogd.ClusterCatalogURLs{
+				Base: "https://fake-url.svc.local/catalogs/catalog-1",
+			},
 		},
 	}
 }
