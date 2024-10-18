@@ -88,7 +88,7 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, catalog *catalogdv
 	// copy.Image can concurrently pull all the layers.
 	//
 	//////////////////////////////////////////////////////
-	dockerRef, err := docker.NewReference(canonicalRef)
+	dockerRef, err := docker.NewReference(imgRef)
 	if err != nil {
 		return nil, fmt.Errorf("error creating source reference: %w", err)
 	}
