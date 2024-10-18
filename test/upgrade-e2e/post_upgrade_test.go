@@ -20,7 +20,7 @@ import (
 
 	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {

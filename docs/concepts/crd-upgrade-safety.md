@@ -56,7 +56,7 @@ The CRD Upgrade Safety preflight check can be entirely disabled by adding the
 `preflight.crdUpgradeSafety.disabled` field with a value of "true" to the ClusterExtension of the CRD.
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
     name: clusterextension-sample
