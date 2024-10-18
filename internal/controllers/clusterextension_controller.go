@@ -291,6 +291,10 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	// to ensure exponential backoff can occur:
 	//   - Permission errors (it is not possible to watch changes to permissions.
 	//     The only way to eventually recover from permission errors is to keep retrying).
+	installedBundle = &InstalledBundle{
+		BundleMetadata: resolvedBundleMetadata,
+		Image:          resolvedBundle.Image,
+	}
 	managedObjs, _, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, objLbls, storeLbls)
 	if err != nil {
 		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedBundleMetadata, err))
@@ -299,10 +303,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		return ctrl.Result{}, err
 	}
 
-	installedBundle = &InstalledBundle{
-		BundleMetadata: resolvedBundleMetadata,
-		Image:          resolvedBundle.Image,
-	}
 	// Successful install
 	setInstalledStatusFromBundle(ext, installedBundle, nil)
 

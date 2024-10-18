@@ -322,7 +322,7 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 
 	t.Log("By checking the status fields")
 	expectedBundleMetadata := ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}
-	require.Empty(t, clusterExtension.Status.Install)
+	require.NotEmpty(t, clusterExtension.Status.Install)
 
 	t.Log("By checking the expected installed conditions")
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
@@ -428,8 +428,8 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 	t.Log("By checking the expected installed conditions")
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
 	require.NotNil(t, installedCond)
-	require.Equal(t, metav1.ConditionTrue, installedCond.Status)
-	require.Equal(t, ocv1alpha1.ReasonSucceeded, installedCond.Reason)
+	require.Equal(t, metav1.ConditionFalse, installedCond.Status)
+	require.Equal(t, ocv1alpha1.ReasonFailed, installedCond.Reason)
 
 	t.Log("By checking the expected progressing conditions")
 	progressingCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)

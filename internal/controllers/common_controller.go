@@ -35,7 +35,12 @@ func setInstalledStatusFromBundle(ext *ocv1alpha1.ClusterExtension, installedBun
 			Bundle: installedBundle.BundleMetadata,
 		}
 		setInstallStatus(ext, installStatus)
-		setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", installedBundle.Image))
+		// If both conditions occur, this is a failed Apply when a bundle was already installed
+		if err != nil {
+			setInstalledStatusConditionFailed(ext, err.Error())
+		} else {
+			setInstalledStatusConditionSuccess(ext, fmt.Sprintf("Installed bundle %s successfully", installedBundle.Image))
+		}
 		return
 	}
 	// Nothing is installed, if there's no error, it means no installed bundle was found
