@@ -205,9 +205,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	l.Info("getting installed bundle")
 	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, ext)
 	if err != nil {
-		setInstallStatus(ext, nil)
-		// TODO: use Installed=Unknown
-		setInstalledStatusConditionFailed(ext, err.Error())
 		setStatusProgressing(ext, err)
 		return ctrl.Result{}, err
 	}
@@ -217,7 +214,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	resolvedBundle, resolvedBundleVersion, resolvedDeprecation, err := r.Resolver.Resolve(ctx, ext, installedBundle)
 	if err != nil {
 		// Note: We don't distinguish between resolution-specific errors and generic errors
-		setInstallStatus(ext, nil)
 		setStatusProgressing(ext, err)
 		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonFailed, err.Error())
 		return ctrl.Result{}, err
@@ -286,10 +282,6 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	managedObjs, _, err := r.Applier.Apply(ctx, unpackResult.Bundle, ext, objLbls, storeLbls)
 	if err != nil {
 		setStatusProgressing(ext, wrapErrorWithResolutionInfo(resolvedBundleMetadata, err))
-		// If bundle is not already installed, set Installed status condition to False
-		if installedBundle == nil {
-			setInstalledStatusConditionFailed(ext, err.Error())
-		}
 		return ctrl.Result{}, err
 	}
 
