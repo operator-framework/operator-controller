@@ -126,7 +126,8 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
             Reason:                Available
             Status:                True
             Type:                  Serving
-          Content URL:             https://catalogd-server.olmv1-system.svc/catalogs/operatorhubio/all.json
+          URLs:
+            Base:                  https://catalogd-server.olmv1-system.svc/catalogs/operatorhubio
           Last Unpacked:           2024-03-12T19:35:34Z
           Resolved Source:
             Image:

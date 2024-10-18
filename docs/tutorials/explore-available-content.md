@@ -24,9 +24,9 @@ The following examples will show this default behavior, but for simplicity's sak
     kubectl -n olmv1-system port-forward svc/catalogd-service 8443:443
     ```
 
-2. Return a list of all the extensions in a catalog:
+2. Return a list of all the extensions in a catalog via the v1 API endpoint:
     ``` terminal
-    curl -k https://localhost:8443/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.package") | .name'
+    curl -k https://localhost:8443/catalogs/operatorhubio/api/v1/all | jq -s '.[] | select(.schema == "olm.package") | .name'
     ```
 
     ??? success
@@ -96,7 +96,7 @@ The following examples will show this default behavior, but for simplicity's sak
     * Return list of packages that support `AllNamespaces` install mode and do not use webhooks:
 
         ``` terminal
-        curl -k https://localhost:8443/catalogs/operatorhubio/all.json | jq -c 'select(.schema == "olm.bundle") | {"package":.package, "version":.properties[] | select(.type == "olm.bundle.object").value.data | @base64d | fromjson | select(.kind == "ClusterServiceVersion" and (.spec.installModes[] | select(.type == "AllNamespaces" and .supported == true) != null) and .spec.webhookdefinitions == null).spec.version}'
+        curl -k https://localhost:8443/catalogs/operatorhubio/api/v1/all | jq -c 'select(.schema == "olm.bundle") | {"package":.package, "version":.properties[] | select(.type == "olm.bundle.object").value.data | @base64d | fromjson | select(.kind == "ClusterServiceVersion" and (.spec.installModes[] | select(.type == "AllNamespaces" and .supported == true) != null) and .spec.webhookdefinitions == null).spec.version}'
         ```
 
         ??? success
@@ -127,7 +127,7 @@ The following examples will show this default behavior, but for simplicity's sak
 3. Inspect the contents of an extension's metadata:
 
     ``` terminal
-    curl -k https://localhost:8443/catalogs/operatorhubio/all.json | jq -s '.[] | select( .schema == "olm.package") | select( .name == "<package_name>")'
+    curl -k https://localhost:8443/catalogs/operatorhubio/api/v1/all | jq -s '.[] | select( .schema == "olm.package") | select( .name == "<package_name>")'
     ```
 
     `package_name`

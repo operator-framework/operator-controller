@@ -7,7 +7,7 @@ The following examples will show this default behavior, but for simplicity's sak
 You can use the `curl` command with `jq` to query catalogs that are installed on your cluster.
 
 ``` terminal title="Query syntax"
-curl -k https://localhost:8443/catalogs/operatorhubio/all.json | <query>
+curl -k https://localhost:8443/catalogs/operatorhubio/api/v1/all | <query>
 ```
 
 ## Package queries
