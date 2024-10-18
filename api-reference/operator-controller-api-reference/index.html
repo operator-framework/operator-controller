@@ -1,0 +1,2079 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../../concepts/version-ranges/">
+      
+      
+        <link rel="next" href="../catalogd-api-reference/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.41">
+    
+    
+      
+        <title>Operator Controller API reference - Operator Lifecycle Manager</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.0253249f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../css/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#api-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Operator Lifecycle Manager" class="md-header__button md-logo" aria-label="Operator Lifecycle Manager" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Operator Lifecycle Manager
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Operator Controller API reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/operator-framework/operator-controller" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Operator Lifecycle Manager" class="md-nav__button md-logo" aria-label="Operator Lifecycle Manager" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Operator Lifecycle Manager
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/operator-framework/operator-controller" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../.." class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_1" id="__nav_1_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Overview
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/olmv1_community/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Community
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/olmv1_architecture/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Architecture
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/olmv1_design_decisions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Design Decisions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/olmv1_limitations/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Limitations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/olmv1_roadmap/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Roadmap
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project/public-api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Public API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/olmv1_getting_started/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/add-catalog/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Add a Catalog
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/explore-available-content/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Explore Content
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/install-extension/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install an Extension
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/upgrade-extension/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Upgrade an Extension
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/downgrade-extension/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Downgrade an Extension
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/uninstall-extension/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Uninstall an Extension
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    How-To Guides
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            How-To Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/catalog-queries/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Catalog queries
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-channel-based-upgrades/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Channel-Based Upgrades
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-pin-version/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Version Pinning
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-version-range-upgrades/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Version Range Upgrades
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/how-to-z-stream-upgrades/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Z-Stream Upgrades
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../howto/derive-service-account/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Derive Service Account Permissions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Conceptual Guides
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Conceptual Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/single-owner-objects/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Single Owner Objects
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/upgrade-support/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Upgrade Support
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/crd-upgrade-safety/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CRD Upgrade Safety
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/controlling-catalog-selection/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Content Resolution
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/version-ranges/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Version Ranges
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API Reference
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Operator Controller API reference
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Operator Controller API reference
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Packages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#olmoperatorframeworkiov1alpha1" class="md-nav__link">
+    <span class="md-ellipsis">
+      olm.operatorframework.io/v1alpha1
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="olm.operatorframework.io/v1alpha1">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resource-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resource Types
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resource Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bundlemetadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      BundleMetadata
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crdupgradesafetypolicy" class="md-nav__link">
+    <span class="md-ellipsis">
+      CRDUpgradeSafetyPolicy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crdupgradesafetypreflightconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      CRDUpgradeSafetyPreflightConfig
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#catalogsource" class="md-nav__link">
+    <span class="md-ellipsis">
+      CatalogSource
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clusterextension" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClusterExtension
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clusterextensioninstallconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClusterExtensionInstallConfig
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clusterextensioninstallstatus" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClusterExtensionInstallStatus
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clusterextensionlist" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClusterExtensionList
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clusterextensionspec" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClusterExtensionSpec
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clusterextensionstatus" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClusterExtensionStatus
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preflightconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      PreflightConfig
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#serviceaccountreference" class="md-nav__link">
+    <span class="md-ellipsis">
+      ServiceAccountReference
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sourceconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      SourceConfig
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upgradeconstraintpolicy" class="md-nav__link">
+    <span class="md-ellipsis">
+      UpgradeConstraintPolicy
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../catalogd-api-reference/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CatalogD API reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../catalogd-webserver/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CatalogD Web Server reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Contribute
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Contribute
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/contributing/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/developer/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Developing OLM v1
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Packages
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#olmoperatorframeworkiov1alpha1" class="md-nav__link">
+    <span class="md-ellipsis">
+      olm.operatorframework.io/v1alpha1
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="olm.operatorframework.io/v1alpha1">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resource-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resource Types
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resource Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bundlemetadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      BundleMetadata
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crdupgradesafetypolicy" class="md-nav__link">
+    <span class="md-ellipsis">
+      CRDUpgradeSafetyPolicy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crdupgradesafetypreflightconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      CRDUpgradeSafetyPreflightConfig
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#catalogsource" class="md-nav__link">
+    <span class="md-ellipsis">
+      CatalogSource
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clusterextension" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClusterExtension
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clusterextensioninstallconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClusterExtensionInstallConfig
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clusterextensioninstallstatus" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClusterExtensionInstallStatus
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clusterextensionlist" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClusterExtensionList
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clusterextensionspec" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClusterExtensionSpec
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clusterextensionstatus" class="md-nav__link">
+    <span class="md-ellipsis">
+      ClusterExtensionStatus
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preflightconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      PreflightConfig
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#serviceaccountreference" class="md-nav__link">
+    <span class="md-ellipsis">
+      ServiceAccountReference
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sourceconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      SourceConfig
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#upgradeconstraintpolicy" class="md-nav__link">
+    <span class="md-ellipsis">
+      UpgradeConstraintPolicy
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="api-reference">API Reference</h1>
+<h2 id="packages">Packages</h2>
+<ul>
+<li><a href="#olmoperatorframeworkiov1alpha1">olm.operatorframework.io/v1alpha1</a></li>
+</ul>
+<h2 id="olmoperatorframeworkiov1alpha1">olm.operatorframework.io/v1alpha1</h2>
+<p>Package v1alpha1 contains API Schema definitions for the olm v1alpha1 API group</p>
+<h3 id="resource-types">Resource Types</h3>
+<ul>
+<li><a href="#clusterextension">ClusterExtension</a></li>
+<li><a href="#clusterextensionlist">ClusterExtensionList</a></li>
+</ul>
+<h4 id="bundlemetadata">BundleMetadata</h4>
+<p><em>Appears in:</em>
+- <a href="#clusterextensioninstallstatus">ClusterExtensionInstallStatus</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code> <em>string</em></td>
+<td>name is a required field and is a reference<br />to the name of a bundle</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>version</code> <em>string</em></td>
+<td>version is a required field and is a reference<br />to the version that this bundle represents</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="crdupgradesafetypolicy">CRDUpgradeSafetyPolicy</h4>
+<p><em>Underlying type:</em> <em>string</em></p>
+<p><em>Appears in:</em>
+- <a href="#crdupgradesafetypreflightconfig">CRDUpgradeSafetyPreflightConfig</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Enabled</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>Disabled</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="crdupgradesafetypreflightconfig">CRDUpgradeSafetyPreflightConfig</h4>
+<p>CRDUpgradeSafetyPreflightConfig is the configuration for CRD upgrade safety preflight check.</p>
+<p><em>Appears in:</em>
+- <a href="#preflightconfig">PreflightConfig</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>policy</code> <em><a href="#crdupgradesafetypolicy">CRDUpgradeSafetyPolicy</a></em></td>
+<td>policy is used to configure the state of the CRD Upgrade Safety pre-flight check.<br /><br />This field is required when the spec.install.preflight.crdUpgradeSafety field is<br />specified.<br /><br />Allowed values are ["Enabled", "Disabled"]. The default value is "Enabled".<br /><br />When set to "Disabled", the CRD Upgrade Safety pre-flight check will be skipped<br />when performing an upgrade operation. This should be used with caution as<br />unintended consequences such as data loss can occur.<br /><br />When set to "Enabled", the CRD Upgrade Safety pre-flight check will be run when<br />performing an upgrade operation.</td>
+<td>Enabled</td>
+<td>Enum: [Enabled Disabled] <br /></td>
+</tr>
+</tbody>
+</table>
+<h4 id="catalogsource">CatalogSource</h4>
+<p>CatalogSource defines the required fields for catalog source.</p>
+<p><em>Appears in:</em>
+- <a href="#sourceconfig">SourceConfig</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>packageName</code> <em>string</em></td>
+<td>packageName is a reference to the name of the package to be installed<br />and is used to filter the content from catalogs.<br /><br />This field is required, immutable and follows the DNS subdomain name<br />standard as defined in [RFC 1123]. This means that valid entries:<br />  - Contain no more than 253 characters<br />  - Contain only lowercase alphanumeric characters, '-', or '.'<br />  - Start with an alphanumeric character<br />  - End with an alphanumeric character<br /><br />Some examples of valid values are:<br />  - some-package<br />  - 123-package<br />  - 1-package-2<br />  - somepackage<br /><br />Some examples of invalid values are:<br />  - -some-package<br />  - some-package-<br />  - thisisareallylongpackagenamethatisgreaterthanthemaximumlength<br />  - some.package<br /><br />[RFC 1123]: https://tools.ietf.org/html/rfc1123</td>
+<td></td>
+<td>MaxLength: 253 <br />Pattern: <code>^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$</code> <br /></td>
+</tr>
+<tr>
+<td><code>version</code> <em>string</em></td>
+<td>version is an optional semver constraint (a specific version or range of versions). When unspecified, the latest version available will be installed.<br /><br />Acceptable version ranges are no longer than 64 characters.<br />Version ranges are composed of comma- or space-delimited values and one or<br />more comparison operators, known as comparison strings. Additional<br />comparison strings can be added using the OR operator (||).<br /><br /># Range Comparisons<br /><br />To specify a version range, you can use a comparison string like "&gt;=3.0,<br />&lt;3.6". When specifying a range, automatic updates will occur within that<br />range. The example comparison string means "install any version greater than<br />or equal to 3.0.0 but less than 3.6.0.". It also states intent that if any<br />upgrades are available within the version range after initial installation,<br />those upgrades should be automatically performed.<br /><br /># Pinned Versions<br /><br />To specify an exact version to install you can use a version range that<br />"pins" to a specific version. When pinning to a specific version, no<br />automatic updates will occur. An example of a pinned version range is<br />"0.6.0", which means "only install version 0.6.0 and never<br />upgrade from this version".<br /><br /># Basic Comparison Operators<br /><br />The basic comparison operators and their meanings are:<br />  - "=", equal (not aliased to an operator)<br />  - "!=", not equal<br />  - "&lt;", less than<br />  - "&gt;", greater than<br />  - "&gt;=", greater than OR equal to<br />  - "&lt;=", less than OR equal to<br /><br /># Wildcard Comparisons<br /><br />You can use the "x", "X", and "<em>" characters as wildcard characters in all<br />comparison operations. Some examples of using the wildcard characters:<br />  - "1.2.x", "1.2.X", and "1.2.</em>" is equivalent to "&gt;=1.2.0, &lt; 1.3.0"<br />  - "&gt;= 1.2.x", "&gt;= 1.2.X", and "&gt;= 1.2.<em>" is equivalent to "&gt;= 1.2.0"<br />  - "&lt;= 2.x", "&lt;= 2.X", and "&lt;= 2.</em>" is equivalent to "&lt; 3"<br />  - "x", "X", and "*" is equivalent to "&gt;= 0.0.0"<br /><br /># Patch Release Comparisons<br /><br />When you want to specify a minor version up to the next major version you<br />can use the "~" character to perform patch comparisons. Some examples:<br />  - "~1.2.3" is equivalent to "&gt;=1.2.3, &lt;1.3.0"<br />  - "~1" and "~1.x" is equivalent to "&gt;=1, &lt;2"<br />  - "~2.3" is equivalent to "&gt;=2.3, &lt;2.4"<br />  - "~1.2.x" is equivalent to "&gt;=1.2.0, &lt;1.3.0"<br /><br /># Major Release Comparisons<br /><br />You can use the "^" character to make major release comparisons after a<br />stable 1.0.0 version is published. If there is no stable version published, // minor versions define the stability level. Some examples:<br />  - "^1.2.3" is equivalent to "&gt;=1.2.3, &lt;2.0.0"<br />  - "^1.2.x" is equivalent to "&gt;=1.2.0, &lt;2.0.0"<br />  - "^2.3" is equivalent to "&gt;=2.3, &lt;3"<br />  - "^2.x" is equivalent to "&gt;=2.0.0, &lt;3"<br />  - "^0.2.3" is equivalent to "&gt;=0.2.3, &lt;0.3.0"<br />  - "^0.2" is equivalent to "&gt;=0.2.0, &lt;0.3.0"<br />  - "^0.0.3" is equvalent to "&gt;=0.0.3, &lt;0.0.4"<br />  - "^0.0" is equivalent to "&gt;=0.0.0, &lt;0.1.0"<br />  - "^0" is equivalent to "&gt;=0.0.0, &lt;1.0.0"<br /><br /># OR Comparisons<br />You can use the "||" character to represent an OR operation in the version<br />range. Some examples:<br />  - "&gt;=1.2.3, &lt;2.0.0 || &gt;3.0.0"<br />  - "^0 || ^3 || ^5"<br /><br />For more information on semver, please see https://semver.org/</td>
+<td></td>
+<td>MaxLength: 64 <br />Pattern: <code>^(\s*(=\|\|!=\|&gt;\|&lt;\|&gt;=\|=&gt;\|&lt;=\|=&lt;\|~\|~&gt;\|\^)\s*(v?(0\|[1-9]\d*\|[x\|X\|\*])(\.(0\|[1-9]\d*\|x\|X\|\*]))?(\.(0\|[1-9]\d*\|x\|X\|\*))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)((?:\s+\|,\s*\|\s*\\|\\|\s*)(=\|\|!=\|&gt;\|&lt;\|&gt;=\|=&gt;\|&lt;=\|=&lt;\|~\|~&gt;\|\^)\s*(v?(0\|[1-9]\d*\|x\|X\|\*])(\.(0\|[1-9]\d*\|x\|X\|\*))?(\.(0\|[1-9]\d*\|x\|X\|\*]))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)*$</code> <br /></td>
+</tr>
+<tr>
+<td><code>channels</code> <em>string array</em></td>
+<td>channels is an optional reference to a set of channels belonging to<br />the package specified in the packageName field.<br /><br />A "channel" is a package author defined stream of updates for an extension.<br /><br />When specified, it is used to constrain the set of installable bundles and<br />the automated upgrade path. This constraint is an AND operation with the<br />version field. For example:<br />  - Given channel is set to "foo"<br />  - Given version is set to "&gt;=1.0.0, &lt;1.5.0"<br />  - Only bundles that exist in channel "foo" AND satisfy the version range comparison will be considered installable<br />  - Automatic upgrades will be constrained to upgrade edges defined by the selected channel<br /><br />When unspecified, upgrade edges across all channels will be used to identify valid automatic upgrade paths.<br /><br />This field follows the DNS subdomain name standard as defined in [RFC<br />1123]. This means that valid entries:<br />  - Contain no more than 253 characters<br />  - Contain only lowercase alphanumeric characters, '-', or '.'<br />  - Start with an alphanumeric character<br />  - End with an alphanumeric character<br /><br />Some examples of valid values are:<br />  - 1.1.x<br />  - alpha<br />  - stable<br />  - stable-v1<br />  - v1-stable<br />  - dev-preview<br />  - preview<br />  - community<br /><br />Some examples of invalid values are:<br />  - -some-channel<br />  - some-channel-<br />  - thisisareallylongchannelnamethatisgreaterthanthemaximumlength<br />  - original_40<br />  - --default-channel<br /><br />[RFC 1123]: https://tools.ietf.org/html/rfc1123</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>selector</code> <em><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#labelselector-v1-meta">LabelSelector</a></em></td>
+<td>selector is an optional field that can be used<br />to filter the set of ClusterCatalogs used in the bundle<br />selection process.<br /><br />When unspecified, all ClusterCatalogs will be used in<br />the bundle selection process.</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>upgradeConstraintPolicy</code> <em><a href="#upgradeconstraintpolicy">UpgradeConstraintPolicy</a></em></td>
+<td>upgradeConstraintPolicy is an optional field that controls whether<br />the upgrade path(s) defined in the catalog are enforced for the package<br />referenced in the packageName field.<br /><br />Allowed values are: ["CatalogProvided", "SelfCertified"].<br /><br />When this field is set to "CatalogProvided", automatic upgrades will only occur<br />when upgrade constraints specified by the package author are met.<br /><br />When this field is set to "SelfCertified", the upgrade constraints specified by<br />the package author are ignored. This allows for upgrades and downgrades to<br />any version of the package. This is considered a dangerous operation as it<br />can lead to unknown and potentially disastrous outcomes, such as data<br />loss. It is assumed that users have independently verified changes when<br />using this option.<br /><br />If unspecified, the default value is "CatalogProvided".</td>
+<td>CatalogProvided</td>
+<td>Enum: [CatalogProvided SelfCertified] <br /></td>
+</tr>
+</tbody>
+</table>
+<h4 id="clusterextension">ClusterExtension</h4>
+<p>ClusterExtension is the Schema for the clusterextensions API</p>
+<p><em>Appears in:</em>
+- <a href="#clusterextensionlist">ClusterExtensionList</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>apiVersion</code> <em>string</em></td>
+<td><code>olm.operatorframework.io/v1alpha1</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>kind</code> <em>string</em></td>
+<td><code>ClusterExtension</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>kind</code> <em>string</em></td>
+<td>Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>apiVersion</code> <em>string</em></td>
+<td>APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code> <em><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#objectmeta-v1-meta">ObjectMeta</a></em></td>
+<td>Refer to Kubernetes API documentation for fields of <code>metadata</code>.</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>spec</code> <em><a href="#clusterextensionspec">ClusterExtensionSpec</a></em></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code> <em><a href="#clusterextensionstatus">ClusterExtensionStatus</a></em></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="clusterextensioninstallconfig">ClusterExtensionInstallConfig</h4>
+<p>ClusterExtensionInstallConfig is a union which selects the clusterExtension installation config.
+ClusterExtensionInstallConfig requires the namespace and serviceAccount which should be used for the installation of packages.</p>
+<p><em>Appears in:</em>
+- <a href="#clusterextensionspec">ClusterExtensionSpec</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>namespace</code> <em>string</em></td>
+<td>namespace is a reference to the Namespace in which the bundle of<br />content for the package referenced in the packageName field will be applied.<br />The bundle may contain cluster-scoped resources or resources that are<br />applied to other Namespaces. This Namespace is expected to exist.<br /><br />namespace is required, immutable, and follows the DNS label standard<br />as defined in [RFC 1123]. This means that valid values:<br />  - Contain no more than 63 characters<br />  - Contain only lowercase alphanumeric characters or '-'<br />  - Start with an alphanumeric character<br />  - End with an alphanumeric character<br /><br />Some examples of valid values are:<br />  - some-namespace<br />  - 123-namespace<br />  - 1-namespace-2<br />  - somenamespace<br /><br />Some examples of invalid values are:<br />  - -some-namespace<br />  - some-namespace-<br />  - thisisareallylongnamespacenamethatisgreaterthanthemaximumlength<br />  - some.namespace<br /><br />[RFC 1123]: https://tools.ietf.org/html/rfc1123</td>
+<td></td>
+<td>MaxLength: 63 <br />Pattern: <code>^[a-z0-9]([-a-z0-9]*[a-z0-9])?$</code> <br /></td>
+</tr>
+<tr>
+<td><code>serviceAccount</code> <em><a href="#serviceaccountreference">ServiceAccountReference</a></em></td>
+<td>serviceAccount is a required reference to a ServiceAccount that exists<br />in the installNamespace. The provided ServiceAccount is used to install and<br />manage the content for the package specified in the packageName field.<br /><br />In order to successfully install and manage the content for the package,<br />the ServiceAccount provided via this field should be configured with the<br />appropriate permissions to perform the necessary operations on all the<br />resources that are included in the bundle of content being applied.</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>preflight</code> <em><a href="#preflightconfig">PreflightConfig</a></em></td>
+<td>preflight is an optional field that can be used to configure the preflight checks run before installation or upgrade of the content for the package specified in the packageName field.<br /><br />When specified, it overrides the default configuration of the preflight checks that are required to execute successfully during an install/upgrade operation.<br /><br />When not specified, the default configuration for each preflight check will be used.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="clusterextensioninstallstatus">ClusterExtensionInstallStatus</h4>
+<p><em>Appears in:</em>
+- <a href="#clusterextensionstatus">ClusterExtensionStatus</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bundle</code> <em><a href="#bundlemetadata">BundleMetadata</a></em></td>
+<td>bundle is a representation of the currently installed bundle.<br /><br />A "bundle" is a versioned set of content that represents the resources that<br />need to be applied to a cluster to install a package.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="clusterextensionlist">ClusterExtensionList</h4>
+<p>ClusterExtensionList contains a list of ClusterExtension</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>apiVersion</code> <em>string</em></td>
+<td><code>olm.operatorframework.io/v1alpha1</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>kind</code> <em>string</em></td>
+<td><code>ClusterExtensionList</code></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>kind</code> <em>string</em></td>
+<td>Kind is a string value representing the REST resource this object represents.<br />Servers may infer this from the endpoint the client submits requests to.<br />Cannot be updated.<br />In CamelCase.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>apiVersion</code> <em>string</em></td>
+<td>APIVersion defines the versioned schema of this representation of an object.<br />Servers should convert recognized schemas to the latest internal value, and<br />may reject unrecognized values.<br />More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>metadata</code> <em><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#listmeta-v1-meta">ListMeta</a></em></td>
+<td>Refer to Kubernetes API documentation for fields of <code>metadata</code>.</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>items</code> <em><a href="#clusterextension">ClusterExtension</a> array</em></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="clusterextensionspec">ClusterExtensionSpec</h4>
+<p>ClusterExtensionSpec defines the desired state of ClusterExtension</p>
+<p><em>Appears in:</em>
+- <a href="#clusterextension">ClusterExtension</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source</code> <em><a href="#sourceconfig">SourceConfig</a></em></td>
+<td>source is a required field which selects the installation source of content<br />for this ClusterExtension. Selection is performed by setting the sourceType.<br /><br />Catalog is currently the only implemented sourceType, and setting the<br />sourcetype to "Catalog" requires the catalog field to also be defined.<br /><br />Below is a minimal example of a source definition (in yaml):<br /><br />source:<br />  sourceType: Catalog<br />  catalog:<br />    packageName: example-package</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>install</code> <em><a href="#clusterextensioninstallconfig">ClusterExtensionInstallConfig</a></em></td>
+<td>install is a required field used to configure the installation options<br />for the ClusterExtension such as the installation namespace,<br />the service account and the pre-flight check configuration.<br /><br />Below is a minimal example of an installation definition (in yaml):<br />install:<br />   namespace: example-namespace<br />   serviceAccount:<br />     name: example-sa</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="clusterextensionstatus">ClusterExtensionStatus</h4>
+<p>ClusterExtensionStatus defines the observed state of ClusterExtension.</p>
+<p><em>Appears in:</em>
+- <a href="#clusterextension">ClusterExtension</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>install</code> <em><a href="#clusterextensioninstallstatus">ClusterExtensionInstallStatus</a></em></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>conditions</code> <em><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta">Condition</a> array</em></td>
+<td>conditions is a representation of the current state for this ClusterExtension.<br />The status is represented by a set of "conditions".<br /><br />Each condition is generally structured in the following format:<br />  - Type: a string representation of the condition type. More or less the condition "name".<br />  - Status: a string representation of the state of the condition. Can be one of ["True", "False", "Unknown"].<br />  - Reason: a string representation of the reason for the current state of the condition. Typically useful for building automation around particular Type+Reason combinations.<br />  - Message: a human readable message that further elaborates on the state of the condition<br /><br />The global set of condition types are:<br />  - "Installed", represents whether or not the a bundle has been installed for this ClusterExtension<br />  - "Progressing", represents whether or not the ClusterExtension is progressing towards a new state<br /><br />When the ClusterExtension is sourced from a catalog, the following conditions are also possible:<br />  - "Deprecated", represents an aggregation of the PackageDeprecated, ChannelDeprecated, and BundleDeprecated condition types<br />  - "PackageDeprecated", represents whether or not the package specified in the spec.source.catalog.packageName field has been deprecated<br />  - "ChannelDeprecated", represents whether or not any channel specified in spec.source.catalog.channels has been deprecated<br />  - "BundleDeprecated", represents whether or not the installed bundle is deprecated<br /><br />The current set of reasons are:<br />  - "Succeeded", this reason is set on the "Installed" and "Progressing" conditions when initial installation and progressing to a new state is successful<br />  - "Failed", this reason is set on the "Installed" condition when an error has occurred while performing the initial installation.<br />  - "Blocked", this reason is set on the "Progressing" condition when the ClusterExtension controller has encountered an error that requires manual intervention for recovery<br />  - "Retrying", this reason is set on the "Progressing" condition when the ClusterExtension controller has encountered an error that could be resolved on subsequent reconciliation attempts<br />  - "Deprecated", this reason is set on the "Deprecated", "PackageDeprecated", "ChannelDeprecated", and "BundleDeprecated" conditions to signal that the installed package has been deprecated at the particular scope</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="preflightconfig">PreflightConfig</h4>
+<p>PreflightConfig holds the configuration for the preflight checks.  If used, at least one preflight check must be non-nil.</p>
+<p><em>Appears in:</em>
+- <a href="#clusterextensioninstallconfig">ClusterExtensionInstallConfig</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>crdUpgradeSafety</code> <em><a href="#crdupgradesafetypreflightconfig">CRDUpgradeSafetyPreflightConfig</a></em></td>
+<td>crdUpgradeSafety is used to configure the CRD Upgrade Safety pre-flight<br />checks that run prior to upgrades of installed content.<br /><br />The CRD Upgrade Safety pre-flight check safeguards from unintended<br />consequences of upgrading a CRD, such as data loss.<br /><br />This field is required if the spec.install.preflight field is specified.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="serviceaccountreference">ServiceAccountReference</h4>
+<p>ServiceAccountReference references a serviceAccount.</p>
+<p><em>Appears in:</em>
+- <a href="#clusterextensioninstallconfig">ClusterExtensionInstallConfig</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code> <em>string</em></td>
+<td>name is a required, immutable reference to the name of the ServiceAccount<br />to be used for installation and management of the content for the package<br />specified in the packageName field.<br /><br />This ServiceAccount is expected to exist in the installNamespace.<br /><br />This field follows the DNS subdomain name standard as defined in [RFC<br />1123]. This means that valid values:<br />  - Contain no more than 253 characters<br />  - Contain only lowercase alphanumeric characters, '-', or '.'<br />  - Start with an alphanumeric character<br />  - End with an alphanumeric character<br /><br />Some examples of valid values are:<br />  - some-serviceaccount<br />  - 123-serviceaccount<br />  - 1-serviceaccount-2<br />  - someserviceaccount<br />  - some.serviceaccount<br /><br />Some examples of invalid values are:<br />  - -some-serviceaccount<br />  - some-serviceaccount-<br /><br />[RFC 1123]: https://tools.ietf.org/html/rfc1123</td>
+<td></td>
+<td>MaxLength: 253 <br />Pattern: <code>^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$</code> <br /></td>
+</tr>
+</tbody>
+</table>
+<h4 id="sourceconfig">SourceConfig</h4>
+<p>SourceConfig is a discriminated union which selects the installation source.</p>
+<p><em>Appears in:</em>
+- <a href="#clusterextensionspec">ClusterExtensionSpec</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sourceType</code> <em>string</em></td>
+<td>sourceType is a required reference to the type of install source.<br /><br />Allowed values are ["Catalog"]<br /><br />When this field is set to "Catalog", information for determining the appropriate<br />bundle of content to install will be fetched from ClusterCatalog resources existing<br />on the cluster. When using the Catalog sourceType, the catalog field must also be set.</td>
+<td></td>
+<td>Enum: [Catalog] <br /></td>
+</tr>
+<tr>
+<td><code>catalog</code> <em><a href="#catalogsource">CatalogSource</a></em></td>
+<td>catalog is used to configure how information is sourced from a catalog. This field must be defined when sourceType is set to "Catalog",<br />and must be the only field defined for this sourceType.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="upgradeconstraintpolicy">UpgradeConstraintPolicy</h4>
+<p><em>Underlying type:</em> <em>string</em></p>
+<p><em>Appears in:</em>
+- <a href="#catalogsource">CatalogSource</a></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CatalogProvided</code></td>
+<td>The extension will only upgrade if the new version satisfies<br />the upgrade constraints set by the package author.<br /></td>
+</tr>
+<tr>
+<td><code>SelfCertified</code></td>
+<td>Unsafe option which allows an extension to be<br />upgraded or downgraded to any available version of the package and<br />ignore the upgrade path designed by package authors.<br />This assumes that users independently verify the outcome of the changes.<br />Use with caution as this can lead to unknown and potentially<br />disastrous results such as data loss.<br /></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.top", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      
+    
+  </body>
+</html>
