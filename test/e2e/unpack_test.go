@@ -65,7 +65,7 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 		})
 
 		It("Successfully unpacks catalog contents", func() {
-			By("Ensuring ClusterCatalog has Status.Condition of Unpacked with a status == True")
+			By("Ensuring ClusterCatalog has Status.Condition of Progressing with a status == False and reason == Succeeded")
 			Eventually(func(g Gomega) {
 				err := c.Get(ctx, types.NamespacedName{Name: catalog.Name}, catalog)
 				g.Expect(err).ToNot(HaveOccurred())

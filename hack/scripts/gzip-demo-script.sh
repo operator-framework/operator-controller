@@ -16,13 +16,13 @@ time kubectl wait --for=condition=Unpacked clustercatalog/operatorhubio --timeou
 sleep 5
 
 # retrieve catalog as plaintext JSONlines
-curl -k -vvv https://localhost:8080/catalogs/operatorhubio/all.json --output /tmp/cat-content.json
+curl -k -vvv https://localhost:8080/catalogs/operatorhubio/api/v1/all --output /tmp/cat-content.json
 
 # advertise handling of compressed content
-curl -vvv -k https://localhost:8080/catalogs/operatorhubio/all.json -H 'Accept-Encoding: gzip' --output /tmp/cat-content.gz
+curl -vvv -k https://localhost:8080/catalogs/operatorhubio/api/v1/all -H 'Accept-Encoding: gzip' --output /tmp/cat-content.gz
 
 # let curl handle the compress/decompress for us
-curl -vvv --compressed -k https://localhost:8080/catalogs/operatorhubio/all.json --output /tmp/cat-content-decompressed.txt
+curl -vvv --compressed -k https://localhost:8080/catalogs/operatorhubio/api/v1/all --output /tmp/cat-content-decompressed.txt
 
 # show that there's no content change with changed format
 diff /tmp/cat-content.json /tmp/cat-content-decompressed.txt

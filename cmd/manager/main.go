@@ -258,7 +258,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	localStorage = storage.LocalDir{RootDir: storeDir, BaseURL: baseStorageURL}
+	localStorage = storage.LocalDirV1{RootDir: storeDir, RootURL: baseStorageURL}
 
 	// Config for the the catalogd web server
 	catalogServerConfig := serverutil.CatalogServerConfig{

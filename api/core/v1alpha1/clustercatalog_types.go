@@ -147,15 +147,22 @@ type ClusterCatalogStatus struct {
 	//  type: Image
 	// +optional
 	ResolvedSource *ResolvedCatalogSource `json:"resolvedSource,omitempty"`
-	// contentURL is a cluster-internal URL from which on-cluster components
-	// can read the content of a catalog
+	// urls contains the URLs that can be used to access the catalog.
 	// +optional
-	ContentURL string `json:"contentURL,omitempty"`
-
+	URLs *ClusterCatalogURLs `json:"urls,omitempty"`
 	// lastUnpacked represents the time when the
 	// ClusterCatalog object was last unpacked successfully.
 	// +optional
 	LastUnpacked metav1.Time `json:"lastUnpacked,omitempty"`
+}
+
+// ClusterCatalogURLs contains the URLs that can be used to access the catalog.
+type ClusterCatalogURLs struct {
+	// base is a required cluster-internal URL which provides API access for this ClusterCatalog.
+	// A suffix API access path can be added to retrieve catalog data for the ClusterCatalog.
+	// Currently, a 'v1' API access provides complete FBC retrival via the path "/api/v1/all", with the general form `{base}/api/v1/all`.
+	// +kubebuilder:validation:Required
+	Base string `json:"base"`
 }
 
 // CatalogSource is a discriminated union of possible sources for a Catalog.

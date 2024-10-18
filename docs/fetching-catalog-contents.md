@@ -1,8 +1,9 @@
 # `ClusterCatalog` Interface
-`catalogd` serves catalog content via an HTTP(S) endpoint
+`catalogd` serves catalog content via a catalog-specific, versioned HTTP(S) endpoint. Clients access catalog information via this API endpoint and a versioned reference of the desired format. Current support includes only a complete catalog download, indicated by the path "api/v1/all", for example if `status.urls.base` is `https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio` then `https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/api/vi/all` would receive the complete FBC for the catalog `operatorhubio`.
+
 
 ## Response Format
-`catalogd` responses are encoded as a [JSON Lines](https://jsonlines.org/) stream of File-Based Catalog (FBC) [Meta](https://olm.operatorframework.io/docs/reference/file-based-catalogs/#schema) objects delimited by newlines.
+`catalogd` responses retrieved via the catalog-specific v1 API are encoded as a [JSON Lines](https://jsonlines.org/) stream of File-Based Catalog (FBC) [Meta](https://olm.operatorframework.io/docs/reference/file-based-catalogs/#schema) objects delimited by newlines.
 
 ### Example
 For an example JSON-encoded FBC snippet
@@ -79,30 +80,32 @@ For example purposes we make the following assumption:
 For local development, consider skipping TLS verification, such as `curl -k`, or reference external material
 on self-signed certificate verification.
 
-`ClusterCatalog` CRs have a status.contentURL field whose value is the location where the content 
-of a catalog can be read from:
+`ClusterCatalog` CRs have a `status.urls.base` field which identifies the catalog-specific API to access the catalog content:
 
 ```yaml
   status:
     .
     .
-    contentURL: https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/all.json
+    urls:
+        base: https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio
     resolvedSource:
       image:
         ref: quay.io/operatorhubio/catalog@sha256:e53267559addc85227c2a7901ca54b980bc900276fc24d3f4db0549cb38ecf76
       type: Image
 ```
 
-
 ## On cluster
 
-When making a request for the contents of the `operatorhubio` `ClusterCatalog` from within
-the cluster issue a HTTP `GET` request to 
-`https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/all.json`
+When making a request for the complete contents of the `operatorhubio` `ClusterCatalog` from within
+the cluster, clients would combine `status.urls.base` with the desired API service and issue an HTTP GET request for the URL.
+
+For example, to receive the complete catalog data for the `operatorhubio` catalog indicated above, the client would append the service point designator `api/v1/all`, like:
+
+`https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/api/v1/all`.
 
 An example command to run a `Pod` to `curl` the catalog contents:
 ```sh
-kubectl run fetcher --image=curlimages/curl:latest -- curl https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/all.json
+kubectl run fetcher --image=curlimages/curl:latest -- curl https://catalogd-service.olmv1-system.svc/catalogs/operatorhubio/api/v1/all
 ```
 
 ## Off cluster
@@ -115,11 +118,11 @@ kubectl -n olmv1-system port-forward svc/catalogd-service 8080:443
 ```
 
 Once the service has been successfully forwarded to a localhost port, issue a HTTP `GET`
-request to `https://localhost:8080/catalogs/operatorhubio/all.json`
+request to `https://localhost:8080/catalogs/operatorhubio/api/v1/all`
 
 An example `curl` request that assumes the port-forwarding is mapped to port 8080 on the local machine:
 ```sh
-curl http://localhost:8080/catalogs/operatorhubio/all.json
+curl http://localhost:8080/catalogs/operatorhubio/api/v1/all
 ```
 
 # Fetching `ClusterCatalog` contents from the `Catalogd` Service outside of the cluster
@@ -190,7 +193,7 @@ This section outlines a way of exposing the `Catalogd` Service's endpoints outsi
 1. Run the below example `curl` request to retrieve all of the catalog contents:
 
     ```sh
-      $ curl https://<address>/catalogs/operatorhubio/all.json
+      $ curl https://<address>/catalogs/operatorhubio/api/v1/all
     ```
     
     To obtain `address` of the ingress object, you can run the below command and look for the value in the `ADDRESS` field from output: 

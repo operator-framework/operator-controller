@@ -221,11 +221,6 @@ spec:
                   - type
                   type: object
                 type: array
-              contentURL:
-                description: |-
-                  contentURL is a cluster-internal URL from which on-cluster components
-                  can read the content of a catalog
-                type: string
               lastUnpacked:
                 description: |-
                   lastUnpacked represents the time when the
@@ -278,6 +273,19 @@ spec:
                 x-kubernetes-validations:
                 - message: source type 'Image' requires image field
                   rule: self.type == 'Image' && has(self.image)
+              urls:
+                description: urls contains the URLs that can be used to access the
+                  catalog.
+                properties:
+                  base:
+                    description: |-
+                      base is a required cluster-internal URL which provides API access for this ClusterCatalog.
+                      A suffix API access path can be added to retrieve catalog data for the ClusterCatalog.
+                      Currently, a 'v1' API access provides complete FBC retrival via the path "/api/v1/all", with the general form `{base}/api/v1/all`.
+                    type: string
+                required:
+                - base
+                type: object
             type: object
         required:
         - metadata

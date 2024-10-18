@@ -159,7 +159,7 @@ func (r *ClusterCatalogReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alpha1.ClusterCatalog) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 	// Check if the catalog availability is set to disabled, if true then
-	// unset content URL, delete it from the cache and set appropriate status
+	// unset base URL, delete it from the cache and set appropriate status
 	if catalog.Spec.Availability == v1alpha1.AvailabilityDisabled {
 		// Delete the catalog from local cache
 		err := r.deleteCatalogCache(ctx, catalog)
@@ -244,10 +244,10 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alp
 			updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), storageErr)
 			return ctrl.Result{}, storageErr
 		}
-		contentURL := r.Storage.ContentURL(catalog.Name)
+		baseURL := r.Storage.BaseURL(catalog.Name)
 
 		updateStatusProgressing(&catalog.Status, catalog.GetGeneration(), nil)
-		updateStatusServing(&catalog.Status, *unpackResult, contentURL, catalog.GetGeneration())
+		updateStatusServing(&catalog.Status, *unpackResult, baseURL, catalog.GetGeneration())
 	default:
 		panic(fmt.Sprintf("unknown unpack state %q", unpackResult.State))
 	}
@@ -271,7 +271,7 @@ func (r *ClusterCatalogReconciler) getCurrentState(catalog *v1alpha1.ClusterCata
 	// Set expected status based on what we see in the stored catalog
 	clearUnknownConditions(expectedStatus)
 	if hasStoredCatalog && r.Storage.ContentExists(catalog.Name) {
-		updateStatusServing(expectedStatus, storedCatalog.unpackResult, r.Storage.ContentURL(catalog.Name), storedCatalog.observedGeneration)
+		updateStatusServing(expectedStatus, storedCatalog.unpackResult, r.Storage.BaseURL(catalog.Name), storedCatalog.observedGeneration)
 		updateStatusProgressing(expectedStatus, storedCatalog.observedGeneration, nil)
 	}
 
@@ -323,9 +323,12 @@ func updateStatusProgressing(status *v1alpha1.ClusterCatalogStatus, generation i
 	meta.SetStatusCondition(&status.Conditions, progressingCond)
 }
 
-func updateStatusServing(status *v1alpha1.ClusterCatalogStatus, result source.Result, contentURL string, generation int64) {
+func updateStatusServing(status *v1alpha1.ClusterCatalogStatus, result source.Result, baseURL string, generation int64) {
 	status.ResolvedSource = result.ResolvedSource
-	status.ContentURL = contentURL
+	if status.URLs == nil {
+		status.URLs = &v1alpha1.ClusterCatalogURLs{}
+	}
+	status.URLs.Base = baseURL
 	status.LastUnpacked = metav1.NewTime(result.UnpackTime)
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:               v1alpha1.TypeServing,
@@ -349,7 +352,7 @@ func updateStatusCatalogDisabled(status *v1alpha1.ClusterCatalogStatus, generati
 
 func updateStatusNotServing(status *v1alpha1.ClusterCatalogStatus, generation int64) {
 	status.ResolvedSource = nil
-	status.ContentURL = ""
+	status.URLs = nil
 	status.LastUnpacked = metav1.Time{}
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:               v1alpha1.TypeServing,

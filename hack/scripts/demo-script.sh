@@ -11,6 +11,7 @@ sleep 10
 kubectl apply -f https://github.com/operator-framework/catalogd/releases/latest/download/catalogd.yaml
 kubectl wait --for=condition=Available -n olmv1-system deploy/catalogd-controller-manager --timeout=60s
 sleep 10
+
 # inspect crds (catalog)
 kubectl get crds -A
 
@@ -19,15 +20,15 @@ kubectl apply -f config/samples/core_v1alpha1_catalog.yaml
 # shows catalog-sample
 kubectl get catalog -A 
 # waiting for catalog to report ready status
-time kubectl wait --for=condition=Unpacked catalog/operatorhubio --timeout=1m
+time kubectl wait --for=condition=Serving catalog/operatorhubio --timeout=1m
 
 # port forward the catalogd-service service to interact with the HTTP server serving catalog contents
 (kubectl -n olmv1-system port-forward svc/catalogd-service 8080:80)&
 
 # check what 'packages' are available in this catalog
-curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.package") | .name'
+curl http://localhost:8080/catalogs/operatorhubio/api/v1/all | jq -s '.[] | select(.schema == "olm.package") | .name'
 # check what channels are included in the wavefront package
-curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.channel") | select(.package == "wavefront") | .name'
+curl http://localhost:8080/catalogs/operatorhubio/api/v1/all | jq -s '.[] | select(.schema == "olm.channel") | select(.package == "wavefront") | .name'
 # check what bundles are included in the wavefront package
-curl http://localhost:8080/catalogs/operatorhubio/all.json | jq -s '.[] | select(.schema == "olm.bundle") | select(.package == "wavefront") | .name'
+curl http://localhost:8080/catalogs/operatorhubio/api/v1/all | jq -s '.[] | select(.schema == "olm.bundle") | select(.package == "wavefront") | .name'
 

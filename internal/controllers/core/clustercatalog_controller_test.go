@@ -70,7 +70,7 @@ func (m MockStore) Delete(_ string) error {
 	return nil
 }
 
-func (m MockStore) ContentURL(_ string) string {
+func (m MockStore) BaseURL(_ string) string {
 	return "URL"
 }
 
@@ -261,7 +261,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL: "URL",
+					URLs: &catalogdv1alpha1.ClusterCatalogURLs{Base: "URL"},
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeServing,
@@ -393,7 +393,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL:   "URL",
 					LastUnpacked: metav1.Time{},
 					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
 						Type: catalogdv1alpha1.SourceTypeImage,
@@ -430,7 +429,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL: "",
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeServing,
@@ -473,7 +471,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL: "URL",
+					URLs: &catalogdv1alpha1.ClusterCatalogURLs{Base: "URL"},
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeProgressing,
@@ -503,7 +501,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL: "URL",
+					URLs: &catalogdv1alpha1.ClusterCatalogURLs{Base: "URL"},
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeProgressing,
@@ -544,7 +542,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					},
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL: "URL",
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeProgressing,
@@ -590,7 +587,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			},
 		},
 		{
-			name: "catalog availability set to disabled, ContentURL should get unset",
+			name: "catalog availability set to disabled, status.urls should get unset",
 			source: &MockSource{
 				result: &source.Result{
 					State: source.StateUnpacked,
@@ -612,7 +609,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					Availability: "Disabled",
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL:   "URL",
+					URLs:         &catalogdv1alpha1.ClusterCatalogURLs{Base: "URL"},
 					LastUnpacked: metav1.Time{},
 					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
 						Type: catalogdv1alpha1.SourceTypeImage,
@@ -648,7 +645,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					Availability: "Disabled",
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL: "",
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeServing,
@@ -688,7 +684,7 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					Availability: "Disabled",
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL:   "URL",
+					URLs:         &catalogdv1alpha1.ClusterCatalogURLs{Base: "URL"},
 					LastUnpacked: metav1.Time{},
 					ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
 						Type: catalogdv1alpha1.SourceTypeImage,
@@ -725,7 +721,6 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 					Availability: "Disabled",
 				},
 				Status: catalogdv1alpha1.ClusterCatalogStatus{
-					ContentURL: "",
 					Conditions: []metav1.Condition{
 						{
 							Type:   catalogdv1alpha1.TypeServing,
@@ -848,7 +843,7 @@ func TestPollingReconcilerUnpack(t *testing.T) {
 	successfulObservedGeneration := int64(2)
 	successfulUnpackStatus := func(mods ...func(status *catalogdv1alpha1.ClusterCatalogStatus)) catalogdv1alpha1.ClusterCatalogStatus {
 		s := catalogdv1alpha1.ClusterCatalogStatus{
-			ContentURL: "URL",
+			URLs: &catalogdv1alpha1.ClusterCatalogURLs{Base: "URL"},
 			Conditions: []metav1.Condition{
 				{
 					Type:               catalogdv1alpha1.TypeProgressing,
