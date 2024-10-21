@@ -1,3 +1,4 @@
+# This is a comment
 if not os.path.exists('../tilt-support'):
     fail('Please clone https://github.com/operator-framework/tilt-support to ../tilt-support')
 
