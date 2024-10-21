@@ -33,8 +33,11 @@ function kubectl_wait() {
 }
 
 kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/${cert_mgr_version}/cert-manager.yaml"
+kubectl_wait "cert-manager" "deployment/cert-manager-cainjector" "60s"
 kubectl_wait "cert-manager" "deployment/cert-manager-webhook" "60s"
-
+kubectl_wait "cert-manager" "deployment/cert-manager" "60s"
+kubectl wait mutatingwebhookconfigurations/cert-manager-webhook --for=jsonpath='{.webhooks[0].clientConfig.caBundle}' --timeout=60s
+kubectl wait validatingwebhookconfigurations/cert-manager-webhook --for=jsonpath='{.webhooks[0].clientConfig.caBundle}' --timeout=60s
 kubectl apply -f "${catalogd_manifest}"
 kubectl_wait "olmv1-system" "deployment/catalogd-controller-manager" "60s"
 
