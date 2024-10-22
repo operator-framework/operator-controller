@@ -58,6 +58,7 @@ type ClusterExtensionSpec struct {
 	//   catalog:
 	//     packageName: example-package
 	//
+	// +kubebuilder:validation:Required
 	Source SourceConfig `json:"source"`
 
 	// install is a required field used to configure the installation options
@@ -69,6 +70,7 @@ type ClusterExtensionSpec struct {
 	//    namespace: example-namespace
 	//    serviceAccount:
 	//      name: example-sa
+	// +kubebuilder:validation:Required
 	Install ClusterExtensionInstallConfig `json:"install"`
 }
 
@@ -88,6 +90,7 @@ type SourceConfig struct {
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Catalog"
+	// +kubebuilder:validation:Required
 	SourceType string `json:"sourceType"`
 
 	// catalog is used to configure how information is sourced from a catalog. This field must be defined when sourceType is set to "Catalog",
@@ -130,6 +133,7 @@ type ClusterExtensionInstallConfig struct {
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
 	//+kubebuilder:validation:MaxLength:=63
 	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
+	//+kubebuilder:validation:Required
 	Namespace string `json:"namespace"`
 
 	// serviceAccount is a required reference to a ServiceAccount that exists
@@ -140,6 +144,7 @@ type ClusterExtensionInstallConfig struct {
 	// the ServiceAccount provided via this field should be configured with the
 	// appropriate permissions to perform the necessary operations on all the
 	// resources that are included in the bundle of content being applied.
+	//+kubebuilder:validation:Required
 	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
 
 	// preflight is an optional field that can be used to configure the preflight checks run before installation or upgrade of the content for the package specified in the packageName field.
@@ -181,6 +186,7 @@ type CatalogSource struct {
 	//+kubebuilder:validation:MaxLength:=253
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
 	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="packageName is immutable"
+	//+kubebuilder:validation:Required
 	PackageName string `json:"packageName"`
 
 	// version is an optional semver constraint (a specific version or range of versions). When unspecified, the latest version available will be installed.
@@ -373,6 +379,7 @@ type ServiceAccountReference struct {
 	//+kubebuilder:validation:MaxLength:=253
 	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
 	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
+	//+kubebuilder:validation:Required
 	Name string `json:"name"`
 }
 
@@ -386,6 +393,7 @@ type PreflightConfig struct {
 	// consequences of upgrading a CRD, such as data loss.
 	//
 	// This field is required if the spec.install.preflight field is specified.
+	//+kubebuilder:validation:Required
 	CRDUpgradeSafety *CRDUpgradeSafetyPreflightConfig `json:"crdUpgradeSafety"`
 }
 
@@ -407,6 +415,7 @@ type CRDUpgradeSafetyPreflightConfig struct {
 	//
 	//+kubebuilder:validation:Enum:="Enabled";"Disabled"
 	//+kubebuilder:default:=Enabled
+	//+kubebuilder:validation:Required
 	Policy CRDUpgradeSafetyPolicy `json:"policy"`
 }
 
@@ -455,9 +464,11 @@ func init() {
 type BundleMetadata struct {
 	// name is a required field and is a reference
 	// to the name of a bundle
+	//+kubebuilder:validation:Required
 	Name string `json:"name"`
 	// version is a required field and is a reference
 	// to the version that this bundle represents
+	//+kubebuilder:validation:Required
 	Version string `json:"version"`
 }
 
@@ -496,6 +507,7 @@ type ClusterExtensionStatus struct {
 	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=type
+	// +kubebuilder:validation:Required
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 }
 
@@ -504,6 +516,7 @@ type ClusterExtensionInstallStatus struct {
 	//
 	// A "bundle" is a versioned set of content that represents the resources that
 	// need to be applied to a cluster to install a package.
+	//+kubebuilder:validation:Required
 	Bundle BundleMetadata `json:"bundle"`
 }
 
@@ -516,7 +529,9 @@ type ClusterExtension struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ClusterExtensionSpec   `json:"spec,omitempty"`
+	//+optional
+	Spec ClusterExtensionSpec `json:"spec,omitempty"`
+	//+optional
 	Status ClusterExtensionStatus `json:"status,omitempty"`
 }
 
@@ -525,8 +540,10 @@ type ClusterExtension struct {
 // ClusterExtensionList contains a list of ClusterExtension
 type ClusterExtensionList struct {
 	metav1.TypeMeta `json:",inline"`
+	//+optional
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []ClusterExtension `json:"items"`
+	//+kubebuilder:validation:Required
+	Items []ClusterExtension `json:"items"`
 }
 
 func init() {
