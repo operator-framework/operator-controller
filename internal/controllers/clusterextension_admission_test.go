@@ -77,7 +77,7 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 
 func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 	tooLongError := "spec.source.catalog.packageName: Too long: may not be longer than 253"
-	regexMismatchError := "spec.source.catalog.packageName in body should match"
+	regexMismatchError := "packageName must be a valid DNS1123 subdomain"
 
 	testCases := []struct {
 		name    string
@@ -136,7 +136,7 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 
 func TestClusterExtensionAdmissionVersion(t *testing.T) {
 	tooLongError := "spec.source.catalog.version: Too long: may not be longer than 64"
-	regexMismatchError := "spec.source.catalog.version in body should match"
+	regexMismatchError := "invalid version expression"
 
 	testCases := []struct {
 		name    string
@@ -236,7 +236,7 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 
 func TestClusterExtensionAdmissionChannel(t *testing.T) {
 	tooLongError := "spec.source.catalog.channels[0]: Too long: may not be longer than 253"
-	regexMismatchError := "spec.source.catalog.channels[0] in body should match"
+	regexMismatchError := "channels entries must be valid DNS1123 subdomains"
 
 	testCases := []struct {
 		name     string
@@ -293,7 +293,7 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 
 func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 	tooLongError := "spec.install.namespace: Too long: may not be longer than 63"
-	regexMismatchError := "spec.install.namespace in body should match"
+	regexMismatchError := "namespace must be a valid DNS1123 label"
 
 	testCases := []struct {
 		name      string
@@ -348,7 +348,7 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 
 func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 	tooLongError := "spec.install.serviceAccount.name: Too long: may not be longer than 253"
-	regexMismatchError := "spec.install.serviceAccount.name in body should match"
+	regexMismatchError := "name must be a valid DNS1123 subdomain"
 
 	testCases := []struct {
 		name           string
