@@ -22,6 +22,10 @@ jobs:
     - uses: actions/checkout@v4
       with:
         path: catalogd
+    - name: Install Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: "catalogd/go.mod"
     - name: Install Tilt
       run: |
         TILT_VERSION="0.33.3"
