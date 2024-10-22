@@ -5,7 +5,7 @@ Catalogd is a Kubernetes extension that unpacks [file-based catalog (FBC)](https
 Catalogd helps customers discover installable content by hosting catalog metadata for Kubernetes extensions, such as Operators and controllers. For more information on the Operator Lifecycle Manager (OLM) v1 suite of microservices, see the [documentation](https://github.com/operator-framework/operator-controller/tree/main/docs) for the Operator Controller.
 
 ## Quickstart DEMO
-[![asciicast](https://asciinema.org/a/624043.svg)](https://asciinema.org/a/624043)
+[![asciicast](https://asciinema.org/a/682344.svg)](https://asciinema.org/a/682344)
 
 ## Quickstart Steps
 Procedure steps marked with an asterisk (`*`) are likely to change with future API updates.
