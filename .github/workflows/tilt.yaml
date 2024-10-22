@@ -32,6 +32,10 @@ jobs:
         repository: operator-framework/catalogd
         path: catalogd
         ref: "${{ steps.get-catalogd-version.outputs.CATALOGD_VERSION }}"
+    - name: Install Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: "operator-controller/go.mod"
     - name: Install Tilt
       run: |
         TILT_VERSION="0.33.3"
