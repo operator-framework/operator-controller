@@ -12,6 +12,9 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -21,12 +24,14 @@ import (
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/controllers"
 	"github.com/operator-framework/operator-controller/internal/finalizers"
+	"github.com/operator-framework/operator-controller/internal/labels"
 	"github.com/operator-framework/operator-controller/internal/resolve"
 	"github.com/operator-framework/operator-controller/internal/rukpak/source"
 )
@@ -392,7 +397,10 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 		cache: &MockManagedContentCache{},
 	}
 	reconciler.InstalledBundleGetter = &MockInstalledBundleGetter{
-		bundle: &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
+		bundle: &controllers.InstalledBundle{
+			BundleMetadata: ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
+			Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
+		},
 	}
 	reconciler.Applier = &MockApplier{
 		objs: []client.Object{},
@@ -745,7 +753,10 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 		cache: &MockManagedContentCache{},
 	}
 	reconciler.InstalledBundleGetter = &MockInstalledBundleGetter{
-		bundle: &ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
+		bundle: &controllers.InstalledBundle{
+			BundleMetadata: ocv1alpha1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"},
+			Image:          "quay.io/operatorhubio/prometheus@fake1.0.0",
+		},
 	}
 	err = reconciler.Finalizers.Register(fakeFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
 		return crfinalizer.Result{}, errors.New(finalizersMessage)
@@ -1398,5 +1409,135 @@ func TestSetDeprecationStatus(t *testing.T) {
 			//  lastTransitionTime to change when the status of the condition changes.
 			assert.Equal(t, "", cmp.Diff(tc.expectedClusterExtension, tc.clusterExtension, cmpopts.IgnoreFields(metav1.Condition{}, "Message", "LastTransitionTime")))
 		})
+	}
+}
+
+type MockActionGetter struct {
+	description    string
+	rels           []*release.Release
+	err            error
+	expectedBundle *controllers.InstalledBundle
+	expectedError  error
+}
+
+func (mag *MockActionGetter) ActionClientFor(ctx context.Context, obj client.Object) (helmclient.ActionInterface, error) {
+	return mag, nil
+}
+
+func (mag *MockActionGetter) Get(name string, opts ...helmclient.GetOption) (*release.Release, error) {
+	return nil, nil
+}
+
+// This is the function we are really testing
+func (mag *MockActionGetter) History(name string, opts ...helmclient.HistoryOption) ([]*release.Release, error) {
+	return mag.rels, mag.err
+}
+
+func (mag *MockActionGetter) Install(name, namespace string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.InstallOption) (*release.Release, error) {
+	return nil, nil
+}
+
+func (mag *MockActionGetter) Upgrade(name, namespace string, chrt *chart.Chart, vals map[string]interface{}, opts ...helmclient.UpgradeOption) (*release.Release, error) {
+	return nil, nil
+}
+
+func (mag *MockActionGetter) Uninstall(name string, opts ...helmclient.UninstallOption) (*release.UninstallReleaseResponse, error) {
+	return nil, nil
+}
+
+func (mag *MockActionGetter) Reconcile(rel *release.Release) error {
+	return nil
+}
+
+func TestGetInstalledBundleHistory(t *testing.T) {
+	getter := controllers.DefaultInstalledBundleGetter{}
+
+	ext := ocv1alpha1.ClusterExtension{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-ext",
+		},
+	}
+
+	mag := []MockActionGetter{
+		{
+			"No return",
+			nil, nil,
+			nil, nil,
+		},
+		{
+			"ErrReleaseNotFound (special case)",
+			nil, driver.ErrReleaseNotFound,
+			nil, nil,
+		},
+		{
+			"Error from History",
+			nil, fmt.Errorf("generic error"),
+			nil, fmt.Errorf("generic error"),
+		},
+		{
+			"One item in history",
+			[]*release.Release{
+				{
+					Name: "test-ext",
+					Info: &release.Info{
+						Status: release.StatusDeployed,
+					},
+					Labels: map[string]string{
+						labels.BundleNameKey:      "test-ext",
+						labels.BundleVersionKey:   "1.0",
+						labels.BundleReferenceKey: "bundle-ref",
+					},
+				},
+			}, nil,
+			&controllers.InstalledBundle{
+				BundleMetadata: ocv1alpha1.BundleMetadata{
+					Name:    "test-ext",
+					Version: "1.0",
+				},
+				Image: "bundle-ref",
+			}, nil,
+		},
+		{
+			"Two items in history",
+			[]*release.Release{
+				{
+					Name: "test-ext",
+					Info: &release.Info{
+						Status: release.StatusFailed,
+					},
+					Labels: map[string]string{
+						labels.BundleNameKey:      "test-ext",
+						labels.BundleVersionKey:   "2.0",
+						labels.BundleReferenceKey: "bundle-ref-2",
+					},
+				},
+				{
+					Name: "test-ext",
+					Info: &release.Info{
+						Status: release.StatusDeployed,
+					},
+					Labels: map[string]string{
+						labels.BundleNameKey:      "test-ext",
+						labels.BundleVersionKey:   "1.0",
+						labels.BundleReferenceKey: "bundle-ref-1",
+					},
+				},
+			}, nil,
+			&controllers.InstalledBundle{
+				BundleMetadata: ocv1alpha1.BundleMetadata{
+					Name:    "test-ext",
+					Version: "1.0",
+				},
+				Image: "bundle-ref-1",
+			}, nil,
+		},
+	}
+
+	for _, tst := range mag {
+		t.Log(tst.description)
+		getter.ActionClientGetter = &tst
+		md, err := getter.GetInstalledBundle(context.Background(), &ext)
+		require.Equal(t, tst.expectedError, err)
+		require.Equal(t, tst.expectedBundle, md)
 	}
 }

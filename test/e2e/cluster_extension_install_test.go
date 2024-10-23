@@ -769,7 +769,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
 			assert.Equal(ct, ocv1alpha1.ReasonFailed, cond.Reason)
-			assert.Contains(ct, cond.Message, "forbidden")
+			assert.Equal(ct, "No bundle installed", cond.Message)
 		}
 	}, pollDuration, pollInterval)
 

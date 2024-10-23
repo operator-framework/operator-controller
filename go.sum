@@ -537,8 +537,8 @@ github.com/operator-framework/api v0.27.0 h1:OrVaGKZJvbZo58HTv2guz7aURkhVKYhFqZ/
 github.com/operator-framework/api v0.27.0/go.mod h1:lg2Xx+S8NQWGYlEOvFwQvH46E5EK5IrAIL7HWfAhciM=
 github.com/operator-framework/catalogd v0.35.0 h1:2lQPyHIzEfcciUjQ/fo4i/GE/sX2LBzd8S+nYxlvEHU=
 github.com/operator-framework/catalogd v0.35.0/go.mod h1:anZurjcFMBvbkuyqlJ98v9z+yjniPKqmhlyitk9DuBQ=
-github.com/operator-framework/helm-operator-plugins v0.5.0 h1:qph2OoECcI9mpuUBtOsWOMgvpx52mPTTSvzVxICsT04=
-github.com/operator-framework/helm-operator-plugins v0.5.0/go.mod h1:yVncrZ/FJNqedMil+055fk6sw8aMKRrget/AqGM0ig0=
+github.com/operator-framework/helm-operator-plugins v0.7.0 h1:YmtIWFc9BaNaDc5mk/dkG0P2BqPZOqpDvjWih5Fczuk=
+github.com/operator-framework/helm-operator-plugins v0.7.0/go.mod h1:fUUCJR3bWtMBZ1qdDhbwjacsBHi9uT576tF4u/DwOgQ=
 github.com/operator-framework/operator-lib v0.15.0 h1:0QeRM4PMtThqINpcFGCEBnIV3Z8u7/8fYLEx6mUtdcM=
 github.com/operator-framework/operator-lib v0.15.0/go.mod h1:ZxLvFuQ7bRWiTNBOqodbuNvcsy/Iq0kOygdxhlbNdI0=
 github.com/operator-framework/operator-registry v1.47.0 h1:Imr7X/W6FmXczwpIOXfnX8d6Snr1dzwWxkMG+lLAfhg=
