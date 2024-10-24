@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/api/v1"
 	cmcache "github.com/operator-framework/operator-controller/internal/contentmanager/cache"
 	oclabels "github.com/operator-framework/operator-controller/internal/labels"
 )
@@ -25,10 +25,10 @@ type Manager interface {
 	// Get returns a managed content cache for the provided
 	// ClusterExtension if one exists. If one does not exist,
 	// a new Cache is created and returned
-	Get(context.Context, *v1alpha1.ClusterExtension) (cmcache.Cache, error)
+	Get(context.Context, *v1.ClusterExtension) (cmcache.Cache, error)
 	// Delete will stop and remove a managed content cache
 	// for the provided ClusterExtension if one exists.
-	Delete(*v1alpha1.ClusterExtension) error
+	Delete(*v1.ClusterExtension) error
 }
 
 type RestConfigMapper func(context.Context, client.Object, *rest.Config) (*rest.Config, error)
@@ -84,7 +84,7 @@ func NewManager(rcm RestConfigMapper, cfg *rest.Config, mapper meta.RESTMapper, 
 // Get returns a Cache for the provided ClusterExtension.
 // If a cache does not already exist, a new one will be created.
 // If a nil ClusterExtension is provided this function will panic.
-func (i *managerImpl) Get(ctx context.Context, ce *v1alpha1.ClusterExtension) (cmcache.Cache, error) {
+func (i *managerImpl) Get(ctx context.Context, ce *v1.ClusterExtension) (cmcache.Cache, error) {
 	if ce == nil {
 		panic("nil ClusterExtension provided")
 	}
@@ -107,7 +107,7 @@ func (i *managerImpl) Get(ctx context.Context, ce *v1alpha1.ClusterExtension) (c
 	}
 
 	tgtLabels := labels.Set{
-		oclabels.OwnerKindKey: v1alpha1.ClusterExtensionKind,
+		oclabels.OwnerKindKey: v1.ClusterExtensionKind,
 		oclabels.OwnerNameKey: ce.GetName(),
 	}
 
@@ -129,7 +129,7 @@ func (i *managerImpl) Get(ctx context.Context, ce *v1alpha1.ClusterExtension) (c
 }
 
 // Delete stops and removes the Cache for the provided ClusterExtension
-func (i *managerImpl) Delete(ce *v1alpha1.ClusterExtension) error {
+func (i *managerImpl) Delete(ce *v1.ClusterExtension) error {
 	if ce == nil {
 		panic("nil ClusterExtension provided")
 	}
