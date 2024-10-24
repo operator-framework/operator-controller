@@ -65,17 +65,10 @@ func (c *Client) GetPackage(ctx context.Context, catalog *catalogd.ClusterCatalo
 
 	catalogFsys, err := c.cache.Get(catalog.Name, catalog.Status.ResolvedSource.Image.Ref)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving catalog cache: %v", err)
+		return nil, fmt.Errorf("error retrieving cache for catalog %q: %v", catalog.Name, err)
 	}
 	if catalogFsys == nil {
-		// TODO: https://github.com/operator-framework/operator-controller/pull/1284
-		// For now we are still populating cache (if absent) on-demand,
-		// but we might end up just returning a "cache not found" error here
-		// once we implement cache population in the controller.
-		catalogFsys, err = c.PopulateCache(ctx, catalog)
-		if err != nil {
-			return nil, fmt.Errorf("error fetching catalog contents: %v", err)
-		}
+		return nil, fmt.Errorf("cache for catalog %q not found", catalog.Name)
 	}
 
 	pkgFsys, err := fs.Sub(catalogFsys, pkgName)

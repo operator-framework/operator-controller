@@ -314,8 +314,9 @@ func main() {
 	}
 
 	if err = (&controllers.ClusterCatalogReconciler{
-		Client: cl,
-		Cache:  catalogClientBackend,
+		Client:                cl,
+		CatalogCache:          catalogClientBackend,
+		CatalogCachePopulator: catalogClient,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterCatalog")
 		os.Exit(1)
