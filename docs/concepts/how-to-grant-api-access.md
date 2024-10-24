@@ -54,6 +54,7 @@ rules:
   - create
   - update
   - patch
+  - delete 
 ```
 
 ### Example: Defining a Custom "Admin" ClusterRole
@@ -124,24 +125,29 @@ This RoleBinding restricts permissions to a specific namespace.
 
 ### Option 2: Extending Default Kubernetes Roles
 
-To automatically extend existing Kubernetes roles (e.g., the default `view`, `edit`, and `admin` roles), you can add **aggregation labels** to your CRDs. This allows users who already have `view`, `edit`, or `admin` roles to interact with the custom resource without needing additional RoleBindings.
+To automatically extend existing Kubernetes roles (e.g., the default `view`, `edit`, and `admin` roles), you can add **aggregation labels** to **ClusterRoles**. This allows users who already have `view`, `edit`, or `admin` roles to interact with the custom resource without needing additional RoleBindings.
 
-#### Example: Adding Aggregation Labels to a CRD
+#### Example: Adding Aggregation Labels to a ClusterRole
 
 ```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
 metadata:
-  name: <your-crd-name>
+  name: custom-resource-aggregated-view
   labels:
     rbac.authorization.k8s.io/aggregate-to-view: "true"
-    rbac.authorization.k8s.io/aggregate-to-edit: "true"
-    rbac.authorization.k8s.io/aggregate-to-admin: "true"
-spec:
-  ...
+rules:
+  - apiGroups:
+      - <your-api-group>
+    resources:
+      - <your-custom-resource>
+    verbs:
+      - get
+      - list
+      - watch
 ```
 
-When these labels are applied, users with existing RoleBindings to the default `view`, `edit`, or `admin` ClusterRoles automatically inherit permissions to interact with this CRD.
+You can create similar ClusterRoles for `edit` and `admin` with appropriate verbs (such as `create`, `update`, `delete` for `edit` and `admin`). By using aggregation labels, the permissions for the custom resources are added to the default roles.
 
 > **Source**: [Kubernetes RBAC Aggregation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#default-roles-and-role-bindings)
 
@@ -161,6 +167,11 @@ This will list all available CRDs, and you can inspect individual CRDs for their
 kubectl get crd <crd-name> -o yaml
 ```
 
+A user can use label selectors to find CRDs owned by a specific cluster extension:
+
+```bash
+kubectl get crds -l 'olm.operatorframework.io/owner-kind=ClusterExtension,olm.operatorframework.io/owner-name=<clusterExtensionName>'
+```
 ---
 
 ## Notes
