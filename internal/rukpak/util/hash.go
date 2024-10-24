@@ -1,15 +1,14 @@
 package util
 
 import (
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"math/big"
 )
 
-// DeepHashObject writes specified object to hash using the spew library
-// which follows pointers and prints actual values of the nested objects
-// ensuring the hash does not change when a pointer changes.
+// DeepHashObject writes specified object to hash by encoding it as JSON and hashing the resulting JSON data with
+// the SHA224 hash sum algorithm.
 func DeepHashObject(obj interface{}) (string, error) {
 	// While the most accurate encoding we could do for Kubernetes objects (runtime.Object)
 	// would use the API machinery serializers, those operate over entire objects - and
@@ -21,7 +20,7 @@ func DeepHashObject(obj interface{}) (string, error) {
 	//  2. be germane to our needs - only fields that serialize and are sent to the server
 	//     will be encoded
 
-	hasher := sha256.New224()
+	hasher := fnv.New64a()
 	hasher.Reset()
 	encoder := json.NewEncoder(hasher)
 	if err := encoder.Encode(obj); err != nil {
@@ -35,5 +34,5 @@ func DeepHashObject(obj interface{}) (string, error) {
 
 	var i big.Int
 	i.SetBytes(hash[:])
-	return i.Text(36), nil
+	return i.Text(62), nil
 }

@@ -34,7 +34,7 @@ func TestDeepHashObject(t *testing.T) {
 				B:   true,
 				N:   nil,
 			},
-			expectedHash: "gta1bt5sybll5qjqxdiekmjm7py93glrinmnrfb31fj",
+			expectedHash: "3ZuoKXfN7Bu",
 		},
 		{
 			name:    "modified populated obj with exported fields",
@@ -54,7 +54,7 @@ func TestDeepHashObject(t *testing.T) {
 				B:   true,
 				N:   nil,
 			},
-			expectedHash: "1ftn1z2ieih8hsmi2a8c6mkoef6uodrtn4wtt1qapioh",
+			expectedHash: "hhbF1vhCexh",
 		},
 		{
 			name:    "populated obj with unexported fields",
@@ -74,7 +74,7 @@ func TestDeepHashObject(t *testing.T) {
 				b:   true,
 				n:   nil,
 			},
-			expectedHash: "16jfjhihxbzhfhs1k5mimq740kvioi98pfbea9q6qtf9",
+			expectedHash: "h6o53zkh2pL",
 		},
 		{
 			// The JSON encoder requires exported fields or it will generate
@@ -82,25 +82,25 @@ func TestDeepHashObject(t *testing.T) {
 			name:         "empty obj",
 			wantErr:      false,
 			obj:          struct{}{},
-			expectedHash: "16jfjhihxbzhfhs1k5mimq740kvioi98pfbea9q6qtf9",
+			expectedHash: "h6o53zkh2pL",
 		},
 		{
 			name:         "string a",
 			wantErr:      false,
 			obj:          "a",
-			expectedHash: "1lu1qv1451mq7gv9upu1cx8ffffi07rel5xvbvvc44dh",
+			expectedHash: "60DgQGu2X8Q",
 		},
 		{
 			name:         "string b",
 			wantErr:      false,
 			obj:          "b",
-			expectedHash: "1ija85ah4gd0beltpfhszipkxfyqqxhp94tf2mjfgq61",
+			expectedHash: "8ar1VDrlnS5",
 		},
 		{
 			name:         "nil obj",
 			wantErr:      false,
 			obj:          nil,
-			expectedHash: "2im0kl1kwvzn46sr4cdtkvmdzrlurvj51xdzhwdht8l0",
+			expectedHash: "3FovGixHSl4",
 		},
 	}
 	for _, tc := range tests {
