@@ -1,0 +1,172 @@
+
+# Granting Users Access to API Resources in OLM
+
+When operators or cluster extensions are installed through OLM, they often provide Custom Resource Definitions (CRDs) that expose new API resources. By default, cluster administrators may have full access to manage these resources, but non-admin users often require specific permissions to create, view, or edit these custom resource objects.
+
+OLM does not automatically manage RBAC for users to interact with CRDs from installed packages. It is recommended that cluster administrators handle RBAC (Role-Based Access Control) to grant appropriate permissions to users. This guide provides steps on how to manually configure RBAC, focusing on creating ClusterRoles and binding them to users or groups.
+
+---
+
+## 1. Creating Default ClusterRoles for API/CRD Access
+
+Administrators can define standard roles to control access to the API resources provided by installed operators. If the operator bundle does not provide default roles, you can create them yourself.
+
+### Default Roles
+
+- **View ClusterRole**: Grants read-only access to all custom resource objects of specified API resources across the cluster.
+- **Edit ClusterRole**: Allows modifying all custom resource objects within the cluster.
+- **Admin ClusterRole**: Provides full permissions (create, update, delete) over all custom resource objects for the specified API resources across the cluster.
+
+### Example: Defining a Custom "View" ClusterRole
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: custom-resource-view
+rules:
+- apiGroups:
+  - <your-api-group>
+  resources:
+  - <your-custom-resources>
+  verbs:
+  - get
+  - list
+  - watch
+```
+
+### Example: Defining a Custom "Edit" ClusterRole
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: custom-resource-edit
+rules:
+- apiGroups:
+  - <your-api-group>
+  resources:
+  - <your-custom-resources>
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+```
+
+### Example: Defining a Custom "Admin" ClusterRole
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: custom-resource-admin
+rules:
+- apiGroups:
+  - <your-api-group>
+  resources:
+  - <your-custom-resources>
+  verbs:
+  - '*'
+```
+
+In each case, replace `<your-api-group>` and `<your-custom-resources>` with the actual API group and resource names provided by the installed operator.
+
+---
+
+## 2. Granting User Access to API Resources
+
+Once the roles are created, you can bind them to specific users or groups to grant them the necessary permissions. There are two main ways to do this:
+
+### Option 1: Binding Default ClusterRoles to Users
+
+- **ClusterRoleBinding**: Use this to grant access across all namespaces.
+- **RoleBinding**: Use this to grant access within a specific namespace.
+
+#### Example: ClusterRoleBinding
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: custom-resource-view-binding
+subjects:
+- kind: User
+  name: <username> # Or use Group for group-based binding
+roleRef:
+  kind: ClusterRole
+  name: custom-resource-view
+  apiGroup: rbac.authorization.k8s.io
+```
+
+This binding grants `<username>` read-only access to the custom resource across all namespaces.
+
+#### Example: RoleBinding
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: custom-resource-edit-binding
+  namespace: <namespace>
+subjects:
+- kind: User
+  name: <username>
+roleRef:
+  kind: Role
+  name: custom-resource-edit
+  apiGroup: rbac.authorization.k8s.io
+```
+
+This RoleBinding restricts permissions to a specific namespace.
+
+### Option 2: Extending Default Kubernetes Roles
+
+To automatically extend existing Kubernetes roles (e.g., the default `view`, `edit`, and `admin` roles), you can add **aggregation labels** to your CRDs. This allows users who already have `view`, `edit`, or `admin` roles to interact with the custom resource without needing additional RoleBindings.
+
+#### Example: Adding Aggregation Labels to a CRD
+
+```yaml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: <your-crd-name>
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+spec:
+  ...
+```
+
+When these labels are applied, users with existing RoleBindings to the default `view`, `edit`, or `admin` ClusterRoles automatically inherit permissions to interact with this CRD.
+
+> **Source**: [Kubernetes RBAC Aggregation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#default-roles-and-role-bindings)
+
+---
+
+## 3. Finding API Groups and Resources Provided by a Bundle
+
+To create appropriate RBAC policies, you need to know which API groups and resources are exposed by the installed operator. You can inspect the installed CRDs and resources by running:
+
+```bash
+kubectl get crds
+```
+
+This will list all available CRDs, and you can inspect individual CRDs for their API groups:
+
+```bash
+kubectl get crd <crd-name> -o yaml
+```
+
+---
+
+## Notes
+
+- OLM does not handle RBAC for users interacting with CRDs, so it's up to cluster administrators to configure these settings.
+- It is not recommended for operator bundles to include RBAC policies granting access to the operator's APIs because cluster administrators should maintain control over the permissions in their clusters.
+
+---
+
