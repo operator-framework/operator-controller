@@ -574,6 +574,8 @@ spec:
                 required:
                 - bundle
                 type: object
+            required:
+            - conditions
             type: object
         type: object
     served: true
