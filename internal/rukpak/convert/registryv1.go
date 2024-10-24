@@ -41,7 +41,7 @@ type Plain struct {
 	Objects []client.Object
 }
 
-func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace string, watchNamespaces []string) (*chart.Chart, error) {
+func LoadRegistryV1(ctx context.Context, rv1 fs.FS) (*RegistryV1, error) {
 	l := log.FromContext(ctx)
 
 	reg := RegistryV1{}
@@ -107,7 +107,16 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace stri
 		return nil, err
 	}
 
-	return toChart(reg, installNamespace, watchNamespaces)
+	return &reg, nil
+}
+
+func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace string, watchNamespaces []string) (*chart.Chart, error) {
+	reg, err := LoadRegistryV1(ctx, rv1)
+	if err != nil {
+		return nil, err
+	}
+
+	return toChart(*reg, installNamespace, watchNamespaces)
 }
 
 // copyMetadataPropertiesToCSV copies properties from `metadata/propeties.yaml` (in the filesystem fsys) into
