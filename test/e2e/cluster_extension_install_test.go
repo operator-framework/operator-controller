@@ -200,10 +200,10 @@ func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCata
 }
 
 func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *ocv1alpha1.ClusterExtension, sa *corev1.ServiceAccount) {
-	require.NoError(t, c.Delete(context.Background(), cat))
+	require.NoError(t, c.Delete(context.Background(), cat, client.PropagationPolicy("DeletePropagationForeground")))
 	require.Eventually(t, func() bool {
 		err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &catalogd.ClusterCatalog{})
-		return errors.IsNotFound(err)
+		return err != nil && errors.IsNotFound(err)
 	}, pollDuration, pollInterval)
 	require.NoError(t, c.Delete(context.Background(), clusterExtension))
 	require.Eventually(t, func() bool {
