@@ -493,14 +493,6 @@ func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, e
 	// But we need to look for the most-recent _Deployed_ release
 	for _, rel := range relhis {
 		if rel.Info != nil && rel.Info.Status == release.StatusDeployed {
-			// If there are blank values, we should consider this as not installed
-			if n, ok := rel.Labels[labels.BundleNameKey]; !ok || n == "" {
-				return nil, nil
-			}
-			if v, ok := rel.Labels[labels.BundleVersionKey]; !ok || v == "" {
-				return nil, nil
-			}
-			// Not checking BundleReferenceKey, as it's new; upgrade test would fail
 			return &InstalledBundle{
 				BundleMetadata: ocv1alpha1.BundleMetadata{
 					Name:    rel.Labels[labels.BundleNameKey],
