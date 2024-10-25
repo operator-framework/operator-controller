@@ -9,7 +9,7 @@ OLM does not automatically manage RBAC for users to interact with CRDs from inst
 
 ## 1. Creating Default ClusterRoles for API/CRD Access
 
-Administrators can define standard roles to control access to the API resources provided by installed operators. If the operator bundle does not provide default roles, you can create them yourself.
+Administrators can define standard roles to control access to the API resources provided by installed operators. If the operator does not provide default roles, you can create them yourself.
 
 ### Default Roles
 
