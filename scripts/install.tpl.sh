@@ -54,7 +54,7 @@ kubectl apply -f "https://github.com/operator-framework/catalogd/releases/downlo
 kubectl_wait_rollout "olmv1-system" "deployment/catalogd-controller-manager" "60s"
 kubectl_wait "olmv1-system" "deployment/catalogd-controller-manager" "60s"
 
-if [[ "${install_default_catalogs,,}" != "false" ]]; then
+if [[ "${install_default_catalogs}" != "false" ]]; then
     kubectl apply -f "https://github.com/operator-framework/catalogd/releases/download/${catalogd_version}/default-catalogs.yaml"
     kubectl wait --for=condition=Serving "clustercatalog/operatorhubio" --timeout="60s"
 fi
