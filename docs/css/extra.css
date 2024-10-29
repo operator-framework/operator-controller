@@ -8,3 +8,18 @@
 .md-nav__item--nested > .md-nav__link { /* Nested top-level items */
     font-weight: bold;
 }
+
+.tags-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .tag {
+    display: inline-block;
+    background-color: red;
+    border-radius: 3px;
+    padding: 2px 8px;
+    margin: 2px;
+    font-size: 0.9em;
+    color: white;
+  }

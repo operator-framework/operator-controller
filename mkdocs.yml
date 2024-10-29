@@ -4,6 +4,7 @@ site_name: Operator Lifecycle Manager
 theme:
   logo: assets/logo.svg
   name: "material"
+  custom_dir: docs/overrides
   palette:
     primary: black
   features:

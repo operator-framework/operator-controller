@@ -5,6 +5,8 @@ tags:
 
 # Configure global pull secrets for allowing components to pull private images
 
+**Note: The UX for how auth info for using private images is provided is an active work in progress.**  
+
 To configure `catalogd` and `operator-controller` to use authentication information for pulling private images (catalog/bundle images etc), the components can be informed about a kubernetes `Secret` object that contains the relevant auth information. The `Secret` must be of type `kubernetes.io/dockerconfigjson`. 
 
 Once the `Secret` is created, `catalogd` and `operator-controller` needs to be redeployed with an additional field, `--global-pull-secret=<secret-namespace>/<secret-name>` passed to the respective binaries.
