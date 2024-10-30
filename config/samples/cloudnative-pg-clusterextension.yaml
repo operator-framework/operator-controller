@@ -29,10 +29,9 @@ metadata:
   name: cloudnative-pg
 spec:
   source:
-    sourceType: Catalog
-    catalog:
-      packageName: cloudnative-pg
-      version: "1.24.1"
+    sourceType: Bundle
+    bundle:
+      ref: quay.io/operatorhubio/cloudnative-pg@sha256:e960f799f3d2b2dd5ecc74bc576476fe9c70de6486ba5ffc7d6ef333bba186bc
   install:
     namespace: cloudnative-pg
     serviceAccount:
