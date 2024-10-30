@@ -14,7 +14,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.20.2
 	github.com/onsi/ginkgo/v2 v2.20.2
-	github.com/onsi/gomega v1.34.2
+	github.com/onsi/gomega v1.35.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/operator-framework/api v0.27.0
 	github.com/operator-framework/catalogd v0.35.0
