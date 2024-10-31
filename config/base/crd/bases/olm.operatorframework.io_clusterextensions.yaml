@@ -456,6 +456,135 @@ spec:
                     otherwise
                   rule: 'has(self.sourceType) && self.sourceType == ''Catalog'' ?
                     has(self.catalog) : !has(self.catalog)'
+              template:
+                description: |-
+                  config stores any custom configuration to be used when templating
+                  content for this extension.
+
+                  config is optional. When not specified, the package manager will use
+                  the default configuration of the extension.
+                properties:
+                  valuesSources:
+                    description: |-
+                      valuesSources is a list of sources from which to obtain arbitrary values that
+                      provide configuration for the installation of bundles managed by the
+                      ClusterExtension.
+
+                      valuesSources is optional. When not specified, the package manager will use
+                      the default configuration of the resolved bundle.
+
+                      If multiple valuesSources are specified, the values are merged in the order
+                      they are specified. Values from later sources will override values from earlier
+                      sources.
+
+                      Bundles can optionally provide a schema for these values. When bundles provide
+                      a schema, it is used to validate these values before proceeding with the
+                      installation. Validation errors are reported via the ClusterExtension status.
+                    items:
+                      description: |-
+                        ValuesSource is a discriminated union of possible sources for values.
+                        ValuesSource contains the sourcing information for those values.
+                      properties:
+                        configMap:
+                          description: |-
+                            configMap is a reference to a key in a specific ConfigMap in the installNamespace.
+                            The referenced ConfigMap is expected to contain the specified key, whose value
+                            contains the desired configuration.
+
+                            ConfigMaps are useful for storing larger, more complex configurations that do
+                            not include sensitive information.
+
+                            The service account provided in the spec.install field must have 'get' permission in
+                            order to read the referenced ConfigMap.
+                          properties:
+                            key:
+                              description: |-
+                                key is a reference to a key in the data field of
+                                the referenced object.
+                                key is required.
+                              type: string
+                            name:
+                              description: |-
+                                name is the name of a resource in the same namespace as the ClusterExtension.
+                                name is required.
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        inline:
+                          description: |-
+                            inline is a map of arbitrary key-value pairs.
+
+                            Inlined values are useful for small, simple configurations that do not
+                            include sensitive information.
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        secret:
+                          description: |-
+                            secret is a reference to a key in a specific Secret in the installNamespace.
+                            The referenced Secret is expected to contain the specified key, whose value
+                            contains the desired configuration.
+
+                            Secrets are useful for storing larger, more complex configurations or
+                            configurations that include sensitive information.
+
+                            The service account provided in the spec.install field must have 'get' permission in
+                            order to read the referenced Secret.
+                          properties:
+                            key:
+                              description: |-
+                                key is a reference to a key in the data field of
+                                the referenced object.
+                                key is required.
+                              type: string
+                            name:
+                              description: |-
+                                name is the name of a resource in the same namespace as the ClusterExtension.
+                                name is required.
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        type:
+                          description: |-
+                            type is a reference to the type of source the values are sourced from.
+                            type is required.
+
+                            The allowed values are "Inline", "ConfigMap", and "Secret".
+
+                            When set to "Inline", the values are sourced directly from the inlined content.
+                            When using an inline source, the inline field must be set and must be the only field defined for this type.
+
+                            When set to "ConfigMap", the values are sourced from the specified ConfigMap in the installNamespace.
+                            When using a ConfigMap source, the configMap field must be set and must be the only field defined for this type.
+
+                            When set to "Secret", the values are sourced from the specified Secret in the installNamespace.
+                            When using a Secret source, the secret field must be set and must be the only field defined for this type.
+                          enum:
+                          - Inline
+                          - ConfigMap
+                          - Secret
+                          type: string
+                      required:
+                      - type
+                      type: object
+                      x-kubernetes-validations:
+                      - message: inline is required when type is Inline, and forbidden
+                          otherwise
+                        rule: 'has(self.type) && self.type == ''Inline'' ?has(self.inline)
+                          : !has(self.inline)'
+                      - message: configMap is required when type is ConfigMap, and
+                          forbidden otherwise
+                        rule: 'has(self.type) && self.type == ''ConfigMap'' ?has(self.configMap)
+                          : !has(self.configMap)'
+                      - message: secret is required when type is Secret, and forbidden
+                          otherwise
+                        rule: 'has(self.type) && self.type == ''Secret'' ?has(self.secret)
+                          : !has(self.secret)'
+                    type: array
+                type: object
             required:
             - namespace
             - serviceAccount

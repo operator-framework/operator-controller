@@ -285,6 +285,7 @@ func main() {
 	}
 
 	applier := &applier.Helm{
+		ActionConfigGetter: cfgGetter,
 		ActionClientGetter: acg,
 		Preflights:         preflights,
 	}

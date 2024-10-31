@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -87,6 +88,15 @@ type ClusterExtensionSpec struct {
 	// +kubebuilder:validation:Required
 	Source SourceConfig `json:"source"`
 
+	// config stores any custom configuration to be used when templating
+	// content for this extension.
+	//
+	// config is optional. When not specified, the package manager will use
+	// the default configuration of the extension.
+	//
+	//+optional
+	Template *ClusterExtensionTemplate `json:"template,omitempty"`
+
 	// install is an optional field used to configure the installation options
 	// for the ClusterExtension such as the pre-flight check configuration.
 	//
@@ -136,6 +146,113 @@ type ClusterExtensionInstallConfig struct {
 	//
 	// +optional
 	Preflight *PreflightConfig `json:"preflight,omitempty"`
+}
+
+type ValuesSourceType string
+
+const (
+	ValuesSourceTypeInline    ValuesSourceType = "Inline"
+	ValuesSourceTypeConfigMap ValuesSourceType = "ConfigMap"
+	ValuesSourceTypeSecret    ValuesSourceType = "Secret"
+)
+
+type ClusterExtensionTemplate struct {
+	// valuesSources is a list of sources from which to obtain arbitrary values that
+	// provide configuration for the installation of bundles managed by the
+	// ClusterExtension.
+	//
+	// valuesSources is optional. When not specified, the package manager will use
+	// the default configuration of the resolved bundle.
+	//
+	// If multiple valuesSources are specified, the values are merged in the order
+	// they are specified. Values from later sources will override values from earlier
+	// sources.
+	//
+	// Bundles can optionally provide a schema for these values. When bundles provide
+	// a schema, it is used to validate these values before proceeding with the
+	// installation. Validation errors are reported via the ClusterExtension status.
+	//
+	//+optional
+	ValuesSources []ValuesSource `json:"valuesSources,omitempty"`
+}
+
+// ValuesSource is a discriminated union of possible sources for values.
+// ValuesSource contains the sourcing information for those values.
+// +union
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'Inline' ?has(self.inline) : !has(self.inline)",message="inline is required when type is Inline, and forbidden otherwise"
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'ConfigMap' ?has(self.configMap) : !has(self.configMap)",message="configMap is required when type is ConfigMap, and forbidden otherwise"
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'Secret' ?has(self.secret) : !has(self.secret)",message="secret is required when type is Secret, and forbidden otherwise"
+type ValuesSource struct {
+	// type is a reference to the type of source the values are sourced from.
+	// type is required.
+	//
+	// The allowed values are "Inline", "ConfigMap", and "Secret".
+	//
+	// When set to "Inline", the values are sourced directly from the inlined content.
+	// When using an inline source, the inline field must be set and must be the only field defined for this type.
+	//
+	// When set to "ConfigMap", the values are sourced from the specified ConfigMap in the installNamespace.
+	// When using a ConfigMap source, the configMap field must be set and must be the only field defined for this type.
+	//
+	// When set to "Secret", the values are sourced from the specified Secret in the installNamespace.
+	// When using a Secret source, the secret field must be set and must be the only field defined for this type.
+	//
+	// +unionDiscriminator
+	// +kubebuilder:validation:Enum:="Inline";"ConfigMap";"Secret"
+	// +kubebuilder:validation:Required
+	Type ValuesSourceType `json:"type"`
+
+	// inline is a map of arbitrary key-value pairs.
+	//
+	// Inlined values are useful for small, simple configurations that do not
+	// include sensitive information.
+	//
+	//+kubebuilder:pruning:PreserveUnknownFields
+	//+kubebuilder:validation:Type=object
+	//+kubebuilder:validation:Schemaless
+	//+optional
+	Inline *apiextensionsv1.JSON `json:"inline,omitempty"`
+
+	// configMap is a reference to a key in a specific ConfigMap in the installNamespace.
+	// The referenced ConfigMap is expected to contain the specified key, whose value
+	// contains the desired configuration.
+	//
+	// ConfigMaps are useful for storing larger, more complex configurations that do
+	// not include sensitive information.
+	//
+	// The service account provided in the spec.install field must have 'get' permission in
+	// order to read the referenced ConfigMap.
+	//
+	//+optional
+	ConfigMap *LocalObjectReferenceWithKey `json:"configMap,omitempty"`
+
+	// secret is a reference to a key in a specific Secret in the installNamespace.
+	// The referenced Secret is expected to contain the specified key, whose value
+	// contains the desired configuration.
+	//
+	// Secrets are useful for storing larger, more complex configurations or
+	// configurations that include sensitive information.
+	//
+	// The service account provided in the spec.install field must have 'get' permission in
+	// order to read the referenced Secret.
+	//
+	//+optional
+	Secret *LocalObjectReferenceWithKey `json:"secret,omitempty"`
+}
+
+type LocalObjectReferenceWithKey struct {
+	// name is the name of a resource in the same namespace as the ClusterExtension.
+	// name is required.
+	//
+	//+kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// key is a reference to a key in the data field of
+	// the referenced object.
+	// key is required.
+	//
+	//+kubebuilder:validation:Required
+	Key string `json:"key"`
 }
 
 // CatalogSource defines the attributes used to identify and filter content from a catalog.
