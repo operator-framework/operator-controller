@@ -1,0 +1,149 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/name: cloudnative-pg
+  name: cnpg-controller-manager
+{{- define "3aaa59e6-7d8d-467e-ab41-cbfaba1661fd" }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector: null
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        alm-examples: |-
+          [
+            {
+              "apiVersion": "postgresql.cnpg.io/v1",
+              "kind": "Backup",
+              "metadata": {
+                "name": "backup-sample"
+              },
+              "spec": {
+                "cluster": {
+                  "name": "cluster-sample"
+                }
+              }
+            },
+            {
+              "apiVersion": "postgresql.cnpg.io/v1",
+              "kind": "Cluster",
+              "metadata": {
+                "name": "cluster-sample"
+              },
+              "spec": {
+                "instances": 3,
+                "logLevel": "info",
+                "primaryUpdateStrategy": "unsupervised",
+                "storage": {
+                  "size": "1Gi"
+                },
+                "walStorage": {
+                  "size": "1Gi"
+                }
+              }
+            },
+            {
+              "apiVersion": "postgresql.cnpg.io/v1",
+              "kind": "Pooler",
+              "metadata": {
+                "name": "pooler-sample-rw"
+              },
+              "spec": {
+                "cluster": {
+                  "name": "cluster-sample"
+                },
+                "instances": 1,
+                "pgbouncer": {
+                  "poolMode": "session"
+                },
+                "type": "rw"
+              }
+            },
+            {
+              "apiVersion": "postgresql.cnpg.io/v1",
+              "kind": "ScheduledBackup",
+              "metadata": {
+                "name": "scheduledbackup-sample"
+              },
+              "spec": {
+                "cluster": {
+                  "name": "cluster-sample"
+                },
+                "schedule": "0 0 0 * * *"
+              }
+            }
+          ]
+        capabilities: Auto Pilot
+        categories: Database
+        certified: "true"
+        containerImage: ghcr.io/cloudnative-pg/cloudnative-pg@sha256:22fd4647a25a4a97bfa36f322b7188b7fdbce1db28f4197d4d2c84422bebdc08
+        createdAt: "2024-10-16T16:15:22Z"
+        description: CloudNativePG is an open source operator designed to manage highly
+          available PostgreSQL databases with a primary/standby architecture on any
+          supported Kubernetes cluster.
+        features.operators.openshift.io/disconnected: "true"
+        features.operators.openshift.io/fips-compliant: "false"
+        features.operators.openshift.io/proxy-aware: "false"
+        features.operators.openshift.io/tls-profiles: "false"
+        features.operators.openshift.io/token-auth-aws: "false"
+        features.operators.openshift.io/token-auth-azure: "false"
+        features.operators.openshift.io/token-auth-gcp: "false"
+        olm.skipRange: '>= 1.18.0 < 1.24.1'
+        operators.operatorframework.io/builder: operator-sdk-v1.37.0
+        operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
+        repository: https://github.com/cloudnative-pg/cloudnative-pg
+        support: Community
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/name: cloudnative-pg
+    spec:
+      containers:
+      - args:
+        - controller
+        - --leader-elect
+        - --config-map-name=cnpg-controller-manager-config
+        - --secret-name=cnpg-controller-manager-config
+        - --webhook-port=9443
+        command:
+        - /manager
+        image: ghcr.io/cloudnative-pg/cloudnative-pg@sha256:22fd4647a25a4a97bfa36f322b7188b7fdbce1db28f4197d4d2c84422bebdc08
+        livenessProbe:
+          httpGet:
+            path: /readyz
+            port: 9443
+            scheme: HTTPS
+        name: manager
+        ports:
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 9443
+            scheme: HTTPS
+        resources: {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
+      imagePullSecrets:
+      - name: cnpg-pull-secret
+      securityContext:
+        runAsNonRoot: true
+      serviceAccountName: cnpg-manager
+      terminationGracePeriodSeconds: 10
+{{- end }}{{"\n"}}
+{{- mergeOverwrite (fromYaml (include "3aaa59e6-7d8d-467e-ab41-cbfaba1661fd" .)) (fromYaml (include "deployment.cnpg-controller-manager.spec.overrides" .))  | toYaml | indent 0 }}
+status: {}
