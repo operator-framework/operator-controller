@@ -2,24 +2,32 @@ package v2
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
+	"slices"
+	"strconv"
 	"strings"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	v1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/go-openapi/spec"
 	"golang.org/x/exp/maps"
 	"helm.sh/helm/v3/pkg/chart"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,8 +50,39 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1FS fs.FS) (*chart.Chart, erro
 		return nil, fmt.Errorf("apiServiceDefintions are not supported")
 	}
 
-	if len(rv1.CSV.Spec.WebhookDefinitions) > 0 {
-		return nil, fmt.Errorf("webhookDefinitions are not supported")
+	supportedInstallModes := getSupportedInstallModes(rv1.CSV.Spec.InstallModes)
+
+	// If the CSV includes webhook definitions, should we fail if
+	// it supports anything other than AllNamespaces install mode? In
+	// OLMv0, it fails in this way, but only for bundles with conversion
+	// webhooks.
+	//
+	// OLMv1 considers APIs to be cluster-scoped, and the upstream
+	// Kubernetes api-server maintainers warned us explicitly not
+	// to use namespaceSelectors in validating/mutating webhooks because
+	// they were not designed to be used that way. They were designed so
+	// core control plane components could be exempted during cluster
+	// upgrade or bootstrap phases to ensure cluster stability.
+	//
+	// The alternative is to support all install modes, never set
+	// namespaceSelectors in the webhook definitions, and use a
+	// constant webhook metadata.name such that it is impossible to
+	// install the same webhook multiple times targeting different
+	// namespaces.
+	//
+	// For now, we'll go with the latter approach in order to have
+	// _some_ support for as many CSVs as possible. We will also keep
+	// OLMv0's behavior for CSVs with conversion webhooks (i.e. only
+	// AllNamespaces install mode is allowed to be supported).
+	for _, webhook := range rv1.CSV.Spec.WebhookDefinitions {
+		if webhook.Type == v1alpha1.ConversionWebhook {
+			if supportedInstallModes != allNamespaces {
+				return nil, fmt.Errorf("invalid CSV: CSVs with conversion webhooks must support only AllNamespaces install mode")
+			}
+			if len(webhook.ConversionCRDs) == 0 {
+				return nil, fmt.Errorf("invalid CSV: conversion webhooks definitions must specify at least one conversion CRD")
+			}
+		}
 	}
 
 	chrt := &chart.Chart{
@@ -63,7 +102,7 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1FS fs.FS) (*chart.Chart, erro
 		chrt.Metadata.KubeVersion = fmt.Sprintf(">= %s", rv1.CSV.Spec.MinKubeVersion)
 	}
 
-	watchNsConfig := getWatchNamespacesSchema(rv1.CSV.Spec.InstallModes)
+	watchNsConfig := getWatchNamespacesSchema(supportedInstallModes)
 
 	/////////////////
 	// Setup schema
@@ -78,7 +117,11 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1FS fs.FS) (*chart.Chart, erro
 	// Setup helpers
 	/////////////////
 	chrt.Templates = append(chrt.Templates, newTargetNamespacesTemplateHelper(watchNsConfig))
-	chrt.Templates = append(chrt.Templates, newDeploymentsTemplateHelper(rv1.CSV))
+	depTmpl, err := newDeploymentsTemplateHelper(rv1.CSV)
+	if err != nil {
+		return nil, err
+	}
+	chrt.Templates = append(chrt.Templates, depTmpl)
 
 	/////////////////
 	// Setup RBAC
@@ -109,6 +152,33 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1FS fs.FS) (*chart.Chart, erro
 		return nil, err
 	}
 	chrt.Templates = append(chrt.Templates, deploymentFiles...)
+
+	///////////////////
+	// Setup services
+	///////////////////
+	serviceFiles, err := newServiceFiles(rv1.CSV)
+	if err != nil {
+		return nil, err
+	}
+	chrt.Templates = append(chrt.Templates, serviceFiles...)
+
+	///////////////////
+	// Setup webhooks
+	///////////////////
+	webhookFiles, err := newWebhookFiles(rv1)
+	if err != nil {
+		return nil, err
+	}
+	chrt.Templates = append(chrt.Templates, webhookFiles...)
+
+	//////////////////////////////////////
+	// Add CRDs
+	//////////////////////////////////////
+	crdFiles, err := newCRDFiles(rv1.CRDs)
+	if err != nil {
+		return nil, err
+	}
+	chrt.Templates = append(chrt.Templates, crdFiles...)
 
 	//////////////////////////////////////
 	// Add all other static bundle objects
@@ -349,9 +419,84 @@ subjects:
 	return files, nil
 }
 
-func newDeploymentsTemplateHelper(csv v1alpha1.ClusterServiceVersion) *chart.File {
-	var sb bytes.Buffer
-	for _, depSpec := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+func newDeploymentsTemplateHelper(csv v1alpha1.ClusterServiceVersion) (*chart.File, error) {
+	var (
+		sb   bytes.Buffer
+		errs []error
+	)
+	for depIdx, depSpec := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+		if depSpec.Name == "" {
+			errs = append(errs, fmt.Errorf("csv.spec.installStrategy.strategySpec.deploymentSpecs[%d] has no name", depIdx))
+			continue
+		}
+
+		var webhooksForDeployment []v1alpha1.WebhookDescription
+		for whIdx, webhook := range csv.Spec.WebhookDefinitions {
+			if webhook.DeploymentName == "" {
+				errs = append(errs, fmt.Errorf("csv.spec.webhookDefinitions[%d] has no deployment name", whIdx))
+				continue
+			}
+			if webhook.DeploymentName == depSpec.Name {
+				webhooksForDeployment = append(webhooksForDeployment, webhook)
+			}
+		}
+
+		if len(webhooksForDeployment) > 0 {
+			// Need to inject volumes and volume mounts for the cert secret
+			depSpec.Spec.Template.Spec.Volumes = slices.DeleteFunc(depSpec.Spec.Template.Spec.Volumes, func(v corev1.Volume) bool {
+				return v.Name == "apiservice-cert" || v.Name == "webhook-cert"
+			})
+			depSpec.Spec.Template.Spec.Volumes = append(depSpec.Spec.Template.Spec.Volumes,
+				corev1.Volume{
+					Name: "apiservice-cert",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: fmt.Sprintf("%s-%s-cert", csv.Name, webhooksForDeployment[0].DomainName()),
+							Items: []corev1.KeyToPath{
+								{
+									Key:  "tls.crt",
+									Path: "apiserver.crt",
+								},
+								{
+									Key:  "tls.key",
+									Path: "apiserver.key",
+								},
+							},
+						},
+					},
+				},
+				corev1.Volume{
+					Name: "webhook-cert",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: fmt.Sprintf("%s-%s-cert", csv.Name, webhooksForDeployment[0].DomainName()),
+							Items: []corev1.KeyToPath{
+								{
+									Key:  "tls.crt",
+									Path: "tls.crt",
+								},
+								{
+									Key:  "tls.key",
+									Path: "tls.key",
+								},
+							},
+						},
+					},
+				},
+			)
+
+			volumeMounts := []corev1.VolumeMount{
+				{Name: "apiservice-cert", MountPath: "/apiserver.local.config/certificates"},
+				{Name: "webhook-cert", MountPath: "/tmp/k8s-webhook-server/serving-certs"},
+			}
+			for i := range depSpec.Spec.Template.Spec.Containers {
+				depSpec.Spec.Template.Spec.Containers[i].VolumeMounts = slices.DeleteFunc(depSpec.Spec.Template.Spec.Containers[i].VolumeMounts, func(vm corev1.VolumeMount) bool {
+					return vm.Name == "apiservice-cert" || vm.Name == "webhook-cert"
+				})
+				depSpec.Spec.Template.Spec.Containers[i].VolumeMounts = append(depSpec.Spec.Template.Spec.Containers[i].VolumeMounts, volumeMounts...)
+			}
+		}
+
 		snippets := map[string]string{}
 
 		affinityJSON, _ := json.Marshal(depSpec.Spec.Template.Spec.Affinity)
@@ -502,10 +647,15 @@ func newDeploymentsTemplateHelper(csv v1alpha1.ClusterServiceVersion) *chart.Fil
   {{- dict "spec" $overrides | toYaml -}}
 {{- end -}}`)
 	}
+
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+
 	return &chart.File{
 		Name: "templates/_helpers.deployments.tpl",
 		Data: sb.Bytes(),
-	}
+	}, nil
 }
 
 func newTargetNamespacesTemplateHelper(watchNsSetup watchNamespaceSchemaConfig) *chart.File {
@@ -590,6 +740,73 @@ func newTargetNamespacesTemplateHelper(watchNsSetup watchNamespaceSchemaConfig) 
 	return nil
 }
 
+func newServiceFiles(csv v1alpha1.ClusterServiceVersion) ([]*chart.File, error) {
+	services := map[string]sets.Set[corev1.ServicePort]{}
+	deploymentNames := map[string]string{}
+
+	for _, desc := range csv.Spec.WebhookDefinitions {
+		serviceName := fmt.Sprintf("%s-service", desc.DomainName())
+		deploymentNames[serviceName] = desc.DeploymentName
+
+		containerPort := int32(443)
+		if desc.ContainerPort > 0 {
+			containerPort = desc.ContainerPort
+		}
+
+		targetPort := intstr.FromInt32(containerPort)
+		if desc.TargetPort != nil {
+			targetPort = *desc.TargetPort
+		}
+		sp := corev1.ServicePort{
+			Name:       strconv.Itoa(int(containerPort)),
+			Port:       containerPort,
+			TargetPort: targetPort,
+		}
+		servicePorts, ok := services[serviceName]
+		if !ok {
+			servicePorts = sets.New[corev1.ServicePort]()
+		}
+		servicePorts.Insert(sp)
+		services[serviceName] = servicePorts
+	}
+
+	var (
+		files = make([]*chart.File, 0, len(services))
+		errs  []error
+	)
+	for serviceName, servicePorts := range services {
+		ports := servicePorts.UnsortedList()
+		slices.SortFunc(ports, func(a, b corev1.ServicePort) int {
+			return cmp.Compare(a.Name, b.Name)
+		})
+		service := corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: serviceName,
+			},
+			Spec: corev1.ServiceSpec{
+				Ports: ports,
+			},
+		}
+		service.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Service"))
+
+		file, err := newFile(&service, parametrize.Pipeline(fmt.Sprintf(`$selector := fromYaml (include "deployment.%s.selector" .) -}}
+{{- if .Values.selector -}}
+{{- $selector = .Values.selector -}}
+{{- end -}}
+{{- $selector.matchLabels | toYaml | nindent 4`, deploymentNames[serviceName]), "spec.selector"))
+
+		if err != nil {
+			errs = append(errs, fmt.Errorf("create template file for service %q: %w", serviceName, err))
+			continue
+		}
+		files = append(files, file)
+	}
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+	return files, nil
+}
+
 func newDeploymentFiles(csv v1alpha1.ClusterServiceVersion) ([]*chart.File, error) {
 	var (
 		files = make([]*chart.File, 0, len(csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs))
@@ -636,6 +853,245 @@ func newDeploymentFiles(csv v1alpha1.ClusterServiceVersion) ([]*chart.File, erro
 		return nil, errors.Join(errs...)
 	}
 	return files, nil
+}
+
+func newCRDFiles(crds []apiextensionsv1.CustomResourceDefinition) ([]*chart.File, error) {
+	var (
+		files = make([]*chart.File, 0, len(crds))
+		errs  []error
+	)
+
+	for _, crd := range crds {
+		var instructions []parametrize.Instruction
+		if crd.Spec.Conversion != nil && crd.Spec.Conversion.Strategy == apiextensionsv1.WebhookConverter {
+			insertServiceNamespace := parametrize.Pipeline(".Release.Namespace", "spec.conversion.webhook.clientConfig.service.namespace")
+			instructions = append(instructions, insertServiceNamespace)
+		}
+		crdFile, err := newFile(&crd, instructions...)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("create template file for crd %q: %w", crd.GetName(), err))
+			continue
+		}
+		files = append(files, crdFile)
+	}
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+	return files, nil
+}
+
+func newWebhookFiles(rv1 *convert.RegistryV1) ([]*chart.File, error) {
+	var (
+		files = make([]*chart.File, 0, len(rv1.CSV.Spec.WebhookDefinitions))
+		errs  []error
+	)
+
+	// NOTES:
+	// -  [ ] if we use a namespace selector, it needs to be templated based on the targetNamespaces
+	// -  [x] the Service namespace needs to be templated as the .Release.Namespace
+	// -  [ ] the CA bundle needs to be injected by cert-manager from a Certificate we generate
+	//    for the webhook service in the install namespace
+
+	// Q&A:
+	// -  Q: should we even setup a namespace selector? If we do, that seems to encourage attempts
+	//       for multi-tenancy. APIs are cluster-wide, so webhooks for those APIs should be cluster-wide
+	//       as well.
+	//    A: We will not setup a namespace selector. The webhook will be cluster-wide.
+
+	// -  Q: along the same lines, should we use metadata.name instead of metadata.generateName? if we
+	//       use metadata.name, then we have built-in guarantees that no two bundles can provide the same
+	//       webhook.
+	//    A: We will use metadata.name.
+
+	// -  Q: Is it really required for a CRD to have spec.preserveUnknownFields=false to let the API Server
+	//       call the webhook to do the conversion?
+	//    A: Yes, it seems so. This provides better guarantees that the webhook will be able to handle all
+	//       of the fields in the object.
+
+	for _, desc := range rv1.CSV.Spec.WebhookDefinitions {
+		switch desc.Type {
+		case v1alpha1.ValidatingAdmissionWebhook:
+			wh := admissionregistrationv1.ValidatingWebhookConfiguration{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: desc.GenerateName,
+				},
+				Webhooks: []admissionregistrationv1.ValidatingWebhook{
+					{
+						Name:                    desc.GenerateName,
+						Rules:                   desc.Rules,
+						FailurePolicy:           desc.FailurePolicy,
+						MatchPolicy:             desc.MatchPolicy,
+						ObjectSelector:          desc.ObjectSelector,
+						SideEffects:             desc.SideEffects,
+						TimeoutSeconds:          desc.TimeoutSeconds,
+						AdmissionReviewVersions: desc.AdmissionReviewVersions,
+						ClientConfig: admissionregistrationv1.WebhookClientConfig{
+							Service: &admissionregistrationv1.ServiceReference{
+								Name: fmt.Sprintf("%s-service", desc.DomainName()),
+								Path: desc.WebhookPath,
+								Port: &desc.ContainerPort,
+							},
+						},
+					},
+				},
+			}
+			wh.SetGroupVersionKind(admissionregistrationv1.SchemeGroupVersion.WithKind("ValidatingWebhookConfiguration"))
+
+			insertServiceNamespace := parametrize.Pipeline(".Release.Namespace", "webhooks.0.clientConfig.service.namespace")
+			insertCAInjectorAnnotation := parametrize.Pipeline(fmt.Sprintf(`dict "cert-manager.io/inject-ca-from" (printf "%%s/%s" .Release.Namespace) | toYaml | nindent 4`, desc.DomainName()), `metadata.annotations`)
+			whFile, err := newFile(&wh, insertServiceNamespace, insertCAInjectorAnnotation)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("create template file for validatingadmissionwebhook %q: %w", desc.GenerateName, err))
+				continue
+			}
+			files = append(files, whFile)
+		case v1alpha1.MutatingAdmissionWebhook:
+			wh := admissionregistrationv1.MutatingWebhookConfiguration{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: desc.GenerateName,
+				},
+				Webhooks: []admissionregistrationv1.MutatingWebhook{
+					{
+						Name:                    desc.GenerateName,
+						Rules:                   desc.Rules,
+						FailurePolicy:           desc.FailurePolicy,
+						MatchPolicy:             desc.MatchPolicy,
+						ObjectSelector:          desc.ObjectSelector,
+						SideEffects:             desc.SideEffects,
+						TimeoutSeconds:          desc.TimeoutSeconds,
+						AdmissionReviewVersions: desc.AdmissionReviewVersions,
+						ClientConfig: admissionregistrationv1.WebhookClientConfig{
+							Service: &admissionregistrationv1.ServiceReference{
+								Name: fmt.Sprintf("%s-service", desc.DomainName()),
+								Path: desc.WebhookPath,
+								Port: &desc.ContainerPort,
+							},
+						},
+						ReinvocationPolicy: desc.ReinvocationPolicy,
+					},
+				},
+			}
+			wh.SetGroupVersionKind(admissionregistrationv1.SchemeGroupVersion.WithKind("MutatingWebhookConfiguration"))
+
+			insertServiceNamespace := parametrize.Pipeline(".Release.Namespace", "webhooks.0.clientConfig.service.namespace")
+			insertCAInjectorAnnotation := parametrize.Pipeline(fmt.Sprintf(`dict "cert-manager.io/inject-ca-from" (printf "%%s/%s" .Release.Namespace) | toYaml | nindent 4`, desc.DomainName()), `metadata.annotations`)
+			whFile, err := newFile(&wh, insertServiceNamespace, insertCAInjectorAnnotation)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("create template file for mutatingadmissionwebhook %q: %w", desc.GenerateName, err))
+				continue
+			}
+			files = append(files, whFile)
+		case v1alpha1.ConversionWebhook:
+			for _, conversionCRD := range desc.ConversionCRDs {
+				crd, i, err := findCRD(conversionCRD, rv1.CSV.Spec.CustomResourceDefinitions.Owned, rv1.CRDs)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+
+				if crd.Spec.PreserveUnknownFields {
+					errs = append(errs, fmt.Errorf("CRD %q sets spec.preserveUnknownFields=true; must be false to let API Server call webhook to do the conversion", crd.Name))
+					continue
+				}
+
+				conversionWebhookPath := "/"
+				if desc.WebhookPath != nil {
+					conversionWebhookPath = *desc.WebhookPath
+				}
+
+				rv1.CRDs[i].Spec.Conversion = &apiextensionsv1.CustomResourceConversion{
+					Strategy: apiextensionsv1.WebhookConverter,
+					Webhook: &apiextensionsv1.WebhookConversion{
+						ClientConfig: &apiextensionsv1.WebhookClientConfig{
+							Service: &apiextensionsv1.ServiceReference{
+								Name: fmt.Sprintf("%s-service", desc.DomainName()),
+								Path: &conversionWebhookPath,
+								Port: &desc.ContainerPort,
+							},
+						},
+						ConversionReviewVersions: desc.AdmissionReviewVersions,
+					},
+				}
+			}
+		}
+
+		issuer := &certmanagerv1.Issuer{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprintf("%s-selfsigned-issuer", rv1.CSV.Name),
+			},
+			Spec: certmanagerv1.IssuerSpec{
+				IssuerConfig: certmanagerv1.IssuerConfig{
+					SelfSigned: &certmanagerv1.SelfSignedIssuer{},
+				},
+			},
+		}
+		issuer.SetGroupVersionKind(certmanagerv1.SchemeGroupVersion.WithKind("Issuer"))
+		certificate := &certmanagerv1.Certificate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: desc.DomainName(),
+			},
+			Spec: certmanagerv1.CertificateSpec{
+				SecretName: fmt.Sprintf("%s-%s-cert", rv1.CSV.Name, desc.DomainName()),
+				Usages:     []certmanagerv1.KeyUsage{certmanagerv1.UsageServerAuth},
+				IssuerRef: v1.ObjectReference{
+					Name: fmt.Sprintf("%s-selfsigned-issuer", rv1.CSV.Name),
+				},
+			},
+		}
+		certificate.SetGroupVersionKind(certmanagerv1.SchemeGroupVersion.WithKind("Certificate"))
+		issuerFile, err := newFile(issuer)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("create issuer %q: %w", desc.GenerateName, err))
+			continue
+		}
+		certFile, err := newFile(certificate, parametrize.Pipeline(
+			fmt.Sprintf(`list (printf "%s.%%s.svc" .Release.Namespace) | toYaml | nindent 4`, fmt.Sprintf("%s-service", desc.DomainName())),
+			"spec.dnsNames"),
+		)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("create certificate %q: %w", desc.GenerateName, err))
+			continue
+		}
+
+		files = append(files, issuerFile, certFile)
+	}
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+	return files, nil
+}
+
+func findCRD(crdName string, ownedCRDs []v1alpha1.CRDDescription, crds []apiextensionsv1.CustomResourceDefinition) (*apiextensionsv1.CustomResourceDefinition, int, error) {
+	foundOwnedCRD := false
+	for _, ownedCRD := range ownedCRDs {
+		if ownedCRD.Name == crdName {
+			foundOwnedCRD = true
+			break
+		}
+	}
+	var errs []error
+	if !foundOwnedCRD {
+		errs = append(errs, fmt.Errorf("CRD %q is not owned by the CSV", crdName))
+	}
+
+	var (
+		foundCRD   *apiextensionsv1.CustomResourceDefinition
+		foundIndex int
+	)
+	for i, crd := range crds {
+		if crd.Name == crdName {
+			foundCRD = &crd
+			foundIndex = i
+			break
+		}
+	}
+	if foundCRD == nil {
+		errs = append(errs, fmt.Errorf("CRD %q is not found in the bundle", crdName))
+	}
+	if len(errs) > 0 {
+		return nil, -1, errors.Join(errs...)
+	}
+	return foundCRD, foundIndex, nil
 }
 
 func fileNameForObject(gk schema.GroupKind, name string) string {
@@ -687,32 +1143,36 @@ type watchNamespaceSchemaConfig struct {
 
 const watchNamespacePattern = `^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
 
-// watchNamespacesSchemaProperties return the OpenAPI v3 schema for the field that controls the namespace or namespaces to watch.
-// It returns the schema as a byte slice, a boolean indicating if the field is required. If the returned byte slice is nil,
-// the field should not be included in the schema.
-func getWatchNamespacesSchema(installModes []v1alpha1.InstallMode) watchNamespaceSchemaConfig {
-	const (
-		AllNamespaces   = 1 << iota // 1 (0001)
-		OwnNamespace                // 2 (0010)
-		SingleNamespace             // 4 (0100)
-		MultiNamespace              // 8 (1000)
-	)
+const (
+	allNamespaces   = 1 << iota // 1 (0001)
+	ownNamespace                // 2 (0010)
+	singleNamespace             // 4 (0100)
+	multiNamespace              // 8 (1000)
+)
+
+func getSupportedInstallModes(installModes []v1alpha1.InstallMode) int {
 	supportedInstallModes := 0
 	for _, installMode := range installModes {
 		if installMode.Supported {
 			switch installMode.Type {
 			case v1alpha1.InstallModeTypeAllNamespaces:
-				supportedInstallModes |= AllNamespaces
+				supportedInstallModes |= allNamespaces
 			case v1alpha1.InstallModeTypeOwnNamespace:
-				supportedInstallModes |= OwnNamespace
+				supportedInstallModes |= ownNamespace
 			case v1alpha1.InstallModeTypeSingleNamespace:
-				supportedInstallModes |= SingleNamespace
+				supportedInstallModes |= singleNamespace
 			case v1alpha1.InstallModeTypeMultiNamespace:
-				supportedInstallModes |= MultiNamespace
+				supportedInstallModes |= multiNamespace
 			}
 		}
 	}
+	return supportedInstallModes
+}
 
+// watchNamespacesSchemaProperties return the OpenAPI v3 schema for the field that controls the namespace or namespaces to watch.
+// It returns the schema as a byte slice, a boolean indicating if the field is required. If the returned byte slice is nil,
+// the field should not be included in the schema.
+func getWatchNamespacesSchema(supportedInstallModes int) watchNamespaceSchemaConfig {
 	watchNamespaceSchema := func() *spec.Schema {
 		itemSchema := spec.StringProperty()
 		itemSchema.Pattern = watchNamespacePattern
@@ -731,12 +1191,12 @@ func getWatchNamespacesSchema(installModes []v1alpha1.InstallMode) watchNamespac
 
 	// 16 cases, for each combination of supported install modes
 	switch supportedInstallModes {
-	case AllNamespaces:
+	case allNamespaces:
 		return watchNamespaceSchemaConfig{
 			IncludeField:               false,
 			TemplateHelperDefaultValue: `""`,
 		}
-	case AllNamespaces | OwnNamespace:
+	case allNamespaces | ownNamespace:
 		// "installMode" enum
 		schema := spec.StringProperty()
 		schema.Enum = []interface{}{"AllNamespaces", "OwnNamespace"}
@@ -749,7 +1209,7 @@ func getWatchNamespacesSchema(installModes []v1alpha1.InstallMode) watchNamespac
 			AllowReleaseNamespace:      true,
 			TemplateHelperDefaultValue: `"AllNamespaces"`,
 		}
-	case AllNamespaces | OwnNamespace | SingleNamespace:
+	case allNamespaces | ownNamespace | singleNamespace:
 		// "watchNamespace" string, optional, .Release.Namespace allowed, unset means all namespaces
 		return watchNamespaceSchemaConfig{
 			IncludeField:               true,
@@ -759,7 +1219,7 @@ func getWatchNamespacesSchema(installModes []v1alpha1.InstallMode) watchNamespac
 			AllowReleaseNamespace:      true,
 			TemplateHelperDefaultValue: `""`,
 		}
-	case AllNamespaces | OwnNamespace | MultiNamespace, AllNamespaces | OwnNamespace | SingleNamespace | MultiNamespace:
+	case allNamespaces | ownNamespace | multiNamespace, allNamespaces | ownNamespace | singleNamespace | multiNamespace:
 		// "watchNamespaces" array of strings, optional, len(1..10), .Release.Namespace allowed, unset means all namespaces
 		return watchNamespaceSchemaConfig{
 			IncludeField:               true,
@@ -769,7 +1229,7 @@ func getWatchNamespacesSchema(installModes []v1alpha1.InstallMode) watchNamespac
 			AllowReleaseNamespace:      true,
 			TemplateHelperDefaultValue: `(list "")`,
 		}
-	case AllNamespaces | SingleNamespace:
+	case allNamespaces | singleNamespace:
 		// "watchNamespace" string, optional, .Release.Namespace not allowed, unset means all namespaces
 		return watchNamespaceSchemaConfig{
 			IncludeField:               true,
@@ -779,7 +1239,7 @@ func getWatchNamespacesSchema(installModes []v1alpha1.InstallMode) watchNamespac
 			AllowReleaseNamespace:      false,
 			TemplateHelperDefaultValue: `""`,
 		}
-	case AllNamespaces | SingleNamespace | MultiNamespace, AllNamespaces | MultiNamespace:
+	case allNamespaces | singleNamespace | multiNamespace, allNamespaces | multiNamespace:
 		// "watchNamespaces" array of strings, optional, len(1..10), .Release.Namespace allowed, unset means all namespaces
 		return watchNamespaceSchemaConfig{
 			IncludeField:               true,
@@ -789,13 +1249,13 @@ func getWatchNamespacesSchema(installModes []v1alpha1.InstallMode) watchNamespac
 			AllowReleaseNamespace:      false,
 			TemplateHelperDefaultValue: `(list "")`,
 		}
-	case OwnNamespace:
+	case ownNamespace:
 		// no field
 		return watchNamespaceSchemaConfig{
 			IncludeField:               false,
 			TemplateHelperDefaultValue: `.Release.Namespace`,
 		}
-	case OwnNamespace | SingleNamespace:
+	case ownNamespace | singleNamespace:
 		// "watchNamespace" string, optional, .Release.Namespace allowed, unset means .Release.Namespace
 		return watchNamespaceSchemaConfig{
 			IncludeField:               true,
@@ -805,7 +1265,7 @@ func getWatchNamespacesSchema(installModes []v1alpha1.InstallMode) watchNamespac
 			AllowReleaseNamespace:      true,
 			TemplateHelperDefaultValue: `.Release.Namespace`,
 		}
-	case OwnNamespace | SingleNamespace | MultiNamespace, OwnNamespace | MultiNamespace:
+	case ownNamespace | singleNamespace | multiNamespace, ownNamespace | multiNamespace:
 		// "watchNamespaces" array of strings, optional, len(1..10), .Release.Namespace allowed, unset means .Release.Namespace
 		return watchNamespaceSchemaConfig{
 			IncludeField:               true,
@@ -815,7 +1275,7 @@ func getWatchNamespacesSchema(installModes []v1alpha1.InstallMode) watchNamespac
 			AllowReleaseNamespace:      true,
 			TemplateHelperDefaultValue: `(list .Release.Namespace)`,
 		}
-	case SingleNamespace:
+	case singleNamespace:
 		// "watchNamespace" string, required, .Release.Namespace not allowed
 		return watchNamespaceSchemaConfig{
 			IncludeField:          true,
@@ -824,7 +1284,7 @@ func getWatchNamespacesSchema(installModes []v1alpha1.InstallMode) watchNamespac
 			Schema:                watchNamespaceSchema(),
 			AllowReleaseNamespace: false,
 		}
-	case SingleNamespace | MultiNamespace, MultiNamespace:
+	case singleNamespace | multiNamespace, multiNamespace:
 		// "watchNamespaces" array of strings, required, len(1..10), .Release.Namespace not allowed
 		return watchNamespaceSchemaConfig{
 			IncludeField:          true,

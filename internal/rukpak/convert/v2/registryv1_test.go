@@ -2,9 +2,12 @@ package v2
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
+	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	certmanagermetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
 	"github.com/google/go-cmp/cmp"
@@ -13,8 +16,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -284,6 +289,18 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 				assertFieldEqual(t, obj, configMapData(), `{.data}`)
 			},
 		)
+
+		assertInManifest(t, manifest,
+			func(obj client.Object) (bool, error) {
+				return obj.GetObjectKind().GroupVersionKind().Kind == "CustomResourceDefinition" && obj.GetName() == crdName(), nil
+			},
+			func(t *testing.T, obj client.Object) {
+				assertFieldEqual(t, obj, crdSpec().Group, `{.spec.group}`)
+				assertFieldEqual(t, obj, crdSpec().Names, `{.spec.names}`)
+				assertFieldEqual(t, obj, crdSpec().Scope, `{.spec.scope}`)
+				assertFieldEqual(t, obj, crdSpec().Versions, `{.spec.versions}`)
+			},
+		)
 	}
 
 	tests := []testCase{
@@ -291,7 +308,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "No overrides",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			values:           nil,
@@ -304,7 +320,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "Merge overrides",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			values: chartutil.Values{
@@ -374,6 +389,7 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "Only overrides",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces},
+				excludeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			values: chartutil.Values{
@@ -438,7 +454,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "OwnNamespace",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeOwnNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			values:           nil,
@@ -451,7 +466,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "AllNamespaces|OwnNamespace, don't specify installMode",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			assert: func(t *testing.T, installNamespace string, chrt *chart.Chart, convertError error, manifest string, templateError error) {
@@ -463,7 +477,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "AllNamespaces|OwnNamespace, specify AllNamespaces installMode",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			values:           chartutil.Values{"installMode": "AllNamespaces"},
@@ -476,7 +489,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "AllNamespaces|OwnNamespace, specify OwnNamespace installMode",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			values:           chartutil.Values{"installMode": "OwnNamespace"},
@@ -489,7 +501,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "AllNamespaces|OwnNamespace, invalid installMode",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			values:           chartutil.Values{"installMode": "foo"},
@@ -504,7 +515,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "SingleNamespace",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			values:           chartutil.Values{"watchNamespace": "watch-namespace"},
@@ -517,7 +527,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "SingleNamespace, specify own namespace to watch",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			values:           chartutil.Values{"watchNamespace": "test-namespace"},
@@ -532,7 +541,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "SingleNamespace, don't specify a namespace to watch",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeSingleNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			assert: func(t *testing.T, installNamespace string, chrt *chart.Chart, convertError error, manifest string, templateError error) {
@@ -546,7 +554,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "MultiNamespace",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeMultiNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			values:           chartutil.Values{"watchNamespaces": []string{"watch-namespace1", "watch-namespace2"}},
@@ -559,7 +566,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "MultiNamespace, specify own namespace to watch",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeMultiNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			values:           chartutil.Values{"watchNamespaces": []string{"test-namespace", "watch-namespace2"}},
@@ -574,7 +580,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "MultiNamespace, specify too many namespaces",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeMultiNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			values:           chartutil.Values{"watchNamespaces": []string{"ws1", "ws2", "ws3", "ws4", "ws5", "ws6", "ws7", "ws8", "ws9", "ws10", "ws11"}},
@@ -589,7 +594,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "AllNamespaces|SingleNamespace, no watchNamespace",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeSingleNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			assert: func(t *testing.T, installNamespace string, chrt *chart.Chart, convertError error, manifest string, templateError error) {
@@ -601,7 +605,6 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			name: "AllNamespaces|MultiNamespace, no watchNamespaces",
 			cfg: genBundleConfig{
 				supportedInstallModes: []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeMultiNamespace},
-				includeMergeables:     true,
 			},
 			installNamespace: "test-namespace",
 			assert: func(t *testing.T, installNamespace string, chrt *chart.Chart, convertError error, manifest string, templateError error) {
@@ -610,14 +613,189 @@ func TestRegistryV1ToHelmChart(t *testing.T) {
 			},
 		},
 		{
-			name: "Include webhooks",
+			name: "AllNamespaces, include all webhooks",
 			cfg: genBundleConfig{
-				supportedInstallModes:     []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces},
-				includeWebhookDefinitions: true,
+				supportedInstallModes:    []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces},
+				includeConversionWebhook: true,
+				includeValidatingWebhook: true,
+				includeMutatingWebhook:   true,
 			},
 			installNamespace: "test-namespace",
 			assert: func(t *testing.T, installNamespace string, chrt *chart.Chart, convertError error, manifest string, templateError error) {
-				assert.ErrorContains(t, convertError, "webhookDefinitions are not supported")
+				assert.NoError(t, convertError)
+				assert.NotNil(t, chrt)
+				assert.NoError(t, templateError)
+				assert.NotEmpty(t, manifest)
+
+				cwDef := csvWebhookConversionDefinition()
+				vwDef := csvWebhookValidationDefinition()
+				mwDef := csvWebhookMutationDefinition()
+
+				var svcNames []string
+				assertInManifest(t, manifest,
+					func(obj client.Object) (bool, error) {
+						return obj.GetObjectKind().GroupVersionKind().Kind == "Service", nil
+					},
+					func(t *testing.T, obj client.Object) {
+						svcNames = append(svcNames, obj.GetName())
+						expectedSpec := corev1.ServiceSpec{
+							Ports: []corev1.ServicePort{
+								{Name: fmt.Sprintf("%d", cwDef.ContainerPort), Port: cwDef.ContainerPort, TargetPort: *cwDef.TargetPort},
+								{Name: fmt.Sprintf("%d", vwDef.ContainerPort), Port: vwDef.ContainerPort, TargetPort: *vwDef.TargetPort},
+								{Name: fmt.Sprintf("%d", mwDef.ContainerPort), Port: mwDef.ContainerPort, TargetPort: *mwDef.TargetPort},
+							},
+							Selector: csvPodLabels(),
+						}
+						assertFieldEqual(t, obj, expectedSpec, `{.spec}`)
+					},
+				)
+				require.Len(t, svcNames, 1)
+
+				var issuerNames []string
+				assertInManifest(t, manifest,
+					func(obj client.Object) (bool, error) {
+						return obj.GetObjectKind().GroupVersionKind().Kind == "Issuer", nil
+					},
+					func(t *testing.T, obj client.Object) {
+						issuerNames = append(issuerNames, obj.GetName())
+						expectedSpec := certmanagerv1.IssuerConfig{
+							SelfSigned: &certmanagerv1.SelfSignedIssuer{},
+						}
+						assertFieldEqual(t, obj, expectedSpec, `{.spec}`)
+					},
+				)
+				require.Len(t, issuerNames, 1)
+
+				var secretName string
+				assertInManifest(t, manifest,
+					func(obj client.Object) (bool, error) {
+						return obj.GetObjectKind().GroupVersionKind().Kind == "Certificate", nil
+					},
+					func(t *testing.T, obj client.Object) {
+						var cert certmanagerv1.Certificate
+						if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.(*unstructured.Unstructured).Object, &cert); err != nil {
+							t.Fatal(err)
+						}
+						secretName = cert.Spec.SecretName
+						assertFieldEqual(t, obj, []string{fmt.Sprintf("%s.%s.svc", svcNames[0], installNamespace)}, `{.spec.dnsNames}`)
+						assertFieldEqual(t, obj, []certmanagerv1.KeyUsage{certmanagerv1.UsageServerAuth}, `{.spec.usages}`)
+						assertFieldEqual(t, obj, certmanagermetav1.ObjectReference{Name: issuerNames[0]}, `{.spec.issuerRef}`)
+					},
+				)
+				require.NotEmpty(t, secretName)
+
+				assertInManifest(t, manifest,
+					func(obj client.Object) (bool, error) {
+						return obj.GetObjectKind().GroupVersionKind().Kind == "CustomResourceDefinition", nil
+					},
+					func(t *testing.T, obj client.Object) {
+						conversion := apiextensionsv1.CustomResourceConversion{
+							Strategy: apiextensionsv1.WebhookConverter,
+							Webhook: &apiextensionsv1.WebhookConversion{
+								ClientConfig: &apiextensionsv1.WebhookClientConfig{Service: &apiextensionsv1.ServiceReference{
+									Name: svcNames[0], Namespace: installNamespace, Path: cwDef.WebhookPath, Port: ptr.To(cwDef.ContainerPort),
+								}},
+								ConversionReviewVersions: cwDef.AdmissionReviewVersions,
+							},
+						}
+						assertFieldEqual(t, obj, conversion, `{.spec.conversion}`)
+					},
+				)
+
+				assertInManifest(t, manifest,
+					func(obj client.Object) (bool, error) {
+						return obj.GetObjectKind().GroupVersionKind().Kind == "ValidatingWebhookConfiguration", nil
+					},
+					func(t *testing.T, obj client.Object) {
+						validation := []admissionregistrationv1.ValidatingWebhook{{
+							AdmissionReviewVersions: vwDef.AdmissionReviewVersions,
+							ClientConfig: admissionregistrationv1.WebhookClientConfig{
+								Service: &admissionregistrationv1.ServiceReference{
+									Name: svcNames[0], Namespace: installNamespace, Path: vwDef.WebhookPath, Port: ptr.To(vwDef.ContainerPort),
+								},
+							},
+							FailurePolicy:  vwDef.FailurePolicy,
+							MatchPolicy:    vwDef.MatchPolicy,
+							Name:           vwDef.GenerateName,
+							ObjectSelector: vwDef.ObjectSelector,
+							Rules:          vwDef.Rules,
+							SideEffects:    vwDef.SideEffects,
+							TimeoutSeconds: vwDef.TimeoutSeconds,
+						}}
+						assertFieldEqual(t, obj, validation, `{.webhooks}`)
+						assertFieldEqual(t, obj, map[string]string{"cert-manager.io/inject-ca-from": fmt.Sprintf("%s/%s", installNamespace, csvDeploymentName())}, `{.metadata.annotations}`)
+					},
+				)
+				assertInManifest(t, manifest,
+					func(obj client.Object) (bool, error) {
+						return obj.GetObjectKind().GroupVersionKind().Kind == "MutatingWebhookConfiguration", nil
+					},
+					func(t *testing.T, obj client.Object) {
+						mutation := []admissionregistrationv1.MutatingWebhook{{
+							AdmissionReviewVersions: mwDef.AdmissionReviewVersions,
+							ClientConfig: admissionregistrationv1.WebhookClientConfig{
+								Service: &admissionregistrationv1.ServiceReference{
+									Name: svcNames[0], Namespace: installNamespace, Path: mwDef.WebhookPath, Port: ptr.To(mwDef.ContainerPort),
+								},
+							},
+							FailurePolicy:      mwDef.FailurePolicy,
+							MatchPolicy:        mwDef.MatchPolicy,
+							Name:               mwDef.GenerateName,
+							ObjectSelector:     mwDef.ObjectSelector,
+							ReinvocationPolicy: mwDef.ReinvocationPolicy,
+							Rules:              mwDef.Rules,
+							SideEffects:        mwDef.SideEffects,
+							TimeoutSeconds:     mwDef.TimeoutSeconds,
+						}}
+						assertFieldEqual(t, obj, mutation, `{.webhooks}`)
+						assertFieldEqual(t, obj, map[string]string{"cert-manager.io/inject-ca-from": fmt.Sprintf("%s/%s", installNamespace, csvDeploymentName())}, `{.metadata.annotations}`)
+					},
+				)
+
+				standardAssertions(t, installNamespace, chrt, convertError, manifest, templateError, configOverrideFields{
+					volumes: append(csvPodVolumes(),
+						corev1.Volume{Name: "apiservice-cert", VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: secretName, Items: []corev1.KeyToPath{
+							{Key: "tls.crt", Path: "apiserver.crt"},
+							{Key: "tls.key", Path: "apiserver.key"},
+						}}}},
+						corev1.Volume{Name: "webhook-cert", VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{SecretName: secretName, Items: []corev1.KeyToPath{
+							{Key: "tls.crt", Path: "tls.crt"},
+							{Key: "tls.key", Path: "tls.key"},
+						}}}},
+					),
+					volumeMounts: append(csvContainerVolumeMounts(),
+						corev1.VolumeMount{Name: "apiservice-cert", MountPath: "/apiserver.local.config/certificates"},
+						corev1.VolumeMount{Name: "webhook-cert", MountPath: "/tmp/k8s-webhook-server/serving-certs"},
+					),
+				})
+				allNamespacesAssertions(t, installNamespace, chrt, convertError, manifest, templateError)
+
+			},
+		},
+		{
+			name: "AllNamespaces|OwnNamespace, fail with conversion webhook",
+			cfg: genBundleConfig{
+				supportedInstallModes:    []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace},
+				includeConversionWebhook: true,
+			},
+			installNamespace: "test-namespace",
+			assert: func(t *testing.T, installNamespace string, chrt *chart.Chart, convertError error, manifest string, templateError error) {
+				assert.ErrorContains(t, convertError, "CSVs with conversion webhooks must support only AllNamespaces install mode")
+			},
+		},
+		{
+			name: "AllNamespaces|OwnNamespace, succeed with admission webhooks",
+			cfg: genBundleConfig{
+				supportedInstallModes:    []v1alpha1.InstallModeType{v1alpha1.InstallModeTypeAllNamespaces, v1alpha1.InstallModeTypeOwnNamespace},
+				includeValidatingWebhook: true,
+				includeMutatingWebhook:   true,
+			},
+			installNamespace: "test-namespace",
+			assert: func(t *testing.T, installNamespace string, chrt *chart.Chart, convertError error, manifest string, templateError error) {
+				assert.NoError(t, convertError)
+				assert.NotNil(t, chrt)
+				assert.NoError(t, templateError)
+				assert.NotEmpty(t, manifest)
 			},
 		},
 		{
@@ -890,7 +1068,7 @@ func Test_getWatchNamespacesSchema(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		for _, supportedInstallModes := range tt.supportedInstallModeSets {
+		for _, supportedInstallModeSet := range tt.supportedInstallModeSets {
 			modes := []string{}
 			installModes := []v1alpha1.InstallMode{}
 
@@ -900,11 +1078,12 @@ func Test_getWatchNamespacesSchema(t *testing.T) {
 				v1alpha1.InstallModeTypeSingleNamespace,
 				v1alpha1.InstallModeTypeMultiNamespace,
 			} {
-				if supportedInstallModes.Has(mode) {
+				if supportedInstallModeSet.Has(mode) {
 					modes = append(modes, string(mode))
-					installModes = append(installModes, v1alpha1.InstallMode{Type: mode, Supported: supportedInstallModes.Has(mode)})
 				}
+				installModes = append(installModes, v1alpha1.InstallMode{Type: mode, Supported: supportedInstallModeSet.Has(mode)})
 			}
+			supportedInstallModes := getSupportedInstallModes(installModes)
 			name := strings.Join(modes, "|")
 			if name == "" {
 				name = "none"
@@ -912,11 +1091,11 @@ func Test_getWatchNamespacesSchema(t *testing.T) {
 			t.Run(name, func(t *testing.T) {
 				if tt.shouldPanic {
 					require.Panics(t, func() {
-						getWatchNamespacesSchema(installModes)
+						getWatchNamespacesSchema(supportedInstallModes)
 					})
 					return
 				}
-				got := getWatchNamespacesSchema(installModes)
+				got := getWatchNamespacesSchema(supportedInstallModes)
 				if diff := cmp.Diff(got, tt.want, cmpopts.IgnoreUnexported(jsonreference.Ref{})); diff != "" {
 					t.Errorf("getWatchNamespacesSchema() mismatch (-got +want):\n%s", diff)
 				}

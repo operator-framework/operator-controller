@@ -15,6 +15,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -23,6 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/sets"
 	k8sresource "k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/util/jsonpath"
@@ -116,8 +118,10 @@ func assertFieldEqual(t *testing.T, obj client.Object, value interface{}, path s
 type genBundleConfig struct {
 	supportedInstallModes        []v1alpha1.InstallModeType
 	includeAPIServiceDefinitions bool
-	includeWebhookDefinitions    bool
-	includeMergeables            bool
+	includeConversionWebhook     bool
+	includeValidatingWebhook     bool
+	includeMutatingWebhook       bool
+	excludeMergeables            bool
 }
 
 func genBundleFS(cfg genBundleConfig) fs.FS {
@@ -151,26 +155,9 @@ func genBundleFS(cfg genBundleConfig) fs.FS {
 			Kind:       "CustomResourceDefinition",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "examples.example.com",
+			Name: crdName(),
 		},
-		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
-			Group: "example.com",
-			Names: apiextensionsv1.CustomResourceDefinitionNames{
-				Plural:   "examples",
-				Singular: "example",
-				Kind:     "Example",
-				ListKind: "ExampleList",
-			},
-			Scope: apiextensionsv1.NamespaceScoped,
-			Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
-				{
-					Name:    "v1alpha1",
-					Served:  true,
-					Storage: true,
-					Schema:  &apiextensionsv1.CustomResourceValidation{},
-				},
-			},
-		},
+		Spec: crdSpec(),
 	}
 	csv := v1alpha1.ClusterServiceVersion{
 		TypeMeta: metav1.TypeMeta{
@@ -178,7 +165,7 @@ func genBundleFS(cfg genBundleConfig) fs.FS {
 			Kind:       "ClusterServiceVersion",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        fmt.Sprintf("example-operator.v%s", csvSpecVersion().String()),
+			Name:        csvName(),
 			Annotations: csvAnnotations(),
 			Labels:      csvLabels(),
 		},
@@ -194,7 +181,7 @@ func genBundleFS(cfg genBundleConfig) fs.FS {
 			MinKubeVersion:            csvSpecMinKubeVersion(),
 			Provider:                  csvSpecProvider(),
 			Version:                   csvSpecVersion(),
-			WebhookDefinitions:        csvSpecWebhookDefinitions(cfg.includeWebhookDefinitions),
+			WebhookDefinitions:        csvSpecWebhookDefinitions(cfg.includeConversionWebhook, cfg.includeValidatingWebhook, cfg.includeMutatingWebhook),
 
 			InstallStrategy: v1alpha1.NamedInstallStrategy{
 				StrategyName: v1alpha1.InstallStrategyNameDeployment,
@@ -213,7 +200,7 @@ func genBundleFS(cfg genBundleConfig) fs.FS {
 					},
 					DeploymentSpecs: []v1alpha1.StrategyDeploymentSpec{
 						{
-							Name:  "example",
+							Name:  csvDeploymentName(),
 							Label: csvDeploymentLabels(),
 							Spec: appsv1.DeploymentSpec{
 								Replicas: csvDeploymentReplicas(),
@@ -244,7 +231,7 @@ func genBundleFS(cfg genBundleConfig) fs.FS {
 			Selector: nil,
 		},
 	}
-	if cfg.includeMergeables {
+	if !cfg.excludeMergeables {
 		csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[0].Spec.Template.Spec.Tolerations = csvPodTolerations()
 		csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[0].Spec.Template.Spec.Volumes = csvPodVolumes()
 		csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[0].Spec.Template.Spec.Containers[0].Env = csvContainerEnv()
@@ -270,10 +257,38 @@ func configMapData() map[string]string {
 	return map[string]string{"config": "example-config"}
 }
 
+func crdName() string {
+	spec := crdSpec()
+	return fmt.Sprintf("%s.%s", spec.Names.Plural, spec.Group)
+}
+
+func crdSpec() apiextensionsv1.CustomResourceDefinitionSpec {
+	return apiextensionsv1.CustomResourceDefinitionSpec{
+		Group: "example.com",
+		Names: apiextensionsv1.CustomResourceDefinitionNames{
+			Plural:   "examples",
+			Singular: "example",
+			Kind:     "Example",
+			ListKind: "ExampleList",
+		},
+		Scope: apiextensionsv1.NamespaceScoped,
+		Versions: []apiextensionsv1.CustomResourceDefinitionVersion{
+			{
+				Name:    "v1alpha1",
+				Served:  true,
+				Storage: true,
+				Schema:  &apiextensionsv1.CustomResourceValidation{},
+			},
+		},
+	}
+}
+
 func csvLabels() map[string]string {
 	return map[string]string{"csvLabel": "csvLabelValue"}
 }
-
+func csvName() string {
+	return fmt.Sprintf("example-operator.v%s", csvSpecVersion().String())
+}
 func csvAnnotations() map[string]string {
 	return map[string]string{"csvAnnotation": "csvAnnotationValue"}
 }
@@ -372,19 +387,87 @@ func csvSpecVersion() version.OperatorVersion {
 	return version.OperatorVersion{Version: semver.MustParse("0.1.0")}
 }
 
-func csvSpecWebhookDefinitions(included bool) []v1alpha1.WebhookDescription {
-	if !included {
-		return nil
+func csvSpecWebhookDefinitions(includeConversion, includeValidating, includeMutating bool) []v1alpha1.WebhookDescription {
+	var webhooks []v1alpha1.WebhookDescription
+	if includeConversion {
+		webhooks = append(webhooks, csvWebhookConversionDefinition())
 	}
-	return []v1alpha1.WebhookDescription{
-		{Type: v1alpha1.ValidatingAdmissionWebhook},
-		{Type: v1alpha1.MutatingAdmissionWebhook},
-		{Type: v1alpha1.ConversionWebhook},
+	if includeValidating {
+		webhooks = append(webhooks, csvWebhookValidationDefinition())
+	}
+	if includeMutating {
+		webhooks = append(webhooks, csvWebhookMutationDefinition())
+	}
+	return webhooks
+}
+
+func csvWebhookConversionDefinition() v1alpha1.WebhookDescription {
+	return v1alpha1.WebhookDescription{
+		Type:                    v1alpha1.ConversionWebhook,
+		AdmissionReviewVersions: []string{"v1-convert", "v1beta1-convert"},
+		ContainerPort:           10001,
+		ConversionCRDs:          []string{crdName()},
+		DeploymentName:          csvDeploymentName(),
+		TargetPort:              ptr.To(intstr.FromInt32(10002)),
+		WebhookPath:             ptr.To("/convert-example"),
+	}
+}
+
+func csvWebhookValidationDefinition() v1alpha1.WebhookDescription {
+	return v1alpha1.WebhookDescription{
+		Type:                    v1alpha1.ValidatingAdmissionWebhook,
+		AdmissionReviewVersions: []string{"v1-validate", "v1beta1-validate"},
+		ContainerPort:           20001,
+		DeploymentName:          csvDeploymentName(),
+		FailurePolicy:           ptr.To(admissionregistrationv1.Ignore),
+		MatchPolicy:             ptr.To(admissionregistrationv1.Equivalent),
+		ObjectSelector:          &metav1.LabelSelector{MatchLabels: map[string]string{"csvWebhookValidationKey": "csvWebhookValidationValue"}},
+		Rules: []admissionregistrationv1.RuleWithOperations{{
+			Operations: []admissionregistrationv1.OperationType{admissionregistrationv1.Delete},
+			Rule: admissionregistrationv1.Rule{
+				APIGroups:   []string{"mutate.example.com"},
+				APIVersions: []string{"v1-mutate"},
+				Resources:   []string{"tests-mutate"},
+			},
+		}},
+		SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassSome),
+		TargetPort:     ptr.To(intstr.FromInt32(20002)),
+		TimeoutSeconds: ptr.To(int32(20)),
+		WebhookPath:    ptr.To("/validate-example"),
+	}
+}
+
+func csvWebhookMutationDefinition() v1alpha1.WebhookDescription {
+	return v1alpha1.WebhookDescription{
+		Type:                    v1alpha1.MutatingAdmissionWebhook,
+		AdmissionReviewVersions: []string{"v1-mutate", "v1beta1-mutate"},
+		ContainerPort:           30001,
+		DeploymentName:          csvDeploymentName(),
+		FailurePolicy:           ptr.To(admissionregistrationv1.Fail),
+		MatchPolicy:             ptr.To(admissionregistrationv1.Exact),
+		ObjectSelector:          &metav1.LabelSelector{MatchLabels: map[string]string{"csvWebhookMutationKey": "csvWebhookMutationValue"}},
+		ReinvocationPolicy:      ptr.To(admissionregistrationv1.IfNeededReinvocationPolicy),
+		Rules: []admissionregistrationv1.RuleWithOperations{{
+			Operations: []admissionregistrationv1.OperationType{admissionregistrationv1.Create},
+			Rule: admissionregistrationv1.Rule{
+				APIGroups:   []string{"validate.example.com"},
+				APIVersions: []string{"v1-validate"},
+				Resources:   []string{"tests-validate"},
+			},
+		}},
+		SideEffects:    ptr.To(admissionregistrationv1.SideEffectClassUnknown),
+		TargetPort:     ptr.To(intstr.FromInt32(30002)),
+		TimeoutSeconds: ptr.To(int32(30)),
+		WebhookPath:    ptr.To("/validate-example"),
 	}
 }
 
 func csvDeploymentLabels() map[string]string {
 	return map[string]string{"csvDeploymentLabel": "csvDeploymentLabelValue"}
+}
+
+func csvDeploymentName() string {
+	return "csvDeploymentName"
 }
 
 func csvDeploymentReplicas() *int32 {
