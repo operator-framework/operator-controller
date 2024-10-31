@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cloudnative-pg.v1.24.1-9uhbzZyT5UL
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cloudnative-pg.v1.24.1-9uhbzZyT5UL
+subjects:
+- kind: ServiceAccount
+  name: cnpg-manager
+  namespace: '{{ .Release.Namespace }}'

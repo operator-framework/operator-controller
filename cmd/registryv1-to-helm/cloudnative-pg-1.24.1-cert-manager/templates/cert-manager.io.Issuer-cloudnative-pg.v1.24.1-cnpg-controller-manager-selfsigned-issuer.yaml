@@ -1,0 +1,6 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: cloudnative-pg.v1.24.1-cnpg-controller-manager-selfsigned-issuer
+spec:
+  selfSigned: {}

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: cloudnative-pg.v1.24.1-cnpg-controller-manager-cert
+  name: cnpg-controller-manager-service
+spec:
+  ports:
+  - name: "443"
+    port: 443
+    targetPort: 9443
+  selector:
+    app.kubernetes.io/name: cloudnative-pg
