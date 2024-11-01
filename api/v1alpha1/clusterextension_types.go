@@ -510,6 +510,11 @@ type ClusterExtensionInstallStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:resource:scope=Cluster
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Installed Bundle",type=string,JSONPath=`.status.install.bundle.name`
+//+kubebuilder:printcolumn:name=Version,type=string,JSONPath=`.status.install.bundle.version`
+//+kubebuilder:printcolumn:name="Installed",type=string,JSONPath=`.status.conditions[?(@.type=='Installed')].status`
+//+kubebuilder:printcolumn:name="Progressing",type=string,JSONPath=`.status.conditions[?(@.type=='Progressing')].status`
+//+kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
 // ClusterExtension is the Schema for the clusterextensions API
 type ClusterExtension struct {
