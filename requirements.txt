@@ -32,4 +32,4 @@ requests==2.32.3
 six==1.16.0
 soupsieve==2.6
 urllib3==2.2.3
-watchdog==4.0.2
+watchdog==6.0.0
