@@ -7,7 +7,29 @@ OLM does not automatically manage RBAC for users to interact with CRDs from inst
 
 ---
 
-## 1. Creating Default ClusterRoles for API/CRD Access
+## 1. Finding API Groups and Resources Provided by a ClusterExtension
+
+To create appropriate RBAC policies, you need to know which API groups and resources are exposed by the installed operator. You can inspect the installed CRDs and resources by running:
+
+```bash
+kubectl get crds
+```
+
+This will list all available CRDs, and you can inspect individual CRDs for their API groups:
+
+```bash
+kubectl get crd <crd-name> -o yaml
+```
+
+A user can use label selectors to find CRDs owned by a specific cluster extension:
+
+```bash
+kubectl get crds -l 'olm.operatorframework.io/owner-kind=ClusterExtension,olm.operatorframework.io/owner-name=<clusterExtensionName>'
+```
+
+---
+
+## 2. Creating Default ClusterRoles for API/CRD Access
 
 Administrators can define standard roles to control access to the API resources provided by installed operators. If the operator does not provide default roles, you can create them yourself.
 
@@ -77,7 +99,7 @@ In each case, replace `<your-api-group>` and `<your-custom-resources>` with the 
 
 ---
 
-## 2. Granting User Access to API Resources
+## 3. Granting User Access to API Resources
 
 Once the roles are created, you can bind them to specific users or groups to grant them the necessary permissions. There are two main ways to do this:
 
@@ -153,31 +175,9 @@ You can create similar ClusterRoles for `edit` and `admin` with appropriate verb
 
 ---
 
-## 3. Finding API Groups and Resources Provided by a Bundle
-
-To create appropriate RBAC policies, you need to know which API groups and resources are exposed by the installed operator. You can inspect the installed CRDs and resources by running:
-
-```bash
-kubectl get crds
-```
-
-This will list all available CRDs, and you can inspect individual CRDs for their API groups:
-
-```bash
-kubectl get crd <crd-name> -o yaml
-```
-
-A user can use label selectors to find CRDs owned by a specific cluster extension:
-
-```bash
-kubectl get crds -l 'olm.operatorframework.io/owner-kind=ClusterExtension,olm.operatorframework.io/owner-name=<clusterExtensionName>'
-```
----
-
 ## Notes
 
 - OLM does not handle RBAC for users interacting with CRDs, so it's up to cluster administrators to configure these settings.
 - It is not recommended for operator bundles to include RBAC policies granting access to the operator's APIs because cluster administrators should maintain control over the permissions in their clusters.
 
 ---
-
