@@ -1,7 +1,7 @@
 
 # Granting Users Access to API Resources in OLM
 
-When operators or cluster extensions are managed via OLM, they often provide Custom Resource Definitions (CRDs) that expose new API resources. Typically, cluster administrators hold full management access to these resources by default, whereas non-administrative users may lack sufficient permissions. Such users often need designated permissions to create, view, or edit these Custom Resources.
+When cluster extensions are managed via OLM, they often provide Custom Resource Definitions (CRDs) that expose new API resources. Typically, cluster administrators hold full management access to these resources by default, whereas non-administrative users may lack sufficient permissions. Such users often need designated permissions to create, view, or edit these Custom Resources.
 
 OLM does **not** automatically configure or manage RBAC for users to interact with the APIs provided by installed packages. It is recommended that cluster administrators manage RBAC (Role-Based Access Control) to grant appropriate permissions to non-administrative users. This guide outlines the steps to manually configure RBAC, with a focus on creating ClusterRoles and binding them to specific users or groups.
 
@@ -9,7 +9,7 @@ OLM does **not** automatically configure or manage RBAC for users to interact wi
 
 ## 1. Finding API Groups and Resources Provided by a ClusterExtension
 
-To create appropriate RBAC policies, you need to know which API groups and resources are exposed by the installed operator. You can inspect the installed CRDs and resources by running:
+To create appropriate RBAC policies, you need to know which API groups and resources are exposed by the installed cluster extension. You can inspect the installed CRDs and resources by running:
 
 ```bash
 kubectl get crds
@@ -31,7 +31,7 @@ kubectl get crds -l 'olm.operatorframework.io/owner-kind=ClusterExtension,olm.op
 
 ## 2. Creating Default ClusterRoles for API/CRD Access
 
-Administrators can define standard roles to control access to the API resources provided by installed operators. If the operator does not provide default roles, you can create them yourself.
+Administrators can define standard roles to control access to the API resources provided by installed cluster extensions. If the cluster extension does not provide default roles, you can create them yourself.
 
 ### Default Roles
 
@@ -95,7 +95,7 @@ rules:
   - '*'
 ```
 **Note**: The `'*'` in verbs allows all actions on the specified resources, including RBAC management actions such as assigning roles and creating role bindings.
-In each case, replace `<your-api-group>` and `<your-custom-resources>` with the actual API group and resource names provided by the installed operator.
+In each case, replace `<your-api-group>` and `<your-custom-resources>` with the actual API group and resource names provided by the installed cluster extension.
 
 ---
 
@@ -178,4 +178,4 @@ You can create similar ClusterRoles for `edit` and `admin` with appropriate verb
 ## Notes
 
 - OLM does not handle RBAC for users interacting with CRDs, so it's up to cluster administrators to configure these settings.
-- It is not recommended for operator bundles to include RBAC policies granting access via bindings or role aggregation to the operator's APIs because cluster administrators should maintain control over the permissions in their clusters. Operator packages can certainly add Roles that facilitate the functioning of the operator.
+- It is not recommended for cluster extension bundles to include RBAC policies granting access via bindings or role aggregation to the cluster extension's APIs because cluster administrators should maintain control over the permissions in their clusters. Cluster extension packages can certainly add Roles that facilitate the functioning of the Cluster Exension.
