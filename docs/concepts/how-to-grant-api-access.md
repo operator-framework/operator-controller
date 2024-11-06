@@ -94,7 +94,7 @@ rules:
   verbs:
   - '*'
 ```
-
+**Note**: The `'*'` in verbs allows all actions on the specified resources, including RBAC management actions such as assigning roles and creating role bindings.
 In each case, replace `<your-api-group>` and `<your-custom-resources>` with the actual API group and resource names provided by the installed operator.
 
 ---
