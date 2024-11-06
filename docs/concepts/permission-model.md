@@ -16,8 +16,7 @@ To understand the permission model, lets see the scope of the the service accoun
 1) The contents of the extension bundle may contain more service accounts and RBAC.
 2) The OLMv1 operator-controller creates the service account/(s) defined as part of the extension bundle with the required RBAC for the controller business logic.
 
-
-Example:
+##### Example:
 
 In this example, the `argocd-operator-controller-manager` [service account](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1124) is created by OLMv1 when it deploys this extension bundle.
 
