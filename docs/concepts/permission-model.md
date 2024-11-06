@@ -1,13 +1,13 @@
 #### OLMv1 Permission Model
 
-Here we aim to describe the OLMv1 permission model. OLMv1 does not have permissions to manage the installation and lifecycle of cluster extensions. Rather, it requires that each cluster extension specify a service account that will be used to manage its bundle contents. The cluster extension service account permissions are a superset of the permissions specified for the service account in the operator bundle. It maintains a distinction with the operator bundle service account.
+Here we aim to describe the OLMv1 permission model. OLMv1 itself does not have cluster-wide admin permissions. Therefore, each cluster extension must specify a service account with sufficient permissions to install and manage it. While this service account is distinct from any service account defined in the bundle, it will need sufficient privileges to create and assign the required RBAC. Therefore, the cluster extension service account's privileges would be a superset of the privileges required by the service account in the bundle.
 
 To understand the permission model, lets see the scope of the the service accounts associated with and part of the ClusterExtension deployment:
 
 #### Service Account associated with the ClusterExtension CR
 
 1) The ClusterExtension CR defines a service account to deploy and manage the ClusterExtension lifecycle and can be derived using the [document](../howto/derive-service-account.md). It is specified in the ClusterExtension [yaml](../tutorials/install-extension#L71) while deploying a ClusterExtension.
-2) The purpose of the service account specified in the ClusterExtension spec is to manage the cluster extension lifecycle. Its permissions is the cumulative of permissions required for managing the cluster extension lifecycle and any RBAC that maybe included in the extenion bundle.
+2) The purpose of the service account specified in the ClusterExtension spec is to manage the cluster extension lifecycle. Its permissions are the cumulative of the permissions required for managing the cluster extension lifecycle and any RBAC that maybe included in the extension bundle.
 3) Since the extension bundle contains its own RBAC, it means the ClusterExtension service account requires either:
 - the same set of permissions that are defined in the RBAC that it is trying to create.
 - bind/escalate verbs for RBAC, see https://kubernetes.io/docs/reference/access-authn-authz/rbac/#privilege-escalation-prevention-and-bootstrapping
