@@ -1,7 +1,7 @@
 
 # Granting Users Access to API Resources in OLM
 
-When operators or cluster extensions are installed through OLM, they often provide Custom Resource Definitions (CRDs) that expose new API resources. By default, cluster administrators may have full access to manage these resources, but non-admin users often require specific permissions to create, view, or edit these custom resource objects.
+When operators or cluster extensions are managed via OLM, they often provide Custom Resource Definitions (CRDs) that expose new API resources. Typically, cluster administrators hold full management access to these resources by default, whereas non-administrative users may lack sufficient permissions. Such users often need designated permissions to create, view, or edit these Custom Resources.
 
 OLM does not automatically manage RBAC for users to interact with CRDs from installed packages. It is recommended that cluster administrators handle RBAC (Role-Based Access Control) to grant appropriate permissions to users. This guide provides steps on how to manually configure RBAC, focusing on creating ClusterRoles and binding them to users or groups.
 
