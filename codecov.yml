@@ -1,3 +1,11 @@
 codecov:
   notify:
     after_n_builds: 2
+
+# Configure the paths to include in coverage reports.
+# Exclude documentation, YAML configurations, and test files.
+coverage:
+  paths:
+    - "api/"
+    - "cmd/"
+    - "internal/"
