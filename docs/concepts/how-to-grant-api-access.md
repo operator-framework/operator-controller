@@ -178,6 +178,4 @@ You can create similar ClusterRoles for `edit` and `admin` with appropriate verb
 ## Notes
 
 - OLM does not handle RBAC for users interacting with CRDs, so it's up to cluster administrators to configure these settings.
-- It is not recommended for operator bundles to include RBAC policies granting access to the operator's APIs because cluster administrators should maintain control over the permissions in their clusters.
-
----
+- It is not recommended for operator bundles to include RBAC policies granting access via bindings or role aggregation to the operator's APIs because cluster administrators should maintain control over the permissions in their clusters. Operator packages can certainly add Roles that facilitate the functioning of the operator.
