@@ -3,7 +3,7 @@
 
 When cluster extensions are managed via OLM, they often provide Custom Resource Definitions (CRDs) that expose new API resources. Typically, cluster administrators hold full management access to these resources by default, whereas non-administrative users may lack sufficient permissions. Such users often need designated permissions to create, view, or edit these Custom Resources.
 
-OLM does **not** automatically configure or manage RBAC for users to interact with the APIs provided by installed packages. It is recommended that cluster administrators manage RBAC (Role-Based Access Control) to grant appropriate permissions to non-administrative users. This guide outlines the steps to manually configure RBAC, with a focus on creating ClusterRoles and binding them to specific users or groups.
+OLM v1 does **not** automatically configure or manage role-based access control (RBAC) for users to interact with the APIs provided by installed packages. Cluster administrators must manage RBAC to grant appropriate permissions to non-administrative users. This guide outlines the steps to manually configure RBAC, with a focus on creating ClusterRoles and binding them to specific users or groups.
 
 ---
 
