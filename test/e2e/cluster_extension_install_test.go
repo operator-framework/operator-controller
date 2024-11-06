@@ -17,9 +17,11 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	kubeclient "k8s.io/client-go/kubernetes"
@@ -37,6 +39,19 @@ const (
 
 var pollDuration = time.Minute
 var pollInterval = time.Second
+
+func createNamespace(ctx context.Context, name string) (*corev1.Namespace, error) {
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+	err := c.Create(ctx, ns)
+	if err != nil {
+		return nil, err
+	}
+	return ns, nil
+}
 
 func createServiceAccount(ctx context.Context, name types.NamespacedName, clusterExtensionName string) (*corev1.ServiceAccount, error) {
 	sa := &corev1.ServiceAccount{
@@ -177,42 +192,91 @@ func createClusterRoleAndBindingForSA(ctx context.Context, name string, sa *core
 	return nil
 }
 
-func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCatalog, *corev1.ServiceAccount) {
+func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCatalog, *corev1.ServiceAccount, *corev1.Namespace) {
 	var err error
-	extensionCatalog, err := createTestCatalog(context.Background(), testCatalogName, os.Getenv(testCatalogRefEnvVar))
-	require.NoError(t, err)
 
 	clusterExtensionName := fmt.Sprintf("clusterextension-%s", rand.String(8))
+
+	ns, err := createNamespace(context.Background(), clusterExtensionName)
+	require.NoError(t, err)
+
 	clusterExtension := &ocv1alpha1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterExtensionName,
 		},
 	}
 
-	defaultNamespace := types.NamespacedName{
+	extensionCatalog, err := createTestCatalog(context.Background(), testCatalogName, os.Getenv(testCatalogRefEnvVar))
+	require.NoError(t, err)
+
+	name := types.NamespacedName{
 		Name:      clusterExtensionName,
-		Namespace: "default",
+		Namespace: ns.GetName(),
 	}
 
-	sa, err := createServiceAccount(context.Background(), defaultNamespace, clusterExtensionName)
+	sa, err := createServiceAccount(context.Background(), name, clusterExtensionName)
 	require.NoError(t, err)
-	return clusterExtension, extensionCatalog, sa
+	return clusterExtension, extensionCatalog, sa, ns
 }
 
-func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *ocv1alpha1.ClusterExtension, sa *corev1.ServiceAccount) {
+func ensureNoExtensionResources(t *testing.T, clusterExtensionName string) {
+	ls := labels.Set{"olm.operatorframework.io/owner-name": clusterExtensionName}
+
+	// CRDs may take an extra long time to be deleted, and may run into the following error:
+	// Condition=Terminating Status=True Reason=InstanceDeletionFailed Message="could not list instances: storage is (re)initializing"
+	t.Logf("By waiting for CustomResourceDefinitions of %q to be deleted", clusterExtensionName)
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		list := &apiextensionsv1.CustomResourceDefinitionList{}
+		err := c.List(context.Background(), list, client.MatchingLabelsSelector{Selector: ls.AsSelector()})
+		assert.NoError(ct, err)
+		assert.Empty(ct, list.Items)
+	}, 5*pollDuration, pollInterval)
+
+	t.Logf("By waiting for ClusterRoleBindings of %q to be deleted", clusterExtensionName)
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		list := &rbacv1.ClusterRoleBindingList{}
+		err := c.List(context.Background(), list, client.MatchingLabelsSelector{Selector: ls.AsSelector()})
+		assert.NoError(ct, err)
+		assert.Empty(ct, list.Items)
+	}, 2*pollDuration, pollInterval)
+
+	t.Logf("By waiting for ClusterRoles of %q to be deleted", clusterExtensionName)
+	require.EventuallyWithT(t, func(ct *assert.CollectT) {
+		list := &rbacv1.ClusterRoleList{}
+		err := c.List(context.Background(), list, client.MatchingLabelsSelector{Selector: ls.AsSelector()})
+		assert.NoError(ct, err)
+		assert.Empty(ct, list.Items)
+	}, 2*pollDuration, pollInterval)
+}
+
+func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *ocv1alpha1.ClusterExtension, sa *corev1.ServiceAccount, ns *corev1.Namespace) {
+	t.Logf("By deleting ClusterCatalog %q", cat.Name)
 	require.NoError(t, c.Delete(context.Background(), cat))
 	require.Eventually(t, func() bool {
 		err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &catalogd.ClusterCatalog{})
 		return errors.IsNotFound(err)
 	}, pollDuration, pollInterval)
+
+	t.Logf("By deleting ClusterExtension %q", clusterExtension.Name)
 	require.NoError(t, c.Delete(context.Background(), clusterExtension))
 	require.Eventually(t, func() bool {
 		err := c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, &ocv1alpha1.ClusterExtension{})
 		return errors.IsNotFound(err)
 	}, pollDuration, pollInterval)
+
+	t.Logf("By deleting ServiceAccount %q", sa.Name)
 	require.NoError(t, c.Delete(context.Background(), sa))
 	require.Eventually(t, func() bool {
 		err := c.Get(context.Background(), types.NamespacedName{Name: sa.Name, Namespace: sa.Namespace}, &corev1.ServiceAccount{})
+		return errors.IsNotFound(err)
+	}, pollDuration, pollInterval)
+
+	ensureNoExtensionResources(t, clusterExtension.Name)
+
+	t.Logf("By deleting Namespace %q", ns.Name)
+	require.NoError(t, c.Delete(context.Background(), ns))
+	require.Eventually(t, func() bool {
+		err := c.Get(context.Background(), types.NamespacedName{Name: ns.Name}, &corev1.Namespace{})
 		return errors.IsNotFound(err)
 	}, pollDuration, pollInterval)
 }
@@ -240,8 +304,8 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 			t.Log("When a cluster extension is installed from a catalog")
 			t.Log("When the extension bundle format is registry+v1")
 
-			clusterExtension, extensionCatalog, sa := testInit(t)
-			defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+			clusterExtension, extensionCatalog, sa, ns := testInit(t)
+			defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 			defer getArtifactsOutput(t)
 
 			clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
@@ -255,7 +319,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 					},
 				},
 				Install: ocv1alpha1.ClusterExtensionInstallConfig{
-					Namespace: "default",
+					Namespace: ns.Name,
 					ServiceAccount: ocv1alpha1.ServiceAccountReference{
 						Name: sa.Name,
 					},
@@ -298,8 +362,8 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 
-	clusterExtension, extensionCatalog, sa := testInit(t)
-	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+	clusterExtension, extensionCatalog, sa, ns := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
@@ -310,7 +374,7 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 			},
 		},
 		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: "default",
+			Namespace: ns.Name,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: sa.Name,
 			},
@@ -341,8 +405,8 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
 
-	clusterExtension, extensionCatalog, sa := testInit(t)
-	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+	clusterExtension, extensionCatalog, sa, ns := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
 	t.Log("By creating an ClusterExtension at a specified version")
@@ -356,7 +420,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 			},
 		},
 		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: "default",
+			Namespace: ns.Name,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: sa.Name,
 			},
@@ -406,8 +470,8 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
 
-	clusterExtension, extensionCatalog, sa := testInit(t)
-	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+	clusterExtension, extensionCatalog, sa, ns := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
 	t.Log("By creating an ClusterExtension at a specified version")
@@ -420,7 +484,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 			},
 		},
 		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: "default",
+			Namespace: ns.Name,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: sa.Name,
 			},
@@ -457,8 +521,8 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When resolving upgrade edges")
-	clusterExtension, extensionCatalog, sa := testInit(t)
-	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+	clusterExtension, extensionCatalog, sa, ns := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
 	t.Log("By creating an ClusterExtension at a specified version")
@@ -471,7 +535,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 			},
 		},
 		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: "default",
+			Namespace: ns.Name,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: sa.Name,
 			},
@@ -507,8 +571,8 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("It resolves again when a catalog is patched with new ImageRef")
-	clusterExtension, extensionCatalog, sa := testInit(t)
-	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+	clusterExtension, extensionCatalog, sa, ns := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
@@ -528,7 +592,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 			},
 		},
 		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: "default",
+			Namespace: ns.Name,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: sa.Name,
 			},
@@ -593,9 +657,11 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 			Name: clusterExtensionName,
 		},
 	}
-	sa, err := createServiceAccount(context.Background(), types.NamespacedName{Name: clusterExtensionName, Namespace: "default"}, clusterExtensionName)
+	ns, err := createNamespace(context.Background(), clusterExtensionName)
 	require.NoError(t, err)
-	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+	sa, err := createServiceAccount(context.Background(), types.NamespacedName{Name: clusterExtensionName, Namespace: ns.Name}, clusterExtensionName)
+	require.NoError(t, err)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
@@ -609,7 +675,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 			},
 		},
 		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: "default",
+			Namespace: ns.Name,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: sa.Name,
 			},
@@ -657,8 +723,8 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("It resolves again when managed content is changed")
-	clusterExtension, extensionCatalog, sa := testInit(t)
-	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+	clusterExtension, extensionCatalog, sa, ns := testInit(t)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
@@ -672,7 +738,7 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 			},
 		},
 		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: "default",
+			Namespace: ns.Name,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: sa.Name,
 			},
@@ -712,18 +778,18 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 	t.Log("When a cluster extension is installed from a catalog")
 	t.Log("When the extension bundle format is registry+v1")
 
-	clusterExtension, extensionCatalog, _ := testInit(t)
+	clusterExtension, extensionCatalog, _, ns := testInit(t)
+
 	name := rand.String(10)
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: "default",
+			Namespace: ns.Name,
 		},
 	}
 	err := c.Create(context.Background(), sa)
 	require.NoError(t, err)
-
-	defer testCleanup(t, extensionCatalog, clusterExtension, sa)
+	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
 	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
@@ -737,7 +803,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 			},
 		},
 		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: "default",
+			Namespace: ns.Name,
 			ServiceAccount: ocv1alpha1.ServiceAccountReference{
 				Name: sa.Name,
 			},

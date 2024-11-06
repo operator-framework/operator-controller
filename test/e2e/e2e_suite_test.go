@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
@@ -32,6 +33,7 @@ func TestMain(m *testing.M) {
 	cfg = ctrl.GetConfigOrDie()
 
 	var err error
+	utilruntime.Must(apiextensionsv1.AddToScheme(scheme.Scheme))
 	c, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	utilruntime.Must(err)
 
