@@ -17,7 +17,7 @@ require (
 	github.com/onsi/gomega v1.35.1
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/operator-framework/api v0.27.0
-	github.com/operator-framework/catalogd v0.35.0
+	github.com/operator-framework/catalogd v0.36.0
 	github.com/operator-framework/helm-operator-plugins v0.7.0
 	github.com/operator-framework/operator-registry v1.48.0
 	github.com/spf13/pflag v1.0.5
@@ -26,11 +26,11 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.16.2
 	k8s.io/api v0.31.2
-	k8s.io/apiextensions-apiserver v0.31.1
+	k8s.io/apiextensions-apiserver v0.31.2
 	k8s.io/apimachinery v0.31.2
 	k8s.io/cli-runtime v0.31.2
 	k8s.io/client-go v0.31.2
-	k8s.io/component-base v0.31.1
+	k8s.io/component-base v0.31.2
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
 	sigs.k8s.io/controller-runtime v0.19.0
@@ -241,7 +241,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiserver v0.31.1 // indirect
+	k8s.io/apiserver v0.31.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/kubectl v0.31.1 // indirect
 	oras.land/oras-go v1.2.5 // indirect
