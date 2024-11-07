@@ -37,7 +37,7 @@ Administrators can define standard roles to control access to the API resources 
 
 - **View ClusterRole**: Grants read-only access to all custom resource objects of specified API resources across the cluster. This role is intended for users who need visibility into the resources without any permissions to modify them. It’s ideal for monitoring purposes and limited access viewing.
 - **Edit ClusterRole**: Allows users to modify all custom resource objects within the cluster. This role enables users to create, update, and delete resources, making it suitable for team members who need to manage resources but should not control RBAC or manage permissions for others.
-- **Admin ClusterRole**: Provides full permissions (create, update, delete) over all custom resource objects for the specified API resources across the cluster. In addition to resource management, it grants users the ability to modify roles and bindings within the cluster, allowing them to delegate specific permissions to other users or groups as needed.
+- **Admin ClusterRole**: Provides full permissions (create, update, delete) over all custom resource objects for the specified API resources across the cluster.
 
 ### Example: Defining a Custom "View" ClusterRole
 
