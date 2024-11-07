@@ -195,6 +195,7 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 	for _, depSpec := range in.CSV.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
 		annotations := util.MergeMaps(in.CSV.Annotations, depSpec.Spec.Template.Annotations)
 		annotations["olm.targetNamespaces"] = strings.Join(targetNamespaces, ",")
+		depSpec.Spec.Template.Annotations = annotations
 		deployments = append(deployments, appsv1.Deployment{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Deployment",
@@ -202,10 +203,9 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 			},
 
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace:   installNamespace,
-				Name:        depSpec.Name,
-				Labels:      depSpec.Label,
-				Annotations: annotations,
+				Namespace: installNamespace,
+				Name:      depSpec.Name,
+				Labels:    depSpec.Label,
 			},
 			Spec: depSpec.Spec,
 		})
