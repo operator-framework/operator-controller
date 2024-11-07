@@ -83,7 +83,7 @@ func (t *TokenGetter) getToken(ctx context.Context, key types.NamespacedName) (*
 	req, err := t.client.ServiceAccounts(key.Namespace).CreateToken(ctx,
 		key.Name,
 		&authenticationv1.TokenRequest{
-			Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: ptr.To[int64](int64(t.expirationDuration / time.Second))},
+			Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: ptr.To(int64(t.expirationDuration / time.Second))},
 		}, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err

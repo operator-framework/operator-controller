@@ -970,12 +970,12 @@ func TestAllCatalogsDisabled(t *testing.T) {
 		return []catalogd.ClusterCatalog{
 			{
 				Spec: catalogd.ClusterCatalogSpec{
-					Availability: "Disabled",
+					AvailabilityMode: catalogd.AvailabilityModeUnavailable,
 				},
 			},
 			{
 				Spec: catalogd.ClusterCatalogSpec{
-					Availability: "Disabled",
+					AvailabilityMode: catalogd.AvailabilityModeUnavailable,
 				},
 			},
 		}, nil
@@ -1004,8 +1004,8 @@ func TestSomeCatalogsDisabled(t *testing.T) {
 					Name: "enabledCatalog",
 				},
 				Spec: catalogd.ClusterCatalogSpec{
-					Priority:     1, // Higher priority
-					Availability: "Enabled",
+					Priority:         1, // Higher priority
+					AvailabilityMode: catalogd.AvailabilityModeAvailable,
 				},
 			},
 			{
@@ -1013,8 +1013,8 @@ func TestSomeCatalogsDisabled(t *testing.T) {
 					Name: "disabledCatalog",
 				},
 				Spec: catalogd.ClusterCatalogSpec{
-					Priority:     0, // Lower priority (but disabled)
-					Availability: "Disabled",
+					Priority:         0, // Lower priority (but disabled)
+					AvailabilityMode: catalogd.AvailabilityModeUnavailable,
 				},
 			},
 		}, nil
