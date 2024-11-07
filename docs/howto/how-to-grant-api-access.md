@@ -172,10 +172,3 @@ rules:
 You can create similar ClusterRoles for `edit` and `admin` with appropriate verbs (such as `create`, `update`, `delete` for `edit` and `admin`). By using aggregation labels, the permissions for the custom resources are added to the default roles.
 
 > **Source**: [Kubernetes RBAC Aggregation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#default-roles-and-role-bindings)
-
----
-
-## Notes
-
-- OLM does not handle RBAC for users interacting with CRDs, so it's up to cluster administrators to configure these settings.
-- It is not recommended for cluster extension bundles to include RBAC policies granting access via bindings or role aggregation to the cluster extension's APIs because cluster administrators should maintain control over the permissions in their clusters. Cluster extension packages can certainly add Roles that facilitate the functioning of the Cluster Exension.
