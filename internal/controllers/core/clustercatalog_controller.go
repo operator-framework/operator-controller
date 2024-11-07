@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -160,7 +161,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alp
 	l := log.FromContext(ctx)
 	// Check if the catalog availability is set to disabled, if true then
 	// unset base URL, delete it from the cache and set appropriate status
-	if catalog.Spec.Availability == v1alpha1.AvailabilityDisabled {
+	if catalog.Spec.AvailabilityMode == v1alpha1.AvailabilityModeUnavailable {
 		// Delete the catalog from local cache
 		err := r.deleteCatalogCache(ctx, catalog)
 		if err != nil {
@@ -169,7 +170,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alp
 
 		// Set status.conditions[type=Progressing] to False as we are done with
 		// all that needs to be done with the catalog
-		updateStatusCatalogDisabled(&catalog.Status, catalog.GetGeneration())
+		updateStatusProgressingUserSpecifiedUnavailable(&catalog.Status, catalog.GetGeneration())
 
 		// Remove the fbcDeletionFinalizer as we do not want a finalizer attached to the catalog
 		// when it is disabled. Because the finalizer serves no purpose now.
@@ -215,7 +216,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alp
 	case catalog.Generation != storedCatalog.observedGeneration:
 		l.Info("unpack required: catalog generation differs from observed generation")
 		needsUnpack = true
-	case r.needsPoll(storedCatalog.unpackResult.ResolvedSource.Image.LastSuccessfulPollAttempt.Time, catalog):
+	case r.needsPoll(storedCatalog.unpackResult.LastSuccessfulPollAttempt.Time, catalog):
 		l.Info("unpack required: poll duration has elapsed")
 		needsUnpack = true
 	}
@@ -223,7 +224,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alp
 	if !needsUnpack {
 		// No need to update the status because we've already checked
 		// that it is set correctly. Otherwise, we'd be unpacking again.
-		return nextPollResult(storedCatalog.unpackResult.ResolvedSource.Image.LastSuccessfulPollAttempt.Time, catalog), nil
+		return nextPollResult(storedCatalog.unpackResult.LastSuccessfulPollAttempt.Time, catalog), nil
 	}
 
 	unpackResult, err := r.Unpacker.Unpack(ctx, catalog)
@@ -258,7 +259,7 @@ func (r *ClusterCatalogReconciler) reconcile(ctx context.Context, catalog *v1alp
 		observedGeneration: catalog.GetGeneration(),
 	}
 	r.storedCatalogsMu.Unlock()
-	return nextPollResult(unpackResult.ResolvedSource.Image.LastSuccessfulPollAttempt.Time, catalog), nil
+	return nextPollResult(unpackResult.LastSuccessfulPollAttempt.Time, catalog), nil
 }
 
 func (r *ClusterCatalogReconciler) getCurrentState(catalog *v1alpha1.ClusterCatalog) (*v1alpha1.ClusterCatalogStatus, storedCatalogData, bool) {
@@ -282,8 +283,9 @@ func nextPollResult(lastSuccessfulPoll time.Time, catalog *v1alpha1.ClusterCatal
 	var requeueAfter time.Duration
 	switch catalog.Spec.Source.Type {
 	case v1alpha1.SourceTypeImage:
-		if catalog.Spec.Source.Image != nil && catalog.Spec.Source.Image.PollInterval != nil {
-			jitteredDuration := wait.Jitter(catalog.Spec.Source.Image.PollInterval.Duration, requeueJitterMaxFactor)
+		if catalog.Spec.Source.Image != nil && catalog.Spec.Source.Image.PollIntervalMinutes != nil {
+			pollDuration := time.Duration(*catalog.Spec.Source.Image.PollIntervalMinutes) * time.Minute
+			jitteredDuration := wait.Jitter(pollDuration, requeueJitterMaxFactor)
 			requeueAfter = time.Until(lastSuccessfulPoll.Add(jitteredDuration))
 		}
 	}
@@ -303,7 +305,7 @@ func clearUnknownConditions(status *v1alpha1.ClusterCatalogStatus) {
 func updateStatusProgressing(status *v1alpha1.ClusterCatalogStatus, generation int64, err error) {
 	progressingCond := metav1.Condition{
 		Type:               v1alpha1.TypeProgressing,
-		Status:             metav1.ConditionFalse,
+		Status:             metav1.ConditionTrue,
 		Reason:             v1alpha1.ReasonSucceeded,
 		Message:            "Successfully unpacked and stored content from resolved source",
 		ObservedGeneration: generation,
@@ -329,7 +331,7 @@ func updateStatusServing(status *v1alpha1.ClusterCatalogStatus, result source.Re
 		status.URLs = &v1alpha1.ClusterCatalogURLs{}
 	}
 	status.URLs.Base = baseURL
-	status.LastUnpacked = metav1.NewTime(result.UnpackTime)
+	status.LastUnpacked = ptr.To(metav1.NewTime(result.UnpackTime))
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:               v1alpha1.TypeServing,
 		Status:             metav1.ConditionTrue,
@@ -339,21 +341,38 @@ func updateStatusServing(status *v1alpha1.ClusterCatalogStatus, result source.Re
 	})
 }
 
-func updateStatusCatalogDisabled(status *v1alpha1.ClusterCatalogStatus, generation int64) {
+func updateStatusProgressingUserSpecifiedUnavailable(status *v1alpha1.ClusterCatalogStatus, generation int64) {
+	// Set Progressing condition to True with reason Succeeded
+	// since we have successfully progressed to the unavailable
+	// availability mode and are ready to progress to any future
+	// desired state.
 	progressingCond := metav1.Condition{
 		Type:               v1alpha1.TypeProgressing,
-		Status:             metav1.ConditionFalse,
-		Reason:             v1alpha1.ReasonDisabled,
-		Message:            "Catalog availability is set to Disabled",
+		Status:             metav1.ConditionTrue,
+		Reason:             v1alpha1.ReasonSucceeded,
+		Message:            "Catalog availability mode is set to Unavailable",
 		ObservedGeneration: generation,
 	}
+
+	// Set Serving condition to False with reason UserSpecifiedUnavailable
+	// so that users of this condition are aware that this catalog is
+	// intentionally not being served
+	servingCond := metav1.Condition{
+		Type:               v1alpha1.TypeServing,
+		Status:             metav1.ConditionFalse,
+		Reason:             v1alpha1.ReasonUserSpecifiedUnavailable,
+		Message:            "Catalog availability mode is set to Unavailable",
+		ObservedGeneration: generation,
+	}
+
 	meta.SetStatusCondition(&status.Conditions, progressingCond)
+	meta.SetStatusCondition(&status.Conditions, servingCond)
 }
 
 func updateStatusNotServing(status *v1alpha1.ClusterCatalogStatus, generation int64) {
 	status.ResolvedSource = nil
 	status.URLs = nil
-	status.LastUnpacked = metav1.Time{}
+	status.LastUnpacked = nil
 	meta.SetStatusCondition(&status.Conditions, metav1.Condition{
 		Type:               v1alpha1.TypeServing,
 		Status:             metav1.ConditionFalse,
@@ -364,12 +383,12 @@ func updateStatusNotServing(status *v1alpha1.ClusterCatalogStatus, generation in
 
 func (r *ClusterCatalogReconciler) needsPoll(lastSuccessfulPoll time.Time, catalog *v1alpha1.ClusterCatalog) bool {
 	// If polling is disabled, we don't need to poll.
-	if catalog.Spec.Source.Image.PollInterval == nil {
+	if catalog.Spec.Source.Image.PollIntervalMinutes == nil {
 		return false
 	}
 
 	// Only poll if the next poll time is in the past.
-	nextPoll := lastSuccessfulPoll.Add(catalog.Spec.Source.Image.PollInterval.Duration)
+	nextPoll := lastSuccessfulPoll.Add(time.Duration(*catalog.Spec.Source.Image.PollIntervalMinutes) * time.Minute)
 	return nextPoll.Before(time.Now())
 }
 

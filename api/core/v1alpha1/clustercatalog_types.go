@@ -24,6 +24,9 @@ import (
 // +enum
 type SourceType string
 
+// AvailabilityMode defines the availability of the catalog
+type AvailabilityMode string
+
 const (
 	SourceTypeImage SourceType = "Image"
 
@@ -31,9 +34,9 @@ const (
 	TypeServing     = "Serving"
 
 	// Serving reasons
-	ReasonAvailable   = "Available"
-	ReasonUnavailable = "Unavailable"
-	ReasonDisabled    = "Disabled"
+	ReasonAvailable                = "Available"
+	ReasonUnavailable              = "Unavailable"
+	ReasonUserSpecifiedUnavailable = "UserSpecifiedUnavailable"
 
 	// Progressing reasons
 	ReasonSucceeded = "Succeeded"
@@ -42,8 +45,8 @@ const (
 
 	MetadataNameLabel = "olm.operatorframework.io/metadata.name"
 
-	AvailabilityEnabled  = "Enabled"
-	AvailabilityDisabled = "Disabled"
+	AvailabilityModeAvailable   AvailabilityMode = "Available"
+	AvailabilityModeUnavailable AvailabilityMode = "Unavailable"
 )
 
 //+kubebuilder:object:root=true
@@ -56,10 +59,24 @@ const (
 // ClusterCatalog enables users to make File-Based Catalog (FBC) catalog data available to the cluster.
 // For more information on FBC, see https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
 type ClusterCatalog struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata"`
 
-	Spec   ClusterCatalogSpec   `json:"spec"`
+	// spec is the desired state of the ClusterCatalog.
+	// spec is required.
+	// The controller will work to ensure that the desired
+	// catalog is unpacked and served over the catalog content HTTP server.
+	// +kubebuilder:validation:Required
+	Spec ClusterCatalogSpec `json:"spec"`
+
+	// status contains information about the state of the ClusterCatalog such as:
+	//   - Whether or not the catalog contents are being served via the catalog content HTTP server
+	//   - Whether or not the ClusterCatalog is progressing to a new state
+	//   - A reference to the source from which the catalog contents were retrieved
+	// +optional
 	Status ClusterCatalogStatus `json:"status,omitempty"`
 }
 
@@ -68,15 +85,28 @@ type ClusterCatalog struct {
 // ClusterCatalogList contains a list of ClusterCatalog
 type ClusterCatalogList struct {
 	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata"`
 
+	// items is a list of ClusterCatalogs.
+	// items is required.
+	// +kubebuilder:validation:Required
 	Items []ClusterCatalog `json:"items"`
 }
 
 // ClusterCatalogSpec defines the desired state of ClusterCatalog
-// +kubebuilder:validation:XValidation:rule="!has(self.source.image.pollInterval) || (self.source.image.ref.find('@sha256:') == \"\")",message="cannot specify PollInterval while using digest-based image"
 type ClusterCatalogSpec struct {
-	// source is a required field that allows the user to define the source of a Catalog that contains catalog metadata in the File-Based Catalog (FBC) format.
+	// source allows a user to define the source of a catalog.
+	// A "catalog" contains information on content that can be installed on a cluster.
+	// Providing a catalog source makes the contents of the catalog discoverable and usable by
+	// other on-cluster components.
+	// These on-cluster components may do a variety of things with this information, such as
+	// presenting the content in a GUI dashboard or installing content from the catalog on the cluster.
+	// The catalog source must contain catalog metadata in the File-Based Catalog (FBC) format.
+	// For more information on FBC, see https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs.
+	// source is a required field.
 	//
 	// Below is a minimal example of a ClusterCatalogSpec that sources a catalog from an image:
 	//
@@ -85,103 +115,136 @@ type ClusterCatalogSpec struct {
 	//    image:
 	//      ref: quay.io/operatorhubio/catalog:latest
 	//
-	// For more information on FBC, see https://olm.operatorframework.io/docs/reference/file-based-catalogs/#docs
+	// +kubebuilder:validation:Required
 	Source CatalogSource `json:"source"`
 
-	// priority is an optional field that allows the user to define a priority for a ClusterCatalog.
+	// priority allows the user to define a priority for a ClusterCatalog.
+	// priority is optional.
+	//
 	// A ClusterCatalog's priority is used by clients as a tie-breaker between ClusterCatalogs that meet the client's requirements.
-	// For example, in the case where multiple ClusterCatalogs provide the same bundle.
-	// A higher number means higher priority. Negative numbers are also accepted.
-	// When omitted, the default priority is 0.
+	// A higher number means higher priority.
+	//
+	// It is up to clients to decide how to handle scenarios where multiple ClusterCatalogs with the same priority meet their requirements.
+	// When deciding how to break the tie in this scenario, it is recommended that clients prompt their users for additional input.
+	//
+	// When omitted, the default priority is 0 because that is the zero value of integers.
+	//
+	// Negative numbers can be used to specify a priority lower than the default.
+	// Positive numbers can be used to specify a priority higher than the default.
+	//
+	// The lowest possible value is -2147483648.
+	// The highest possible value is 2147483647.
+	//
 	// +kubebuilder:default:=0
+	// +kubebuilder:validation:minimum:=-2147483648
+	// +kubebuilder:validation:maximum:=2147483647
 	// +optional
 	Priority int32 `json:"priority"`
 
-	// Availability is an optional field that allows users to define whether the ClusterCatalog is utilized by the operator-controller.
+	// availabilityMode allows users to define how the ClusterCatalog is made available to clients on the cluster.
+	// availabilityMode is optional.
 	//
-	// Allowed values are : ["Enabled", "Disabled"].
-	// If set to "Enabled", the catalog will be used for updates, serving contents, and package installations.
+	// Allowed values are "Available" and "Unavailable" and omitted.
 	//
-	// If set to "Disabled", catalogd will stop serving the catalog and the cached data will be removed.
+	// When omitted, the default value is "Available".
 	//
-	// If unspecified, the default value is "Enabled"
+	// When set to "Available", the catalog contents will be unpacked and served over the catalog content HTTP server.
+	// Setting the availabilityMode to "Available" tells clients that they should consider this ClusterCatalog
+	// and its contents as usable.
 	//
-	// +kubebuilder:validation:Enum="Disabled";"Enabled"
-	// +kubebuilder:default="Enabled"
+	// When set to "Unavailable", the catalog contents will no longer be served over the catalog content HTTP server.
+	// When set to this availabilityMode it should be interpreted the same as the ClusterCatalog not existing.
+	// Setting the availabilityMode to "Unavailable" can be useful in scenarios where a user may not want
+	// to delete the ClusterCatalog all together, but would still like it to be treated as if it doesn't exist.
+	//
+	// +kubebuilder:validation:Enum:="Unavailable";"Available"
+	// +kubebuilder:default:="Available"
 	// +optional
-	Availability string `json:"availability,omitempty"`
+	AvailabilityMode AvailabilityMode `json:"availabilityMode,omitempty"`
 }
 
 // ClusterCatalogStatus defines the observed state of ClusterCatalog
 type ClusterCatalogStatus struct {
 	// conditions is a representation of the current state for this ClusterCatalog.
-	// The status is represented by a set of "conditions".
 	//
-	// Each condition is generally structured in the following format:
-	//   - Type: a string representation of the condition type. More or less the condition "name".
-	//   - Status: a string representation of the state of the condition. Can be one of ["True", "False", "Unknown"].
-	//   - Reason: a string representation of the reason for the current state of the condition. Typically useful for building automation around particular Type+Reason combinations.
-	//   - Message: a human-readable message that further elaborates on the state of the condition.
+	// The current condition types are Serving and Progressing.
 	//
-	// The current set of condition types are:
-	//   - "Serving", which represents whether or not the contents of the catalog are being served via the HTTP(S) web server.
-	//   - "Progressing", which represents whether or not the ClusterCatalog is progressing towards a new state.
+	// The Serving condition is used to represent whether or not the contents of the catalog is being served via the HTTP(S) web server.
+	// When it has a status of True and a reason of Available, the contents of the catalog are being served.
+	// When it has a status of False and a reason of Unavailable, the contents of the catalog are not being served because the contents are not yet available.
+	// When it has a status of False and a reason of UserSpecifiedUnavailable, the contents of the catalog are not being served because the catalog has been intentionally marked as unavailable.
 	//
-	// The current set of reasons are:
-	//   - "Succeeded", this reason is set on the "Progressing" condition when progressing to a new state is successful.
-	//   - "Blocked", this reason is set on the "Progressing" condition when the ClusterCatalog controller has encountered an error that requires manual intervention for recovery.
-	//   - "Retrying", this reason is set on the "Progressing" condition when the ClusterCatalog controller has encountered an error that might be resolvable on subsequent reconciliation attempts.
-	//   - "Available", this reason is set on the "Serving" condition when the contents of the ClusterCatalog are being served via an endpoint on the HTTP(S) web server.
-	//   - "Unavailable", this reason is set on the "Serving" condition when there is not an endpoint on the HTTP(S) web server that is serving the contents of the ClusterCatalog.
+	// The Progressing condition is used to represent whether or not the ClusterCatalog is progressing or is ready to progress towards a new state.
+	// When it has a status of True and a reason of Retrying, there was an error in the progression of the ClusterCatalog that may be resolved on subsequent reconciliation attempts.
+	// When it has a status of True and a reason of Succeeded, the ClusterCatalog has successfully progressed to a new state and is ready to continue progressing.
+	// When it has a status of False and a reason of Blocked, there was an error in the progression of the ClusterCatalog that requires manual intervention for recovery.
 	//
+	// In the case that the Serving condition is True with reason Available and Progressing is True with reason Retrying, the previously fetched
+	// catalog contents are still being served via the HTTP(S) web server while we are progressing towards serving a new version of the catalog
+	// contents. This could occur when we've initially fetched the latest contents from the source for this catalog and when polling for changes
+	// to the contents we identify that there are updates to the contents.
+	//
+	// +listType=map
+	// +listMapKey=type
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 	// resolvedSource contains information about the resolved source based on the source type.
-	//
-	// Below is an example of a resolved source for an image source:
-	// resolvedSource:
-	//
-	//  image:
-	//    lastSuccessfulPollAttempt: "2024-09-10T12:22:13Z"
-	//    ref: quay.io/operatorhubio/catalog@sha256:c7392b4be033da629f9d665fec30f6901de51ce3adebeff0af579f311ee5cf1b
-	//  type: Image
 	// +optional
 	ResolvedSource *ResolvedCatalogSource `json:"resolvedSource,omitempty"`
 	// urls contains the URLs that can be used to access the catalog.
 	// +optional
 	URLs *ClusterCatalogURLs `json:"urls,omitempty"`
-	// lastUnpacked represents the time when the
-	// ClusterCatalog object was last unpacked successfully.
+	// lastUnpacked represents the last time the contents of the
+	// catalog were extracted from their source format. As an example,
+	// when using an Image source, the OCI image will be pulled and the
+	// image layers written to a file-system backed cache. We refer to the
+	// act of this extraction from the source format as "unpacking".
 	// +optional
-	LastUnpacked metav1.Time `json:"lastUnpacked,omitempty"`
+	LastUnpacked *metav1.Time `json:"lastUnpacked,omitempty"`
 }
 
 // ClusterCatalogURLs contains the URLs that can be used to access the catalog.
 type ClusterCatalogURLs struct {
-	// base is a required cluster-internal URL which provides API access for this ClusterCatalog.
-	// A suffix API access path can be added to retrieve catalog data for the ClusterCatalog.
-	// Currently, a 'v1' API access provides complete FBC retrival via the path "/api/v1/all", with the general form `{base}/api/v1/all`.
+	// base is a cluster-internal URL that provides endpoints for
+	// accessing the content of the catalog.
+	//
+	// It is expected that clients append the path for the endpoint they wish
+	// to access.
+	//
+	// Currently, only a single endpoint is served and is accessible at the path
+	// /api/v1.
+	//
+	// The endpoints served for the v1 API are:
+	//   - /all - this endpoint returns the entirety of the catalog contents in the FBC format
+	//
+	// As the needs of users and clients of the evolve, new endpoints may be added.
+	//
 	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength:=525
+	// +kubebuilder:validation:XValidation:rule="isURL(self)",message="must be a valid URL"
+	// +kubebuilder:validation:XValidation:rule="isURL(self) ? (url(self).getScheme() == \"http\" || url(self).getScheme() == \"https\") : true",message="scheme must be either http or https"
 	Base string `json:"base"`
 }
 
 // CatalogSource is a discriminated union of possible sources for a Catalog.
 // CatalogSource contains the sourcing information for a Catalog
 // +union
-// +kubebuilder:validation:XValidation:rule="self.type == 'Image' && has(self.image)",message="source type 'Image' requires image field"
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'Image' ? has(self.image) : !has(self.image)",message="image is required when source type is Image, and forbidden otherwise"
 type CatalogSource struct {
-	// type is a required reference to the type of source the catalog is sourced from.
+	// type is a reference to the type of source the catalog is sourced from.
+	// type is required.
 	//
-	// Allowed values are ["Image"]
+	// The only allowed value is "Image".
 	//
-	// When this field is set to "Image", the ClusterCatalog content will be sourced from an OCI image.
+	// When set to "Image", the ClusterCatalog content will be sourced from an OCI image.
 	// When using an image source, the image field must be set and must be the only field defined for this type.
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Image"
 	// +kubebuilder:validation:Required
 	Type SourceType `json:"type"`
-	// image is used to configure how catalog contents are sourced from an OCI image. This field must be set when type is set to "Image" and must be the only field defined for this type.
+	// image is used to configure how catalog contents are sourced from an OCI image.
+	// This field is required when type is Image, and forbidden otherwise.
 	// +optional
 	Image *ImageSource `json:"image,omitempty"`
 }
@@ -189,49 +252,104 @@ type CatalogSource struct {
 // ResolvedCatalogSource is a discriminated union of resolution information for a Catalog.
 // ResolvedCatalogSource contains the information about a sourced Catalog
 // +union
-// +kubebuilder:validation:XValidation:rule="self.type == 'Image' && has(self.image)",message="source type 'Image' requires image field"
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'Image' ? has(self.image) : !has(self.image)",message="image is required when source type is Image, and forbidden otherwise"
 type ResolvedCatalogSource struct {
 	// type is a reference to the type of source the catalog is sourced from.
+	// type is required.
 	//
-	// It will be set to one of the following values: ["Image"].
+	// The only allowed value is "Image".
 	//
-	// When this field is set to "Image", information about the resolved image source will be set in the 'image' field.
+	// When set to "Image", information about the resolved image source will be set in the 'image' field.
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Image"
 	// +kubebuilder:validation:Required
 	Type SourceType `json:"type"`
 	// image is a field containing resolution information for a catalog sourced from an image.
+	// This field must be set when type is Image, and forbidden otherwise.
 	Image *ResolvedImageSource `json:"image"`
 }
 
 // ResolvedImageSource provides information about the resolved source of a Catalog sourced from an image.
 type ResolvedImageSource struct {
-	// ref contains the resolved sha256 image ref containing Catalog contents.
+	// ref contains the resolved image digest-based reference.
+	// The digest format is used so users can use other tooling to fetch the exact
+	// OCI manifests that were used to extract the catalog contents.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength:=1000
+	// +kubebuilder:validation:XValidation:rule="self.matches('^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])((\\\\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]))+)?(:[0-9]+)?\\\\b')",message="must start with a valid domain. valid domains must be alphanumeric characters (lowercase and uppercase) separated by the \".\" character."
+	// +kubebuilder:validation:XValidation:rule="self.find('(\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?((\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?)+)?)') != \"\"",message="a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters."
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\"",message="must end with a digest"
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" ? self.find('(@.*:)').matches('(@[A-Za-z][A-Za-z0-9]*([-_+.][A-Za-z][A-Za-z0-9]*)*[:])') : true",message="digest algorithm is not valid. valid algorithms must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the \"-\", \"_\", \"+\", and \".\" characters."
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" ? self.find(':.*$').substring(1).size() >= 32 : true",message="digest is not valid. the encoded string must be at least 32 characters"
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" ? self.find(':.*$').matches(':[0-9A-Fa-f]*$') : true",message="digest is not valid. the encoded string must only contain hex characters (A-F, a-f, 0-9)"
 	Ref string `json:"ref"`
-	// lastSuccessfulPollAttempt is the time when the resolved source was last successfully polled for new content.
-	LastSuccessfulPollAttempt metav1.Time `json:"lastSuccessfulPollAttempt"`
 }
 
 // ImageSource enables users to define the information required for sourcing a Catalog from an OCI image
+//
+// If we see that there is a possibly valid digest-based image reference AND pollIntervalMinutes is specified,
+// reject the resource since there is no use in polling a digest-based image reference.
+// +kubebuilder:validation:XValidation:rule="self.ref.find('(@.*:)') != \"\" ? !has(self.pollIntervalMinutes) : true",message="cannot specify pollIntervalMinutes while using digest-based image"
 type ImageSource struct {
-	// ref is a required field that allows the user to define the reference to a container image containing Catalog contents.
-	// Examples:
-	//   ref: quay.io/operatorhubio/catalog:latest # image reference
-	//   ref: quay.io/operatorhubio/catalog@sha256:c7392b4be033da629f9d665fec30f6901de51ce3adebeff0af579f311ee5cf1b # image reference with sha256 digest
+	// ref allows users to define the reference to a container image containing Catalog contents.
+	// ref is required.
+	// ref can not be more than 1000 characters.
+	//
+	// A reference can be broken down into 3 parts - the domain, name, and identifier.
+	//
+	// The domain is typically the registry where an image is located.
+	// It must be alphanumeric characters (lowercase and uppercase) separated by the "." character.
+	// Hyphenation is allowed, but the domain must start and end with alphanumeric characters.
+	// Specifying a port to use is also allowed by adding the ":" character followed by numeric values.
+	// The port must be the last value in the domain.
+	// Some examples of valid domain values are "registry.mydomain.io", "quay.io", "my-registry.io:8080".
+	//
+	// The name is typically the repository in the registry where an image is located.
+	// It must contain lowercase alphanumeric characters separated only by the ".", "_", "__", "-" characters.
+	// Multiple names can be concatenated with the "/" character.
+	// The domain and name are combined using the "/" character.
+	// Some examples of valid name values are "operatorhubio/catalog", "catalog", "my-catalog.prod".
+	// An example of the domain and name parts of a reference being combined is "quay.io/operatorhubio/catalog".
+	//
+	// The identifier is typically the tag or digest for an image reference and is present at the end of the reference.
+	// It starts with a separator character used to distinguish the end of the name and beginning of the identifier.
+	// For a digest-based reference, the "@" character is the separator.
+	// For a tag-based reference, the ":" character is the separator.
+	// An identifier is required in the reference.
+	//
+	// Digest-based references must contain an algorithm reference immediately after the "@" separator.
+	// The algorithm reference must be followed by the ":" character and an encoded string.
+	// The algorithm must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the "-", "_", "+", and "." characters.
+	// Some examples of valid algorithm values are "sha256", "sha256+b64u", "multihash+base58".
+	// The encoded string following the algorithm must be hex digits (a-f, A-F, 0-9) and must be a minimum of 32 characters.
+	//
+	// Tag-based references must begin with a word character (alphanumeric + "_") followed by word characters or ".", and "-" characters.
+	// The tag must not be longer than 127 characters.
+	//
+	// An example of a valid digest-based image reference is "quay.io/operatorhubio/catalog@sha256:200d4ddb2a73594b91358fe6397424e975205bfbe44614f5846033cad64b3f05"
+	// An example of a valid tag-based image reference is "quay.io/operatorhubio/catalog:latest"
+	//
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MaxLength:=1000
+	// +kubebuilder:validation:XValidation:rule="self.matches('^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])((\\\\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]))+)?(:[0-9]+)?\\\\b')",message="must start with a valid domain. valid domains must be alphanumeric characters (lowercase and uppercase) separated by the \".\" character."
+	// +kubebuilder:validation:XValidation:rule="self.find('(\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?((\\\\/[a-z0-9]+((([._]|__|[-]*)[a-z0-9]+)+)?)+)?)') != \"\"",message="a valid name is required. valid names must contain lowercase alphanumeric characters separated only by the \".\", \"_\", \"__\", \"-\" characters."
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" || self.find(':.*$') != \"\"",message="must end with a digest or a tag"
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') == \"\" ? (self.find(':.*$') != \"\" ? self.find(':.*$').substring(1).size() <= 127 : true) : true",message="tag is invalid. the tag must not be more than 127 characters"
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') == \"\" ? (self.find(':.*$') != \"\" ? self.find(':.*$').matches(':[\\\\w][\\\\w.-]*$') : true) : true",message="tag is invalid. valid tags must begin with a word character (alphanumeric + \"_\") followed by word characters or \".\", and \"-\" characters"
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" ? self.find('(@.*:)').matches('(@[A-Za-z][A-Za-z0-9]*([-_+.][A-Za-z][A-Za-z0-9]*)*[:])') : true",message="digest algorithm is not valid. valid algorithms must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the \"-\", \"_\", \"+\", and \".\" characters."
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" ? self.find(':.*$').substring(1).size() >= 32 : true",message="digest is not valid. the encoded string must be at least 32 characters"
+	// +kubebuilder:validation:XValidation:rule="self.find('(@.*:)') != \"\" ? self.find(':.*$').matches(':[0-9A-Fa-f]*$') : true",message="digest is not valid. the encoded string must only contain hex characters (A-F, a-f, 0-9)"
 	Ref string `json:"ref"`
-	// pollInterval is an optional field that allows the user to set the interval at which the image source should be polled for new content.
-	// It must be specified as a duration.
-	// It must not be specified for a catalog image referenced by a sha256 digest.
-	// Examples:
-	//   pollInterval: 1h # poll the image source every hour
-	//   pollInterval: 30m # poll the image source every 30 minutes
-	//   pollInterval: 1h30m # poll the image source every 1 hour and 30 minutes
+
+	// pollIntervalMinutes allows the user to set the interval, in minutes, at which the image source should be polled for new content.
+	// pollIntervalMinutes is optional.
+	// pollIntervalMinutes can not be specified when ref is a digest-based reference.
 	//
 	// When omitted, the image will not be polled for new content.
-	// +kubebuilder:validation:Format:=duration
+	// +kubebuilder:validation:Minimum:=1
 	// +optional
-	PollInterval *metav1.Duration `json:"pollInterval,omitempty"`
+	PollIntervalMinutes *int `json:"pollIntervalMinutes,omitempty"`
 }
 
 func init() {

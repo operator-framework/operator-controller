@@ -5,6 +5,8 @@ import (
 	"io/fs"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
 )
 
@@ -48,6 +50,8 @@ type Result struct {
 	// digest rather than an image tag, and git sources should reference a
 	// commit hash rather than a branch or tag.
 	ResolvedSource *catalogdv1alpha1.ResolvedCatalogSource
+
+	LastSuccessfulPollAttempt metav1.Time
 
 	// State is the current state of unpacking the catalog content.
 	State State

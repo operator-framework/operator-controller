@@ -71,7 +71,7 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 				g.Expect(err).ToNot(HaveOccurred())
 				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeProgressing)
 				g.Expect(cond).ToNot(BeNil())
-				g.Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 				g.Expect(cond.Reason).To(Equal(catalogd.ReasonSucceeded))
 			}).Should(Succeed())
 
