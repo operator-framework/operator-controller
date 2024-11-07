@@ -35,7 +35,7 @@ To create the catalog, run the following command:
 ```bash
 # Create ClusterCatalog
 kubectl apply -f - <<EOF
-apiVersion: catalogd.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1alpha1
 kind: ClusterCatalog
 metadata:
   name: operatorhubio
