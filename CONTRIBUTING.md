@@ -36,6 +36,29 @@ The workflow defined above implies that the community is always ready for discus
 
 Please keep this workflow in mind as you read through the document.
 
+## How to Build and Deploy Locally
+
+After creating a fork and cloning the project locally,
+you can follow the steps below to test your changes:
+
+1. Create the cluster:
+
+```sh
+kind create cluster operator-controller
+```
+
+2. Build your changes:
+
+```sh
+make build docker-build
+```
+
+3. Load the image locally and Deploy to Kind
+
+```sh
+make kind-load kind-deploy
+```
+
 ### Communication Channels
 
 - Email: [operator-framework-olm-dev](mailto:operator-framework-olm-dev@googlegroups.com)
