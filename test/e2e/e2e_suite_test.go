@@ -4,11 +4,11 @@ import (
 	"context"
 	"os"
 	"testing"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -53,8 +53,8 @@ func createTestCatalog(ctx context.Context, name string, imageRef string) (*cata
 			Source: catalogd.CatalogSource{
 				Type: catalogd.SourceTypeImage,
 				Image: &catalogd.ImageSource{
-					Ref:          imageRef,
-					PollInterval: &metav1.Duration{Duration: time.Second},
+					Ref:                 imageRef,
+					PollIntervalMinutes: ptr.To(1),
 				},
 			},
 		},

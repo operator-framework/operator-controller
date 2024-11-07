@@ -245,7 +245,7 @@ func CatalogWalker(
 
 		// Remove disabled catalogs from consideration
 		catalogs = slices.DeleteFunc(catalogs, func(c catalogd.ClusterCatalog) bool {
-			if c.Spec.Availability == "Disabled" {
+			if c.Spec.AvailabilityMode == catalogd.AvailabilityModeUnavailable {
 				l.Info("excluding ClusterCatalog from resolution process since it is disabled", "catalog", c.Name)
 				return true
 			}
