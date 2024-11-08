@@ -43,13 +43,18 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 	versionRange := ext.Spec.Source.Catalog.Version
 	channels := ext.Spec.Source.Catalog.Channels
 
-	selector, err := metav1.LabelSelectorAsSelector(&ext.Spec.Source.Catalog.Selector)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("desired catalog selector is invalid: %w", err)
-	}
-	// A nothing (empty) seletor selects everything
-	if selector == labels.Nothing() {
-		selector = labels.Everything()
+	// unless overridden, default to selecting all bundles
+	var selector = labels.Everything()
+	var err error
+	if ext.Spec.Source.Catalog != nil {
+		selector, err = metav1.LabelSelectorAsSelector(ext.Spec.Source.Catalog.Selector)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("desired catalog selector is invalid: %w", err)
+		}
+		// A nothing (empty) selector selects everything
+		if selector == labels.Nothing() {
+			selector = labels.Everything()
+		}
 	}
 
 	var versionRangeConstraints *mmsemver.Constraints

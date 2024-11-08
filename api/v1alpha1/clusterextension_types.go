@@ -18,15 +18,13 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/operator-framework/operator-controller/internal/conditionsets"
 )
 
 var ClusterExtensionKind = "ClusterExtension"
 
 type (
-	UpgradeConstraintPolicy string
-	CRDUpgradeSafetyPolicy  string
+	UpgradeConstraintPolicy     string
+	CRDUpgradeSafetyEnforcement string
 )
 
 const (
@@ -58,6 +56,7 @@ type ClusterExtensionSpec struct {
 	//   catalog:
 	//     packageName: example-package
 	//
+	// +kubebuilder:validation:Required
 	Source SourceConfig `json:"source"`
 
 	// install is a required field used to configure the installation options
@@ -69,100 +68,93 @@ type ClusterExtensionSpec struct {
 	//    namespace: example-namespace
 	//    serviceAccount:
 	//      name: example-sa
+	//
+	// +kubebuilder:validation:Required
 	Install ClusterExtensionInstallConfig `json:"install"`
 }
 
 const SourceTypeCatalog = "Catalog"
 
 // SourceConfig is a discriminated union which selects the installation source.
+//
 // +union
-// +kubebuilder:validation:XValidation:rule="self.sourceType == 'Catalog' && has(self.catalog)",message="sourceType Catalog requires catalog field"
+// +kubebuilder:validation:XValidation:rule="has(self.sourceType) && self.sourceType == 'Catalog' ? has(self.catalog) : !has(self.catalog)",message="catalog is required when sourceType is Catalog, and forbidden otherwise"
 type SourceConfig struct {
 	// sourceType is a required reference to the type of install source.
 	//
-	// Allowed values are ["Catalog"]
+	// Allowed values are "Catalog"
 	//
-	// When this field is set to "Catalog", information for determining the appropriate
-	// bundle of content to install will be fetched from ClusterCatalog resources existing
-	// on the cluster. When using the Catalog sourceType, the catalog field must also be set.
+	// When this field is set to "Catalog", information for determining the
+	// appropriate bundle of content to install will be fetched from
+	// ClusterCatalog resources existing on the cluster.
+	// When using the Catalog sourceType, the catalog field must also be set.
 	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Catalog"
+	// +kubebuilder:validation:Required
 	SourceType string `json:"sourceType"`
 
-	// catalog is used to configure how information is sourced from a catalog. This field must be defined when sourceType is set to "Catalog",
-	// and must be the only field defined for this sourceType.
+	// catalog is used to configure how information is sourced from a catalog.
+	// This field is required when sourceType is "Catalog", and forbidden otherwise.
 	//
-	// +optional.
+	// +optional
 	Catalog *CatalogSource `json:"catalog,omitempty"`
 }
 
 // ClusterExtensionInstallConfig is a union which selects the clusterExtension installation config.
 // ClusterExtensionInstallConfig requires the namespace and serviceAccount which should be used for the installation of packages.
+//
 // +union
 type ClusterExtensionInstallConfig struct {
-	// namespace is a reference to the Namespace in which the bundle of
-	// content for the package referenced in the packageName field will be applied.
+	// namespace designates the kubernetes Namespace where bundle content
+	// for the package, referenced in the 'packageName' field, will be applied and the necessary
+	// service account can be found.
 	// The bundle may contain cluster-scoped resources or resources that are
 	// applied to other Namespaces. This Namespace is expected to exist.
 	//
 	// namespace is required, immutable, and follows the DNS label standard
-	// as defined in [RFC 1123]. This means that valid values:
-	//   - Contain no more than 63 characters
-	//   - Contain only lowercase alphanumeric characters or '-'
-	//   - Start with an alphanumeric character
-	//   - End with an alphanumeric character
-	//
-	// Some examples of valid values are:
-	//   - some-namespace
-	//   - 123-namespace
-	//   - 1-namespace-2
-	//   - somenamespace
-	//
-	// Some examples of invalid values are:
-	//   - -some-namespace
-	//   - some-namespace-
-	//   - thisisareallylongnamespacenamethatisgreaterthanthemaximumlength
-	//   - some.namespace
+	// as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters or hyphens (-),
+	// start and end with an alphanumeric character, and be no longer than 63 characters
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
-	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
-	//+kubebuilder:validation:MaxLength:=63
-	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
+	// +kubebuilder:validation:MaxLength:=63
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be a valid DNS1123 label. It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character, and be no longer than 63 characters"
+	// +kubebuilder:validation:Required
 	Namespace string `json:"namespace"`
 
 	// serviceAccount is a required reference to a ServiceAccount that exists
-	// in the installNamespace. The provided ServiceAccount is used to install and
+	// in the installNamespace which is used to install and
 	// manage the content for the package specified in the packageName field.
 	//
 	// In order to successfully install and manage the content for the package,
 	// the ServiceAccount provided via this field should be configured with the
 	// appropriate permissions to perform the necessary operations on all the
 	// resources that are included in the bundle of content being applied.
+	//
+	// +kubebuilder:validation:Required
 	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
 
-	// preflight is an optional field that can be used to configure the preflight checks run before installation or upgrade of the content for the package specified in the packageName field.
+	// preflight is an optional field that can be used to configure the checks that are
+	// run before installation or upgrade of the content for the package specified in the packageName field.
 	//
-	// When specified, it overrides the default configuration of the preflight checks that are required to execute successfully during an install/upgrade operation.
+	// When specified, it replaces the default preflight configuration for install/upgrade actions.
+	// When not specified, the default configuration will be used.
 	//
-	// When not specified, the default configuration for each preflight check will be used.
-	//
-	//+optional
+	// +optional
 	Preflight *PreflightConfig `json:"preflight,omitempty"`
 }
 
-// CatalogSource defines the required fields for catalog source.
+// CatalogSource defines the attributes used to identify and filter content from a catalog.
 type CatalogSource struct {
 	// packageName is a reference to the name of the package to be installed
 	// and is used to filter the content from catalogs.
 	//
-	// This field is required, immutable and follows the DNS subdomain name
-	// standard as defined in [RFC 1123]. This means that valid entries:
-	//   - Contain no more than 253 characters
-	//   - Contain only lowercase alphanumeric characters, '-', or '.'
-	//   - Start with an alphanumeric character
-	//   - End with an alphanumeric character
+	// packageName is required, immutable, and follows the DNS subdomain standard
+	// as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters,
+	// hyphens (-) or periods (.), start and end with an alphanumeric character,
+	// and be no longer than 253 characters.
 	//
 	// Some examples of valid values are:
 	//   - some-package
@@ -178,9 +170,11 @@ type CatalogSource struct {
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
-	//+kubebuilder:validation:MaxLength:=253
-	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
-	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="packageName is immutable"
+	// +kubebuilder:validation.Required
+	// +kubebuilder:validation:MaxLength:=253
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="packageName is immutable"
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="packageName must be a valid DNS1123 subdomain. It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.), start and end with an alphanumeric character, and be no longer than 253 characters"
+	// +kubebuilder:validation:Required
 	PackageName string `json:"packageName"`
 
 	// version is an optional semver constraint (a specific version or range of versions). When unspecified, the latest version available will be installed.
@@ -257,15 +251,20 @@ type CatalogSource struct {
 	//
 	// For more information on semver, please see https://semver.org/
 	//
-	//+kubebuilder:validation:MaxLength:=64
-	//+kubebuilder:validation:Pattern=`^(\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\^)\s*(v?(0|[1-9]\d*|[x|X|\*])(\.(0|[1-9]\d*|x|X|\*]))?(\.(0|[1-9]\d*|x|X|\*))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)((?:\s+|,\s*|\s*\|\|\s*)(=||!=|>|<|>=|=>|<=|=<|~|~>|\^)\s*(v?(0|[1-9]\d*|x|X|\*])(\.(0|[1-9]\d*|x|X|\*))?(\.(0|[1-9]\d*|x|X|\*]))?(-([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?(\+([0-9A-Za-z\-]+(\.[0-9A-Za-z\-]+)*))?)\s*)*$`
-	//+optional
+	// +kubebuilder:validation:MaxLength:=64
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^(\\\\s*(=||!=|>|<|>=|=>|<=|=<|~|~>|\\\\^)\\\\s*(v?(0|[1-9]\\\\d*|[x|X|\\\\*])(\\\\.(0|[1-9]\\\\d*|x|X|\\\\*]))?(\\\\.(0|[1-9]\\\\d*|x|X|\\\\*))?(-([0-9A-Za-z\\\\-]+(\\\\.[0-9A-Za-z\\\\-]+)*))?(\\\\+([0-9A-Za-z\\\\-]+(\\\\.[0-9A-Za-z\\\\-]+)*))?)\\\\s*)((?:\\\\s+|,\\\\s*|\\\\s*\\\\|\\\\|\\\\s*)(=||!=|>|<|>=|=>|<=|=<|~|~>|\\\\^)\\\\s*(v?(0|[1-9]\\\\d*|x|X|\\\\*])(\\\\.(0|[1-9]\\\\d*|x|X|\\\\*))?(\\\\.(0|[1-9]\\\\d*|x|X|\\\\*]))?(-([0-9A-Za-z\\\\-]+(\\\\.[0-9A-Za-z\\\\-]+)*))?(\\\\+([0-9A-Za-z\\\\-]+(\\\\.[0-9A-Za-z\\\\-]+)*))?)\\\\s*)*$\")",message="invalid version expression"
+	// +optional
 	Version string `json:"version,omitempty"`
 
 	// channels is an optional reference to a set of channels belonging to
 	// the package specified in the packageName field.
 	//
-	// A "channel" is a package author defined stream of updates for an extension.
+	// A "channel" is a package-author-defined stream of updates for an extension.
+	//
+	// Each channel in the list must follow the DNS subdomain standard
+	// as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters,
+	// hyphens (-) or periods (.), start and end with an alphanumeric character,
+	// and be no longer than 253 characters. No more than 256 channels can be specified.
 	//
 	// When specified, it is used to constrain the set of installable bundles and
 	// the automated upgrade path. This constraint is an AND operation with the
@@ -276,13 +275,6 @@ type CatalogSource struct {
 	//   - Automatic upgrades will be constrained to upgrade edges defined by the selected channel
 	//
 	// When unspecified, upgrade edges across all channels will be used to identify valid automatic upgrade paths.
-	//
-	// This field follows the DNS subdomain name standard as defined in [RFC
-	// 1123]. This means that valid entries:
-	//   - Contain no more than 253 characters
-	//   - Contain only lowercase alphanumeric characters, '-', or '.'
-	//   - Start with an alphanumeric character
-	//   - End with an alphanumeric character
 	//
 	// Some examples of valid values are:
 	//   - 1.1.x
@@ -303,9 +295,10 @@ type CatalogSource struct {
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
-	//+kubebuilder:validation:items:MaxLength:=253
-	//+kubebuilder:validation:items:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
-	//+optional
+	// +kubebuilder:validation:items:MaxLength:=253
+	// +kubebuilder:validation:MaxItems:=256
+	// +kubebuilder:validation:items:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="channels entries must be valid DNS1123 subdomains"
+	// +optional
 	Channels []string `json:"channels,omitempty"`
 
 	// selector is an optional field that can be used
@@ -315,14 +308,14 @@ type CatalogSource struct {
 	// When unspecified, all ClusterCatalogs will be used in
 	// the bundle selection process.
 	//
-	//+optional
-	Selector metav1.LabelSelector `json:"selector,omitempty"`
+	// +optional
+	Selector *metav1.LabelSelector `json:"selector,omitempty"`
 
 	// upgradeConstraintPolicy is an optional field that controls whether
 	// the upgrade path(s) defined in the catalog are enforced for the package
 	// referenced in the packageName field.
 	//
-	// Allowed values are: ["CatalogProvided", "SelfCertified"].
+	// Allowed values are: "CatalogProvided" or "SelfCertified", or omitted.
 	//
 	// When this field is set to "CatalogProvided", automatic upgrades will only occur
 	// when upgrade constraints specified by the package author are met.
@@ -334,28 +327,26 @@ type CatalogSource struct {
 	// loss. It is assumed that users have independently verified changes when
 	// using this option.
 	//
-	// If unspecified, the default value is "CatalogProvided".
+	// When this field is omitted, the default value is "CatalogProvided".
 	//
-	//+kubebuilder:validation:Enum:=CatalogProvided;SelfCertified
-	//+kubebuilder:default:=CatalogProvided
-	//+optional
+	// +kubebuilder:validation:Enum:=CatalogProvided;SelfCertified
+	// +kubebuilder:default:=CatalogProvided
+	// +optional
 	UpgradeConstraintPolicy UpgradeConstraintPolicy `json:"upgradeConstraintPolicy,omitempty"`
 }
 
-// ServiceAccountReference references a serviceAccount.
+// ServiceAccountReference identifies the serviceAccount used fo install a ClusterExtension.
 type ServiceAccountReference struct {
 	// name is a required, immutable reference to the name of the ServiceAccount
 	// to be used for installation and management of the content for the package
 	// specified in the packageName field.
 	//
-	// This ServiceAccount is expected to exist in the installNamespace.
+	// This ServiceAccount must exist in the installNamespace.
 	//
-	// This field follows the DNS subdomain name standard as defined in [RFC
-	// 1123]. This means that valid values:
-	//   - Contain no more than 253 characters
-	//   - Contain only lowercase alphanumeric characters, '-', or '.'
-	//   - Start with an alphanumeric character
-	//   - End with an alphanumeric character
+	// name follows the DNS subdomain standard as defined in [RFC 1123].
+	// It must contain only lowercase alphanumeric characters,
+	// hyphens (-) or periods (.), start and end with an alphanumeric character,
+	// and be no longer than 253 characters.
 	//
 	// Some examples of valid values are:
 	//   - some-serviceaccount
@@ -370,13 +361,15 @@ type ServiceAccountReference struct {
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
-	//+kubebuilder:validation:MaxLength:=253
-	//+kubebuilder:validation:Pattern:=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
-	//+kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
+	// +kubebuilder:validation:MaxLength:=253
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="name must be a valid DNS1123 subdomain. It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.), start and end with an alphanumeric character, and be no longer than 253 characters"
+	// +kubebuilder:validation:Required
 	Name string `json:"name"`
 }
 
 // PreflightConfig holds the configuration for the preflight checks.  If used, at least one preflight check must be non-nil.
+//
 // +kubebuilder:validation:XValidation:rule="has(self.crdUpgradeSafety)",message="at least one of [crdUpgradeSafety] are required when preflight is specified"
 type PreflightConfig struct {
 	// crdUpgradeSafety is used to configure the CRD Upgrade Safety pre-flight
@@ -384,34 +377,28 @@ type PreflightConfig struct {
 	//
 	// The CRD Upgrade Safety pre-flight check safeguards from unintended
 	// consequences of upgrading a CRD, such as data loss.
-	//
-	// This field is required if the spec.install.preflight field is specified.
 	CRDUpgradeSafety *CRDUpgradeSafetyPreflightConfig `json:"crdUpgradeSafety"`
 }
 
 // CRDUpgradeSafetyPreflightConfig is the configuration for CRD upgrade safety preflight check.
 type CRDUpgradeSafetyPreflightConfig struct {
-	// policy is used to configure the state of the CRD Upgrade Safety pre-flight check.
+	// enforcement is a required field, used to configure the state of the CRD Upgrade Safety pre-flight check.
 	//
-	// This field is required when the spec.install.preflight.crdUpgradeSafety field is
-	// specified.
+	// Allowed values are "None" or "Strict". The default value is "Strict".
 	//
-	// Allowed values are ["Enabled", "Disabled"]. The default value is "Enabled".
-	//
-	// When set to "Disabled", the CRD Upgrade Safety pre-flight check will be skipped
+	// When set to "None", the CRD Upgrade Safety pre-flight check will be skipped
 	// when performing an upgrade operation. This should be used with caution as
 	// unintended consequences such as data loss can occur.
 	//
-	// When set to "Enabled", the CRD Upgrade Safety pre-flight check will be run when
+	// When set to "Strict", the CRD Upgrade Safety pre-flight check will be run when
 	// performing an upgrade operation.
 	//
-	//+kubebuilder:validation:Enum:="Enabled";"Disabled"
-	//+kubebuilder:default:=Enabled
-	Policy CRDUpgradeSafetyPolicy `json:"policy"`
+	// +kubebuilder:validation:Enum:="None";"Strict"
+	// +kubebuilder:validation:Required
+	Enforcement CRDUpgradeSafetyEnforcement `json:"enforcement"`
 }
 
 const (
-	// TODO(user): add more Types, here and into init()
 	TypeInstalled   = "Installed"
 	TypeProgressing = "Progressing"
 
@@ -428,110 +415,111 @@ const (
 	ReasonBlocked    = "Blocked"
 	ReasonRetrying   = "Retrying"
 
-	CRDUpgradeSafetyPolicyEnabled  CRDUpgradeSafetyPolicy = "Enabled"
-	CRDUpgradeSafetyPolicyDisabled CRDUpgradeSafetyPolicy = "Disabled"
+	// None will not perform CRD upgrade safety checks.
+	CRDUpgradeSafetyEnforcementNone CRDUpgradeSafetyEnforcement = "None"
+	// Strict will enforce the CRD upgrade safety check and block the upgrade if the CRD would not pass the check.
+	CRDUpgradeSafetyEnforcementStrict CRDUpgradeSafetyEnforcement = "Strict"
 )
 
-func init() {
-	// TODO(user): add Types from above
-	conditionsets.ConditionTypes = append(conditionsets.ConditionTypes,
-		TypeInstalled,
-		TypeDeprecated,
-		TypePackageDeprecated,
-		TypeChannelDeprecated,
-		TypeBundleDeprecated,
-		TypeProgressing,
-	)
-	// TODO(user): add Reasons from above
-	conditionsets.ConditionReasons = append(conditionsets.ConditionReasons,
-		ReasonSucceeded,
-		ReasonDeprecated,
-		ReasonFailed,
-		ReasonBlocked,
-		ReasonRetrying,
-	)
-}
-
+// BundleMetadata is a representation of the identifying attributes of a bundle.
 type BundleMetadata struct {
-	// name is a required field and is a reference
-	// to the name of a bundle
+	// name is required and follows the DNS subdomain standard
+	// as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters,
+	// hyphens (-) or periods (.), start and end with an alphanumeric character,
+	// and be no longer than 253 characters.
+	//
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="packageName must be a valid DNS1123 subdomain. It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.), start and end with an alphanumeric character, and be no longer than 253 characters"
 	Name string `json:"name"`
-	// version is a required field and is a reference
-	// to the version that this bundle represents
+
+	// version is a required field and is a reference to the version that this bundle represents
+	// version follows the semantic versioning standard as defined in https://semver.org/.
+	//
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^([0-9]+)(\\\\.[0-9]+)?(\\\\.[0-9]+)?(-([-0-9A-Za-z]+(\\\\.[-0-9A-Za-z]+)*))?(\\\\+([-0-9A-Za-z]+(-\\\\.[-0-9A-Za-z]+)*))?\")",message="version must be well-formed semver"
 	Version string `json:"version"`
 }
 
-// ClusterExtensionStatus defines the observed state of ClusterExtension.
+// ClusterExtensionStatus defines the observed state of a ClusterExtension.
 type ClusterExtensionStatus struct {
-	Install *ClusterExtensionInstallStatus `json:"install,omitempty"`
-
-	// conditions is a representation of the current state for this ClusterExtension.
-	// The status is represented by a set of "conditions".
+	// The set of condition types which apply to all spec.source variations are Installed and Progressing.
 	//
-	// Each condition is generally structured in the following format:
-	//   - Type: a string representation of the condition type. More or less the condition "name".
-	//   - Status: a string representation of the state of the condition. Can be one of ["True", "False", "Unknown"].
-	//   - Reason: a string representation of the reason for the current state of the condition. Typically useful for building automation around particular Type+Reason combinations.
-	//   - Message: a human readable message that further elaborates on the state of the condition
+	// The Installed condition represents whether or not the bundle has been installed for this ClusterExtension.
+	// When Installed is True and the Reason is Succeeded, the bundle has been successfully installed.
+	// When Installed is False and the Reason is Failed, the bundle has failed to install.
 	//
-	// The global set of condition types are:
-	//   - "Installed", represents whether or not the a bundle has been installed for this ClusterExtension
-	//   - "Progressing", represents whether or not the ClusterExtension is progressing towards a new state
+	// The Progressing condition represents whether or not the ClusterExtension is advancing towards a new state.
+	// When Progressing is True and the Reason is Succeeded, the ClusterExtension is making progress towards a new state.
+	// When Progressing is True and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.
+	// When Progressing is False and the Reason is Blocked, the ClusterExtension has encountered an error that requires manual intervention for recovery.
 	//
-	// When the ClusterExtension is sourced from a catalog, the following conditions are also possible:
-	//   - "Deprecated", represents an aggregation of the PackageDeprecated, ChannelDeprecated, and BundleDeprecated condition types
-	//   - "PackageDeprecated", represents whether or not the package specified in the spec.source.catalog.packageName field has been deprecated
-	//   - "ChannelDeprecated", represents whether or not any channel specified in spec.source.catalog.channels has been deprecated
-	//   - "BundleDeprecated", represents whether or not the installed bundle is deprecated
-	//
-	// The current set of reasons are:
-	//   - "Succeeded", this reason is set on the "Installed" and "Progressing" conditions when initial installation and progressing to a new state is successful
-	//   - "Failed", this reason is set on the "Installed" condition when an error has occurred while performing the initial installation.
-	//   - "Blocked", this reason is set on the "Progressing" condition when the ClusterExtension controller has encountered an error that requires manual intervention for recovery
-	//   - "Retrying", this reason is set on the "Progressing" condition when the ClusterExtension controller has encountered an error that could be resolved on subsequent reconciliation attempts
-	//   - "Deprecated", this reason is set on the "Deprecated", "PackageDeprecated", "ChannelDeprecated", and "BundleDeprecated" conditions to signal that the installed package has been deprecated at the particular scope
-	//
+	// When the ClusterExtension is sourced from a catalog, if may also communicate a deprecation condition.
+	// These are indications from a package owner to guide users away from a particular package, channel, or bundle.
+	// BundleDeprecated is set if the requested bundle version is marked deprecated in the catalog.
+	// ChannelDeprecated is set if the requested channel is marked deprecated in the catalog.
+	// PackageDeprecated is set if the requested package is marked deprecated in the catalog.
+	// Deprecated is a rollup condition that is present when any of the deprecated conditions are present.
 	//
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +listType=map
 	// +listMapKey=type
+	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+
+	// install is a representation of the current installation status for this ClusterExtension.
+	//
+	// +optional
+	Install *ClusterExtensionInstallStatus `json:"install,omitempty"`
 }
 
+// ClusterExtensionInstallStatus is a representation of the status of the identified bundle.
 type ClusterExtensionInstallStatus struct {
-	// bundle is a representation of the currently installed bundle.
+	// bundle is a required field which represents the identifying attributes of a bundle.
 	//
 	// A "bundle" is a versioned set of content that represents the resources that
 	// need to be applied to a cluster to install a package.
+	//
+	// +kubebuilder:validation:Required
 	Bundle BundleMetadata `json:"bundle"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:resource:scope=Cluster
-//+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="Installed Bundle",type=string,JSONPath=`.status.install.bundle.name`
-//+kubebuilder:printcolumn:name=Version,type=string,JSONPath=`.status.install.bundle.version`
-//+kubebuilder:printcolumn:name="Installed",type=string,JSONPath=`.status.conditions[?(@.type=='Installed')].status`
-//+kubebuilder:printcolumn:name="Progressing",type=string,JSONPath=`.status.conditions[?(@.type=='Progressing')].status`
-//+kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
+// +kubebuilder:object:root=true
+// +kubebuilder:resource:scope=Cluster
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Installed Bundle",type=string,JSONPath=`.status.install.bundle.name`
+// +kubebuilder:printcolumn:name=Version,type=string,JSONPath=`.status.install.bundle.version`
+// +kubebuilder:printcolumn:name="Installed",type=string,JSONPath=`.status.conditions[?(@.type=='Installed')].status`
+// +kubebuilder:printcolumn:name="Progressing",type=string,JSONPath=`.status.conditions[?(@.type=='Progressing')].status`
+// +kubebuilder:printcolumn:name=Age,type=date,JSONPath=`.metadata.creationTimestamp`
 
 // ClusterExtension is the Schema for the clusterextensions API
 type ClusterExtension struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ClusterExtensionSpec   `json:"spec,omitempty"`
+	// spec is an optional field that defines the desired state of the ClusterExtension.
+	// +optional
+	Spec ClusterExtensionSpec `json:"spec,omitempty"`
+
+	// status is an optional field that defines the observed state of the ClusterExtension.
+	// +optional
 	Status ClusterExtensionStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // ClusterExtensionList contains a list of ClusterExtension
 type ClusterExtensionList struct {
 	metav1.TypeMeta `json:",inline"`
+
+	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []ClusterExtension `json:"items"`
+
+	// items is a required list of ClusterExtension objects.
+	//
+	// +kubebuilder:validation:Required
+	Items []ClusterExtension `json:"items"`
 }
 
 func init() {

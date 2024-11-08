@@ -313,7 +313,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 					SourceType: "Catalog",
 					Catalog: &ocv1alpha1.CatalogSource{
 						PackageName: tc.packageName,
-						Selector: metav1.LabelSelector{
+						Selector: &metav1.LabelSelector{
 							MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
 						},
 					},
@@ -334,12 +334,12 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 				assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 			}, pollDuration, pollInterval)
 
-			t.Log("By eventually reporting no longer progressing")
+			t.Log("By eventually reporting progressing as True")
 			require.EventuallyWithT(t, func(ct *assert.CollectT) {
 				assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 				if assert.NotNil(ct, cond) {
-					assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+					assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 					assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 				}
 			}, pollDuration, pollInterval)
@@ -440,7 +440,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
@@ -496,7 +496,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
@@ -512,7 +512,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
@@ -547,7 +547,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
@@ -562,7 +562,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
@@ -580,7 +580,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 			SourceType: "Catalog",
 			Catalog: &ocv1alpha1.CatalogSource{
 				PackageName: "prometheus",
-				Selector: metav1.LabelSelector{
+				Selector: &metav1.LabelSelector{
 					MatchExpressions: []metav1.LabelSelectorRequirement{
 						{
 							Key:      "olm.operatorframework.io/metadata.name",
@@ -607,7 +607,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
@@ -631,7 +631,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
@@ -669,7 +669,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 			SourceType: "Catalog",
 			Catalog: &ocv1alpha1.CatalogSource{
 				PackageName: "prometheus",
-				Selector: metav1.LabelSelector{
+				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
 				},
 			},
@@ -690,7 +690,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
@@ -714,7 +714,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
@@ -732,7 +732,7 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 			SourceType: "Catalog",
 			Catalog: &ocv1alpha1.CatalogSource{
 				PackageName: "prometheus",
-				Selector: metav1.LabelSelector{
+				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
 				},
 			},
@@ -797,7 +797,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 			SourceType: "Catalog",
 			Catalog: &ocv1alpha1.CatalogSource{
 				PackageName: "prometheus",
-				Selector: metav1.LabelSelector{
+				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
 				},
 			},
@@ -858,12 +858,12 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 		}
 	}, pollDuration, pollInterval)
 
-	t.Log("By eventually reporting Progressing == False with Reason Success")
+	t.Log("By eventually reporting Progressing == True with Reason Success")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
+			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)

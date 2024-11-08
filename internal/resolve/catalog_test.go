@@ -770,7 +770,7 @@ func TestInvalidClusterExtensionCatalogMatchExpressions(t *testing.T) {
 			Source: ocv1alpha1.SourceConfig{
 				Catalog: &ocv1alpha1.CatalogSource{
 					PackageName: "foo",
-					Selector: metav1.LabelSelector{
+					Selector: &metav1.LabelSelector{
 						MatchExpressions: []metav1.LabelSelectorRequirement{
 							{
 								Key:      "name",
@@ -802,7 +802,7 @@ func TestInvalidClusterExtensionCatalogMatchLabelsName(t *testing.T) {
 			Source: ocv1alpha1.SourceConfig{
 				Catalog: &ocv1alpha1.CatalogSource{
 					PackageName: "foo",
-					Selector: metav1.LabelSelector{
+					Selector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{"": "value"},
 					},
 				},
@@ -828,7 +828,7 @@ func TestInvalidClusterExtensionCatalogMatchLabelsValue(t *testing.T) {
 			Source: ocv1alpha1.SourceConfig{
 				Catalog: &ocv1alpha1.CatalogSource{
 					PackageName: "foo",
-					Selector: metav1.LabelSelector{
+					Selector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{"name": "&value"},
 					},
 				},
@@ -852,7 +852,9 @@ func TestClusterExtensionMatchLabel(t *testing.T) {
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyCatalogProvided)
-	ce.Spec.Source.Catalog.Selector.MatchLabels = map[string]string{"olm.operatorframework.io/metadata.name": "b"}
+	ce.Spec.Source.Catalog.Selector = &metav1.LabelSelector{
+		MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": "b"},
+	}
 
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	require.NoError(t, err)
@@ -871,7 +873,9 @@ func TestClusterExtensionNoMatchLabel(t *testing.T) {
 	}
 	r := CatalogResolver{WalkCatalogsFunc: w.WalkCatalogs}
 	ce := buildFooClusterExtension(pkgName, []string{}, "", ocv1alpha1.UpgradeConstraintPolicyCatalogProvided)
-	ce.Spec.Source.Catalog.Selector.MatchLabels = map[string]string{"olm.operatorframework.io/metadata.name": "a"}
+	ce.Spec.Source.Catalog.Selector = &metav1.LabelSelector{
+		MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": "a"},
+	}
 
 	_, _, _, err := r.Resolve(context.Background(), ce, nil)
 	require.Error(t, err)

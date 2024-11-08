@@ -22,12 +22,12 @@ func TestSetStatusProgressing(t *testing.T) {
 		expected         metav1.Condition
 	}{
 		{
-			name:             "non-nil ClusterExtension, nil error, Progressing condition has status False with reason Success",
+			name:             "non-nil ClusterExtension, nil error, Progressing condition has status True with reason Success",
 			err:              nil,
 			clusterExtension: &ocv1alpha1.ClusterExtension{},
 			expected: metav1.Condition{
 				Type:    ocv1alpha1.TypeProgressing,
-				Status:  metav1.ConditionFalse,
+				Status:  metav1.ConditionTrue,
 				Reason:  ocv1alpha1.ReasonSucceeded,
 				Message: "desired state reached",
 			},

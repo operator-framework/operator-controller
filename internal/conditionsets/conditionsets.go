@@ -16,9 +16,27 @@ limitations under the License.
 
 package conditionsets
 
+import (
+	"github.com/operator-framework/operator-controller/api/v1alpha1"
+)
+
 // ConditionTypes is the full set of ClusterExtension condition Types.
 // ConditionReasons is the full set of ClusterExtension condition Reasons.
 //
-// NOTE: These are populated by init() in api/v1alpha1/clusterextension_types.go
-var ConditionTypes []string
-var ConditionReasons []string
+// NOTE: unit tests in clusterextension_types_test will enforce completeness.
+var ConditionTypes = []string{
+	v1alpha1.TypeInstalled,
+	v1alpha1.TypeDeprecated,
+	v1alpha1.TypePackageDeprecated,
+	v1alpha1.TypeChannelDeprecated,
+	v1alpha1.TypeBundleDeprecated,
+	v1alpha1.TypeProgressing,
+}
+
+var ConditionReasons = []string{
+	v1alpha1.ReasonSucceeded,
+	v1alpha1.ReasonDeprecated,
+	v1alpha1.ReasonFailed,
+	v1alpha1.ReasonBlocked,
+	v1alpha1.ReasonRetrying,
+}

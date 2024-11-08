@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
@@ -56,6 +57,26 @@ type Helm struct {
 	Preflights         []Preflight
 }
 
+// shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
+// if it is set to enforcement None.
+func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1alpha1.ClusterExtension, state string) bool {
+	l := log.FromContext(ctx)
+	hasCRDUpgradeSafety := ext.Spec.Install.Preflight != nil && ext.Spec.Install.Preflight.CRDUpgradeSafety != nil
+	_, isCRDUpgradeSafetyInstance := preflight.(*crdupgradesafety.Preflight)
+
+	if hasCRDUpgradeSafety && isCRDUpgradeSafetyInstance {
+		if state == StateNeedsInstall || state == StateNeedsUpgrade {
+			l.Info("crdUpgradeSafety ", "policy", ext.Spec.Install.Preflight.CRDUpgradeSafety.Enforcement)
+		}
+		if ext.Spec.Install.Preflight.CRDUpgradeSafety.Enforcement == ocv1alpha1.CRDUpgradeSafetyEnforcementNone {
+			// Skip this preflight check because it is of type *crdupgradesafety.Preflight and the CRD Upgrade Safety
+			// policy is set to None
+			return true
+		}
+	}
+	return false
+}
+
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
 	chrt, err := convert.RegistryV1ToHelmChart(ctx, contentFS, ext.Spec.Install.Namespace, []string{corev1.NamespaceAll})
 	if err != nil {
@@ -78,12 +99,8 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 	}
 
 	for _, preflight := range h.Preflights {
-		if ext.Spec.Install.Preflight != nil && ext.Spec.Install.Preflight.CRDUpgradeSafety != nil {
-			if _, ok := preflight.(*crdupgradesafety.Preflight); ok && ext.Spec.Install.Preflight.CRDUpgradeSafety.Policy == ocv1alpha1.CRDUpgradeSafetyPolicyDisabled {
-				// Skip this preflight check because it is of type *crdupgradesafety.Preflight and the CRD Upgrade Safety
-				// preflight check has been disabled
-				continue
-			}
+		if shouldSkipPreflight(ctx, preflight, ext, state) {
+			continue
 		}
 		switch state {
 		case StateNeedsInstall:
