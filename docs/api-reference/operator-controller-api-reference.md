@@ -120,8 +120,6 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `namespace` _string_ | namespace designates the kubernetes Namespace where bundle content<br />for the package, referenced in the 'packageName' field, will be applied and the necessary<br />service account can be found.<br />The bundle may contain cluster-scoped resources or resources that are<br />applied to other Namespaces. This Namespace is expected to exist.<br /><br />namespace is required, immutable, and follows the DNS label standard<br />as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters or hyphens (-),<br />start and end with an alphanumeric character, and be no longer than 63 characters<br /><br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 63 <br />Required: \{\} <br /> |
-| `serviceAccount` _[ServiceAccountReference](#serviceaccountreference)_ | serviceAccount is a required reference to a ServiceAccount that exists<br />in the installNamespace which is used to install and<br />manage the content for the package specified in the packageName field.<br /><br />In order to successfully install and manage the content for the package,<br />the ServiceAccount provided via this field should be configured with the<br />appropriate permissions to perform the necessary operations on all the<br />resources that are included in the bundle of content being applied. |  | Required: \{\} <br /> |
 | `preflight` _[PreflightConfig](#preflightconfig)_ | preflight is an optional field that can be used to configure the checks that are<br />run before installation or upgrade of the content for the package specified in the packageName field.<br /><br />When specified, it replaces the default preflight configuration for install/upgrade actions.<br />When not specified, the default configuration will be used. |  |  |
 
 
@@ -174,8 +172,10 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `namespace` _string_ | namespace is a reference to a Kubernetes namespace.<br />This is the namespace in which the provided ServiceAccount must exist.<br />It also designates the default namespace where namespace-scoped resources<br />for the extension are applied to the cluster.<br />Some extensions may contain namespace-scoped resources to be applied in other namespaces.<br />This namespace must exist.<br /><br />namespace is required, immutable, and follows the DNS label standard<br />as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters or hyphens (-),<br />start and end with an alphanumeric character, and be no longer than 63 characters<br /><br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 63 <br />Required: \{\} <br /> |
+| `serviceAccount` _[ServiceAccountReference](#serviceaccountreference)_ | serviceAccount is a reference to a ServiceAccount used to perform all interactions<br />with the cluster that are required to manage the extension.<br />The ServiceAccount must be configured with the necessary permissions to perform these interactions.<br />The ServiceAccount must exist in the namespace referenced in the spec.<br />serviceAccount is required. |  | Required: \{\} <br /> |
 | `source` _[SourceConfig](#sourceconfig)_ | source is a required field which selects the installation source of content<br />for this ClusterExtension. Selection is performed by setting the sourceType.<br /><br />Catalog is currently the only implemented sourceType, and setting the<br />sourcetype to "Catalog" requires the catalog field to also be defined.<br /><br />Below is a minimal example of a source definition (in yaml):<br /><br />source:<br />  sourceType: Catalog<br />  catalog:<br />    packageName: example-package |  | Required: \{\} <br /> |
-| `install` _[ClusterExtensionInstallConfig](#clusterextensioninstallconfig)_ | install is a required field used to configure the installation options<br />for the ClusterExtension such as the installation namespace,<br />the service account and the pre-flight check configuration.<br /><br />Below is a minimal example of an installation definition (in yaml):<br />install:<br />   namespace: example-namespace<br />   serviceAccount:<br />     name: example-sa |  | Required: \{\} <br /> |
+| `install` _[ClusterExtensionInstallConfig](#clusterextensioninstallconfig)_ | install is an optional field used to configure the installation options<br />for the ClusterExtension such as the pre-flight check configuration. |  |  |
 
 
 #### ClusterExtensionStatus
@@ -220,7 +220,7 @@ ServiceAccountReference identifies the serviceAccount used fo install a ClusterE
 
 
 _Appears in:_
-- [ClusterExtensionInstallConfig](#clusterextensioninstallconfig)
+- [ClusterExtensionSpec](#clusterextensionspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |

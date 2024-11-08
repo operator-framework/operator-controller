@@ -111,7 +111,7 @@ spec:
               namespace:
                 description: |-
                   namespace is a reference to a Kubernetes namespace.
-                  This is the namespace the provided ServiceAccount must exist.
+                  This is the namespace in which the provided ServiceAccount must exist.
                   It also designates the default namespace where namespace-scoped resources
                   for the extension are applied to the cluster.
                   Some extensions may contain namespace-scoped resources to be applied in other namespaces.

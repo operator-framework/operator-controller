@@ -397,25 +397,25 @@ func TestClusterExtensionAdmissionInstall(t *testing.T) {
 		errMsg        string
 	}{
 		{
-			"install specified, nothing configured",
-			&ocv1alpha1.ClusterExtensionInstallConfig{},
-			oneOfErrMsg,
+			name:          "install specified, nothing configured",
+			installConfig: &ocv1alpha1.ClusterExtensionInstallConfig{},
+			errMsg:        oneOfErrMsg,
 		},
 		{
-			"install specified, preflight configured",
-			&ocv1alpha1.ClusterExtensionInstallConfig{
+			name: "install specified, preflight configured",
+			installConfig: &ocv1alpha1.ClusterExtensionInstallConfig{
 				Preflight: &ocv1alpha1.PreflightConfig{
 					CRDUpgradeSafety: &ocv1alpha1.CRDUpgradeSafetyPreflightConfig{
 						Enforcement: ocv1alpha1.CRDUpgradeSafetyEnforcementNone,
 					},
 				},
 			},
-			"",
+			errMsg: "",
 		},
 		{
-			"install not specified",
-			nil,
-			"",
+			name:          "install not specified",
+			installConfig: nil,
+			errMsg:        "",
 		},
 	}
 
