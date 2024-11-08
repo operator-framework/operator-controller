@@ -646,10 +646,8 @@ func buildFooClusterExtension(pkg string, channels []string, version string, upg
 			Name: pkg,
 		},
 		Spec: ocv1alpha1.ClusterExtensionSpec{
-			Install: ocv1alpha1.ClusterExtensionInstallConfig{
-				Namespace:      "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{Name: "default"},
-			},
+			Namespace:      "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{Name: "default"},
 			Source: ocv1alpha1.SourceConfig{
 				SourceType: "Catalog",
 				Catalog: &ocv1alpha1.CatalogSource{

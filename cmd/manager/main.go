@@ -197,7 +197,7 @@ func main() {
 		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), systemNamespace)),
 		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
 			ext := obj.(*ocv1alpha1.ClusterExtension)
-			return ext.Spec.Install.Namespace, nil
+			return ext.Spec.Namespace, nil
 		}),
 		helmclient.ClientRestConfigMapper(clientRestConfigMapper),
 	)

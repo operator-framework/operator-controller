@@ -318,11 +318,9 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 						},
 					},
 				},
-				Install: ocv1alpha1.ClusterExtensionInstallConfig{
-					Namespace: ns.Name,
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: sa.Name,
-					},
+				Namespace: ns.Name,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: sa.Name,
 				},
 			}
 			t.Log("It resolves the specified package with correct bundle path")
@@ -373,11 +371,9 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 				PackageName: "prometheus",
 			},
 		},
-		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: ns.Name,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: sa.Name,
-			},
+		Namespace: ns.Name,
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: sa.Name,
 		},
 	}
 	t.Log("It resolves to multiple bundle paths")
@@ -419,11 +415,9 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 				// No Selector since this is an exact version match
 			},
 		},
-		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: ns.Name,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: sa.Name,
-			},
+		Namespace: ns.Name,
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: sa.Name,
 		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
@@ -483,11 +477,9 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 				Version:     "1.0.0",
 			},
 		},
-		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: ns.Name,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: sa.Name,
-			},
+		Namespace: ns.Name,
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: sa.Name,
 		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
@@ -534,11 +526,9 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 				Version:     "1.0.0",
 			},
 		},
-		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: ns.Name,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: sa.Name,
-			},
+		Namespace: ns.Name,
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: sa.Name,
 		},
 	}
 	require.NoError(t, c.Create(context.Background(), clusterExtension))
@@ -591,11 +581,9 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 				},
 			},
 		},
-		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: ns.Name,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: sa.Name,
-			},
+		Namespace: ns.Name,
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: sa.Name,
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
@@ -674,11 +662,9 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 				},
 			},
 		},
-		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: ns.Name,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: sa.Name,
-			},
+		Namespace: ns.Name,
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: sa.Name,
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")
@@ -737,11 +723,9 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 				},
 			},
 		},
-		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: ns.Name,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: sa.Name,
-			},
+		Namespace: ns.Name,
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: sa.Name,
 		},
 	}
 	t.Log("It installs the specified package with correct bundle path")
@@ -763,7 +747,7 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 	prometheusService := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "prometheus-operator",
-			Namespace: clusterExtension.Spec.Install.Namespace,
+			Namespace: clusterExtension.Spec.Namespace,
 		},
 	}
 	require.NoError(t, c.Delete(context.Background(), prometheusService))
@@ -802,11 +786,9 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 				},
 			},
 		},
-		Install: ocv1alpha1.ClusterExtensionInstallConfig{
-			Namespace: ns.Name,
-			ServiceAccount: ocv1alpha1.ServiceAccountReference{
-				Name: sa.Name,
-			},
+		Namespace: ns.Name,
+		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+			Name: sa.Name,
 		},
 	}
 	t.Log("It resolves the specified package with correct bundle path")

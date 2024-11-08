@@ -75,11 +75,9 @@ func TestExtensionDeveloper(t *testing.T) {
 					PackageName: os.Getenv("REG_PKG_NAME"),
 				},
 			},
-			Install: ocv1alpha1.ClusterExtensionInstallConfig{
-				Namespace: installNamespace,
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: sa.Name,
-				},
+			Namespace: installNamespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: sa.Name,
 			},
 		},
 	}

@@ -16,8 +16,8 @@ func ServiceAccountRestConfigMapper(tokenGetter *authentication.TokenGetter) fun
 	return func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
 		cExt := o.(*ocv1alpha1.ClusterExtension)
 		saKey := types.NamespacedName{
-			Name:      cExt.Spec.Install.ServiceAccount.Name,
-			Namespace: cExt.Spec.Install.Namespace,
+			Name:      cExt.Spec.ServiceAccount.Name,
+			Namespace: cExt.Spec.Namespace,
 		}
 		saConfig := rest.AnonymousClientConfig(c)
 		saConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
