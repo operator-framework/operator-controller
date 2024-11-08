@@ -61,7 +61,7 @@ type Helm struct {
 // if it is set to enforcement None.
 func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1alpha1.ClusterExtension, state string) bool {
 	l := log.FromContext(ctx)
-	hasCRDUpgradeSafety := ext.Spec.Install.Preflight != nil && ext.Spec.Install.Preflight.CRDUpgradeSafety != nil
+	hasCRDUpgradeSafety := ext.Spec.Install != nil && ext.Spec.Install.Preflight != nil && ext.Spec.Install.Preflight.CRDUpgradeSafety != nil
 	_, isCRDUpgradeSafetyInstance := preflight.(*crdupgradesafety.Preflight)
 
 	if hasCRDUpgradeSafety && isCRDUpgradeSafetyInstance {
