@@ -71,7 +71,7 @@ spec:
                   namespace:
                     description: |-
                       namespace designates the kubernetes Namespace where bundle content
-                      for the 'packageName' package field will be applied and the necessary
+                      for the package, referenced in the 'packageName' field, will be applied and the necessary
                       service account can be found.
                       The bundle may contain cluster-scoped resources or resources that are
                       applied to other Namespaces. This Namespace is expected to exist.
@@ -86,7 +86,10 @@ spec:
                     x-kubernetes-validations:
                     - message: namespace is immutable
                       rule: self == oldSelf
-                    - message: namespace must be a valid DNS1123 label
+                    - message: namespace must be a valid DNS1123 label. It must contain
+                        only lowercase alphanumeric characters or hyphens (-), start
+                        and end with an alphanumeric character, and be no longer than
+                        63 characters
                       rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
                   preflight:
                     description: |-
@@ -105,7 +108,6 @@ spec:
                           consequences of upgrading a CRD, such as data loss.
                         properties:
                           enforcement:
-                            default: Strict
                             description: |-
                               enforcement is a required field, used to configure the state of the CRD Upgrade Safety pre-flight check.
 
@@ -172,7 +174,10 @@ spec:
                         x-kubernetes-validations:
                         - message: name is immutable
                           rule: self == oldSelf
-                        - message: name must be a valid DNS1123 subdomain
+                        - message: name must be a valid DNS1123 subdomain. It must
+                            contain only lowercase alphanumeric characters, hyphens
+                            (-) or periods (.), start and end with an alphanumeric
+                            character, and be no longer than 253 characters
                           rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$")
                     required:
                     - name
@@ -211,7 +216,7 @@ spec:
                           Each channel in the list must follow the DNS subdomain standard
                           as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters,
                           hyphens (-) or periods (.), start and end with an alphanumeric character,
-                          and be no longer than 253 characters.
+                          and be no longer than 253 characters. No more than 256 channels can be specified.
 
                           When specified, it is used to constrain the set of installable bundles and
                           the automated upgrade path. This constraint is an AND operation with the
@@ -277,7 +282,10 @@ spec:
                         x-kubernetes-validations:
                         - message: packageName is immutable
                           rule: self == oldSelf
-                        - message: packageName must be a valid DNS1123 subdomain
+                        - message: packageName must be a valid DNS1123 subdomain.
+                            It must contain only lowercase alphanumeric characters,
+                            hyphens (-) or periods (.), start and end with an alphanumeric
+                            character, and be no longer than 253 characters
                           rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$")
                       selector:
                         description: |-
@@ -477,8 +485,8 @@ spec:
 
                   The Progressing condition represents whether or not the ClusterExtension is advancing towards a new state.
                   When Progressing is True and the Reason is Succeeded, the ClusterExtension is making progress towards a new state.
+                  When Progressing is True and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.
                   When Progressing is False and the Reason is Blocked, the ClusterExtension has encountered an error that requires manual intervention for recovery.
-                  When Progressing is False and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.
 
                   When the ClusterExtension is sourced from a catalog, if may also communicate a deprecation condition.
                   These are indications from a package owner to guide users away from a particular package, channel, or bundle.
@@ -563,16 +571,19 @@ spec:
                           and be no longer than 253 characters.
                         type: string
                         x-kubernetes-validations:
-                        - message: packageName must be a valid DNS1123 subdomain
+                        - message: packageName must be a valid DNS1123 subdomain.
+                            It must contain only lowercase alphanumeric characters,
+                            hyphens (-) or periods (.), start and end with an alphanumeric
+                            character, and be no longer than 253 characters
                           rule: self.matches("^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$")
                       version:
                         description: |-
                           version is a required field and is a reference to the version that this bundle represents
-                          version follows the semantic versioning standard as defined in https://semver.org/, but permits a leading 'v' character.
+                          version follows the semantic versioning standard as defined in https://semver.org/.
                         type: string
                         x-kubernetes-validations:
-                        - message: version name must foo
-                          rule: self.matches("^v?([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-([-0-9A-Za-z]+(\\.[-0-9A-Za-z]+)*))?(\\+([-0-9A-Za-z]+(-\\.[-0-9A-Za-z]+)*))?")
+                        - message: version must be well-formed semver
+                          rule: self.matches("^([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-([-0-9A-Za-z]+(\\.[-0-9A-Za-z]+)*))?(\\+([-0-9A-Za-z]+(-\\.[-0-9A-Za-z]+)*))?")
                     required:
                     - name
                     - version

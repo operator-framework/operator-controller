@@ -97,7 +97,7 @@ type SourceConfig struct {
 	// catalog is used to configure how information is sourced from a catalog.
 	// This field is required when sourceType is "Catalog", and forbidden otherwise.
 	//
-	// +optional.
+	// +optional
 	Catalog *CatalogSource `json:"catalog,omitempty"`
 }
 
@@ -107,7 +107,7 @@ type SourceConfig struct {
 // +union
 type ClusterExtensionInstallConfig struct {
 	// namespace designates the kubernetes Namespace where bundle content
-	// for the 'packageName' package field will be applied and the necessary
+	// for the package, referenced in the 'packageName' field, will be applied and the necessary
 	// service account can be found.
 	// The bundle may contain cluster-scoped resources or resources that are
 	// applied to other Namespaces. This Namespace is expected to exist.
@@ -120,7 +120,7 @@ type ClusterExtensionInstallConfig struct {
 	//
 	// +kubebuilder:validation:MaxLength:=63
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
-	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be a valid DNS1123 label"
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be a valid DNS1123 label. It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character, and be no longer than 63 characters"
 	// +kubebuilder:validation:Required
 	Namespace string `json:"namespace"`
 
@@ -173,7 +173,7 @@ type CatalogSource struct {
 	// +kubebuilder:validation.Required
 	// +kubebuilder:validation:MaxLength:=253
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="packageName is immutable"
-	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="packageName must be a valid DNS1123 subdomain"
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="packageName must be a valid DNS1123 subdomain. It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.), start and end with an alphanumeric character, and be no longer than 253 characters"
 	// +kubebuilder:validation:Required
 	PackageName string `json:"packageName"`
 
@@ -264,7 +264,7 @@ type CatalogSource struct {
 	// Each channel in the list must follow the DNS subdomain standard
 	// as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters,
 	// hyphens (-) or periods (.), start and end with an alphanumeric character,
-	// and be no longer than 253 characters.
+	// and be no longer than 253 characters. No more than 256 channels can be specified.
 	//
 	// When specified, it is used to constrain the set of installable bundles and
 	// the automated upgrade path. This constraint is an AND operation with the
@@ -363,7 +363,7 @@ type ServiceAccountReference struct {
 	//
 	// +kubebuilder:validation:MaxLength:=253
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="name is immutable"
-	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="name must be a valid DNS1123 subdomain"
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="name must be a valid DNS1123 subdomain. It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.), start and end with an alphanumeric character, and be no longer than 253 characters"
 	// +kubebuilder:validation:Required
 	Name string `json:"name"`
 }
@@ -394,7 +394,6 @@ type CRDUpgradeSafetyPreflightConfig struct {
 	// performing an upgrade operation.
 	//
 	// +kubebuilder:validation:Enum:="None";"Strict"
-	// +kubebuilder:default:=Strict
 	// +kubebuilder:validation:Required
 	Enforcement CRDUpgradeSafetyEnforcement `json:"enforcement"`
 }
@@ -430,14 +429,14 @@ type BundleMetadata struct {
 	// and be no longer than 253 characters.
 	//
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="packageName must be a valid DNS1123 subdomain"
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="packageName must be a valid DNS1123 subdomain. It must contain only lowercase alphanumeric characters, hyphens (-) or periods (.), start and end with an alphanumeric character, and be no longer than 253 characters"
 	Name string `json:"name"`
 
 	// version is a required field and is a reference to the version that this bundle represents
-	// version follows the semantic versioning standard as defined in https://semver.org/, but permits a leading 'v' character.
+	// version follows the semantic versioning standard as defined in https://semver.org/.
 	//
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:XValidation:rule="self.matches(\"^v?([0-9]+)(\\\\.[0-9]+)?(\\\\.[0-9]+)?(-([-0-9A-Za-z]+(\\\\.[-0-9A-Za-z]+)*))?(\\\\+([-0-9A-Za-z]+(-\\\\.[-0-9A-Za-z]+)*))?\")",message="version name must foo"
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^([0-9]+)(\\\\.[0-9]+)?(\\\\.[0-9]+)?(-([-0-9A-Za-z]+(\\\\.[-0-9A-Za-z]+)*))?(\\\\+([-0-9A-Za-z]+(-\\\\.[-0-9A-Za-z]+)*))?\")",message="version must be well-formed semver"
 	Version string `json:"version"`
 }
 
@@ -451,8 +450,8 @@ type ClusterExtensionStatus struct {
 	//
 	// The Progressing condition represents whether or not the ClusterExtension is advancing towards a new state.
 	// When Progressing is True and the Reason is Succeeded, the ClusterExtension is making progress towards a new state.
+	// When Progressing is True and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.
 	// When Progressing is False and the Reason is Blocked, the ClusterExtension has encountered an error that requires manual intervention for recovery.
-	// When Progressing is False and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.
 	//
 	// When the ClusterExtension is sourced from a catalog, if may also communicate a deprecation condition.
 	// These are indications from a package owner to guide users away from a particular package, channel, or bundle.
@@ -517,6 +516,8 @@ type ClusterExtensionList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
+	// items is a required list of ClusterExtension objects.
+	//
 	// +kubebuilder:validation:Required
 	Items []ClusterExtension `json:"items"`
 }

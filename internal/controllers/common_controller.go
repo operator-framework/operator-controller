@@ -83,14 +83,13 @@ func setInstallStatus(ext *ocv1alpha1.ClusterExtension, installStatus *ocv1alpha
 func setStatusProgressing(ext *ocv1alpha1.ClusterExtension, err error) {
 	progressingCond := metav1.Condition{
 		Type:               ocv1alpha1.TypeProgressing,
-		Status:             metav1.ConditionFalse,
+		Status:             metav1.ConditionTrue,
 		Reason:             ocv1alpha1.ReasonSucceeded,
 		Message:            "desired state reached",
 		ObservedGeneration: ext.GetGeneration(),
 	}
 
 	if err != nil {
-		progressingCond.Status = metav1.ConditionTrue
 		progressingCond.Reason = ocv1alpha1.ReasonRetrying
 		progressingCond.Message = err.Error()
 	}

@@ -59,7 +59,7 @@ type Helm struct {
 
 // shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
 // if it is set to enforcement None.
-func shouldSkipPreflight(preflight Preflight, ctx context.Context, ext *ocv1alpha1.ClusterExtension, state string) bool {
+func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1alpha1.ClusterExtension, state string) bool {
 	l := log.FromContext(ctx)
 	hasCRDUpgradeSafety := ext.Spec.Install.Preflight != nil && ext.Spec.Install.Preflight.CRDUpgradeSafety != nil
 	_, isCRDUpgradeSafetyInstance := preflight.(*crdupgradesafety.Preflight)
@@ -99,7 +99,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 	}
 
 	for _, preflight := range h.Preflights {
-		if shouldSkipPreflight(preflight, ctx, ext, state) {
+		if shouldSkipPreflight(ctx, preflight, ext, state) {
 			continue
 		}
 		switch state {
