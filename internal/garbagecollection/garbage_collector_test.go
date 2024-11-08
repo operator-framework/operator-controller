@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/metadata/fake"
 
-	"github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
 )
 
 func TestRunGarbageCollection(t *testing.T) {
@@ -28,7 +28,7 @@ func TestRunGarbageCollection(t *testing.T) {
 				{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ClusterCatalog",
-						APIVersion: v1alpha1.GroupVersion.String(),
+						APIVersion: catalogdv1.GroupVersion.String(),
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "one",
@@ -37,7 +37,7 @@ func TestRunGarbageCollection(t *testing.T) {
 				{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ClusterCatalog",
-						APIVersion: v1alpha1.GroupVersion.String(),
+						APIVersion: catalogdv1.GroupVersion.String(),
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "two",
@@ -48,7 +48,7 @@ func TestRunGarbageCollection(t *testing.T) {
 				{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ClusterCatalog",
-						APIVersion: v1alpha1.GroupVersion.String(),
+						APIVersion: catalogdv1.GroupVersion.String(),
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "three",

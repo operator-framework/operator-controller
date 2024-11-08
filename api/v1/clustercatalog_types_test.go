@@ -1,4 +1,4 @@
-package v1alpha1
+package v1
 
 import (
 	"context"
@@ -20,10 +20,12 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const crdFilePath = "../../config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml"
+
 func TestImageSourceCELValidationRules(t *testing.T) {
-	validators := fieldValidatorsFromFile(t, "../../../config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml")
+	validators := fieldValidatorsFromFile(t, crdFilePath)
 	pth := "openAPIV3Schema.properties.spec.properties.source.properties.image"
-	validator, found := validators["v1alpha1"][pth]
+	validator, found := validators[GroupVersion.Version][pth]
 	require.True(t, found)
 
 	for name, tc := range map[string]struct {
@@ -157,9 +159,9 @@ func TestImageSourceCELValidationRules(t *testing.T) {
 }
 
 func TestResolvedImageSourceCELValidation(t *testing.T) {
-	validators := fieldValidatorsFromFile(t, "../../../config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml")
+	validators := fieldValidatorsFromFile(t, crdFilePath)
 	pth := "openAPIV3Schema.properties.status.properties.resolvedSource.properties.image.properties.ref"
-	validator, found := validators["v1alpha1"][pth]
+	validator, found := validators[GroupVersion.Version][pth]
 	require.True(t, found)
 
 	for name, tc := range map[string]struct {
@@ -250,9 +252,9 @@ func TestResolvedImageSourceCELValidation(t *testing.T) {
 }
 
 func TestClusterCatalogURLsCELValidation(t *testing.T) {
-	validators := fieldValidatorsFromFile(t, "../../../config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml")
+	validators := fieldValidatorsFromFile(t, crdFilePath)
 	pth := "openAPIV3Schema.properties.status.properties.urls.properties.base"
-	validator, found := validators["v1alpha1"][pth]
+	validator, found := validators[GroupVersion.Version][pth]
 	require.True(t, found)
 	for name, tc := range map[string]struct {
 		urls     ClusterCatalogURLs
@@ -294,9 +296,9 @@ func TestClusterCatalogURLsCELValidation(t *testing.T) {
 }
 
 func TestSourceCELValidation(t *testing.T) {
-	validators := fieldValidatorsFromFile(t, "../../../config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml")
+	validators := fieldValidatorsFromFile(t, crdFilePath)
 	pth := "openAPIV3Schema.properties.spec.properties.source"
-	validator, found := validators["v1alpha1"][pth]
+	validator, found := validators[GroupVersion.Version][pth]
 	require.True(t, found)
 	for name, tc := range map[string]struct {
 		source   CatalogSource
@@ -335,9 +337,9 @@ func TestSourceCELValidation(t *testing.T) {
 }
 
 func TestResolvedSourceCELValidation(t *testing.T) {
-	validators := fieldValidatorsFromFile(t, "../../../config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml")
+	validators := fieldValidatorsFromFile(t, crdFilePath)
 	pth := "openAPIV3Schema.properties.status.properties.resolvedSource"
-	validator, found := validators["v1alpha1"][pth]
+	validator, found := validators[GroupVersion.Version][pth]
 
 	require.True(t, found)
 	for name, tc := range map[string]struct {

@@ -13,7 +13,7 @@ import (
 	"k8s.io/client-go/metadata"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
 )
 
 var _ manager.Runnable = (*GarbageCollector)(nil)
@@ -64,7 +64,7 @@ func (gc *GarbageCollector) Start(ctx context.Context) error {
 }
 
 func runGarbageCollection(ctx context.Context, cachePath string, metaClient metadata.Interface) ([]string, error) {
-	getter := metaClient.Resource(v1alpha1.GroupVersion.WithResource("clustercatalogs"))
+	getter := metaClient.Resource(catalogdv1.GroupVersion.WithResource("clustercatalogs"))
 	metaList, err := getter.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("error listing clustercatalogs: %w", err)

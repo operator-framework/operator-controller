@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
 )
 
 // Define a dummy struct that implements runtime.Object but isn't a ClusterCatalog
@@ -29,7 +29,7 @@ func TestClusterCatalogDefaulting(t *testing.T) {
 		errorMessage   string
 	}{
 		"no labels provided, name label added": {
-			clusterCatalog: &v1alpha1.ClusterCatalog{
+			clusterCatalog: &catalogdv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-catalog",
 				},
@@ -40,7 +40,7 @@ func TestClusterCatalogDefaulting(t *testing.T) {
 			expectError: false,
 		},
 		"labels already present, name label added": {
-			clusterCatalog: &v1alpha1.ClusterCatalog{
+			clusterCatalog: &catalogdv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-catalog",
 					Labels: map[string]string{
@@ -55,7 +55,7 @@ func TestClusterCatalogDefaulting(t *testing.T) {
 			expectError: false,
 		},
 		"name label already present, no changes": {
-			clusterCatalog: &v1alpha1.ClusterCatalog{
+			clusterCatalog: &catalogdv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-catalog",
 					Labels: map[string]string{
@@ -96,7 +96,7 @@ func TestClusterCatalogDefaulting(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				if tc.expectedLabels != nil {
-					labels := tc.clusterCatalog.(*v1alpha1.ClusterCatalog).Labels
+					labels := tc.clusterCatalog.(*catalogdv1.ClusterCatalog).Labels
 					assert.Equal(t, tc.expectedLabels, labels)
 				}
 			}

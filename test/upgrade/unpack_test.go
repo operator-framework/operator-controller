@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
 	"github.com/operator-framework/catalogd/test/e2e"
 )
 
@@ -30,7 +30,7 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			ctx := context.Background()
 
 			var managerDeployment appsv1.Deployment
-			managerLabelSelector := labels.Set{"control-plane": "catalogd-controller-manager"}
+			managerLabelSelector := labels.Set{"control-plane": "catalogdv1-controller-manager"}
 			By("Checking that the controller-manager deployment is updated")
 			Eventually(func(g Gomega) {
 				var managerDeployments appsv1.DeploymentList
@@ -54,7 +54,7 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 				managerPod = managerPods.Items[0]
 			}).Should(Succeed())
 
-			By("Reading logs to make sure that ClusterCatalog was reconciled by catalogd")
+			By("Reading logs to make sure that ClusterCatalog was reconciled by catalogdv1")
 			logCtx, cancel := context.WithTimeout(ctx, time.Minute)
 			defer cancel()
 			substrings := []string{
@@ -65,15 +65,15 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(found).To(BeTrue())
 
-			catalog := &catalogd.ClusterCatalog{}
+			catalog := &catalogdv1.ClusterCatalog{}
 			By("Ensuring ClusterCatalog has Status.Condition of Progressing with a status == False, reason == Succeeded")
 			Eventually(func(g Gomega) {
 				err := c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, catalog)
 				g.Expect(err).ToNot(HaveOccurred())
-				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeProgressing)
+				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogdv1.TypeProgressing)
 				g.Expect(cond).ToNot(BeNil())
 				g.Expect(cond.Status).To(Equal(metav1.ConditionFalse))
-				g.Expect(cond.Reason).To(Equal(catalogd.ReasonSucceeded))
+				g.Expect(cond.Reason).To(Equal(catalogdv1.ReasonSucceeded))
 			}).Should(Succeed())
 
 			expectedFBC, err := os.ReadFile("../../testdata/catalogs/test-catalog/expected_all.json")
@@ -90,10 +90,10 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			Eventually(func(g Gomega) {
 				err := c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, catalog)
 				g.Expect(err).ToNot(HaveOccurred())
-				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeServing)
+				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogdv1.TypeServing)
 				g.Expect(cond).ToNot(BeNil())
 				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-				g.Expect(cond.Reason).To(Equal(catalogd.ReasonAvailable))
+				g.Expect(cond.Reason).To(Equal(catalogdv1.ReasonAvailable))
 			}).Should(Succeed())
 		})
 	})

@@ -18,7 +18,7 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
 
     ```sh
     $ kubectl apply -f - << EOF
-    apiVersion: olm.operatorframework.io/v1alpha1
+    apiVersion: olm.operatorframework.io/v1
     kind: ClusterCatalog
     metadata:
       name: operatorhubio
@@ -42,7 +42,7 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
     Namespace:
     Labels:       olm.operatorframework.io/metadata.name=operatorhubio
     Annotations:  <none>
-    API Version:  olm.operatorframework.io/v1alpha1
+    API Version:  olm.operatorframework.io/v1
     Kind:         ClusterCatalog
     Metadata:
       Creation Timestamp:  2024-10-17T13:48:46Z

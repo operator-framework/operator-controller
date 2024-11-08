@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
 )
 
 const (
@@ -39,21 +39,21 @@ func catalogImageRef() string {
 var _ = Describe("ClusterCatalog Unpacking", func() {
 	var (
 		ctx     context.Context
-		catalog *catalogd.ClusterCatalog
+		catalog *catalogdv1.ClusterCatalog
 	)
 	When("A ClusterCatalog is created", func() {
 		BeforeEach(func() {
 			ctx = context.Background()
 			var err error
 
-			catalog = &catalogd.ClusterCatalog{
+			catalog = &catalogdv1.ClusterCatalog{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: catalogName,
 				},
-				Spec: catalogd.ClusterCatalogSpec{
-					Source: catalogd.CatalogSource{
-						Type: catalogd.SourceTypeImage,
-						Image: &catalogd.ImageSource{
+				Spec: catalogdv1.ClusterCatalogSpec{
+					Source: catalogdv1.CatalogSource{
+						Type: catalogdv1.SourceTypeImage,
+						Image: &catalogdv1.ImageSource{
 							Ref: catalogImageRef(),
 						},
 					},
@@ -69,10 +69,10 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			Eventually(func(g Gomega) {
 				err := c.Get(ctx, types.NamespacedName{Name: catalog.Name}, catalog)
 				g.Expect(err).ToNot(HaveOccurred())
-				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeProgressing)
+				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogdv1.TypeProgressing)
 				g.Expect(cond).ToNot(BeNil())
 				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-				g.Expect(cond.Reason).To(Equal(catalogd.ReasonSucceeded))
+				g.Expect(cond.Reason).To(Equal(catalogdv1.ReasonSucceeded))
 			}).Should(Succeed())
 
 			By("Checking that it has an appropriate name label")
@@ -92,16 +92,16 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			Eventually(func(g Gomega) {
 				err := c.Get(ctx, types.NamespacedName{Name: catalog.Name}, catalog)
 				g.Expect(err).ToNot(HaveOccurred())
-				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogd.TypeServing)
+				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogdv1.TypeServing)
 				g.Expect(cond).ToNot(BeNil())
 				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
-				g.Expect(cond.Reason).To(Equal(catalogd.ReasonAvailable))
+				g.Expect(cond.Reason).To(Equal(catalogdv1.ReasonAvailable))
 			}).Should(Succeed())
 		})
 		AfterEach(func() {
 			Expect(c.Delete(ctx, catalog)).To(Succeed())
 			Eventually(func(g Gomega) {
-				err = c.Get(ctx, types.NamespacedName{Name: catalog.Name}, &catalogd.ClusterCatalog{})
+				err = c.Get(ctx, types.NamespacedName{Name: catalog.Name}, &catalogdv1.ClusterCatalog{})
 				g.Expect(errors.IsNotFound(err)).To(BeTrue())
 			}).Should(Succeed())
 		})

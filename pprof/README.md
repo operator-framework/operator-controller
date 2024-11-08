@@ -4,7 +4,7 @@
 > This pprof data is based on early versions of catalogd and has not been updated since. The data is likely not accurate anymore.
 > A decision about removing or updating this data will be made in the future. 
 
-This folder contains some profiles that can be read using [pprof](https://github.com/google/pprof) to show how the core kubernetes apiserver and the custom catalogd apiserver CPU & Memory utilization is affected by the creation and reconciliation of the sample `Catalog` CR found at `../config/samples/core_v1alpha1_catalog.yaml`.
+This folder contains some profiles that can be read using [pprof](https://github.com/google/pprof) to show how the core kubernetes apiserver and the custom catalogd apiserver CPU & Memory utilization is affected by the creation and reconciliation of the sample `Catalog` CR found at `../config/samples/core_v1_clustercatalog.yaml`.
 
 Instead of providing static screenshots and losing the interactivity associated with these `pprof` profiles, each of the files with the extension `.pb` can be used to view the profiles that were the result of running `pprof` against the live processes.
 
@@ -85,7 +85,7 @@ This section is being added as the pprof metrics don't necessarily show the whol
 
 This image shows the spike in CPU utilization and the increase in Memory consumption. In this scenario, the command:
 ```
-kubectl apply -f config/samples/core_v1alpha1_catalog.yaml
+kubectl apply -f config/samples/core_v1_clustercatalog.yaml
 ```
 was run right at 1:44 PM.
 
@@ -112,7 +112,7 @@ With this, we can see that without the catalogd apiserver the core kube-apiserve
 
 This image shows the spike in CPU utilization and the increase in Memory consumption. In this scenario, the command:
 ```
-kubectl apply -f config/samples/core_v1alpha1_catalog.yaml
+kubectl apply -f config/samples/core_v1_clustercatalog.yaml
 ```
 was run right at 3:06 PM
 
@@ -139,7 +139,7 @@ With this, we can see that with the catalogd apiserver the core kube-apiserver h
 
 This image shows the spike in CPU utilization and the increase in Memory consumption. In this scenario, the command:
 ```
-kubectl apply -f config/samples/core_v1alpha1_catalog.yaml
+kubectl apply -f config/samples/core_v1_clustercatalog.yaml
 ```
 was run right at 3:06 PM
 
@@ -174,7 +174,7 @@ Overall, when running both the kube-apiserver and the catalogd apiserver the tot
 
 This image shows the spike in CPU utilization and the increase in Memory consumption. In this scenario, the command:
 ```
-kubectl apply -f config/samples/core_v1alpha1_catalog.yaml
+kubectl apply -f config/samples/core_v1_clustercatalog.yaml
 ```
 was run right at 3:06 PM
 

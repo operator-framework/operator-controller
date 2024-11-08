@@ -28,7 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
 )
 
 const ConfigDirLabel = "operators.operatorframework.io.index.configs.v1"
@@ -38,11 +38,11 @@ type ContainersImageRegistry struct {
 	SourceContextFunc func(logger logr.Logger) (*types.SystemContext, error)
 }
 
-func (i *ContainersImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1alpha1.ClusterCatalog) (*Result, error) {
+func (i *ContainersImageRegistry) Unpack(ctx context.Context, catalog *catalogdv1.ClusterCatalog) (*Result, error) {
 	l := log.FromContext(ctx)
 
-	if catalog.Spec.Source.Type != catalogdv1alpha1.SourceTypeImage {
-		panic(fmt.Sprintf("programmer error: source type %q is unable to handle specified catalog source type %q", catalogdv1alpha1.SourceTypeImage, catalog.Spec.Source.Type))
+	if catalog.Spec.Source.Type != catalogdv1.SourceTypeImage {
+		panic(fmt.Sprintf("programmer error: source type %q is unable to handle specified catalog source type %q", catalogdv1.SourceTypeImage, catalog.Spec.Source.Type))
 	}
 
 	if catalog.Spec.Source.Image == nil {
@@ -169,9 +169,9 @@ func (i *ContainersImageRegistry) Unpack(ctx context.Context, catalog *catalogdv
 func successResult(unpackPath string, canonicalRef reference.Canonical, lastUnpacked time.Time) *Result {
 	return &Result{
 		FS: os.DirFS(unpackPath),
-		ResolvedSource: &catalogdv1alpha1.ResolvedCatalogSource{
-			Type: catalogdv1alpha1.SourceTypeImage,
-			Image: &catalogdv1alpha1.ResolvedImageSource{
+		ResolvedSource: &catalogdv1.ResolvedCatalogSource{
+			Type: catalogdv1.SourceTypeImage,
+			Image: &catalogdv1.ResolvedImageSource{
 				Ref: canonicalRef.String(),
 			},
 		},
@@ -188,7 +188,7 @@ func successResult(unpackPath string, canonicalRef reference.Canonical, lastUnpa
 	}
 }
 
-func (i *ContainersImageRegistry) Cleanup(_ context.Context, catalog *catalogdv1alpha1.ClusterCatalog) error {
+func (i *ContainersImageRegistry) Cleanup(_ context.Context, catalog *catalogdv1.ClusterCatalog) error {
 	if err := deleteRecursive(i.catalogPath(catalog.Name)); err != nil {
 		return fmt.Errorf("error deleting catalog cache: %w", err)
 	}

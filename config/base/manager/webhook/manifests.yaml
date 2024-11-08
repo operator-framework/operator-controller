@@ -10,14 +10,14 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-olm-operatorframework-io-v1alpha1-clustercatalog
+      path: /mutate-olm-operatorframework-io-v1-clustercatalog
   failurePolicy: Fail
   name: inject-metadata-name.olm.operatorframework.io
   rules:
   - apiGroups:
     - olm.operatorframework.io
     apiVersions:
-    - v1alpha1
+    - v1
     operations:
     - CREATE
     - UPDATE

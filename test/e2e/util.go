@@ -10,10 +10,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
 )
 
-func ReadTestCatalogServerContents(ctx context.Context, catalog *catalogd.ClusterCatalog, c client.Client, kubeClient kubernetes.Interface) ([]byte, error) {
+func ReadTestCatalogServerContents(ctx context.Context, catalog *catalogdv1.ClusterCatalog, c client.Client, kubeClient kubernetes.Interface) ([]byte, error) {
 	if catalog == nil {
 		return nil, fmt.Errorf("cannot read nil catalog")
 	}

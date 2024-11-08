@@ -13,7 +13,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
 )
 
 var (
@@ -34,7 +34,7 @@ var _ = BeforeSuite(func() {
 	cfg = ctrl.GetConfigOrDie()
 
 	sch := scheme.Scheme
-	Expect(catalogd.AddToScheme(sch)).To(Succeed())
+	Expect(catalogdv1.AddToScheme(sch)).To(Succeed())
 	c, err = client.New(cfg, client.Options{Scheme: sch})
 	Expect(err).To(Not(HaveOccurred()))
 	kubeClient, err = kubernetes.NewForConfig(cfg)

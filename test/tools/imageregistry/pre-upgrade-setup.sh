@@ -20,7 +20,7 @@ export TEST_CLUSTER_CATALOG_IMAGE=$1
 export TEST_CLUSTER_CATALOG_NAME=$2
 
 kubectl apply -f - << EOF
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterCatalog
 metadata:
   name: ${TEST_CLUSTER_CATALOG_NAME}

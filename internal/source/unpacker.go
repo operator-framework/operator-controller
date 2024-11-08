@@ -7,7 +7,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
 )
 
 // TODO: This package is almost entirely copy/pasted from rukpak. We should look
@@ -31,8 +31,8 @@ import (
 // specifications. A source should treat a catalog root directory as an opaque
 // file tree and delegate catalog format concerns to catalog parsers.
 type Unpacker interface {
-	Unpack(context.Context, *catalogdv1alpha1.ClusterCatalog) (*Result, error)
-	Cleanup(context.Context, *catalogdv1alpha1.ClusterCatalog) error
+	Unpack(context.Context, *catalogdv1.ClusterCatalog) (*Result, error)
+	Cleanup(context.Context, *catalogdv1.ClusterCatalog) error
 }
 
 // Result conveys progress information about unpacking catalog content.
@@ -49,7 +49,7 @@ type Result struct {
 	// For example, resolved image sources should reference a container image
 	// digest rather than an image tag, and git sources should reference a
 	// commit hash rather than a branch or tag.
-	ResolvedSource *catalogdv1alpha1.ResolvedCatalogSource
+	ResolvedSource *catalogdv1.ResolvedCatalogSource
 
 	LastSuccessfulPollAttempt metav1.Time
 
