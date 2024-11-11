@@ -43,11 +43,9 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 							PackageName: "test-package",
 						},
 					},
-					Install: ocv1alpha1.ClusterExtensionInstallConfig{
-						Namespace: "default",
-						ServiceAccount: ocv1alpha1.ServiceAccountReference{
-							Name: "default",
-						},
+					Namespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: "default",
 					},
 				}))
 			}
@@ -56,11 +54,9 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 					Source: ocv1alpha1.SourceConfig{
 						SourceType: tc.sourceType,
 					},
-					Install: ocv1alpha1.ClusterExtensionInstallConfig{
-						Namespace: "default",
-						ServiceAccount: ocv1alpha1.ServiceAccountReference{
-							Name: "default",
-						},
+					Namespace: "default",
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: "default",
 					},
 				}))
 			}
@@ -117,11 +113,9 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 						PackageName: tc.pkgName,
 					},
 				},
-				Install: ocv1alpha1.ClusterExtensionInstallConfig{
-					Namespace: "default",
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: "default",
-					},
+				Namespace: "default",
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: "default",
 				},
 			}))
 			if tc.errMsg == "" {
@@ -217,11 +211,9 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 						Version:     tc.version,
 					},
 				},
-				Install: ocv1alpha1.ClusterExtensionInstallConfig{
-					Namespace: "default",
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: "default",
-					},
+				Namespace: "default",
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: "default",
 				},
 			}))
 			if tc.errMsg == "" {
@@ -274,11 +266,9 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 						Channels:    tc.channels,
 					},
 				},
-				Install: ocv1alpha1.ClusterExtensionInstallConfig{
-					Namespace: "default",
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: "default",
-					},
+				Namespace: "default",
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: "default",
 				},
 			}))
 			if tc.errMsg == "" {
@@ -292,7 +282,7 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
-	tooLongError := "spec.install.namespace: Too long: may not be longer than 63"
+	tooLongError := "spec.namespace: Too long: may not be longer than 63"
 	regexMismatchError := "namespace must be a valid DNS1123 label"
 
 	testCases := []struct {
@@ -329,11 +319,9 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 						PackageName: "package",
 					},
 				},
-				Install: ocv1alpha1.ClusterExtensionInstallConfig{
-					Namespace: tc.namespace,
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: "default",
-					},
+				Namespace: tc.namespace,
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: "default",
 				},
 			}))
 			if tc.errMsg == "" {
@@ -347,7 +335,7 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
-	tooLongError := "spec.install.serviceAccount.name: Too long: may not be longer than 253"
+	tooLongError := "spec.serviceAccount.name: Too long: may not be longer than 253"
 	regexMismatchError := "name must be a valid DNS1123 subdomain"
 
 	testCases := []struct {
@@ -385,15 +373,73 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 						PackageName: "package",
 					},
 				},
-				Install: ocv1alpha1.ClusterExtensionInstallConfig{
-					Namespace: "default",
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: tc.serviceAccount,
-					},
+				Namespace: "default",
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: tc.serviceAccount,
 				},
 			}))
 			if tc.errMsg == "" {
 				require.NoError(t, err, "unexpected error for service account name %q: %w", tc.serviceAccount, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errMsg)
+			}
+		})
+	}
+}
+
+func TestClusterExtensionAdmissionInstall(t *testing.T) {
+	oneOfErrMsg := "at least one of [preflight] are required when install is specified"
+
+	testCases := []struct {
+		name          string
+		installConfig *ocv1alpha1.ClusterExtensionInstallConfig
+		errMsg        string
+	}{
+		{
+			name:          "install specified, nothing configured",
+			installConfig: &ocv1alpha1.ClusterExtensionInstallConfig{},
+			errMsg:        oneOfErrMsg,
+		},
+		{
+			name: "install specified, preflight configured",
+			installConfig: &ocv1alpha1.ClusterExtensionInstallConfig{
+				Preflight: &ocv1alpha1.PreflightConfig{
+					CRDUpgradeSafety: &ocv1alpha1.CRDUpgradeSafetyPreflightConfig{
+						Enforcement: ocv1alpha1.CRDUpgradeSafetyEnforcementNone,
+					},
+				},
+			},
+			errMsg: "",
+		},
+		{
+			name:          "install not specified",
+			installConfig: nil,
+			errMsg:        "",
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
+				Source: ocv1alpha1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1alpha1.CatalogSource{
+						PackageName: "package",
+					},
+				},
+				Namespace: "default",
+				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					Name: "default",
+				},
+				Install: tc.installConfig,
+			}))
+			if tc.errMsg == "" {
+				require.NoError(t, err, "unexpected error for install configuration %v: %w", tc.installConfig, err)
 			} else {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errMsg)

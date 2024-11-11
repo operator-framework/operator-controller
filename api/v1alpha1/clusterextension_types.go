@@ -43,6 +43,34 @@ const (
 
 // ClusterExtensionSpec defines the desired state of ClusterExtension
 type ClusterExtensionSpec struct {
+	// namespace is a reference to a Kubernetes namespace.
+	// This is the namespace in which the provided ServiceAccount must exist.
+	// It also designates the default namespace where namespace-scoped resources
+	// for the extension are applied to the cluster.
+	// Some extensions may contain namespace-scoped resources to be applied in other namespaces.
+	// This namespace must exist.
+	//
+	// namespace is required, immutable, and follows the DNS label standard
+	// as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters or hyphens (-),
+	// start and end with an alphanumeric character, and be no longer than 63 characters
+	//
+	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
+	//
+	// +kubebuilder:validation:MaxLength:=63
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
+	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be a valid DNS1123 label"
+	// +kubebuilder:validation:Required
+	Namespace string `json:"namespace"`
+
+	// serviceAccount is a reference to a ServiceAccount used to perform all interactions
+	// with the cluster that are required to manage the extension.
+	// The ServiceAccount must be configured with the necessary permissions to perform these interactions.
+	// The ServiceAccount must exist in the namespace referenced in the spec.
+	// serviceAccount is required.
+	//
+	// +kubebuilder:validation:Required
+	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
+
 	// source is a required field which selects the installation source of content
 	// for this ClusterExtension. Selection is performed by setting the sourceType.
 	//
@@ -59,18 +87,11 @@ type ClusterExtensionSpec struct {
 	// +kubebuilder:validation:Required
 	Source SourceConfig `json:"source"`
 
-	// install is a required field used to configure the installation options
-	// for the ClusterExtension such as the installation namespace,
-	// the service account and the pre-flight check configuration.
+	// install is an optional field used to configure the installation options
+	// for the ClusterExtension such as the pre-flight check configuration.
 	//
-	// Below is a minimal example of an installation definition (in yaml):
-	// install:
-	//    namespace: example-namespace
-	//    serviceAccount:
-	//      name: example-sa
-	//
-	// +kubebuilder:validation:Required
-	Install ClusterExtensionInstallConfig `json:"install"`
+	// +optional
+	Install *ClusterExtensionInstallConfig `json:"install,omitempty"`
 }
 
 const SourceTypeCatalog = "Catalog"
@@ -104,38 +125,9 @@ type SourceConfig struct {
 // ClusterExtensionInstallConfig is a union which selects the clusterExtension installation config.
 // ClusterExtensionInstallConfig requires the namespace and serviceAccount which should be used for the installation of packages.
 //
+// +kubebuilder:validation:XValidation:rule="has(self.preflight)",message="at least one of [preflight] are required when install is specified"
 // +union
 type ClusterExtensionInstallConfig struct {
-	// namespace designates the kubernetes Namespace where bundle content
-	// for the package, referenced in the 'packageName' field, will be applied and the necessary
-	// service account can be found.
-	// The bundle may contain cluster-scoped resources or resources that are
-	// applied to other Namespaces. This Namespace is expected to exist.
-	//
-	// namespace is required, immutable, and follows the DNS label standard
-	// as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters or hyphens (-),
-	// start and end with an alphanumeric character, and be no longer than 63 characters
-	//
-	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
-	//
-	// +kubebuilder:validation:MaxLength:=63
-	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
-	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be a valid DNS1123 label. It must contain only lowercase alphanumeric characters or hyphens (-), start and end with an alphanumeric character, and be no longer than 63 characters"
-	// +kubebuilder:validation:Required
-	Namespace string `json:"namespace"`
-
-	// serviceAccount is a required reference to a ServiceAccount that exists
-	// in the installNamespace which is used to install and
-	// manage the content for the package specified in the packageName field.
-	//
-	// In order to successfully install and manage the content for the package,
-	// the ServiceAccount provided via this field should be configured with the
-	// appropriate permissions to perform the necessary operations on all the
-	// resources that are included in the bundle of content being applied.
-	//
-	// +kubebuilder:validation:Required
-	ServiceAccount ServiceAccountReference `json:"serviceAccount"`
-
 	// preflight is an optional field that can be used to configure the checks that are
 	// run before installation or upgrade of the content for the package specified in the packageName field.
 	//

@@ -67,11 +67,9 @@ func TestClusterExtensionResolutionFails(t *testing.T) {
 					PackageName: pkgName,
 				},
 			},
-			Install: ocv1alpha1.ClusterExtensionInstallConfig{
-				Namespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: "default",
-				},
+			Namespace: "default",
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: "default",
 			},
 		},
 	}
@@ -145,11 +143,9 @@ func TestClusterExtensionResolutionSuccessfulUnpackFails(t *testing.T) {
 							Channels:    []string{pkgChan},
 						},
 					},
-					Install: ocv1alpha1.ClusterExtensionInstallConfig{
-						Namespace: namespace,
-						ServiceAccount: ocv1alpha1.ServiceAccountReference{
-							Name: serviceAccount,
-						},
+					Namespace: namespace,
+					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+						Name: serviceAccount,
 					},
 				},
 			}
@@ -229,11 +225,9 @@ func TestClusterExtensionUnpackUnexpectedState(t *testing.T) {
 					Channels:    []string{pkgChan},
 				},
 			},
-			Install: ocv1alpha1.ClusterExtensionInstallConfig{
-				Namespace: namespace,
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: serviceAccount,
-				},
+			Namespace: namespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
 			},
 		},
 	}
@@ -289,11 +283,9 @@ func TestClusterExtensionResolutionAndUnpackSuccessfulApplierFails(t *testing.T)
 					Channels:    []string{pkgChan},
 				},
 			},
-			Install: ocv1alpha1.ClusterExtensionInstallConfig{
-				Namespace: namespace,
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: serviceAccount,
-				},
+			Namespace: namespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
 			},
 		},
 	}
@@ -371,11 +363,9 @@ func TestClusterExtensionApplierFailsWithBundleInstalled(t *testing.T) {
 					Channels:    []string{pkgChan},
 				},
 			},
-			Install: ocv1alpha1.ClusterExtensionInstallConfig{
-				Namespace: namespace,
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: serviceAccount,
-				},
+			Namespace: namespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
 			},
 		},
 	}
@@ -472,11 +462,9 @@ func TestClusterExtensionManagerFailed(t *testing.T) {
 					Channels:    []string{pkgChan},
 				},
 			},
-			Install: ocv1alpha1.ClusterExtensionInstallConfig{
-				Namespace: namespace,
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: serviceAccount,
-				},
+			Namespace: namespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
 			},
 		},
 	}
@@ -556,11 +544,9 @@ func TestClusterExtensionManagedContentCacheWatchFail(t *testing.T) {
 					Channels:    []string{pkgChan},
 				},
 			},
-			Install: ocv1alpha1.ClusterExtensionInstallConfig{
-				Namespace: installNamespace,
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: serviceAccount,
-				},
+			Namespace: installNamespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
 			},
 		},
 	}
@@ -641,11 +627,9 @@ func TestClusterExtensionInstallationSucceeds(t *testing.T) {
 					Channels:    []string{pkgChan},
 				},
 			},
-			Install: ocv1alpha1.ClusterExtensionInstallConfig{
-				Namespace: namespace,
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: serviceAccount,
-				},
+			Namespace: namespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
 			},
 		},
 	}
@@ -724,11 +708,9 @@ func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
 					Channels:    []string{pkgChan},
 				},
 			},
-			Install: ocv1alpha1.ClusterExtensionInstallConfig{
-				Namespace: namespace,
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
-					Name: serviceAccount,
-				},
+			Namespace: namespace,
+			ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				Name: serviceAccount,
 			},
 		},
 	}
@@ -1488,7 +1470,8 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 						labels.BundleReferenceKey: "bundle-ref",
 					},
 				},
-			}, nil,
+			},
+			nil,
 			&controllers.InstalledBundle{
 				BundleMetadata: ocv1alpha1.BundleMetadata{
 					Name:    "test-ext",
@@ -1522,7 +1505,8 @@ func TestGetInstalledBundleHistory(t *testing.T) {
 						labels.BundleReferenceKey: "bundle-ref-1",
 					},
 				},
-			}, nil,
+			},
+			nil,
 			&controllers.InstalledBundle{
 				BundleMetadata: ocv1alpha1.BundleMetadata{
 					Name:    "test-ext",
