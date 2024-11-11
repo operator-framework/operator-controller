@@ -35,17 +35,17 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
         type: Image
         image:
           ref: <catalog_image>
-          pollInterval: <poll_interval_duration>
+          pollIntervalMinutes: <poll_interval_duration>
     ```
 
     `catalog_name`
     :   Specifies the image reference for the catalog you want to install, such as `quay.io/operatorhubio/catalog:latest`.
 
     `poll_interval_duration`
-    :   Specifies the interval for polling the remote registry for newer image digests.
-            The default value is `24h`.
-            Valid units include seconds (`s`), minutes (`m`), and hours (`h`).
-            To disable polling, set a zero value, such as `0s`.
+    :   Specifies the interval in minutes for polling the remote registry for new image content.
+        `pollIntervalMinutes` is optional and only accepts values in minutes.
+         It cannot be set when the image reference is digest-based.
+         To disable polling, omit this field.
 
     ``` yaml title="Example `operatorhubio.yaml` CR"
     apiVersion: olm.operatorframework.io/v1alpha1
@@ -57,7 +57,7 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
         type: Image
         image:
           ref: quay.io/operatorhubio/catalog:latest
-          pollInterval: 10m
+          pollIntervalMinutes: 10
     ```
 
 2. Apply the ClusterCatalog CR:

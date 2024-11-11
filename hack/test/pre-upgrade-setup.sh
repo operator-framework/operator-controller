@@ -29,7 +29,7 @@ spec:
     type: Image
     image:
       ref: ${TEST_CATALOG_IMG}
-      pollInterval: 24h
+      pollIntervalMinutes: 1440
 EOF
 
 kubectl apply -f - <<EOF

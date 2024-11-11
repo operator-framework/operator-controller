@@ -44,7 +44,7 @@ spec:
     type: Image
     image:
       ref: quay.io/operatorhubio/catalog:latest
-      pollInterval: 10m
+      pollIntervalMinutes: 10
 EOF
 ```
 
