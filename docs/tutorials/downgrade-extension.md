@@ -26,7 +26,7 @@ Custom Resource Definitions (CRDs) ensure that the resources used by the `Cluste
 
 **Disable CRD Safety Check Configuration:**
 
-Add the `crdUpgradeSafety` field and set its `policy` to `Disabled` in the `ClusterExtension` resource under the `preflight` section.
+Add the `crdUpgradeSafety` field and set its `enforcement` to `None` in the `ClusterExtension` resource. This configuration disables CRD safety checks during the downgrade process.
 
 **Example:**
 
@@ -36,19 +36,18 @@ kind: ClusterExtension
 metadata:
   name: example-extension
 spec:
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
   install:
     preflight:
       crdUpgradeSafety:
-        policy: Disabled
-    namespace: argocd
-    serviceAccount:
-      name: argocd-installer
+        enforcement: None
   source:
     sourceType: Catalog
     catalog:
       packageName: argocd-operator
       version: 0.6.0
-      upgradeConstraintPolicy: SelfCertified
 ```
 
 **Command Example:**
@@ -56,9 +55,8 @@ spec:
 If you prefer using the command line, you can use `kubectl` to modify the upgrade CRD safety check configuration.
 
 ```bash
-kubectl patch clusterextension <extension_name> --patch '{"spec":{"install":{"preflight":{"crdUpgradeSafety":{"policy":"Disabled"}}}}}' --type=merge
+kubectl patch clusterextension example-extension --patch '{"spec":{"install":{"preflight":{"crdUpgradeSafety":{"enforcement":"None"}}}}}' --type=merge
 ```
-Kubernetes will apply the updated configuration, disabling CRD safety checks during the downgrade process.
 
 ### 2. Ignoring Catalog Provided Upgrade Constraints
 
@@ -76,16 +74,19 @@ kind: ClusterExtension
 metadata:
   name: example-extension
 spec:
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  install:
+    preflight:
+      crdUpgradeSafety:
+        enforcement: None
   source:
     sourceType: Catalog
     catalog:
       packageName: argocd-operator
       version: 0.6.0
       upgradeConstraintPolicy: SelfCertified
-  install:
-    namespace: argocd
-    serviceAccount:
-      name: argocd-installer
 ```
 
 **Command Example:**
@@ -93,7 +94,7 @@ spec:
 If you prefer using the command line, you can use `kubectl` to modify the upgrade constraint policy.
 
 ```bash
-kubectl patch clusterextension <extension_name> --patch '{"spec":{"upgradeConstraintPolicy":"SelfCertified"}}' --type=merge
+kubectl patch clusterextension example-extension --patch '{"spec":{"source": {"catalog":{"upgradeConstraintPolicy":"SelfCertified"}}}}' --type=merge
 ```
 
 ### 3. Executing the Downgrade
@@ -105,7 +106,7 @@ Once the CRD safety checks are disabled and upgrade constraints are set, you can
     Modify the `ClusterExtension` custom resource to specify the target version and adjust the upgrade constraints.
 
     ```bash
-    kubectl edit clusterextension <extension_name>
+    kubectl edit clusterextension example-extension
     ```
 
 2. **Update the Version:**
@@ -116,17 +117,21 @@ Once the CRD safety checks are disabled and upgrade constraints are set, you can
     apiVersion: olm.operatorframework.io/v1
     kind: ClusterExtension
     metadata:
-      name: <extension_name>
+      name: example-extension
     spec:
+      namespace: argocd
+      serviceAccount:
+        name: argocd-installer
+      install:
+        preflight:
+          crdUpgradeSafety:
+            enforcement: None
       source:
         sourceType: Catalog
         catalog:
-          packageName: <package_name>
+          packageName: argocd-operator
           version: <target_version>
-      install:
-        namespace: <namespace>
-        serviceAccount:
-          name: <service_account>
+          upgradeConstraintPolicy: SelfCertified
     ```
 
     `target_version`
@@ -145,7 +150,7 @@ After completing the downgrade, verify that the `ClusterExtension` is functionin
 1. **Check the Status of the ClusterExtension:**
 
     ```bash
-    kubectl get clusterextension <extension_name> -o yaml
+    kubectl get clusterextension example-extension -o yaml
     ```
 
     Ensure that the `status` reflects the target version and that there are no error messages.
