@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 func TestClusterExtensionSourceConfig(t *testing.T) {
@@ -36,26 +36,26 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 			cl := newClient(t)
 			var err error
 			if tc.unionField == "Catalog" {
-				err = cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-					Source: ocv1alpha1.SourceConfig{
+				err = cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+					Source: ocv1.SourceConfig{
 						SourceType: tc.sourceType,
-						Catalog: &ocv1alpha1.CatalogSource{
+						Catalog: &ocv1.CatalogSource{
 							PackageName: "test-package",
 						},
 					},
 					Namespace: "default",
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					ServiceAccount: ocv1.ServiceAccountReference{
 						Name: "default",
 					},
 				}))
 			}
 			if tc.unionField == "" {
-				err = cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-					Source: ocv1alpha1.SourceConfig{
+				err = cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+					Source: ocv1.SourceConfig{
 						SourceType: tc.sourceType,
 					},
 					Namespace: "default",
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
+					ServiceAccount: ocv1.ServiceAccountReference{
 						Name: "default",
 					},
 				}))
@@ -106,15 +106,15 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				Source: ocv1alpha1.SourceConfig{
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1alpha1.CatalogSource{
+					Catalog: &ocv1.CatalogSource{
 						PackageName: tc.pkgName,
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 			}))
@@ -203,16 +203,16 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				Source: ocv1alpha1.SourceConfig{
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1alpha1.CatalogSource{
+					Catalog: &ocv1.CatalogSource{
 						PackageName: "package",
 						Version:     tc.version,
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 			}))
@@ -258,16 +258,16 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				Source: ocv1alpha1.SourceConfig{
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1alpha1.CatalogSource{
+					Catalog: &ocv1.CatalogSource{
 						PackageName: "package",
 						Channels:    tc.channels,
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 			}))
@@ -312,15 +312,15 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				Source: ocv1alpha1.SourceConfig{
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1alpha1.CatalogSource{
+					Catalog: &ocv1.CatalogSource{
 						PackageName: "package",
 					},
 				},
 				Namespace: tc.namespace,
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 			}))
@@ -366,15 +366,15 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				Source: ocv1alpha1.SourceConfig{
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1alpha1.CatalogSource{
+					Catalog: &ocv1.CatalogSource{
 						PackageName: "package",
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{
 					Name: tc.serviceAccount,
 				},
 			}))
@@ -393,20 +393,20 @@ func TestClusterExtensionAdmissionInstall(t *testing.T) {
 
 	testCases := []struct {
 		name          string
-		installConfig *ocv1alpha1.ClusterExtensionInstallConfig
+		installConfig *ocv1.ClusterExtensionInstallConfig
 		errMsg        string
 	}{
 		{
 			name:          "install specified, nothing configured",
-			installConfig: &ocv1alpha1.ClusterExtensionInstallConfig{},
+			installConfig: &ocv1.ClusterExtensionInstallConfig{},
 			errMsg:        oneOfErrMsg,
 		},
 		{
 			name: "install specified, preflight configured",
-			installConfig: &ocv1alpha1.ClusterExtensionInstallConfig{
-				Preflight: &ocv1alpha1.PreflightConfig{
-					CRDUpgradeSafety: &ocv1alpha1.CRDUpgradeSafetyPreflightConfig{
-						Enforcement: ocv1alpha1.CRDUpgradeSafetyEnforcementNone,
+			installConfig: &ocv1.ClusterExtensionInstallConfig{
+				Preflight: &ocv1.PreflightConfig{
+					CRDUpgradeSafety: &ocv1.CRDUpgradeSafetyPreflightConfig{
+						Enforcement: ocv1.CRDUpgradeSafetyEnforcementNone,
 					},
 				},
 			},
@@ -425,15 +425,15 @@ func TestClusterExtensionAdmissionInstall(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				Source: ocv1alpha1.SourceConfig{
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1alpha1.CatalogSource{
+					Catalog: &ocv1.CatalogSource{
 						PackageName: "package",
 					},
 				},
 				Namespace: "default",
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{
 					Name: "default",
 				},
 				Install: tc.installConfig,
@@ -448,8 +448,8 @@ func TestClusterExtensionAdmissionInstall(t *testing.T) {
 	}
 }
 
-func buildClusterExtension(spec ocv1alpha1.ClusterExtensionSpec) *ocv1alpha1.ClusterExtension {
-	return &ocv1alpha1.ClusterExtension{
+func buildClusterExtension(spec ocv1.ClusterExtensionSpec) *ocv1.ClusterExtension {
+	return &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "test-extension-",
 		},

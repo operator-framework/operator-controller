@@ -20,7 +20,7 @@ import (
 
 	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
@@ -76,15 +76,15 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	}, time.Minute, time.Second)
 
 	t.Log("Checking that the ClusterExtension is installed")
-	var clusterExtension ocv1alpha1.ClusterExtension
+	var clusterExtension ocv1.ClusterExtension
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterExtensionName}, &clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
 		if !assert.NotNil(ct, cond) {
 			return
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+		assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		assert.Contains(ct, cond.Message, "Installed bundle")
 		if assert.NotNil(ct, clusterExtension.Status.Install) {
 			assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle.Version)
@@ -101,13 +101,13 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 	t.Log("Checking that the ClusterExtension installs successfully")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterExtensionName}, &clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
 		if !assert.NotNil(ct, cond) {
 			return
 		}
-		assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+		assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		assert.Contains(ct, cond.Message, "Installed bundle")
-		assert.Equal(ct, ocv1alpha1.BundleMetadata{Name: "prometheus-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.Install.Bundle)
+		assert.Equal(ct, ocv1.BundleMetadata{Name: "prometheus-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.Install.Bundle)
 		assert.NotEqual(ct, previousVersion, clusterExtension.Status.Install.Bundle.Version)
 	}, time.Minute, time.Second)
 }

@@ -49,7 +49,7 @@ import (
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/contentmanager"
@@ -80,11 +80,11 @@ type Applier interface {
 	// Apply applies the content in the provided fs.FS using the configuration of the provided ClusterExtension.
 	// It also takes in a map[string]string to be applied to all applied resources as labels and another
 	// map[string]string used to create a unique identifier for a stored reference to the resources created.
-	Apply(context.Context, fs.FS, *ocv1alpha1.ClusterExtension, map[string]string, map[string]string) ([]client.Object, string, error)
+	Apply(context.Context, fs.FS, *ocv1.ClusterExtension, map[string]string, map[string]string) ([]client.Object, string, error)
 }
 
 type InstalledBundleGetter interface {
-	GetInstalledBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*InstalledBundle, error)
+	GetInstalledBundle(ctx context.Context, ext *ocv1.ClusterExtension) (*InstalledBundle, error)
 }
 
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch;update;patch
@@ -105,7 +105,7 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	l.Info("reconcile starting")
 	defer l.Info("reconcile ending")
 
-	existingExt := &ocv1alpha1.ClusterExtension{}
+	existingExt := &ocv1.ClusterExtension{}
 	if err := r.Client.Get(ctx, req.NamespacedName, existingExt); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -146,7 +146,7 @@ func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 // ensureAllConditionsWithReason checks that all defined condition types exist in the given ClusterExtension,
 // and assigns a specified reason and custom message to any missing condition.
-func ensureAllConditionsWithReason(ext *ocv1alpha1.ClusterExtension, reason v1alpha1.ConditionReason, message string) {
+func ensureAllConditionsWithReason(ext *ocv1.ClusterExtension, reason v1alpha1.ConditionReason, message string) {
 	for _, condType := range conditionsets.ConditionTypes {
 		cond := apimeta.FindStatusCondition(ext.Status.Conditions, condType)
 		if cond == nil {
@@ -165,8 +165,8 @@ func ensureAllConditionsWithReason(ext *ocv1alpha1.ClusterExtension, reason v1al
 }
 
 // Compare resources - ignoring status & metadata.finalizers
-func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
-	a.Status, b.Status = ocv1alpha1.ClusterExtensionStatus{}, ocv1alpha1.ClusterExtensionStatus{}
+func checkForUnexpectedFieldChange(a, b ocv1.ClusterExtension) bool {
+	a.Status, b.Status = ocv1.ClusterExtensionStatus{}, ocv1.ClusterExtensionStatus{}
 	a.Finalizers, b.Finalizers = []string{}, []string{}
 	return !equality.Semantic.DeepEqual(a, b)
 }
@@ -187,7 +187,7 @@ func checkForUnexpectedFieldChange(a, b ocv1alpha1.ClusterExtension) bool {
 4.3 Apply the release on cluster.
 */
 //nolint:unparam
-func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (ctrl.Result, error) {
+func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.ClusterExtension) (ctrl.Result, error) {
 	l := log.FromContext(ctx)
 
 	l.Info("handling finalizers")
@@ -213,7 +213,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 	// run resolution
 	l.Info("resolving bundle")
-	var bm *ocv1alpha1.BundleMetadata
+	var bm *ocv1.BundleMetadata
 	if installedBundle != nil {
 		bm = &installedBundle.BundleMetadata
 	}
@@ -222,7 +222,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 		// Note: We don't distinguish between resolution-specific errors and generic errors
 		setStatusProgressing(ext, err)
 		setInstalledStatusFromBundle(ext, installedBundle)
-		ensureAllConditionsWithReason(ext, ocv1alpha1.ReasonFailed, err.Error())
+		ensureAllConditionsWithReason(ext, ocv1.ReasonFailed, err.Error())
 		return ctrl.Result{}, err
 	}
 
@@ -267,7 +267,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 	}
 
 	objLbls := map[string]string{
-		labels.OwnerKindKey: ocv1alpha1.ClusterExtensionKind,
+		labels.OwnerKindKey: ocv1.ClusterExtensionKind,
 		labels.OwnerNameKey: ext.GetName(),
 	}
 
@@ -328,7 +328,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1alp
 
 // SetDeprecationStatus will set the appropriate deprecation statuses for a ClusterExtension
 // based on the provided bundle
-func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, deprecation *declcfg.Deprecation) {
+func SetDeprecationStatus(ext *ocv1.ClusterExtension, bundleName string, deprecation *declcfg.Deprecation) {
 	deprecations := map[string][]declcfg.DeprecationEntry{}
 	channelSet := sets.New[string]()
 	if ext.Spec.Source.Catalog != nil {
@@ -340,16 +340,16 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, d
 		for _, entry := range deprecation.Entries {
 			switch entry.Reference.Schema {
 			case declcfg.SchemaPackage:
-				deprecations[ocv1alpha1.TypePackageDeprecated] = []declcfg.DeprecationEntry{entry}
+				deprecations[ocv1.TypePackageDeprecated] = []declcfg.DeprecationEntry{entry}
 			case declcfg.SchemaChannel:
 				if channelSet.Has(entry.Reference.Name) {
-					deprecations[ocv1alpha1.TypeChannelDeprecated] = append(deprecations[ocv1alpha1.TypeChannelDeprecated], entry)
+					deprecations[ocv1.TypeChannelDeprecated] = append(deprecations[ocv1.TypeChannelDeprecated], entry)
 				}
 			case declcfg.SchemaBundle:
 				if bundleName != entry.Reference.Name {
 					continue
 				}
-				deprecations[ocv1alpha1.TypeBundleDeprecated] = []declcfg.DeprecationEntry{entry}
+				deprecations[ocv1.TypeBundleDeprecated] = []declcfg.DeprecationEntry{entry}
 			}
 		}
 	}
@@ -357,9 +357,9 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, d
 	// first get ordered deprecation messages that we'll join in the Deprecated condition message
 	var deprecationMessages []string
 	for _, conditionType := range []string{
-		ocv1alpha1.TypePackageDeprecated,
-		ocv1alpha1.TypeChannelDeprecated,
-		ocv1alpha1.TypeBundleDeprecated,
+		ocv1.TypePackageDeprecated,
+		ocv1.TypeChannelDeprecated,
+		ocv1.TypeBundleDeprecated,
 	} {
 		if entries, ok := deprecations[conditionType]; ok {
 			for _, entry := range entries {
@@ -369,12 +369,12 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, d
 	}
 
 	// next, set the Deprecated condition
-	status, reason, message := metav1.ConditionFalse, ocv1alpha1.ReasonDeprecated, ""
+	status, reason, message := metav1.ConditionFalse, ocv1.ReasonDeprecated, ""
 	if len(deprecationMessages) > 0 {
-		status, reason, message = metav1.ConditionTrue, ocv1alpha1.ReasonDeprecated, strings.Join(deprecationMessages, ";")
+		status, reason, message = metav1.ConditionTrue, ocv1.ReasonDeprecated, strings.Join(deprecationMessages, ";")
 	}
 	apimeta.SetStatusCondition(&ext.Status.Conditions, metav1.Condition{
-		Type:               ocv1alpha1.TypeDeprecated,
+		Type:               ocv1.TypeDeprecated,
 		Reason:             reason,
 		Status:             status,
 		Message:            message,
@@ -383,14 +383,14 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, d
 
 	// finally, set the individual deprecation conditions for package, channel, and bundle
 	for _, conditionType := range []string{
-		ocv1alpha1.TypePackageDeprecated,
-		ocv1alpha1.TypeChannelDeprecated,
-		ocv1alpha1.TypeBundleDeprecated,
+		ocv1.TypePackageDeprecated,
+		ocv1.TypeChannelDeprecated,
+		ocv1.TypeBundleDeprecated,
 	} {
 		entries, ok := deprecations[conditionType]
-		status, reason, message := metav1.ConditionFalse, ocv1alpha1.ReasonDeprecated, ""
+		status, reason, message := metav1.ConditionFalse, ocv1.ReasonDeprecated, ""
 		if ok {
-			status, reason = metav1.ConditionTrue, ocv1alpha1.ReasonDeprecated
+			status, reason = metav1.ConditionTrue, ocv1.ReasonDeprecated
 			for _, entry := range entries {
 				message = fmt.Sprintf("%s\n%s", message, entry.Message)
 			}
@@ -408,7 +408,7 @@ func SetDeprecationStatus(ext *ocv1alpha1.ClusterExtension, bundleName string, d
 // SetupWithManager sets up the controller with the Manager.
 func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	controller, err := ctrl.NewControllerManagedBy(mgr).
-		For(&ocv1alpha1.ClusterExtension{}).
+		For(&ocv1.ClusterExtension{}).
 		Watches(&catalogd.ClusterCatalog{},
 			crhandler.EnqueueRequestsFromMapFunc(clusterExtensionRequestsForCatalog(mgr.GetClient(), mgr.GetLogger())),
 			builder.WithPredicates(predicate.Funcs{
@@ -438,7 +438,7 @@ func (r *ClusterExtensionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return nil
 }
 
-func wrapErrorWithResolutionInfo(resolved ocv1alpha1.BundleMetadata, err error) error {
+func wrapErrorWithResolutionInfo(resolved ocv1.BundleMetadata, err error) error {
 	return fmt.Errorf("%w for resolved bundle %q with version %q", err, resolved.Name, resolved.Version)
 }
 
@@ -447,7 +447,7 @@ func clusterExtensionRequestsForCatalog(c client.Reader, logger logr.Logger) crh
 	return func(ctx context.Context, _ client.Object) []reconcile.Request {
 		// no way of associating an extension to a catalog so create reconcile requests for everything
 		clusterExtensions := metav1.PartialObjectMetadataList{}
-		clusterExtensions.SetGroupVersionKind(ocv1alpha1.GroupVersion.WithKind("ClusterExtensionList"))
+		clusterExtensions.SetGroupVersionKind(ocv1.GroupVersion.WithKind("ClusterExtensionList"))
 		err := c.List(ctx, &clusterExtensions)
 		if err != nil {
 			logger.Error(err, "unable to enqueue cluster extensions for catalog reconcile")
@@ -471,11 +471,11 @@ type DefaultInstalledBundleGetter struct {
 }
 
 type InstalledBundle struct {
-	ocv1alpha1.BundleMetadata
+	ocv1.BundleMetadata
 	Image string
 }
 
-func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*InstalledBundle, error) {
+func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1.ClusterExtension) (*InstalledBundle, error) {
 	cl, err := d.ActionClientFor(ctx, ext)
 	if err != nil {
 		return nil, err
@@ -494,7 +494,7 @@ func (d *DefaultInstalledBundleGetter) GetInstalledBundle(ctx context.Context, e
 	for _, rel := range relhis {
 		if rel.Info != nil && rel.Info.Status == release.StatusDeployed {
 			return &InstalledBundle{
-				BundleMetadata: ocv1alpha1.BundleMetadata{
+				BundleMetadata: ocv1.BundleMetadata{
 					Name:    rel.Labels[labels.BundleNameKey],
 					Version: rel.Labels[labels.BundleVersionKey],
 				},

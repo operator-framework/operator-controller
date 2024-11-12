@@ -23,7 +23,7 @@ import (
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/rukpak/util"
@@ -59,7 +59,7 @@ type Helm struct {
 
 // shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
 // if it is set to enforcement None.
-func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1alpha1.ClusterExtension, state string) bool {
+func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1.ClusterExtension, state string) bool {
 	l := log.FromContext(ctx)
 	hasCRDUpgradeSafety := ext.Spec.Install != nil && ext.Spec.Install.Preflight != nil && ext.Spec.Install.Preflight.CRDUpgradeSafety != nil
 	_, isCRDUpgradeSafetyInstance := preflight.(*crdupgradesafety.Preflight)
@@ -68,7 +68,7 @@ func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1alph
 		if state == StateNeedsInstall || state == StateNeedsUpgrade {
 			l.Info("crdUpgradeSafety ", "policy", ext.Spec.Install.Preflight.CRDUpgradeSafety.Enforcement)
 		}
-		if ext.Spec.Install.Preflight.CRDUpgradeSafety.Enforcement == ocv1alpha1.CRDUpgradeSafetyEnforcementNone {
+		if ext.Spec.Install.Preflight.CRDUpgradeSafety.Enforcement == ocv1.CRDUpgradeSafetyEnforcementNone {
 			// Skip this preflight check because it is of type *crdupgradesafety.Preflight and the CRD Upgrade Safety
 			// policy is set to None
 			return true
@@ -77,7 +77,7 @@ func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1alph
 	return false
 }
 
-func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
+func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
 	chrt, err := convert.RegistryV1ToHelmChart(ctx, contentFS, ext.Spec.Namespace, []string{corev1.NamespaceAll})
 	if err != nil {
 		return nil, "", err
@@ -151,7 +151,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 	return relObjects, state, nil
 }
 
-func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1alpha1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
+func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
 	currentRelease, err := cl.Get(ext.GetName())
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil, nil, StateError, err

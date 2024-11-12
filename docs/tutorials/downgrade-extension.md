@@ -31,7 +31,7 @@ Add the `crdUpgradeSafety` field and set its `policy` to `Disabled` in the `Clus
 **Example:**
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: example-extension
@@ -71,7 +71,7 @@ Set the `upgradeConstraintPolicy` to `SelfCertified` in the `ClusterExtension` r
 **Example:**
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: example-extension
@@ -113,7 +113,7 @@ Once the CRD safety checks are disabled and upgrade constraints are set, you can
    Within the YAML editor, update the `spec` section as follows:
 
    ```yaml
-   apiVersion: olm.operatorframework.io/v1alpha1
+   apiVersion: olm.operatorframework.io/v1
    kind: ClusterExtension
    metadata:
      name: <extension_name>

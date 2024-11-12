@@ -267,7 +267,7 @@ subjects:
   name: argocd-installer
   namespace: argocd
 ---
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: argocd

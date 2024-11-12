@@ -8,13 +8,13 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/authentication"
 )
 
 func ServiceAccountRestConfigMapper(tokenGetter *authentication.TokenGetter) func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
 	return func(ctx context.Context, o client.Object, c *rest.Config) (*rest.Config, error) {
-		cExt := o.(*ocv1alpha1.ClusterExtension)
+		cExt := o.(*ocv1.ClusterExtension)
 		saKey := types.NamespacedName{
 			Name:      cExt.Spec.ServiceAccount.Name,
 			Namespace: cExt.Spec.Namespace,

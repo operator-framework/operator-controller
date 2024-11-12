@@ -5,7 +5,7 @@ To disable automatic updates, and pin the version of an extension, set `version`
 Example:
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: argocd
