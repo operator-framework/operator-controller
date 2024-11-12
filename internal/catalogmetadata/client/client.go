@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogd "github.com/operator-framework/catalogd/api/v1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 )
 

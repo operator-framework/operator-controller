@@ -18,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogdv1alpha1 "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogd "github.com/operator-framework/catalogd/api/v1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
@@ -65,14 +65,14 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 
 	t.Log("Checking that the ClusterCatalog is serving")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		var clusterCatalog catalogdv1alpha1.ClusterCatalog
+		var clusterCatalog catalogd.ClusterCatalog
 		assert.NoError(ct, c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, &clusterCatalog))
-		cond := apimeta.FindStatusCondition(clusterCatalog.Status.Conditions, catalogdv1alpha1.TypeServing)
+		cond := apimeta.FindStatusCondition(clusterCatalog.Status.Conditions, catalogd.TypeServing)
 		if !assert.NotNil(ct, cond) {
 			return
 		}
 		assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-		assert.Equal(ct, catalogdv1alpha1.ReasonAvailable, cond.Reason)
+		assert.Equal(ct, catalogd.ReasonAvailable, cond.Reason)
 	}, time.Minute, time.Second)
 
 	t.Log("Checking that the ClusterExtension is installed")
