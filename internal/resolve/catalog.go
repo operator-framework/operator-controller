@@ -18,7 +18,7 @@ import (
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
@@ -38,7 +38,7 @@ type foundBundle struct {
 }
 
 // Resolve returns a Bundle from a catalog that needs to get installed on the cluster.
-func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterExtension, installedBundle *ocv1alpha1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
 	packageName := ext.Spec.Source.Catalog.PackageName
 	versionRange := ext.Spec.Source.Catalog.Version
 	channels := ext.Spec.Source.Catalog.Channels
@@ -89,7 +89,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 			predicates = append(predicates, filter.InMastermindsSemverRange(versionRangeConstraints))
 		}
 
-		if ext.Spec.Source.Catalog.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicySelfCertified && installedBundle != nil {
+		if ext.Spec.Source.Catalog.UpgradeConstraintPolicy != ocv1.UpgradeConstraintPolicySelfCertified && installedBundle != nil {
 			successorPredicate, err := filter.SuccessorsOf(*installedBundle, packageFBC.Channels...)
 			if err != nil {
 				return fmt.Errorf("error finding upgrade edges: %w", err)
@@ -187,7 +187,7 @@ type resolutionError struct {
 	PackageName     string
 	Version         string
 	Channels        []string
-	InstalledBundle *ocv1alpha1.BundleMetadata
+	InstalledBundle *ocv1.BundleMetadata
 	ResolvedBundles []foundBundle
 }
 

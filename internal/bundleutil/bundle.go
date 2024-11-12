@@ -9,7 +9,7 @@ import (
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 	"github.com/operator-framework/operator-registry/alpha/property"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 func GetVersion(b declcfg.Bundle) (*bsemver.Version, error) {
@@ -30,8 +30,8 @@ func GetVersion(b declcfg.Bundle) (*bsemver.Version, error) {
 }
 
 // MetadataFor returns a BundleMetadata for the given bundle name and version.
-func MetadataFor(bundleName string, bundleVersion bsemver.Version) ocv1alpha1.BundleMetadata {
-	return ocv1alpha1.BundleMetadata{
+func MetadataFor(bundleName string, bundleVersion bsemver.Version) ocv1.BundleMetadata {
+	return ocv1.BundleMetadata{
 		Name:    bundleName,
 		Version: bundleVersion.String(),
 	}

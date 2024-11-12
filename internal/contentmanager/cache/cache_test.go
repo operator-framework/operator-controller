@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 type mockWatcher struct {
@@ -64,7 +64,7 @@ func TestCacheWatch(t *testing.T) {
 		&mockSourcerer{
 			source: &mockSource{},
 		},
-		&ocv1alpha1.ClusterExtension{},
+		&ocv1.ClusterExtension{},
 		time.Second,
 	)
 
@@ -81,7 +81,7 @@ func TestCacheWatchInvalidGVK(t *testing.T) {
 		&mockSourcerer{
 			source: &mockSource{},
 		},
-		&ocv1alpha1.ClusterExtension{},
+		&ocv1.ClusterExtension{},
 		time.Second,
 	)
 
@@ -94,7 +94,7 @@ func TestCacheWatchSourcererError(t *testing.T) {
 		&mockSourcerer{
 			err: errors.New("error"),
 		},
-		&ocv1alpha1.ClusterExtension{},
+		&ocv1.ClusterExtension{},
 		time.Second,
 	)
 
@@ -109,7 +109,7 @@ func TestCacheWatchWatcherError(t *testing.T) {
 		&mockSourcerer{
 			source: &mockSource{},
 		},
-		&ocv1alpha1.ClusterExtension{},
+		&ocv1.ClusterExtension{},
 		time.Second,
 	)
 
@@ -126,7 +126,7 @@ func TestCacheWatchSourceWaitForSyncError(t *testing.T) {
 				err: errors.New("error"),
 			},
 		},
-		&ocv1alpha1.ClusterExtension{},
+		&ocv1.ClusterExtension{},
 		time.Second,
 	)
 
@@ -142,7 +142,7 @@ func TestCacheWatchExistingSourceNotPanic(t *testing.T) {
 		&mockSourcerer{
 			source: &mockSource{},
 		},
-		&ocv1alpha1.ClusterExtension{},
+		&ocv1.ClusterExtension{},
 		time.Second,
 	)
 
@@ -162,7 +162,7 @@ func TestCacheWatchRemovesStaleSources(t *testing.T) {
 		&mockSourcerer{
 			source: &mockSource{},
 		},
-		&ocv1alpha1.ClusterExtension{},
+		&ocv1.ClusterExtension{},
 		time.Second,
 	)
 
@@ -186,7 +186,7 @@ func TestCacheWatchRemovingStaleSourcesError(t *testing.T) {
 		&mockSourcerer{
 			source: &mockSource{},
 		},
-		&ocv1alpha1.ClusterExtension{},
+		&ocv1.ClusterExtension{},
 		time.Second,
 	)
 

@@ -30,7 +30,7 @@ import (
 
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 const (
@@ -192,7 +192,7 @@ func createClusterRoleAndBindingForSA(ctx context.Context, name string, sa *core
 	return nil
 }
 
-func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCatalog, *corev1.ServiceAccount, *corev1.Namespace) {
+func testInit(t *testing.T) (*ocv1.ClusterExtension, *catalogd.ClusterCatalog, *corev1.ServiceAccount, *corev1.Namespace) {
 	var err error
 
 	clusterExtensionName := fmt.Sprintf("clusterextension-%s", rand.String(8))
@@ -200,7 +200,7 @@ func testInit(t *testing.T) (*ocv1alpha1.ClusterExtension, *catalogd.ClusterCata
 	ns, err := createNamespace(context.Background(), clusterExtensionName)
 	require.NoError(t, err)
 
-	clusterExtension := &ocv1alpha1.ClusterExtension{
+	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterExtensionName,
 		},
@@ -249,7 +249,7 @@ func ensureNoExtensionResources(t *testing.T, clusterExtensionName string) {
 	}, 2*pollDuration, pollInterval)
 }
 
-func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *ocv1alpha1.ClusterExtension, sa *corev1.ServiceAccount, ns *corev1.Namespace) {
+func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *ocv1.ClusterExtension, sa *corev1.ServiceAccount, ns *corev1.Namespace) {
 	t.Logf("By deleting ClusterCatalog %q", cat.Name)
 	require.NoError(t, c.Delete(context.Background(), cat))
 	require.Eventually(t, func() bool {
@@ -260,7 +260,7 @@ func testCleanup(t *testing.T, cat *catalogd.ClusterCatalog, clusterExtension *o
 	t.Logf("By deleting ClusterExtension %q", clusterExtension.Name)
 	require.NoError(t, c.Delete(context.Background(), clusterExtension))
 	require.Eventually(t, func() bool {
-		err := c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, &ocv1alpha1.ClusterExtension{})
+		err := c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, &ocv1.ClusterExtension{})
 		return errors.IsNotFound(err)
 	}, pollDuration, pollInterval)
 
@@ -308,10 +308,10 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 			defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 			defer getArtifactsOutput(t)
 
-			clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-				Source: ocv1alpha1.SourceConfig{
+			clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1alpha1.CatalogSource{
+					Catalog: &ocv1.CatalogSource{
 						PackageName: tc.packageName,
 						Selector: &metav1.LabelSelector{
 							MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
@@ -319,7 +319,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 					},
 				},
 				Namespace: ns.Name,
-				ServiceAccount: ocv1alpha1.ServiceAccountReference{
+				ServiceAccount: ocv1.ServiceAccountReference{
 					Name: sa.Name,
 				},
 			}
@@ -335,20 +335,20 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 			t.Log("By eventually reporting progressing as True")
 			require.EventuallyWithT(t, func(ct *assert.CollectT) {
 				assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 				if assert.NotNil(ct, cond) {
 					assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-					assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+					assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 				}
 			}, pollDuration, pollInterval)
 
 			t.Log("By eventually installing the package successfully")
 			require.EventuallyWithT(t, func(ct *assert.CollectT) {
 				assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+				cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
 				if assert.NotNil(ct, cond) {
 					assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-					assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+					assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 					assert.Contains(ct, cond.Message, "Installed bundle")
 					assert.NotEmpty(ct, clusterExtension.Status.Install.Bundle)
 				}
@@ -364,15 +364,15 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
-	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		Source: ocv1alpha1.SourceConfig{
+	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1alpha1.CatalogSource{
+			Catalog: &ocv1.CatalogSource{
 				PackageName: "prometheus",
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -388,10 +388,10 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 	t.Log("By eventually reporting Progressing == True and Reason Retrying")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonRetrying, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonRetrying, cond.Reason)
 			assert.Contains(ct, cond.Message, "in multiple catalogs with the same priority [operatorhubio test-catalog]")
 		}
 	}, pollDuration, pollInterval)
@@ -406,17 +406,17 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 	defer getArtifactsOutput(t)
 
 	t.Log("By creating an ClusterExtension at a specified version")
-	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		Source: ocv1alpha1.SourceConfig{
+	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1alpha1.CatalogSource{
+			Catalog: &ocv1.CatalogSource{
 				PackageName: "prometheus",
 				Version:     "1.0.0",
 				// No Selector since this is an exact version match
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -425,17 +425,17 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		assert.Equal(ct,
-			&ocv1alpha1.ClusterExtensionInstallStatus{Bundle: ocv1alpha1.BundleMetadata{
+			&ocv1.ClusterExtensionInstallStatus{Bundle: ocv1.BundleMetadata{
 				Name:    "prometheus-operator.1.0.0",
 				Version: "1.0.0",
 			}},
 			clusterExtension.Status.Install,
 		)
 
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
@@ -452,9 +452,9 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("By eventually reporting Progressing == True and Reason Retrying")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
-			assert.Equal(ct, ocv1alpha1.ReasonRetrying, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonRetrying, cond.Reason)
 			assert.Equal(ct, "error upgrading from currently installed version \"1.0.0\": no bundles found for package \"prometheus\" matching version \"1.2.0\"", cond.Message)
 		}
 	}, pollDuration, pollInterval)
@@ -469,16 +469,16 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 	defer getArtifactsOutput(t)
 
 	t.Log("By creating an ClusterExtension at a specified version")
-	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		Source: ocv1alpha1.SourceConfig{
+	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1alpha1.CatalogSource{
+			Catalog: &ocv1.CatalogSource{
 				PackageName: "prometheus",
 				Version:     "1.0.0",
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -486,10 +486,10 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("By eventually reporting a successful resolution")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
@@ -497,15 +497,15 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 	t.Log("By updating the ClusterExtension resource to a non-successor version")
 	// 1.2.0 does not replace/skip/skipRange 1.0.0.
 	clusterExtension.Spec.Source.Catalog.Version = "1.2.0"
-	clusterExtension.Spec.Source.Catalog.UpgradeConstraintPolicy = ocv1alpha1.UpgradeConstraintPolicySelfCertified
+	clusterExtension.Spec.Source.Catalog.UpgradeConstraintPolicy = ocv1.UpgradeConstraintPolicySelfCertified
 	require.NoError(t, c.Update(context.Background(), clusterExtension))
 	t.Log("By eventually reporting a satisfiable resolution")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 }
@@ -518,16 +518,16 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 	defer getArtifactsOutput(t)
 
 	t.Log("By creating an ClusterExtension at a specified version")
-	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		Source: ocv1alpha1.SourceConfig{
+	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1alpha1.CatalogSource{
+			Catalog: &ocv1.CatalogSource{
 				PackageName: "prometheus",
 				Version:     "1.0.0",
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -535,10 +535,10 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 	t.Log("By eventually reporting a successful resolution")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
@@ -550,10 +550,10 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 	t.Log("By eventually reporting a successful resolution and bundle path")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 }
@@ -565,10 +565,10 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
-	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		Source: ocv1alpha1.SourceConfig{
+	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1alpha1.CatalogSource{
+			Catalog: &ocv1.CatalogSource{
 				PackageName: "prometheus",
 				Selector: &metav1.LabelSelector{
 					MatchExpressions: []metav1.LabelSelectorRequirement{
@@ -582,7 +582,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -593,10 +593,10 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 	t.Log("By reporting a successful resolution and bundle path")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
@@ -617,10 +617,10 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 	t.Log("By eventually reporting a successful resolution and bundle path")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 }
@@ -640,7 +640,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	extensionCatalog, err := createTestCatalog(context.Background(), testCatalogName, latestCatalogImage)
 	require.NoError(t, err)
 	clusterExtensionName := fmt.Sprintf("clusterextension-%s", rand.String(8))
-	clusterExtension := &ocv1alpha1.ClusterExtension{
+	clusterExtension := &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterExtensionName,
 		},
@@ -652,10 +652,10 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
-	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		Source: ocv1alpha1.SourceConfig{
+	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1alpha1.CatalogSource{
+			Catalog: &ocv1.CatalogSource{
 				PackageName: "prometheus",
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
@@ -663,7 +663,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -674,10 +674,10 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	t.Log("By reporting a successful resolution and bundle path")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
@@ -698,10 +698,10 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 	t.Log("By eventually reporting a successful resolution and bundle path")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 }
@@ -713,10 +713,10 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
-	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		Source: ocv1alpha1.SourceConfig{
+	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1alpha1.CatalogSource{
+			Catalog: &ocv1.CatalogSource{
 				PackageName: "prometheus",
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
@@ -724,7 +724,7 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -735,10 +735,10 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 	t.Log("By reporting a successful installation")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 			assert.Contains(ct, cond.Message, "Installed bundle")
 		}
 	}, pollDuration, pollInterval)
@@ -776,10 +776,10 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
 
-	clusterExtension.Spec = ocv1alpha1.ClusterExtensionSpec{
-		Source: ocv1alpha1.SourceConfig{
+	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
+		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
-			Catalog: &ocv1alpha1.CatalogSource{
+			Catalog: &ocv1.CatalogSource{
 				PackageName: "prometheus",
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
@@ -787,7 +787,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 			},
 		},
 		Namespace: ns.Name,
-		ServiceAccount: ocv1alpha1.ServiceAccountReference{
+		ServiceAccount: ocv1.ServiceAccountReference{
 			Name: sa.Name,
 		},
 	}
@@ -803,20 +803,20 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 	t.Log("By eventually reporting Progressing == True with Reason Retrying")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonRetrying, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonRetrying, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 
 	t.Log("By eventually failing to install the package successfully due to insufficient ServiceAccount permissions")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionFalse, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonFailed, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonFailed, cond.Reason)
 			assert.Equal(ct, "No bundle installed", cond.Message)
 		}
 	}, pollDuration, pollInterval)
@@ -831,10 +831,10 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 	t.Log("By eventually installing the package successfully")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeInstalled)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 			assert.Contains(ct, cond.Message, "Installed bundle")
 			assert.NotEmpty(ct, clusterExtension.Status.Install)
 		}
@@ -843,10 +843,10 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 	t.Log("By eventually reporting Progressing == True with Reason Success")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
-		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1alpha1.TypeProgressing)
+		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
-			assert.Equal(ct, ocv1alpha1.ReasonSucceeded, cond.Reason)
+			assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		}
 	}, pollDuration, pollInterval)
 }
@@ -882,7 +882,7 @@ func getArtifactsOutput(t *testing.T) {
 	}
 
 	// get all cluster extensions save them to the artifact path.
-	clusterExtensions := ocv1alpha1.ClusterExtensionList{}
+	clusterExtensions := ocv1.ClusterExtensionList{}
 	if err := c.List(context.Background(), &clusterExtensions, client.InNamespace("")); err != nil {
 		fmt.Printf("Failed to list cluster extensions: %v", err)
 	}

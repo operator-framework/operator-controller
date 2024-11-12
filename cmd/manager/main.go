@@ -49,7 +49,7 @@ import (
 	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/action"
 	"github.com/operator-framework/operator-controller/internal/applier"
 	"github.com/operator-framework/operator-controller/internal/authentication"
@@ -141,8 +141,8 @@ func main() {
 	setupLog.Info("set up manager")
 	cacheOptions := crcache.Options{
 		ByObject: map[client.Object]crcache.ByObject{
-			&ocv1alpha1.ClusterExtension{}: {Label: k8slabels.Everything()},
-			&catalogd.ClusterCatalog{}:     {Label: k8slabels.Everything()},
+			&ocv1.ClusterExtension{}:   {Label: k8slabels.Everything()},
+			&catalogd.ClusterCatalog{}: {Label: k8slabels.Everything()},
 		},
 		DefaultNamespaces: map[string]crcache.Config{
 			systemNamespace: {LabelSelector: k8slabels.Everything()},
@@ -196,7 +196,7 @@ func main() {
 	cfgGetter, err := helmclient.NewActionConfigGetter(mgr.GetConfig(), mgr.GetRESTMapper(),
 		helmclient.StorageDriverMapper(action.ChunkedStorageDriverMapper(coreClient, mgr.GetAPIReader(), systemNamespace)),
 		helmclient.ClientNamespaceMapper(func(obj client.Object) (string, error) {
-			ext := obj.(*ocv1alpha1.ClusterExtension)
+			ext := obj.(*ocv1.ClusterExtension)
 			return ext.Spec.Namespace, nil
 		}),
 		helmclient.ClientRestConfigMapper(clientRestConfigMapper),
@@ -291,7 +291,7 @@ func main() {
 
 	cm := contentmanager.NewManager(clientRestConfigMapper, mgr.GetConfig(), mgr.GetRESTMapper())
 	err = clusterExtensionFinalizers.Register(controllers.ClusterExtensionCleanupContentManagerCacheFinalizer, finalizers.FinalizerFunc(func(ctx context.Context, obj client.Object) (crfinalizer.Result, error) {
-		ext := obj.(*ocv1alpha1.ClusterExtension)
+		ext := obj.(*ocv1.ClusterExtension)
 		err := cm.Delete(ext)
 		return crfinalizer.Result{}, err
 	}))

@@ -35,7 +35,7 @@ import (
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/contentmanager"
 	cmcache "github.com/operator-framework/operator-controller/internal/contentmanager/cache"
 	"github.com/operator-framework/operator-controller/internal/controllers"
@@ -65,7 +65,7 @@ func newClient(t *testing.T) client.Client {
 	// TODO: this is a live client, which behaves differently than a cache client.
 	//  We may want to use a caching client instead to get closer to real behavior.
 	sch := runtime.NewScheme()
-	require.NoError(t, ocv1alpha1.AddToScheme(sch))
+	require.NoError(t, ocv1.AddToScheme(sch))
 	cl, err := client.New(config, client.Options{Scheme: sch})
 	require.NoError(t, err)
 	require.NotNil(t, cl)
@@ -80,7 +80,7 @@ func (m *MockInstalledBundleGetter) SetBundle(bundle *controllers.InstalledBundl
 	m.bundle = bundle
 }
 
-func (m *MockInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1alpha1.ClusterExtension) (*controllers.InstalledBundle, error) {
+func (m *MockInstalledBundleGetter) GetInstalledBundle(ctx context.Context, ext *ocv1.ClusterExtension) (*controllers.InstalledBundle, error) {
 	return m.bundle, nil
 }
 
@@ -92,7 +92,7 @@ type MockApplier struct {
 	state string
 }
 
-func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1alpha1.ClusterExtension, _ map[string]string, _ map[string]string) ([]client.Object, string, error) {
+func (m *MockApplier) Apply(_ context.Context, _ fs.FS, _ *ocv1.ClusterExtension, _ map[string]string, _ map[string]string) ([]client.Object, string, error) {
 	if m.err != nil {
 		return nil, m.state, m.err
 	}
@@ -107,14 +107,14 @@ type MockManagedContentCacheManager struct {
 	cache cmcache.Cache
 }
 
-func (m *MockManagedContentCacheManager) Get(_ context.Context, _ *ocv1alpha1.ClusterExtension) (cmcache.Cache, error) {
+func (m *MockManagedContentCacheManager) Get(_ context.Context, _ *ocv1.ClusterExtension) (cmcache.Cache, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
 	return m.cache, nil
 }
 
-func (m *MockManagedContentCacheManager) Delete(_ *ocv1alpha1.ClusterExtension) error {
+func (m *MockManagedContentCacheManager) Delete(_ *ocv1.ClusterExtension) error {
 	return m.err
 }
 
