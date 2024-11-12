@@ -130,6 +130,12 @@ bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
 		$(BINGO) get "$$pkg@latest"; \
 	done
 
+.PHONY: verify-crd-compatibility
+CRD_DIFF_ORIGINAL_REF := main
+CRD_DIFF_UPDATED_REF  := HEAD
+verify-crd-compatibility: $(CRD_DIFF)
+	$(CRD_DIFF) "git://${CRD_DIFF_ORIGINAL_REF}?path=config/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml" "git://${CRD_DIFF_UPDATED_REF}?path=config/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml"
+
 .PHONY: test
 test: manifests generate fmt vet test-unit test-e2e #HELP Run all tests.
 
