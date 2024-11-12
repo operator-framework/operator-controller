@@ -16,23 +16,27 @@ limitations under the License.
 
 package conditionsets
 
+import (
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+)
+
 // ConditionTypes is the full set of ClusterExtension condition Types.
 // ConditionReasons is the full set of ClusterExtension condition Reasons.
 //
 // NOTE: unit tests in clusterextension_types_test will enforce completeness.
 var ConditionTypes = []string{
-	v1alpha1.TypeInstalled,
-	v1alpha1.TypeDeprecated,
-	v1alpha1.TypePackageDeprecated,
-	v1alpha1.TypeChannelDeprecated,
-	v1alpha1.TypeBundleDeprecated,
-	v1alpha1.TypeProgressing,
+	ocv1.TypeInstalled,
+	ocv1.TypeDeprecated,
+	ocv1.TypePackageDeprecated,
+	ocv1.TypeChannelDeprecated,
+	ocv1.TypeBundleDeprecated,
+	ocv1.TypeProgressing,
 }
 
 var ConditionReasons = []string{
-	v1alpha1.ReasonSucceeded,
-	v1alpha1.ReasonDeprecated,
-	v1alpha1.ReasonFailed,
-	v1alpha1.ReasonBlocked,
-	v1alpha1.ReasonRetrying,
+	ocv1.ReasonSucceeded,
+	ocv1.ReasonDeprecated,
+	ocv1.ReasonFailed,
+	ocv1.ReasonBlocked,
+	ocv1.ReasonRetrying,
 }
