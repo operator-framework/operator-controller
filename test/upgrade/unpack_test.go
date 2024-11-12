@@ -30,7 +30,7 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			ctx := context.Background()
 
 			var managerDeployment appsv1.Deployment
-			managerLabelSelector := labels.Set{"control-plane": "catalogdv1-controller-manager"}
+			managerLabelSelector := labels.Set{"control-plane": "catalogd-controller-manager"}
 			By("Checking that the controller-manager deployment is updated")
 			Eventually(func(g Gomega) {
 				var managerDeployments appsv1.DeploymentList
@@ -66,13 +66,13 @@ var _ = Describe("ClusterCatalog Unpacking", func() {
 			Expect(found).To(BeTrue())
 
 			catalog := &catalogdv1.ClusterCatalog{}
-			By("Ensuring ClusterCatalog has Status.Condition of Progressing with a status == False, reason == Succeeded")
+			By("Ensuring ClusterCatalog has Status.Condition of Progressing with a status == True, reason == Succeeded")
 			Eventually(func(g Gomega) {
 				err := c.Get(ctx, types.NamespacedName{Name: testClusterCatalogName}, catalog)
 				g.Expect(err).ToNot(HaveOccurred())
 				cond := meta.FindStatusCondition(catalog.Status.Conditions, catalogdv1.TypeProgressing)
 				g.Expect(cond).ToNot(BeNil())
-				g.Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+				g.Expect(cond.Status).To(Equal(metav1.ConditionTrue))
 				g.Expect(cond.Reason).To(Equal(catalogdv1.ReasonSucceeded))
 			}).Should(Succeed())
 
