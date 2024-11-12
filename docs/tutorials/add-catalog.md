@@ -26,7 +26,7 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
 1. Create a catalog custom resource (CR):
 
     ``` yaml title="clustercatalog_cr.yaml"
-    apiVersion: olm.operatorframework.io/v1alpha1
+    apiVersion: olm.operatorframework.io/v1
     kind: ClusterCatalog
     metadata:
       name: operatorhubio
@@ -48,7 +48,7 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
             To disable polling, set a zero value, such as `0s`.
 
     ``` yaml title="Example `operatorhubio.yaml` CR"
-    apiVersion: olm.operatorframework.io/v1alpha1
+    apiVersion: olm.operatorframework.io/v1
     kind: ClusterCatalog
     metadata:
       name: operatorhub
@@ -96,7 +96,7 @@ This catalog is distributed as an image [quay.io/operatorhubio/catalog](https://
         Namespace:
         Labels:       olm.operatorframework.io/metadata.name=operatorhubio
         Annotations:  <none>
-        API Version:  olm.operatorframework.io/v1alpha1
+        API Version:  olm.operatorframework.io/v1
         Kind:         ClusterCatalog
         Metadata:
         Creation Timestamp:  2024-10-02T19:51:24Z

@@ -125,7 +125,7 @@ When multiple catalogs provide the same package, you can set priorities to resol
 In your `ClusterCatalog` resource, set the `priority` field:
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterCatalog
 metadata:
   name: high-priority-catalog
@@ -160,7 +160,7 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
 1. **Create or Update `ClusterCatalogs` with Appropriate Labels and Priority**
 
    ```yaml
-   apiVersion: olm.operatorframework.io/v1alpha1
+   apiVersion: olm.operatorframework.io/v1
    kind: ClusterCatalog
    metadata:
      name: catalog-a
@@ -175,7 +175,7 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
    ```
 
    ```yaml
-   apiVersion: olm.operatorframework.io/v1alpha1
+   apiVersion: olm.operatorframework.io/v1
    kind: ClusterCatalog
    metadata:
      name: catalog-b
