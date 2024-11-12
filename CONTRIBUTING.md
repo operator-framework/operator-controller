@@ -43,28 +43,28 @@ you can follow the steps below to test your changes:
 
 1. Create the cluster:
 
-```sh
-kind create cluster operator-controller
-```
+    ```sh
+    kind create cluster operator-controller
+    ```
 
 2. Build your changes:
 
-```sh
-make build docker-build
-```
+    ```sh
+    make build docker-build
+    ```
 
 3. Load the image locally and Deploy to Kind
 
-```sh
-make kind-load kind-deploy
-```
+    ```sh
+    make kind-load kind-deploy
+    ```
 
 ### Communication Channels
 
 - Email: [operator-framework-olm-dev](mailto:operator-framework-olm-dev@googlegroups.com)
 - Slack: [#olm-dev](https://kubernetes.slack.com/archives/C0181L6JYQ2)
 - Google Group: [olm-gg](https://groups.google.com/g/operator-framework-olm-dev)
-- Weekly in Person Working Group Meeting: [olm-wg](https://github.com/operator-framework/community#operator-lifecycle-manager-working-group) 
+- Weekly in Person Working Group Meeting: [olm-wg](https://github.com/operator-framework/community#operator-lifecycle-manager-working-group)
 
 ## How are Milestones Designed?
 
@@ -91,7 +91,7 @@ As discussed earlier, the operator-controller adheres to a microservice architec
 
 ## Submitting Issues
 
-Unsure where to submit an issue? 
+Unsure where to submit an issue?
 
 - [The Operator-Controller project](https://github.com/operator-framework/operator-controller/), which is the top level component allowing users to specify operators they'd like to install.
 - [The Catalogd project](https://github.com/operator-framework/catalogd/), which hosts operator content and helps users discover installable content.

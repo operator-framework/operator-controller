@@ -2,9 +2,9 @@
 
 The following script will install OLMv1 on a Kubernetes cluster. If you don't have one, you can deploy a Kubernetes cluster with [KIND](https://sigs.k8s.io/kind).
 
-> [!CAUTION]  
-> Operator-Controller depends on [cert-manager](https://cert-manager.io/). Running the following command
-> may affect an existing installation of cert-manager and cause cluster instability.
+!!! warning
+    Operator-Controller depends on [cert-manager](https://cert-manager.io/). Running the following command
+    may affect an existing installation of cert-manager and cause cluster instability.
 
 The latest version of Operator Controller can be installed with the following command:
 
