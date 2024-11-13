@@ -1,0 +1,51 @@
+name: Install
+
+on:
+  workflow_dispatch:
+  pull_request:
+  merge_group:
+  push:
+    branches:
+      - main
+
+jobs:
+  kind-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install the latest version of kind
+        run: |
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
+
+      - name: Create Kind cluster for operator-controller
+        run: |
+          kind create cluster --name operator-controller
+
+      - name: Build the project
+        run: |
+          make docker-build
+
+      - name: Load image into Kind cluster and deploy
+        run: |
+          make kind-load kind-deploy
+
+      - name: Logs and Details
+        if: always()
+        run: |
+          # Capture high-level information
+          echo "Gathering details for all resources in namespace olmv1-system..."
+          kubectl get all -n olmv1-system
+          
+          # Describe each pod in the namespace for more details
+          for pod in $(kubectl get pods -n olmv1-system -o jsonpath='{.items[*].metadata.name}'); do
+            echo "Describing pod $pod..."
+            kubectl describe pod $pod -n olmv1-system
+            echo "Logs for pod $pod:"
+            kubectl logs $pod -n olmv1-system --all-containers=true
+          done
