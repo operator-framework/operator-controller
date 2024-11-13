@@ -127,7 +127,7 @@ roleRef:
 EOF
 
 kubectl apply -f - << EOF
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: ${TEST_CLUSTER_EXTENSION_NAME}
