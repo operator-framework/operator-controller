@@ -5,10 +5,10 @@
         "creationTimestamp": null,
         "labels": {
             "app.kubernetes.io/component": "controller",
-            "app.kubernetes.io/name": "prometheus-operator",
+            "app.kubernetes.io/name": "test-operator",
             "app.kubernetes.io/version": "1.0.0"
         },
-        "name": "prometheus-operator"
+        "name": "test-operator"
     },
     "spec": {
         "clusterIP": "None",
@@ -21,7 +21,7 @@
         ],
         "selector": {
             "app.kubernetes.io/component": "controller",
-            "app.kubernetes.io/name": "prometheus-operator"
+            "app.kubernetes.io/name": "test-operator"
         }
     },
     "status": {

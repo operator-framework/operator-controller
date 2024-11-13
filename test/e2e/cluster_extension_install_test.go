@@ -91,6 +91,7 @@ func createClusterRoleAndBindingForSA(ctx context.Context, name string, sa *core
 					"",
 				},
 				Resources: []string{
+					"configmaps",
 					"secrets", // for helm
 					"services",
 					"serviceaccounts",
@@ -289,7 +290,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 	for _, tc := range []testCase{
 		{
 			name:        "no registry configuration necessary",
-			packageName: "prometheus",
+			packageName: "test",
 		},
 		{
 			// NOTE: This test requires an extra configuration in /etc/containers/registries.conf, which is mounted
@@ -297,7 +298,7 @@ func TestClusterExtensionInstallRegistry(t *testing.T) {
 			// The goal here is to prove that "mirrored-registry.operator-controller-e2e.svc.cluster.local:5000" is
 			// mapped to the "real" registry hostname ("docker-registry.operator-controller-e2e.svc.cluster.local:5000").
 			name:        "package requires mirror registry configuration in /etc/containers/registries.conf",
-			packageName: "prometheus-mirrored",
+			packageName: "test-mirrored",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -361,14 +362,24 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 	t.Log("When a cluster extension is installed from a catalog")
 
 	clusterExtension, extensionCatalog, sa, ns := testInit(t)
+	extraCatalog, err := createTestCatalog(context.Background(), "extra-test-catalog", os.Getenv(testCatalogRefEnvVar))
+	require.NoError(t, err)
+
 	defer testCleanup(t, extensionCatalog, clusterExtension, sa, ns)
 	defer getArtifactsOutput(t)
+	defer func(cat *catalogd.ClusterCatalog) {
+		require.NoError(t, c.Delete(context.Background(), cat))
+		require.Eventually(t, func() bool {
+			err := c.Get(context.Background(), types.NamespacedName{Name: cat.Name}, &catalogd.ClusterCatalog{})
+			return errors.IsNotFound(err)
+		}, pollDuration, pollInterval)
+	}(extraCatalog)
 
 	clusterExtension.Spec = ocv1.ClusterExtensionSpec{
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
 			Catalog: &ocv1.CatalogSource{
-				PackageName: "prometheus",
+				PackageName: "test",
 			},
 		},
 		Namespace: ns.Name,
@@ -392,7 +403,7 @@ func TestClusterExtensionInstallRegistryMultipleBundles(t *testing.T) {
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, metav1.ConditionTrue, cond.Status)
 			assert.Equal(ct, ocv1.ReasonRetrying, cond.Reason)
-			assert.Contains(ct, cond.Message, "in multiple catalogs with the same priority [operatorhubio test-catalog]")
+			assert.Contains(ct, cond.Message, "in multiple catalogs with the same priority [extra-test-catalog test-catalog]")
 		}
 	}, pollDuration, pollInterval)
 }
@@ -410,7 +421,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
 			Catalog: &ocv1.CatalogSource{
-				PackageName: "prometheus",
+				PackageName: "test",
 				Version:     "1.0.0",
 				// No Selector since this is an exact version match
 			},
@@ -426,7 +437,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: clusterExtension.Name}, clusterExtension))
 		assert.Equal(ct,
 			&ocv1.ClusterExtensionInstallStatus{Bundle: ocv1.BundleMetadata{
-				Name:    "prometheus-operator.1.0.0",
+				Name:    "test-operator.1.0.0",
 				Version: "1.0.0",
 			}},
 			clusterExtension.Status.Install,
@@ -455,7 +466,7 @@ func TestClusterExtensionBlockInstallNonSuccessorVersion(t *testing.T) {
 		cond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeProgressing)
 		if assert.NotNil(ct, cond) {
 			assert.Equal(ct, ocv1.ReasonRetrying, cond.Reason)
-			assert.Equal(ct, "error upgrading from currently installed version \"1.0.0\": no bundles found for package \"prometheus\" matching version \"1.2.0\"", cond.Message)
+			assert.Equal(ct, "error upgrading from currently installed version \"1.0.0\": no bundles found for package \"test\" matching version \"1.2.0\"", cond.Message)
 		}
 	}, pollDuration, pollInterval)
 }
@@ -473,7 +484,7 @@ func TestClusterExtensionForceInstallNonSuccessorVersion(t *testing.T) {
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
 			Catalog: &ocv1.CatalogSource{
-				PackageName: "prometheus",
+				PackageName: "test",
 				Version:     "1.0.0",
 			},
 		},
@@ -522,7 +533,7 @@ func TestClusterExtensionInstallSuccessorVersion(t *testing.T) {
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
 			Catalog: &ocv1.CatalogSource{
-				PackageName: "prometheus",
+				PackageName: "test",
 				Version:     "1.0.0",
 			},
 		},
@@ -569,7 +580,7 @@ func TestClusterExtensionInstallReResolvesWhenCatalogIsPatched(t *testing.T) {
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
 			Catalog: &ocv1.CatalogSource{
-				PackageName: "prometheus",
+				PackageName: "test",
 				Selector: &metav1.LabelSelector{
 					MatchExpressions: []metav1.LabelSelectorRequirement{
 						{
@@ -656,7 +667,7 @@ func TestClusterExtensionInstallReResolvesWhenNewCatalog(t *testing.T) {
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
 			Catalog: &ocv1.CatalogSource{
-				PackageName: "prometheus",
+				PackageName: "test",
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
 				},
@@ -717,7 +728,7 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
 			Catalog: &ocv1.CatalogSource{
-				PackageName: "prometheus",
+				PackageName: "test",
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
 				},
@@ -744,17 +755,17 @@ func TestClusterExtensionInstallReResolvesWhenManagedContentChanged(t *testing.T
 	}, pollDuration, pollInterval)
 
 	t.Log("By deleting a managed resource")
-	prometheusService := &corev1.Service{
+	testConfigMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "prometheus-operator",
+			Name:      "test-configmap",
 			Namespace: clusterExtension.Spec.Namespace,
 		},
 	}
-	require.NoError(t, c.Delete(context.Background(), prometheusService))
+	require.NoError(t, c.Delete(context.Background(), testConfigMap))
 
 	t.Log("By eventually re-creating the managed resource")
 	require.EventuallyWithT(t, func(ct *assert.CollectT) {
-		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: prometheusService.Name, Namespace: prometheusService.Namespace}, prometheusService))
+		assert.NoError(ct, c.Get(context.Background(), types.NamespacedName{Name: testConfigMap.Name, Namespace: testConfigMap.Namespace}, testConfigMap))
 	}, pollDuration, pollInterval)
 }
 
@@ -780,7 +791,7 @@ func TestClusterExtensionRecoversFromInitialInstallFailedWhenFailureFixed(t *tes
 		Source: ocv1.SourceConfig{
 			SourceType: "Catalog",
 			Catalog: &ocv1.CatalogSource{
-				PackageName: "prometheus",
+				PackageName: "test",
 				Selector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{"olm.operatorframework.io/metadata.name": extensionCatalog.Name},
 				},

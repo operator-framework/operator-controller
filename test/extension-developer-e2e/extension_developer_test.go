@@ -104,6 +104,7 @@ func TestExtensionDeveloper(t *testing.T) {
 					"",
 				},
 				Resources: []string{
+					"configmaps",
 					"services",
 					"serviceaccounts",
 				},
