@@ -152,13 +152,15 @@ test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension creat
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
 .PHONY: test-unit
+# Define CGO_ENABLED based on the OS
+CGO_ENABLED_VAL := $(if $(filter Linux, $(shell uname)),1,0)
 ENVTEST_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/)
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
 test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
 	rm -rf $(COVERAGE_UNIT_DIR) && mkdir -p $(COVERAGE_UNIT_DIR)
 	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && \
-            CGO_ENABLED=1 go test \
+            CGO_ENABLED=$(CGO_ENABLED_VAL) go test \
                 -tags '$(GO_BUILD_TAGS)' \
                 -cover -coverprofile ${ROOT_DIR}/coverage/unit.out \
                 -count=1 -race -short \
