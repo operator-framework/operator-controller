@@ -1,0 +1,18 @@
+name: crd-diff
+on:
+  pull_request:
+jobs:
+  crd-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run make verify-crd-compatibility
+        run: make verify-crd-compatibility CRD_DIFF_ORIGINAL_REF=${{ github.event.pull_request.base.sha }} CRD_DIFF_UPDATED_REF=${{ github.event.pull_request.head.sha }}
+
