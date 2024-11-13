@@ -6,7 +6,7 @@
 
 ## olm.operatorframework.io/v1
 
-Package v1alpha1 contains API Schema definitions for the olm v1alpha1 API group
+Package v1 contains API Schema definitions for the olm v1 API group
 
 ### Resource Types
 - [ClusterExtension](#clusterextension)
