@@ -107,7 +107,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		}
 		assert.Equal(ct, ocv1.ReasonSucceeded, cond.Reason)
 		assert.Contains(ct, cond.Message, "Installed bundle")
-		assert.Equal(ct, ocv1.BundleMetadata{Name: "prometheus-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.Install.Bundle)
+		assert.Equal(ct, ocv1.BundleMetadata{Name: "test-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.Install.Bundle)
 		assert.NotEqual(ct, previousVersion, clusterExtension.Status.Install.Bundle.Version)
 	}, time.Minute, time.Second)
 }

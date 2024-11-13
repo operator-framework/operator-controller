@@ -49,6 +49,7 @@ rules:
   - apiGroups:
     - ""
     resources:
+    - "configmaps"
     - "secrets"
     - "services"
     - "serviceaccounts"
@@ -138,7 +139,7 @@ spec:
   source:
     sourceType: Catalog
     catalog:
-      packageName: prometheus
+      packageName: test
       version: 1.0.0
 EOF
 

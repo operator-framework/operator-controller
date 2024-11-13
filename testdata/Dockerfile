@@ -1,4 +1,4 @@
-from gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static:nonroot
 
 WORKDIR /
 
