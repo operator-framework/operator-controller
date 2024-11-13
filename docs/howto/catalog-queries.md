@@ -1,7 +1,8 @@
 # Catalog queries
 
-**Note:** By default, Catalogd is installed with TLS enabled for the catalog webserver.
-The following examples will show this default behavior, but for simplicity's sake will ignore TLS verification in the curl commands using the `-k` flag.
+!!! note
+    By default, Catalogd is installed with TLS enabled for the catalog webserver.
+    The following examples will show this default behavior, but for simplicity's sake will ignore TLS verification in the curl commands using the `-k` flag.
 
 
 You can use the `curl` command with `jq` to query catalogs that are installed on your cluster.

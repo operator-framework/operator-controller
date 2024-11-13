@@ -51,14 +51,14 @@ spec:
       upgradeConstraintPolicy: SelfCertified
 ```
 
-** Disable CRD Upgrade Safety Check:**
+**Command Example:**
 
-**Patch the ClusterExtension Resource:**
+If you prefer using the command line, you can use `kubectl` to modify the upgrade CRD safety check configuration.
 
-   ```bash
-   kubectl patch clusterextension <extension_name> --patch '{"spec":{"install":{"preflight":{"crdUpgradeSafety":{"policy":"Disabled"}}}}}' --type=merge
-   ```
-   Kubernetes will apply the updated configuration, disabling CRD safety checks during the downgrade process.
+```bash
+kubectl patch clusterextension <extension_name> --patch '{"spec":{"install":{"preflight":{"crdUpgradeSafety":{"policy":"Disabled"}}}}}' --type=merge
+```
+Kubernetes will apply the updated configuration, disabling CRD safety checks during the downgrade process.
 
 ### 2. Ignoring Catalog Provided Upgrade Constraints
 
@@ -102,38 +102,39 @@ Once the CRD safety checks are disabled and upgrade constraints are set, you can
 
 1. **Edit the ClusterExtension Resource:**
 
-   Modify the `ClusterExtension` custom resource to specify the target version and adjust the upgrade constraints.
+    Modify the `ClusterExtension` custom resource to specify the target version and adjust the upgrade constraints.
 
-   ```bash
-   kubectl edit clusterextension <extension_name>
-   ```
+    ```bash
+    kubectl edit clusterextension <extension_name>
+    ```
 
 2. **Update the Version:**
 
-   Within the YAML editor, update the `spec` section as follows:
+    Within the YAML editor, update the `spec` section as follows:
 
-   ```yaml
-   apiVersion: olm.operatorframework.io/v1
-   kind: ClusterExtension
-   metadata:
-     name: <extension_name>
-   spec:
-     source:
-       sourceType: Catalog
-       catalog:
-         packageName: <package_name>
-         version: <target_version>
-     install:
-       namespace: <namespace>
-       serviceAccount:
-         name: <service_account>
-   ```
+    ```yaml
+    apiVersion: olm.operatorframework.io/v1
+    kind: ClusterExtension
+    metadata:
+      name: <extension_name>
+    spec:
+      source:
+        sourceType: Catalog
+        catalog:
+          packageName: <package_name>
+          version: <target_version>
+      install:
+        namespace: <namespace>
+        serviceAccount:
+          name: <service_account>
+    ```
 
-   - **`version`:** Specify the target version you wish to downgrade to.
+    `target_version`
+    : Specify the target version you wish to downgrade to.
 
 3. **Apply the Changes:**
 
-   Save and exit the editor. Kubernetes will apply the changes and initiate the downgrade process.
+    Save and exit the editor. Kubernetes will apply the changes and initiate the downgrade process.
 
 ### 4. Post-Downgrade Verification
 
@@ -143,31 +144,31 @@ After completing the downgrade, verify that the `ClusterExtension` is functionin
 
 1. **Check the Status of the ClusterExtension:**
 
-   ```bash
-   kubectl get clusterextension <extension_name> -o yaml
-   ```
+    ```bash
+    kubectl get clusterextension <extension_name> -o yaml
+    ```
 
-   Ensure that the `status` reflects the target version and that there are no error messages.
+    Ensure that the `status` reflects the target version and that there are no error messages.
 
 2. **Validate CRD Integrity:**
 
-   Confirm that all CRDs associated with the `ClusterExtension` are correctly installed and compatible with the downgraded version.
+    Confirm that all CRDs associated with the `ClusterExtension` are correctly installed and compatible with the downgraded version.
 
-   ```bash
-   kubectl get crd | grep <extension_crd>
-   ```
+    ```bash
+    kubectl get crd | grep <extension_crd>
+    ```
 
 3. **Test Extension Functionality:**
 
-   Perform functional tests to ensure that the extension operates correctly in its downgraded state.
+    Perform functional tests to ensure that the extension operates correctly in its downgraded state.
 
 4. **Monitor Logs:**
 
-   Check the logs of the operator managing the `ClusterExtension` for any warnings or errors.
+    Check the logs of the operator managing the `ClusterExtension` for any warnings or errors.
 
-   ```bash
-   kubectl logs deployment/<operator_deployment> -n <operator_namespace>
-   ```
+    ```bash
+    kubectl logs deployment/<operator_deployment> -n <operator_namespace>
+    ```
 
 ## Troubleshooting
 
