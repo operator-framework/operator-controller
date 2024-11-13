@@ -102,7 +102,7 @@ FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 ifeq ($(origin E2E_FLAGS), undefined)
 E2E_FLAGS :=
 endif
-test-e2e: $(GINKGO) ## Run the e2e tests
+test-e2e: check-cluster $(GINKGO) ## Run the e2e tests on existing cluster
 	$(GINKGO) $(E2E_FLAGS) -trace -vv $(FOCUS) test/e2e
 
 e2e: KIND_CLUSTER_NAME := catalogd-e2e
@@ -214,12 +214,12 @@ kind-cluster-cleanup: $(KIND) ## Delete the kind cluster
 	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-load
-kind-load: $(KIND) ## Load the built images onto the local cluster
+kind-load: check-cluster $(KIND) ## Load the built images onto the local cluster
 	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
 	$(KIND) load docker-image $(IMAGE) --name $(KIND_CLUSTER_NAME)
 
 .PHONY: install
-install: build-container kind-load deploy wait ## Install local catalogd
+install: check-cluster build-container kind-load deploy wait ## Install local catalogd to an existing cluster
 
 .PHONY: deploy
 deploy: export MANIFEST="./catalogd.yaml"
@@ -229,7 +229,7 @@ deploy: $(KUSTOMIZE) ## Deploy Catalogd to the K8s cluster specified in ~/.kube/
 	$(KUSTOMIZE) build $(KUSTOMIZE_OVERLAY) | sed "s/cert-git-version/cert-$(GIT_VERSION)/g" > catalogd.yaml
 	envsubst '$$CERT_MGR_VERSION,$$MANIFEST,$$DEFAULT_CATALOGS' < scripts/install.tpl.sh | bash -s
 
-.PHONY: only-deploy-manifest
+.PHONY: check-cluster only-deploy-manifest
 only-deploy-manifest: $(KUSTOMIZE) ## Deploy just the Catalogd manifest--used in e2e testing where cert-manager is installed in a separate step
 	cd config/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
 	$(KUSTOMIZE) build $(KUSTOMIZE_OVERLAY) | kubectl apply -f -
@@ -267,3 +267,10 @@ quickstart: $(KUSTOMIZE) generate ## Generate the installation release manifests
 .PHONY: demo-update
 demo-update:
 	hack/scripts/generate-asciidemo.sh
+
+.PHONY: check-cluster
+check-cluster:
+	if ! kubectl config current-context >/dev/null 2>&1; then \
+		echo "Error: Could not get current Kubernetes context. Maybe use 'run' or 'e2e' targets first?"; \
+		exit 1; \
+	fi
