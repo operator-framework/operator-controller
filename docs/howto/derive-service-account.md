@@ -1,6 +1,6 @@
 # Derive minimal ServiceAccount required for ClusterExtension Installation and Management
 
-OLM v1 does not have permission to install extensions on a cluster by default. In order to install a [supported bundle](../project/olmv1_limitations.md), 
+OLM v1 does not have permission to install extensions on a cluster by default. In order to install a [supported bundle](../project/olmv1_limitations.md),
 OLM must be provided a ServiceAccount configured with the appropriate permissions.
 
 This document serves as a guide for how to derive the RBAC necessary to install a bundle.
@@ -31,7 +31,7 @@ Depending on the scope, each permission will need to be added to either a `Clust
 ### Example
 
 The following example illustrates the process of deriving the minimal RBAC required to install the [ArgoCD Operator](https://operatorhub.io/operator/argocd-operator) [v0.6.0](https://operatorhub.io/operator/argocd-operator/alpha/argocd-operator.v0.6.0) provided by [OperatorHub.io](https://operatorhub.io/).
-The final permission set can be found in the [ClusterExtension sample manifest](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1alpha1_clusterextension.yaml) in the [samples](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1alpha1_clusterextension.yaml) directory.
+The final permission set can be found in the [ClusterExtension sample manifest](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1_clusterextension.yaml) in the [samples](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1_clusterextension.yaml) directory.
 
 The bundle includes the following manifests, which can be found [here](https://github.com/argoproj-labs/argocd-operator/tree/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0):
 
@@ -99,7 +99,7 @@ The same can be done for `ClusterRoleBindings`.
 
 ##### Step 2. `CustomResourceDefinition` permissions
 
-The installer service account must be able to create and manage the `CustomResourceDefinition`s for the extension, as well 
+The installer service account must be able to create and manage the `CustomResourceDefinition`s for the extension, as well
 as grant the extension controller's service account the permissions it needs to manage its CRDs.
 
 ```yaml
@@ -302,7 +302,7 @@ Once the installer service account required cluster-scoped and namespace-scoped 
 6. Create the `RoleBinding` between the installer service account and its role
 7. Create the `ClusterExtension`
 
-A manifest with the full set of resources can be found [here](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1alpha1_clusterextension.yaml).
+A manifest with the full set of resources can be found [here](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1_clusterextension.yaml).
 
 ### Alternatives
 
@@ -348,5 +348,5 @@ kubectl create clusterrolebinding my-cluster-extension-installer-role-binding \
 
 In the spirit of making this process more tenable until the proper tools are in place, the scripts
 in [hack/tools/catalogs](https://github.com/operator-framework/operator-controller/blob/main/hack/tools/catalogs) were created to help the user navigate and search catalogs as well
-as to generate the minimal RBAC requirements. These tools are offered as is, with no guarantees on their correctness, 
+as to generate the minimal RBAC requirements. These tools are offered as is, with no guarantees on their correctness,
 support, or maintenance. For more information, see [Hack Catalog Tools](https://github.com/operator-framework/operator-controller/blob/main/hack/tools/catalogs/README.md).

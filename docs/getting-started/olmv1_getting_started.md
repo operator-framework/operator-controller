@@ -65,7 +65,7 @@ More information on installing extensions can be found [here](../tutorials/insta
 ```bash
 # Apply the sample ClusterExtension. Manifest already includes
 # namespace and adequately privileged service account
-kubectl apply -f https://raw.githubusercontent.com/operator-framework/operator-controller/main/config/samples/olm_v1alpha1_clusterextension.yaml
+kubectl apply -f https://raw.githubusercontent.com/operator-framework/operator-controller/main/config/samples/olm_v1_clusterextension.yaml
 ```
 
 ### Upgrade the Cluster Extension
