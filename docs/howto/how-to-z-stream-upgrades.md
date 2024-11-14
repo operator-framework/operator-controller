@@ -10,15 +10,14 @@ kind: ClusterExtension
 metadata:
   name: argocd
 spec:
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
   source:
     sourceType: Catalog
     catalog:
       packageName: argocd-operator
-      version: “~2.3" # Automatically upgrade patch releases for v2.3
-  install:
-    namespace: argocd
-    serviceAccount:
-      name: argocd-installer
+      version: "~2.3" # Automatically upgrade patch releases for v2.3
 ```
 
 For more information on SemVer version ranges see [version ranges](../concepts/version-ranges.md)
