@@ -73,12 +73,11 @@ kubectl apply -f https://raw.githubusercontent.com/operator-framework/operator-c
 To upgrade the installed extension, update the version field in the ClusterExtension resource. Note that
 there must be CRD compatibility between the versions being upgraded, and the target version must be
 compatible with OLM v1. More information on CRD upgrade safety can be found [here](../concepts/crd-upgrade-safety.md),
-compatible with OLM v1. More information on CRD upgrade safety can be found [here](../concepts/crd-upgrade-safety.md),
-and on the extension upgrade process [here](../tutorials/upgrade-extension.md).
+and more information on the extension upgrade process can be found [here](../tutorials/upgrade-extension.md).
 
 ```bash
 # Update to v0.11.0
-kubectl patch clusterextension argocd --type='merge' -p '{"spec": {"source": {"catalog": {"version": "0.11.0"}}}}'
+kubectl patch clusterextension argocd --type='merge' -p '{"spec": {"source": {"catalog": {"version": "0.2.1"}}}}'
 ```
 
 For information on the downgrade process, see [here](../tutorials/downgrade-extension.md).
