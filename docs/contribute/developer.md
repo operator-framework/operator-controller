@@ -4,7 +4,7 @@
 The following `make run` starts a [KIND](https://sigs.k8s.io/kind) cluster for you to get a local cluster for testing, see the manual install steps below for how to run against a remote cluster.
 
 !!! note
-    You will need a container runtime environment, like Docker, or experimentally, Podman, installed, to run Kind.
+    You will need a container runtime environment like Docker to run Kind. Kind also has experimental support for Podman.
 
     If you are on MacOS, see [Special Setup for MacOS](#special-setup-for-macos).
 
