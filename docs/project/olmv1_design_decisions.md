@@ -1,8 +1,8 @@
 # Multi-Tenancy Challenges, Lessons Learned, and Design Shifts
 
-This provides historical context on the design explorations and challenges that led to substantial design shifts between 
-OLM v1 and its predecessor. It explains the technical reasons why OLM v1 cannot support major v0 features, such as, 
-multi-tenancy, and namespace-specific controller configurations. Finally, it highlights OLM v1’s shift toward 
+This provides historical context on the design explorations and challenges that led to substantial design shifts between
+OLM v1 and its predecessor. It explains the technical reasons why OLM v1 cannot support major v0 features, such as,
+multi-tenancy, and namespace-specific controller configurations. Finally, it highlights OLM v1’s shift toward
 more secure, predictable, and simple operations while moving away from some of the complex, error-prone features of OLM v0.
 
 ## What won't OLM v1 do that OLM v0 did?
@@ -91,7 +91,7 @@ There is a set of operators that both (a) provide fully namespace-scoped workloa
 
 Some projects have been successful delivering and supporting their operator on Kubernetes, but outside of OLM, for example with helm-packaged operators. On this path, individual layered project teams have more flexibility in solving lifecycling problems for their users because they are unencumbered by OLM’s opinions. However the tradeoff is that those project teams and their users take on responsibility and accountability for safe upgrades, automation, and multi-tenant architectures. With OLM v1 no longer attempting to support multi-tenancy in a first-class way, these tradeoffs change and project teams may decide that a different approach is necessary.
 
-This path does not necessarily mean a scattering of content in various places. It would still be possible to provide customers with a marketplace of content (e.g. see https://artifacthub.io/).
+This path does not necessarily mean a scattering of content in various places. It would still be possible to provide customers with a marketplace of content (e.g. see [artifacthub.io](https://artifacthub.io/)).
 
 ### Authors of "simple" operators ship their workload without an operator
 
@@ -168,6 +168,7 @@ In cases where OLMv0 decides that joint ownership of CRDs will not impact differ
 In OLM v1, we will not design the core APIs and controllers around this promise. Instead, we will build an API where ownership of installed objects is not shared. Managed objects are owned by exactly one extension.
 
 This pattern is generic, aligns with the Kubernetes API, and makes multi-tenancy a possibility, but not a guarantee or core concept. We will explore the implications of this design on existing OLMv0 registry+v1 bundles as part of the larger v0 to v1 migration design. For net new content, operator authors that intend multiple installations of operator on the same cluster would need to package their components to account for this ownership rule. Generally, this would entail separation along these lines:
+
 - CRDs, conversion webhook workloads, and admission webhook configurations and workloads, APIServices and workloads.
 - Controller workloads, service accounts, RBAC, etc.
 
@@ -212,11 +213,11 @@ OLM v1 will take a slightly different approach:
 
 - It will not require bundles to have very specific controller-centric shapes. OLM v1 will happily install a bundle that contains a deployment, service, and ingress or a bundle that contains a single configmap.
 - However for bundles that do include CRDs, controllers, RBAC, webhooks, and other objects that relate to the behavior of the apiserver, OLM will continue to have opinions and special handling:
-  - CRD upgrade checks (best effort)
-  - Specific knowledge and handling of webhooks.
+    - CRD upgrade checks (best effort)
+    - Specific knowledge and handling of webhooks.
 - To the extent necessary OLM v1 will include optional controller-centric concepts in its APIs and or CLIs in order to facilitate the most common controller patterns. Examples could include:
-  - Permission management
-  - CRD upgrade check policies
+    - Permission management
+    - CRD upgrade check policies
 - OLM v1 will continue to have opinions about upgrade traversals and CRD changes that help users prevent accidental breakage, but it will also allow administrators to disable safeguards and proceed anyway.
 
 OLMv0 has some support for automatic upgrades. However, administrators cannot control the maximum version for automatic upgrades, and the upgrade policy (manual vs automatic) applies to all operators in a namespace. If any operator’s upgrade policy is manual, all upgrades of all operators in the namespace must be approved manually.
@@ -260,4 +261,3 @@ Areas where the official CLI could provide value include:
 - Upgrade previews
 - RBAC management
 - Discovery of available APIs
-

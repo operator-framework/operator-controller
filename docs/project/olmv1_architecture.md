@@ -53,7 +53,8 @@ flowchart TB
     A -- pushed to --> B
 ```
 
-**Note**: The direction of the arrows represents the flow of communication. If an arrow starts from A and points to B, it indicates that A retrieves or consumes information from B, unless otherwise specified.
+!!! note
+    The direction of the arrows represents the flow of communication. If an arrow starts from A and points to B, it indicates that A retrieves or consumes information from B, unless otherwise specified.
 
 ---
 
@@ -91,10 +92,9 @@ catalogd has three main sub-components:
 1. **ClusterCatalog Controller**:
     - Pulls FBC-based catalog images from the registry and unpacks them into the catalog content cache.
     - Reconciles any changes in the catalog and ensures the latest content is reflected in the cluster.
-  
+
 2. **CatalogD HTTP Server**:
     - Serves catalog information to clients, such as the Cluster Extension Controller.
 
 3. **CatalogD Content Cache**:
     - A cache maintained by the Catalog Controller that stores unpacked catalog data, which the CatalogD HTTP Server uses to respond to client queries.
-

@@ -76,7 +76,7 @@ rules:
   - create
   - update
   - patch
-  - delete 
+  - delete
 ```
 
 ### Example: Defining a Custom "Admin" ClusterRole
@@ -94,8 +94,10 @@ rules:
   verbs:
   - '*'
 ```
-**Note**: The `'*'` in verbs allows all actions on the specified resources
-In each case, replace `<your-api-group>` and `<your-custom-resources>` with the actual API group and resource names provided by the installed cluster extension.
+
+!!! note
+    The `'*'` in verbs allows all actions on the specified resources.
+    In each case, replace `<your-api-group>` and `<your-custom-resources>` with the actual API group and resource names provided by the installed cluster extension.
 
 ---
 

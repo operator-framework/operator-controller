@@ -21,6 +21,7 @@ The service account must have permissions to:
  - create and manage the extension controller's deployment
 
 Additionally, for clusters that use the [OwnerReferencesPermissionEnforcement](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement) admission plug-in, the service account must also have permissions to:
+
  - update finalizers on the ClusterExtension to be able to set blockOwnerDeletion and ownerReferences
 
 It is good security practice to follow the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege), and scope permissions to specific resource names, wherever possible.
@@ -36,17 +37,17 @@ The final permission set can be found in the [ClusterExtension sample manifest](
 The bundle includes the following manifests, which can be found [here](https://github.com/argoproj-labs/argocd-operator/tree/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0):
 
 * `ClusterServiceVersion`:
-  - [argocd-operator.v0.6.0.clusterserviceversion.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml)
+    - [argocd-operator.v0.6.0.clusterserviceversion.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml)
 * `CustomResourceDefinition`s:
-  - [argoproj.io_applicationsets.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_applicationsets.yaml)
-  - [argoproj.io_applications.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_applications.yaml)
-  - [argoproj.io_appprojects.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_appprojects.yaml)
-  - [argoproj.io_argocdexports.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_argocdexports.yaml)
-  - [argoproj.io_argocds.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_argocds.yaml)
+    - [argoproj.io_applicationsets.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_applicationsets.yaml)
+    - [argoproj.io_applications.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_applications.yaml)
+    - [argoproj.io_appprojects.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_appprojects.yaml)
+    - [argoproj.io_argocdexports.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_argocdexports.yaml)
+    - [argoproj.io_argocds.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_argocds.yaml)
 * Additional resources:
-  - [argocd-operator-controller-manager-metrics-service_v1_service.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-controller-manager-metrics-service_v1_service.yaml)
-  - [argocd-operator-manager-config_v1_configmap.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-manager-config_v1_configmap.yaml)
-  - [argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml)
+    - [argocd-operator-controller-manager-metrics-service_v1_service.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-controller-manager-metrics-service_v1_service.yaml)
+    - [argocd-operator-manager-config_v1_configmap.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-manager-config_v1_configmap.yaml)
+    - [argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml)
 
 The `ClusterServiceVersion` defines a single `Deployment` in `spec.install.deployments` named `argocd-operator-controller-manager` with a `ServiceAccount` of the same name.
 It declares the following cluster-scoped permissions in `spec.install.clusterPermissions`, and its namespace-scoped permissions in `spec.install.permissions`.
@@ -269,6 +270,7 @@ This example's `ClusterServiceVersion` can be found [here](https://github.com/ar
 
 The installer service account must also create and manage other namespace-scoped resources included in the bundle.
 In this example, the bundle also includes two additional namespace-scoped resources:
+
  * the [argocd-operator-controller-manager-metrics-service](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-controller-manager-metrics-service_v1_service.yaml) `Service`, and
  * the [argocd-operator-manager-config](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-manager-config_v1_configmap.yaml) `ConfigMap`
 
