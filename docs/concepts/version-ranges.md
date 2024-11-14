@@ -31,7 +31,7 @@ You define a version range by adding a comparison string to the `spec.version` f
 To specify a version range, use a range comparison similar to the following example:
 
 ```yaml
-version: >=3.0, <3.6
+version: ">=3.0, <3.6"
 ```
 
 #### Wildcards in comparisons

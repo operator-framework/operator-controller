@@ -53,26 +53,26 @@ not cause the CRD Upgrade Safety preflight check to halt the upgrade:
 ## Disabling CRD Upgrade Safety
 
 The CRD Upgrade Safety preflight check can be entirely disabled by adding the
-`preflight.crdUpgradeSafety.disabled` field with a value of "true" to the ClusterExtension of the CRD.
+`.spec.install.preflight.crdUpgradeSafety.enforcement` field with a value of `None` to the `ClusterExtension` of the CRD.
 
 ```yaml
 apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
-    name: clusterextension-sample
+  name: argocd
 spec:
-    source:
-      sourceType: Catalog
-      catalog:
-        packageName: argocd-operator
-        version: 0.6.0
-    install:
-      namespace: default
-      serviceAccount:
-        name: argocd-installer
-      preflight:
-        crdUpgradeSafety:
-          disabled: true
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      version: 0.6.0
+  install:
+    preflight:
+      crdUpgradeSafety:
+        enforcement: None
 ```
 
 You cannot disable individual field validators. If you disable the CRD Upgrade Safety preflight check, all field validators are disabled.

@@ -21,16 +21,21 @@ To select a specific catalog by name, you can use the `matchLabels` field in you
 apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
-  name: my-extension
+  name: argocd
 spec:
-  packageName: my-package
-  catalog:
-    selector:
-      matchLabels:
-        olm.operatorframework.io/metadata.name: my-content-management
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      selector:
+        matchLabels:
+          olm.operatorframework.io/metadata.name: operatorhubio
 ```
 
-In this example, only the catalog named `my-catalog` will be considered when resolving `my-package`.
+In this example, only the catalog named `operatorhubio` will be considered when resolving `argocd-operator`.
 
 ### Selecting Catalogs by Labels
 
@@ -42,13 +47,18 @@ If you have catalogs labeled with specific metadata, you can select them using `
 apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
-  name: my-extension
+  name: argocd
 spec:
-  packageName: my-package
-  catalog:
-    selector:
-      matchLabels:
-        example.com/support: "true"
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      selector:
+        matchLabels:
+          example.com/support: "true"
 ```
 
 This selects catalogs labeled with `example.com/support: "true"`.
@@ -59,17 +69,22 @@ This selects catalogs labeled with `example.com/support: "true"`.
 apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
-  name: my-extension
+  name: argocd
 spec:
-  packageName: my-package
-  catalog:
-    selector:
-      matchExpressions:
-        - key: example.com/support
-          operator: In
-          values:
-            - "gold"
-            - "platinum"
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      selector:
+        matchExpressions:
+          - key: example.com/support
+            operator: In
+            values:
+              - "gold"
+              - "platinum"
 ```
 
 This selects catalogs where the label `example.com/support` has the value `gold` or `platinum`.
@@ -84,16 +99,21 @@ You can exclude catalogs by using the `NotIn` or `DoesNotExist` operators in `ma
 apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
-  name: my-extension
+  name: argocd
 spec:
-  packageName: my-package
-  catalog:
-    selector:
-      matchExpressions:
-        - key: olm.operatorframework.io/metadata.name
-          operator: NotIn
-          values:
-            - unwanted-content-management
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      selector:
+        matchExpressions:
+          - key: olm.operatorframework.io/metadata.name
+            operator: NotIn
+            values:
+              - unwanted-catalog
 ```
 
 This excludes the catalog named `unwanted-catalog` from consideration.
@@ -104,14 +124,19 @@ This excludes the catalog named `unwanted-catalog` from consideration.
 apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
-  name: my-extension
+  name: argocd
 spec:
-  packageName: my-package
-  catalog:
-    selector:
-      matchExpressions:
-        - key: example.com/support
-          operator: DoesNotExist
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      selector:
+        matchExpressions:
+          - key: example.com/support
+            operator: DoesNotExist
 ```
 
 This selects catalogs that do not have the `example.com/support` label.
@@ -200,11 +225,16 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
     metadata:
       name: install-my-operator
     spec:
-      packageName: my-operator
-      catalog:
-        selector:
-          matchLabels:
-            example.com/support: "true"
+      namespace: my-operator-ns
+      serviceAccount:
+        name: my-operator-installer
+      source:
+        sourceType: Catalog
+        catalog:
+          packageName: my-operator
+          selector:
+            matchLabels:
+              example.com/support: "true"
     ```
 
 3. **Apply the Resources**

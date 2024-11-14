@@ -15,7 +15,7 @@ It also introduces an API to enable independently verified upgrades and downgrad
 
 When determining upgrade edges, also known as upgrade paths or upgrade constraints, for an installed cluster extension, Operator Lifecycle Manager (OLM) v1 supports [legacy OLM semantics](https://olm.operatorframework.io/docs/concepts/olm-architecture/operator-catalog/creating-an-update-graph/) by default. This support follows the behavior from legacy OLM, including `replaces`, `skips`, and `skipRange` directives, with a few noted differences.
 
-By supporting legacy OLM semantics, OLM v1 now honors the upgrade graph from catalogs accurately.
+By supporting legacy OLM semantics, OLM v1 honors the upgrade graph from catalogs accurately.
 
 If there are multiple possible successors, OLM v1 behavior differs in the following ways:
 
@@ -29,7 +29,7 @@ Consider the following set of file-based catalog (FBC) channel entries:
   - name: example.v3.0.0
     skips: ["example.v2.0.0"]
   - name: example.v2.0.0
-    skipRange: >=1.0.0 <2.0.0
+    skipRange: ">=1.0.0 <2.0.0"
   ```
 
 If `1.0.0` is installed, OLM v1 behavior differs in the following ways:
@@ -39,18 +39,21 @@ If `1.0.0` is installed, OLM v1 behavior differs in the following ways:
 
 You can change the default behavior of the upgrade constraints by setting the `upgradeConstraintPolicy` parameter in your cluster extension's custom resource (CR).
 
-``` yaml hl_lines="10"
+``` yaml hl_lines="14"
 apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: <extension_name>
 spec:
-  installNamespace: <namespace>
-  packageName: <package_name>
+  namespace: <namespace>
   serviceAccount:
     name: <service_account>
-  upgradeConstraintPolicy: SelfCertified
-  version: "<version_or_version_range>"
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: <package_name>
+      version: "<version_or_version_range>"
+      upgradeConstraintPolicy: SelfCertified
 ```
 
 Setting the `upgradeConstraintPolicy` to:
@@ -82,11 +85,11 @@ You must verify and perform upgrades manually in cases where automatic upgrades 
 !!! warning
     If you want to force an upgrade manually, you must thoroughly verify the outcome before applying any changes to production workloads. Failure to test and verify the upgrade might lead to catastrophic consequences such as data loss.
 
-As a package admin, if you must upgrade or downgrade to version that might be incompatible with the currently installed version, you can set the `.spec.upgradeConstraintPolicy` field to `SelfCertified` on the relevant `ClusterExtension` resource.
+As a package admin, if you must upgrade or downgrade to version that might be incompatible with the currently installed version, you can set the `.spec.source.catalog.upgradeConstraintPolicy` field to `SelfCertified` on the relevant `ClusterExtension` resource.
 
 If you set the field to `SelfCertified`, no upgrade constraints are set on the package. As a result, you can change the version to any version available in the catalogs for a given package.
 
-Example `ClusterExtension` with `.spec.upgradeConstraintPolicy` field set to `SelfCertified`:
+Example `ClusterExtension` with `.spec.source.catalog.upgradeConstraintPolicy` field set to `SelfCertified`:
 
 ```yaml
 apiVersion: olm.operatorframework.io/v1
@@ -94,14 +97,13 @@ kind: ClusterExtension
 metadata:
   name: extension-sample
 spec:
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
   source:
     sourceType: Catalog
     catalog:
       packageName: argocd-operator
       version: 0.6.0
       upgradeConstraintPolicy: SelfCertified
-  install:
-    namespace: argocd
-    serviceAccout:
-      name: argocd-installer
 ```
