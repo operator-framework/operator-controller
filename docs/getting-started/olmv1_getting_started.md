@@ -44,7 +44,7 @@ spec:
     type: Image
     image:
       ref: quay.io/operatorhubio/catalog:latest
-      pollInterval: 10m
+      pollIntervalMinutes: 10
 EOF
 ```
 
@@ -78,8 +78,7 @@ and on the extension upgrade process [here](../tutorials/upgrade-extension.md).
 
 ```bash
 # Update to v0.11.0
-kubectl patch clusterextension argocd --type='merge' -p '{"spec": {"source": {"content-management": {"version": "0.11.0"}}}}'
-
+kubectl patch clusterextension argocd --type='merge' -p '{"spec": {"source": {"catalog": {"version": "0.11.0"}}}}'
 ```
 
 For information on the downgrade process, see [here](../tutorials/downgrade-extension.md).
@@ -106,10 +105,10 @@ kubectl delete namespace argocd
 
 ```bash
 # Delete installer service account cluster roles
-kubectl delete clusterrole argocd-installer-clusterrole && kubectl delete clusterrole argocd-rbac-clusterrole
+kubectl delete clusterrole argocd-installer-clusterrole && kubectl delete clusterrole argocd-installer-rbac-clusterrole
 ```
 
 ```bash
 # Delete installer service account cluster role bindings
-kuebctl delete clusterrolebinding argocd-installer-binding && kubectl delete clusterrolebinding argocd-rbac-binding
+kubectl delete clusterrolebinding argocd-installer-binding && kubectl delete clusterrolebinding argocd-installer-rbac-binding
 ```

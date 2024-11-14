@@ -39,16 +39,15 @@ For information on determining the ServiceAccount's permission, please see [Deri
     metadata:
       name: <extension_name>
     spec:
+      namespace: <namespace_name>
+      serviceAccount:
+        name: <serviceAccount_name>
       source:
         sourceType: Catalog
         catalog:
           packageName: <package_name>
           channel: <channel>
           version: "<version>"
-      install:
-        namespace: <namespace_name>
-        serviceAccount:
-          name: <serviceAccount_name>
     ```
 
      `extension_name`
@@ -63,14 +62,14 @@ For information on determining the ServiceAccount's permission, please see [Deri
      `version`
      : Optional: Specifies the version or version range you want installed, such as `1.3.1` or `"<2"`.
      If you use a comparison string to define a version range, the string must be surrounded by double quotes (`"`).
-    
+
     `namespace_name`
-    : Specifies a name for the namespace in which the bundle of content for the package referenced 
-    in the packageName field will be applied. 
+    : Specifies a name for the namespace in which the bundle of content for the package referenced
+    in the packageName field will be applied.
 
     `serviceAccount_name`
     : serviceAccount name is a required reference to a ServiceAccount that exists
-    in the installNamespace. The provided ServiceAccount is used to install and
+    in the `namespace_name`. The provided ServiceAccount is used to install and
     manage the content for the package specified in the packageName field.
 
     !!! warning
@@ -88,9 +87,9 @@ For information on determining the ServiceAccount's permission, please see [Deri
     kubectl apply -f <cr_name>.yaml
     ```
 
-    ??? success
+    !!! success
         ``` text title="Example output"
-        clusterextension.olm.operatorframework.io/camel-k created
+        clusterextension.olm.operatorframework.io/my-camel-k created
         ```
 
 ### Verification
@@ -110,66 +109,64 @@ For information on determining the ServiceAccount's permission, please see [Deri
         API Version:  olm.operatorframework.io/v1
         Kind:         ClusterExtension
         Metadata:
-        Creation Timestamp:  2024-10-03T16:02:40Z
-        Finalizers:
+          Creation Timestamp:  2024-11-11T13:41:23Z
+          Finalizers:
             olm.operatorframework.io/cleanup-unpack-cache
             olm.operatorframework.io/cleanup-contentmanager-cache
-        Generation:        2
-        Resource Version:  1174
-        UID:               0fcaf3f5-d142-4c7e-8d88-c88a549f7764
+          Generation:        1
+          Resource Version:  5426
+          UID:               bde55f03-abe2-48af-8c09-28d32df878ad
         Spec:
-        Install:
-            Namespace:  argocd
-            Service Account:
+          Namespace:  argocd
+          Service Account:
             Name:  argocd-installer
-        Source:
+          Source:
             Catalog:
-            Package Name:  argocd-operator
-            Selector:
-            Upgrade Constraint Policy:  CatalogProvided
-            Version:                    0.6.0
+              Package Name:               argocd-operator
+              Upgrade Constraint Policy:  CatalogProvided
+              Version:                    0.6.0
             Source Type:                  Catalog
         Status:
-        Conditions:
-            Last Transition Time:  2024-10-03T16:02:41Z
+          Conditions:
+            Last Transition Time:  2024-11-11T13:41:23Z
             Message:
-            Observed Generation:   2
+            Observed Generation:   1
             Reason:                Deprecated
             Status:                False
             Type:                  Deprecated
-            Last Transition Time:  2024-10-03T16:02:41Z
+            Last Transition Time:  2024-11-11T13:41:23Z
             Message:
-            Observed Generation:   2
+            Observed Generation:   1
             Reason:                Deprecated
             Status:                False
             Type:                  PackageDeprecated
-            Last Transition Time:  2024-10-03T16:02:41Z
+            Last Transition Time:  2024-11-11T13:41:23Z
             Message:
-            Observed Generation:   2
+            Observed Generation:   1
             Reason:                Deprecated
             Status:                False
             Type:                  ChannelDeprecated
-            Last Transition Time:  2024-10-03T16:02:41Z
+            Last Transition Time:  2024-11-11T13:41:23Z
             Message:
-            Observed Generation:   2
+            Observed Generation:   1
             Reason:                Deprecated
             Status:                False
             Type:                  BundleDeprecated
-            Last Transition Time:  2024-10-03T16:02:43Z
+            Last Transition Time:  2024-11-11T13:41:31Z
             Message:               Installed bundle quay.io/operatorhubio/argocd-operator@sha256:d538c45a813b38ef0e44f40d279dc2653f97ca901fb660da5d7fe499d51ad3b3 successfully
-            Observed Generation:   2
+            Observed Generation:   1
             Reason:                Succeeded
             Status:                True
             Type:                  Installed
-            Last Transition Time:  2024-10-03T16:02:43Z
+            Last Transition Time:  2024-11-11T13:41:32Z
             Message:               desired state reached
-            Observed Generation:   2
+            Observed Generation:   1
             Reason:                Succeeded
-            Status:                False
+            Status:                True
             Type:                  Progressing
-        Install:
+          Install:
             Bundle:
-            Name:     argocd-operator.v0.6.0
-            Version:  0.6.0
+              Name:     argocd-operator.v0.6.0
+              Version:  0.6.0
         Events:         <none>
         ```
