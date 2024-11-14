@@ -35,7 +35,7 @@ curl -k https://localhost:8443/catalogs/operatorhubio/api/v1/all | <query>
 
 * Packages that support `AllNamespaces` install mode and do not use webhooks:
     ``` terminal
-    jq -c 'select(.schema == "olm.bundle") | {"package":.package, "version":.properties[] | select(.type == "olm.bundle.object").value.data |  @base64d | fromjson | select(.kind == "ClusterServiceVersion" and (.spec.installModes[] | select(.type == "AllNamespaces" and .supported == true) != null) and .spec.webhookdefinitions == null).spec.version}'
+    jq -cs '[.[] | select(.schema == "olm.bundle" and (.properties[] | select(.type == "olm.csv.metadata").value.installModes[] | select(.type == "AllNamespaces" and .supported == true)) and .spec.webhookdefinitions == null) | .package] | unique[]'
     ```
 
 * Package metadata:
