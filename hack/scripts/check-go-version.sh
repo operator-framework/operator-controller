@@ -63,6 +63,14 @@ for f in $(find . -name "*.mod"); do
     old=${old#go }
     new=$(git grep -ohP '^go .*$' "${f}")
     new=${new#go }
+    # If ${old} is empty, it means this is a new .mod file
+    if [ -z "${old}" ]; then
+        continue
+    fi
+    # Check if patch version remains 0: X.x.0 <-> X.x
+    if [ "${new}.0" == "${old}" -o "${new}" == "${old}.0" ]; then
+        continue
+    fi
     if [ "${new}" != "${old}" ]; then
         echo "${f}: ${v}: Updated golang version from ${old}"
         RETCODE=1
