@@ -44,7 +44,7 @@ you can follow the steps below to test your changes:
 1. Create the cluster:
 
     ```sh
-    kind create cluster operator-controller
+    kind create cluster -n operator-controller
     ```
 
 2. Build your changes:
