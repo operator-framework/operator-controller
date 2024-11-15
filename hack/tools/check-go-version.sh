@@ -32,7 +32,7 @@ check_version () {
         echo "${file}: ${whole}: Bad golang version (expected ${GO_VER} or less)"
         return 1
     fi
-    
+
     if [ ${#ver[*]} -eq 2 ] ; then
         return 0
     fi
@@ -63,8 +63,15 @@ for f in $(find . -name "*.mod"); do
     old=${old#go }
     new=$(git grep -ohP '^go .*$' "${f}")
     new=${new#go }
-    # If ${old} is empty, it means this is a new file
-    if [ "${new}" != "${old}" -a -n "${old}" ]; then
+    # If ${old} is empty, it means this is a new .mod file
+    if [ -z "${old}" ]; then
+        continue
+    fi
+    # Check if patch version remains 0: X.x.0 <-> X.x
+    if [ "${new}.0" == "${old}" -o "${new}" == "${old}.0" ]; then
+        continue
+    fi
+    if [ "${new}" != "${old}" ]; then
         echo "${f}: ${v}: Updated golang version from ${old}"
         RETCODE=1
     fi
