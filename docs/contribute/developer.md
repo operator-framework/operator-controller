@@ -49,28 +49,12 @@ curl -L -s https://github.com/operator-framework/operator-controller/releases/la
     make deploy IMG=<some-registry>/operator-controller:tag
     ```
 
-### Uninstall CRDs
-To delete the CRDs from the cluster:
-
-```sh
-make uninstall
-```
-
-### Undeploy controller
-To undeploy the controller from the cluster:
-
-```sh
-make undeploy
-```
-
 ### Modifying the API definitions
 If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
 
 ```sh
 make manifests
 ```
-
----
 
 !!! note
     Run `make help` for more information on all potential `make` targets.
