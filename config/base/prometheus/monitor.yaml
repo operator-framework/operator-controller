@@ -17,3 +17,4 @@ spec:
   selector:
     matchLabels:
       control-plane: operator-controller-controller-manager
+

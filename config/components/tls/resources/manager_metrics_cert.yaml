@@ -1,0 +1,16 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: olmv1-metrics-ca
+spec:
+  secretName: olmv1-metrics-ca
+  dnsNames:
+    - controller-manager-metrics-service.olmv1-system.svc
+    - controller-manager-metrics-service.olmv1-system.svc.cluster.local
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: olmv1-metrics-ca
+    kind: ClusterIssuer
+    group: cert-manager.io

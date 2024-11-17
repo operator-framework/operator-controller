@@ -1,0 +1,12 @@
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: olmv1-metrics-ca
+    secret:
+      secretName: olmv1-metrics-ca
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    name: olmv1-metrics-ca
+    mountPath: /var/metrics/certs
+    readOnly: true

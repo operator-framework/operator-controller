@@ -198,6 +198,10 @@ func main() {
 		// can access the metrics endpoint. The RBAC are configured in 'config/rbac/kustomization.yaml'. More info:
 		// https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.1/pkg/metrics/filters#WithAuthenticationAndAuthorization
 		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
+
+		metricsServerOptions.CertDir = "/var/metrics/certs"
+		metricsServerOptions.CertName = "tls.crt"
+		metricsServerOptions.KeyName = "tls.key"
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{

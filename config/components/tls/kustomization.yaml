@@ -3,8 +3,13 @@ kind: Component
 namespace: olmv1-system
 resources:
 - resources/manager_cert.yaml
+- resources/manager_metrics_cert.yaml
 patches:
 - target:
     kind: Deployment
     name: controller-manager
   path: patches/manager_deployment_cert.yaml
+- target:
+    kind: Deployment
+    name: controller-manager
+  path: patches/manager_metrics_deployment_cert.yaml
