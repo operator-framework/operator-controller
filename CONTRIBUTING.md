@@ -35,6 +35,29 @@ details.
 - Create a new branch from the default `main` branch and begin development in
   the area of your interest.
 
+## How to Build and Deploy Locally
+
+After creating a fork and cloning the project locally,
+you can follow the steps below to test your changes:
+
+1. Create the cluster:
+
+    ```sh
+    kind create cluster -n catalogd
+    ```
+
+2. Build your changes:
+
+    ```sh
+    make build-container
+    ```
+
+3. Load the image locally and Deploy to Kind
+
+    ```sh
+    make kind-load deploy
+    ```
+
 ## Reporting bugs and creating issues
 
 Any new contribution should be linked to a new or existing github issue in the
