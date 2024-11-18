@@ -23,6 +23,14 @@ type TokenGetter struct {
 
 type TokenGetterOption func(*TokenGetter)
 
+type SANotFoundError struct {
+	Msg string
+}
+
+func (e *SANotFoundError) Error() string {
+	return fmt.Sprintf(" %s", e.Msg)
+}
+
 const (
 	rotationThresholdFraction = 0.1
 	DefaultExpirationDuration = 5 * time.Minute
@@ -88,11 +96,10 @@ func (t *TokenGetter) getToken(ctx context.Context, key types.NamespacedName) (*
 			Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: ptr.To(int64(t.expirationDuration / time.Second))},
 		}, metav1.CreateOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
-			var saNotFoundError = fmt.Errorf("service account not found")
-			return nil, saNotFoundError
-		}
-		return nil, err
+		errMsg := err.Error()
+		stripErrMsg := errMsg[strings.LastIndex(errMsg, ":")+1:]
+		saErr := &SANotFoundError{stripErrMsg}
+		return nil, saErr
 	}
 	return &req.Status, nil
 }
