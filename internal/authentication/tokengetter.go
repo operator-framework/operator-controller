@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"fmt"
 	"context"
 	"sync"
 	"time"
@@ -9,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 )
 
@@ -86,6 +88,10 @@ func (t *TokenGetter) getToken(ctx context.Context, key types.NamespacedName) (*
 			Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: ptr.To(int64(t.expirationDuration / time.Second))},
 		}, metav1.CreateOptions{})
 	if err != nil {
+		if errors.IsNotFound(err) {
+			var saNotFoundError = fmt.Errorf("service account not found")
+			return nil, saNotFoundError
+		}
 		return nil, err
 	}
 	return &req.Status, nil
