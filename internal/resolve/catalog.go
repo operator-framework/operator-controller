@@ -13,11 +13,12 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogd "github.com/operator-framework/catalogd/api/v1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/compare"
 	"github.com/operator-framework/operator-controller/internal/catalogmetadata/filter"
@@ -37,18 +38,23 @@ type foundBundle struct {
 }
 
 // Resolve returns a Bundle from a catalog that needs to get installed on the cluster.
-func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterExtension, installedBundle *ocv1alpha1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
 	packageName := ext.Spec.Source.Catalog.PackageName
 	versionRange := ext.Spec.Source.Catalog.Version
 	channels := ext.Spec.Source.Catalog.Channels
 
-	selector, err := metav1.LabelSelectorAsSelector(&ext.Spec.Source.Catalog.Selector)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("desired catalog selector is invalid: %w", err)
-	}
-	// A nothing (empty) seletor selects everything
-	if selector == labels.Nothing() {
-		selector = labels.Everything()
+	// unless overridden, default to selecting all bundles
+	var selector = labels.Everything()
+	var err error
+	if ext.Spec.Source.Catalog != nil {
+		selector, err = metav1.LabelSelectorAsSelector(ext.Spec.Source.Catalog.Selector)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("desired catalog selector is invalid: %w", err)
+		}
+		// A nothing (empty) selector selects everything
+		if selector == labels.Nothing() {
+			selector = labels.Everything()
+		}
 	}
 
 	var versionRangeConstraints *mmsemver.Constraints
@@ -83,7 +89,7 @@ func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1alpha1.ClusterEx
 			predicates = append(predicates, filter.InMastermindsSemverRange(versionRangeConstraints))
 		}
 
-		if ext.Spec.Source.Catalog.UpgradeConstraintPolicy != ocv1alpha1.UpgradeConstraintPolicySelfCertified && installedBundle != nil {
+		if ext.Spec.Source.Catalog.UpgradeConstraintPolicy != ocv1.UpgradeConstraintPolicySelfCertified && installedBundle != nil {
 			successorPredicate, err := filter.SuccessorsOf(*installedBundle, packageFBC.Channels...)
 			if err != nil {
 				return fmt.Errorf("error finding upgrade edges: %w", err)
@@ -181,7 +187,7 @@ type resolutionError struct {
 	PackageName     string
 	Version         string
 	Channels        []string
-	InstalledBundle *ocv1alpha1.BundleMetadata
+	InstalledBundle *ocv1.BundleMetadata
 	ResolvedBundles []foundBundle
 }
 
@@ -231,20 +237,37 @@ func isDeprecated(bundle declcfg.Bundle, deprecation *declcfg.Deprecation) bool 
 
 type CatalogWalkFunc func(context.Context, *catalogd.ClusterCatalog, *declcfg.DeclarativeConfig, error) error
 
-func CatalogWalker(listCatalogs func(context.Context, ...client.ListOption) ([]catalogd.ClusterCatalog, error), getPackage func(context.Context, *catalogd.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error)) func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
+func CatalogWalker(
+	listCatalogs func(context.Context, ...client.ListOption) ([]catalogd.ClusterCatalog, error),
+	getPackage func(context.Context, *catalogd.ClusterCatalog, string) (*declcfg.DeclarativeConfig, error),
+) func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
 	return func(ctx context.Context, packageName string, f CatalogWalkFunc, catalogListOpts ...client.ListOption) error {
+		l := log.FromContext(ctx)
 		catalogs, err := listCatalogs(ctx, catalogListOpts...)
 		if err != nil {
 			return fmt.Errorf("error listing catalogs: %w", err)
 		}
 
+		// Remove disabled catalogs from consideration
+		catalogs = slices.DeleteFunc(catalogs, func(c catalogd.ClusterCatalog) bool {
+			if c.Spec.AvailabilityMode == catalogd.AvailabilityModeUnavailable {
+				l.Info("excluding ClusterCatalog from resolution process since it is disabled", "catalog", c.Name)
+				return true
+			}
+			return false
+		})
+
 		for i := range catalogs {
 			cat := &catalogs[i]
+
+			// process enabled catalogs
 			fbc, fbcErr := getPackage(ctx, cat, packageName)
+
 			if walkErr := f(ctx, cat, fbc, fbcErr); walkErr != nil {
 				return walkErr
 			}
 		}
+
 		return nil
 	}
 }

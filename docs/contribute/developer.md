@@ -3,10 +3,10 @@
 
 The following `make run` starts a [KIND](https://sigs.k8s.io/kind) cluster for you to get a local cluster for testing, see the manual install steps below for how to run against a remote cluster.
 
-> [!NOTE]
-> You will need a container runtime environment, like Docker, or experimentally, Podman, installed, to run Kind.
-> 
-> If you are on MacOS, see [Special Setup for MacOS](#special-setup-for-macos).
+!!! note
+    You will need a container runtime environment like Docker to run Kind. Kind also has experimental support for Podman.
+
+    If you are on MacOS, see [Special Setup for MacOS](#special-setup-for-macos).
 
 ### Quickstart Installation
 
@@ -20,9 +20,9 @@ This will build a local container image of the operator-controller, create a new
 
 ### To Install Any Given Release
 
-> [!CAUTION]  
-> Operator-Controller depends on [cert-manager](https://cert-manager.io/). Running the following command
-> may affect an existing installation of cert-manager and cause cluster instability.
+!!! warning
+    Operator-Controller depends on [cert-manager](https://cert-manager.io/). Running the following command
+    may affect an existing installation of cert-manager and cause cluster instability.
 
 The latest version of Operator Controller can be installed with the following command:
 
@@ -33,35 +33,21 @@ curl -L -s https://github.com/operator-framework/operator-controller/releases/la
 ### Manual Step-by-Step Installation
 1. Install Instances of Custom Resources:
 
-```sh
-kubectl apply -f config/samples/
-```
+    ```sh
+    kubectl apply -f config/samples/
+    ```
 
 2. Build and push your image to the location specified by `IMG`:
 
-```sh
-make docker-build docker-push IMG=<some-registry>/operator-controller:tag
-```
+    ```sh
+    make docker-build docker-push IMG=<some-registry>/operator-controller:tag
+    ```
 
 3. Deploy the controller to the cluster with the image specified by `IMG`:
 
-```sh
-make deploy IMG=<some-registry>/operator-controller:tag
-```
-
-### Uninstall CRDs
-To delete the CRDs from the cluster:
-
-```sh
-make uninstall
-```
-
-### Undeploy controller
-To undeploy the controller from the cluster:
-
-```sh
-make undeploy
-```
+    ```sh
+    make deploy IMG=<some-registry>/operator-controller:tag
+    ```
 
 ### Modifying the API definitions
 If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
@@ -70,9 +56,8 @@ If you are editing the API definitions, generate the manifests such as CRs or CR
 make manifests
 ```
 
----
-
-**NOTE:** Run `make help` for more information on all potential `make` targets.
+!!! note
+    Run `make help` for more information on all potential `make` targets.
 
 ### Rapid Iterative Development with Tilt
 
@@ -124,17 +109,18 @@ This is typically as short as:
 tilt up
 ```
 
-**NOTE:** if you are using Podman, at least as of v4.5.1, you need to do this:
+!!! note
+    If you are using Podman, at least as of v4.5.1, you need to do this:
 
-```shell
-DOCKER_BUILDKIT=0 tilt up
-```
+    ```shell
+    DOCKER_BUILDKIT=0 tilt up
+    ```
 
-Otherwise, you'll see an error when Tilt tries to build your image that looks similar to:
+    Otherwise, you'll see an error when Tilt tries to build your image that looks similar to:
 
-```text
-Build Failed: ImageBuild: stat /var/tmp/libpod_builder2384046170/build/Dockerfile: no such file or directory
-```
+    ```text
+    Build Failed: ImageBuild: stat /var/tmp/libpod_builder2384046170/build/Dockerfile: no such file or directory
+    ```
 
 When Tilt starts, you'll see something like this in your terminal:
 

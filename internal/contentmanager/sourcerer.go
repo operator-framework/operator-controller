@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	"github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/contentmanager/cache"
 	"github.com/operator-framework/operator-controller/internal/contentmanager/source"
 )
@@ -68,7 +68,7 @@ func buildScheme(gvks ...schema.GroupVersionKind) (*runtime.Scheme, error) {
 	// The ClusterExtension types must be added to the scheme since its
 	// going to be used to establish watches that trigger reconciliation
 	// of the owning ClusterExtension
-	if err := v1alpha1.AddToScheme(scheme); err != nil {
+	if err := v1.AddToScheme(scheme); err != nil {
 		return nil, fmt.Errorf("adding operator controller APIs to scheme: %w", err)
 	}
 

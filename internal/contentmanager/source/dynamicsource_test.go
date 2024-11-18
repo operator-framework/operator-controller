@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	"github.com/operator-framework/operator-controller/api/v1alpha1"
+	"github.com/operator-framework/operator-controller/api/v1"
 )
 
 func TestDynamicInformerSourceCloseBeforeStartErrors(t *testing.T) {
@@ -101,7 +101,7 @@ func TestDynamicInformerSourceStart(t *testing.T) {
 			Version:  "v1",
 			Resource: "pods",
 		},
-		Owner:           &v1alpha1.ClusterExtension{},
+		Owner:           &v1.ClusterExtension{},
 		Handler:         handler.Funcs{},
 		Predicates:      []predicate.Predicate{},
 		OnPostSyncError: func(ctx context.Context) {},

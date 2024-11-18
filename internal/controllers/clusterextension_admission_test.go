@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 )
 
 func TestClusterExtensionSourceConfig(t *testing.T) {
@@ -36,31 +36,27 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 			cl := newClient(t)
 			var err error
 			if tc.unionField == "Catalog" {
-				err = cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-					Source: ocv1alpha1.SourceConfig{
+				err = cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+					Source: ocv1.SourceConfig{
 						SourceType: tc.sourceType,
-						Catalog: &ocv1alpha1.CatalogSource{
+						Catalog: &ocv1.CatalogSource{
 							PackageName: "test-package",
 						},
 					},
-					Install: ocv1alpha1.ClusterExtensionInstallConfig{
-						Namespace: "default",
-						ServiceAccount: ocv1alpha1.ServiceAccountReference{
-							Name: "default",
-						},
+					Namespace: "default",
+					ServiceAccount: ocv1.ServiceAccountReference{
+						Name: "default",
 					},
 				}))
 			}
 			if tc.unionField == "" {
-				err = cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-					Source: ocv1alpha1.SourceConfig{
+				err = cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+					Source: ocv1.SourceConfig{
 						SourceType: tc.sourceType,
 					},
-					Install: ocv1alpha1.ClusterExtensionInstallConfig{
-						Namespace: "default",
-						ServiceAccount: ocv1alpha1.ServiceAccountReference{
-							Name: "default",
-						},
+					Namespace: "default",
+					ServiceAccount: ocv1.ServiceAccountReference{
+						Name: "default",
 					},
 				}))
 			}
@@ -77,7 +73,7 @@ func TestClusterExtensionSourceConfig(t *testing.T) {
 
 func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 	tooLongError := "spec.source.catalog.packageName: Too long: may not be longer than 253"
-	regexMismatchError := "spec.source.catalog.packageName in body should match"
+	regexMismatchError := "packageName must be a valid DNS1123 subdomain"
 
 	testCases := []struct {
 		name    string
@@ -110,18 +106,16 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				Source: ocv1alpha1.SourceConfig{
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1alpha1.CatalogSource{
+					Catalog: &ocv1.CatalogSource{
 						PackageName: tc.pkgName,
 					},
 				},
-				Install: ocv1alpha1.ClusterExtensionInstallConfig{
-					Namespace: "default",
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: "default",
-					},
+				Namespace: "default",
+				ServiceAccount: ocv1.ServiceAccountReference{
+					Name: "default",
 				},
 			}))
 			if tc.errMsg == "" {
@@ -136,7 +130,7 @@ func TestClusterExtensionAdmissionPackageName(t *testing.T) {
 
 func TestClusterExtensionAdmissionVersion(t *testing.T) {
 	tooLongError := "spec.source.catalog.version: Too long: may not be longer than 64"
-	regexMismatchError := "spec.source.catalog.version in body should match"
+	regexMismatchError := "invalid version expression"
 
 	testCases := []struct {
 		name    string
@@ -209,19 +203,17 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				Source: ocv1alpha1.SourceConfig{
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1alpha1.CatalogSource{
+					Catalog: &ocv1.CatalogSource{
 						PackageName: "package",
 						Version:     tc.version,
 					},
 				},
-				Install: ocv1alpha1.ClusterExtensionInstallConfig{
-					Namespace: "default",
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: "default",
-					},
+				Namespace: "default",
+				ServiceAccount: ocv1.ServiceAccountReference{
+					Name: "default",
 				},
 			}))
 			if tc.errMsg == "" {
@@ -236,7 +228,7 @@ func TestClusterExtensionAdmissionVersion(t *testing.T) {
 
 func TestClusterExtensionAdmissionChannel(t *testing.T) {
 	tooLongError := "spec.source.catalog.channels[0]: Too long: may not be longer than 253"
-	regexMismatchError := "spec.source.catalog.channels[0] in body should match"
+	regexMismatchError := "channels entries must be valid DNS1123 subdomains"
 
 	testCases := []struct {
 		name     string
@@ -266,19 +258,17 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				Source: ocv1alpha1.SourceConfig{
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1alpha1.CatalogSource{
+					Catalog: &ocv1.CatalogSource{
 						PackageName: "package",
 						Channels:    tc.channels,
 					},
 				},
-				Install: ocv1alpha1.ClusterExtensionInstallConfig{
-					Namespace: "default",
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: "default",
-					},
+				Namespace: "default",
+				ServiceAccount: ocv1.ServiceAccountReference{
+					Name: "default",
 				},
 			}))
 			if tc.errMsg == "" {
@@ -292,8 +282,8 @@ func TestClusterExtensionAdmissionChannel(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
-	tooLongError := "spec.install.namespace: Too long: may not be longer than 63"
-	regexMismatchError := "spec.install.namespace in body should match"
+	tooLongError := "spec.namespace: Too long: may not be longer than 63"
+	regexMismatchError := "namespace must be a valid DNS1123 label"
 
 	testCases := []struct {
 		name      string
@@ -322,18 +312,16 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				Source: ocv1alpha1.SourceConfig{
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1alpha1.CatalogSource{
+					Catalog: &ocv1.CatalogSource{
 						PackageName: "package",
 					},
 				},
-				Install: ocv1alpha1.ClusterExtensionInstallConfig{
-					Namespace: tc.namespace,
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: "default",
-					},
+				Namespace: tc.namespace,
+				ServiceAccount: ocv1.ServiceAccountReference{
+					Name: "default",
 				},
 			}))
 			if tc.errMsg == "" {
@@ -347,8 +335,8 @@ func TestClusterExtensionAdmissionInstallNamespace(t *testing.T) {
 }
 
 func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
-	tooLongError := "spec.install.serviceAccount.name: Too long: may not be longer than 253"
-	regexMismatchError := "spec.install.serviceAccount.name in body should match"
+	tooLongError := "spec.serviceAccount.name: Too long: may not be longer than 253"
+	regexMismatchError := "name must be a valid DNS1123 subdomain"
 
 	testCases := []struct {
 		name           string
@@ -378,18 +366,16 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			cl := newClient(t)
-			err := cl.Create(context.Background(), buildClusterExtension(ocv1alpha1.ClusterExtensionSpec{
-				Source: ocv1alpha1.SourceConfig{
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
 					SourceType: "Catalog",
-					Catalog: &ocv1alpha1.CatalogSource{
+					Catalog: &ocv1.CatalogSource{
 						PackageName: "package",
 					},
 				},
-				Install: ocv1alpha1.ClusterExtensionInstallConfig{
-					Namespace: "default",
-					ServiceAccount: ocv1alpha1.ServiceAccountReference{
-						Name: tc.serviceAccount,
-					},
+				Namespace: "default",
+				ServiceAccount: ocv1.ServiceAccountReference{
+					Name: tc.serviceAccount,
 				},
 			}))
 			if tc.errMsg == "" {
@@ -402,8 +388,68 @@ func TestClusterExtensionAdmissionServiceAccount(t *testing.T) {
 	}
 }
 
-func buildClusterExtension(spec ocv1alpha1.ClusterExtensionSpec) *ocv1alpha1.ClusterExtension {
-	return &ocv1alpha1.ClusterExtension{
+func TestClusterExtensionAdmissionInstall(t *testing.T) {
+	oneOfErrMsg := "at least one of [preflight] are required when install is specified"
+
+	testCases := []struct {
+		name          string
+		installConfig *ocv1.ClusterExtensionInstallConfig
+		errMsg        string
+	}{
+		{
+			name:          "install specified, nothing configured",
+			installConfig: &ocv1.ClusterExtensionInstallConfig{},
+			errMsg:        oneOfErrMsg,
+		},
+		{
+			name: "install specified, preflight configured",
+			installConfig: &ocv1.ClusterExtensionInstallConfig{
+				Preflight: &ocv1.PreflightConfig{
+					CRDUpgradeSafety: &ocv1.CRDUpgradeSafetyPreflightConfig{
+						Enforcement: ocv1.CRDUpgradeSafetyEnforcementNone,
+					},
+				},
+			},
+			errMsg: "",
+		},
+		{
+			name:          "install not specified",
+			installConfig: nil,
+			errMsg:        "",
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cl := newClient(t)
+			err := cl.Create(context.Background(), buildClusterExtension(ocv1.ClusterExtensionSpec{
+				Source: ocv1.SourceConfig{
+					SourceType: "Catalog",
+					Catalog: &ocv1.CatalogSource{
+						PackageName: "package",
+					},
+				},
+				Namespace: "default",
+				ServiceAccount: ocv1.ServiceAccountReference{
+					Name: "default",
+				},
+				Install: tc.installConfig,
+			}))
+			if tc.errMsg == "" {
+				require.NoError(t, err, "unexpected error for install configuration %v: %w", tc.installConfig, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errMsg)
+			}
+		})
+	}
+}
+
+func buildClusterExtension(spec ocv1.ClusterExtensionSpec) *ocv1.ClusterExtension {
+	return &ocv1.ClusterExtension{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "test-extension-",
 		},

@@ -41,6 +41,7 @@ nav:
     - Version Range Upgrades: howto/how-to-version-range-upgrades.md
     - Z-Stream Upgrades: howto/how-to-z-stream-upgrades.md
     - Derive Service Account Permissions: howto/derive-service-account.md
+    - Grant Access to Your Extension's API: howto/how-to-grant-api-access.md
   - Conceptual Guides:
     - Single Owner Objects: concepts/single-owner-objects.md
     - Upgrade Support: concepts/upgrade-support.md

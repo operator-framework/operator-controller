@@ -20,7 +20,7 @@ TEST_CLUSTER_CATALOG_NAME=$2
 TEST_CLUSTER_EXTENSION_NAME=$3
 
 kubectl apply -f - << EOF
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterCatalog
 metadata:
   name: ${TEST_CLUSTER_CATALOG_NAME}
@@ -29,7 +29,7 @@ spec:
     type: Image
     image:
       ref: ${TEST_CATALOG_IMG}
-      pollInterval: 24h
+      pollIntervalMinutes: 1440
 EOF
 
 kubectl apply -f - <<EOF
@@ -49,6 +49,7 @@ rules:
   - apiGroups:
     - ""
     resources:
+    - "configmaps"
     - "secrets"
     - "services"
     - "serviceaccounts"
@@ -127,20 +128,19 @@ roleRef:
 EOF
 
 kubectl apply -f - << EOF
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: ${TEST_CLUSTER_EXTENSION_NAME}
 spec:
+  namespace: default
+  serviceAccount:
+    name: upgrade-e2e
   source:
     sourceType: Catalog
     catalog:
-      packageName: prometheus
+      packageName: test
       version: 1.0.0
-  install:
-    namespace: default
-    serviceAccount:
-      name: upgrade-e2e
 EOF
 
 kubectl wait --for=condition=Serving --timeout=60s ClusterCatalog $TEST_CLUSTER_CATALOG_NAME

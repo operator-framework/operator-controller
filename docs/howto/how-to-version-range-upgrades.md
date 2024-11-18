@@ -5,20 +5,19 @@ Set the version for the desired package in the Catalog source to a comparison st
 Example:
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: argocd
 spec:
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
   source:
     sourceType: Catalog
     catalog:
       packageName: argocd-operator
       version: ">=3.0, <3.6"  # Install versions from v3.0.0 up to, but not including, v3.6.0
-  install:
-    namespace: argocd
-    serviceAccount:
-      name: argocd-installer
 ```
 
-For more information on SemVer version ranges see [version-rages](../concepts/version-ranges.md)
+For more information on SemVer version ranges see [version-ranges](../concepts/version-ranges.md)

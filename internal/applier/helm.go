@@ -19,10 +19,11 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 
-	ocv1alpha1 "github.com/operator-framework/operator-controller/api/v1alpha1"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
 	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/rukpak/util"
@@ -56,8 +57,28 @@ type Helm struct {
 	Preflights         []Preflight
 }
 
-func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
-	chrt, err := convert.RegistryV1ToHelmChart(ctx, contentFS, ext.Spec.Install.Namespace, []string{corev1.NamespaceAll})
+// shouldSkipPreflight is a helper to determine if the preflight check is CRDUpgradeSafety AND
+// if it is set to enforcement None.
+func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1.ClusterExtension, state string) bool {
+	l := log.FromContext(ctx)
+	hasCRDUpgradeSafety := ext.Spec.Install != nil && ext.Spec.Install.Preflight != nil && ext.Spec.Install.Preflight.CRDUpgradeSafety != nil
+	_, isCRDUpgradeSafetyInstance := preflight.(*crdupgradesafety.Preflight)
+
+	if hasCRDUpgradeSafety && isCRDUpgradeSafetyInstance {
+		if state == StateNeedsInstall || state == StateNeedsUpgrade {
+			l.Info("crdUpgradeSafety ", "policy", ext.Spec.Install.Preflight.CRDUpgradeSafety.Enforcement)
+		}
+		if ext.Spec.Install.Preflight.CRDUpgradeSafety.Enforcement == ocv1.CRDUpgradeSafetyEnforcementNone {
+			// Skip this preflight check because it is of type *crdupgradesafety.Preflight and the CRD Upgrade Safety
+			// policy is set to None
+			return true
+		}
+	}
+	return false
+}
+
+func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
+	chrt, err := convert.RegistryV1ToHelmChart(ctx, contentFS, ext.Spec.Namespace, []string{corev1.NamespaceAll})
 	if err != nil {
 		return nil, "", err
 	}
@@ -78,12 +99,8 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 	}
 
 	for _, preflight := range h.Preflights {
-		if ext.Spec.Install.Preflight != nil && ext.Spec.Install.Preflight.CRDUpgradeSafety != nil {
-			if _, ok := preflight.(*crdupgradesafety.Preflight); ok && ext.Spec.Install.Preflight.CRDUpgradeSafety.Policy == ocv1alpha1.CRDUpgradeSafetyPolicyDisabled {
-				// Skip this preflight check because it is of type *crdupgradesafety.Preflight and the CRD Upgrade Safety
-				// preflight check has been disabled
-				continue
-			}
+		if shouldSkipPreflight(ctx, preflight, ext, state) {
+			continue
 		}
 		switch state {
 		case StateNeedsInstall:
@@ -101,7 +118,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 
 	switch state {
 	case StateNeedsInstall:
-		rel, err = ac.Install(ext.GetName(), ext.Spec.Install.Namespace, chrt, values, func(install *action.Install) error {
+		rel, err = ac.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(install *action.Install) error {
 			install.CreateNamespace = false
 			install.Labels = storageLabels
 			return nil
@@ -110,7 +127,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 			return nil, state, err
 		}
 	case StateNeedsUpgrade:
-		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.Install.Namespace, chrt, values, func(upgrade *action.Upgrade) error {
+		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.Namespace, chrt, values, func(upgrade *action.Upgrade) error {
 			upgrade.MaxHistory = maxHelmReleaseHistory
 			upgrade.Labels = storageLabels
 			return nil
@@ -134,7 +151,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1alpha1.Clust
 	return relObjects, state, nil
 }
 
-func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1alpha1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
+func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
 	currentRelease, err := cl.Get(ext.GetName())
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil, nil, StateError, err
@@ -144,7 +161,7 @@ func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1alpha1.Cl
 	}
 
 	if errors.Is(err, driver.ErrReleaseNotFound) {
-		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.Install.Namespace, chrt, values, func(i *action.Install) error {
+		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(i *action.Install) error {
 			i.DryRun = true
 			i.DryRunOption = "server"
 			return nil
@@ -154,7 +171,7 @@ func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1alpha1.Cl
 		}
 		return nil, desiredRelease, StateNeedsInstall, nil
 	}
-	desiredRelease, err := cl.Upgrade(ext.GetName(), ext.Spec.Install.Namespace, chrt, values, func(upgrade *action.Upgrade) error {
+	desiredRelease, err := cl.Upgrade(ext.GetName(), ext.Spec.Namespace, chrt, values, func(upgrade *action.Upgrade) error {
 		upgrade.MaxHistory = maxHelmReleaseHistory
 		upgrade.DryRun = true
 		upgrade.DryRunOption = "server"

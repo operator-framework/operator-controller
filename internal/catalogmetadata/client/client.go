@@ -7,12 +7,17 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"net/url"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	catalogd "github.com/operator-framework/catalogd/api/core/v1alpha1"
+	catalogd "github.com/operator-framework/catalogd/api/v1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
+)
+
+const (
+	clusterCatalogV1ApiURL = "api/v1/all"
 )
 
 type Cache interface {
@@ -60,17 +65,10 @@ func (c *Client) GetPackage(ctx context.Context, catalog *catalogd.ClusterCatalo
 
 	catalogFsys, err := c.cache.Get(catalog.Name, catalog.Status.ResolvedSource.Image.Ref)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving catalog cache: %v", err)
+		return nil, fmt.Errorf("error retrieving cache for catalog %q: %v", catalog.Name, err)
 	}
 	if catalogFsys == nil {
-		// TODO: https://github.com/operator-framework/operator-controller/pull/1284
-		// For now we are still populating cache (if absent) on-demand,
-		// but we might end up just returning a "cache not found" error here
-		// once we implement cache population in the controller.
-		catalogFsys, err = c.PopulateCache(ctx, catalog)
-		if err != nil {
-			return nil, fmt.Errorf("error fetching catalog contents: %v", err)
-		}
+		return nil, fmt.Errorf("cache for catalog %q not found", catalog.Name)
 	}
 
 	pkgFsys, err := fs.Sub(catalogFsys, pkgName)
@@ -113,7 +111,16 @@ func (c *Client) PopulateCache(ctx context.Context, catalog *catalogd.ClusterCat
 }
 
 func (c *Client) doRequest(ctx context.Context, catalog *catalogd.ClusterCatalog) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, catalog.Status.ContentURL, nil)
+	if catalog.Status.URLs == nil {
+		return nil, fmt.Errorf("error: catalog %q has a nil status.urls value", catalog.Name)
+	}
+
+	catalogdURL, err := url.JoinPath(catalog.Status.URLs.Base, clusterCatalogV1ApiURL)
+	if err != nil {
+		return nil, fmt.Errorf("error forming catalogd API endpoint: %v", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, catalogdURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error forming request: %v", err)
 	}

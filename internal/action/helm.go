@@ -75,6 +75,12 @@ func (a ActionClient) Get(name string, opts ...actionclient.GetOption) (*release
 	return resp, err
 }
 
+func (a ActionClient) History(name string, opts ...actionclient.HistoryOption) ([]*release.Release, error) {
+	resp, err := a.ActionInterface.History(name, opts...)
+	err = a.actionClientErrorTranslator(err)
+	return resp, err
+}
+
 func (a ActionClient) Reconcile(rel *release.Release) error {
 	return a.actionClientErrorTranslator(a.ActionInterface.Reconcile(rel))
 }

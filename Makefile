@@ -165,12 +165,16 @@ test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
                 $(UNIT_TEST_DIRS) \
                 -test.gocoverdir=$(ROOT_DIR)/coverage/unit
 
-image-registry: ## Setup in-cluster image registry
-	./hack/test/image-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME)
-
-build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and push it to the image registry
-	./hack/test/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
-	./hack/test/build-push-e2e-catalog.sh $(E2E_REGISTRY_NAMESPACE) $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V2)
+.PHONY: image-registry
+E2E_REGISTRY_IMAGE=localhost/e2e-test-registry:devel
+image-registry: export GOOS=linux
+image-registry: export GOARCH=amd64
+image-registry: ## Build the testdata catalog used for e2e tests and push it to the image registry
+	go build $(GO_BUILD_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/registry/bin/registry ./testdata/registry/registry.go
+	go build $(GO_BUILD_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o ./testdata/push/bin/push         ./testdata/push/push.go
+	$(CONTAINER_RUNTIME) build -f ./testdata/Dockerfile -t $(E2E_REGISTRY_IMAGE) ./testdata
+	$(CONTAINER_RUNTIME) save $(E2E_REGISTRY_IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
+	./testdata/build-test-registry.sh $(E2E_REGISTRY_NAMESPACE) $(E2E_REGISTRY_NAME) $(E2E_REGISTRY_IMAGE)
 
 # When running the e2e suite, you can set the ARTIFACT_PATH variable to the absolute path
 # of the directory for the operator-controller e2e tests to store the artifacts, which
@@ -181,7 +185,7 @@ build-push-e2e-catalog: ## Build the testdata catalog used for e2e tests and pus
 test-e2e: KIND_CLUSTER_NAME := operator-controller-e2e
 test-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/e2e
 test-e2e: GO_BUILD_FLAGS := -cover
-test-e2e: run image-registry build-push-e2e-catalog registry-load-bundles e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
+test-e2e: run image-registry e2e e2e-coverage kind-clean #HELP Run e2e test suite on local kind cluster
 
 .PHONY: extension-developer-e2e
 extension-developer-e2e: KUSTOMIZE_BUILD_DIR := config/overlays/cert-manager
@@ -205,7 +209,7 @@ post-upgrade-checks:
 test-upgrade-e2e: KIND_CLUSTER_NAME := operator-controller-upgrade-e2e
 test-upgrade-e2e: export TEST_CLUSTER_CATALOG_NAME := test-catalog
 test-upgrade-e2e: export TEST_CLUSTER_EXTENSION_NAME := test-package
-test-upgrade-e2e: kind-cluster run-latest-release image-registry build-push-e2e-catalog registry-load-bundles pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean #HELP Run upgrade e2e tests on a local kind cluster
+test-upgrade-e2e: kind-cluster run-latest-release image-registry pre-upgrade-setup docker-build kind-load kind-deploy post-upgrade-checks kind-clean #HELP Run upgrade e2e tests on a local kind cluster
 
 .PHONY: e2e-coverage
 e2e-coverage:
@@ -230,12 +234,6 @@ kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
 .PHONY: kind-clean
 kind-clean: $(KIND) #EXHELP Delete the kind cluster.
 	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
-
-registry-load-bundles: ## Load selected e2e testdata container images created in kind-load-bundles into registry
-	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(LOCAL_REGISTRY_HOST)/bundles/registry-v1/prometheus-operator:v1.0.0 prometheus-operator.v1.0.0 prometheus-operator.v1.0.0
-	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(LOCAL_REGISTRY_HOST)/bundles/registry-v1/prometheus-operator:v1.0.1 prometheus-operator.v1.0.1 prometheus-operator.v1.0.0
-	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(LOCAL_REGISTRY_HOST)/bundles/registry-v1/prometheus-operator:v1.2.0 prometheus-operator.v1.2.0 prometheus-operator.v1.0.0
-	testdata/bundles/registry-v1/build-push-e2e-bundle.sh ${E2E_REGISTRY_NAMESPACE} $(LOCAL_REGISTRY_HOST)/bundles/registry-v1/prometheus-operator:v2.0.0 prometheus-operator.v2.0.0 prometheus-operator.v1.0.0
 
 #SECTION Build
 

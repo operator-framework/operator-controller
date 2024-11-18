@@ -18,19 +18,24 @@ To select a specific catalog by name, you can use the `matchLabels` field in you
 #### Example
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
-  name: my-extension
+  name: argocd
 spec:
-  packageName: my-package
-  catalog:
-    selector:
-      matchLabels:
-        olm.operatorframework.io/metadata.name: my-content-management
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      selector:
+        matchLabels:
+          olm.operatorframework.io/metadata.name: operatorhubio
 ```
 
-In this example, only the catalog named `my-catalog` will be considered when resolving `my-package`.
+In this example, only the catalog named `operatorhubio` will be considered when resolving `argocd-operator`.
 
 ### Selecting Catalogs by Labels
 
@@ -39,16 +44,21 @@ If you have catalogs labeled with specific metadata, you can select them using `
 #### Using `matchLabels`
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
-  name: my-extension
+  name: argocd
 spec:
-  packageName: my-package
-  catalog:
-    selector:
-      matchLabels:
-        example.com/support: "true"
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      selector:
+        matchLabels:
+          example.com/support: "true"
 ```
 
 This selects catalogs labeled with `example.com/support: "true"`.
@@ -56,20 +66,25 @@ This selects catalogs labeled with `example.com/support: "true"`.
 #### Using `matchExpressions`
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
-  name: my-extension
+  name: argocd
 spec:
-  packageName: my-package
-  catalog:
-    selector:
-      matchExpressions:
-        - key: example.com/support
-          operator: In
-          values:
-            - "gold"
-            - "platinum"
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      selector:
+        matchExpressions:
+          - key: example.com/support
+            operator: In
+            values:
+              - "gold"
+              - "platinum"
 ```
 
 This selects catalogs where the label `example.com/support` has the value `gold` or `platinum`.
@@ -81,19 +96,24 @@ You can exclude catalogs by using the `NotIn` or `DoesNotExist` operators in `ma
 #### Example: Exclude Specific Catalogs
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
-  name: my-extension
+  name: argocd
 spec:
-  packageName: my-package
-  catalog:
-    selector:
-      matchExpressions:
-        - key: olm.operatorframework.io/metadata.name
-          operator: NotIn
-          values:
-            - unwanted-content-management
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      selector:
+        matchExpressions:
+          - key: olm.operatorframework.io/metadata.name
+            operator: NotIn
+            values:
+              - unwanted-catalog
 ```
 
 This excludes the catalog named `unwanted-catalog` from consideration.
@@ -101,17 +121,22 @@ This excludes the catalog named `unwanted-catalog` from consideration.
 #### Example: Exclude Catalogs with a Specific Label
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
-  name: my-extension
+  name: argocd
 spec:
-  packageName: my-package
-  catalog:
-    selector:
-      matchExpressions:
-        - key: example.com/support
-          operator: DoesNotExist
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  source:
+    sourceType: Catalog
+    catalog:
+      packageName: argocd-operator
+      selector:
+        matchExpressions:
+          - key: example.com/support
+            operator: DoesNotExist
 ```
 
 This selects catalogs that do not have the `example.com/support` label.
@@ -125,7 +150,7 @@ When multiple catalogs provide the same package, you can set priorities to resol
 In your `ClusterCatalog` resource, set the `priority` field:
 
 ```yaml
-apiVersion: catalogd.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterCatalog
 metadata:
   name: high-priority-catalog
@@ -159,70 +184,76 @@ If the system cannot resolve to a single bundle due to ambiguity, it will genera
 
 1. **Create or Update `ClusterCatalogs` with Appropriate Labels and Priority**
 
-   ```yaml
-   apiVersion: catalogd.operatorframework.io/v1alpha1
-   kind: ClusterCatalog
-   metadata:
-     name: catalog-a
-     labels:
-       example.com/support: "true"
-   spec:
-     priority: 1000
-     source:
-       type: Image
-       image:
-         ref: quay.io/example/content-management-a:latest
-   ```
+    ```yaml
+    apiVersion: olm.operatorframework.io/v1
+    kind: ClusterCatalog
+    metadata:
+      name: catalog-a
+      labels:
+        example.com/support: "true"
+    spec:
+      priority: 1000
+      source:
+        type: Image
+        image:
+          ref: quay.io/example/content-management-a:latest
+    ```
 
-   ```yaml
-   apiVersion: catalogd.operatorframework.io/v1alpha1
-   kind: ClusterCatalog
-   metadata:
-     name: catalog-b
-     labels:
-       example.com/support: "false"
-   spec:
-     priority: 500
-     source:
-       type: Image
-       image:
-         ref: quay.io/example/content-management-b:latest
-   ```
-   NB: an `olm.operatorframework.io/metadata.name` label will be added automatically to ClusterCatalogs when applied
+    ```yaml
+    apiVersion: olm.operatorframework.io/v1
+    kind: ClusterCatalog
+    metadata:
+      name: catalog-b
+      labels:
+        example.com/support: "false"
+    spec:
+      priority: 500
+      source:
+        type: Image
+        image:
+          ref: quay.io/example/content-management-b:latest
+    ```
+    !!! note
+        An `olm.operatorframework.io/metadata.name` label will be added automatically to ClusterCatalogs when applied
 
 
 2. **Create a `ClusterExtension` with Catalog Selection**
 
-   ```yaml
-   apiVersion: olm.operatorframework.io/v1alpha1
-   kind: ClusterExtension
-   metadata:
-     name: install-my-operator
-   spec:
-     packageName: my-operator
-     catalog:
-       selector:
-         matchLabels:
-           example.com/support: "true"
-   ```
+    ```yaml
+    apiVersion: olm.operatorframework.io/v1
+    kind: ClusterExtension
+    metadata:
+      name: install-my-operator
+    spec:
+      namespace: my-operator-ns
+      serviceAccount:
+        name: my-operator-installer
+      source:
+        sourceType: Catalog
+        catalog:
+          packageName: my-operator
+          selector:
+            matchLabels:
+              example.com/support: "true"
+    ```
 
 3. **Apply the Resources**
 
-   ```shell
-   kubectl apply -f content-management-a.yaml
-   kubectl apply -f content-management-b.yaml
-   kubectl apply -f install-my-operator.yaml
-   ```
+    ```shell
+    kubectl apply -f content-management-a.yaml
+    kubectl apply -f content-management-b.yaml
+    kubectl apply -f install-my-operator.yaml
+    ```
 
 4. **Verify the Installation**
 
-   Check the status of the `ClusterExtension`:
+    Check the status of the `ClusterExtension`:
 
-   ```shell
-   kubectl get clusterextension install-my-operator -o yaml
-   ```
+    ```shell
+    kubectl get clusterextension install-my-operator -o yaml
+    ```
 
-   The status should indicate that the bundle was resolved from `catalog-a` due to the higher priority and matching label.
+    The status should indicate that the bundle was resolved from `catalog-a` due to the higher priority and matching label.
 
 ## Important Notes
 

@@ -31,7 +31,7 @@ You define a version range by adding a comparison string to the `spec.version` f
 To specify a version range, use a range comparison similar to the following example:
 
 ```yaml
-version: >=3.0, <3.6
+version: ">=3.0, <3.6"
 ```
 
 #### Wildcards in comparisons
@@ -41,6 +41,7 @@ If you use a wildcard character with the `=` operator, you define a patch level 
 This is equivalent to making a tilde range comparison.
 
 *Example comparisons with wildcard characters*
+
 | Comparison | Equivalent          |
 |------------|---------------------|
 | `1.2.x`    | `>= 1.2.0, < 1.3.0` |
@@ -55,6 +56,7 @@ You can use the tilde (`~`) operator to make patch release comparisons.
 This is useful when you want to specify a minor version up to the next major version.
 
 *Example patch release comparisons*
+
 | Comparison | Equivalent          |
 |------------|---------------------|
 | `~1.2.3`   | `>= 1.2.3, < 1.3.0` |

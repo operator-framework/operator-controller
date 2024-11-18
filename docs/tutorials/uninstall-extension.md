@@ -23,7 +23,7 @@ You can uninstall a Kubernetes extension and its associated custom resource defi
     : Specifies the name defined in the `metadata.name` field of the extension's CR.
 
     ``` text title="Example output"
-    clusterextension.olm.operatorframework.io "argocd-operator" deleted
+    clusterextension.olm.operatorframework.io "argocd" deleted
     ```
 
 ### Verification
@@ -37,7 +37,7 @@ You can uninstall a Kubernetes extension and its associated custom resource defi
     ``` text title="Example output"
     No resources found
     ```
-  
+
 ### Cleanup
 
 * Remove the extension namespace, and installer service account cluster-scoped RBAC resources (if applicable).

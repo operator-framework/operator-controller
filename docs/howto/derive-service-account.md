@@ -1,11 +1,11 @@
 # Derive minimal ServiceAccount required for ClusterExtension Installation and Management
 
-OLM v1 does not have permission to install extensions on a cluster by default. In order to install a [supported bundle](../project/olmv1_limitations.md), 
+OLM v1 does not have permission to install extensions on a cluster by default. In order to install a [supported bundle](../project/olmv1_limitations.md),
 OLM must be provided a ServiceAccount configured with the appropriate permissions.
 
 This document serves as a guide for how to derive the RBAC necessary to install a bundle.
 
-### Required RBAC
+## Required RBAC
 
 The required permissions for the installation and management of a cluster extension can be determined by examining the contents of its bundle image.
 This bundle image contains all the manifests that make up the extension (e.g. `CustomResourceDefinition`s, `Service`s, `Secret`s, `ConfigMap`s, `Deployment`s etc.)
@@ -21,6 +21,7 @@ The service account must have permissions to:
  - create and manage the extension controller's deployment
 
 Additionally, for clusters that use the [OwnerReferencesPermissionEnforcement](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement) admission plug-in, the service account must also have permissions to:
+
  - update finalizers on the ClusterExtension to be able to set blockOwnerDeletion and ownerReferences
 
 It is good security practice to follow the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege), and scope permissions to specific resource names, wherever possible.
@@ -28,32 +29,32 @@ Keep in mind, that it is not possible to scope `create`, `list`, and `watch` per
 
 Depending on the scope, each permission will need to be added to either a `ClusterRole` or a `Role` and then bound to the service account with a `ClusterRoleBinding` or a `RoleBinding`.
 
-### Example
+## Example
 
 The following example illustrates the process of deriving the minimal RBAC required to install the [ArgoCD Operator](https://operatorhub.io/operator/argocd-operator) [v0.6.0](https://operatorhub.io/operator/argocd-operator/alpha/argocd-operator.v0.6.0) provided by [OperatorHub.io](https://operatorhub.io/).
-The final permission set can be found in the [ClusterExtension sample manifest](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1alpha1_clusterextension.yaml) in the [samples](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1alpha1_clusterextension.yaml) directory.
+The final permission set can be found in the [ClusterExtension sample manifest](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1_clusterextension.yaml) in the [samples](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1_clusterextension.yaml) directory.
 
 The bundle includes the following manifests, which can be found [here](https://github.com/argoproj-labs/argocd-operator/tree/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0):
 
 * `ClusterServiceVersion`:
-  - [argocd-operator.v0.6.0.clusterserviceversion.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml)
+    - [argocd-operator.v0.6.0.clusterserviceversion.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml)
 * `CustomResourceDefinition`s:
-  - [argoproj.io_applicationsets.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_applicationsets.yaml)
-  - [argoproj.io_applications.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_applications.yaml)
-  - [argoproj.io_appprojects.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_appprojects.yaml)
-  - [argoproj.io_argocdexports.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_argocdexports.yaml)
-  - [argoproj.io_argocds.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_argocds.yaml)
+    - [argoproj.io_applicationsets.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_applicationsets.yaml)
+    - [argoproj.io_applications.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_applications.yaml)
+    - [argoproj.io_appprojects.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_appprojects.yaml)
+    - [argoproj.io_argocdexports.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_argocdexports.yaml)
+    - [argoproj.io_argocds.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argoproj.io_argocds.yaml)
 * Additional resources:
-  - [argocd-operator-controller-manager-metrics-service_v1_service.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-controller-manager-metrics-service_v1_service.yaml)
-  - [argocd-operator-manager-config_v1_configmap.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-manager-config_v1_configmap.yaml)
-  - [argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml)
+    - [argocd-operator-controller-manager-metrics-service_v1_service.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-controller-manager-metrics-service_v1_service.yaml)
+    - [argocd-operator-manager-config_v1_configmap.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-manager-config_v1_configmap.yaml)
+    - [argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-metrics-reader_rbac.authorization.k8s.io_v1_clusterrole.yaml)
 
 The `ClusterServiceVersion` defines a single `Deployment` in `spec.install.deployments` named `argocd-operator-controller-manager` with a `ServiceAccount` of the same name.
 It declares the following cluster-scoped permissions in `spec.install.clusterPermissions`, and its namespace-scoped permissions in `spec.install.permissions`.
 
-#### Derive permissions for the installer service account `ClusterRole`
+### Derive permissions for the installer service account `ClusterRole`
 
-##### Step 1. RBAC creation and management permissions
+#### Step 1. RBAC creation and management permissions
 
 The installer service account must create and manage the `ClusterRole`s and `ClusterRoleBinding`s for the extension controller(s).
 Therefore, it must have the following permissions:
@@ -75,10 +76,11 @@ Therefore, it must have the following permissions:
   resourceNames: [<controller cluster rolebinding name 1>, ...]
 ```
 
-Note: The `resourceNames` field should be populated with the names of the `ClusterRole`s and `ClusterRoleBinding`s created by OLM v1.
-These names are generated with the following format: `<packageName>.<hash>`. Since it is not a trivial task
-to generate these names ahead of time, it is recommended to use a wildcard `*` in the `resourceNames` field for the installation.
-Then, update the `resourceNames` fields by inspecting the cluster for the generated resource names. For instance, for `ClusterRole`s:
+!!! note
+    The `resourceNames` field should be populated with the names of the `ClusterRole`s and `ClusterRoleBinding`s created by OLM v1.
+    These names are generated with the following format: `<packageName>.<hash>`. Since it is not a trivial task
+    to generate these names ahead of time, it is recommended to use a wildcard `*` in the `resourceNames` field for the installation.
+    Then, update the `resourceNames` fields by inspecting the cluster for the generated resource names. For instance, for `ClusterRole`s:
 
 ```terminal
 kubectl get clusterroles | grep argocd
@@ -97,9 +99,9 @@ argocd-operator.v0-22gmilmgp91wu25is5i2ec598hni8owq3l71bbkl7iz3        2024-09-3
 
 The same can be done for `ClusterRoleBindings`.
 
-##### Step 2. `CustomResourceDefinition` permissions
+#### Step 2. `CustomResourceDefinition` permissions
 
-The installer service account must be able to create and manage the `CustomResourceDefinition`s for the extension, as well 
+The installer service account must be able to create and manage the `CustomResourceDefinition`s for the extension, as well
 as grant the extension controller's service account the permissions it needs to manage its CRDs.
 
 ```yaml
@@ -113,7 +115,7 @@ as grant the extension controller's service account the permissions it needs to 
   resourceNames: [applications.argoproj.io, appprojects.argoproj.io, argocds.argoproj.io, argocdexports.argoproj.io, applicationsets.argoproj.io]
 ```
 
-##### Step 3. `OwnerReferencesPermissionEnforcement` permissions
+#### Step 3. `OwnerReferencesPermissionEnforcement` permissions
 
 For clusters that use `OwnerReferencesPermissionEnforcement`, the installer service account must be able to update finalizers on the ClusterExtension to be able to set blockOwnerDeletion and ownerReferences for clusters that use `OwnerReferencesPermissionEnforcement`.
 This is only a requirement for clusters that use the [OwnerReferencesPermissionEnforcement](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#ownerreferencespermissionenforcement) admission plug-in.
@@ -126,7 +128,7 @@ This is only a requirement for clusters that use the [OwnerReferencesPermissionE
   resourceNames: [argocd-operator.v0.6.0]
 ```
 
-##### Step 4. Bundled cluster-scoped resource permissions
+#### Step 4. Bundled cluster-scoped resource permissions
 
 Permissions must be added for the creation and management of any cluster-scoped resources included in the bundle.
 In this example, the ArgoCD bundle contains a `ClusterRole` called `argocd-operator-metrics-reader`. Given that
@@ -140,12 +142,13 @@ is sufficient to add the `argocd-operator-metrics-reader`resource name to the `r
   resourceNames: [<controller cluster role name 1>, ..., argocd-operator-metrics-reader]
 ```
 
-##### Step 5. Operator permissions declared in the ClusterServiceVersion
+#### Step 5. Operator permissions declared in the ClusterServiceVersion
 
 Include all permissions defined in the `.spec.install.permissions` ([reference](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1091)) and `.spec.install.clusterPermissions` ([reference](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml#L872)) stanzas in the bundle's `ClusterServiceVersion`.
 These permissions are required by the extension controller, and therefore the installer service account must be able to grant them.
 
-Note: there may be overlap between the rules defined in each stanza. Overlapping rules needn't be added twice.
+!!! note
+    There may be overlap between the rules defined in each stanza. Overlapping rules needn't be added twice.
 
 ```yaml
 # from .spec.install.clusterPermissions
@@ -224,12 +227,12 @@ Note: there may be overlap between the rules defined in each stanza. Overlapping
 #  verbs: ["create", "patch"]
 ```
 
-#### Derive permissions for the installer service account `Role`
+### Derive permissions for the installer service account `Role`
 
 The following steps detail how to define the namespace-scoped permissions needed by the installer service account's `Role`.
 The installer service account must create and manage the `RoleBinding`s for the extension controller(s).
 
-##### Step 1. `Deployment` permissions
+#### Step 1. `Deployment` permissions
 
 The installer service account must be able to create and manage the `Deployment`s for the extension controller(s).
 The `Deployment` name(s) can be found in the `ClusterServiceVersion` resource packed in the bundle under `.spec.install.deployments` ([reference](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator.v0.6.0.clusterserviceversion.yaml#L1029)).
@@ -246,7 +249,7 @@ This example's `ClusterServiceVersion` can be found [here](https://github.com/ar
   resourceNames: [argocd-operator-controller-manager]
 ```
 
-##### Step 2: `ServiceAccount` permissions
+#### Step 2: `ServiceAccount` permissions
 
 The installer service account must be able to create and manage the `ServiceAccount`(s) for the extension controller(s).
 The `ServiceAccount` name(s) can be found in deployment template in the `ClusterServiceVersion` resource packed in the bundle under `.spec.install.deployments`.
@@ -263,10 +266,11 @@ This example's `ClusterServiceVersion` can be found [here](https://github.com/ar
   resourceNames: [argocd-operator-controller-manager]
 ```
 
-##### Step 3. Bundled namespace-scoped resource permissions
+#### Step 3. Bundled namespace-scoped resource permissions
 
 The installer service account must also create and manage other namespace-scoped resources included in the bundle.
 In this example, the bundle also includes two additional namespace-scoped resources:
+
  * the [argocd-operator-controller-manager-metrics-service](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-controller-manager-metrics-service_v1_service.yaml) `Service`, and
  * the [argocd-operator-manager-config](https://github.com/argoproj-labs/argocd-operator/blob/da6b8a7e68f71920de9545152714b9066990fc4b/deploy/olm-catalog/argocd-operator/0.6.0/argocd-operator-manager-config_v1_configmap.yaml) `ConfigMap`
 
@@ -291,9 +295,10 @@ Therefore, the following permissions must be given to the installer service acco
   resourceNames: [argocd-operator-manager-config]
 ```
 
-#### Putting it all together
+### Putting it all together
 
 Once the installer service account required cluster-scoped and namespace-scoped permissions have been collected:
+
 1. Create the installation namespace
 2. Create the installer `ServiceAccount`
 3. Create the installer `ClusterRole`
@@ -302,15 +307,15 @@ Once the installer service account required cluster-scoped and namespace-scoped 
 6. Create the `RoleBinding` between the installer service account and its role
 7. Create the `ClusterExtension`
 
-A manifest with the full set of resources can be found [here](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1alpha1_clusterextension.yaml).
+A manifest with the full set of resources can be found [here](https://github.com/operator-framework/operator-controller/blob/main/config/samples/olm_v1_clusterextension.yaml).
 
-### Alternatives
+## Alternatives
 
 We understand that manually determining the minimum RBAC required for installation/upgrade of a `ClusterExtension` quite complex and protracted.
 In the near future, OLM v1 will provide tools and automation in order to simplify this process while maintaining our security posture.
 For users wishing to test out OLM v1 in a non-production settings, we offer the following alternatives:
 
-#### Give the installer service account admin privileges
+### Give the installer service account admin privileges
 
 The `cluster-admin` `ClusterRole` can be bound to the installer service account giving it full permissions to the cluster.
 While this obviates the need to determine the minimal RBAC required for installation, it is also dangerous. It is highly recommended
@@ -344,9 +349,9 @@ kubectl create clusterrolebinding my-cluster-extension-installer-role-binding \
   --serviceaccount=my-cluster-extension-namespace:my-cluster-installer-service-account
 ```
 
-#### hack/tools/catalog
+### hack/tools/catalog
 
 In the spirit of making this process more tenable until the proper tools are in place, the scripts
 in [hack/tools/catalogs](https://github.com/operator-framework/operator-controller/blob/main/hack/tools/catalogs) were created to help the user navigate and search catalogs as well
-as to generate the minimal RBAC requirements. These tools are offered as is, with no guarantees on their correctness, 
+as to generate the minimal RBAC requirements. These tools are offered as is, with no guarantees on their correctness,
 support, or maintenance. For more information, see [Hack Catalog Tools](https://github.com/operator-framework/operator-controller/blob/main/hack/tools/catalogs/README.md).

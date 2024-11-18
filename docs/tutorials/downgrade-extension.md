@@ -26,39 +26,37 @@ Custom Resource Definitions (CRDs) ensure that the resources used by the `Cluste
 
 **Disable CRD Safety Check Configuration:**
 
-Add the `crdUpgradeSafety` field and set its `policy` to `Disabled` in the `ClusterExtension` resource under the `preflight` section.
+Add the `crdUpgradeSafety` field and set its `enforcement` to `None` in the `ClusterExtension` resource. This configuration disables CRD safety checks during the downgrade process.
 
 **Example:**
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: example-extension
 spec:
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
   install:
     preflight:
       crdUpgradeSafety:
-        policy: Disabled
-    namespace: argocd
-    serviceAccount:
-      name: argocd-installer
+        enforcement: None
   source:
     sourceType: Catalog
     catalog:
       packageName: argocd-operator
       version: 0.6.0
-      upgradeConstraintPolicy: SelfCertified
 ```
 
-** Disable CRD Upgrade Safety Check:**
+**Command Example:**
 
-**Patch the ClusterExtension Resource:**
+If you prefer using the command line, you can use `kubectl` to modify the upgrade CRD safety check configuration.
 
-   ```bash
-   kubectl patch clusterextension <extension_name> --patch '{"spec":{"install":{"preflight":{"crdUpgradeSafety":{"policy":"Disabled"}}}}}' --type=merge
-   ```
-   Kubernetes will apply the updated configuration, disabling CRD safety checks during the downgrade process.
+```bash
+kubectl patch clusterextension example-extension --patch '{"spec":{"install":{"preflight":{"crdUpgradeSafety":{"enforcement":"None"}}}}}' --type=merge
+```
 
 ### 2. Ignoring Catalog Provided Upgrade Constraints
 
@@ -71,21 +69,24 @@ Set the `upgradeConstraintPolicy` to `SelfCertified` in the `ClusterExtension` r
 **Example:**
 
 ```yaml
-apiVersion: olm.operatorframework.io/v1alpha1
+apiVersion: olm.operatorframework.io/v1
 kind: ClusterExtension
 metadata:
   name: example-extension
 spec:
+  namespace: argocd
+  serviceAccount:
+    name: argocd-installer
+  install:
+    preflight:
+      crdUpgradeSafety:
+        enforcement: None
   source:
     sourceType: Catalog
     catalog:
       packageName: argocd-operator
       version: 0.6.0
       upgradeConstraintPolicy: SelfCertified
-  install:
-    namespace: argocd
-    serviceAccount:
-      name: argocd-installer
 ```
 
 **Command Example:**
@@ -93,7 +94,7 @@ spec:
 If you prefer using the command line, you can use `kubectl` to modify the upgrade constraint policy.
 
 ```bash
-kubectl patch clusterextension <extension_name> --patch '{"spec":{"upgradeConstraintPolicy":"SelfCertified"}}' --type=merge
+kubectl patch clusterextension example-extension --patch '{"spec":{"source": {"catalog":{"upgradeConstraintPolicy":"SelfCertified"}}}}' --type=merge
 ```
 
 ### 3. Executing the Downgrade
@@ -102,38 +103,43 @@ Once the CRD safety checks are disabled and upgrade constraints are set, you can
 
 1. **Edit the ClusterExtension Resource:**
 
-   Modify the `ClusterExtension` custom resource to specify the target version and adjust the upgrade constraints.
+    Modify the `ClusterExtension` custom resource to specify the target version and adjust the upgrade constraints.
 
-   ```bash
-   kubectl edit clusterextension <extension_name>
-   ```
+    ```bash
+    kubectl edit clusterextension example-extension
+    ```
 
 2. **Update the Version:**
 
-   Within the YAML editor, update the `spec` section as follows:
+    Within the YAML editor, update the `spec` section as follows:
 
-   ```yaml
-   apiVersion: olm.operatorframework.io/v1alpha1
-   kind: ClusterExtension
-   metadata:
-     name: <extension_name>
-   spec:
-     source:
-       sourceType: Catalog
-       catalog:
-         packageName: <package_name>
-         version: <target_version>
-     install:
-       namespace: <namespace>
-       serviceAccount:
-         name: <service_account>
-   ```
+    ```yaml
+    apiVersion: olm.operatorframework.io/v1
+    kind: ClusterExtension
+    metadata:
+      name: example-extension
+    spec:
+      namespace: argocd
+      serviceAccount:
+        name: argocd-installer
+      install:
+        preflight:
+          crdUpgradeSafety:
+            enforcement: None
+      source:
+        sourceType: Catalog
+        catalog:
+          packageName: argocd-operator
+          version: <target_version>
+          upgradeConstraintPolicy: SelfCertified
+    ```
 
-   - **`version`:** Specify the target version you wish to downgrade to.
+    `target_version`
+    : Specify the target version you wish to downgrade to.
 
 3. **Apply the Changes:**
 
-   Save and exit the editor. Kubernetes will apply the changes and initiate the downgrade process.
+    Save and exit the editor. Kubernetes will apply the changes and initiate the downgrade process.
 
 ### 4. Post-Downgrade Verification
 
@@ -143,31 +149,31 @@ After completing the downgrade, verify that the `ClusterExtension` is functionin
 
 1. **Check the Status of the ClusterExtension:**
 
-   ```bash
-   kubectl get clusterextension <extension_name> -o yaml
-   ```
+    ```bash
+    kubectl get clusterextension example-extension -o yaml
+    ```
 
-   Ensure that the `status` reflects the target version and that there are no error messages.
+    Ensure that the `status` reflects the target version and that there are no error messages.
 
 2. **Validate CRD Integrity:**
 
-   Confirm that all CRDs associated with the `ClusterExtension` are correctly installed and compatible with the downgraded version.
+    Confirm that all CRDs associated with the `ClusterExtension` are correctly installed and compatible with the downgraded version.
 
-   ```bash
-   kubectl get crd | grep <extension_crd>
-   ```
+    ```bash
+    kubectl get crd | grep <extension_crd>
+    ```
 
 3. **Test Extension Functionality:**
 
-   Perform functional tests to ensure that the extension operates correctly in its downgraded state.
+    Perform functional tests to ensure that the extension operates correctly in its downgraded state.
 
 4. **Monitor Logs:**
 
-   Check the logs of the operator managing the `ClusterExtension` for any warnings or errors.
+    Check the logs of the operator managing the `ClusterExtension` for any warnings or errors.
 
-   ```bash
-   kubectl logs deployment/<operator_deployment> -n <operator_namespace>
-   ```
+    ```bash
+    kubectl logs deployment/<operator_deployment> -n <operator_namespace>
+    ```
 
 ## Troubleshooting
 
