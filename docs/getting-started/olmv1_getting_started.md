@@ -77,7 +77,7 @@ and more information on the extension upgrade process can be found [here](../tut
 
 ```bash
 # Update to v0.11.0
-kubectl patch clusterextension argocd --type='merge' -p '{"spec": {"source": {"catalog": {"version": "0.2.1"}}}}'
+kubectl patch clusterextension argocd --type='merge' -p '{"spec": {"source": {"catalog": {"version": "0.11.0"}}}}'
 ```
 
 For information on the downgrade process, see [here](../tutorials/downgrade-extension.md).
