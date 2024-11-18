@@ -25,6 +25,14 @@ ifeq ($(shell [[ $$HOME == "" || $$HOME == "/" ]] && [[ $$XDG_DATA_HOME == "" ]]
 	SETUP_ENVTEST_BIN_DIR_OVERRIDE += --bin-dir /tmp/envtest-binaries
 endif
 
+ifneq (, $(shell command -v docker 2>/dev/null))
+CONTAINER_RUNTIME := docker
+else ifneq (, $(shell command -v podman 2>/dev/null))
+CONTAINER_RUNTIME := podman
+else
+$(warning Could not find docker or podman in path! This may result in targets requiring a container runtime failing!)
+endif
+
 # For standard development and release flows, we use the config/overlays/cert-manager overlay.
 KUSTOMIZE_OVERLAY := config/overlays/cert-manager
 
@@ -200,7 +208,7 @@ run: generate kind-cluster install ## Create a kind cluster and install a local 
 
 .PHONY: build-container
 build-container: build-linux ## Build docker image for catalogd.
-	docker build -f Dockerfile -t $(IMAGE) bin/linux
+	$(CONTAINER_RUNTIME) build -f Dockerfile -t $(IMAGE) ./bin/linux
 
 ##@ Deploy
 
@@ -215,7 +223,7 @@ kind-cluster-cleanup: $(KIND) ## Delete the kind cluster
 
 .PHONY: kind-load
 kind-load: check-cluster $(KIND) ## Load the built images onto the local cluster
-	docker save $(IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
+	$(CONTAINER_RUNTIME) save $(IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 
 .PHONY: install
 install: check-cluster build-container kind-load deploy wait ## Install local catalogd to an existing cluster
