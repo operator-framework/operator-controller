@@ -215,8 +215,7 @@ kind-cluster-cleanup: $(KIND) ## Delete the kind cluster
 
 .PHONY: kind-load
 kind-load: check-cluster $(KIND) ## Load the built images onto the local cluster
-	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
-	$(KIND) load docker-image $(IMAGE) --name $(KIND_CLUSTER_NAME)
+	docker save $(IMAGE) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 
 .PHONY: install
 install: check-cluster build-container kind-load deploy wait ## Install local catalogd to an existing cluster
