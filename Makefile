@@ -32,7 +32,7 @@ export INSTALL_DEFAULT_CATALOGS := true
 # By default setup-envtest will write to $XDG_DATA_HOME, or $HOME/.local/share if that is not defined.
 # If $HOME is not set, we need to specify a binary directory to prevent an error in setup-envtest.
 # Useful for some CI/CD environments that set neither $XDG_DATA_HOME nor $HOME.
-SETUP_ENVTEST_BIN_DIR_OVERRIDE=
+SETUP_ENVTEST_BIN_DIR_OVERRIDE += --bin-dir $(ROOT_DIR)/bin/envtest-binaries
 ifeq ($(shell [[ $$HOME == "" || $$HOME == "/" ]] && [[ $$XDG_DATA_HOME == "" ]] && echo true ), true)
 	SETUP_ENVTEST_BIN_DIR_OVERRIDE += --bin-dir /tmp/envtest-binaries
 endif
@@ -151,19 +151,25 @@ test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension creat
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
-.PHONY: test-unit
 ENVTEST_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/)
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
-test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
+
+.PHONY: setup-envtest #HELP Install the binaries required to run ENVTEST-test based in the project/bin directory.
+setup-envtest: $(SETUP_ENVTEST)
+	mkdir -p $(ROOT_DIR)/bin
+	$(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)
+
+.PHONY: test-unit
+test-unit: $(SETUP_ENVTEST) setup-envtest #HELP Run the unit tests
 	rm -rf $(COVERAGE_UNIT_DIR) && mkdir -p $(COVERAGE_UNIT_DIR)
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && \
+	KUBEBUILDER_ASSETS="$(shell $(SETUP_ENVTEST) use -p path $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE))" \
             CGO_ENABLED=1 go test \
                 -tags '$(GO_BUILD_TAGS)' \
                 -cover -coverprofile ${ROOT_DIR}/coverage/unit.out \
                 -count=1 -race -short \
                 $(UNIT_TEST_DIRS) \
-                -test.gocoverdir=$(ROOT_DIR)/coverage/unit
+                -test.gocoverdir=$(COVERAGE_UNIT_DIR)
 
 .PHONY: image-registry
 E2E_REGISTRY_IMAGE=localhost/e2e-test-registry:devel
