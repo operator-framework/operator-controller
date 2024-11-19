@@ -1,10 +1,8 @@
 package authentication
 
 import (
-	"fmt"
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -12,7 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 )
 
@@ -23,15 +20,15 @@ type TokenGetter struct {
 	mu                 sync.RWMutex
 }
 
-type TokenGetterOption func(*TokenGetter)
-
 type SANotFoundError struct {
 	Msg string
 }
 
-func (e *SANotFoundError) Error() string {
-	return fmt.Sprintf(" %s", e.Msg)
+func (e *SANotFoundError) Error(serviceAccountName string) string {
+	return fmt.Sprintf(" Unable to authenticate with Kubernetes cluster using ServiceAccount \"%s\": ServiceAccount \"%s\" not found.", serviceAccountName, serviceAccountName)
 }
+
+type TokenGetterOption func(*TokenGetter)
 
 const (
 	rotationThresholdFraction = 0.1
@@ -95,12 +92,10 @@ func (t *TokenGetter) getToken(ctx context.Context, key types.NamespacedName) (*
 	req, err := t.client.ServiceAccounts(key.Namespace).CreateToken(ctx,
 		key.Name,
 		&authenticationv1.TokenRequest{
-			Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: ptr.To(int64(t.expirationDuration / time.Second))},
+			Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: ptr.To[int64](int64(t.expirationDuration / time.Second))},
 		}, metav1.CreateOptions{})
 	if err != nil {
-		errMsg := err.Error()
-		stripErrMsg := errMsg[strings.LastIndex(errMsg, ":")+1:]
-		saErr := &SANotFoundError{stripErrMsg}
+		saErr := &SANotFoundError{key.Name}
 		return nil, saErr
 	}
 	return &req.Status, nil
