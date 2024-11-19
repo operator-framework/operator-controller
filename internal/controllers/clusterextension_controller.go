@@ -47,6 +47,7 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	catalogd "github.com/operator-framework/catalogd/api/v1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
+	tokengetter "github.com/operator-framework/operator-controller/internal/authentication"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
@@ -206,6 +207,11 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, ext)
 	if err != nil {
 		setInstallStatus(ext, nil)
+		var saerr *tokengetter.SANotFoundError
+		if errors.As(err, &saerr) {
+			l.Info("is a SAError")
+			err = saerr
+		}
 		setInstalledStatusConditionUnknown(ext, err.Error())
 		setStatusProgressing(ext, errors.New("retrying to get installed bundle"))
 		return ctrl.Result{}, err
