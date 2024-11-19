@@ -4,6 +4,7 @@ BINGO_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 GOPATH ?= $(shell go env GOPATH)
 GOBIN  ?= $(firstword $(subst :, ,${GOPATH}))/bin
 GO     ?= $(shell which go)
+LOCAL_KIND := $(shell command -v kind || echo "")
 
 # Below generated variables ensure that every time a tool under each variable is invoked, the correct version
 # will be used; reinstalling only if needed.
@@ -47,11 +48,18 @@ $(GORELEASER): $(BINGO_DIR)/goreleaser.mod
 	@echo "(re)installing $(GOBIN)/goreleaser-v1.26.2"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=goreleaser.mod -o=$(GOBIN)/goreleaser-v1.26.2 "github.com/goreleaser/goreleaser"
 
-KIND := $(GOBIN)/kind-v0.24.0
-$(KIND): $(BINGO_DIR)/kind.mod
-	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/kind-v0.24.0"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kind.mod -o=$(GOBIN)/kind-v0.24.0 "sigs.k8s.io/kind"
+GLOBAL_KIND := $(shell command -v kind || echo "")
+# Use global kind if available; otherwise, fall back to BINGO-managed kind.
+KIND := $(if $(GLOBAL_KIND),$(GLOBAL_KIND),$(GOBIN)/kind-v0.24.0)
+
+# Define the BINGO-managed kind target only if no global kind is found.
+$(GOBIN)/kind-v0.24.0: $(BINGO_DIR)/kind.mod
+	@if [ -z "$(GLOBAL_KIND)" ]; then \
+		echo "(re)installing $(GOBIN)/kind-v0.24.0 via BINGO..."; \
+		cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kind.mod -o=$(GOBIN)/kind-v0.24.0 "sigs.k8s.io/kind"; \
+	else \
+		echo "Global kind found at $(GLOBAL_KIND). Skipping BINGO installation."; \
+	fi
 
 KUSTOMIZE := $(GOBIN)/kustomize-v4.5.7
 $(KUSTOMIZE): $(BINGO_DIR)/kustomize.mod
