@@ -21,11 +21,11 @@ type TokenGetter struct {
 }
 
 type SANotFoundError struct {
-	Msg string
+	ServiceAccountName string
 }
 
-func (e *SANotFoundError) Error(serviceAccountName string) string {
-	return fmt.Sprintf(" Unable to authenticate with Kubernetes cluster using ServiceAccount \"%s\": ServiceAccount \"%s\" not found.", serviceAccountName, serviceAccountName)
+func (e *SANotFoundError) Error() string {
+	return fmt.Sprintf(" Unable to authenticate with Kubernetes cluster using ServiceAccount \"%s\": ServiceAccount \"%s\" not found.", e.ServiceAccountName, e.ServiceAccountName)
 }
 
 type TokenGetterOption func(*TokenGetter)
