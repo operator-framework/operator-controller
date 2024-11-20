@@ -24,6 +24,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	catalogd "github.com/operator-framework/catalogd/api/v1"
 )
@@ -47,6 +48,12 @@ type ClusterCatalogReconciler struct {
 //+kubebuilder:rbac:groups=olm.operatorframework.io,resources=clustercatalogs,verbs=get;list;watch
 
 func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	l := log.FromContext(ctx).WithName("cluster-catalog")
+	ctx = log.IntoContext(ctx, l)
+
+	l.Info("reconcile starting")
+	defer l.Info("reconcile ending")
+
 	existingCatalog := &catalogd.ClusterCatalog{}
 	err := r.Client.Get(ctx, req.NamespacedName, existingCatalog)
 	if apierrors.IsNotFound(err) {
@@ -70,9 +77,8 @@ func (r *ClusterCatalogReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	catalogFsys, err := r.CatalogCache.Get(existingCatalog.Name, existingCatalog.Status.ResolvedSource.Image.Ref)
 	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("error retrieving cache for catalog %q: %v", existingCatalog.Name, err)
-	}
-	if catalogFsys != nil {
+		l.Info("retrying cache population: found previous error from catalog cache", "cacheErr", err)
+	} else if catalogFsys != nil {
 		// Cache already exists so we do not need to populate it
 		return ctrl.Result{}, nil
 	}

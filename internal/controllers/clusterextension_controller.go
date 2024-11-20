@@ -99,7 +99,7 @@ type InstalledBundleGetter interface {
 // The operator controller needs to watch all the bundle objects and reconcile accordingly. Though not ideal, but these permissions are required.
 // This has been taken from rukpak, and an issue was created before to discuss it: https://github.com/operator-framework/rukpak/issues/800.
 func (r *ClusterExtensionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	l := log.FromContext(ctx).WithName("operator-controller")
+	l := log.FromContext(ctx).WithName("cluster-extension")
 	ctx = log.IntoContext(ctx, l)
 
 	l.Info("reconcile starting")

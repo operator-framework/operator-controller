@@ -134,8 +134,8 @@ func TestClusterCatalogReconcilerFinalizers(t *testing.T) {
 					return nil, errors.New("fake error from cache get function")
 				},
 			},
-			wantGetCacheCalled: true,
-			wantErr:            "error retrieving cache for catalog",
+			wantGetCacheCalled:      true,
+			wantPopulateCacheCalled: true,
 		},
 		{
 			name: "catalog does not exist",

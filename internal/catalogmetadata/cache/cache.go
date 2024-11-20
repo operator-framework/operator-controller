@@ -60,19 +60,6 @@ func (fsc *filesystemCache) Put(catalogName, resolvedRef string, source io.Reade
 	fsc.mutex.Lock()
 	defer fsc.mutex.Unlock()
 
-	// make sure we only write if this info hasn't been updated
-	// by another thread. The check here, if multiple threads are
-	// updating this, has no way to tell if the current ref is the
-	// newest possible ref. If another thread has already updated
-	// this to be the same value, skip the write logic and return
-	// the cached contents.
-	if cache, err := fsc.get(catalogName, resolvedRef); err == nil && cache != nil {
-		// We only return here if the was no error during
-		// the previous (likely concurrent) cache population attempt.
-		// If there was an error - we want to try and populate the cache again.
-		return cache, nil
-	}
-
 	var cacheFS fs.FS
 	if errToCache == nil {
 		cacheFS, errToCache = fsc.writeFS(catalogName, source)
