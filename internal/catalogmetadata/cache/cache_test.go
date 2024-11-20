@@ -96,12 +96,10 @@ func TestFilesystemCachePutAndGet(t *testing.T) {
 	assert.NoError(t, equalFilesystems(actualFSPut, actualFSGet))
 
 	t.Log("Put v1 error into cache")
-	actualFSPut, err = c.Put(catalogName, resolvedRef1, nil, errors.New("fake put error"))
-	// Errors do not override previously successfully populated cache
-	require.NoError(t, err)
-	require.NotNil(t, actualFSPut)
-	assert.NoError(t, equalFilesystems(defaultFS(), actualFSPut))
-	assert.NoError(t, equalFilesystems(actualFSPut, actualFSGet))
+	actualFSPut, err = c.Put(catalogName, resolvedRef1, nil, errors.New("fake v1 put error"))
+	// Errors for an existing resolvedRef should override previously successfully populated cache
+	assert.Equal(t, err, errors.New("fake v1 put error"))
+	assert.Nil(t, actualFSPut)
 
 	t.Log("Put v2 error into cache")
 	actualFSPut, err = c.Put(catalogName, resolvedRef2, nil, errors.New("fake v2 put error"))
