@@ -207,7 +207,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	installedBundle, err := r.InstalledBundleGetter.GetInstalledBundle(ctx, ext)
 	if err != nil {
 		setInstallStatus(ext, nil)
-		var saerr *tokengetter.SANotFoundError
+		var saerr *tokengetter.ServiceAccountNotFoundError
 		if errors.As(err, &saerr) {
 			l.Info("is a SAError")
 			err = saerr
