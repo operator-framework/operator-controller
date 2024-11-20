@@ -20,7 +20,7 @@ type TokenGetter struct {
 	mu                 sync.RWMutex
 }
 
-type SANotFoundError struct {
+type ServiceAccountNotFoundError struct {
 	ServiceAccountName string
 }
 
