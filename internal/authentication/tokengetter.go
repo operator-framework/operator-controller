@@ -24,7 +24,7 @@ type ServiceAccountNotFoundError struct {
 	ServiceAccountName string
 }
 
-func (e *SANotFoundError) Error() string {
+func (e *ServiceAccountNotFoundError) Error() string {
 	return fmt.Sprintf(" Unable to authenticate with Kubernetes cluster using ServiceAccount \"%s\": ServiceAccount \"%s\" not found.", e.ServiceAccountName, e.ServiceAccountName)
 }
 
@@ -95,7 +95,7 @@ func (t *TokenGetter) getToken(ctx context.Context, key types.NamespacedName) (*
 			Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: ptr.To(int64(t.expirationDuration / time.Second))},
 		}, metav1.CreateOptions{})
 	if err != nil {
-		saErr := &SANotFoundError{key.Name}
+		saErr := &ServiceAccountNotFoundError{key.Name}
 		return nil, saErr
 	}
 	return &req.Status, nil
