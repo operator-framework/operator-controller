@@ -1,0 +1,3 @@
+properties:
+  - type: "from-file-key"
+    value: "from-file-value"
