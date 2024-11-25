@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -23,6 +24,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/operator-registry/alpha/property"
 	registrybundle "github.com/operator-framework/operator-registry/pkg/lib/bundle"
 
 	registry "github.com/operator-framework/operator-controller/internal/rukpak/operator-registry"
@@ -43,12 +45,12 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace stri
 	l := log.FromContext(ctx)
 
 	reg := RegistryV1{}
-	fileData, err := fs.ReadFile(rv1, filepath.Join("metadata", "annotations.yaml"))
+	annotationsFileData, err := fs.ReadFile(rv1, filepath.Join("metadata", "annotations.yaml"))
 	if err != nil {
 		return nil, err
 	}
 	annotationsFile := registry.AnnotationsFile{}
-	if err := yaml.Unmarshal(fileData, &annotationsFile); err != nil {
+	if err := yaml.Unmarshal(annotationsFileData, &annotationsFile); err != nil {
 		return nil, err
 	}
 	reg.PackageName = annotationsFile.Annotations.PackageName
@@ -101,7 +103,59 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace stri
 		return nil, err
 	}
 
+	if err := copyMetadataPropertiesToCSV(&reg.CSV, rv1); err != nil {
+		return nil, err
+	}
+
 	return toChart(reg, installNamespace, watchNamespaces)
+}
+
+// copyMetadataPropertiesToCSV copies properties from `metadata/propeties.yaml` (in the filesystem fsys) into
+// the CSV's `.metadata.annotations['olm.properties']` value, preserving any properties that are already
+// present in the annotations.
+func copyMetadataPropertiesToCSV(csv *v1alpha1.ClusterServiceVersion, fsys fs.FS) error {
+	var allProperties []property.Property
+
+	// First load existing properties from the CSV. We want to preserve these.
+	if csvPropertiesJSON, ok := csv.Annotations["olm.properties"]; ok {
+		var csvProperties []property.Property
+		if err := json.Unmarshal([]byte(csvPropertiesJSON), &csvProperties); err != nil {
+			return fmt.Errorf("failed to unmarshal csv.metadata.annotations['olm.properties']: %w", err)
+		}
+		allProperties = append(allProperties, csvProperties...)
+	}
+
+	// Next, load properties from the metadata/properties.yaml file, if it exists.
+	metadataPropertiesJSON, err := fs.ReadFile(fsys, filepath.Join("metadata", "properties.yaml"))
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("failed to read properties.yaml file: %w", err)
+	}
+
+	// If there are no properties, we can stick with whatever
+	// was already present in the CSV annotations.
+	if len(metadataPropertiesJSON) == 0 {
+		return nil
+	}
+
+	// Otherwise, we need to parse the properties.yaml file and
+	// append its properties into the CSV annotation.
+	type registryV1Properties struct {
+		Properties []property.Property `json:"properties"`
+	}
+
+	var metadataProperties registryV1Properties
+	if err := yaml.Unmarshal(metadataPropertiesJSON, &metadataProperties); err != nil {
+		return fmt.Errorf("failed to unmarshal metadata/properties.yaml: %w", err)
+	}
+	allProperties = append(allProperties, metadataProperties.Properties...)
+
+	// Lastly re-marshal all the properties back into a JSON array and update the CSV annotation
+	allPropertiesJSON, err := json.Marshal(allProperties)
+	if err != nil {
+		return fmt.Errorf("failed to marshal registry+v1 properties to json: %w", err)
+	}
+	csv.Annotations["olm.properties"] = string(allPropertiesJSON)
+	return nil
 }
 
 func toChart(in RegistryV1, installNamespace string, watchNamespaces []string) (*chart.Chart, error) {

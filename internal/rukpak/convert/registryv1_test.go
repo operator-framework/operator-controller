@@ -1,7 +1,9 @@
 package convert
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -24,7 +26,7 @@ import (
 
 func TestRegistryV1Converter(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "RegstryV1 suite")
+	RunSpecs(t, "RegistryV1 suite")
 }
 
 var _ = Describe("RegistryV1 Suite", func() {
@@ -415,6 +417,17 @@ var _ = Describe("RegistryV1 Suite", func() {
 				chrt, err := toChart(registryv1Bundle, installNamespace, watchNamespaces)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(chrt.Metadata.Annotations["olm.properties"]).NotTo(BeNil())
+			})
+		})
+
+		Context("Should read the registry+v1 bundle filesystem correctly", func() {
+			It("should include metadata/properties.yaml and csv.metadata.annotations['olm.properties'] in chart metadata", func() {
+				fsys := os.DirFS("testdata/combine-properties-bundle")
+				chrt, err := RegistryV1ToHelmChart(context.Background(), fsys, "", nil)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(chrt).NotTo(BeNil())
+				Expect(chrt.Metadata).NotTo(BeNil())
+				Expect(chrt.Metadata.Annotations).To(HaveKeyWithValue("olm.properties", `[{"type":"from-csv-annotations-key","value":"from-csv-annotations-value"},{"type":"from-file-key","value":"from-file-value"}]`))
 			})
 		})
 
