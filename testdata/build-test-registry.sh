@@ -42,6 +42,8 @@ spec:
   dnsNames:
     - ${name}.${namespace}.svc
     - ${name}.${namespace}.svc.cluster.local
+    - controller-manager-metrics-service.${namespace}.svc
+    - controller-manager-metrics-service.${namespace}.svc.cluster.local
   privateKey:
     algorithm: ECDSA
     size: 256

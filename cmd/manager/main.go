@@ -18,8 +18,10 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -41,9 +43,11 @@ import (
 	"k8s.io/klog/v2/textlogger"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crcache "sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crfinalizer "sigs.k8s.io/controller-runtime/pkg/finalizer"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	catalogd "github.com/operator-framework/catalogd/api/v1"
@@ -70,6 +74,7 @@ import (
 var (
 	setupLog               = ctrl.Log.WithName("setup")
 	defaultSystemNamespace = "olmv1-system"
+	certWatcher            *certwatcher.CertWatcher
 )
 
 const authFilePrefix = "operator-controller-global-pull-secrets"
@@ -89,7 +94,10 @@ func podNamespace() string {
 func main() {
 	var (
 		metricsAddr               string
+		certFile                  string
+		keyFile                   string
 		enableLeaderElection      bool
+		disableMetricsTLS         bool
 		probeAddr                 string
 		cachePath                 string
 		operatorControllerVersion bool
@@ -97,9 +105,14 @@ func main() {
 		caCertDir                 string
 		globalPullSecret          string
 	)
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
+		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&caCertDir, "ca-certs-dir", "", "The directory of TLS certificate to use for verifying HTTPS connections to the Catalogd and docker-registry web servers.")
+	flag.BoolVar(&disableMetricsTLS, "disable-metrics-tls", false,
+		"Disables TLS for the metrics endpoint, making it insecure. Use with caution. Defaults to secure (false).")
+	flag.StringVar(&certFile, "tls-cert", "", "The certificate file used for serving metrics contents over HTTPS. Requires tls-key.")
+	flag.StringVar(&keyFile, "tls-key", "", "The key file used for serving metrics contents over HTTPS. Requires tls-cert.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -117,6 +130,11 @@ func main() {
 	if operatorControllerVersion {
 		fmt.Println(version.String())
 		os.Exit(0)
+	}
+
+	if (certFile != "" && keyFile == "") || (certFile == "" && keyFile != "") {
+		setupLog.Error(nil, "unable to configure TLS certificates: tls-cert and tls-key flags must be used together")
+		os.Exit(1)
 	}
 
 	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
@@ -161,9 +179,46 @@ func main() {
 			},
 		}
 	}
+
+	metricsServerOptions := server.Options{
+		BindAddress:   metricsAddr,
+		SecureServing: !disableMetricsTLS,
+	}
+
+	if !disableMetricsTLS {
+		setupLog.Info("Metrics endpoint will be protected by TLS.")
+
+		// FilterProvider is used to protect the metrics endpoint with authn/authz.
+		// These configurations ensure that only authorized users and service accounts
+		// can access the metrics endpoint.
+		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
+
+		// If the certificate files are provided, the metrics server will use them to serve the metrics endpoint.
+		// Otherwise, the metrics server will use the default certificate provided by the controller-runtime which
+		// is not recommended for production use.
+		if len(certFile) > 0 && len(keyFile) > 0 {
+			setupLog.Info("Using provided TLS certificate and key files for the metrics server.",
+				"certFile", certFile, "keyFile", keyFile)
+
+			// If the certificate files change, the watcher will reload them.
+			var err error
+			certWatcher, err = certwatcher.New(certFile, keyFile)
+			if err != nil {
+				log.Fatalf("Failed to initialize certificate watcher: %v", err)
+			}
+			metricsServerOptions.TLSOpts = append(metricsServerOptions.TLSOpts, func(config *tls.Config) {
+				config.GetCertificate = certWatcher.GetCertificate
+			})
+		} else {
+			setupLog.Info("WARNING: No certificate files provided. (not recommended for production).")
+		}
+	} else {
+		setupLog.Info("WARNING: Metrics endpoint is not protected by TLS. Ensure this is intentional.")
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme.Scheme,
-		Metrics:                server.Options{BindAddress: metricsAddr},
+		Metrics:                metricsServerOptions,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "9c4404e7.operatorframework.io",
@@ -336,6 +391,14 @@ func main() {
 	}
 
 	//+kubebuilder:scaffold:builder
+
+	if !disableMetricsTLS && certWatcher != nil {
+		setupLog.Info("Adding certificate watcher to manager")
+		if err := mgr.Add(certWatcher); err != nil {
+			setupLog.Error(err, "unable to add certificate watcher to manager")
+			os.Exit(1)
+		}
+	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
