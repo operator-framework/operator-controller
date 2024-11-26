@@ -71,7 +71,7 @@ func TestTokenGetterGet(t *testing.T) {
 		{"Testing token that expired 10 seconds ago", "test-service-account-3",
 			"test-namespace-3", "test-token-3", "failed to get token"},
 		{"Testing error when getting token from fake client", "test-service-account-4",
-			"test-namespace-4", "error when fetching token", "error when fetching token"},
+			"test-namespace-4", "error when fetching token.", "error when fetching token"},
 	}
 
 	for _, tc := range tests {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -25,7 +26,7 @@ type ServiceAccountNotFoundError struct {
 }
 
 func (e *ServiceAccountNotFoundError) Error() string {
-	return fmt.Sprintf(" Unable to authenticate with Kubernetes cluster using ServiceAccount \"%s\": ServiceAccount \"%s\" not found.", e.ServiceAccountName, e.ServiceAccountName)
+	return fmt.Sprintf("Unable to authenticate with Kubernetes cluster using ServiceAccount \"%s\": ServiceAccount \"%s\" not found.", e.ServiceAccountName, e.ServiceAccountName)
 }
 
 type TokenGetterOption func(*TokenGetter)
@@ -95,8 +96,12 @@ func (t *TokenGetter) getToken(ctx context.Context, key types.NamespacedName) (*
 			Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: ptr.To(int64(t.expirationDuration / time.Second))},
 		}, metav1.CreateOptions{})
 	if err != nil {
-		saErr := &ServiceAccountNotFoundError{key.Name}
-		return nil, saErr
+		if errors.IsNotFound(err) {
+			saErr := &ServiceAccountNotFoundError{key.Name}
+			return nil, saErr
+		} else {
+			return nil, err
+		}
 	}
 	return &req.Status, nil
 }

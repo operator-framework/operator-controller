@@ -744,6 +744,7 @@ func TestClusterExtensionInstallationFailsWithNoServiceAccount(t *testing.T) {
 	require.Equal(t, ocv1.BundleMetadata{Name: "prometheus.v1.0.0", Version: "1.0.0"}, clusterExtension.Status.Install.Bundle)
 
 	t.Log("By checking the expected installed conditions")
+
 	installedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.TypeInstalled)
 	t.Log("By checking the installed conditions message", installedCond.Message)
 	require.NotNil(t, installedCond)
@@ -760,8 +761,11 @@ func TestClusterExtensionInstallationFailsWithNoServiceAccount(t *testing.T) {
 	t.Log("Progressing condition reason", progressingCond.Reason)
 	//require.Equal(t, metav1.ConditionTrue, progressingCond.Status)
 	require.Equal(t, ocv1.ReasonFailed, progressingCond.Reason)
+	failedCond := apimeta.FindStatusCondition(clusterExtension.Status.Conditions, ocv1.ReasonFailed)
+	t.Log("By checking the failed conditions message", failedCond.Message)
+	t.Log("By checking the failed conditions status", failedCond.Status, failedCond.Reason)
 
-	//require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
+	require.NoError(t, cl.DeleteAllOf(ctx, &ocv1.ClusterExtension{}))
 }
 
 func TestClusterExtensionDeleteFinalizerFails(t *testing.T) {
