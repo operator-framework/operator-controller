@@ -7,6 +7,8 @@ spec:
   dnsNames:
     - operator-controller.olmv1-system.svc
     - operator-controller.olmv1-system.svc.cluster.local
+    - operator-controller-controller-manager-metrics-service.olmv1-system.svc
+    - operator-controller-controller-manager-metrics-service.olmv1-system.svc.cluster.local
   privateKey:
     algorithm: ECDSA
     size: 256

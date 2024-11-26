@@ -52,7 +52,7 @@ spec:
         - /manager
         args:
         - "--health-probe-bind-address=:8081"
-        - "--metrics-bind-address=127.0.0.1:8080"
+        - "--metrics-bind-address=:8443"
         - "--leader-elect"
         image: controller:latest
         imagePullPolicy: IfNotPresent
@@ -82,27 +82,6 @@ spec:
         resources:
           requests:
             cpu: 10m
-            memory: 64Mi
-        terminationMessagePolicy: FallbackToLogsOnError
-      - name: kube-rbac-proxy
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - "ALL"
-        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
-        args:
-        - --secure-listen-address=0.0.0.0:8443
-        - --http2-disable
-        - --upstream=http://127.0.0.1:8080/
-        - --logtostderr=true
-        ports:
-        - containerPort: 8443
-          protocol: TCP
-          name: https
-        resources:
-          requests:
-            cpu: 5m
             memory: 64Mi
         terminationMessagePolicy: FallbackToLogsOnError
       serviceAccountName: operator-controller-controller-manager
