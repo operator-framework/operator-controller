@@ -110,7 +110,7 @@ FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 ifeq ($(origin E2E_FLAGS), undefined)
 E2E_FLAGS :=
 endif
-test-e2e: check-cluster $(GINKGO) ## Run the e2e tests on existing cluster
+test-e2e: $(GINKGO) ## Run the e2e tests on existing cluster
 	$(GINKGO) $(E2E_FLAGS) -trace -vv $(FOCUS) test/e2e
 
 e2e: KIND_CLUSTER_NAME := catalogd-e2e
@@ -236,7 +236,7 @@ deploy: $(KUSTOMIZE) ## Deploy Catalogd to the K8s cluster specified in ~/.kube/
 	$(KUSTOMIZE) build $(KUSTOMIZE_OVERLAY) | sed "s/cert-git-version/cert-$(GIT_VERSION)/g" > catalogd.yaml
 	envsubst '$$CERT_MGR_VERSION,$$MANIFEST,$$DEFAULT_CATALOGS' < scripts/install.tpl.sh | bash -s
 
-.PHONY: check-cluster only-deploy-manifest
+.PHONY: only-deploy-manifest
 only-deploy-manifest: $(KUSTOMIZE) ## Deploy just the Catalogd manifest--used in e2e testing where cert-manager is installed in a separate step
 	cd config/base/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
 	$(KUSTOMIZE) build $(KUSTOMIZE_OVERLAY) | kubectl apply -f -
