@@ -99,9 +99,8 @@ func (t *TokenGetter) getToken(ctx context.Context, key types.NamespacedName) (*
 		if errors.IsNotFound(err) {
 			saErr := &ServiceAccountNotFoundError{key.Name}
 			return nil, saErr
-		} else {
-			return nil, err
 		}
+		return nil, err
 	}
 	return &req.Status, nil
 }
