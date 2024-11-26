@@ -37,3 +37,12 @@ For more details on the evolution of OLM and the roadmap for v1, explore the fol
 
 - [Multi-Tenancy Challenges, Lessons Learned, and Design Shifts](project/olmv1_design_decisions.md)
 - [OLM v1 Roadmap](project/olmv1_roadmap.md)
+
+## Can I Migrate from OLMv0 to OLMv1?
+
+There is currently no concrete migration strategy due to the [conceptual differences between OLMv0 and OLMv1](project/olmv1_design_decisions.md).
+OLMv1, as of writing, supports a subset of the existing content supported by OLMv0.
+For more information regarding the current limitations of OLMv1, see [limitations](project/olmv1_limitations.md).
+
+If your current usage of OLMv0 is compatible with the limitations and expectations of OLMv1, you may be able to manually
+transition to using OLMv1 following the standard workflows we have documented.
