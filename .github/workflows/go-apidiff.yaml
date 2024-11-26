@@ -1,6 +1,7 @@
 name: go-apidiff
 
 on:
+  merge_group:
   pull_request:
 
 jobs:
