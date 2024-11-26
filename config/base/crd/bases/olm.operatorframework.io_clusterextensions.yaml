@@ -122,7 +122,7 @@ spec:
                   start and end with an alphanumeric character, and be no longer than 63 characters
 
                   [RFC 1123]: https://tools.ietf.org/html/rfc1123
-                maxLength: 63
+                maxLength: 53
                 type: string
                 x-kubernetes-validations:
                 - message: namespace is immutable
@@ -236,7 +236,7 @@ spec:
 
                           [RFC 1123]: https://tools.ietf.org/html/rfc1123
                         items:
-                          maxLength: 253
+                          maxLength: 250
                           type: string
                           x-kubernetes-validations:
                           - message: channels entries must be valid DNS1123 subdomains
@@ -447,8 +447,10 @@ spec:
                       When using the Catalog sourceType, the catalog field must also be set.
                     enum:
                     - Catalog
+                    - Bundle
                     type: string
                 required:
+                - catalog
                 - sourceType
                 type: object
                 x-kubernetes-validations:

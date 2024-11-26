@@ -56,7 +56,7 @@ type ClusterExtensionSpec struct {
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
-	// +kubebuilder:validation:MaxLength:=63
+	// +kubebuilder:validation:MaxLength:=53
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="namespace is immutable"
 	// +kubebuilder:validation:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$\")",message="namespace must be a valid DNS1123 label"
 	// +kubebuilder:validation:Required
@@ -111,14 +111,14 @@ type SourceConfig struct {
 	// When using the Catalog sourceType, the catalog field must also be set.
 	//
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="Catalog"
+	// +kubebuilder:validation:Enum:="Catalog";"Bundle"
 	// +kubebuilder:validation:Required
 	SourceType string `json:"sourceType"`
 
 	// catalog is used to configure how information is sourced from a catalog.
 	// This field is required when sourceType is "Catalog", and forbidden otherwise.
 	//
-	// +optional
+    // +kubebuilder:validation:Required
 	Catalog *CatalogSource `json:"catalog,omitempty"`
 }
 
@@ -287,7 +287,7 @@ type CatalogSource struct {
 	//
 	// [RFC 1123]: https://tools.ietf.org/html/rfc1123
 	//
-	// +kubebuilder:validation:items:MaxLength:=253
+	// +kubebuilder:validation:items:MaxLength:=250
 	// +kubebuilder:validation:MaxItems:=256
 	// +kubebuilder:validation:items:XValidation:rule="self.matches(\"^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$\")",message="channels entries must be valid DNS1123 subdomains"
 	// +optional
