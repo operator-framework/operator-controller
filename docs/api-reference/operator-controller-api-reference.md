@@ -31,6 +31,23 @@ _Appears in:_
 | `version` _string_ | version is a required field and is a reference to the version that this bundle represents<br />version follows the semantic versioning standard as defined in https://semver.org/. |  | Required: \{\} <br /> |
 
 
+#### BundleSource
+
+
+
+BundleSource defines the configuration used to retrieve a bundle directly from
+its OCI-based image reference.
+
+
+
+_Appears in:_
+- [SourceConfig](#sourceconfig)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ref` _string_ | ref allows users to define the reference to a container image containing bundle contents.<br />ref is required.<br />ref can not be more than 1000 characters.<br /><br />A reference can be broken down into 3 parts - the domain, name, and identifier.<br /><br />The domain is typically the registry where an image is located.<br />It must be alphanumeric characters (lowercase and uppercase) separated by the "." character.<br />Hyphenation is allowed, but the domain must start and end with alphanumeric characters.<br />Specifying a port to use is also allowed by adding the ":" character followed by numeric values.<br />The port must be the last value in the domain.<br />Some examples of valid domain values are "registry.mydomain.io", "quay.io", "my-registry.io:8080".<br /><br />The name is typically the repository in the registry where an image is located.<br />It must contain lowercase alphanumeric characters separated only by the ".", "_", "__", "-" characters.<br />Multiple names can be concatenated with the "/" character.<br />The domain and name are combined using the "/" character.<br />Some examples of valid name values are "operatorhubio/bundle", "bundle", "my-bundle.prod".<br />An example of the domain and name parts of a reference being combined is "quay.io/operatorhubio/bundle".<br /><br />The identifier is typically the tag or digest for an image reference and is present at the end of the reference.<br />It starts with a separator character used to distinguish the end of the name and beginning of the identifier.<br />For a digest-based reference, the "@" character is the separator.<br />For a tag-based reference, the ":" character is the separator.<br />An identifier is required in the reference.<br /><br />Digest-based references must contain an algorithm reference immediately after the "@" separator.<br />The algorithm reference must be followed by the ":" character and an encoded string.<br />The algorithm must start with an uppercase or lowercase alpha character followed by alphanumeric characters and may contain the "-", "_", "+", and "." characters.<br />Some examples of valid algorithm values are "sha256", "sha256+b64u", "multihash+base58".<br />The encoded string following the algorithm must be hex digits (a-f, A-F, 0-9) and must be a minimum of 32 characters.<br /><br />Tag-based references must begin with a word character (alphanumeric + "_") followed by word characters or ".", and "-" characters.<br />The tag must not be longer than 127 characters.<br /><br />An example of a valid digest-based image reference is "quay.io/operatorhubio/catalog@sha256:200d4ddb2a73594b91358fe6397424e975205bfbe44614f5846033cad64b3f05"<br />An example of a valid tag-based image reference is "quay.io/operatorhubio/catalog:latest" |  | MaxLength: 1000 <br />Required: \{\} <br /> |
+
+
 #### CRDUpgradeSafetyEnforcement
 
 _Underlying type:_ _string_
@@ -175,6 +192,7 @@ _Appears in:_
 | `namespace` _string_ | namespace is a reference to a Kubernetes namespace.<br />This is the namespace in which the provided ServiceAccount must exist.<br />It also designates the default namespace where namespace-scoped resources<br />for the extension are applied to the cluster.<br />Some extensions may contain namespace-scoped resources to be applied in other namespaces.<br />This namespace must exist.<br /><br />namespace is required, immutable, and follows the DNS label standard<br />as defined in [RFC 1123]. It must contain only lowercase alphanumeric characters or hyphens (-),<br />start and end with an alphanumeric character, and be no longer than 63 characters<br /><br />[RFC 1123]: https://tools.ietf.org/html/rfc1123 |  | MaxLength: 63 <br />Required: \{\} <br /> |
 | `serviceAccount` _[ServiceAccountReference](#serviceaccountreference)_ | serviceAccount is a reference to a ServiceAccount used to perform all interactions<br />with the cluster that are required to manage the extension.<br />The ServiceAccount must be configured with the necessary permissions to perform these interactions.<br />The ServiceAccount must exist in the namespace referenced in the spec.<br />serviceAccount is required. |  | Required: \{\} <br /> |
 | `source` _[SourceConfig](#sourceconfig)_ | source is a required field which selects the installation source of content<br />for this ClusterExtension. Selection is performed by setting the sourceType.<br /><br />Catalog is currently the only implemented sourceType, and setting the<br />sourcetype to "Catalog" requires the catalog field to also be defined.<br /><br />Below is a minimal example of a source definition (in yaml):<br /><br />source:<br />  sourceType: Catalog<br />  catalog:<br />    packageName: example-package |  | Required: \{\} <br /> |
+| `template` _[ClusterExtensionTemplate](#clusterextensiontemplate)_ | config stores any custom configuration to be used when templating<br />content for this extension.<br /><br />config is optional. When not specified, the package manager will use<br />the default configuration of the extension. |  |  |
 | `install` _[ClusterExtensionInstallConfig](#clusterextensioninstallconfig)_ | install is an optional field used to configure the installation options<br />for the ClusterExtension such as the pre-flight check configuration. |  |  |
 
 
@@ -193,6 +211,39 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#condition-v1-meta) array_ | The set of condition types which apply to all spec.source variations are Installed and Progressing.<br /><br />The Installed condition represents whether or not the bundle has been installed for this ClusterExtension.<br />When Installed is True and the Reason is Succeeded, the bundle has been successfully installed.<br />When Installed is False and the Reason is Failed, the bundle has failed to install.<br /><br />The Progressing condition represents whether or not the ClusterExtension is advancing towards a new state.<br />When Progressing is True and the Reason is Succeeded, the ClusterExtension is making progress towards a new state.<br />When Progressing is True and the Reason is Retrying, the ClusterExtension has encountered an error that could be resolved on subsequent reconciliation attempts.<br />When Progressing is False and the Reason is Blocked, the ClusterExtension has encountered an error that requires manual intervention for recovery.<br /><br />When the ClusterExtension is sourced from a catalog, if may also communicate a deprecation condition.<br />These are indications from a package owner to guide users away from a particular package, channel, or bundle.<br />BundleDeprecated is set if the requested bundle version is marked deprecated in the catalog.<br />ChannelDeprecated is set if the requested channel is marked deprecated in the catalog.<br />PackageDeprecated is set if the requested package is marked deprecated in the catalog.<br />Deprecated is a rollup condition that is present when any of the deprecated conditions are present. |  |  |
 | `install` _[ClusterExtensionInstallStatus](#clusterextensioninstallstatus)_ | install is a representation of the current installation status for this ClusterExtension. |  |  |
+
+
+#### ClusterExtensionTemplate
+
+
+
+
+
+
+
+_Appears in:_
+- [ClusterExtensionSpec](#clusterextensionspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `valuesSources` _[ValuesSource](#valuessource) array_ | valuesSources is a list of sources from which to obtain arbitrary values that<br />provide configuration for the installation of bundles managed by the<br />ClusterExtension.<br /><br />valuesSources is optional. When not specified, the package manager will use<br />the default configuration of the resolved bundle.<br /><br />If multiple valuesSources are specified, the values are merged in the order<br />they are specified. Values from later sources will override values from earlier<br />sources.<br /><br />Bundles can optionally provide a schema for these values. When bundles provide<br />a schema, it is used to validate these values before proceeding with the<br />installation. Validation errors are reported via the ClusterExtension status. |  |  |
+
+
+#### LocalObjectReferenceWithKey
+
+
+
+
+
+
+
+_Appears in:_
+- [ValuesSource](#valuessource)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | name is the name of a resource in the same namespace as the ClusterExtension.<br />name is required. |  | Required: \{\} <br /> |
+| `key` _string_ | key is a reference to a key in the data field of<br />the referenced object.<br />key is required. |  | Required: \{\} <br /> |
 
 
 #### PreflightConfig
@@ -215,7 +266,7 @@ _Appears in:_
 
 
 
-ServiceAccountReference identifies the serviceAccount used fo install a ClusterExtension.
+ServiceAccountReference identifies the serviceAccount used to install a ClusterExtension.
 
 
 
@@ -240,7 +291,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `sourceType` _string_ | sourceType is a required reference to the type of install source.<br /><br />Allowed values are "Catalog"<br /><br />When this field is set to "Catalog", information for determining the<br />appropriate bundle of content to install will be fetched from<br />ClusterCatalog resources existing on the cluster.<br />When using the Catalog sourceType, the catalog field must also be set. |  | Enum: [Catalog] <br />Required: \{\} <br /> |
+| `sourceType` _string_ | sourceType is a required reference to the type of install source.<br /><br />Allowed values are "Bundle" or "Catalog"<br /><br />When this field is set to "Bundle", the bundle of content to install is specified<br />directly. In this case, no interaction with ClusterCatalog resources is necessary.<br />When using the Bundle sourceType, the bundle field must also be set.<br /><br />When this field is set to "Catalog", information for determining the<br />appropriate bundle of content to install will be fetched from<br />ClusterCatalog resources existing on the cluster.<br />When using the Catalog sourceType, the catalog field must also be set. |  | Enum: [Bundle Catalog] <br />Required: \{\} <br /> |
+| `bundle` _[BundleSource](#bundlesource)_ | bundle is used to configure how information is sourced from a bundle.<br />This field is required when sourceType is "Bundle", and forbidden otherwise. |  |  |
 | `catalog` _[CatalogSource](#catalogsource)_ | catalog is used to configure how information is sourced from a catalog.<br />This field is required when sourceType is "Catalog", and forbidden otherwise. |  |  |
 
 
@@ -259,5 +311,43 @@ _Appears in:_
 | --- | --- |
 | `CatalogProvided` | The extension will only upgrade if the new version satisfies<br />the upgrade constraints set by the package author.<br /> |
 | `SelfCertified` | Unsafe option which allows an extension to be<br />upgraded or downgraded to any available version of the package and<br />ignore the upgrade path designed by package authors.<br />This assumes that users independently verify the outcome of the changes.<br />Use with caution as this can lead to unknown and potentially<br />disastrous results such as data loss.<br /> |
+
+
+#### ValuesSource
+
+
+
+ValuesSource is a discriminated union of possible sources for values.
+ValuesSource contains the sourcing information for those values.
+
+
+
+_Appears in:_
+- [ClusterExtensionTemplate](#clusterextensiontemplate)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `type` _[ValuesSourceType](#valuessourcetype)_ | type is a reference to the type of source the values are sourced from.<br />type is required.<br /><br />The allowed values are "Inline", "ConfigMap", and "Secret".<br /><br />When set to "Inline", the values are sourced directly from the inlined content.<br />When using an inline source, the inline field must be set and must be the only field defined for this type.<br /><br />When set to "ConfigMap", the values are sourced from the specified ConfigMap in the installNamespace.<br />When using a ConfigMap source, the configMap field must be set and must be the only field defined for this type.<br /><br />When set to "Secret", the values are sourced from the specified Secret in the installNamespace.<br />When using a Secret source, the secret field must be set and must be the only field defined for this type. |  | Enum: [Inline ConfigMap Secret] <br />Required: \{\} <br /> |
+| `inline` _[JSON](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#json-v1-apiextensions-k8s-io)_ | inline is a map of arbitrary key-value pairs.<br /><br />Inlined values are useful for small, simple configurations that do not<br />include sensitive information. |  | Schemaless: \{\} <br />Type: object <br /> |
+| `configMap` _[LocalObjectReferenceWithKey](#localobjectreferencewithkey)_ | configMap is a reference to a key in a specific ConfigMap in the installNamespace.<br />The referenced ConfigMap is expected to contain the specified key, whose value<br />contains the desired configuration.<br /><br />ConfigMaps are useful for storing larger, more complex configurations that do<br />not include sensitive information.<br /><br />The service account provided in the spec.install field must have 'get' permission in<br />order to read the referenced ConfigMap. |  |  |
+| `secret` _[LocalObjectReferenceWithKey](#localobjectreferencewithkey)_ | secret is a reference to a key in a specific Secret in the installNamespace.<br />The referenced Secret is expected to contain the specified key, whose value<br />contains the desired configuration.<br /><br />Secrets are useful for storing larger, more complex configurations or<br />configurations that include sensitive information.<br /><br />The service account provided in the spec.install field must have 'get' permission in<br />order to read the referenced Secret. |  |  |
+
+
+#### ValuesSourceType
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [ValuesSource](#valuessource)
+
+| Field | Description |
+| --- | --- |
+| `Inline` |  |
+| `ConfigMap` |  |
+| `Secret` |  |
 
 

@@ -14,6 +14,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,6 +35,7 @@ import (
 type RegistryV1 struct {
 	PackageName string
 	CSV         v1alpha1.ClusterServiceVersion
+	CRDs        []apiextensionsv1.CustomResourceDefinition
 	Others      []unstructured.Unstructured
 }
 
@@ -41,7 +43,7 @@ type Plain struct {
 	Objects []client.Object
 }
 
-func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace string, watchNamespaces []string) (*chart.Chart, error) {
+func LoadRegistryV1(ctx context.Context, rv1 fs.FS) (*RegistryV1, error) {
 	l := log.FromContext(ctx)
 
 	reg := RegistryV1{}
@@ -91,6 +93,12 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace stri
 					return err
 				}
 				reg.CSV = csv
+			case "CustomResourceDefinition":
+				crd := apiextensionsv1.CustomResourceDefinition{}
+				if err := runtime.DefaultUnstructuredConverter.FromUnstructured(info.Object.(*unstructured.Unstructured).Object, &crd); err != nil {
+					return err
+				}
+				reg.CRDs = append(reg.CRDs, crd)
 			default:
 				reg.Others = append(reg.Others, *info.Object.(*unstructured.Unstructured))
 			}
@@ -107,7 +115,16 @@ func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace stri
 		return nil, err
 	}
 
-	return toChart(reg, installNamespace, watchNamespaces)
+	return &reg, nil
+}
+
+func RegistryV1ToHelmChart(ctx context.Context, rv1 fs.FS, installNamespace string, watchNamespaces []string) (*chart.Chart, error) {
+	reg, err := LoadRegistryV1(ctx, rv1)
+	if err != nil {
+		return nil, err
+	}
+
+	return toChart(*reg, installNamespace, watchNamespaces)
 }
 
 // copyMetadataPropertiesToCSV copies properties from `metadata/propeties.yaml` (in the filesystem fsys) into
@@ -348,6 +365,10 @@ func Convert(in RegistryV1, installNamespace string, targetNamespaces []string) 
 		objs = append(objs, &obj)
 	}
 	for _, obj := range clusterRoleBindings {
+		obj := obj
+		objs = append(objs, &obj)
+	}
+	for _, obj := range in.CRDs {
 		obj := obj
 		objs = append(objs, &obj)
 	}

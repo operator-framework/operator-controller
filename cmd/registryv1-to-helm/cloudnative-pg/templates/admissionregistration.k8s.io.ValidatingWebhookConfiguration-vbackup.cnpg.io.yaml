@@ -1,0 +1,28 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations: {{ dict "cert-manager.io/inject-ca-from" (printf "%s/cnpg-controller-manager" .Release.Namespace) | toYaml | nindent 4 }}
+  creationTimestamp: null
+  name: vbackup.cnpg.io
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: cnpg-controller-manager-service
+      namespace: {{ .Release.Namespace }}
+      path: /validate-postgresql-cnpg-io-v1-backup
+      port: 443
+  failurePolicy: Fail
+  name: vbackup.cnpg.io
+  rules:
+  - apiGroups:
+    - postgresql.cnpg.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - backups
+  sideEffects: None

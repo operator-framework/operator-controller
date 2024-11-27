@@ -15,18 +15,17 @@ import (
 	"helm.sh/helm/v3/pkg/postrender"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachyaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
-	"github.com/operator-framework/operator-controller/internal/rukpak/convert"
+	convert "github.com/operator-framework/operator-controller/internal/rukpak/convert/v2"
 	"github.com/operator-framework/operator-controller/internal/rukpak/preflights/crdupgradesafety"
 	"github.com/operator-framework/operator-controller/internal/rukpak/util"
+	"github.com/operator-framework/operator-controller/internal/values"
 )
 
 const (
@@ -53,6 +52,7 @@ type Preflight interface {
 }
 
 type Helm struct {
+	ActionConfigGetter helmclient.ActionConfigGetter
 	ActionClientGetter helmclient.ActionClientGetter
 	Preflights         []Preflight
 }
@@ -78,11 +78,25 @@ func shouldSkipPreflight(ctx context.Context, preflight Preflight, ext *ocv1.Clu
 }
 
 func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExtension, objectLabels map[string]string, storageLabels map[string]string) ([]client.Object, string, error) {
-	chrt, err := convert.RegistryV1ToHelmChart(ctx, contentFS, ext.Spec.Namespace, []string{corev1.NamespaceAll})
+	chrt, err := convert.RegistryV1ToHelmChart(ctx, contentFS)
 	if err != nil {
 		return nil, "", err
 	}
-	values := chartutil.Values{}
+
+	cfg, err := h.ActionConfigGetter.ActionConfigFor(ctx, ext)
+	if err != nil {
+		return nil, "", err
+	}
+
+	kcs, err := cfg.KubernetesClientSet()
+	if err != nil {
+		return nil, "", err
+	}
+
+	vals, err := values.MergeAll(ctx, values.SourcesFromClusterExtension(ext, kcs)...)
+	if err != nil {
+		return nil, "", err
+	}
 
 	ac, err := h.ActionClientGetter.ActionClientFor(ctx, ext)
 	if err != nil {
@@ -93,7 +107,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 		labels: objectLabels,
 	}
 
-	rel, desiredRel, state, err := h.getReleaseState(ac, ext, chrt, values, post)
+	rel, desiredRel, state, err := h.getReleaseState(ac, ext, chrt, vals, post)
 	if err != nil {
 		return nil, "", err
 	}
@@ -118,7 +132,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 
 	switch state {
 	case StateNeedsInstall:
-		rel, err = ac.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(install *action.Install) error {
+		rel, err = ac.Install(ext.GetName(), ext.Spec.Namespace, chrt, vals, func(install *action.Install) error {
 			install.CreateNamespace = false
 			install.Labels = storageLabels
 			return nil
@@ -127,9 +141,10 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 			return nil, state, err
 		}
 	case StateNeedsUpgrade:
-		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.Namespace, chrt, values, func(upgrade *action.Upgrade) error {
+		rel, err = ac.Upgrade(ext.GetName(), ext.Spec.Namespace, chrt, vals, func(upgrade *action.Upgrade) error {
 			upgrade.MaxHistory = maxHelmReleaseHistory
 			upgrade.Labels = storageLabels
+			upgrade.ResetValues = true
 			return nil
 		}, helmclient.AppendUpgradePostRenderer(post))
 		if err != nil {
@@ -151,7 +166,7 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 	return relObjects, state, nil
 }
 
-func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
+func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, vals chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
 	currentRelease, err := cl.Get(ext.GetName())
 	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return nil, nil, StateError, err
@@ -161,7 +176,7 @@ func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterE
 	}
 
 	if errors.Is(err, driver.ErrReleaseNotFound) {
-		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(i *action.Install) error {
+		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.Namespace, chrt, vals, func(i *action.Install) error {
 			i.DryRun = true
 			i.DryRunOption = "server"
 			return nil
@@ -171,10 +186,11 @@ func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterE
 		}
 		return nil, desiredRelease, StateNeedsInstall, nil
 	}
-	desiredRelease, err := cl.Upgrade(ext.GetName(), ext.Spec.Namespace, chrt, values, func(upgrade *action.Upgrade) error {
+	desiredRelease, err := cl.Upgrade(ext.GetName(), ext.Spec.Namespace, chrt, vals, func(upgrade *action.Upgrade) error {
 		upgrade.MaxHistory = maxHelmReleaseHistory
 		upgrade.DryRun = true
 		upgrade.DryRunOption = "server"
+		upgrade.ResetValues = true
 		return nil
 	}, helmclient.AppendUpgradePostRenderer(post))
 	if err != nil {

@@ -1,0 +1,11 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  creationTimestamp: null
+  name: cnpg-controller-manager
+spec:
+  dnsNames: {{ list (printf "cnpg-controller-manager-service.%s.svc" .Release.Namespace) | toYaml | nindent 4 }}
+  issuerRef:
+    name: cloudnative-pg.v1.24.1-selfsigned-issuer
+  secretName: cloudnative-pg.v1.24.1-cnpg-controller-manager-cert
+status: {}

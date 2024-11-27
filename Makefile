@@ -103,9 +103,11 @@ tidy: #HELP Update dependencies.
 manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac
 
+OPENAPI_VERSION := $(shell go list -m k8s.io/api | cut -d" " -f2 | sed 's/^v0/v1/')
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	curl -sSL https://raw.githubusercontent.com/kubernetes/kubernetes/refs/tags/$(OPENAPI_VERSION)/api/openapi-spec/v3/apis__apps__v1_openapi.json > ./internal/rukpak/convert/v2/internal/apis__apps__v1_openapi.json
 
 .PHONY: verify
 verify: tidy fmt vet generate manifests crd-ref-docs #HELP Verify all generated code is up-to-date.

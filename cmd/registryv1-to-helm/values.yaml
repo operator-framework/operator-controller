@@ -1,0 +1,39 @@
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+nodeSelector:
+  overrideKey1: overrideValue1
+
+selector:
+  overrideKey2: overrideValue2
+
+tolerations:
+ - effect: NoSchedule
+   key: node-role.kubernetes.io/master2
+
+volumes:
+    - name: argocd-operator-token-5z5z2
+      emptyDir: {}
+
+env:
+  - name: WATCH_NAMESPACE
+    value: BAR
+
+envFrom:
+  - configMapRef:
+      name: my-configmap
+  - secretRef:
+      name: my-secret
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 100Mi
+
+volumeMounts:
+  - name: tmp
+    mountPath: override

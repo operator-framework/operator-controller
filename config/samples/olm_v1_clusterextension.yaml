@@ -279,7 +279,11 @@ spec:
   serviceAccount:
     name: argocd-installer
   source:
-    sourceType: Catalog
-    catalog:
-      packageName: argocd-operator
-      version: 0.6.0
+    sourceType: Bundle
+    bundle:
+      ref: quay.io/operatorhubio/argocd-operator@sha256:d538c45a813b38ef0e44f40d279dc2653f97ca901fb660da5d7fe499d51ad3b3
+  template:
+    valuesSources:
+      - type: Inline
+        inline:
+          watchNamespace: argocd
