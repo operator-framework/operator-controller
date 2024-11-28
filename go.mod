@@ -16,7 +16,7 @@ require (
 	github.com/operator-framework/operator-registry v1.48.0
 	github.com/prometheus/client_golang v1.20.5
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	k8s.io/api v0.31.3
 	k8s.io/apiextensions-apiserver v0.31.3
 	k8s.io/apimachinery v0.31.3
