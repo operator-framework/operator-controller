@@ -21,6 +21,20 @@ jobs:
     - name: Run the extension developer e2e test
       run: make extension-developer-e2e
 
+    - name: Collect pod logs and descriptions on failure
+      if: failure()
+      run: |
+        echo "Fetching pod logs and descriptions..."
+        kubectl get pods -n olmv1-system -o wide || true
+        for pod in $(kubectl get pods -n olmv1-system -o name); do
+          echo "Collecting logs for $pod..."
+          kubectl logs $pod -n olmv1-system || true
+          echo "Describing $pod..."
+          kubectl describe $pod -n olmv1-system || true
+        done
+      env:
+        KUBECONFIG: ${{ secrets.KUBECONFIG }}
+
   e2e-kind:
     runs-on: ubuntu-latest
     steps:
@@ -34,6 +48,20 @@ jobs:
 
       - name: Run e2e tests
         run: ARTIFACT_PATH=/tmp/artifacts make test-e2e
+
+      - name: Collect pod logs and descriptions on failure
+        if: failure()
+        run: |
+          echo "Fetching pod logs and descriptions..."
+          kubectl get pods -n olmv1-system -o wide || true
+          for pod in $(kubectl get pods -n olmv1-system -o name); do
+            echo "Collecting logs for $pod..."
+            kubectl logs $pod -n olmv1-system || true
+            echo "Describing $pod..."
+            kubectl describe $pod -n olmv1-system || true
+          done
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
 
       - uses: cytopia/upload-artifact-retry-action@v0.1.7
         if: failure()
@@ -59,3 +87,17 @@ jobs:
 
     - name: Run the upgrade e2e test
       run: make test-upgrade-e2e
+
+    - name: Collect pod logs and descriptions on failure
+      if: failure()
+      run: |
+        echo "Fetching pod logs and descriptions..."
+        kubectl get pods -n olmv1-system -o wide || true
+        for pod in $(kubectl get pods -n olmv1-system -o name); do
+          echo "Collecting logs for $pod..."
+          kubectl logs $pod -n olmv1-system || true
+          echo "Describing $pod..."
+          kubectl describe $pod -n olmv1-system || true
+        done
+      env:
+        KUBECONFIG: ${{ secrets.KUBECONFIG }}
