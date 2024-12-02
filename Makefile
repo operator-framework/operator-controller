@@ -131,6 +131,13 @@ tidy: ## Update dependencies
 verify: tidy fmt vet generate ## Verify the current code generation and lint
 	git diff --exit-code
 
+.PHONY: verify-crd-compatibility
+CRD_DIFF_ORIGINAL_REF := main
+CRD_DIFF_UPDATED_SOURCE := file://config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml
+CRD_DIFF_CONFIG := crd-diff-config.yaml
+verify-crd-compatibility: $(CRD_DIFF)
+	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml" ${CRD_DIFF_UPDATED_SOURCE}
+
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Run golangci linter.
 	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
