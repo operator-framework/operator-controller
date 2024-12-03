@@ -37,3 +37,14 @@ For more details on the evolution of OLM and the roadmap for v1, explore the fol
 
 - [Multi-Tenancy Challenges, Lessons Learned, and Design Shifts](project/olmv1_design_decisions.md)
 - [OLM v1 Roadmap](project/olmv1_roadmap.md)
+
+## Can I Migrate from OLMv0 to OLMv1?
+
+Not yet. Currently, OLMv1 is a **Minimum Viable Product (MVP)** with a subset of OLMv0’s functionality.
+While it makes a best-effort attempt to remain compatible with and manage Bundles in the Registry+v1 format (using CSV, as supported in OLMv0),
+it comes with certain [limitations](project/olmv1_limitations.md). Additionally, users may encounter edge cases that 
+might have not been fully mapped due to the [conceptual differences between OLMv0 and OLMv1](project/olmv1_design_decisions.md).
+
+OLMv1 is actively evolving towards adopting more common package formats widely used by the community, 
+such as **HelmCharts**. Until OLMv1 achieves key milestones on its [roadmap—such](project/olmv1_roadmap.md) as support for **Webhooks**, 
+**HelmCharts**, and other critical features—we strongly recommend that users **do not migrate from OLMv0 to OLMv1** at this time.
