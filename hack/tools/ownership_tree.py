@@ -13,14 +13,16 @@ args = parser.parse_args()
 NAMESPACE = args.namespace
 SHOW_EVENTS = not args.no_events
 
-# Build a mapping of Kind -> plural name from `kubectl api-resources` table output
+# Build a mapping of Kind -> plural name from `kubectl api-resources` output
 kind_to_plural = {}
 try:
     all_resources_output = subprocess.check_output(["kubectl", "api-resources"], text=True).strip()
     lines = all_resources_output.split('\n')
+    # Skip header line
     for line in lines[1:]:
         parts = [p for p in line.split(' ') if p]
         # NAME is first column, KIND is last column
+        # We need at least NAME and KIND
         if len(parts) < 2:
             continue
         plural_name = parts[0]
@@ -51,7 +53,7 @@ def get_resources_for_type(r_type):
         return []
     return data["items"]
 
-# Collect all resources into uid_to_resource
+# Collect all resources
 for r_type in resource_types:
     items = get_resources_for_type(r_type)
     for item in items:
@@ -73,13 +75,12 @@ for r_type in resource_types:
         }
         all_uids.add(uid)
 
-# Build a map of owner_uid -> [child_uids]
 owner_to_children = defaultdict(list)
 for uid, res in uid_to_resource.items():
     for (o_kind, o_name, o_uid) in res["owners"]:
         owner_to_children[o_uid].append(uid)
 
-# Find top-level resources
+# Identify top-level resources
 top_level = []
 for uid, res in uid_to_resource.items():
     if len(res["owners"]) == 0:
@@ -101,18 +102,20 @@ for uid in top_level:
         continue
     kind_groups[r["kind"]].append(uid)
 
-# Create pseudo-nodes for each kind group
+# Create pseudo-nodes for each kind group, using the plural form if available
 pseudo_nodes = {}
 for kind, uids in kind_groups.items():
-    # Use cluster known plural if available, else fallback
+    if kind == "Event" and not SHOW_EVENTS:
+        continue
+
     plural = kind_to_plural.get(kind, kind.lower() + "s")
-    # Capitalize the plural to make it look nice as a "kind" name
-    # e.g. "configmaps" -> "Configmaps", "events" -> "Events"
     pseudo_uid = f"PSEUDO_{kind.upper()}_NODE"
     pseudo_nodes[kind] = pseudo_uid
     uid_to_resource[pseudo_uid] = {
+        # Use the plural form, capitalized, as the "kind"
         "kind": plural.capitalize(),
-        "name": f"(all {plural})",
+        # Empty name so we don't print "(all ...)"
+        "name": "",
         "namespace": NAMESPACE,
         "uid": pseudo_uid,
         "owners": []
@@ -121,7 +124,6 @@ for kind, uids in kind_groups.items():
     for child_uid in uids:
         owner_to_children[pseudo_uid].append(child_uid)
 
-# Now our actual top-level nodes are these pseudo-nodes (one per kind)
 top_level_kinds = list(pseudo_nodes.values())
 
 def pseudo_sort_key(uid):
@@ -137,7 +139,11 @@ def resource_sort_key(uid):
 def print_tree(uid, prefix="", is_last=True):
     r = uid_to_resource[uid]
     branch = "└── " if is_last else "├── "
-    print(prefix + branch + f"{r['kind']}/{r['name']}")
+    # If name is empty, just print kind (which is pluralized)
+    if r['name']:
+        print(prefix + branch + f"{r['kind']}/{r['name']}")
+    else:
+        print(prefix + branch + f"{r['kind']}")
     children = owner_to_children.get(uid, [])
     children.sort(key=resource_sort_key)
     child_prefix = prefix + ("    " if is_last else "│   ")
