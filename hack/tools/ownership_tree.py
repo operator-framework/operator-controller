@@ -8,10 +8,12 @@ from collections import defaultdict
 parser = argparse.ArgumentParser(description="Print a tree of ownership for all resources in a namespace, including cluster-scoped ones that reference the namespace.")
 parser.add_argument("namespace", help="The namespace to inspect")
 parser.add_argument("--no-events", action="store_true", help="Do not show Events kind grouping")
+parser.add_argument("--with-event-info", action="store_true", help="Show additional info (message) for Events")
 args = parser.parse_args()
 
 NAMESPACE = args.namespace
 SHOW_EVENTS = not args.no_events
+WITH_EVENT_INFO = args.with_event_info
 
 def parse_api_resources_line(line):
     parts = [p for p in line.split(' ') if p]
@@ -24,15 +26,9 @@ def parse_api_resources_line(line):
     namespaced = (namespaced_str == "true")
     # NAME is first
     name = parts[0]
-    # Middle columns could be SHORTNAMES and APIVERSION
-    # If len(middle) == 1: NAME APIVERSION NAMESPACED KIND
-    # If len(middle) == 2: NAME SHORTNAMES APIVERSION NAMESPACED KIND
-    middle = parts[1:-2]
-    # We don't need these explicitly for logic now, just handle parsing consistently
-    # APIVERSION unused directly, just ensuring correct parse.
-    return name, "", "", namespaced, kind
+    # We don't need SHORTNAMES/APIVERSION for the tree logic.
+    return name, namespaced, kind
 
-# Gather resource info
 kind_to_plural = {}
 resource_info = []
 
@@ -43,14 +39,18 @@ try:
     for line in lines[1:]:
         if not line.strip():
             continue
-        parsed = parse_api_resources_line(line)
-        if not parsed:
+        parts = [p for p in line.split(' ') if p]
+        if len(parts) < 3:
             continue
-        name, _, _, is_namespaced, kind = parsed
+        # Parse from right: kind=last, namespaced=second-last, name=first
+        kind = parts[-1]
+        namespaced_str = parts[-2].lower()
+        namespaced = (namespaced_str == "true")
+        name = parts[0]
+
         if kind not in kind_to_plural:
             kind_to_plural[kind] = name
-        resource_info.append((kind, name, is_namespaced))
-
+        resource_info.append((kind, name, namespaced))
 except subprocess.CalledProcessError:
     pass
 
@@ -110,6 +110,10 @@ def get_resources_for_type(resource_name, namespaced):
 
 # Collect resources
 for (kind, plural_name, is_namespaced) in resource_info:
+    # Skip events if we don't show them at all
+    if kind == "Event" and not SHOW_EVENTS:
+        continue
+
     items = get_resources_for_type(plural_name, is_namespaced)
     for item in items:
         uid = item["metadata"]["uid"]
@@ -117,16 +121,23 @@ for (kind, plural_name, is_namespaced) in resource_info:
         nm = item["metadata"]["name"]
         owners = [(o["kind"], o["name"], o["uid"]) for o in item["metadata"].get("ownerReferences", [])]
 
+        # If it's an Event and we don't show events, skip
         if k == "Event" and not SHOW_EVENTS:
             continue
 
-        uid_to_resource[uid] = {
+        res_entry = {
             "kind": k,
             "name": nm,
             "namespace": NAMESPACE,
             "uid": uid,
             "owners": owners
         }
+
+        # If it's an Event and we want event info, store the message
+        if k == "Event" and WITH_EVENT_INFO:
+            res_entry["message"] = item.get("message", "")
+
+        uid_to_resource[uid] = res_entry
         all_uids.add(uid)
 
 owner_to_children = defaultdict(list)
@@ -159,7 +170,6 @@ pseudo_nodes = {}
 for kind, uids in kind_groups.items():
     if kind == "Event" and not SHOW_EVENTS:
         continue
-
     plural = kind_to_plural.get(kind, kind.lower() + "s")
     pseudo_uid = f"PSEUDO_{kind.upper()}_NODE"
     pseudo_nodes[kind] = pseudo_uid
@@ -170,7 +180,6 @@ for kind, uids in kind_groups.items():
         "uid": pseudo_uid,
         "owners": []
     }
-
     for child_uid in uids:
         owner_to_children[pseudo_uid].append(child_uid)
 
@@ -189,10 +198,15 @@ def resource_sort_key(uid):
 def print_tree(uid, prefix="", is_last=True):
     r = uid_to_resource[uid]
     branch = "└── " if is_last else "├── "
-    if r['name']:
-        print(prefix + branch + f"{r['kind']}/{r['name']}")
-    else:
-        print(prefix + branch + f"{r['kind']}")
+    print(prefix + branch + f"{r['kind']}" + (f"/{r['name']}" if r['name'] else ""))
+
+    # If Event and we want message info
+    if WITH_EVENT_INFO and r['kind'] == "Event" and "message" in r:
+        # Print event message as a child line
+        child_prefix = prefix + ("    " if is_last else "│   ")
+        # message line
+        print(child_prefix + "└── message: " + r["message"])
+
     children = owner_to_children.get(uid, [])
     children.sort(key=resource_sort_key)
     child_prefix = prefix + ("    " if is_last else "│   ")
