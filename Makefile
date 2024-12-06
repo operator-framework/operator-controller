@@ -37,8 +37,7 @@ ifeq ($(shell [[ $$HOME == "" || $$HOME == "/" ]] && [[ $$XDG_DATA_HOME == "" ]]
 	SETUP_ENVTEST_BIN_DIR_OVERRIDE += --bin-dir /tmp/envtest-binaries
 endif
 
-# bingo manages consistent tooling versions for things like kind, kustomize, etc.
-include .bingo/Variables.mk
+include tools/Variables.mk
 
 ifeq ($(origin KIND_CLUSTER_NAME), undefined)
 KIND_CLUSTER_NAME := operator-controller
@@ -91,7 +90,7 @@ help-extended: #HELP Display extended help.
 #SECTION Development
 
 .PHONY: lint
-lint: $(GOLANGCI_LINT) #HELP Run golangci linter.
+lint: #HELP Run golangci linter.
 	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
 .PHONY: tidy
@@ -100,11 +99,11 @@ tidy: #HELP Update dependencies.
 	$(Q)go mod tidy -go=$(GOLANG_VERSION)
 
 .PHONY: manifests
-manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: #EXHELP Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac
 
 .PHONY: generate
-generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: verify
@@ -112,7 +111,7 @@ verify: tidy fmt vet generate manifests crd-ref-docs #HELP Verify all generated 
 	git diff --exit-code
 
 .PHONY: fix-lint
-fix-lint: $(GOLANGCI_LINT) #EXHELP Fix lint issues
+fix-lint: #EXHELP Fix lint issues
 	$(GOLANGCI_LINT) run --fix --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
 .PHONY: fmt
@@ -123,18 +122,11 @@ fmt: #EXHELP Formats code
 vet: #EXHELP Run go vet against code.
 	go vet -tags '$(GO_BUILD_TAGS)' ./...
 
-.PHONY: bingo-upgrade
-bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
-	@for pkg in $$($(BINGO) list | awk '{ print $$1 }' | tail -n +3); do \
-		echo "Upgrading $$pkg to latest..."; \
-		$(BINGO) get "$$pkg@latest"; \
-	done
-
 .PHONY: verify-crd-compatibility
 CRD_DIFF_ORIGINAL_REF := main
 CRD_DIFF_UPDATED_SOURCE := file://config/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml
 CRD_DIFF_CONFIG := crd-diff-config.yaml
-verify-crd-compatibility: $(CRD_DIFF) manifests
+verify-crd-compatibility: manifests
 	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=config/base/crd/bases/olm.operatorframework.io_clusterextensions.yaml" ${CRD_DIFF_UPDATED_SOURCE}
 
 .PHONY: test
@@ -154,7 +146,7 @@ export E2E_TEST_CATALOG_V1 := e2e/test-catalog:v1
 export E2E_TEST_CATALOG_V2 := e2e/test-catalog:v2
 export CATALOG_IMG := $(LOCAL_REGISTRY_HOST)/$(E2E_TEST_CATALOG_V1)
 .PHONY: test-ext-dev-e2e
-test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension create, upgrade and delete tests.
+test-ext-dev-e2e: #HELP Run extension create, upgrade and delete tests.
 	test/extension-developer-e2e/setup.sh $(OPERATOR_SDK) $(CONTAINER_RUNTIME) $(KUSTOMIZE) $(KIND) $(KIND_CLUSTER_NAME) $(E2E_REGISTRY_NAMESPACE)
 	go test -count=1 -v ./test/extension-developer-e2e/...
 
@@ -162,7 +154,7 @@ test-ext-dev-e2e: $(OPERATOR_SDK) $(KUSTOMIZE) $(KIND) #HELP Run extension creat
 ENVTEST_VERSION := $(shell go list -m k8s.io/client-go | cut -d" " -f2 | sed 's/^v0\.\([[:digit:]]\{1,\}\)\.[[:digit:]]\{1,\}$$/1.\1.x/')
 UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/)
 COVERAGE_UNIT_DIR := $(ROOT_DIR)/coverage/unit
-test-unit: $(SETUP_ENVTEST) #HELP Run the unit tests
+test-unit: #HELP Run the unit tests
 	rm -rf $(COVERAGE_UNIT_DIR) && mkdir -p $(COVERAGE_UNIT_DIR)
 	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && \
             CGO_ENABLED=1 go test \
@@ -223,23 +215,23 @@ e2e-coverage:
 	COVERAGE_OUTPUT=./coverage/e2e.out ./hack/test/e2e-coverage.sh
 
 .PHONY: kind-load
-kind-load: $(KIND) #EXHELP Loads the currently constructed image onto the cluster.
+kind-load: #EXHELP Loads the currently constructed image onto the cluster.
 	$(CONTAINER_RUNTIME) save $(IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-deploy
 kind-deploy: export MANIFEST="./operator-controller.yaml"
-kind-deploy: manifests $(KUSTOMIZE) #EXHELP Install controller and dependencies onto the kind cluster.
+kind-deploy: manifests #EXHELP Install controller and dependencies onto the kind cluster.
 	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) > operator-controller.yaml
 	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
 
 .PHONY: kind-cluster
-kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
+kind-cluster: #EXHELP Standup a kind cluster.
 	-$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
 	$(KIND) create cluster --name $(KIND_CLUSTER_NAME) --image $(KIND_CLUSTER_IMAGE) --config ./kind-config.yaml
 	$(KIND) export kubeconfig --name $(KIND_CLUSTER_NAME)
 
 .PHONY: kind-clean
-kind-clean: $(KIND) #EXHELP Delete the kind cluster.
+kind-clean: #EXHELP Delete the kind cluster.
 	$(KIND) delete cluster --name $(KIND_CLUSTER_NAME)
 
 #SECTION Build
@@ -302,12 +294,12 @@ export ENABLE_RELEASE_PIPELINE
 export GORELEASER_ARGS
 
 .PHONY: release
-release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
+release: #EXHELP Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
 	$(GORELEASER) $(GORELEASER_ARGS)
 
 .PHONY: quickstart
 quickstart: export MANIFEST := https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml
-quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the installation release manifests and scripts.
+quickstart: manifests #EXHELP Generate the installation release manifests and scripts.
 	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
 	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
@@ -318,7 +310,7 @@ OPERATOR_CONTROLLER_API_REFERENCE_FILENAME := operator-controller-api-reference.
 CATALOGD_API_REFERENCE_FILENAME := catalogd-api-reference.md
 CATALOGD_TMP_DIR := $(ROOT_DIR)/.catalogd-tmp/
 API_REFERENCE_DIR := $(ROOT_DIR)/docs/api-reference
-crd-ref-docs: $(CRD_REF_DOCS) #EXHELP Generate the API Reference Documents.
+crd-ref-docs: #EXHELP Generate the API Reference Documents.
 	rm -f $(API_REFERENCE_DIR)/$(OPERATOR_CONTROLLER_API_REFERENCE_FILENAME)
 	$(CRD_REF_DOCS) --source-path=$(ROOT_DIR)/api \
 	--config=$(API_REFERENCE_DIR)/crd-ref-docs-gen-config.yaml \
