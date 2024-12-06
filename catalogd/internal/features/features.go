@@ -5,7 +5,13 @@ import (
 	"k8s.io/component-base/featuregate"
 )
 
-var catalogdFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{}
+const (
+	APIV1QueryHandler = featuregate.Feature("APIV1QueryHandler")
+)
+
+var catalogdFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
+	APIV1QueryHandler: {Default: false, PreRelease: featuregate.Alpha},
+}
 
 var CatalogdFeatureGate featuregate.MutableFeatureGate = featuregate.NewFeatureGate()
 

@@ -69,14 +69,13 @@ var _ = Describe("LocalDir Storage Test", func() {
 			Expect(err).To(Not(HaveOccurred()))
 		})
 		It("should store the content in the RootDir correctly", func() {
-			fbcDir := filepath.Join(rootDir, catalog, v1ApiPath)
-			fbcFile := filepath.Join(fbcDir, v1ApiData)
+			fbcFile := filepath.Join(rootDir, fmt.Sprintf("%s.jsonl", catalog))
 			_, err := os.Stat(fbcFile)
 			Expect(err).To(Not(HaveOccurred()))
 
 			gotConfig, err := declcfg.LoadFS(ctx, unpackResultFS)
 			Expect(err).To(Not(HaveOccurred()))
-			storedConfig, err := declcfg.LoadFile(os.DirFS(fbcDir), v1ApiData)
+			storedConfig, err := declcfg.LoadFile(os.DirFS(filepath.Dir(fbcFile)), filepath.Base(fbcFile))
 			Expect(err).To(Not(HaveOccurred()))
 			diff := cmp.Diff(gotConfig, storedConfig)
 			Expect(diff).To(Equal(""))
@@ -93,8 +92,13 @@ var _ = Describe("LocalDir Storage Test", func() {
 				Expect(err).To(Not(HaveOccurred()))
 			})
 			It("should delete the FBC from the cache directory", func() {
-				fbcFile := filepath.Join(rootDir, catalog)
+				fbcFile := filepath.Join(rootDir, fmt.Sprintf("%s.jsonl", catalog))
 				_, err := os.Stat(fbcFile)
+				Expect(err).To(HaveOccurred())
+				Expect(os.IsNotExist(err)).To(BeTrue())
+
+				indexFile := filepath.Join(rootDir, fmt.Sprintf("%s.index.json", catalog))
+				_, err = os.Stat(indexFile)
 				Expect(err).To(HaveOccurred())
 				Expect(os.IsNotExist(err)).To(BeTrue())
 			})
@@ -111,9 +115,7 @@ var _ = Describe("LocalDir Server Handler tests", func() {
 		store      LocalDirV1
 	)
 	BeforeEach(func() {
-		d, err := os.MkdirTemp(GinkgoT().TempDir(), "cache")
-		Expect(err).ToNot(HaveOccurred())
-		Expect(os.MkdirAll(filepath.Join(d, "test-catalog", v1ApiPath), 0700)).To(Succeed())
+		d := GinkgoT().TempDir()
 		store = LocalDirV1{RootDir: d, RootURL: &url.URL{Path: urlPrefix}}
 		testServer = httptest.NewServer(store.StorageServerHandler())
 
@@ -127,33 +129,32 @@ var _ = Describe("LocalDir Server Handler tests", func() {
 	It("gets 404 for the path /catalogs/test-catalog/", func() {
 		expectNotFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/"))
 	})
-	It("gets 404 for the path /test-catalog/foo.txt", func() {
-		// This ensures that even if the file exists, the URL must contain the /catalogs/ prefix
-		Expect(os.WriteFile(filepath.Join(store.RootDir, "test-catalog", "foo.txt"), []byte("bar"), 0600)).To(Succeed())
-		expectNotFound(fmt.Sprintf("%s/%s", testServer.URL, "/test-catalog/foo.txt"))
+	It("gets 404 for the path /catalogs/test-catalog/api", func() {
+		expectNotFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/api"))
 	})
-	It("gets 404 for the path /catalogs/test-catalog/non-existent.txt", func() {
-		expectNotFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/non-existent.txt"))
+	It("gets 404 for the path /catalogs/test-catalog/api/v1", func() {
+		expectNotFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/api/v1"))
 	})
-	It("gets 200 for the path /catalogs/foo.txt", func() {
-		expectedContent := []byte("bar")
-		Expect(os.WriteFile(filepath.Join(store.RootDir, "foo.txt"), expectedContent, 0600)).To(Succeed())
-		expectFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/foo.txt"), expectedContent)
+	It("gets 404 for the path /catalogs/test-catalog.jsonl", func() {
+		// This is actually how the file is stored, but we don't serve
+		// the filesystem, we serve an API. Hence, expect 404 not found
+		Expect(os.WriteFile(filepath.Join(store.RootDir, "test-catalog.jsonl"), []byte("foobar"), 0600)).To(Succeed())
+		expectNotFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog.jsonl"))
 	})
-	It("gets 200 for the path /catalogs/test-catalog/foo.txt", func() {
-		expectedContent := []byte("bar")
-		Expect(os.WriteFile(filepath.Join(store.RootDir, "test-catalog", "foo.txt"), expectedContent, 0600)).To(Succeed())
-		expectFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/foo.txt"), expectedContent)
+	It("gets 200 for the path /catalogs/test-catalog/api/v1/all", func() {
+		expectedContent := []byte(`{"foo":"bar"}`)
+		Expect(os.WriteFile(filepath.Join(store.RootDir, "test-catalog.jsonl"), expectedContent, 0600)).To(Succeed())
+		expectFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/api/v1/all"), expectedContent, false)
 	})
 	It("ignores accept-encoding for the path /catalogs/test-catalog/api/v1/all with size < 1400 bytes", func() {
-		expectedContent := []byte("bar")
-		Expect(os.WriteFile(filepath.Join(store.RootDir, "test-catalog", v1ApiPath, v1ApiData), expectedContent, 0600)).To(Succeed())
-		expectFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/api/v1/all"), expectedContent)
+		expectedContent := []byte(`{"foo":"bar"}`)
+		Expect(os.WriteFile(filepath.Join(store.RootDir, "test-catalog.jsonl"), expectedContent, 0600)).To(Succeed())
+		expectFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/api/v1/all"), expectedContent, false)
 	})
 	It("provides gzipped content for the path /catalogs/test-catalog/api/v1/all with size > 1400 bytes", func() {
 		expectedContent := []byte(testCompressableJSON)
-		Expect(os.WriteFile(filepath.Join(store.RootDir, "test-catalog", v1ApiPath, v1ApiData), expectedContent, 0600)).To(Succeed())
-		expectFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/api/v1/all"), expectedContent)
+		Expect(os.WriteFile(filepath.Join(store.RootDir, "test-catalog.jsonl"), expectedContent, 0600)).To(Succeed())
+		expectFound(fmt.Sprintf("%s/%s", testServer.URL, "/catalogs/test-catalog/api/v1/all"), expectedContent, true)
 	})
 	It("provides json-lines format for the served JSON catalog", func() {
 		catalog := "test-catalog"
@@ -165,9 +166,9 @@ var _ = Describe("LocalDir Server Handler tests", func() {
 
 		expectedContent, err := generateJSONLines([]byte(testCompressableJSON))
 		Expect(err).To(Not(HaveOccurred()))
-		path, err := url.JoinPath(testServer.URL, urlPrefix, catalog, v1ApiPath, v1ApiData)
+		path, err := url.JoinPath(testServer.URL, urlPrefix, catalog, "api", "v1", "all")
 		Expect(err).To(Not(HaveOccurred()))
-		expectFound(path, []byte(expectedContent))
+		expectFound(path, []byte(expectedContent), true)
 	})
 	It("provides json-lines format for the served YAML catalog", func() {
 		catalog := "test-catalog"
@@ -181,9 +182,9 @@ var _ = Describe("LocalDir Server Handler tests", func() {
 
 		expectedContent, err := generateJSONLines(yamlData)
 		Expect(err).To(Not(HaveOccurred()))
-		path, err := url.JoinPath(testServer.URL, urlPrefix, catalog, v1ApiPath, v1ApiData)
+		path, err := url.JoinPath(testServer.URL, urlPrefix, catalog, "api", "v1", "all")
 		Expect(err).To(Not(HaveOccurred()))
-		expectFound(path, []byte(expectedContent))
+		expectFound(path, []byte(expectedContent), true)
 	})
 	AfterEach(func() {
 		testServer.Close()
@@ -197,7 +198,7 @@ func expectNotFound(url string) {
 	Expect(resp.Body.Close()).To(Succeed())
 }
 
-func expectFound(url string, expectedContent []byte) {
+func expectFound(url string, expectedContent []byte, expectCompression bool) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	Expect(err).To(Not(HaveOccurred()))
 	req.Header.Set("Accept-Encoding", "gzip")
@@ -206,15 +207,16 @@ func expectFound(url string, expectedContent []byte) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
 	var actualContent []byte
-	switch resp.Header.Get("Content-Encoding") {
-	case "gzip":
+	if expectCompression {
+		Expect(resp.Header.Get("Content-Encoding")).To(Equal("gzip"))
 		Expect(len(expectedContent)).To(BeNumerically(">", 1400),
 			fmt.Sprintf("gzipped content should only be provided for content larger than 1400 bytes, but our expected content is only %d bytes", len(expectedContent)))
 		gz, err := gzip.NewReader(resp.Body)
 		Expect(err).To(Not(HaveOccurred()))
 		actualContent, err = io.ReadAll(gz)
 		Expect(err).To(Not(HaveOccurred()))
-	default:
+	} else {
+		Expect(resp.Header.Get("Content-Encoding")).To(BeEmpty())
 		actualContent, err = io.ReadAll(resp.Body)
 		Expect(len(expectedContent)).To(BeNumerically("<", 1400),
 			fmt.Sprintf("plaintext content should only be provided for content smaller than 1400 bytes, but we received plaintext for %d bytes\n expectedContent:\n%s\n", len(expectedContent), expectedContent))
