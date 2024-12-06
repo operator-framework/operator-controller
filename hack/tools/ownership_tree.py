@@ -153,4 +153,3 @@ def print_tree(uid, prefix="", is_last=True):
 # Print all top-level kind groupings
 for i, uid in enumerate(top_level_kinds):
     print_tree(uid, prefix="", is_last=(i == len(top_level_kinds)-1))
-    print()
