@@ -13,9 +13,12 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/klauspost/compress/gzhttp"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
@@ -31,7 +34,8 @@ type LocalDirV1 struct {
 	RootDir string
 	RootURL *url.URL
 
-	m sync.RWMutex
+	m  sync.RWMutex
+	sf singleflight.Group
 }
 
 func (s *LocalDirV1) Store(ctx context.Context, catalog string, fsys fs.FS) error {
@@ -175,7 +179,8 @@ func (s *LocalDirV1) v1AllHandler() http.Handler {
 		w.Header().Add("Content-Type", "application/jsonl")
 		gzHandler.ServeHTTP(w, r)
 	})
-	return typeHandler
+
+	return newLoggingMiddleware(typeHandler)
 }
 
 func (s *LocalDirV1) v1QueryHandler() http.Handler {
@@ -215,22 +220,11 @@ func (s *LocalDirV1) v1QueryHandler() http.Handler {
 		}
 		defer catalogFile.Close()
 
-		indexFile, err := os.Open(filepath.Join(s.RootDir, fmt.Sprintf("%s.index.json", catalog)))
+		idx, err := s.getIndex(catalog)
 		if err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				http.Error(w, "No catalog contents found matching query", http.StatusNotFound)
-			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		defer indexFile.Close()
-
-		var idx index
-		if err := json.NewDecoder(indexFile).Decode(&idx); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
 		queryReader, ok := idx.Get(catalogFile, schema, pkg, name)
 		if !ok {
 			http.Error(w, fmt.Sprintf("No index found for schema=%q, package=%q, name=%q", schema, pkg, name), http.StatusInternalServerError)
@@ -241,7 +235,7 @@ func (s *LocalDirV1) v1QueryHandler() http.Handler {
 		_, _ = io.Copy(w, queryReader)
 	})
 	gzHandler := gzhttp.GzipHandler(catalogHandler)
-	return gzHandler
+	return newLoggingMiddleware(gzHandler)
 }
 
 func (s *LocalDirV1) ContentExists(catalog string) bool {
@@ -267,4 +261,50 @@ func (s *LocalDirV1) ContentExists(catalog string) bool {
 		}
 	}
 	return true
+}
+
+func (s *LocalDirV1) getIndex(catalog string) (*index, error) {
+	idx, err, _ := s.sf.Do(catalog, func() (interface{}, error) {
+		indexFilePath := filepath.Join(s.RootDir, fmt.Sprintf("%s.index.json", catalog))
+		fmt.Printf("opening index file %s\n", indexFilePath)
+		indexFile, err := os.Open(indexFilePath)
+		if err != nil {
+			return nil, err
+		}
+		defer indexFile.Close()
+		var idx index
+		if err := json.NewDecoder(indexFile).Decode(&idx); err != nil {
+			return nil, err
+		}
+		return &idx, nil
+	})
+	return idx.(*index), err
+}
+
+func newLoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := logr.FromContextOrDiscard(r.Context())
+
+		start := time.Now()
+		lrw := &loggingResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+		next.ServeHTTP(lrw, r)
+
+		logger.WithValues(
+			"method", r.Method,
+			"url", r.URL.String(),
+			"status", lrw.statusCode,
+			"duration", time.Since(start),
+			"remoteAddr", r.RemoteAddr,
+		).Info("HTTP request processed")
+	})
+}
+
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (w *loggingResponseWriter) WriteHeader(code int) {
+	w.statusCode = code
+	w.ResponseWriter.WriteHeader(code)
 }
