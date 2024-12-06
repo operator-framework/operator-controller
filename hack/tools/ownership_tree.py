@@ -13,6 +13,24 @@ args = parser.parse_args()
 NAMESPACE = args.namespace
 SHOW_EVENTS = not args.no_events
 
+# Build a mapping of Kind -> plural name from `kubectl api-resources` table output
+kind_to_plural = {}
+try:
+    all_resources_output = subprocess.check_output(["kubectl", "api-resources"], text=True).strip()
+    lines = all_resources_output.split('\n')
+    for line in lines[1:]:
+        parts = [p for p in line.split(' ') if p]
+        # NAME is first column, KIND is last column
+        if len(parts) < 2:
+            continue
+        plural_name = parts[0]
+        kind = parts[-1]
+        if kind not in kind_to_plural:
+            kind_to_plural[kind] = plural_name
+except subprocess.CalledProcessError:
+    # If this fails, we just won't have any plural mapping
+    pass
+
 # Get all namespaced resource types
 api_resources_cmd = ["kubectl", "api-resources", "--verbs=list", "--namespaced", "-o", "name"]
 resource_types = subprocess.check_output(api_resources_cmd, text=True).strip().split('\n')
@@ -43,7 +61,6 @@ for r_type in resource_types:
         namespace = item["metadata"].get("namespace", NAMESPACE)
         owners = [(o["kind"], o["name"], o["uid"]) for o in item["metadata"].get("ownerReferences", [])]
 
-        # If --no-events and resource is an Event, skip adding it altogether
         if kind == "Event" and not SHOW_EVENTS:
             continue
 
@@ -60,7 +77,6 @@ for r_type in resource_types:
 owner_to_children = defaultdict(list)
 for uid, res in uid_to_resource.items():
     for (o_kind, o_name, o_uid) in res["owners"]:
-        # May or may not exist in uid_to_resource
         owner_to_children[o_uid].append(uid)
 
 # Find top-level resources
@@ -69,7 +85,6 @@ for uid, res in uid_to_resource.items():
     if len(res["owners"]) == 0:
         top_level.append(uid)
     else:
-        # Check if all owners are known
         all_known = True
         for (_, _, o_uid) in res["owners"]:
             if o_uid not in uid_to_resource:
@@ -83,56 +98,38 @@ kind_groups = defaultdict(list)
 for uid in top_level:
     r = uid_to_resource[uid]
     if r["kind"] == "Event" and not SHOW_EVENTS:
-        # Skip events if no-events is true
         continue
     kind_groups[r["kind"]].append(uid)
 
-# We will create a pseudo-node for each kind that has top-level resources
-# Named: KIND/(all <kind>s)
-# Then list all those top-level resources under it.
-#
-# For example:
-#  Deployment/(all deployments)
-#    ├── Deployment/foo
-#    └── Deployment/bar
-#
-# If there is only one resource of a given kind, we still group it under that kind node for consistency.
-
-# We'll store these pseudo-nodes in uid_to_resource as well
+# Create pseudo-nodes for each kind group
 pseudo_nodes = {}
 for kind, uids in kind_groups.items():
-    # Skip Events if SHOW_EVENTS is false
-    if kind == "Event" and not SHOW_EVENTS:
-        continue
-
-    # Create a pseudo UID for the kind group node
+    # Use cluster known plural if available, else fallback
+    plural = kind_to_plural.get(kind, kind.lower() + "s")
+    # Capitalize the plural to make it look nice as a "kind" name
+    # e.g. "configmaps" -> "Configmaps", "events" -> "Events"
     pseudo_uid = f"PSEUDO_{kind.upper()}_NODE"
     pseudo_nodes[kind] = pseudo_uid
     uid_to_resource[pseudo_uid] = {
-        "kind": kind,
-        "name": f"(all {kind.lower()}s)",
+        "kind": plural.capitalize(),
+        "name": f"(all {plural})",
         "namespace": NAMESPACE,
         "uid": pseudo_uid,
-        "owners": []  # top-level grouping node has no owners
+        "owners": []
     }
 
-    # The top-level resources of this kind become children of this pseudo-node
     for child_uid in uids:
         owner_to_children[pseudo_uid].append(child_uid)
 
 # Now our actual top-level nodes are these pseudo-nodes (one per kind)
 top_level_kinds = list(pseudo_nodes.values())
 
-# Sort these top-level kind nodes by their kind (and name) for stable output
 def pseudo_sort_key(uid):
     r = uid_to_resource[uid]
-    # The kind of this pseudo node is in r["kind"], and name is something like (all configmaps)
-    # Sorting by kind and name is sufficient.
     return (r["kind"].lower(), r["name"].lower())
 
 top_level_kinds.sort(key=pseudo_sort_key)
 
-# For printing the tree
 def resource_sort_key(uid):
     r = uid_to_resource[uid]
     return (r["kind"].lower(), r["name"].lower())
