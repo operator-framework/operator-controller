@@ -1,7 +1,9 @@
 #!/usr/bin/env python3.11
 import json
 import os
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 import subprocess
 import sys
 import argparse
@@ -14,11 +16,15 @@ parser.add_argument("--with-event-info", action="store_true", help="Show additio
 parser.add_argument("--gather-cluster-extension-state", action="store_true",
                     help="Gather and save a compressed fingerprint of the cluster extension state to a file.")
 parser.add_argument("--no-tree", action="store_true", help="Do not print the tree output (only used if gather-cluster-extension-state is set).")
+parser.add_argument("--prompt", action="store_true", help="Create the fingerprint file (if needed) and send it to OpenAI for diagnosis.")
 args = parser.parse_args()
 
 NAMESPACE = args.namespace
 
-# If gather-cluster-extension-state is used, we want full info regardless of other flags
+# If --prompt is used, we also want full info and to gather fingerprint, regardless of other flags
+if args.prompt:
+    args.gather_cluster_extension_state = True
+
 if args.gather_cluster_extension_state:
     SHOW_EVENTS = True
     WITH_EVENT_INFO = True
@@ -112,7 +118,6 @@ def get_resources_for_type(resource_name, namespaced):
 
 # Collect resources
 for (kind, plural_name, is_namespaced) in resource_info:
-    # If we are gathering CE state or SHOW_EVENTS is True, we process events, else skip if no events
     if kind == "Event" and not SHOW_EVENTS:
         continue
     items = get_resources_for_type(plural_name, is_namespaced)
@@ -139,6 +144,7 @@ for (kind, plural_name, is_namespaced) in resource_info:
         uid_to_resource[uid] = res_entry
         all_uids.add(uid)
 
+from collections import defaultdict
 owner_to_children = defaultdict(list)
 for uid, res in uid_to_resource.items():
     for (_, _, o_uid) in res["owners"]:
@@ -211,9 +217,6 @@ def print_tree(uid, prefix="", is_last=True):
         print_tree(c_uid, prefix=child_prefix, is_last=(i == len(children)-1))
 
 
-###############################
-# Code for gather fingerprint
-###############################
 def extract_resource_summary(kind, name, namespace):
     is_namespaced = (namespace is not None and namespace != "")
     cmd = ["kubectl", "get", kind.lower()+"/"+name]
@@ -274,12 +277,10 @@ def extract_resource_summary(kind, name, namespace):
     return summary
 
 def load_fingerprint(file_path):
-    """Load the JSON fingerprint file from the specified path."""
     with open(file_path, 'r') as f:
         return json.load(f)
 
 def generate_prompt(fingerprint):
-    """Generate the diagnostic prompt by embedding the fingerprint into the request."""
     prompt = """
 You are an expert in Kubernetes operations and diagnostics. I will provide you with a JSON file that represents a snapshot ("fingerprint") of the entire state of a Kubernetes namespace focusing on a particular ClusterExtension and all related resources. This fingerprint includes:
 
@@ -308,26 +309,17 @@ Please provide a summarized diagnosis and suggested fixes below:
     return prompt
 
 def send_to_openai(prompt, model="gpt-4o"):
-    """Send the prompt to OpenAI's completions API and get the response."""
     try:
-        openai.api_key = os.getenv("OPENAI_API_KEY")
-        if not openai.api_key:
+        if os.getenv("OPENAI_API_KEY") is None:
             raise ValueError("OPENAI_API_KEY environment variable is not set.")
-
-        response = openai.ChatCompletion.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt}]
-        )
-
-        # Extract and return the assistant's message
-        message_content = response['choices'][0]['message']['content']
+        response = client.chat.completions.create(model=model,
+        messages=[{"role": "user", "content": prompt}])
+        message_content = response.choices[0].message.content
         return message_content
-
     except Exception as e:
         return f"Error communicating with OpenAI API: {e}"
 
 def gather_fingerprint(namespace):
-    # Find cluster extension(s)
     ce_uids = [uid for uid, res in uid_to_resource.items() if res["kind"] == "ClusterExtension" and res["namespace"] == namespace]
     if not ce_uids:
         return []
@@ -342,7 +334,6 @@ def gather_fingerprint(namespace):
         nm = r["name"]
         ns = r["namespace"]
         summary = extract_resource_summary(k, nm, ns)
-        # Deduplicate images
         if "containers" in summary:
             new_containers = []
             for c in summary["containers"]:
@@ -360,7 +351,6 @@ def gather_fingerprint(namespace):
     results = []
     for ce_uid in ce_uids:
         fingerprint = {}
-        # Include all discovered resources
         for uid in uid_to_resource:
             r = uid_to_resource[uid]
             key = f"{r['kind']}/{r['name']}"
@@ -375,12 +365,10 @@ def gather_fingerprint(namespace):
         results.append(fname)
     return results
 
-# If gather-cluster-extension-state, generate state file(s)
 state_files = []
 if args.gather_cluster_extension_state:
     state_files = gather_fingerprint(NAMESPACE)
 
-# Print tree unless --no-tree is given AND we are in gather-cluster-extension-state mode
 if not (args.gather_cluster_extension_state and args.no_tree):
     for i, uid in enumerate(top_level_kinds):
         print_tree(uid, prefix="", is_last=(i == len(top_level_kinds)-1))
@@ -390,3 +378,15 @@ if args.gather_cluster_extension_state:
         print("No ClusterExtension found in the namespace, no state file created.", file=sys.stderr)
     else:
         print("Created state file(s):", ", ".join(state_files))
+
+# If --prompt is used, we already created the fingerprint file. Now load and send to OpenAI.
+if args.prompt:
+    if not state_files:
+        print("No ClusterExtension found, cannot prompt OpenAI.", file=sys.stderr)
+        sys.exit(1)
+    # Assume one ClusterExtension, take the first file
+    fingerprint_data = load_fingerprint(state_files[0])
+    prompt = generate_prompt(fingerprint_data)
+    response = send_to_openai(prompt)
+    print("\n--- OpenAI Diagnosis ---\n")
+    print(response)
