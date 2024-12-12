@@ -1,0 +1,28 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    service.beta.openshift.io/inject-cabundle: "true"
+  name: vcluster.cnpg.io
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: cnpg-controller-manager-service
+      namespace: '{{ .Release.Namespace }}'
+      path: /validate-postgresql-cnpg-io-v1-cluster
+      port: 443
+  failurePolicy: Fail
+  name: vcluster.cnpg.io
+  rules:
+  - apiGroups:
+    - postgresql.cnpg.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusters
+  sideEffects: None

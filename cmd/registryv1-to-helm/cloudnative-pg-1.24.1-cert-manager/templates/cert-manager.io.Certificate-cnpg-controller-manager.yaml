@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: cnpg-controller-manager
+spec:
+  dnsNames:
+  - cnpg-controller-manager-service.{{ .Release.Namespace }}.svc
+  issuerRef:
+    name: cloudnative-pg.v1.24.1-cnpg-controller-manager-selfsigned-issuer
+  secretName: cloudnative-pg.v1.24.1-cnpg-controller-manager-cert
+  usages:
+  - server auth
