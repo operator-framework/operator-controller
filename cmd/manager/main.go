@@ -159,13 +159,22 @@ func main() {
 		log.Fatalf("Failed to initialize certificate watcher: %v", err)
 	}
 
+	tlsOpts := func(config *tls.Config) {
+		config.GetCertificate = cw.GetCertificate
+		// Ensure HTTP/2 is disabled by default for webhooks. Disabling HTTP/2 mitigates vulnerabilities associated with:
+		// - HTTP/2 Stream Cancellation (GHSA-qppj-fm5r-hxr3)
+		// - HTTP/2 Rapid Reset (GHSA-4374-p667-p6c8)
+		// While CVE fixes exist, they remain insufficient; disabling HTTP/2 helps reduce risks.
+		// For details, see: https://github.com/kubernetes/kubernetes/issues/121197
+		setupLog.Info("disabling http/2")
+		config.NextProtos = []string{"http/1.1"}
+	}
+
 	// Create webhook server and configure TLS
 	webhookServer := crwebhook.NewServer(crwebhook.Options{
 		Port: webhookPort,
 		TLSOpts: []func(*tls.Config){
-			func(cfg *tls.Config) {
-				cfg.GetCertificate = cw.GetCertificate
-			},
+			tlsOpts,
 		},
 	})
 
