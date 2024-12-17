@@ -35,11 +35,11 @@ $(CRD_DIFF): $(BINGO_DIR)/crd-diff.mod
 	@echo "(re)installing $(GOBIN)/crd-diff-v0.1.0"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=crd-diff.mod -o=$(GOBIN)/crd-diff-v0.1.0 "github.com/everettraven/crd-diff"
 
-GINKGO := $(GOBIN)/ginkgo-v2.21.0
+GINKGO := $(GOBIN)/ginkgo-v2.22.0
 $(GINKGO): $(BINGO_DIR)/ginkgo.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
-	@echo "(re)installing $(GOBIN)/ginkgo-v2.21.0"
-	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=ginkgo.mod -o=$(GOBIN)/ginkgo-v2.21.0 "github.com/onsi/ginkgo/v2/ginkgo"
+	@echo "(re)installing $(GOBIN)/ginkgo-v2.22.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=ginkgo.mod -o=$(GOBIN)/ginkgo-v2.22.0 "github.com/onsi/ginkgo/v2/ginkgo"
 
 GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.60.3
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod

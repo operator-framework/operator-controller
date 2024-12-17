@@ -4,4 +4,4 @@ go 1.22.0
 
 toolchain go1.23.0
 
-require github.com/onsi/ginkgo/v2 v2.21.0 // ginkgo
+require github.com/onsi/ginkgo/v2 v2.22.0 // ginkgo
