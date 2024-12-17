@@ -22,11 +22,12 @@ type TokenGetter struct {
 }
 
 type ServiceAccountNotFoundError struct {
-	ServiceAccountName string
+	ServiceAccountName string // The name of the missing ServiceAccount.
 }
 
+// Error implements the error interface for ServiceAccountNotFoundError.
 func (e *ServiceAccountNotFoundError) Error() string {
-	return fmt.Sprintf("Unable to authenticate with Kubernetes cluster using ServiceAccount \"%s\": ServiceAccount \"%s\" not found.", e.ServiceAccountName, e.ServiceAccountName)
+	return fmt.Sprintf("ServiceAccount \"%s\" not found: Unable to authenticate with the Kubernetes cluster.", e.ServiceAccountName)
 }
 
 type TokenGetterOption func(*TokenGetter)
@@ -97,8 +98,7 @@ func (t *TokenGetter) getToken(ctx context.Context, key types.NamespacedName) (*
 		}, metav1.CreateOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			saErr := &ServiceAccountNotFoundError{key.Name}
-			return nil, saErr
+			return nil, &ServiceAccountNotFoundError{ServiceAccountName: key.Name}
 		}
 		return nil, err
 	}
