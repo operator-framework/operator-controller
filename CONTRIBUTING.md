@@ -59,6 +59,32 @@ you can follow the steps below to test your changes:
     make kind-load kind-deploy
     ```
 
+## How to debug controller tests using ENVTEST
+
+[ENVTEST](https://book.kubebuilder.io/reference/envtest) requires k8s binaries to be downloaded to run the tests.
+To download the necessary binaries, follow the steps below:
+
+```sh
+make envtest-k8s-bins
+```
+
+Note that the binaries are downloaded to the `bin/envtest-binaries` directory.
+
+```sh
+$ tree
+.
+├── envtest-binaries
+│   └── k8s
+│       └── 1.31.0-darwin-arm64
+│           ├── etcd
+│           ├── kube-apiserver
+│           └── kubectl
+```
+
+Now, you can debug them with your IDE:
+
+![Screenshot IDE example](https://github.com/user-attachments/assets/3096d524-0686-48ca-911c-5b843093ad1f)
+
 ### Communication Channels
 
 - Email: [operator-framework-olm-dev](mailto:operator-framework-olm-dev@googlegroups.com)

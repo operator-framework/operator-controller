@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/runtime"
+	apimachineryruntime "k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -64,7 +64,7 @@ func (m *MockUnpacker) Cleanup(_ context.Context, _ *source.BundleSource) error 
 func newClient(t *testing.T) client.Client {
 	// TODO: this is a live client, which behaves differently than a cache client.
 	//  We may want to use a caching client instead to get closer to real behavior.
-	sch := runtime.NewScheme()
+	sch := apimachineryruntime.NewScheme()
 	require.NoError(t, ocv1.AddToScheme(sch))
 	cl, err := client.New(config, client.Options{Scheme: sch})
 	require.NoError(t, err)
@@ -162,6 +162,21 @@ func TestMain(m *testing.M) {
 		ErrorIfCRDPathMissing: true,
 	}
 
+	// ENVTEST-based tests require specific binaries. By default, these binaries are located
+	// in paths defined by controller-runtime. However, the `BinaryAssetsDirectory` needs
+	// to be explicitly set when running tests directly (e.g., debugging tests in an IDE)
+	// without using the Makefile targets.
+	//
+	// This is equivalent to configuring your IDE to export the `KUBEBUILDER_ASSETS` environment
+	// variable before each test execution. The following function simplifies this process
+	// by handling the configuration for you.
+	//
+	// To ensure the binaries are in the expected path without manual configuration, run:
+	// `make envtest-k8s-bins`
+	if getFirstFoundEnvTestBinaryDir() != "" {
+		testEnv.BinaryAssetsDirectory = getFirstFoundEnvTestBinaryDir()
+	}
+
 	var err error
 	config, err = testEnv.Start()
 	utilruntime.Must(err)
@@ -178,4 +193,16 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 	utilruntime.Must(testEnv.Stop())
 	os.Exit(code)
+}
+
+// getFirstFoundEnvTestBinaryDir finds and returns the first directory under the given path.
+func getFirstFoundEnvTestBinaryDir() string {
+	basePath := filepath.Join("..", "..", "bin", "envtest-binaries", "k8s")
+	entries, _ := os.ReadDir(basePath)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			return filepath.Join(basePath, entry.Name())
+		}
+	}
+	return ""
 }
