@@ -3,7 +3,10 @@ hide:
   - toc
 ---
 
-# OLM v1 roadmap
+# OLM v1 roadmap (Deprecated)
+
+**Note**: The current roadmap is deprecated and it is not up-to-date. Refer to project [dashboard](https://github.com/orgs/operator-framework/projects/8/views/47) to get latest information.
+
 ## Functional Requirements
 _Priority Rating: 1 highest, 2 medium, 3 lower (e.g. P2 = Medium Priority)_
 
