@@ -4,6 +4,7 @@ site_name: Operator Lifecycle Manager
 theme:
   logo: assets/logo.svg
   name: "material"
+  custom_dir: docs/overrides
   palette:
     primary: black
   features:
@@ -36,6 +37,7 @@ nav:
     - Uninstall an Extension: tutorials/uninstall-extension.md
   - How-To Guides:
     - Catalog queries: howto/catalog-queries.md
+    - Configure Global pull secrets: howto/configure-global-pull-secrets.md
     - Channel-Based Upgrades: howto/how-to-channel-based-upgrades.md
     - Version Pinning: howto/how-to-pin-version.md
     - Version Range Upgrades: howto/how-to-version-range-upgrades.md
