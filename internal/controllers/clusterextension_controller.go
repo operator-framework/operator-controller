@@ -45,7 +45,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
-	catalogd "github.com/operator-framework/catalogd/api/v1"
+	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
