@@ -51,16 +51,16 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	crwebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
-	corecontrollers "github.com/operator-framework/catalogd/internal/controllers/core"
-	"github.com/operator-framework/catalogd/internal/features"
-	"github.com/operator-framework/catalogd/internal/garbagecollection"
-	catalogdmetrics "github.com/operator-framework/catalogd/internal/metrics"
-	"github.com/operator-framework/catalogd/internal/serverutil"
-	"github.com/operator-framework/catalogd/internal/source"
-	"github.com/operator-framework/catalogd/internal/storage"
-	"github.com/operator-framework/catalogd/internal/version"
-	"github.com/operator-framework/catalogd/internal/webhook"
+	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	corecontrollers "github.com/operator-framework/operator-controller/catalogd/internal/controllers/core"
+	"github.com/operator-framework/operator-controller/catalogd/internal/features"
+	"github.com/operator-framework/operator-controller/catalogd/internal/garbagecollection"
+	catalogdmetrics "github.com/operator-framework/operator-controller/catalogd/internal/metrics"
+	"github.com/operator-framework/operator-controller/catalogd/internal/serverutil"
+	"github.com/operator-framework/operator-controller/catalogd/internal/source"
+	"github.com/operator-framework/operator-controller/catalogd/internal/storage"
+	"github.com/operator-framework/operator-controller/catalogd/internal/version"
+	"github.com/operator-framework/operator-controller/catalogd/internal/webhook"
 )
 
 var (

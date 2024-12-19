@@ -8,7 +8,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
+	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
 )
 
 // +kubebuilder:webhook:admissionReviewVersions={v1},failurePolicy=Fail,groups=olm.operatorframework.io,mutating=true,name=inject-metadata-name.olm.operatorframework.io,path=/mutate-olm-operatorframework-io-v1-clustercatalog,resources=clustercatalogs,verbs=create;update,versions=v1,sideEffects=None,timeoutSeconds=10

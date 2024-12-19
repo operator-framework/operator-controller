@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
+	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
 )
 
 func ReadTestCatalogServerContents(ctx context.Context, catalog *catalogdv1.ClusterCatalog, c client.Client, kubeClient kubernetes.Interface) ([]byte, error) {

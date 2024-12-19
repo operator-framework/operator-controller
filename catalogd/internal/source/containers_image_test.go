@@ -27,8 +27,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
-	"github.com/operator-framework/catalogd/internal/source"
+	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	"github.com/operator-framework/operator-controller/catalogd/internal/source"
 )
 
 func TestImageRegistry(t *testing.T) {
@@ -425,7 +425,7 @@ func TestImageRegistry(t *testing.T) {
 // case that specifically tests that multiple calls to the
 // ImageRegistry.Unpack() method return an error and is meant
 // to ensure coverage of the bug reported in
-// https://github.com/operator-framework/catalogd/issues/206
+// https://github.com/operator-framework/operator-controller/catalogd/issues/206
 func TestImageRegistryMissingLabelConsistentFailure(t *testing.T) {
 	// Create context, temporary cache directory,
 	// and image registry source

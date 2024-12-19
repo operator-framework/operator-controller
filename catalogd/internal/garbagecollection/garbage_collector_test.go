@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/metadata/fake"
 
-	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
+	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
 )
 
 func TestRunGarbageCollection(t *testing.T) {

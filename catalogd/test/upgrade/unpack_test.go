@@ -20,8 +20,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
-	"github.com/operator-framework/catalogd/test/e2e"
+	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
+	"github.com/operator-framework/operator-controller/catalogd/test/e2e"
 )
 
 var _ = Describe("ClusterCatalog Unpacking", func() {

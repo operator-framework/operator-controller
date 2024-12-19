@@ -28,7 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
+	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
 )
 
 const ConfigDirLabel = "operators.operatorframework.io.index.configs.v1"
