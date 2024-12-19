@@ -1,6 +1,8 @@
 package e2e
 
 import (
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -24,6 +26,11 @@ var (
 )
 
 func TestE2E(t *testing.T) {
+	_, err := ctrl.GetConfig()
+	if err != nil {
+		fmt.Println("Error: Could not get current Kubernetes context. Verify the cluster configuration")
+		os.Exit(0)
+	}
 	RegisterFailHandler(Fail)
 	SetDefaultEventuallyTimeout(1 * time.Minute)
 	SetDefaultEventuallyPollingInterval(1 * time.Second)
