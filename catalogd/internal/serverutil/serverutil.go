@@ -10,9 +10,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 
-	catalogdmetrics "github.com/operator-framework/catalogd/internal/metrics"
-	"github.com/operator-framework/catalogd/internal/storage"
-	"github.com/operator-framework/catalogd/internal/third_party/server"
+	catalogdmetrics "github.com/operator-framework/operator-controller/catalogd/internal/metrics"
+	"github.com/operator-framework/operator-controller/catalogd/internal/storage"
+	"github.com/operator-framework/operator-controller/catalogd/internal/third_party/server"
 )
 
 type CatalogServerConfig struct {
