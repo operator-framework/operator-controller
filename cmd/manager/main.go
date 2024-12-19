@@ -166,7 +166,6 @@ func main() {
 		// - HTTP/2 Rapid Reset (GHSA-4374-p667-p6c8)
 		// While CVE fixes exist, they remain insufficient; disabling HTTP/2 helps reduce risks.
 		// For details, see: https://github.com/kubernetes/kubernetes/issues/121197
-		setupLog.Info("disabling http/2")
 		config.NextProtos = []string{"http/1.1"}
 	}
 
