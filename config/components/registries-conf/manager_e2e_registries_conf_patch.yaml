@@ -7,7 +7,6 @@ spec:
   template:
     spec:
       containers:
-      - name: kube-rbac-proxy
       - name: manager
         volumeMounts:
         - name: e2e-registries-conf

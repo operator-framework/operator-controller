@@ -311,10 +311,6 @@ const testCompressableJSON = `{
   "relatedImages": [
     {
       "name": "",
-      "image": "gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0"
-    },
-    {
-      "name": "",
       "image": "quay.io/helmoperators/cockroachdb:v5.0.3"
     },
     {
@@ -348,10 +344,6 @@ const testCompressableJSON = `{
   "relatedImages": [
     {
       "name": "",
-      "image": "gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0"
-    },
-    {
-      "name": "",
       "image": "quay.io/helmoperators/cockroachdb:v5.0.4"
     },
     {
@@ -383,10 +375,6 @@ const testCompressableJSON = `{
     }
   ],
   "relatedImages": [
-    {
-      "name": "",
-      "image": "gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0"
-    },
     {
       "name": "",
       "image": "quay.io/cockroachdb/cockroach-helm-operator:6.0.0"

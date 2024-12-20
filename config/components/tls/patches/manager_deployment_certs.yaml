@@ -2,11 +2,11 @@
   path: /spec/template/spec/volumes/-
   value: {"name":"catalogserver-certs", "secret":{"secretName":"catalogd-service-cert-git-version"}}
 - op: add
-  path: /spec/template/spec/containers/1/volumeMounts/-
+  path: /spec/template/spec/containers/0/volumeMounts/-
   value: {"name":"catalogserver-certs", "mountPath":"/var/certs"}
 - op: add
-  path: /spec/template/spec/containers/1/args/-
+  path: /spec/template/spec/containers/0/args/-
   value: "--tls-cert=/var/certs/tls.crt"
 - op: add
-  path: /spec/template/spec/containers/1/args/-
+  path: /spec/template/spec/containers/0/args/-
   value: "--tls-key=/var/certs/tls.key"

@@ -50,32 +50,11 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: kube-rbac-proxy
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
-        args:
-        - --secure-listen-address=0.0.0.0:7443
-        - --http2-disable
-        - --upstream=http://127.0.0.1:8080/
-        - --logtostderr=true
-        ports:
-        - containerPort: 7443
-          protocol: TCP
-          name: https
-        resources:
-          requests:
-            cpu: 5m
-            memory: 64Mi
-        terminationMessagePolicy: FallbackToLogsOnError
       - command:
         - ./manager
         args:
         - --leader-elect
-        - --metrics-bind-address=127.0.0.1:8080
+        - --metrics-bind-address=:7443
         - --external-address=catalogd-service.olmv1-system.svc
         image: controller:latest
         name: manager
