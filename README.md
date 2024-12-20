@@ -52,10 +52,10 @@ Procedure steps marked with an asterisk (`*`) are likely to change with future A
       Resource Version:  7908
       UID:               34eeaa91-9f8e-4254-9937-0ae9d25e92df
     Spec:
+      Availability Mode:  Available
       Priority:  0
       Source:
         Image:
-          Poll Interval:  10m0s
           Ref:            quay.io/operatorhubio/catalog:latest
         Type:             Image
     Status:
