@@ -14,6 +14,8 @@ After you add a catalog to your cluster, you can install an extension by creatin
 * The name, and optionally version, or channel, of the [supported extension](../project/olmv1_limitations.md) to be installed
 * An existing namespace in which to install the extension
 
+**Note** To install ClusterExentions that are shipped as private container images hosted in an image registry, please see [How to conifgure global pull secrets](../howto/configure-global-pull-secrets.md).
+
 ### ServiceAccount for ClusterExtension Installation and Management
 
 Adhering to OLM v1's "Secure by Default" tenet, OLM v1 does not have the permissions
