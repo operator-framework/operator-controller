@@ -1,0 +1,22 @@
+name: demo
+
+on:
+  workflow_dispatch:
+  merge_group:
+  pull_request:
+  push:
+    branches:
+    - main
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    env:
+      TERM: linux
+    steps:
+      - run: sudo apt update && sudo apt install -y asciinema curl
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+      - run: make demo-update
