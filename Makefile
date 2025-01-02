@@ -100,8 +100,12 @@ tidy: #HELP Update dependencies.
 	$(Q)go mod tidy -go=$(GOLANG_VERSION)
 
 .PHONY: manifests
-manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac
+# To exclude catalogd. Otherwise, the CRD, Webhook and other configurations will be generated and added to the config/
+PATHS = ./api/... ./cmd/... ./internal/... ./test/...
+manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
+	@for path in $(PATHS); do \
+		$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="$$path" output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac; \
+	done
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
