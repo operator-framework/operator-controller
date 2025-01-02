@@ -14,6 +14,11 @@ IMAGE_REPO := quay.io/operator-framework/operator-controller
 endif
 export IMAGE_REPO
 
+ifeq ($(origin CATALOG_IMAGE_REPO), undefined)
+CATALOG_IMAGE_REPO := quay.io/operator-framework/catalogd
+endif
+export CATALOG_IMAGE_REPO
+
 ifeq ($(origin IMAGE_TAG), undefined)
 IMAGE_TAG := devel
 endif
@@ -23,7 +28,6 @@ IMG := $(IMAGE_REPO):$(IMAGE_TAG)
 
 # Define dependency versions (use go.mod if we also use Go code from dependency)
 export CERT_MGR_VERSION := v1.15.3
-export CATALOGD_VERSION := $(shell go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/catalogd)
 export WAIT_TIMEOUT := 60s
 
 # Install default ClusterCatalogs
@@ -99,9 +103,14 @@ tidy: #HELP Update dependencies.
 	# Force tidy to use the version already in go.mod
 	$(Q)go mod tidy -go=$(GOLANG_VERSION)
 
+
 .PHONY: manifests
-manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac
+manifests: $(CONTROLLER_GEN) #EXHELP Generate WebhookConfiguration, ClusterRole, and CustomResourceDefinition objects.
+	# To generate the manifests used and do not use catalogd directory
+	$(CONTROLLER_GEN) rbac:roleName=manager-role paths=./internal/... output:rbac:artifacts:config=config/base/rbac
+	$(CONTROLLER_GEN) crd paths=./api/... output:crd:artifacts:config=config/base/crd/bases
+	# To generate the manifests for catalogd
+	$(MAKE) -C catalogd generate
 
 .PHONY: generate
 generate: $(CONTROLLER_GEN) #EXHELP Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -229,14 +238,16 @@ e2e-coverage:
 	COVERAGE_OUTPUT=./coverage/e2e.out ./hack/test/e2e-coverage.sh
 
 .PHONY: kind-load
-kind-load: $(KIND) #EXHELP Loads the currently constructed image onto the cluster.
+kind-load: $(KIND) #EXHELP Loads the currently constructed images into the KIND cluster.
 	$(CONTAINER_RUNTIME) save $(IMG) | $(KIND) load image-archive /dev/stdin --name $(KIND_CLUSTER_NAME)
+	IMAGE_REPO=$(CATALOG_IMAGE_REPO) KIND_CLUSTER_NAME=$(KIND_CLUSTER_NAME) $(MAKE) -C catalogd kind-load
 
 .PHONY: kind-deploy
-kind-deploy: export MANIFEST="./operator-controller.yaml"
-kind-deploy: manifests $(KUSTOMIZE) #EXHELP Install controller and dependencies onto the kind cluster.
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) > operator-controller.yaml
-	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
+kind-deploy: export MANIFEST := ./operator-controller.yaml
+kind-deploy: manifests $(KUSTOMIZE)
+	($(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) && echo "---" && $(KUSTOMIZE) build catalogd/config/overlays/cert-manager | sed "s/cert-git-version/cert-$(VERSION)/g") > $(MANIFEST)
+	envsubst '$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh | bash -s
+
 
 .PHONY: kind-cluster
 kind-cluster: $(KIND) #EXHELP Standup a kind cluster.
@@ -293,8 +304,9 @@ go-build-linux: $(BINARIES)
 run: docker-build kind-cluster kind-load kind-deploy #HELP Build the operator-controller then deploy it into a new kind cluster.
 
 .PHONY: docker-build
-docker-build: build-linux #EXHELP Build docker image for operator-controller with GOOS=linux and local GOARCH.
+docker-build: build-linux  #EXHELP Build docker image for operator-controller and catalog with GOOS=linux and local GOARCH.
 	$(CONTAINER_RUNTIME) build -t $(IMG) -f Dockerfile ./bin/linux
+	IMAGE_REPO=$(CATALOG_IMAGE_REPO) $(MAKE) -C catalogd build-container
 
 #SECTION Release
 ifeq ($(origin ENABLE_RELEASE_PIPELINE), undefined)
@@ -312,10 +324,10 @@ release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By d
 	$(GORELEASER) $(GORELEASER_ARGS)
 
 .PHONY: quickstart
-quickstart: export MANIFEST := https://github.com/operator-framework/operator-controller/releases/download/$(VERSION)/operator-controller.yaml
-quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the installation release manifests and scripts.
-	$(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) | sed "s/:devel/:$(VERSION)/g" > operator-controller.yaml
-	envsubst '$$CATALOGD_VERSION,$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
+quickstart: export MANIFEST := ./operator-controller.yaml
+quickstart: $(KUSTOMIZE) manifests #EXHELP Generate the unified installation release manifests and scripts.
+	($(KUSTOMIZE) build $(KUSTOMIZE_BUILD_DIR) && echo "---" && $(KUSTOMIZE) build catalogd/config/overlays/cert-manager | sed "s/cert-git-version/cert-$(VERSION)/g") > $(MANIFEST)
+	envsubst '$$CERT_MGR_VERSION,$$INSTALL_DEFAULT_CATALOGS,$$MANIFEST' < scripts/install.tpl.sh > install.sh
 
 ##@ Docs
 

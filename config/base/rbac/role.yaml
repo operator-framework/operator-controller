@@ -21,28 +21,9 @@ rules:
   resources:
   - clustercatalogs
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - clustercatalogs/finalizers
-  - clusterextensions/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - olm.operatorframework.io
-  resources:
-  - clustercatalogs/status
-  verbs:
-  - get
-  - patch
-  - update
 - apiGroups:
   - olm.operatorframework.io
   resources:
@@ -53,6 +34,12 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - olm.operatorframework.io
+  resources:
+  - clusterextensions/finalizers
+  verbs:
+  - update
 - apiGroups:
   - olm.operatorframework.io
   resources:
