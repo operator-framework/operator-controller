@@ -1,14 +1,16 @@
+name: catalogd-tilt
+
 on:
   pull_request:
     paths:
-      - '.bingo/**'
-      - '.github/workflows/tilt.yaml'
-      - 'api/**'
-      - 'cmd/**'
-      - 'config/**'
-      - 'internal/**'
-      - 'pkg/**'
-      - 'Tiltfile'
+      - 'catalogd/.bingo/**'
+      - 'catalogd/.github/workflows/catalogd-tilt.yaml'
+      - 'catalogd/api/**'
+      - 'catalogd/cmd/**'
+      - 'catalogd/config/**'
+      - 'catalogd/internal/**'
+      - 'catalogd/pkg/**'
+      - 'catalogd/Tiltfile'
   merge_group:
 
 jobs:
@@ -17,15 +19,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        repository: operator-framework/tilt-support
-        path: tilt-support
-    - uses: actions/checkout@v4
-      with:
-        path: catalogd
+        fetch-depth: 0
+    - name: Clone tilt-support
+      run: |
+        git clone https://github.com/operator-framework/tilt-support catalogd/../tilt-support
     - name: Install Go
       uses: actions/setup-go@v5
       with:
-        go-version-file: "catalogd/go.mod"
+        go-version-file: catalogd/go.mod
     - name: Install Tilt
       run: |
         TILT_VERSION="0.33.3"
