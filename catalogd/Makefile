@@ -136,7 +136,12 @@ CRD_DIFF_ORIGINAL_REF := main
 CRD_DIFF_UPDATED_SOURCE := file://config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml
 CRD_DIFF_CONFIG := crd-diff-config.yaml
 verify-crd-compatibility: $(CRD_DIFF)
-	$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml" ${CRD_DIFF_UPDATED_SOURCE}
+	@if git show ${CRD_DIFF_ORIGINAL_REF}:config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml > /dev/null 2>&1; then \
+		echo "Running CRD diff..."; \
+		$(CRD_DIFF) --config="${CRD_DIFF_CONFIG}" "git://${CRD_DIFF_ORIGINAL_REF}?path=config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml" ${CRD_DIFF_UPDATED_SOURCE}; \
+	else \
+		echo "Skipping CRD diff: CRD does not exist in ${CRD_DIFF_ORIGINAL_REF}"; \
+	fi
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Run golangci linter.
