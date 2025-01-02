@@ -11,7 +11,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: catalogd/go.mod
+          go-version-file: go.mod
 
       - name: Run make verify-crd-compatibility
         working-directory: catalogd

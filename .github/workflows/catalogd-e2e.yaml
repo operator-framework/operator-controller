@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: "catalogd/go.mod"
+          go-version-file: "go.mod"
       - name: Run the upgrade e2e test
         working-directory: catalogd
         run: make test-upgrade-e2e

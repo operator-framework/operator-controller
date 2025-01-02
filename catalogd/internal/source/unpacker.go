@@ -7,7 +7,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	catalogdv1 "github.com/operator-framework/catalogd/api/v1"
+	catalogdv1 "github.com/operator-framework/operator-controller/catalogd/api/v1"
 )
 
 // TODO: This package is almost entirely copy/pasted from rukpak. We should look

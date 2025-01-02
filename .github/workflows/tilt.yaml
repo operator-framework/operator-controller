@@ -26,7 +26,7 @@ jobs:
       id: get-catalogd-version
       run: |
         cd operator-controller
-        echo "CATALOGD_VERSION=$(go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/catalogd)" >> "$GITHUB_OUTPUT"
+        echo "CATALOGD_VERSION=$(go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/operator-controller/catalogd)" >> "$GITHUB_OUTPUT"
     - uses: actions/checkout@v4
       with:
         repository: operator-framework/catalogd

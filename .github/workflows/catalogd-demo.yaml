@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: "catalogd/go.mod"
+          go-version-file: "go.mod"
       - name: Run Demo Update
         working-directory: catalogd
         run: make demo-update
