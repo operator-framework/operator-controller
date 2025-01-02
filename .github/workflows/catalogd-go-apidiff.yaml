@@ -1,4 +1,4 @@
-name: go-apidiff
+name: catalogd-go-apidiff
 
 on:
   merge_group:
@@ -15,7 +15,8 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version-file: "go.mod"
+        go-version-file: "catalogd/go.mod"
       id: go
     - name: Run go-apidiff
+      working-directory: catalogd
       uses: joelanford/go-apidiff@main

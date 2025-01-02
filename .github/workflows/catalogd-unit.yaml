@@ -1,4 +1,4 @@
-name: unit
+name: catalogd-unit
 
 on:
   workflow_dispatch:
@@ -15,10 +15,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: "go.mod"
-      - run: make test-unit
+          go-version-file: "catalogd/go.mod"
+
+      - name: Unit Test
+        working-directory: catalogd
+        run: make test-unit
 
       - uses: codecov/codecov-action@v5
+        working-directory: catalogd
         with:
           disable_search: true
           files: cover.out

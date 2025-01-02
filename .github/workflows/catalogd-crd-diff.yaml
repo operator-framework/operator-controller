@@ -1,4 +1,4 @@
-name: crd-diff
+name: catalogd-crd-diff
 on:
   pull_request:
 jobs:
@@ -11,8 +11,9 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: catalogd/go.mod
 
       - name: Run make verify-crd-compatibility
+        working-directory: catalogd
         run: make verify-crd-compatibility CRD_DIFF_ORIGINAL_REF=${{ github.event.pull_request.base.sha }} CRD_DIFF_UPDATED_SOURCE="git://${{ github.event.pull_request.head.sha }}?path=config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml"
 

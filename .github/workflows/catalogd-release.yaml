@@ -1,4 +1,4 @@
-name: release
+name: catalogd-release
 
 on:
   workflow_dispatch:
@@ -25,7 +25,7 @@ jobs:
     - name: Install Go
       uses: actions/setup-go@v5
       with:
-        go-version-file: "go.mod"
+        go-version-file: "catalogd/go.mod"
 
     - name: Docker Login
       if: ${{ github.event_name != 'pull_request' }}
@@ -53,11 +53,13 @@ jobs:
           echo IMAGE_TAG="$(git describe --tags --always)" >> $GITHUB_ENV
         fi
     - name: Create release manifests
+      working-directory: catalogd
       run: |
         echo VERSION="${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
         make quickstart
 
     - name: Run goreleaser
+      working-directory: catalogd
       run: make release
       env:
         GITHUB_TOKEN: ${{ github.token }}
