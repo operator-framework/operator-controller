@@ -7,7 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Verify PR title
     steps:
-    - name: Verify PR title
-      uses: kubernetes-sigs/kubebuilder-release-tools@v0.4.3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify PR title
+        id: get_title
+        run: echo "title=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
+      - name: Run Check
+        id: check_title
+        run: |
+          ./hack/test/pr-title.sh "${{ env.title }}"
