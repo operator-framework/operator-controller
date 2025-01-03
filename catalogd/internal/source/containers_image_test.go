@@ -410,7 +410,7 @@ func TestImageRegistry(t *testing.T) {
 					assert.False(t, rs.UnpackTime.IsZero())
 				}
 			} else {
-				assert.Error(t, err)
+				require.Error(t, err)
 				isTerminal := errors.Is(err, reconcile.TerminalError(nil))
 				assert.Equal(t, tt.terminal, isTerminal, "expected terminal %v, got %v", tt.terminal, isTerminal)
 			}

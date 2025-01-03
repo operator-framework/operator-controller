@@ -80,14 +80,6 @@ generate: $(CONTROLLER_GEN) ## Generate code and manifests.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac output:webhook:artifacts:config=config/base/manager/webhook/
 
-.PHONY: fmt
-fmt: ## Run go fmt against code.
-	go fmt ./...
-
-.PHONY: vet
-vet: ## Run go vet against code.
-	go vet -tags '$(GO_BUILD_TAGS)' ./...
-
 .PHONY: bingo-upgrade
 bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
 	@for pkg in $$($(BINGO) list | awk '{ print $$1 }' | tail -n +3); do \
@@ -120,15 +112,6 @@ e2e: run image-registry test-e2e kind-cluster-cleanup ## Run e2e test suite on l
 image-registry: ## Setup in-cluster image registry
 	./test/tools/imageregistry/registry.sh $(ISSUER_KIND) $(ISSUER_NAME)
 
-.PHONY: tidy
-tidy: ## Update dependencies
-	# Force tidy to use the version already in go.mod
-	go mod tidy -go=$(GOLANG_VERSION)
-
-.PHONY: verify
-verify: tidy fmt vet generate ## Verify the current code generation and lint
-	git diff --exit-code
-
 .PHONY: verify-crd-compatibility
 CRD_DIFF_ORIGINAL_REF := main
 CRD_DIFF_UPDATED_SOURCE := file://config/base/crd/bases/olm.operatorframework.io_clustercatalogs.yaml
@@ -141,9 +124,6 @@ verify-crd-compatibility: $(CRD_DIFF)
 		echo "Skipping CRD diff: CRD does not exist in ${CRD_DIFF_ORIGINAL_REF}"; \
 	fi
 
-.PHONY: lint
-lint: $(GOLANGCI_LINT) ## Run golangci linter.
-	$(GOLANGCI_LINT) run --build-tags $(GO_BUILD_TAGS) $(GOLANGCI_LINT_ARGS)
 
 ## image-registry target has to come after run-latest-release,
 ## because the image-registry depends on the olm-ca issuer.
@@ -196,7 +176,7 @@ export GO_BUILD_TAGS     := containers_image_openpgp
 BUILDCMD = go build -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$(notdir $@) ./cmd/$(notdir $@)
 
 .PHONY: build-deps
-build-deps: generate fmt vet
+build-deps: generate
 
 .PHONY: build go-build-local $(BINARIES)
 build: build-deps go-build-local ## Build binaries for current GOOS and GOARCH.

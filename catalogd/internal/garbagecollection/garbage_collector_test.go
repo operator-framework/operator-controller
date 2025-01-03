@@ -77,7 +77,7 @@ func TestRunGarbageCollection(t *testing.T) {
 
 			_, err := runGarbageCollection(ctx, cachePath, metaClient)
 			if !tt.wantErr {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				entries, err := os.ReadDir(cachePath)
 				require.NoError(t, err)
 				assert.Len(t, entries, len(tt.existCatalogs))

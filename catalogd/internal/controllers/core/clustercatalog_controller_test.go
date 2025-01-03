@@ -758,9 +758,9 @@ func TestCatalogdControllerReconcile(t *testing.T) {
 			assert.Equal(t, ctrl.Result{}, res)
 			// errors are aggregated/wrapped
 			if tt.expectedError == nil {
-				assert.Nil(t, err)
+				require.NoError(t, err)
 			} else {
-				assert.NotNil(t, err)
+				require.Error(t, err)
 				assert.Equal(t, tt.expectedError.Error(), err.Error())
 			}
 			diff := cmp.Diff(tt.expectedCatalog, tt.catalog,

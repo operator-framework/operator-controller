@@ -46,10 +46,10 @@ import (
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
 	"github.com/operator-framework/operator-controller/internal/bundleutil"
 	"github.com/operator-framework/operator-controller/internal/conditionsets"
 	"github.com/operator-framework/operator-controller/internal/contentmanager"

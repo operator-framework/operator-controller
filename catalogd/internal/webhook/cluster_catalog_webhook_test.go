@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -91,7 +92,7 @@ func TestClusterCatalogDefaulting(t *testing.T) {
 
 			// Assert
 			if tc.expectError {
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.errorMessage)
 			} else {
 				assert.NoError(t, err)

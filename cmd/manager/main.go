@@ -50,9 +50,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	helmclient "github.com/operator-framework/helm-operator-plugins/pkg/client"
-	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
 
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
 	"github.com/operator-framework/operator-controller/internal/action"
 	"github.com/operator-framework/operator-controller/internal/applier"
 	"github.com/operator-framework/operator-controller/internal/authentication"
