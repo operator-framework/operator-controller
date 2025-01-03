@@ -103,7 +103,7 @@ func main() {
 		caCertDir                 string
 		globalPullSecret          string
 	)
-	flag.StringVar(&metricsAddr, "metrics-bind-address", "", "The address for the metrics endpoint. Requires tls-cert and tls-key. (Default: ':8443')")
+	flag.StringVar(&metricsAddr, "metrics-bind-address", "", "The address for the metrics endpoint. Requires tls-cert and tls-key. (Default: ':8445')")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&caCertDir, "ca-certs-dir", "", "The directory of TLS certificate to use for verifying HTTPS connections to the Catalogd and docker-registry web servers.")
 	flag.StringVar(&certFile, "tls-cert", "", "The certificate file used for the metrics server. Required to enable the metrics server. Requires tls-key.")
@@ -138,7 +138,7 @@ func main() {
 	}
 
 	if certFile != "" && keyFile != "" && metricsAddr == "" {
-		metricsAddr = ":8443"
+		metricsAddr = ":8445"
 	}
 
 	ctrl.SetLogger(textlogger.NewLogger(textlogger.NewConfig()))
