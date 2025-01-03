@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - name: kube-rbac-proxy
+      - name: manager
+        volumeMounts:
+        - name: e2e-registries-conf
+          mountPath: /etc/containers
+      volumes:
+      - name: e2e-registries-conf
+        configMap:
+          name: e2e-registries-conf
