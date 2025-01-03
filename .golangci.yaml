@@ -16,6 +16,11 @@ run:
   # Default timeout is 1m, up to give more room
   timeout: 4m
 
+issues:
+  exclude-use-default: false
+  exclude-dirs:
+    - '^catalogd/'
+
 linters:
   enable:
   - asciicheck
