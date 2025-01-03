@@ -1,4 +1,4 @@
-name: sanity
+name: catalogd-sanity
 
 on:
   workflow_dispatch:
@@ -26,4 +26,5 @@ jobs:
         with:
           go-version-file: "go.mod"
       - name: Run lint checks
+        working-directory: catalogd
         run: make lint GOLANGCI_LINT_ARGS="--out-format github-actions"

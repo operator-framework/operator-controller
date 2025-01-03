@@ -1,4 +1,4 @@
-name: demo
+name: catalogd-demo
 
 on:
   workflow_dispatch:
@@ -19,4 +19,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
-      - run: make demo-update
+      - name: Run Demo Update
+        working-directory: catalogd
+        run: make demo-update
+
