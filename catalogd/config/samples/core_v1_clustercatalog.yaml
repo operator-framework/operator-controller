@@ -1,0 +1,11 @@
+apiVersion: olm.operatorframework.io/v1
+kind: ClusterCatalog
+metadata:
+  name: operatorhubio
+spec:
+  priority: 0
+  source:
+    type: Image
+    image:
+      pollIntervalMinutes: 1440
+      ref: quay.io/operatorhubio/catalog:latest

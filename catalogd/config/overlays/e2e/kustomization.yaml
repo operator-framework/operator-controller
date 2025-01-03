@@ -1,0 +1,12 @@
+# kustomization file for all the e2e's
+# DO NOT ADD A NAMESPACE HERE
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base/crd
+  - ../../base/rbac
+  - ../../base/manager
+components:
+  - ../../components/tls
+  - ../../components/registries-conf
+  - ../../components/ca

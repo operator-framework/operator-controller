@@ -1,0 +1,6 @@
+- op: replace
+  path: /spec/ports/0/port
+  value: 443
+- op: replace
+  path: /spec/ports/0/name
+  value: https

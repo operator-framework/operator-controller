@@ -18,9 +18,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	catalogd "github.com/operator-framework/catalogd/api/v1"
-
 	ocv1 "github.com/operator-framework/operator-controller/api/v1"
+	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
 )
 
 func TestExtensionDeveloper(t *testing.T) {

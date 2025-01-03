@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	catalogd "github.com/operator-framework/catalogd/api/v1"
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
+	catalogd "github.com/operator-framework/operator-controller/catalogd/api/v1"
 	catalogClient "github.com/operator-framework/operator-controller/internal/catalogmetadata/client"
 )
 

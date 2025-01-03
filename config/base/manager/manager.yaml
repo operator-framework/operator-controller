@@ -52,7 +52,7 @@ spec:
         - /manager
         args:
         - "--health-probe-bind-address=:8081"
-        - "--metrics-bind-address=:8443"
+        - "--metrics-bind-address=:8445"
         - "--leader-elect"
         image: controller:latest
         imagePullPolicy: IfNotPresent
