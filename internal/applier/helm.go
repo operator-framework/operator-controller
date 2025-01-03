@@ -153,13 +153,6 @@ func (h *Helm) Apply(ctx context.Context, contentFS fs.FS, ext *ocv1.ClusterExte
 
 func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterExtension, chrt *chart.Chart, values chartutil.Values, post postrender.PostRenderer) (*release.Release, *release.Release, string, error) {
 	currentRelease, err := cl.Get(ext.GetName())
-	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
-		return nil, nil, StateError, err
-	}
-	if errors.Is(err, driver.ErrReleaseNotFound) {
-		return nil, nil, StateNeedsInstall, nil
-	}
-
 	if errors.Is(err, driver.ErrReleaseNotFound) {
 		desiredRelease, err := cl.Install(ext.GetName(), ext.Spec.Namespace, chrt, values, func(i *action.Install) error {
 			i.DryRun = true
@@ -171,6 +164,10 @@ func (h *Helm) getReleaseState(cl helmclient.ActionInterface, ext *ocv1.ClusterE
 		}
 		return nil, desiredRelease, StateNeedsInstall, nil
 	}
+	if err != nil {
+		return nil, nil, StateError, err
+	}
+
 	desiredRelease, err := cl.Upgrade(ext.GetName(), ext.Spec.Namespace, chrt, values, func(upgrade *action.Upgrade) error {
 		upgrade.MaxHistory = maxHelmReleaseHistory
 		upgrade.DryRun = true
