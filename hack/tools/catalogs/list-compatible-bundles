@@ -45,13 +45,13 @@ done
 shift $((OPTIND -1))
 
 # Select bundle documents
-function select-bundle-documents() {
+select-bundle-documents() {
     jq 'select(.schema == "olm.bundle")'
 }
 
 # Select bundles that declare AllNamespace install mode
 # or declare nothing at all (older released bundles sans "olm.csv.metadata" property)
-function that-support-allnamespace-install-mode() {
+that-support-allnamespace-install-mode() {
     jq 'select(
             all(.properties[].type; . != "olm.csv.metadata") or
             (.properties[]? |
@@ -65,23 +65,23 @@ function that-support-allnamespace-install-mode() {
 }
 
 # Select bundles without dependencies
-function that-dont-have-dependencies() {
+that-dont-have-dependencies() {
     jq 'select(all(.properties[].type; . != "olm.package.required" and . != "olm.gvk.required"))'
 }
 
 # Select the "olm.package" property from the bundles
 # This contains the packageName and version information
-function extract-olm-package-property() {
+extract-olm-package-property() {
     jq '.properties[] | select(.type == "olm.package") |.value'
 }
 
 # Group packages by name and collect versions into an array
-function group-versions-by-package-name() {
+group-versions-by-package-name() {
     jq -s 'group_by(.packageName) | map({packageName: .[0].packageName, versions: map(.version)})'
 }
 
 # Apply regex on name
-function filter-by-regex-if-necessary() {
+filter-by-regex-if-necessary() {
     jq --arg regex "$REGEX" '
         if $regex != "" then
             map(select(.packageName | test($regex)))
