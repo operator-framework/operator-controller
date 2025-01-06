@@ -280,7 +280,7 @@ export GO_BUILD_FLAGS :=
 export GO_BUILD_LDFLAGS := -s -w \
     -X '$(VERSION_PATH).version=$(VERSION)' \
 
-BINARIES=manager
+BINARIES=operator-controller
 
 $(BINARIES):
 	go build $(GO_BUILD_FLAGS) -tags '$(GO_BUILD_TAGS)' -ldflags '$(GO_BUILD_LDFLAGS)' -gcflags '$(GO_BUILD_GCFLAGS)' -asmflags '$(GO_BUILD_ASMFLAGS)' -o $(BUILDBIN)/$@ ./cmd/$@
@@ -321,7 +321,7 @@ export GORELEASER_ARGS
 
 .PHONY: release
 release: $(GORELEASER) #EXHELP Runs goreleaser for the operator-controller. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
-	$(GORELEASER) $(GORELEASER_ARGS)
+	OPERATOR_CONTROLLER_IMAGE_REPO=$(IMAGE_REPO) CATALOGD_IMAGE_REPO=$(CATALOG_IMAGE_REPO) $(GORELEASER) $(GORELEASER_ARGS)
 
 .PHONY: quickstart
 quickstart: export MANIFEST := ./operator-controller.yaml

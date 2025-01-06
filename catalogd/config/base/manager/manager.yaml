@@ -51,7 +51,7 @@ spec:
           type: RuntimeDefault
       containers:
       - command:
-        - ./manager
+        - ./catalogd
         args:
         - --leader-elect
         - --metrics-bind-address=:7443

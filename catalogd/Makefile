@@ -147,7 +147,7 @@ post-upgrade-checks: $(GINKGO)
 
 ##@ Build
 
-BINARIES=manager
+BINARIES=catalogd
 LINUX_BINARIES=$(join $(addprefix linux/,$(BINARIES)), )
 
 # Build info
@@ -240,26 +240,6 @@ wait:
 cert-manager:
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MGR_VERSION}/cert-manager.yaml
 	kubectl wait --for=condition=Available --namespace=cert-manager deployment/cert-manager-webhook --timeout=60s
-
-##@ Release
-
-ifeq ($(origin ENABLE_RELEASE_PIPELINE), undefined)
-ENABLE_RELEASE_PIPELINE := false
-endif
-export ENABLE_RELEASE_PIPELINE
-
-ifeq ($(origin GORELEASER_ARGS), undefined)
-GORELEASER_ARGS := --snapshot --clean
-endif
-
-release: $(GORELEASER) ## Runs goreleaser for catalogd. By default, this will run only as a snapshot and will not publish any artifacts unless it is run with different arguments. To override the arguments, run with "GORELEASER_ARGS=...". When run as a github action from a tag, this target will publish a full release.
-	$(GORELEASER) $(GORELEASER_ARGS)
-
-quickstart: export MANIFEST := https://github.com/operator-framework/catalogd/releases/download/$(VERSION)/catalogd.yaml
-quickstart: export DEFAULT_CATALOGS := https://github.com/operator-framework/catalogd/releases/download/$(VERSION)/default-catalogs.yaml
-quickstart: $(KUSTOMIZE) generate ## Generate the installation release manifests and scripts
-	$(KUSTOMIZE) build $(KUSTOMIZE_OVERLAY) | sed "s/:devel/:$(GIT_VERSION)/g" | sed "s/cert-git-version/cert-$(GIT_VERSION)/g" > catalogd.yaml
-	envsubst '$$CERT_MGR_VERSION,$$MANIFEST,$$DEFAULT_CATALOGS' < scripts/install.tpl.sh > install.sh
 
 .PHONY: demo-update
 demo-update:
