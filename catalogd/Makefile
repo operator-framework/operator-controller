@@ -3,7 +3,7 @@
 SHELL := /usr/bin/env bash -o pipefail
 .SHELLFLAGS := -ec
 
-GOLANG_VERSION := $(shell sed -En 's/^go (.*)$$/\1/p' "go.mod")
+GOLANG_VERSION := $(shell sed -En 's/^go (.*)$$/\1/p' "../go.mod")
 
 ifeq ($(origin IMAGE_REPO), undefined)
 IMAGE_REPO := quay.io/operator-framework/catalogd
