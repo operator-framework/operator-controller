@@ -23,7 +23,6 @@ resources:
 # can access the metrics endpoint. Comment the following
 # permissions if you want to disable this protection.
 # More info: https://book.kubebuilder.io/reference/metrics.html
-- auth_proxy_service.yaml
 - auth_proxy_role.yaml
 - auth_proxy_role_binding.yaml
 - auth_proxy_client_clusterrole.yaml
