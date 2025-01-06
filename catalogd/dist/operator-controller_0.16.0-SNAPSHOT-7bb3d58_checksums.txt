@@ -1,0 +1,4 @@
+dee6275713bdb5b7667a46ab64e3ece384519d1d5959ac215b1c1196900a8ce2  operator-controller_0.16.0-SNAPSHOT-7bb3d58_linux_amd64.tar.gz
+863155d67c79faddde963d1dc4f5fe89b458cccf65b61ef992ee7f1f5b27bfd1  operator-controller_0.16.0-SNAPSHOT-7bb3d58_linux_arm64.tar.gz
+519aad23499e0331dc6ebd140185a85027f8286c1306ac2d408e5de3932d82f6  operator-controller_0.16.0-SNAPSHOT-7bb3d58_linux_ppc64le.tar.gz
+c2d3179997fddab240d92466714f5948a9aa0cc956c2539c5afcacf32899e7c4  operator-controller_0.16.0-SNAPSHOT-7bb3d58_linux_s390x.tar.gz
