@@ -6,9 +6,11 @@ on:
     - 'api/**'
     - 'cmd/**'
     - 'config/**'
+    - 'catalogd/**'
     - 'internal/**'
     - 'pkg/**'
     - 'Tiltfile'
+    - '.tilt-support'
   merge_group:
 
 jobs:
@@ -17,21 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        repository: operator-framework/tilt-support
-        path: tilt-support
-    - uses: actions/checkout@v4
-      with:
         path: operator-controller
-    - name: Get catalogd version
-      id: get-catalogd-version
-      run: |
-        cd operator-controller
-        echo "CATALOGD_VERSION=$(go list -mod=mod -m -f "{{.Version}}" github.com/operator-framework/catalogd)" >> "$GITHUB_OUTPUT"
-    - uses: actions/checkout@v4
-      with:
-        repository: operator-framework/catalogd
-        path: catalogd
-        ref: "${{ steps.get-catalogd-version.outputs.CATALOGD_VERSION }}"
     - name: Install Go
       uses: actions/setup-go@v5
       with:

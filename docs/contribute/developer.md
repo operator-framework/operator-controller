@@ -91,16 +91,6 @@ Follow Tilt's [instructions](https://docs.tilt.dev/install.html) for installatio
 operator-controller requires
 [catalogd](https://github.com/operator-framework/catalogd). Please make sure it's installed, either normally or via its own Tiltfile., before proceeding. If you want to use Tilt, make sure you specify a unique `--port` flag to each `tilt up` invocation.
 
-### Install tilt-support Repo
-
-You must install the tilt-support repo at the directory level above this repo:
-
-```bash
-pushd ..
-git clone https://github.com/operator-framework/tilt-support
-popd
-```
-
 ### Starting Tilt
 
 This is typically as short as:
@@ -136,6 +126,15 @@ v0.33.1, built 2023-06-28
 
 At the end of the installation process, the command output will prompt you to press the space bar to open the web UI, which provides a useful overview of all the installed components.
 
+Shortly after starting, Tilt processes the `Tiltfile`, resulting in:
+
+- Building the go binaries
+- Building the images
+- Loading the images into kind
+- Running kustomize and applying everything except the Deployments that reference the images above
+- Modifying the Deployments to use the just-built images
+- Creating the Deployments
+
 ---
 
 ## Special Setup for MacOS
@@ -158,6 +157,14 @@ do
   export PATH=$bindir:$PATH
 done
 ```
+
+---
+
+## Making code changes
+
+Any time you change any of the files listed in the `deps` section in the `<binary name>_binary` `local_resource`,
+Tilt automatically rebuilds the go binary. As soon as the binary is rebuilt, Tilt pushes it (and only it) into the
+appropriate running container, and then restarts the process.
 
 ---
 
