@@ -15,7 +15,7 @@ require (
 	github.com/google/go-containerregistry v0.20.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/operator-framework/api v0.27.0
-	github.com/operator-framework/catalogd v1.0.0
+	github.com/operator-framework/catalogd v1.1.0
 	github.com/operator-framework/helm-operator-plugins v0.7.0
 	github.com/operator-framework/operator-registry v1.48.0
 	github.com/spf13/pflag v1.0.5
@@ -24,11 +24,11 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.16.4
 	k8s.io/api v0.31.4
-	k8s.io/apiextensions-apiserver v0.31.3
+	k8s.io/apiextensions-apiserver v0.31.4
 	k8s.io/apimachinery v0.31.4
 	k8s.io/cli-runtime v0.31.4
 	k8s.io/client-go v0.31.4
-	k8s.io/component-base v0.31.3
+	k8s.io/component-base v0.31.4
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
 	sigs.k8s.io/controller-runtime v0.19.0
@@ -166,8 +166,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
-	github.com/onsi/ginkgo/v2 v2.22.0 // indirect
-	github.com/onsi/gomega v1.36.0 // indirect
+	github.com/onsi/gomega v1.36.2 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opencontainers/runtime-spec v1.2.0 // indirect
 	github.com/openshift/crd-schema-checker v0.0.0-20240404194209-35a9033b1d11 // indirect
@@ -233,12 +232,12 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
 	google.golang.org/grpc v1.67.1 // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
+	google.golang.org/protobuf v1.36.1 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiserver v0.31.3 // indirect
+	k8s.io/apiserver v0.31.4 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/kubectl v0.31.3 // indirect
 	oras.land/oras-go v1.2.5 // indirect
