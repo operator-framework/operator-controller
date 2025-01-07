@@ -8,7 +8,7 @@ assert-commands kubectl jq wget
 
 # ClusterCatalog coordinates
 : "${CATALOGD_CATALOGD_SERVICE_NAMESPACE:=olmv1-system}"
-: "${CATALOGD_SERVICE_NAME:=catalogd-server}"
+: "${CATALOGD_SERVICE_NAME:=catalogd-service}"
 : "${CATALOGD_SERVICE_PORT:=443}" # Assumes the service uses HTTPS on port 443
 : "${CATALOGD_LOCAL_SERVICE_PORT:=8001}"
 
