@@ -27,7 +27,7 @@ endif
 KUSTOMIZE_OVERLAY := config/overlays/cert-manager
 
 # bingo manages consistent tooling versions for things like kind, kustomize, etc.
-include .bingo/Variables.mk
+include ./../.bingo/Variables.mk
 
 # Dependencies
 export CERT_MGR_VERSION := v1.15.3
@@ -71,14 +71,6 @@ clean: ## Remove binaries and test artifacts
 generate: $(CONTROLLER_GEN) ## Generate code and manifests.
 	$(CONTROLLER_GEN) object:headerFile="../hack/boilerplate.go.txt" paths="./..."
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/base/crd/bases output:rbac:artifacts:config=config/base/rbac output:webhook:artifacts:config=config/base/manager/webhook/
-
-.PHONY: bingo-upgrade
-bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
-	@for pkg in $$($(BINGO) list | awk '{ print $$1 }' | tail -n +3); do \
-		echo "Upgrading $$pkg to latest..."; \
-		$(BINGO) get "$$pkg@latest"; \
-	done
-
 
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 ifeq ($(origin E2E_FLAGS), undefined)
