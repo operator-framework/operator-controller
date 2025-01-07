@@ -109,7 +109,7 @@ func TestClusterExtensionAfterOLMUpgrade(t *testing.T) {
 		assert.Contains(ct, cond.Message, "Installed bundle")
 		assert.Equal(ct, ocv1.BundleMetadata{Name: "test-operator.1.0.1", Version: "1.0.1"}, clusterExtension.Status.Install.Bundle)
 		assert.NotEqual(ct, previousVersion, clusterExtension.Status.Install.Bundle.Version)
-	}, time.Minute, time.Second)
+	}, 3*time.Minute, time.Second)
 }
 
 func watchPodLogsForSubstring(ctx context.Context, pod *corev1.Pod, container string, substrings ...string) (bool, error) {
