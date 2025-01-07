@@ -15,14 +15,6 @@ export IMAGE_TAG
 
 IMAGE := $(IMAGE_REPO):$(IMAGE_TAG)
 
-# By default setup-envtest will write to $XDG_DATA_HOME, or $HOME/.local/share if that is not defined.
-# If $HOME is not set, we need to specify a binary directory to prevent an error in setup-envtest.
-# Useful for some CI/CD environments that set neither $XDG_DATA_HOME nor $HOME.
-SETUP_ENVTEST_BIN_DIR_OVERRIDE=
-ifeq ($(shell [[ $$HOME == "" || $$HOME == "/" ]] && [[ $$XDG_DATA_HOME == "" ]] && echo true ), true)
-	SETUP_ENVTEST_BIN_DIR_OVERRIDE += --bin-dir /tmp/envtest-binaries
-endif
-
 ifneq (, $(shell command -v docker 2>/dev/null))
 CONTAINER_RUNTIME := docker
 else ifneq (, $(shell command -v podman 2>/dev/null))
@@ -87,14 +79,6 @@ bingo-upgrade: $(BINGO) #EXHELP Upgrade tools
 		$(BINGO) get "$$pkg@latest"; \
 	done
 
-.PHONY: test-unit
-UNIT_TEST_DIRS := $(shell go list ./... | grep -v /test/e2e | grep -v /test/upgrade)
-test-unit: generate fmt vet $(SETUP_ENVTEST) ## Run tests.
-	eval $$($(SETUP_ENVTEST) use -p env $(ENVTEST_SERVER_VERSION) $(SETUP_ENVTEST_BIN_DIR_OVERRIDE)) && \
-        go test \
-          -tags '$(GO_BUILD_TAGS)' \
-          -coverprofile cover.out \
-          $(UNIT_TEST_DIRS)
 
 FOCUS := $(if $(TEST),-v -focus "$(TEST)")
 ifeq ($(origin E2E_FLAGS), undefined)
