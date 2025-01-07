@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"bytes"
+	"io"
 	"os/exec"
 	"testing"
 
@@ -20,11 +21,10 @@ import (
 // 6. Cleans up all resources created during the test, such as the ClusterRoleBinding and curl pod.
 func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 	var (
-		token     string
-		curlPod   = "curl-metrics"
-		namespace = "olmv1-system"
-		client    = ""
-		clients   = []string{"kubectl", "oc"}
+		token   string
+		curlPod = "curl-metrics"
+		client  = ""
+		clients = []string{"kubectl", "oc"}
 	)
 
 	t.Log("Looking for k8s client")
@@ -37,15 +37,25 @@ func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 		}
 	}
 	if client == "" {
-		t.Skip("k8s client not found, skipping test")
+		t.Fatal("k8s client not found")
 	}
 	t.Logf("Using %q as k8s client", client)
 
+	t.Log("Determining catalogd namespace")
+	cmd := exec.Command(client, "get", "pods", "--all-namespaces", "--selector=control-plane=catalogd-controller-manager", "--output=jsonpath={.items[0].metadata.namespace}")
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, "Error creating determining catalogd namespace: %s", string(output))
+	namespace := string(output)
+	if namespace == "" {
+		t.Fatal("No catalogd namespace found")
+	}
+	t.Logf("Using %q as catalogd namespace", namespace)
+
 	t.Log("Creating ClusterRoleBinding for metrics access")
-	cmd := exec.Command(client, "create", "clusterrolebinding", "catalogd-metrics-binding",
+	cmd = exec.Command(client, "create", "clusterrolebinding", "catalogd-metrics-binding",
 		"--clusterrole=catalogd-metrics-reader",
 		"--serviceaccount="+namespace+":catalogd-controller-manager")
-	output, err := cmd.CombinedOutput()
+	output, err = cmd.CombinedOutput()
 	require.NoError(t, err, "Error creating ClusterRoleBinding: %s", string(output))
 
 	defer func() {
@@ -55,8 +65,8 @@ func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 
 	t.Log("Creating service account token for authentication")
 	tokenCmd := exec.Command(client, "create", "token", "catalogd-controller-manager", "-n", namespace)
-	tokenOutput, err := tokenCmd.Output()
-	require.NoError(t, err, "Error creating token: %s", string(tokenOutput))
+	tokenOutput, tokenCombinedOutput, err := stdoutAndCombined(tokenCmd)
+	require.NoError(t, err, "Error creating token: %s", string(tokenCombinedOutput))
 	token = string(bytes.TrimSpace(tokenOutput))
 
 	t.Log("Creating a pod to run curl commands")
@@ -104,4 +114,14 @@ func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 	output, err = curlCmd.CombinedOutput()
 	require.NoError(t, err, "Error calling metrics endpoint: %s", string(output))
 	require.Contains(t, string(output), "200 OK", "Metrics endpoint did not return 200 OK")
+}
+
+func stdoutAndCombined(cmd *exec.Cmd) ([]byte, []byte, error) {
+	var outOnly bytes.Buffer
+	var outAndErr bytes.Buffer
+	allWriter := io.MultiWriter(&outOnly, &outAndErr)
+	cmd.Stderr = &outAndErr
+	cmd.Stdout = allWriter
+	err := cmd.Run()
+	return outOnly.Bytes(), outAndErr.Bytes(), err
 }
