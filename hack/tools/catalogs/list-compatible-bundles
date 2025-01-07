@@ -77,7 +77,7 @@ function extract-olm-package-property() {
 
 # Group packages by name and collect versions into an array
 function group-versions-by-package-name() {
-    jq -s 'group_by(.packageName) | map({packageName: .[0].packageName, versions: map(.version)})' | regex_it
+    jq -s 'group_by(.packageName) | map({packageName: .[0].packageName, versions: map(.version)})'
 }
 
 # Apply regex on name
@@ -90,7 +90,7 @@ function filter-by-regex-if-necessary() {
         end'
 }
 
-cat - | select-bundle-documents | that-support-allnamespace-install-mode | that-dont-have-dependencies | group-versions-by-package-name | filter-by-regex-if-necessary
+cat - | select-bundle-documents | that-support-allnamespace-install-mode | that-dont-have-dependencies | extract-olm-package-property | group-versions-by-package-name | filter-by-regex-if-necessary
 
 echo "NOTE: OLM v1 currently only supports bundles that support AllNamespaces install model, don't have dependencies, and don't contain webhooks" >&2
 echo "WARNING: These results may include bundles with webhooks, which are incompatible" >&2
