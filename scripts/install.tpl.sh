@@ -25,7 +25,7 @@ if [[ -z "$catalogd_version" || -z "$cert_mgr_version" ]]; then
     exit 1
 fi
 
-function kubectl_wait() {
+kubectl_wait() {
     namespace=$1
     runtime=$2
     timeout=$3
@@ -33,7 +33,7 @@ function kubectl_wait() {
     kubectl wait --for=condition=Available --namespace="${namespace}" "${runtime}" --timeout="${timeout}"
 }
 
-function kubectl_wait_rollout() {
+kubectl_wait_rollout() {
     namespace=$1
     runtime=$2
     timeout=$3
@@ -41,7 +41,7 @@ function kubectl_wait_rollout() {
     kubectl rollout status --namespace="${namespace}" "${runtime}" --timeout="${timeout}"
 }
 
-function kubectl_wait_for_query() {
+kubectl_wait_for_query() {
     manifest=$1
     query=$2
     timeout=$3
