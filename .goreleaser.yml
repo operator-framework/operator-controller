@@ -4,13 +4,30 @@ before:
     - go mod download
 builds:
   - id: operator-controller
-    main: ./cmd/manager/
-    binary: manager
+    main: ./cmd/operator-controller/
+    binary: operator-controller
     asmflags: "{{ .Env.GO_BUILD_ASMFLAGS }}"
     gcflags: "{{ .Env.GO_BUILD_GCFLAGS }}"
     ldflags: "{{ .Env.GO_BUILD_LDFLAGS }}"
     tags:
-    - "{{ .Env.GO_BUILD_TAGS }}"
+      - "{{ .Env.GO_BUILD_TAGS }}"
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+      - ppc64le
+      - s390x
+  - id: catalogd
+    main: ./catalogd/cmd/catalogd/
+    binary: catalogd
+    asmflags: "{{ .Env.GO_BUILD_ASMFLAGS }}"
+    gcflags: "{{ .Env.GO_BUILD_GCFLAGS }}"
+    ldflags: "{{ .Env.GO_BUILD_LDFLAGS }}"
+    tags:
+      - "{{ .Env.GO_BUILD_TAGS }}"
+    mod_timestamp: "{{ .CommitTimestamp }}"
     goos:
       - linux
     goarch:
@@ -20,7 +37,7 @@ builds:
       - s390x
 dockers:
   - image_templates:
-      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
     dockerfile: Dockerfile
     goos: linux
     goarch: amd64
@@ -28,7 +45,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/amd64"
   - image_templates:
-      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
     dockerfile: Dockerfile
     goos: linux
     goarch: arm64
@@ -36,7 +53,7 @@ dockers:
     build_flag_templates:
       - "--platform=linux/arm64"
   - image_templates:
-      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
     dockerfile: Dockerfile
     goos: linux
     goarch: ppc64le
@@ -44,20 +61,58 @@ dockers:
     build_flag_templates:
       - "--platform=linux/ppc64le"
   - image_templates:
-      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
     dockerfile: Dockerfile
     goos: linux
     goarch: s390x
     use: buildx
     build_flag_templates:
       - "--platform=linux/s390x"
+  - image_templates:
+      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+    dockerfile: catalogd/Dockerfile
+    goos: linux
+    goarch: amd64
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+  - image_templates:
+      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+    dockerfile: catalogd/Dockerfile
+    goos: linux
+    goarch: arm64
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64"
+  - image_templates:
+      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+    dockerfile: catalogd/Dockerfile
+    goos: linux
+    goarch: ppc64le
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/ppc64le"
+  - image_templates:
+      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+    dockerfile: catalogd/Dockerfile
+    goos: linux
+    goarch: s390x
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/s390x"
 docker_manifests:
-  - name_template: "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
+  - name_template: "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
     image_templates:
-      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
-      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
-      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
-      - "{{ .Env.IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+      - "{{ .Env.OPERATOR_CONTROLLER_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
+  - name_template: "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}"
+    image_templates:
+      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-amd64"
+      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-arm64"
+      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-ppc64le"
+      - "{{ .Env.CATALOGD_IMAGE_REPO }}:{{ .Env.IMAGE_TAG }}-s390x"
 checksum:
   name_template: 'checksums.txt'
 snapshot:
