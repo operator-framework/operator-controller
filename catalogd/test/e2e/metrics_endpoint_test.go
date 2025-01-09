@@ -108,7 +108,7 @@ func TestCatalogdMetricsExportedEndpoint(t *testing.T) {
 	require.NoError(t, waitErr, "Error waiting for curl pod to be ready: %s", string(waitOutput))
 
 	t.Log("Validating the metrics endpoint")
-	metricsURL := "https://catalogd-service.olmv1-system.svc.cluster.local:7443/metrics"
+	metricsURL := "https://catalogd-service." + namespace + ".svc.cluster.local:7443/metrics"
 	curlCmd := exec.Command(client, "exec", curlPod, "-n", namespace, "--",
 		"curl", "-v", "-k", "-H", "Authorization: Bearer "+token, metricsURL)
 	output, err = curlCmd.CombinedOutput()
