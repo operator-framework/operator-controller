@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/blang/semver/v4"
+	mmsemver "github.com/Masterminds/semver/v3"
 	genericversion "k8s.io/apimachinery/pkg/version"
 )
 
@@ -27,10 +27,11 @@ func Version() genericversion.Info {
 		Compiler:     runtime.Compiler,
 		Platform:     fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
 	}
-	v, err := semver.Parse(strings.TrimPrefix(gitVersion, "v"))
+
+	v, err := mmsemver.NewVersion(strings.TrimPrefix(gitVersion, "v"))
 	if err == nil {
-		info.Major = fmt.Sprintf("%d", v.Major)
-		info.Minor = fmt.Sprintf("%d", v.Minor)
+		info.Major = fmt.Sprintf("%d", v.Major())
+		info.Minor = fmt.Sprintf("%d", v.Minor())
 	}
 	return info
 }

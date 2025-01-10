@@ -6,7 +6,6 @@ require (
 	carvel.dev/kapp v0.63.3
 	github.com/BurntSushi/toml v1.4.0
 	github.com/Masterminds/semver/v3 v3.3.1
-	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/containerd v1.7.24
 	github.com/containers/image/v5 v5.32.2
 	github.com/fsnotify/fsnotify v1.8.0
@@ -55,6 +54,7 @@ require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect

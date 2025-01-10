@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	bsemver "github.com/blang/semver/v4"
+	mmsemver "github.com/Masterminds/semver/v3"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
@@ -134,7 +134,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.
 	}{
 		{
 			name:            "with non-zero major version",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0", bsemver.MustParse("2.0.0")),
+			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0", mmsemver.MustParse("2.0.0")),
 			expectedResult: []declcfg.Bundle{
 				// Updates are allowed within the major version
 				bundleSet["test-package.v2.2.0"],
@@ -144,7 +144,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.
 		},
 		{
 			name:            "with zero major and zero minor version",
-			installedBundle: bundleutil.MetadataFor("test-package.v0.0.1", bsemver.MustParse("0.0.1")),
+			installedBundle: bundleutil.MetadataFor("test-package.v0.0.1", mmsemver.MustParse("0.0.1")),
 			expectedResult: []declcfg.Bundle{
 				// No updates are allowed in major version zero when minor version is also zero
 				bundleSet["test-package.v0.0.1"],
@@ -152,7 +152,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsEnabled(t *testing.
 		},
 		{
 			name:            "with zero major and non-zero minor version",
-			installedBundle: bundleutil.MetadataFor("test-package.v0.1.0", bsemver.MustParse("0.1.0")),
+			installedBundle: bundleutil.MetadataFor("test-package.v0.1.0", mmsemver.MustParse("0.1.0")),
 			expectedResult: []declcfg.Bundle{
 				// Patch version updates are allowed within the minor version
 				bundleSet["test-package.v0.1.2"],
@@ -286,7 +286,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing
 	}{
 		{
 			name:            "respect replaces directive from catalog",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0", bsemver.MustParse("2.0.0")),
+			installedBundle: bundleutil.MetadataFor("test-package.v2.0.0", mmsemver.MustParse("2.0.0")),
 			expectedResult: []declcfg.Bundle{
 				// Must only have two bundle:
 				// - the one which replaces the current version
@@ -297,7 +297,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing
 		},
 		{
 			name:            "respect skips directive from catalog",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.2.1", bsemver.MustParse("2.2.1")),
+			installedBundle: bundleutil.MetadataFor("test-package.v2.2.1", mmsemver.MustParse("2.2.1")),
 			expectedResult: []declcfg.Bundle{
 				// Must only have two bundle:
 				// - the one which skips the current version
@@ -308,7 +308,7 @@ func TestSuccessorsPredicateWithForceSemverUpgradeConstraintsDisabled(t *testing
 		},
 		{
 			name:            "respect skipRange directive from catalog",
-			installedBundle: bundleutil.MetadataFor("test-package.v2.3.0", bsemver.MustParse("2.3.0")),
+			installedBundle: bundleutil.MetadataFor("test-package.v2.3.0", mmsemver.MustParse("2.3.0")),
 			expectedResult: []declcfg.Bundle{
 				// Must only have two bundle:
 				// - the one which is skipRanges the current version

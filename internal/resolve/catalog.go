@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	mmsemver "github.com/Masterminds/semver/v3"
-	bsemver "github.com/blang/semver/v4"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -38,7 +37,7 @@ type foundBundle struct {
 }
 
 // Resolve returns a Bundle from a catalog that needs to get installed on the cluster.
-func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+func (r *CatalogResolver) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *mmsemver.Version, *declcfg.Deprecation, error) {
 	packageName := ext.Spec.Source.Catalog.PackageName
 	versionRange := ext.Spec.Source.Catalog.Version
 	channels := ext.Spec.Source.Catalog.Channels

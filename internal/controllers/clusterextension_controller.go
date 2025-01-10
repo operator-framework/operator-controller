@@ -242,7 +242,7 @@ func (r *ClusterExtensionReconciler) reconcile(ctx context.Context, ext *ocv1.Cl
 	//         all catalogs?
 	SetDeprecationStatus(ext, resolvedBundle.Name, resolvedDeprecation)
 
-	resolvedBundleMetadata := bundleutil.MetadataFor(resolvedBundle.Name, *resolvedBundleVersion)
+	resolvedBundleMetadata := bundleutil.MetadataFor(resolvedBundle.Name, resolvedBundleVersion)
 	bundleSource := &rukpaksource.BundleSource{
 		Name: ext.GetName(),
 		Type: rukpaksource.SourceTypeImage,

@@ -19,7 +19,7 @@ func ByVersion(b1, b2 declcfg.Bundle) int {
 
 	// Check for "greater than" because
 	// we want higher versions on top
-	return v2.Compare(*v1)
+	return v2.Compare(v1)
 }
 
 func ByDeprecationFunc(deprecation declcfg.Deprecation) func(a, b declcfg.Bundle) int {

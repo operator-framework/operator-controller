@@ -3,7 +3,7 @@ package resolve
 import (
 	"context"
 
-	bsemver "github.com/blang/semver/v4"
+	mmsemver "github.com/Masterminds/semver/v3"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
@@ -11,11 +11,11 @@ import (
 )
 
 type Resolver interface {
-	Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error)
+	Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *mmsemver.Version, *declcfg.Deprecation, error)
 }
 
-type Func func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error)
+type Func func(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *mmsemver.Version, *declcfg.Deprecation, error)
 
-func (f Func) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *bsemver.Version, *declcfg.Deprecation, error) {
+func (f Func) Resolve(ctx context.Context, ext *ocv1.ClusterExtension, installedBundle *ocv1.BundleMetadata) (*declcfg.Bundle, *mmsemver.Version, *declcfg.Deprecation, error) {
 	return f(ctx, ext, installedBundle)
 }

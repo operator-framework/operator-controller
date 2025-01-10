@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	mmsemver "github.com/Masterminds/semver/v3"
-	bsemver "github.com/blang/semver/v4"
 
 	"github.com/operator-framework/operator-registry/alpha/declcfg"
 
@@ -45,7 +44,7 @@ func SuccessorsOf(installedBundle ocv1.BundleMetadata, channels ...declcfg.Chann
 type successorsPredicateFunc func(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (Predicate[declcfg.Bundle], error)
 
 func legacySuccessor(installedBundle ocv1.BundleMetadata, channels ...declcfg.Channel) (Predicate[declcfg.Bundle], error) {
-	installedBundleVersion, err := bsemver.Parse(installedBundle.Version)
+	installedBundleVersion, err := mmsemver.NewVersion(installedBundle.Version)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing installed bundle version: %w", err)
 	}
@@ -60,8 +59,8 @@ func legacySuccessor(installedBundle ocv1.BundleMetadata, channels ...declcfg.Ch
 			}
 		}
 		if candidateBundleEntry.SkipRange != "" {
-			skipRange, err := bsemver.ParseRange(candidateBundleEntry.SkipRange)
-			if err == nil && skipRange(installedBundleVersion) {
+			skipRange, err := mmsemver.NewConstraint(candidateBundleEntry.SkipRange)
+			if err == nil && skipRange.Check(installedBundleVersion) {
 				return true
 			}
 		}
