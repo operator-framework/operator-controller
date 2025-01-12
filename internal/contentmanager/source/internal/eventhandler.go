@@ -38,6 +38,7 @@ limitations under the License.
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	cgocache "k8s.io/client-go/tools/cache"
@@ -94,8 +95,11 @@ func (e *EventHandler[object, request]) OnAdd(obj interface{}) {
 	if o, ok := obj.(object); ok {
 		c.Object = o
 	} else {
-		log.Error(nil, "OnAdd missing Object",
-			"object", obj, "type", fmt.Sprintf("%T", obj))
+		log.Error(errors.New("failed to cast object"),
+			"OnAdd missing Object",
+			"expected_type", fmt.Sprintf("%T", c.Object),
+			"received_type", fmt.Sprintf("%T", obj),
+			"object", obj)
 		return
 	}
 
@@ -118,8 +122,11 @@ func (e *EventHandler[object, request]) OnUpdate(oldObj, newObj interface{}) {
 	if o, ok := oldObj.(object); ok {
 		u.ObjectOld = o
 	} else {
-		log.Error(nil, "OnUpdate missing ObjectOld",
-			"object", oldObj, "type", fmt.Sprintf("%T", oldObj))
+		log.Error(errors.New("failed to cast old object"),
+			"OnUpdate missing ObjectOld",
+			"object", oldObj,
+			"expected_type", fmt.Sprintf("%T", u.ObjectOld),
+			"received_type", fmt.Sprintf("%T", oldObj))
 		return
 	}
 
@@ -127,11 +134,15 @@ func (e *EventHandler[object, request]) OnUpdate(oldObj, newObj interface{}) {
 	if o, ok := newObj.(object); ok {
 		u.ObjectNew = o
 	} else {
-		log.Error(nil, "OnUpdate missing ObjectNew",
-			"object", newObj, "type", fmt.Sprintf("%T", newObj))
+		log.Error(errors.New("failed to cast new object"),
+			"OnUpdate missing ObjectNew",
+			"object", newObj,
+			"expected_type", fmt.Sprintf("%T", u.ObjectNew),
+			"received_type", fmt.Sprintf("%T", newObj))
 		return
 	}
 
+	// Run predicates before proceeding
 	for _, p := range e.predicates {
 		if !p.Update(u) {
 			return
@@ -148,18 +159,25 @@ func (e *EventHandler[object, request]) OnUpdate(oldObj, newObj interface{}) {
 func (e *EventHandler[object, request]) OnDelete(obj interface{}) {
 	d := event.TypedDeleteEvent[object]{}
 
+	// Handle tombstone events (cache.DeletedFinalStateUnknown)
+	if obj == nil {
+		log.Error(errors.New("received nil object"),
+			"OnDelete received a nil object, ignoring event")
+		return
+	}
+
 	// Deal with tombstone events by pulling the object out.  Tombstone events wrap the object in a
 	// DeleteFinalStateUnknown struct, so the object needs to be pulled out.
 	// Copied from sample-controller
 	// This should never happen if we aren't missing events, which we have concluded that we are not
 	// and made decisions off of this belief.  Maybe this shouldn't be here?
-	var ok bool
-	if _, ok = obj.(client.Object); !ok {
+	if _, ok := obj.(client.Object); !ok {
 		// If the object doesn't have Metadata, assume it is a tombstone object of type DeletedFinalStateUnknown
 		tombstone, ok := obj.(cgocache.DeletedFinalStateUnknown)
 		if !ok {
-			log.Error(nil, "Error decoding objects.  Expected cache.DeletedFinalStateUnknown",
-				"type", fmt.Sprintf("%T", obj),
+			log.Error(errors.New("unexpected object type"),
+				"Error decoding objects, expected cache.DeletedFinalStateUnknown",
+				"received_type", fmt.Sprintf("%T", obj),
 				"object", obj)
 			return
 		}
@@ -175,8 +193,11 @@ func (e *EventHandler[object, request]) OnDelete(obj interface{}) {
 	if o, ok := obj.(object); ok {
 		d.Object = o
 	} else {
-		log.Error(nil, "OnDelete missing Object",
-			"object", obj, "type", fmt.Sprintf("%T", obj))
+		log.Error(errors.New("failed to cast object"),
+			"OnDelete missing Object",
+			"expected_type", fmt.Sprintf("%T", d.Object),
+			"received_type", fmt.Sprintf("%T", obj),
+			"object", obj)
 		return
 	}
 
