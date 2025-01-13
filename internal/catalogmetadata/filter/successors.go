@@ -60,6 +60,11 @@ func legacySuccessor(installedBundle ocv1.BundleMetadata, channels ...declcfg.Ch
 			}
 		}
 		if candidateBundleEntry.SkipRange != "" {
+			// There are differences between how "github.com/blang/semver/v4" and "github.com/Masterminds/semver/v3"
+			// handle version ranges. OLM v0 used blang and there might still be registry+v1 bundles that rely
+			// on those specific differences. Because OLM v1 supports registry+v1 bundles,
+			// blang needs to be kept alongside any other semver lib for range handling.
+			// see: https://github.com/operator-framework/operator-controller/pull/1565#issuecomment-2586455768
 			skipRange, err := bsemver.ParseRange(candidateBundleEntry.SkipRange)
 			if err == nil && skipRange(installedBundleVersion) {
 				return true
