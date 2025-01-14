@@ -1,6 +1,8 @@
 module github.com/operator-framework/operator-controller
 
-go 1.22.5
+go 1.23.0
+
+toolchain go1.23.4
 
 require (
 	carvel.dev/kapp v0.63.3
