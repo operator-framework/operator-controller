@@ -5,17 +5,17 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - apiextensions.k8s.io
-  resources:
-  - customresourcedefinitions
-  verbs:
-  - get
-- apiGroups:
   - ""
   resources:
   - serviceaccounts/token
   verbs:
   - create
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
 - apiGroups:
   - olm.operatorframework.io
   resources:
