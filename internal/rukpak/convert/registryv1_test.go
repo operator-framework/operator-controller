@@ -486,7 +486,7 @@ func TestRegistryV1SuiteReadBundleFileSystem(t *testing.T) {
 	require.NotNil(t, chrt)
 	require.NotNil(t, chrt.Metadata)
 	require.Contains(t, chrt.Metadata.Annotations, olmProperties)
-	require.Equal(t, `[{"type":"from-csv-annotations-key","value":"from-csv-annotations-value"},{"type":"from-file-key","value":"from-file-value"}]`, chrt.Metadata.Annotations[olmProperties])
+	require.JSONEq(t, `[{"type":"from-csv-annotations-key","value":"from-csv-annotations-value"},{"type":"from-file-key","value":"from-file-value"}]`, chrt.Metadata.Annotations[olmProperties])
 }
 
 func TestRegistryV1SuiteGenerateNoWebhooks(t *testing.T) {
